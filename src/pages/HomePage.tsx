@@ -65,7 +65,7 @@ export function HomePage() {
               Scopri e Recensisci le Migliori Attività
             </h1>
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-              La piattaforma italiana per recensioni autentiche e sconti esclusivi
+              Su TrovaFacile trovi le attività migliori nella tua zona, leggi le recensioni e accedi a sconti esclusivi
             </p>
 
             <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-2">
