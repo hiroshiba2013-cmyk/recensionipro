@@ -1,20 +1,36 @@
 import { useState, useEffect } from 'react';
-import { Search, Star, TrendingUp, ShieldCheck } from 'lucide-react';
+import { Star, TrendingUp, ShieldCheck } from 'lucide-react';
 import { supabase, Business, BusinessCategory } from '../lib/supabase';
 import { BusinessCard } from '../components/business/BusinessCard';
+import { AdvancedSearch, SearchFilters } from '../components/search/AdvancedSearch';
 import { useAuth } from '../contexts/AuthContext';
 
+interface BusinessWithRating extends Business {
+  avg_rating?: number;
+  review_count?: number;
+}
+
 export function HomePage() {
-  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [businesses, setBusinesses] = useState<BusinessWithRating[]>([]);
   const [categories, setCategories] = useState<BusinessCategory[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState<SearchFilters>({
+    category: '',
+    city: '',
+    businessName: '',
+    minRating: 0,
+  });
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
   useEffect(() => {
     loadData();
-  }, [selectedCategory, searchTerm]);
+  }, []);
+
+  useEffect(() => {
+    if (categories.length > 0) {
+      applyFilters();
+    }
+  }, [filters]);
 
   const loadData = async () => {
     setLoading(true);
@@ -27,7 +43,16 @@ export function HomePage() {
       if (categoriesData) {
         setCategories(categoriesData);
       }
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const applyFilters = async () => {
+    setLoading(true);
+    try {
       let query = supabase
         .from('businesses')
         .select(`
@@ -36,18 +61,51 @@ export function HomePage() {
         `)
         .eq('verified', true);
 
-      if (selectedCategory) {
-        query = query.eq('category_id', selectedCategory);
+      if (filters.category) {
+        query = query.eq('category_id', filters.category);
       }
 
-      if (searchTerm) {
-        query = query.or(`name.ilike.%${searchTerm}%,city.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+      if (filters.city) {
+        query = query.eq('city', filters.city);
+      }
+
+      if (filters.businessName) {
+        query = query.ilike('name', `%${filters.businessName}%`);
       }
 
       const { data: businessesData } = await query.order('created_at', { ascending: false });
 
       if (businessesData) {
-        setBusinesses(businessesData);
+        const businessesWithRatings = await Promise.all(
+          businessesData.map(async (business) => {
+            const { data: reviews } = await supabase
+              .from('reviews')
+              .select('rating')
+              .eq('business_id', business.id);
+
+            const avg_rating = reviews && reviews.length > 0
+              ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+              : 0;
+
+            const review_count = reviews?.length || 0;
+
+            return {
+              ...business,
+              avg_rating,
+              review_count,
+            };
+          })
+        );
+
+        let filtered = businessesWithRatings;
+
+        if (filters.minRating > 0) {
+          filtered = filtered.filter(b => (b.avg_rating || 0) >= filters.minRating);
+        }
+
+        filtered.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
+
+        setBusinesses(filtered);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -68,23 +126,7 @@ export function HomePage() {
               Su TrovaFacile trovi le attività migliori nella tua zona, leggi le recensioni e accedi a sconti esclusivi
             </p>
 
-            <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-2">
-              <div className="flex gap-2">
-                <div className="flex-1 flex items-center gap-2 px-4">
-                  <Search className="w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Cerca attività, città o categoria..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="flex-1 py-2 text-gray-900 outline-none"
-                  />
-                </div>
-                <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors">
-                  Cerca
-                </button>
-              </div>
-            </div>
+            <AdvancedSearch onSearch={setFilters} isLoading={loading} />
           </div>
         </div>
       </div>
@@ -108,34 +150,6 @@ export function HomePage() {
           </div>
         </div>
 
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Categorie</h2>
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => setSelectedCategory('')}
-              className={`px-4 py-2 rounded-full transition-colors ${
-                selectedCategory === ''
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              Tutte
-            </button>
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`px-4 py-2 rounded-full transition-colors ${
-                  selectedCategory === category.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                {category.name}
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Attività in Evidenza</h2>
