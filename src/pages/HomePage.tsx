@@ -116,14 +116,14 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-5xl font-bold mb-6">
-              La scelta di chi cerca. L'opportunità di chi lavora.
+            <h1 className="text-6xl font-extrabold mb-8 leading-tight tracking-tight">
+              La scelta di chi cerca.<br />L'opportunità di chi lavora.
             </h1>
-            <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-              Trova le migliori attività nella tua zona e scopri opportunità di lavoro esclusive
+            <p className="text-2xl text-blue-50 mb-12 max-w-4xl mx-auto leading-relaxed font-light">
+              <span className="font-semibold">TrovaFacile:</span> tutto ciò che cerchi, recensioni verificate e scelte migliori. Più visibilità, più clienti, più crescita.
             </p>
 
             <AdvancedSearch onSearch={setFilters} isLoading={loading} />
