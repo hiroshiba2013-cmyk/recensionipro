@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { HomePage } from '../pages/HomePage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { SubscriptionPage } from '../pages/SubscriptionPage';
+import { JobsPage } from '../pages/JobsPage';
 
 export function Router() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -31,6 +32,10 @@ export function Router() {
 
   if (currentPath === '/subscription') {
     return <SubscriptionPage />;
+  }
+
+  if (currentPath === '/jobs') {
+    return <JobsPage />;
   }
 
   return <HomePage />;

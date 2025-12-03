@@ -31,6 +31,13 @@ export function Header() {
             </a>
 
             <nav className="flex items-center gap-6">
+              <a
+                href="/jobs"
+                className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
+              >
+                Lavoro
+              </a>
+
               {user && profile ? (
                 <>
                   <a

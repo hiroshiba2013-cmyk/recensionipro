@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Plus, Star, Tag, Building } from 'lucide-react';
+import { Plus, Star, Tag, Building, Briefcase } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Business, Review, Discount } from '../lib/supabase';
+import { BusinessJobForm } from '../components/jobs/BusinessJobForm';
 
 export function DashboardPage() {
   const { profile } = useAuth();
@@ -9,6 +10,7 @@ export function DashboardPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showJobForm, setShowJobForm] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -218,6 +220,28 @@ export function DashboardPage() {
                           )}
                         </div>
                       ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-2">
+                      <Briefcase className="w-6 h-6" />
+                      Annunci di Lavoro
+                    </h2>
+                    <button
+                      onClick={() => setShowJobForm(!showJobForm)}
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                    >
+                      <Plus className="w-5 h-5" />
+                      Pubblica Annuncio
+                    </button>
+                  </div>
+
+                  {showJobForm && (
+                    <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                      <BusinessJobForm onSuccess={() => setShowJobForm(false)} />
                     </div>
                   )}
                 </div>
