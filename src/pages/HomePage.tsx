@@ -120,10 +120,10 @@ export function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-5xl font-bold mb-6">
-              Scopri e Recensisci le Migliori Attività
+              La scelta di chi cerca. L'opportunità di chi lavora.
             </h1>
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-              Su TrovaFacile trovi le attività migliori nella tua zona, leggi le recensioni e accedi a sconti esclusivi
+              Trova le migliori attività nella tua zona e scopri opportunità di lavoro esclusive
             </p>
 
             <AdvancedSearch onSearch={setFilters} isLoading={loading} />
