@@ -59,10 +59,14 @@ export function Header() {
                   )}
 
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 text-gray-700">
+                    <a
+                      href="/profile"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors"
+                      title="Mio Profilo"
+                    >
                       <User className="w-5 h-5" />
                       <span>{profile.full_name}</span>
-                    </div>
+                    </a>
                     <button
                       onClick={handleSignOut}
                       className="text-gray-700 hover:text-red-600 transition-colors"

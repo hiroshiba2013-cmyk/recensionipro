@@ -3,6 +3,7 @@ import { HomePage } from '../pages/HomePage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { SubscriptionPage } from '../pages/SubscriptionPage';
 import { JobsPage } from '../pages/JobsPage';
+import { ProfilePage } from '../pages/ProfilePage';
 
 export function Router() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -36,6 +37,10 @@ export function Router() {
 
   if (currentPath === '/jobs') {
     return <JobsPage />;
+  }
+
+  if (currentPath === '/profile') {
+    return <ProfilePage />;
   }
 
   return <HomePage />;
