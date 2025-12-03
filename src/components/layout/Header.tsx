@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogOut, User, LayoutDashboard, CreditCard } from 'lucide-react';
+import { LogOut, User, CreditCard } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
@@ -40,14 +40,6 @@ export function Header() {
 
               {user && profile ? (
                 <>
-                  <a
-                    href="/dashboard"
-                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors"
-                  >
-                    <LayoutDashboard className="w-5 h-5" />
-                    <span>Dashboard</span>
-                  </a>
-
                   {profile.subscription_status !== 'active' && (
                     <a
                       href="/subscription"
