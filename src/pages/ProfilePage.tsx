@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { AvatarUpload } from '../components/profile/AvatarUpload';
 import { EditProfileForm } from '../components/profile/EditProfileForm';
 import { JobRequestForm } from '../components/profile/JobRequestForm';
+import { ResumeUpload } from '../components/profile/ResumeUpload';
 import { EditBusinessForm } from '../components/business/EditBusinessForm';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
 
@@ -20,6 +21,7 @@ interface Profile {
   phone: string;
   billing_address: string;
   avatar_url: string | null;
+  resume_url: string | null;
   user_type: 'customer' | 'business';
   subscription_type: string | null;
   subscription_status: string;
@@ -102,19 +104,13 @@ export function ProfilePage() {
         .maybeSingle();
 
       if (profileData) {
-        console.log('DEBUG - Profile loaded:', profileData);
-        console.log('DEBUG - User type:', profileData.user_type);
         setProfile(profileData);
 
         if (profileData.user_type === 'customer') {
-          console.log('DEBUG - Loading customer data...');
           await loadCustomerData();
         } else {
-          console.log('DEBUG - Loading business data...');
           await loadBusinessData();
         }
-      } else {
-        console.log('DEBUG - No profile data found');
       }
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -311,6 +307,12 @@ export function ProfilePage() {
             />
 
             <JobRequestForm customerId={profile.id} />
+
+            <ResumeUpload
+              userId={profile.id}
+              currentResumeUrl={profile.resume_url}
+              onUpdate={loadProfileData}
+            />
 
             <div className="bg-white rounded-xl shadow-md p-8 mb-8">
               <div className="flex items-center gap-3 mb-6">
