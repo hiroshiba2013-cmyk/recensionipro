@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { AvatarUpload } from '../components/profile/AvatarUpload';
 import { EditProfileForm } from '../components/profile/EditProfileForm';
 import { JobRequestForm } from '../components/profile/JobRequestForm';
+import { EditBusinessForm } from '../components/business/EditBusinessForm';
+import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
 
 interface Profile {
   id: string;
@@ -56,6 +58,14 @@ interface Discount {
 interface Business {
   id: string;
   name: string;
+  vat_number: string;
+  unique_code: string;
+  ateco_code: string;
+  pec_email: string;
+  phone: string;
+  billing_address: string;
+  office_address: string;
+  website_url: string;
 }
 
 export function ProfilePage() {
@@ -238,17 +248,11 @@ export function ProfilePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-xl shadow-md p-8 mb-8">
           <div className="flex items-center gap-6">
-            {profile.user_type === 'customer' ? (
-              <AvatarUpload
-                userId={profile.id}
-                currentAvatarUrl={profile.avatar_url}
-                onAvatarUpdate={() => loadProfileData()}
-              />
-            ) : (
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center">
-                <User className="w-10 h-10 text-white" />
-              </div>
-            )}
+            <AvatarUpload
+              userId={profile.id}
+              currentAvatarUrl={profile.avatar_url}
+              onAvatarUpdate={() => loadProfileData()}
+            />
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{profile.full_name}</h1>
               <p className="text-gray-600 mt-1">{profile.email}</p>
@@ -384,6 +388,17 @@ export function ProfilePage() {
           </>
         ) : (
           <>
+            {business && (
+              <>
+                <EditBusinessForm
+                  business={business}
+                  onUpdate={loadBusinessData}
+                />
+
+                <BusinessJobPostingForm businessId={business.id} />
+              </>
+            )}
+
             <div className="bg-white rounded-xl shadow-md p-8 mb-8">
               <div className="flex items-center gap-3 mb-6">
                 <Star className="w-6 h-6 text-yellow-500" />
