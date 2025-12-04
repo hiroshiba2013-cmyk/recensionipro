@@ -16,6 +16,7 @@ export interface BusinessData {
   companyName: string;
   vatNumber: string;
   uniqueCode: string;
+  atecoCode: string;
   pecEmail: string;
   phone: string;
   billingAddress: string;
@@ -139,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           name: data.companyName,
           vat_number: data.vatNumber,
           unique_code: data.uniqueCode,
+          ateco_code: data.atecoCode,
           pec_email: data.pecEmail,
           phone: data.phone,
           billing_address: data.billingAddress,

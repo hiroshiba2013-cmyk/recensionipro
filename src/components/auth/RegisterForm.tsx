@@ -27,6 +27,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     companyName: '',
     vatNumber: '',
     uniqueCode: '',
+    atecoCode: '',
     pecEmail: '',
     phone: '',
     billingAddress: '',
@@ -331,6 +332,22 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
               onChange={handleBusinessChange}
               required
               placeholder="Es. T04X7MT"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="atecoCode" className="block text-sm font-medium text-gray-700 mb-1">
+              Codice ATECO
+            </label>
+            <input
+              id="atecoCode"
+              name="atecoCode"
+              type="text"
+              value={businessForm.atecoCode}
+              onChange={handleBusinessChange}
+              required
+              placeholder="Es. 47.91.10"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             />
           </div>
