@@ -23,11 +23,12 @@ export function Header() {
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <a href="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">T</span>
-              </div>
-              <span className="text-xl font-bold text-gray-900">TrovaFacile</span>
+            <a href="/" className="flex items-center">
+              <img
+                src="/chatgpt_image_4_dic_2025,_22_51_45.png"
+                alt="TrovaFacile"
+                className="h-12"
+              />
             </a>
 
             <nav className="flex items-center gap-6">

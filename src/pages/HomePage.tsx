@@ -123,7 +123,7 @@ export function HomePage() {
               La scelta di chi cerca.<br />L'opportunità di chi lavora.
             </h1>
             <p className="text-2xl text-blue-50 mb-12 max-w-4xl mx-auto leading-relaxed font-light">
-              <span className="font-semibold">TrovaFacile:</span> tutto ciò che cerchi, recensioni verificate e scelte migliori. Più visibilità, più clienti, più crescita.
+              Tutto ciò che cerchi, recensioni verificate e scelte migliori. Più visibilità, più clienti, più crescita.
             </p>
 
             <AdvancedSearch onSearch={setFilters} isLoading={loading} />

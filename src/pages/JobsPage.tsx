@@ -161,7 +161,7 @@ export function JobsPage() {
             <h1 className="text-5xl font-bold">Opportunità di Lavoro</h1>
           </div>
           <p className="text-green-100 text-lg">
-            Trova le migliori opportunità lavorative nelle aziende registrate su TrovaFacile
+            Trova le migliori opportunità lavorative nelle aziende registrate
           </p>
         </div>
       </div>
