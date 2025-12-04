@@ -8,6 +8,7 @@ export interface CustomerData {
   nickname: string;
   dateOfBirth: string;
   taxCode: string;
+  phone: string;
   billingAddress: string;
 }
 
@@ -18,6 +19,7 @@ export interface BusinessData {
   pecEmail: string;
   phone: string;
   billingAddress: string;
+  officeAddress?: string;
 }
 
 interface AuthContextType {
@@ -98,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           nickname: data.nickname,
           date_of_birth: data.dateOfBirth,
           tax_code: data.taxCode,
+          phone: data.phone,
           billing_address: data.billingAddress,
           user_type: 'customer',
           subscription_status: 'expired',
@@ -139,6 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           pec_email: data.pecEmail,
           phone: data.phone,
           billing_address: data.billingAddress,
+          office_address: data.officeAddress || '',
         });
 
       if (businessError) throw businessError;

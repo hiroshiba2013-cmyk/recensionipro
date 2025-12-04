@@ -16,6 +16,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     nickname: '',
     dateOfBirth: '',
     taxCode: '',
+    phone: '',
     billingAddress: '',
   });
 
@@ -29,6 +30,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     pecEmail: '',
     phone: '',
     billingAddress: '',
+    officeAddress: '',
   });
 
   const handleCustomerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,7 +110,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
         >
-          Azienda
+          Professionale
         </button>
       </div>
 
@@ -173,6 +175,22 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
               value={customerForm.email}
               onChange={handleCustomerChange}
               required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+              Numero di Telefono
+            </label>
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              value={customerForm.phone}
+              onChange={handleCustomerChange}
+              required
+              placeholder="Es. +39 320 1234567"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             />
           </div>
@@ -272,7 +290,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
         <form onSubmit={handleBusinessSubmit} className="space-y-4 max-h-96 overflow-y-auto pr-2">
           <div>
             <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1">
-              Nome Azienda
+              Ragione Sociale
             </label>
             <input
               id="companyName"
@@ -380,6 +398,21 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             />
           </div>
 
+          <div>
+            <label htmlFor="officeAddress" className="block text-sm font-medium text-gray-700 mb-1">
+              Indirizzo Sede (se diverso da quello di fatturazione)
+            </label>
+            <input
+              id="officeAddress"
+              name="officeAddress"
+              type="text"
+              value={businessForm.officeAddress}
+              onChange={handleBusinessChange}
+              placeholder="Via/Piazza, numero, CAP, Città (opzionale)"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
@@ -421,7 +454,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             disabled={loading}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 text-sm font-medium"
           >
-            {loading ? 'Registrazione...' : 'Registra Azienda'}
+            {loading ? 'Registrazione...' : 'Registrati'}
           </button>
         </form>
       )}
