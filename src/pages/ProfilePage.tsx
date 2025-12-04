@@ -2,11 +2,22 @@ import { useState, useEffect } from 'react';
 import { User, Star, CreditCard, Tag, Plus, Calendar, Percent, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { AvatarUpload } from '../components/profile/AvatarUpload';
+import { EditProfileForm } from '../components/profile/EditProfileForm';
+import { JobRequestForm } from '../components/profile/JobRequestForm';
 
 interface Profile {
   id: string;
   email: string;
   full_name: string;
+  first_name: string;
+  last_name: string;
+  nickname: string;
+  date_of_birth: string;
+  tax_code: string;
+  phone: string;
+  billing_address: string;
+  avatar_url: string | null;
   user_type: 'customer' | 'business';
   subscription_type: string | null;
   subscription_status: string;
@@ -227,9 +238,17 @@ export function ProfilePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-xl shadow-md p-8 mb-8">
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center">
-              <User className="w-10 h-10 text-white" />
-            </div>
+            {profile.user_type === 'customer' ? (
+              <AvatarUpload
+                userId={profile.id}
+                currentAvatarUrl={profile.avatar_url}
+                onAvatarUpdate={() => loadProfileData()}
+              />
+            ) : (
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center">
+                <User className="w-10 h-10 text-white" />
+              </div>
+            )}
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{profile.full_name}</h1>
               <p className="text-gray-600 mt-1">{profile.email}</p>
@@ -276,6 +295,13 @@ export function ProfilePage() {
 
         {profile.user_type === 'customer' ? (
           <>
+            <EditProfileForm
+              profile={profile}
+              onUpdate={loadProfileData}
+            />
+
+            <JobRequestForm customerId={profile.id} />
+
             <div className="bg-white rounded-xl shadow-md p-8 mb-8">
               <div className="flex items-center gap-3 mb-6">
                 <Star className="w-6 h-6 text-yellow-500" />
