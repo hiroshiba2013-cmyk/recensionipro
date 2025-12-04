@@ -102,13 +102,19 @@ export function ProfilePage() {
         .maybeSingle();
 
       if (profileData) {
+        console.log('DEBUG - Profile loaded:', profileData);
+        console.log('DEBUG - User type:', profileData.user_type);
         setProfile(profileData);
 
         if (profileData.user_type === 'customer') {
+          console.log('DEBUG - Loading customer data...');
           await loadCustomerData();
         } else {
+          console.log('DEBUG - Loading business data...');
           await loadBusinessData();
         }
+      } else {
+        console.log('DEBUG - No profile data found');
       }
     } catch (error) {
       console.error('Error loading profile:', error);
