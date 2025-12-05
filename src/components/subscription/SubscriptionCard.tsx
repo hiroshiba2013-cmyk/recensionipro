@@ -56,7 +56,7 @@ export function SubscriptionCard({ plan, userType, onSelect }: SubscriptionCardP
 export const CUSTOMER_PLANS: SubscriptionPlan[] = [
   {
     type: 'monthly',
-    price: 4.99,
+    price: 0.99,
     features: [
       'Scrivi recensioni illimitate',
       'Accesso a tutti gli sconti disponibili',
@@ -67,7 +67,7 @@ export const CUSTOMER_PLANS: SubscriptionPlan[] = [
   },
   {
     type: 'annual',
-    price: 49.99,
+    price: 9.90,
     features: [
       'Scrivi recensioni illimitate',
       'Accesso a tutti gli sconti disponibili',
@@ -82,7 +82,7 @@ export const CUSTOMER_PLANS: SubscriptionPlan[] = [
 export const BUSINESS_PLANS: SubscriptionPlan[] = [
   {
     type: 'monthly',
-    price: 19.99,
+    price: 2.49,
     features: [
       'Profilo aziendale completo',
       'Visualizza e rispondi alle recensioni',
@@ -90,11 +90,12 @@ export const BUSINESS_PLANS: SubscriptionPlan[] = [
       'Statistiche sulle recensioni',
       'Badge di verifica',
       'Supporto dedicato',
+      'Prezzo escluso IVA',
     ],
   },
   {
     type: 'annual',
-    price: 199.99,
+    price: 24.90,
     features: [
       'Profilo aziendale completo',
       'Visualizza e rispondi alle recensioni',
@@ -104,6 +105,7 @@ export const BUSINESS_PLANS: SubscriptionPlan[] = [
       'Supporto dedicato prioritario',
       'Posizionamento in evidenza',
       'Report mensili dettagliati',
+      'Prezzo escluso IVA',
     ],
   },
 ];

@@ -266,9 +266,17 @@ export function ProfilePage() {
         </div>
 
         <div className="bg-white rounded-xl shadow-md p-8 mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <CreditCard className="w-6 h-6 text-blue-600" />
-            <h2 className="text-2xl font-bold text-gray-900">Piano di Abbonamento</h2>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <CreditCard className="w-6 h-6 text-blue-600" />
+              <h2 className="text-2xl font-bold text-gray-900">Piano di Abbonamento</h2>
+            </div>
+            <a
+              href="/subscription"
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+            >
+              {profile.subscription_status === 'active' ? 'Cambia Piano' : 'Attiva Abbonamento'}
+            </a>
           </div>
 
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6">
