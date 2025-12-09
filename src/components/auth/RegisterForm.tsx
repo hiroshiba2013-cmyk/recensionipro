@@ -1,11 +1,37 @@
 import { useState } from 'react';
 import { useAuth, CustomerData, BusinessData } from '../../contexts/AuthContext';
+import { SearchableSelect } from '../common/SearchableSelect';
+import { Plus, Trash2 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+
+interface FamilyMember {
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  taxCode: string;
+  relationship: string;
+}
+
+interface BusinessLocation {
+  name: string;
+  address: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  phone: string;
+}
 
 export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
   const [userType, setUserType] = useState<'customer' | 'business'>('customer');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signUpCustomer, signUpBusiness } = useAuth();
+
+  const [numberOfPeople, setNumberOfPeople] = useState('1');
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+
+  const [numberOfLocations, setNumberOfLocations] = useState('1');
+  const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
 
   const [customerForm, setCustomerForm] = useState<CustomerData & { email: string; password: string; confirmPassword: string }>({
     email: '',
@@ -44,6 +70,47 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     setBusinessForm(prev => ({ ...prev, [name]: value }));
   };
 
+  const addFamilyMember = () => {
+    setFamilyMembers([...familyMembers, {
+      firstName: '',
+      lastName: '',
+      dateOfBirth: '',
+      taxCode: '',
+      relationship: 'Coniuge',
+    }]);
+  };
+
+  const removeFamilyMember = (index: number) => {
+    setFamilyMembers(familyMembers.filter((_, i) => i !== index));
+  };
+
+  const updateFamilyMember = (index: number, field: keyof FamilyMember, value: string) => {
+    const updated = [...familyMembers];
+    updated[index] = { ...updated[index], [field]: value };
+    setFamilyMembers(updated);
+  };
+
+  const addBusinessLocation = () => {
+    setBusinessLocations([...businessLocations, {
+      name: 'Sede',
+      address: '',
+      city: '',
+      province: '',
+      postalCode: '',
+      phone: '',
+    }]);
+  };
+
+  const removeBusinessLocation = (index: number) => {
+    setBusinessLocations(businessLocations.filter((_, i) => i !== index));
+  };
+
+  const updateBusinessLocation = (index: number, field: keyof BusinessLocation, value: string) => {
+    const updated = [...businessLocations];
+    updated[index] = { ...updated[index], [field]: value };
+    setBusinessLocations(updated);
+  };
+
   const handleCustomerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -58,6 +125,26 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     try {
       const { email, password, confirmPassword, ...data } = customerForm;
       await signUpCustomer(email, password, data as CustomerData);
+
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user && familyMembers.length > 0) {
+        const membersToInsert = familyMembers.map(member => ({
+          customer_id: user.id,
+          first_name: member.firstName,
+          last_name: member.lastName,
+          date_of_birth: member.dateOfBirth,
+          tax_code: member.taxCode,
+          relationship: member.relationship,
+        }));
+
+        const { error: membersError } = await supabase
+          .from('customer_family_members')
+          .insert(membersToInsert);
+
+        if (membersError) throw membersError;
+      }
+
       onSuccess?.();
     } catch (err: any) {
       setError(err.message || 'Errore durante la registrazione');
@@ -80,6 +167,36 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     try {
       const { email, password, confirmPassword, ...data } = businessForm;
       await signUpBusiness(email, password, data as BusinessData);
+
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user && businessLocations.length > 0) {
+        const { data: businesses } = await supabase
+          .from('businesses')
+          .select('id')
+          .eq('owner_id', user.id)
+          .single();
+
+        if (businesses) {
+          const locationsToInsert = businessLocations.map((location, index) => ({
+            business_id: businesses.id,
+            name: location.name,
+            address: location.address,
+            city: location.city,
+            province: location.province,
+            postal_code: location.postalCode,
+            phone: location.phone,
+            is_primary: index === 0,
+          }));
+
+          const { error: locationsError } = await supabase
+            .from('business_locations')
+            .insert(locationsToInsert);
+
+          if (locationsError) throw locationsError;
+        }
+      }
+
       onSuccess?.();
     } catch (err: any) {
       setError(err.message || 'Errore durante la registrazione');
@@ -117,167 +234,302 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
 
       {userType === 'customer' ? (
         <form onSubmit={handleCustomerSubmit} className="space-y-4 max-h-96 overflow-y-auto pr-2">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                Nome
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Per quante persone vuoi aprire l'account?
+            </label>
+            <SearchableSelect
+              value={numberOfPeople}
+              onChange={(value) => {
+                setNumberOfPeople(value);
+                const num = parseInt(value) - 1;
+                if (num > familyMembers.length) {
+                  const toAdd = num - familyMembers.length;
+                  for (let i = 0; i < toAdd; i++) {
+                    addFamilyMember();
+                  }
+                } else if (num < familyMembers.length) {
+                  setFamilyMembers(familyMembers.slice(0, num));
+                }
+              }}
+              options={[
+                { value: '1', label: '1 persona (solo io)' },
+                { value: '2', label: '2 persone' },
+                { value: '3', label: '3 persone' },
+                { value: '4', label: '4 o più persone' },
+              ]}
+              placeholder="Seleziona numero persone"
+            />
+          </div>
+
+          <div className="bg-gray-50 p-4 rounded-lg mb-4">
+            <h3 className="text-sm font-bold text-gray-900 mb-3">Dati Titolare Account (Persona 1)</h3>
+
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Nome
+                </label>
+                <input
+                  id="firstName"
+                  name="firstName"
+                  type="text"
+                  value={customerForm.firstName}
+                  onChange={handleCustomerChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Cognome
+                </label>
+                <input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  value={customerForm.lastName}
+                  onChange={handleCustomerChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="nickname" className="block text-sm font-medium text-gray-700 mb-1">
+                Nickname
               </label>
               <input
-                id="firstName"
-                name="firstName"
+                id="nickname"
+                name="nickname"
                 type="text"
-                value={customerForm.firstName}
+                value={customerForm.nickname}
+                onChange={handleCustomerChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                placeholder="Nome visibile per le review"
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">
+                Data di Nascita
+              </label>
+              <input
+                id="dateOfBirth"
+                name="dateOfBirth"
+                type="date"
+                value={customerForm.dateOfBirth}
                 onChange={handleCustomerChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               />
             </div>
 
-            <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                Cognome
+            <div className="mb-3">
+              <label htmlFor="taxCode" className="block text-sm font-medium text-gray-700 mb-1">
+                Codice Fiscale
               </label>
               <input
-                id="lastName"
-                name="lastName"
+                id="taxCode"
+                name="taxCode"
                 type="text"
-                value={customerForm.lastName}
+                value={customerForm.taxCode}
                 onChange={handleCustomerChange}
                 required
+                placeholder="Es. RSSMRA85T10A562S"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               />
             </div>
           </div>
 
-          <div>
-            <label htmlFor="nickname" className="block text-sm font-medium text-gray-700 mb-1">
-              Nickname
-            </label>
-            <input
-              id="nickname"
-              name="nickname"
-              type="text"
-              value={customerForm.nickname}
-              onChange={handleCustomerChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              placeholder="Nome visibile per le review"
-            />
-          </div>
+          {familyMembers.map((member, index) => (
+            <div key={index} className="bg-emerald-50 p-4 rounded-lg border border-emerald-200 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-bold text-gray-900">Dati Persona {index + 2}</h3>
+                <button
+                  type="button"
+                  onClick={() => removeFamilyMember(index)}
+                  className="text-red-600 hover:text-red-700 p-1"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              value={customerForm.email}
-              onChange={handleCustomerChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-          </div>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nome
+                  </label>
+                  <input
+                    type="text"
+                    value={member.firstName}
+                    onChange={(e) => updateFamilyMember(index, 'firstName', e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                </div>
 
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-              Numero di Telefono
-            </label>
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              value={customerForm.phone}
-              onChange={handleCustomerChange}
-              required
-              placeholder="Es. +39 320 1234567"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-          </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Cognome
+                  </label>
+                  <input
+                    type="text"
+                    value={member.lastName}
+                    onChange={(e) => updateFamilyMember(index, 'lastName', e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                </div>
+              </div>
 
-          <div>
-            <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">
-              Data di Nascita
-            </label>
-            <input
-              id="dateOfBirth"
-              name="dateOfBirth"
-              type="date"
-              value={customerForm.dateOfBirth}
-              onChange={handleCustomerChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-          </div>
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Data di Nascita
+                </label>
+                <input
+                  type="date"
+                  value={member.dateOfBirth}
+                  onChange={(e) => updateFamilyMember(index, 'dateOfBirth', e.target.value)}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
 
-          <div>
-            <label htmlFor="taxCode" className="block text-sm font-medium text-gray-700 mb-1">
-              Codice Fiscale
-            </label>
-            <input
-              id="taxCode"
-              name="taxCode"
-              type="text"
-              value={customerForm.taxCode}
-              onChange={handleCustomerChange}
-              required
-              placeholder="Es. RSSMRA85T10A562S"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-          </div>
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Codice Fiscale
+                </label>
+                <input
+                  type="text"
+                  value={member.taxCode}
+                  onChange={(e) => updateFamilyMember(index, 'taxCode', e.target.value)}
+                  required
+                  placeholder="Es. RSSMRA85T10A562S"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
 
-          <div>
-            <label htmlFor="billingAddress" className="block text-sm font-medium text-gray-700 mb-1">
-              Indirizzo di Fatturazione
-            </label>
-            <input
-              id="billingAddress"
-              name="billingAddress"
-              type="text"
-              value={customerForm.billingAddress}
-              onChange={handleCustomerChange}
-              required
-              placeholder="Via/Piazza, numero, CAP, Città"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-          </div>
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Relazione
+                </label>
+                <SearchableSelect
+                  value={member.relationship}
+                  onChange={(value) => updateFamilyMember(index, 'relationship', value)}
+                  options={[
+                    { value: 'Coniuge', label: 'Coniuge' },
+                    { value: 'Figlio/a', label: 'Figlio/a' },
+                    { value: 'Genitore', label: 'Genitore' },
+                    { value: 'Fratello/Sorella', label: 'Fratello/Sorella' },
+                    { value: 'Altro', label: 'Altro familiare' },
+                  ]}
+                  placeholder="Seleziona relazione"
+                />
+              </div>
+            </div>
+          ))}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
+          {parseInt(numberOfPeople) === 4 && (
+            <button
+              type="button"
+              onClick={addFamilyMember}
+              className="w-full flex items-center justify-center gap-2 py-2 px-4 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors text-sm font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              Aggiungi altra persona
+            </button>
+          )}
+
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-sm font-bold text-gray-900 mb-3">Dati Account</h3>
+
+            <div className="mb-3">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                Email
               </label>
               <input
-                id="password"
-                name="password"
-                type="password"
-                value={customerForm.password}
+                id="email"
+                name="email"
+                type="email"
+                value={customerForm.email}
                 onChange={handleCustomerChange}
                 required
-                minLength={6}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               />
             </div>
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                Conferma Password
+            <div className="mb-3">
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                Numero di Telefono
               </label>
               <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                value={customerForm.confirmPassword}
+                id="phone"
+                name="phone"
+                type="tel"
+                value={customerForm.phone}
                 onChange={handleCustomerChange}
                 required
-                minLength={6}
+                placeholder="Es. +39 320 1234567"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="billingAddress" className="block text-sm font-medium text-gray-700 mb-1">
+                Indirizzo di Fatturazione
+              </label>
+              <input
+                id="billingAddress"
+                name="billingAddress"
+                type="text"
+                value={customerForm.billingAddress}
+                onChange={handleCustomerChange}
+                required
+                placeholder="Via/Piazza, numero, CAP, Città"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={customerForm.password}
+                  onChange={handleCustomerChange}
+                  required
+                  minLength={6}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                  Conferma Password
+                </label>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  value={customerForm.confirmPassword}
+                  onChange={handleCustomerChange}
+                  required
+                  minLength={6}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
             </div>
           </div>
 
-          {error && <div className="text-red-600 text-sm">{error}</div>}
+          {error && <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{error}</div>}
 
           <button
             type="submit"
@@ -289,182 +541,320 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
         </form>
       ) : (
         <form onSubmit={handleBusinessSubmit} className="space-y-4 max-h-96 overflow-y-auto pr-2">
-          <div>
-            <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1">
-              Ragione Sociale
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Quante sedi ha la tua azienda?
             </label>
-            <input
-              id="companyName"
-              name="companyName"
-              type="text"
-              value={businessForm.companyName}
-              onChange={handleBusinessChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            <SearchableSelect
+              value={numberOfLocations}
+              onChange={(value) => {
+                setNumberOfLocations(value);
+                const num = parseInt(value);
+                if (num > businessLocations.length) {
+                  const toAdd = num - businessLocations.length;
+                  for (let i = 0; i < toAdd; i++) {
+                    addBusinessLocation();
+                  }
+                } else if (num < businessLocations.length) {
+                  setBusinessLocations(businessLocations.slice(0, num));
+                }
+              }}
+              options={[
+                { value: '1', label: '1 sede' },
+                { value: '2', label: '2 sedi' },
+                { value: '3', label: '3 sedi' },
+                { value: '4', label: '4 o più sedi' },
+              ]}
+              placeholder="Seleziona numero sedi"
             />
           </div>
 
-          <div>
-            <label htmlFor="vatNumber" className="block text-sm font-medium text-gray-700 mb-1">
-              P.IVA
-            </label>
-            <input
-              id="vatNumber"
-              name="vatNumber"
-              type="text"
-              value={businessForm.vatNumber}
-              onChange={handleBusinessChange}
-              required
-              placeholder="Es. IT12345678900"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-          </div>
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-sm font-bold text-gray-900 mb-3">Dati Azienda</h3>
 
-          <div>
-            <label htmlFor="uniqueCode" className="block text-sm font-medium text-gray-700 mb-1">
-              Codice Univoco
-            </label>
-            <input
-              id="uniqueCode"
-              name="uniqueCode"
-              type="text"
-              value={businessForm.uniqueCode}
-              onChange={handleBusinessChange}
-              required
-              placeholder="Es. T04X7MT"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="atecoCode" className="block text-sm font-medium text-gray-700 mb-1">
-              Codice ATECO
-            </label>
-            <input
-              id="atecoCode"
-              name="atecoCode"
-              type="text"
-              value={businessForm.atecoCode}
-              onChange={handleBusinessChange}
-              required
-              placeholder="Es. 47.91.10"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              value={businessForm.email}
-              onChange={handleBusinessChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="pecEmail" className="block text-sm font-medium text-gray-700 mb-1">
-              PEC Email
-            </label>
-            <input
-              id="pecEmail"
-              name="pecEmail"
-              type="email"
-              value={businessForm.pecEmail}
-              onChange={handleBusinessChange}
-              required
-              placeholder="es. azienda@pec.it"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-              Numero di Telefono
-            </label>
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              value={businessForm.phone}
-              onChange={handleBusinessChange}
-              required
-              placeholder="Es. +39 02 1234567"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="billingAddress" className="block text-sm font-medium text-gray-700 mb-1">
-              Indirizzo di Fatturazione
-            </label>
-            <input
-              id="billingAddress"
-              name="billingAddress"
-              type="text"
-              value={businessForm.billingAddress}
-              onChange={handleBusinessChange}
-              required
-              placeholder="Via/Piazza, numero, CAP, Città"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="officeAddress" className="block text-sm font-medium text-gray-700 mb-1">
-              Indirizzo Sede (se diverso da quello di fatturazione)
-            </label>
-            <input
-              id="officeAddress"
-              name="officeAddress"
-              type="text"
-              value={businessForm.officeAddress}
-              onChange={handleBusinessChange}
-              placeholder="Via/Piazza, numero, CAP, Città (opzionale)"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
+            <div className="mb-3">
+              <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1">
+                Ragione Sociale
               </label>
               <input
-                id="password"
-                name="password"
-                type="password"
-                value={businessForm.password}
+                id="companyName"
+                name="companyName"
+                type="text"
+                value={businessForm.companyName}
                 onChange={handleBusinessChange}
                 required
-                minLength={6}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               />
             </div>
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                Conferma Password
+            <div className="mb-3">
+              <label htmlFor="vatNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                P.IVA
               </label>
               <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                value={businessForm.confirmPassword}
+                id="vatNumber"
+                name="vatNumber"
+                type="text"
+                value={businessForm.vatNumber}
                 onChange={handleBusinessChange}
                 required
-                minLength={6}
+                placeholder="Es. IT12345678900"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="uniqueCode" className="block text-sm font-medium text-gray-700 mb-1">
+                Codice Univoco
+              </label>
+              <input
+                id="uniqueCode"
+                name="uniqueCode"
+                type="text"
+                value={businessForm.uniqueCode}
+                onChange={handleBusinessChange}
+                required
+                placeholder="Es. T04X7MT"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="atecoCode" className="block text-sm font-medium text-gray-700 mb-1">
+                Codice ATECO
+              </label>
+              <input
+                id="atecoCode"
+                name="atecoCode"
+                type="text"
+                value={businessForm.atecoCode}
+                onChange={handleBusinessChange}
+                required
+                placeholder="Es. 47.91.10"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                value={businessForm.email}
+                onChange={handleBusinessChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="pecEmail" className="block text-sm font-medium text-gray-700 mb-1">
+                PEC Email
+              </label>
+              <input
+                id="pecEmail"
+                name="pecEmail"
+                type="email"
+                value={businessForm.pecEmail}
+                onChange={handleBusinessChange}
+                required
+                placeholder="es. azienda@pec.it"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                Numero di Telefono
+              </label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                value={businessForm.phone}
+                onChange={handleBusinessChange}
+                required
+                placeholder="Es. +39 02 1234567"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="billingAddress" className="block text-sm font-medium text-gray-700 mb-1">
+                Indirizzo di Fatturazione
+              </label>
+              <input
+                id="billingAddress"
+                name="billingAddress"
+                type="text"
+                value={businessForm.billingAddress}
+                onChange={handleBusinessChange}
+                required
+                placeholder="Via/Piazza, numero, CAP, Città"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               />
             </div>
           </div>
 
-          {error && <div className="text-red-600 text-sm">{error}</div>}
+          {businessLocations.map((location, index) => (
+            <div key={index} className="bg-emerald-50 p-4 rounded-lg border border-emerald-200 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-bold text-gray-900">
+                  {index === 0 ? 'Sede Principale' : `Sede ${index + 1}`}
+                </h3>
+                {index > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => removeBusinessLocation(index)}
+                    className="text-red-600 hover:text-red-700 p-1"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nome Sede
+                </label>
+                <input
+                  type="text"
+                  value={location.name}
+                  onChange={(e) => updateBusinessLocation(index, 'name', e.target.value)}
+                  required
+                  placeholder={index === 0 ? 'Sede Principale' : `Sede ${index + 1}`}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Indirizzo Completo
+                </label>
+                <input
+                  type="text"
+                  value={location.address}
+                  onChange={(e) => updateBusinessLocation(index, 'address', e.target.value)}
+                  required
+                  placeholder="Via/Piazza, numero civico"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Città
+                  </label>
+                  <input
+                    type="text"
+                    value={location.city}
+                    onChange={(e) => updateBusinessLocation(index, 'city', e.target.value)}
+                    required
+                    placeholder="Es. Milano"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Provincia
+                  </label>
+                  <input
+                    type="text"
+                    value={location.province}
+                    onChange={(e) => updateBusinessLocation(index, 'province', e.target.value)}
+                    required
+                    placeholder="Es. MI"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    CAP
+                  </label>
+                  <input
+                    type="text"
+                    value={location.postalCode}
+                    onChange={(e) => updateBusinessLocation(index, 'postalCode', e.target.value)}
+                    required
+                    placeholder="Es. 20121"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Telefono Sede
+                  </label>
+                  <input
+                    type="tel"
+                    value={location.phone}
+                    onChange={(e) => updateBusinessLocation(index, 'phone', e.target.value)}
+                    placeholder="Es. +39 02 1234567"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {parseInt(numberOfLocations) === 4 && (
+            <button
+              type="button"
+              onClick={addBusinessLocation}
+              className="w-full flex items-center justify-center gap-2 py-2 px-4 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors text-sm font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              Aggiungi altra sede
+            </button>
+          )}
+
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-sm font-bold text-gray-900 mb-3">Dati Accesso</h3>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={businessForm.password}
+                  onChange={handleBusinessChange}
+                  required
+                  minLength={6}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                  Conferma Password
+                </label>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  value={businessForm.confirmPassword}
+                  onChange={handleBusinessChange}
+                  required
+                  minLength={6}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          {error && <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{error}</div>}
 
           <button
             type="submit"
