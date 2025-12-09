@@ -34,6 +34,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
 
   const [numberOfLocations, setNumberOfLocations] = useState('1');
   const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
+  const [businessBillingPeriod, setBusinessBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
 
   const [customerForm, setCustomerForm] = useState<CustomerData & { email: string; password: string; confirmPassword: string }>({
     email: '',
@@ -122,6 +123,16 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
       '4': { monthly: 2.49, yearly: 24.90 },
     };
     return prices[persons as keyof typeof prices][period];
+  };
+
+  const getBusinessSubscriptionPrice = (locations: string, period: 'monthly' | 'yearly') => {
+    const prices = {
+      '1': { monthly: 2.49, yearly: 24.90 },
+      '2': { monthly: 3.99, yearly: 39.90 },
+      '3': { monthly: 4.99, yearly: 49.90 },
+      '4': { monthly: 5.99, yearly: 59.90 },
+    };
+    return prices[locations as keyof typeof prices][period];
   };
 
   const handleCustomerSubmit = async (e: React.FormEvent) => {
@@ -237,6 +248,36 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             .insert(locationsToInsert);
 
           if (locationsError) throw locationsError;
+        }
+      }
+
+      if (user) {
+        const { data: plan } = await supabase
+          .from('subscription_plans')
+          .select('id')
+          .eq('max_persons', parseInt(numberOfLocations))
+          .eq('billing_period', businessBillingPeriod)
+          .like('name', 'Piano Business%')
+          .single();
+
+        if (plan) {
+          const endDate = new Date();
+          if (businessBillingPeriod === 'monthly') {
+            endDate.setMonth(endDate.getMonth() + 1);
+          } else {
+            endDate.setFullYear(endDate.getFullYear() + 1);
+          }
+
+          const { error: subscriptionError } = await supabase
+            .from('subscriptions')
+            .insert({
+              customer_id: user.id,
+              plan_id: plan.id,
+              status: 'active',
+              end_date: endDate.toISOString(),
+            });
+
+          if (subscriptionError) throw subscriptionError;
         }
       }
 
@@ -671,6 +712,53 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
               ]}
               placeholder="Seleziona numero sedi"
             />
+
+            <div className="mt-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Periodo di Fatturazione
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setBusinessBillingPeriod('monthly')}
+                  className={`py-3 px-4 rounded-lg border-2 transition-all ${
+                    businessBillingPeriod === 'monthly'
+                      ? 'border-blue-600 bg-blue-50 text-blue-700'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
+                  }`}
+                >
+                  <div className="font-semibold">Mensile</div>
+                  <div className="text-lg font-bold mt-1">{getBusinessSubscriptionPrice(numberOfLocations, 'monthly').toFixed(2)}€</div>
+                  <div className="text-xs text-gray-600">al mese + IVA</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBusinessBillingPeriod('yearly')}
+                  className={`py-3 px-4 rounded-lg border-2 transition-all ${
+                    businessBillingPeriod === 'yearly'
+                      ? 'border-blue-600 bg-blue-50 text-blue-700'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
+                  }`}
+                >
+                  <div className="font-semibold">Annuale</div>
+                  <div className="text-lg font-bold mt-1">{getBusinessSubscriptionPrice(numberOfLocations, 'yearly').toFixed(2)}€</div>
+                  <div className="text-xs text-gray-600">all'anno + IVA</div>
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-3 p-3 bg-white rounded-lg border border-blue-300">
+              <div className="text-sm font-medium text-gray-700">
+                Abbonamento Selezionato:
+              </div>
+              <div className="text-lg font-bold text-blue-600 mt-1">
+                {getBusinessSubscriptionPrice(numberOfLocations, businessBillingPeriod).toFixed(2)}€
+                {businessBillingPeriod === 'monthly' ? '/mese' : '/anno'} + IVA
+              </div>
+              <div className="text-xs text-gray-600 mt-1">
+                Per {numberOfLocations} {parseInt(numberOfLocations) === 1 ? 'punto vendita' : 'punti vendita'}
+              </div>
+            </div>
           </div>
 
           <div className="bg-gray-50 p-4 rounded-lg">
