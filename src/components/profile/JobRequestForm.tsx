@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Briefcase, Plus, X, Edit, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { SearchableSelect } from '../common/SearchableSelect';
 
 interface JobRequest {
   id: string;
@@ -258,19 +259,20 @@ export function JobRequestForm({ customerId }: JobRequestFormProps) {
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Tipo Contratto
               </label>
-              <select
+              <SearchableSelect
                 name="employment_type"
                 value={formData.employment_type}
-                onChange={handleChange}
+                onChange={(value) => setFormData(prev => ({ ...prev, employment_type: value }))}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="full-time">Full-time</option>
-                <option value="part-time">Part-time</option>
-                <option value="contract">Contratto</option>
-                <option value="freelance">Freelance</option>
-                <option value="internship">Stage</option>
-              </select>
+                options={[
+                  { value: 'full-time', label: 'Full-time' },
+                  { value: 'part-time', label: 'Part-time' },
+                  { value: 'contract', label: 'Contratto' },
+                  { value: 'freelance', label: 'Freelance' },
+                  { value: 'internship', label: 'Stage' },
+                ]}
+                placeholder="Seleziona tipo contratto"
+              />
             </div>
 
             <div>

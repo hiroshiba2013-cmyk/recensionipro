@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Briefcase, Plus, X, Edit, Trash2, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { SearchableSelect } from '../common/SearchableSelect';
 
 interface JobPosting {
   id: string;
@@ -244,19 +245,20 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Tipo Contratto
               </label>
-              <select
+              <SearchableSelect
                 name="position_type"
                 value={formData.position_type}
-                onChange={handleChange}
+                onChange={(value) => setFormData(prev => ({ ...prev, position_type: value }))}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="Full-time">Full-time</option>
-                <option value="Part-time">Part-time</option>
-                <option value="Contract">Contratto</option>
-                <option value="Freelance">Freelance</option>
-                <option value="Internship">Stage</option>
-              </select>
+                options={[
+                  { value: 'Full-time', label: 'Full-time' },
+                  { value: 'Part-time', label: 'Part-time' },
+                  { value: 'Contract', label: 'Contratto' },
+                  { value: 'Freelance', label: 'Freelance' },
+                  { value: 'Internship', label: 'Stage' },
+                ]}
+                placeholder="Seleziona tipo contratto"
+              />
             </div>
           </div>
 
@@ -312,18 +314,19 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Livello Esperienza
               </label>
-              <select
+              <SearchableSelect
                 name="experience_level"
                 value={formData.experience_level}
-                onChange={handleChange}
+                onChange={(value) => setFormData(prev => ({ ...prev, experience_level: value }))}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="Junior">Junior</option>
-                <option value="Mid">Mid</option>
-                <option value="Senior">Senior</option>
-                <option value="Lead">Lead</option>
-              </select>
+                options={[
+                  { value: 'Junior', label: 'Junior' },
+                  { value: 'Mid', label: 'Mid' },
+                  { value: 'Senior', label: 'Senior' },
+                  { value: 'Lead', label: 'Lead' },
+                ]}
+                placeholder="Seleziona livello esperienza"
+              />
             </div>
           </div>
 
@@ -331,20 +334,21 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Titolo di Studio
             </label>
-            <select
+            <SearchableSelect
               name="education_level"
               value={formData.education_level}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Non specificato</option>
-              <option value="Nessuno">Nessun titolo richiesto</option>
-              <option value="Licenza Media">Licenza Media</option>
-              <option value="Diploma">Diploma</option>
-              <option value="Laurea Triennale">Laurea Triennale</option>
-              <option value="Laurea Magistrale">Laurea Magistrale</option>
-              <option value="Master/Dottorato">Master/Dottorato</option>
-            </select>
+              onChange={(value) => setFormData(prev => ({ ...prev, education_level: value }))}
+              options={[
+                { value: '', label: 'Non specificato' },
+                { value: 'Nessuno', label: 'Nessun titolo richiesto' },
+                { value: 'Licenza Media', label: 'Licenza Media' },
+                { value: 'Diploma', label: 'Diploma' },
+                { value: 'Laurea Triennale', label: 'Laurea Triennale' },
+                { value: 'Laurea Magistrale', label: 'Laurea Magistrale' },
+                { value: 'Master/Dottorato', label: 'Master/Dottorato' },
+              ]}
+              placeholder="Non specificato"
+            />
           </div>
 
           <div className="grid md:grid-cols-2 gap-4 mb-6">

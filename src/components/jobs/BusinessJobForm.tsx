@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { SearchableSelect } from '../common/SearchableSelect';
 
 interface Business {
   id: string;
@@ -168,16 +169,16 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Azienda
         </label>
-        <select
+        <SearchableSelect
           name="businessId"
           value={formData.businessId}
-          onChange={handleChange}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-        >
-          {businesses.map(b => (
-            <option key={b.id} value={b.id}>{b.name}</option>
-          ))}
-        </select>
+          onChange={(value) => setFormData(prev => ({ ...prev, businessId: value }))}
+          options={businesses.map(b => ({
+            value: b.id,
+            label: b.name,
+          }))}
+          placeholder="Seleziona azienda"
+        />
       </div>
 
       <div>
@@ -215,34 +216,36 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Tipo di Posizione
           </label>
-          <select
+          <SearchableSelect
             name="positionType"
             value={formData.positionType}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          >
-            <option value="Full-time">Full-time</option>
-            <option value="Part-time">Part-time</option>
-            <option value="Contract">Contract</option>
-            <option value="Freelance">Freelance</option>
-            <option value="Internship">Tirocinio</option>
-          </select>
+            onChange={(value) => setFormData(prev => ({ ...prev, positionType: value }))}
+            options={[
+              { value: 'Full-time', label: 'Full-time' },
+              { value: 'Part-time', label: 'Part-time' },
+              { value: 'Contract', label: 'Contract' },
+              { value: 'Freelance', label: 'Freelance' },
+              { value: 'Internship', label: 'Tirocinio' },
+            ]}
+            placeholder="Seleziona tipo posizione"
+          />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Livello di Esperienza
           </label>
-          <select
+          <SearchableSelect
             name="experienceLevel"
             value={formData.experienceLevel}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          >
-            <option value="Junior">Junior</option>
-            <option value="Mid">Mid</option>
-            <option value="Senior">Senior</option>
-          </select>
+            onChange={(value) => setFormData(prev => ({ ...prev, experienceLevel: value }))}
+            options={[
+              { value: 'Junior', label: 'Junior' },
+              { value: 'Mid', label: 'Mid' },
+              { value: 'Senior', label: 'Senior' },
+            ]}
+            placeholder="Seleziona livello esperienza"
+          />
         </div>
       </div>
 
@@ -281,16 +284,17 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Valuta
           </label>
-          <select
+          <SearchableSelect
             name="salaryCurrency"
             value={formData.salaryCurrency}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          >
-            <option value="EUR">EUR</option>
-            <option value="USD">USD</option>
-            <option value="GBP">GBP</option>
-          </select>
+            onChange={(value) => setFormData(prev => ({ ...prev, salaryCurrency: value }))}
+            options={[
+              { value: 'EUR', label: 'EUR' },
+              { value: 'USD', label: 'USD' },
+              { value: 'GBP', label: 'GBP' },
+            ]}
+            placeholder="Seleziona valuta"
+          />
         </div>
 
         <div>

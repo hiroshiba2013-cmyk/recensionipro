@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Filter, X } from 'lucide-react';
 import { supabase, BusinessCategory } from '../../lib/supabase';
 import { ITALIAN_PROVINCES, CITIES_BY_PROVINCE } from '../../lib/cities';
+import { SearchableSelect } from '../common/SearchableSelect';
 
 export interface SearchFilters {
   category: string;
@@ -130,75 +131,78 @@ export function AdvancedSearch({ onSearch, isLoading = false }: AdvancedSearchPr
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Categoria
                 </label>
-                <select
+                <SearchableSelect
                   value={filters.category}
-                  onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                >
-                  <option value="">Tutte le categorie</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(value) => setFilters({ ...filters, category: value })}
+                  options={[
+                    { value: '', label: 'Tutte le categorie' },
+                    ...categories.map((cat) => ({
+                      value: cat.id,
+                      label: cat.name,
+                    }))
+                  ]}
+                  placeholder="Tutte le categorie"
+                  className="text-sm"
+                />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Provincia
                 </label>
-                <select
+                <SearchableSelect
                   value={filters.province}
-                  onChange={(e) => setFilters({ ...filters, province: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                >
-                  <option value="">Tutte le province</option>
-                  {ITALIAN_PROVINCES.map((province) => (
-                    <option key={province} value={province}>
-                      {province}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(value) => setFilters({ ...filters, province: value })}
+                  options={[
+                    { value: '', label: 'Tutte le province' },
+                    ...ITALIAN_PROVINCES.map((province) => ({
+                      value: province,
+                      label: province,
+                    }))
+                  ]}
+                  placeholder="Tutte le province"
+                  className="text-sm"
+                />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Città
                 </label>
-                <select
+                <SearchableSelect
                   value={filters.city}
-                  onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+                  onChange={(value) => setFilters({ ...filters, city: value })}
                   disabled={!filters.province}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="">
-                    {filters.province ? 'Tutte le città' : 'Seleziona prima una provincia'}
-                  </option>
-                  {availableCities.map((city) => (
-                    <option key={city} value={city}>
-                      {city}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: '', label: filters.province ? 'Tutte le città' : 'Seleziona prima una provincia' },
+                    ...availableCities.map((city) => ({
+                      value: city,
+                      label: city,
+                    }))
+                  ]}
+                  placeholder={filters.province ? 'Tutte le città' : 'Seleziona prima una provincia'}
+                  className="text-sm"
+                />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Valutazione Minima
                 </label>
-                <select
-                  value={filters.minRating}
-                  onChange={(e) => setFilters({ ...filters, minRating: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                >
-                  <option value={0}>Tutte le valutazioni</option>
-                  <option value={1}>1 stella e più</option>
-                  <option value={2}>2 stelle e più</option>
-                  <option value={3}>3 stelle e più</option>
-                  <option value={4}>4 stelle e più</option>
-                  <option value={5}>5 stelle</option>
-                </select>
+                <SearchableSelect
+                  value={String(filters.minRating)}
+                  onChange={(value) => setFilters({ ...filters, minRating: Number(value) })}
+                  options={[
+                    { value: '0', label: 'Tutte le valutazioni' },
+                    { value: '1', label: '1 stella e più' },
+                    { value: '2', label: '2 stelle e più' },
+                    { value: '3', label: '3 stelle e più' },
+                    { value: '4', label: '4 stelle e più' },
+                    { value: '5', label: '5 stelle' },
+                  ]}
+                  placeholder="Tutte le valutazioni"
+                  className="text-sm"
+                />
               </div>
 
               <div>
