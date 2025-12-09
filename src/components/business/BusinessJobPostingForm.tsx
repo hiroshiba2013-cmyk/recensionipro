@@ -13,6 +13,7 @@ interface JobPosting {
   location: string;
   required_skills: string[];
   experience_level: string;
+  education_level: string | null;
   expires_at: string;
   status: string;
   created_at: string;
@@ -37,6 +38,7 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
     location: '',
     required_skills: '',
     experience_level: 'Mid',
+    education_level: '',
     expires_at: '',
     status: 'active',
   });
@@ -81,6 +83,7 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
         location: formData.location,
         required_skills: formData.required_skills.split(',').map(s => s.trim()).filter(s => s),
         experience_level: formData.experience_level,
+        education_level: formData.education_level || null,
         expires_at: formData.expires_at,
         status: formData.status,
       };
@@ -122,6 +125,7 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
       location: posting.location,
       required_skills: posting.required_skills.join(', '),
       experience_level: posting.experience_level,
+      education_level: posting.education_level || '',
       expires_at: posting.expires_at.split('T')[0],
       status: posting.status,
     });
@@ -171,6 +175,7 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
       location: '',
       required_skills: '',
       experience_level: 'Mid',
+      education_level: '',
       expires_at: '',
       status: 'active',
     });
@@ -322,6 +327,26 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
             </div>
           </div>
 
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Titolo di Studio
+            </label>
+            <select
+              name="education_level"
+              value={formData.education_level}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Non specificato</option>
+              <option value="Nessuno">Nessun titolo richiesto</option>
+              <option value="Licenza Media">Licenza Media</option>
+              <option value="Diploma">Diploma</option>
+              <option value="Laurea Triennale">Laurea Triennale</option>
+              <option value="Laurea Magistrale">Laurea Magistrale</option>
+              <option value="Master/Dottorato">Master/Dottorato</option>
+            </select>
+          </div>
+
           <div className="grid md:grid-cols-2 gap-4 mb-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -420,6 +445,11 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
                     <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full font-medium">
                       {posting.experience_level}
                     </span>
+                    {posting.education_level && (
+                      <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full font-medium">
+                        {posting.education_level}
+                      </span>
+                    )}
                     <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full font-medium">
                       {posting.location}
                     </span>
