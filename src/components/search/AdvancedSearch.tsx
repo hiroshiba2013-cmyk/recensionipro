@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, X } from 'lucide-react';
 import { supabase, BusinessCategory } from '../../lib/supabase';
+import { ITALIAN_CITIES } from '../../lib/cities';
 
 export interface SearchFilters {
   category: string;
@@ -17,7 +18,6 @@ interface AdvancedSearchProps {
 export function AdvancedSearch({ onSearch, isLoading = false }: AdvancedSearchProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [categories, setCategories] = useState<BusinessCategory[]>([]);
-  const [cities, setCities] = useState<string[]>([]);
 
   const [filters, setFilters] = useState<SearchFilters>({
     category: '',
@@ -28,7 +28,6 @@ export function AdvancedSearch({ onSearch, isLoading = false }: AdvancedSearchPr
 
   useEffect(() => {
     loadCategories();
-    loadCities();
   }, []);
 
   const loadCategories = async () => {
@@ -42,23 +41,6 @@ export function AdvancedSearch({ onSearch, isLoading = false }: AdvancedSearchPr
       }
     } catch (error) {
       console.error('Error loading categories:', error);
-    }
-  };
-
-  const loadCities = async () => {
-    try {
-      const { data } = await supabase
-        .from('businesses')
-        .select('city')
-        .eq('verified', true)
-        .neq('city', null);
-
-      if (data) {
-        const uniqueCities = Array.from(new Set(data.map(b => b.city).filter(Boolean))) as string[];
-        setCities(uniqueCities.sort());
-      }
-    } catch (error) {
-      console.error('Error loading cities:', error);
     }
   };
 
@@ -158,7 +140,7 @@ export function AdvancedSearch({ onSearch, isLoading = false }: AdvancedSearchPr
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 >
                   <option value="">Tutte le città</option>
-                  {cities.map((city) => (
+                  {ITALIAN_CITIES.map((city) => (
                     <option key={city} value={city}>
                       {city}
                     </option>
