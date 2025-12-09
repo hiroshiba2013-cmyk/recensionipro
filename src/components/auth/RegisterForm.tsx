@@ -30,6 +30,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
 
   const [numberOfPeople, setNumberOfPeople] = useState('1');
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
 
   const [numberOfLocations, setNumberOfLocations] = useState('1');
   const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
@@ -113,6 +114,16 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     setBusinessLocations(updated);
   };
 
+  const getSubscriptionPrice = (persons: string, period: 'monthly' | 'yearly') => {
+    const prices = {
+      '1': { monthly: 0.99, yearly: 9.90 },
+      '2': { monthly: 1.49, yearly: 14.90 },
+      '3': { monthly: 1.99, yearly: 19.90 },
+      '4': { monthly: 2.49, yearly: 24.90 },
+    };
+    return prices[persons as keyof typeof prices][period];
+  };
+
   const handleCustomerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -146,6 +157,35 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
           .insert(membersToInsert);
 
         if (membersError) throw membersError;
+      }
+
+      if (user) {
+        const { data: plan } = await supabase
+          .from('subscription_plans')
+          .select('id')
+          .eq('max_persons', parseInt(numberOfPeople))
+          .eq('billing_period', billingPeriod)
+          .single();
+
+        if (plan) {
+          const endDate = new Date();
+          if (billingPeriod === 'monthly') {
+            endDate.setMonth(endDate.getMonth() + 1);
+          } else {
+            endDate.setFullYear(endDate.getFullYear() + 1);
+          }
+
+          const { error: subscriptionError } = await supabase
+            .from('subscriptions')
+            .insert({
+              customer_id: user.id,
+              plan_id: plan.id,
+              status: 'active',
+              end_date: endDate.toISOString(),
+            });
+
+          if (subscriptionError) throw subscriptionError;
+        }
       }
 
       onSuccess?.();
@@ -263,6 +303,53 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
               ]}
               placeholder="Seleziona numero persone"
             />
+
+            <div className="mt-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Periodo di Fatturazione
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setBillingPeriod('monthly')}
+                  className={`py-3 px-4 rounded-lg border-2 transition-all ${
+                    billingPeriod === 'monthly'
+                      ? 'border-blue-600 bg-blue-50 text-blue-700'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
+                  }`}
+                >
+                  <div className="font-semibold">Mensile</div>
+                  <div className="text-lg font-bold mt-1">{getSubscriptionPrice(numberOfPeople, 'monthly').toFixed(2)}€</div>
+                  <div className="text-xs text-gray-600">al mese</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBillingPeriod('yearly')}
+                  className={`py-3 px-4 rounded-lg border-2 transition-all ${
+                    billingPeriod === 'yearly'
+                      ? 'border-blue-600 bg-blue-50 text-blue-700'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
+                  }`}
+                >
+                  <div className="font-semibold">Annuale</div>
+                  <div className="text-lg font-bold mt-1">{getSubscriptionPrice(numberOfPeople, 'yearly').toFixed(2)}€</div>
+                  <div className="text-xs text-gray-600">all'anno</div>
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-3 p-3 bg-white rounded-lg border border-blue-300">
+              <div className="text-sm font-medium text-gray-700">
+                Abbonamento Selezionato:
+              </div>
+              <div className="text-lg font-bold text-blue-600 mt-1">
+                {getSubscriptionPrice(numberOfPeople, billingPeriod).toFixed(2)}€
+                {billingPeriod === 'monthly' ? '/mese' : '/anno'}
+              </div>
+              <div className="text-xs text-gray-600 mt-1">
+                Per {numberOfPeople} {parseInt(numberOfPeople) === 1 ? 'persona' : 'persone'}
+              </div>
+            </div>
           </div>
 
           <div className="bg-gray-50 p-4 rounded-lg mb-4">
