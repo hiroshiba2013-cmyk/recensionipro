@@ -15,6 +15,7 @@ export function HomePage() {
   const [categories, setCategories] = useState<BusinessCategory[]>([]);
   const [filters, setFilters] = useState<SearchFilters>({
     category: '',
+    province: '',
     city: '',
     businessName: '',
     minRating: 0,

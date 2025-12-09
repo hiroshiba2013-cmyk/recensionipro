@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, X } from 'lucide-react';
 import { supabase, BusinessCategory } from '../../lib/supabase';
-import { ITALIAN_CITIES } from '../../lib/cities';
+import { ITALIAN_PROVINCES, CITIES_BY_PROVINCE } from '../../lib/cities';
 
 export interface SearchFilters {
   category: string;
+  province: string;
   city: string;
   businessName: string;
   minRating: number;
@@ -18,9 +19,11 @@ interface AdvancedSearchProps {
 export function AdvancedSearch({ onSearch, isLoading = false }: AdvancedSearchProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [categories, setCategories] = useState<BusinessCategory[]>([]);
+  const [availableCities, setAvailableCities] = useState<string[]>([]);
 
   const [filters, setFilters] = useState<SearchFilters>({
     category: '',
+    province: '',
     city: '',
     businessName: '',
     minRating: 0,
@@ -29,6 +32,15 @@ export function AdvancedSearch({ onSearch, isLoading = false }: AdvancedSearchPr
   useEffect(() => {
     loadCategories();
   }, []);
+
+  useEffect(() => {
+    if (filters.province) {
+      setAvailableCities(CITIES_BY_PROVINCE[filters.province] || []);
+      setFilters(prev => ({ ...prev, city: '' }));
+    } else {
+      setAvailableCities([]);
+    }
+  }, [filters.province]);
 
   const loadCategories = async () => {
     try {
@@ -51,19 +63,21 @@ export function AdvancedSearch({ onSearch, isLoading = false }: AdvancedSearchPr
   const handleReset = () => {
     setFilters({
       category: '',
+      province: '',
       city: '',
       businessName: '',
       minRating: 0,
     });
     onSearch({
       category: '',
+      province: '',
       city: '',
       businessName: '',
       minRating: 0,
     });
   };
 
-  const hasActiveFilters = filters.category || filters.city || filters.businessName || filters.minRating > 0;
+  const hasActiveFilters = filters.category || filters.province || filters.city || filters.businessName || filters.minRating > 0;
 
   return (
     <div className="space-y-3">
@@ -95,7 +109,7 @@ export function AdvancedSearch({ onSearch, isLoading = false }: AdvancedSearchPr
             <span className="text-sm font-medium">Filtri</span>
             {hasActiveFilters && (
               <span className="ml-1 px-2 py-0.5 bg-blue-600 text-white text-xs rounded-full">
-                {[filters.category, filters.city, filters.minRating > 0 ? 'rating' : ''].filter(Boolean).length}
+                {[filters.category, filters.province, filters.city, filters.minRating > 0 ? 'rating' : ''].filter(Boolean).length}
               </span>
             )}
           </button>
@@ -111,7 +125,7 @@ export function AdvancedSearch({ onSearch, isLoading = false }: AdvancedSearchPr
 
         {showAdvanced && (
           <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Categoria
@@ -132,15 +146,36 @@ export function AdvancedSearch({ onSearch, isLoading = false }: AdvancedSearchPr
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Provincia
+                </label>
+                <select
+                  value={filters.province}
+                  onChange={(e) => setFilters({ ...filters, province: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                >
+                  <option value="">Tutte le province</option>
+                  {ITALIAN_PROVINCES.map((province) => (
+                    <option key={province} value={province}>
+                      {province}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Città
                 </label>
                 <select
                   value={filters.city}
                   onChange={(e) => setFilters({ ...filters, city: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  disabled={!filters.province}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
-                  <option value="">Tutte le città</option>
-                  {ITALIAN_CITIES.map((city) => (
+                  <option value="">
+                    {filters.province ? 'Tutte le città' : 'Seleziona prima una provincia'}
+                  </option>
+                  {availableCities.map((city) => (
                     <option key={city} value={city}>
                       {city}
                     </option>
