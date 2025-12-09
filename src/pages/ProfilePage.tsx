@@ -6,8 +6,10 @@ import { AvatarUpload } from '../components/profile/AvatarUpload';
 import { EditProfileForm } from '../components/profile/EditProfileForm';
 import { JobRequestForm } from '../components/profile/JobRequestForm';
 import { ResumeUpload } from '../components/profile/ResumeUpload';
+import { EditFamilyMembersForm } from '../components/profile/EditFamilyMembersForm';
 import { EditBusinessForm } from '../components/business/EditBusinessForm';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
+import { EditBusinessLocationsForm } from '../components/business/EditBusinessLocationsForm';
 
 interface Profile {
   id: string;
@@ -314,6 +316,11 @@ export function ProfilePage() {
               onUpdate={loadProfileData}
             />
 
+            <EditFamilyMembersForm
+              customerId={profile.id}
+              onUpdate={loadProfileData}
+            />
+
             <JobRequestForm customerId={profile.id} />
 
             <ResumeUpload
@@ -408,6 +415,11 @@ export function ProfilePage() {
               <>
                 <EditBusinessForm
                   business={business}
+                  onUpdate={loadBusinessData}
+                />
+
+                <EditBusinessLocationsForm
+                  businessId={business.id}
                   onUpdate={loadBusinessData}
                 />
 
