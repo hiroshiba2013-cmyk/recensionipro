@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase';
 interface FamilyMember {
   firstName: string;
   lastName: string;
+  nickname: string;
   dateOfBirth: string;
   taxCode: string;
   relationship: string;
@@ -74,6 +75,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     setFamilyMembers([...familyMembers, {
       firstName: '',
       lastName: '',
+      nickname: '',
       dateOfBirth: '',
       taxCode: '',
       relationship: 'Coniuge',
@@ -133,6 +135,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
           customer_id: user.id,
           first_name: member.firstName,
           last_name: member.lastName,
+          nickname: member.nickname,
           date_of_birth: member.dateOfBirth,
           tax_code: member.taxCode,
           relationship: member.relationship,
@@ -384,6 +387,20 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   />
                 </div>
+              </div>
+
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nickname
+                </label>
+                <input
+                  type="text"
+                  value={member.nickname}
+                  onChange={(e) => updateFamilyMember(index, 'nickname', e.target.value)}
+                  required
+                  placeholder="Nome visibile per le review"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
               </div>
 
               <div className="mb-3">
