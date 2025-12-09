@@ -41,14 +41,6 @@ export function Header() {
 
               {user && profile ? (
                 <>
-                  <a
-                    href="/subscription"
-                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors"
-                  >
-                    <CreditCard className="w-5 h-5" />
-                    <span>Abbonamento</span>
-                  </a>
-
                   <div className="flex items-center gap-3">
                     <a
                       href="/profile"
@@ -68,15 +60,24 @@ export function Header() {
                   </div>
                 </>
               ) : (
-                <button
-                  onClick={() => {
-                    setAuthMode('login');
-                    setShowAuthModal(true);
-                  }}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Accedi
-                </button>
+                <>
+                  <a
+                    href="/subscription"
+                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                  >
+                    <CreditCard className="w-5 h-5" />
+                    <span>Abbonamenti</span>
+                  </a>
+                  <button
+                    onClick={() => {
+                      setAuthMode('login');
+                      setShowAuthModal(true);
+                    }}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Accedi
+                  </button>
+                </>
               )}
             </nav>
           </div>
