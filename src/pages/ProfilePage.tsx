@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Star, CreditCard, Tag, Plus, Calendar, Percent, X } from 'lucide-react';
+import { User, Star, Tag, Plus, Calendar, Percent, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { AvatarUpload } from '../components/profile/AvatarUpload';
@@ -10,6 +10,7 @@ import { EditFamilyMembersForm } from '../components/profile/EditFamilyMembersFo
 import { EditBusinessForm } from '../components/business/EditBusinessForm';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
 import { EditBusinessLocationsForm } from '../components/business/EditBusinessLocationsForm';
+import { SubscriptionManagement } from '../components/subscription/SubscriptionManagement';
 
 interface Profile {
   id: string;
@@ -267,54 +268,41 @@ export function ProfilePage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-8 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <CreditCard className="w-6 h-6 text-blue-600" />
-              <h2 className="text-2xl font-bold text-gray-900">Piano di Abbonamento</h2>
-            </div>
-            <a
-              href="/subscription"
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-            >
-              {profile.subscription_status === 'active' ? 'Cambia Piano' : 'Attiva Abbonamento'}
-            </a>
-          </div>
-
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Stato Abbonamento</p>
-                <p className="text-2xl font-bold text-gray-900 capitalize">
-                  {profile.subscription_status === 'active' ? 'Attivo' :
-                   profile.subscription_status === 'expired' ? 'Scaduto' : 'Cancellato'}
-                </p>
-              </div>
-              {profile.subscription_type && (
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Piano</p>
-                  <p className="text-xl font-semibold text-gray-900 capitalize">
-                    {profile.subscription_type === 'monthly' ? 'Mensile' : 'Annuale'}
-                  </p>
-                </div>
-              )}
-            </div>
-            {profile.subscription_expires_at && (
-              <div className="mt-4 pt-4 border-t border-blue-200">
-                <p className="text-sm text-gray-600">
-                  Scadenza: {new Date(profile.subscription_expires_at).toLocaleDateString('it-IT')}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+        <SubscriptionManagement
+          userId={profile.id}
+          userType={profile.user_type}
+          currentSubscriptionStatus={profile.subscription_status}
+          onUpdate={loadProfileData}
+        />
 
         {profile.user_type === 'customer' ? (
           <>
+            <div className="border-t-4 border-blue-500 bg-gradient-to-r from-blue-50 to-white rounded-lg p-4 mb-6">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <User className="w-6 h-6 text-blue-600" />
+                Dati Personali Account Principale
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">Informazioni del titolare dell'account</p>
+            </div>
+
             <EditProfileForm
               profile={profile}
               onUpdate={loadProfileData}
             />
+
+            <ResumeUpload
+              userId={profile.id}
+              currentResumeUrl={profile.resume_url}
+              onUpdate={loadProfileData}
+            />
+
+            <div className="border-t-4 border-green-500 bg-gradient-to-r from-green-50 to-white rounded-lg p-4 mb-6 mt-8">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <User className="w-6 h-6 text-green-600" />
+                Membri della Famiglia
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">Gestisci i membri collegati al tuo account</p>
+            </div>
 
             <EditFamilyMembersForm
               customerId={profile.id}
@@ -322,12 +310,6 @@ export function ProfilePage() {
             />
 
             <JobRequestForm customerId={profile.id} />
-
-            <ResumeUpload
-              userId={profile.id}
-              currentResumeUrl={profile.resume_url}
-              onUpdate={loadProfileData}
-            />
 
             <div className="bg-white rounded-xl shadow-md p-8 mb-8">
               <div className="flex items-center gap-3 mb-6">

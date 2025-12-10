@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Users, Edit, Save, X, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { FamilyMemberAvatarUpload } from './FamilyMemberAvatarUpload';
+import { FamilyMemberResumeUpload } from './FamilyMemberResumeUpload';
 
 interface FamilyMember {
   id: string;
@@ -11,6 +12,7 @@ interface FamilyMember {
   date_of_birth: string;
   tax_code: string;
   avatar_url: string | null;
+  resume_url: string | null;
 }
 
 interface EditFamilyMembersFormProps {
@@ -53,6 +55,7 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
         date_of_birth: '',
         tax_code: '',
         avatar_url: null,
+        resume_url: null,
       },
     ]);
   };
@@ -202,6 +205,12 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
                     <p className="text-lg font-semibold text-gray-900">{member.tax_code}</p>
                   </div>
                 </div>
+                <FamilyMemberResumeUpload
+                  memberId={member.id}
+                  currentResumeUrl={member.resume_url}
+                  memberName={member.nickname}
+                  onUpdate={loadFamilyMembers}
+                />
               </div>
             ))}
           </div>
@@ -324,6 +333,14 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
                   />
                 </div>
               </div>
+              {!member.id.startsWith('new-') && (
+                <FamilyMemberResumeUpload
+                  memberId={member.id}
+                  currentResumeUrl={member.resume_url}
+                  memberName={member.nickname}
+                  onUpdate={loadFamilyMembers}
+                />
+              )}
             </div>
           ))}
         </div>
