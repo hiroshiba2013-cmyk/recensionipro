@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Users, Edit, Save, X, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { FamilyMemberAvatarUpload } from './FamilyMemberAvatarUpload';
 
 interface FamilyMember {
   id: string;
@@ -9,6 +10,7 @@ interface FamilyMember {
   nickname: string;
   date_of_birth: string;
   tax_code: string;
+  avatar_url: string | null;
 }
 
 interface EditFamilyMembersFormProps {
@@ -50,6 +52,7 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
         nickname: '',
         date_of_birth: '',
         tax_code: '',
+        avatar_url: null,
       },
     ]);
   };
@@ -165,7 +168,16 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
           <div className="space-y-6">
             {familyMembers.map((member, index) => (
               <div key={member.id} className="border border-gray-200 rounded-lg p-6 bg-gray-50">
-                <h3 className="font-bold text-lg text-gray-900 mb-4">Membro {index + 1}</h3>
+                <div className="flex items-start gap-6 mb-4">
+                  <FamilyMemberAvatarUpload
+                    memberId={member.id}
+                    currentAvatarUrl={member.avatar_url}
+                    onAvatarUpdate={loadFamilyMembers}
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg text-gray-900 mb-4">Membro {index + 1}</h3>
+                  </div>
+                </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Nome</p>
@@ -217,8 +229,24 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
         <div className="space-y-6 mb-6">
           {familyMembers.map((member, index) => (
             <div key={member.id} className="border-2 border-gray-200 rounded-lg p-6 bg-gray-50">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-lg text-gray-900">Membro {index + 1}</h3>
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-start gap-6">
+                  {!member.id.startsWith('new-') && (
+                    <FamilyMemberAvatarUpload
+                      memberId={member.id}
+                      currentAvatarUrl={member.avatar_url}
+                      onAvatarUpdate={loadFamilyMembers}
+                    />
+                  )}
+                  <div>
+                    <h3 className="font-bold text-lg text-gray-900">Membro {index + 1}</h3>
+                    {member.id.startsWith('new-') && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        Salva per poter caricare l'avatar
+                      </p>
+                    )}
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={() => handleRemoveMember(member.id)}
