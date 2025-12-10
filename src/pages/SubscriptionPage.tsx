@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { SubscriptionCard, BUSINESS_PLANS } from '../components/subscription/SubscriptionCard';
+import { Check } from 'lucide-react';
+
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price: number;
+  billing_period: 'monthly' | 'yearly';
+  max_persons: number;
+}
 
 interface Subscription {
   id: string;
-  plan: {
-    id: string;
-    name: string;
-    price: number;
-    billing_period: 'monthly' | 'yearly';
-    max_persons: number;
-  };
+  plan: SubscriptionPlan;
   status: string;
   start_date: string;
   end_date: string;
@@ -22,6 +24,7 @@ export function SubscriptionPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
+  const [availablePlans, setAvailablePlans] = useState<SubscriptionPlan[]>([]);
   const [familyMembersCount, setFamilyMembersCount] = useState(0);
   const [businessLocationsCount, setBusinessLocationsCount] = useState(0);
 
@@ -29,9 +32,11 @@ export function SubscriptionPage() {
     if (profile?.user_type === 'customer') {
       loadSubscription();
       loadFamilyMembers();
+      loadCustomerPlans();
     } else if (profile?.user_type === 'business') {
       loadSubscription();
       loadBusinessLocations();
+      loadBusinessPlans();
     }
   }, [profile]);
 
@@ -43,10 +48,36 @@ export function SubscriptionPage() {
       .select('id, status, start_date, end_date, plan:subscription_plans(id, name, price, billing_period, max_persons)')
       .eq('customer_id', profile.id)
       .eq('status', 'active')
-      .single();
+      .maybeSingle();
 
     if (!error && data) {
       setCurrentSubscription(data as any);
+    }
+  };
+
+  const loadCustomerPlans = async () => {
+    const { data } = await supabase
+      .from('subscription_plans')
+      .select('*')
+      .like('name', 'Piano %Persona%')
+      .order('billing_period')
+      .order('max_persons');
+
+    if (data) {
+      setAvailablePlans(data);
+    }
+  };
+
+  const loadBusinessPlans = async () => {
+    const { data } = await supabase
+      .from('subscription_plans')
+      .select('*')
+      .like('name', '%Business%')
+      .order('billing_period')
+      .order('max_persons');
+
+    if (data) {
+      setAvailablePlans(data);
     }
   };
 
@@ -80,32 +111,57 @@ export function SubscriptionPage() {
     }
   };
 
-  const plans = profile?.user_type === 'business' ? BUSINESS_PLANS : [];
-
-  const handleSelectPlan = async (type: 'monthly' | 'annual') => {
+  const handleSelectPlan = async (planId: string) => {
     if (!profile) return;
 
     setLoading(true);
     setMessage('');
 
     try {
-      const expiresAt = new Date();
-      if (type === 'monthly') {
-        expiresAt.setMonth(expiresAt.getMonth() + 1);
+      const selectedPlan = availablePlans.find(p => p.id === planId);
+      if (!selectedPlan) throw new Error('Piano non trovato');
+
+      const endDate = new Date();
+      if (selectedPlan.billing_period === 'monthly') {
+        endDate.setMonth(endDate.getMonth() + 1);
       } else {
-        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+        endDate.setFullYear(endDate.getFullYear() + 1);
       }
 
-      const { error } = await supabase
+      if (currentSubscription) {
+        const { error: updateError } = await supabase
+          .from('subscriptions')
+          .update({
+            plan_id: planId,
+            end_date: endDate.toISOString(),
+            status: 'active',
+          })
+          .eq('id', currentSubscription.id);
+
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from('subscriptions')
+          .insert({
+            customer_id: profile.id,
+            plan_id: planId,
+            status: 'active',
+            end_date: endDate.toISOString(),
+          });
+
+        if (insertError) throw insertError;
+      }
+
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          subscription_type: type,
+          subscription_type: selectedPlan.billing_period === 'monthly' ? 'monthly' : 'annual',
           subscription_status: 'active',
-          subscription_expires_at: expiresAt.toISOString(),
+          subscription_expires_at: endDate.toISOString(),
         })
         .eq('id', profile.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
 
       setMessage('Abbonamento attivato con successo! In un ambiente di produzione, qui si integrerebbe un sistema di pagamento come Stripe.');
 
@@ -208,11 +264,81 @@ export function SubscriptionPage() {
             </div>
           )}
 
-          <div className="mt-12 text-center text-gray-600">
-            <p className="text-sm">
-              Per modificare il tuo abbonamento, contatta il supporto clienti.
-            </p>
-          </div>
+          {!currentSubscription && availablePlans.length > 0 && (
+            <div className="mt-12">
+              <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
+                Scegli il Tuo Piano
+              </h2>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {availablePlans.map((plan) => (
+                  <div
+                    key={plan.id}
+                    className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-blue-500 transition-all"
+                  >
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">
+                      {plan.name}
+                    </h3>
+                    <div className="mb-6">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
+                        <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleSelectPlan(plan.id)}
+                      disabled={loading}
+                      className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400"
+                    >
+                      {loading ? 'Attivazione...' : 'Seleziona Piano'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {currentSubscription && availablePlans.length > 0 && (
+            <div className="mt-12">
+              <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
+                Cambia Piano
+              </h2>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {availablePlans.map((plan) => (
+                  <div
+                    key={plan.id}
+                    className={`bg-white rounded-xl shadow-lg p-6 border-2 transition-all ${
+                      currentSubscription.plan.id === plan.id
+                        ? 'border-green-500 bg-green-50'
+                        : 'border-gray-200 hover:border-blue-500'
+                    }`}
+                  >
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">
+                      {plan.name}
+                    </h3>
+                    <div className="mb-6">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
+                        <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
+                      </div>
+                    </div>
+                    {currentSubscription.plan.id === plan.id ? (
+                      <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
+                        Piano Attuale
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleSelectPlan(plan.id)}
+                        disabled={loading}
+                        className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400"
+                      >
+                        {loading ? 'Cambio...' : 'Cambia Piano'}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -244,7 +370,7 @@ export function SubscriptionPage() {
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold text-blue-600">
-                    {currentSubscription.plan.price.toFixed(2)}€
+                    {Number(currentSubscription.plan.price).toFixed(2)}€
                   </div>
                   <div className="text-sm text-gray-600">
                     {currentSubscription.plan.billing_period === 'monthly' ? 'al mese' : 'all\'anno'} + IVA
@@ -268,27 +394,27 @@ export function SubscriptionPage() {
                 <h3 className="font-semibold text-gray-900 mb-3">Incluso nel tuo piano:</h3>
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <Check className="w-5 h-5 text-green-600" />
                     Profilo aziendale completo
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <Check className="w-5 h-5 text-green-600" />
                     Visualizza e rispondi alle recensioni
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <Check className="w-5 h-5 text-green-600" />
                     Crea sconti illimitati
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <Check className="w-5 h-5 text-green-600" />
                     Statistiche sulle recensioni
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <Check className="w-5 h-5 text-green-600" />
                     Badge di verifica
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <Check className="w-5 h-5 text-green-600" />
                     Supporto dedicato
                   </li>
                 </ul>
@@ -305,11 +431,81 @@ export function SubscriptionPage() {
           </div>
         )}
 
-        <div className="mt-12 text-center text-gray-600">
-          <p className="text-sm">
-            Per modificare il tuo abbonamento, contatta il supporto clienti.
-          </p>
-        </div>
+        {!currentSubscription && availablePlans.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
+              Scegli il Tuo Piano
+            </h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {availablePlans.map((plan) => (
+                <div
+                  key={plan.id}
+                  className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-blue-500 transition-all"
+                >
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">
+                    {plan.name}
+                  </h3>
+                  <div className="mb-6">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
+                      <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleSelectPlan(plan.id)}
+                    disabled={loading}
+                    className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400"
+                  >
+                    {loading ? 'Attivazione...' : 'Seleziona Piano'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentSubscription && availablePlans.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
+              Cambia Piano
+            </h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {availablePlans.map((plan) => (
+                <div
+                  key={plan.id}
+                  className={`bg-white rounded-xl shadow-lg p-6 border-2 transition-all ${
+                    currentSubscription.plan.id === plan.id
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-200 hover:border-blue-500'
+                  }`}
+                >
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">
+                    {plan.name}
+                  </h3>
+                  <div className="mb-6">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
+                      <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
+                    </div>
+                  </div>
+                  {currentSubscription.plan.id === plan.id ? (
+                    <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
+                      Piano Attuale
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleSelectPlan(plan.id)}
+                      disabled={loading}
+                      className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400"
+                    >
+                      {loading ? 'Cambio...' : 'Cambia Piano'}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
