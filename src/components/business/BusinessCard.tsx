@@ -1,5 +1,8 @@
-import { Star, MapPin, ExternalLink } from 'lucide-react';
+import { useState } from 'react';
+import { Star, MapPin, ExternalLink, MessageSquare } from 'lucide-react';
 import { Business } from '../../lib/supabase';
+import { ReviewForm } from '../reviews/ReviewForm';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface BusinessCardProps {
   business: Business & { avg_rating?: number; review_count?: number };
@@ -7,6 +10,15 @@ interface BusinessCardProps {
 }
 
 export function BusinessCard({ business, onClick }: BusinessCardProps) {
+  const { profile } = useAuth();
+  const [showReviewForm, setShowReviewForm] = useState(false);
+
+  const canWriteReview = profile && profile.user_type === 'customer' && profile.subscription_status === 'active';
+
+  const handleReviewClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowReviewForm(true);
+  };
   return (
     <div
       onClick={onClick}
@@ -70,7 +82,30 @@ export function BusinessCard({ business, onClick }: BusinessCardProps) {
             </a>
           )}
         </div>
+
+        {canWriteReview && (
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <button
+              onClick={handleReviewClick}
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm"
+            >
+              <MessageSquare className="w-4 h-4" />
+              Scrivi una recensione
+            </button>
+          </div>
+        )}
       </div>
+
+      {showReviewForm && (
+        <ReviewForm
+          businessId={business.id}
+          businessName={business.name}
+          onClose={() => setShowReviewForm(false)}
+          onSuccess={() => {
+            setShowReviewForm(false);
+          }}
+        />
+      )}
     </div>
   );
 }
