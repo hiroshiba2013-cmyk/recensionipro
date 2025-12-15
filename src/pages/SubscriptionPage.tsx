@@ -72,9 +72,9 @@ export function SubscriptionPage() {
     const { data } = await supabase
       .from('subscription_plans')
       .select('*')
-      .like('name', 'Piano %Persona%')
-      .order('billing_period')
-      .order('max_persons');
+      .not('name', 'like', '%Business%')
+      .order('max_persons')
+      .order('billing_period');
 
     if (data) {
       setAvailablePlans(data);

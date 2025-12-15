@@ -82,7 +82,7 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
       .select('id, price')
       .eq('max_persons', personsKey)
       .eq('billing_period', billingPeriod)
-      .like('name', 'Piano %Persona%')
+      .not('name', 'like', '%Business%')
       .maybeSingle();
 
     if (newPlan) {
