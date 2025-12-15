@@ -10,7 +10,11 @@ export interface CustomerData {
   dateOfBirth: string;
   taxCode: string;
   phone: string;
-  billingAddress: string;
+  billingStreet: string;
+  billingStreetNumber: string;
+  billingPostalCode: string;
+  billingCity: string;
+  billingProvince: string;
 }
 
 export interface BusinessData {
@@ -20,8 +24,16 @@ export interface BusinessData {
   atecoCode: string;
   pecEmail: string;
   phone: string;
-  billingAddress: string;
-  officeAddress?: string;
+  billingStreet: string;
+  billingStreetNumber: string;
+  billingPostalCode: string;
+  billingCity: string;
+  billingProvince: string;
+  officeStreet?: string;
+  officeStreetNumber?: string;
+  officePostalCode?: string;
+  officeCity?: string;
+  officeProvince?: string;
 }
 
 interface AuthContextType {
@@ -92,6 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
 
     if (authData.user) {
+      const billingAddress = `${data.billingStreet} ${data.billingStreetNumber}, ${data.billingPostalCode} ${data.billingCity}, ${data.billingProvince}`;
+
       const profileData: any = {
         id: authData.user.id,
         email,
@@ -100,7 +114,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         date_of_birth: data.dateOfBirth,
         tax_code: data.taxCode,
         phone: data.phone,
-        billing_address: data.billingAddress,
+        billing_street: data.billingStreet,
+        billing_street_number: data.billingStreetNumber,
+        billing_postal_code: data.billingPostalCode,
+        billing_city: data.billingCity,
+        billing_province: data.billingProvince.toUpperCase(),
+        billing_address: billingAddress,
         user_type: 'customer',
         subscription_status: 'expired',
       };
@@ -142,6 +161,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (profileError) throw profileError;
 
+      const billingAddress = `${data.billingStreet} ${data.billingStreetNumber}, ${data.billingPostalCode} ${data.billingCity}, ${data.billingProvince}`;
+      const officeAddress = data.officeStreet && data.officeStreetNumber && data.officePostalCode && data.officeCity && data.officeProvince
+        ? `${data.officeStreet} ${data.officeStreetNumber}, ${data.officePostalCode} ${data.officeCity}, ${data.officeProvince}`
+        : '';
+
       const { error: businessError } = await supabase
         .from('businesses')
         .insert({
@@ -153,8 +177,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ateco_code: data.atecoCode,
           pec_email: data.pecEmail,
           phone: data.phone,
-          billing_address: data.billingAddress,
-          office_address: data.officeAddress || '',
+          billing_street: data.billingStreet,
+          billing_street_number: data.billingStreetNumber,
+          billing_postal_code: data.billingPostalCode,
+          billing_city: data.billingCity,
+          billing_province: data.billingProvince.toUpperCase(),
+          billing_address: billingAddress,
+          office_street: data.officeStreet || null,
+          office_street_number: data.officeStreetNumber || null,
+          office_postal_code: data.officePostalCode || null,
+          office_city: data.officeCity || null,
+          office_province: data.officeProvince ? data.officeProvince.toUpperCase() : null,
+          office_address: officeAddress,
         });
 
       if (businessError) throw businessError;

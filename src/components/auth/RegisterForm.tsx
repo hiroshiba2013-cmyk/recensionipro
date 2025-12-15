@@ -47,7 +47,11 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     dateOfBirth: '',
     taxCode: '',
     phone: '',
-    billingAddress: '',
+    billingStreet: '',
+    billingStreetNumber: '',
+    billingPostalCode: '',
+    billingCity: '',
+    billingProvince: '',
   });
 
   const [businessForm, setBusinessForm] = useState<BusinessData & { email: string; password: string; confirmPassword: string }>({
@@ -60,8 +64,16 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     atecoCode: '',
     pecEmail: '',
     phone: '',
-    billingAddress: '',
-    officeAddress: '',
+    billingStreet: '',
+    billingStreetNumber: '',
+    billingPostalCode: '',
+    billingCity: '',
+    billingProvince: '',
+    officeStreet: '',
+    officeStreetNumber: '',
+    officePostalCode: '',
+    officeCity: '',
+    officeProvince: '',
   });
 
   const handleCustomerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -646,19 +658,89 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             </div>
 
             <div className="mb-3">
-              <label htmlFor="billingAddress" className="block text-sm font-medium text-gray-700 mb-1">
-                Indirizzo di Fatturazione
+              <label htmlFor="billingStreet" className="block text-sm font-medium text-gray-700 mb-1">
+                Via/Piazza
               </label>
               <input
-                id="billingAddress"
-                name="billingAddress"
+                id="billingStreet"
+                name="billingStreet"
                 type="text"
-                value={customerForm.billingAddress}
+                value={customerForm.billingStreet}
                 onChange={handleCustomerChange}
                 required
-                placeholder="Via/Piazza, numero, CAP, Città"
+                placeholder="Es. Via Roma"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               />
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              <div className="col-span-1">
+                <label htmlFor="billingStreetNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                  Numero
+                </label>
+                <input
+                  id="billingStreetNumber"
+                  name="billingStreetNumber"
+                  type="text"
+                  value={customerForm.billingStreetNumber}
+                  onChange={handleCustomerChange}
+                  required
+                  placeholder="Es. 42"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+
+              <div className="col-span-2">
+                <label htmlFor="billingPostalCode" className="block text-sm font-medium text-gray-700 mb-1">
+                  CAP
+                </label>
+                <input
+                  id="billingPostalCode"
+                  name="billingPostalCode"
+                  type="text"
+                  value={customerForm.billingPostalCode}
+                  onChange={handleCustomerChange}
+                  required
+                  placeholder="Es. 00100"
+                  maxLength={5}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label htmlFor="billingCity" className="block text-sm font-medium text-gray-700 mb-1">
+                  Città
+                </label>
+                <input
+                  id="billingCity"
+                  name="billingCity"
+                  type="text"
+                  value={customerForm.billingCity}
+                  onChange={handleCustomerChange}
+                  required
+                  placeholder="Es. Roma"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="billingProvince" className="block text-sm font-medium text-gray-700 mb-1">
+                  Provincia
+                </label>
+                <input
+                  id="billingProvince"
+                  name="billingProvince"
+                  type="text"
+                  value={customerForm.billingProvince}
+                  onChange={handleCustomerChange}
+                  required
+                  placeholder="Es. RM"
+                  maxLength={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm uppercase"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -897,19 +979,89 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             </div>
 
             <div className="mb-3">
-              <label htmlFor="billingAddress" className="block text-sm font-medium text-gray-700 mb-1">
-                Indirizzo di Fatturazione
+              <label htmlFor="billingStreet" className="block text-sm font-medium text-gray-700 mb-1">
+                Via/Piazza (Fatturazione)
               </label>
               <input
-                id="billingAddress"
-                name="billingAddress"
+                id="billingStreet"
+                name="billingStreet"
                 type="text"
-                value={businessForm.billingAddress}
+                value={businessForm.billingStreet}
                 onChange={handleBusinessChange}
                 required
-                placeholder="Via/Piazza, numero, CAP, Città"
+                placeholder="Es. Via Roma"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               />
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              <div className="col-span-1">
+                <label htmlFor="billingStreetNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                  Numero
+                </label>
+                <input
+                  id="billingStreetNumber"
+                  name="billingStreetNumber"
+                  type="text"
+                  value={businessForm.billingStreetNumber}
+                  onChange={handleBusinessChange}
+                  required
+                  placeholder="Es. 42"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+
+              <div className="col-span-2">
+                <label htmlFor="billingPostalCode" className="block text-sm font-medium text-gray-700 mb-1">
+                  CAP
+                </label>
+                <input
+                  id="billingPostalCode"
+                  name="billingPostalCode"
+                  type="text"
+                  value={businessForm.billingPostalCode}
+                  onChange={handleBusinessChange}
+                  required
+                  placeholder="Es. 00100"
+                  maxLength={5}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label htmlFor="billingCity" className="block text-sm font-medium text-gray-700 mb-1">
+                  Città
+                </label>
+                <input
+                  id="billingCity"
+                  name="billingCity"
+                  type="text"
+                  value={businessForm.billingCity}
+                  onChange={handleBusinessChange}
+                  required
+                  placeholder="Es. Roma"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="billingProvince" className="block text-sm font-medium text-gray-700 mb-1">
+                  Provincia
+                </label>
+                <input
+                  id="billingProvince"
+                  name="billingProvince"
+                  type="text"
+                  value={businessForm.billingProvince}
+                  onChange={handleBusinessChange}
+                  required
+                  placeholder="Es. RM"
+                  maxLength={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm uppercase"
+                />
+              </div>
             </div>
           </div>
 

@@ -12,6 +12,11 @@ interface ProfileData {
   date_of_birth: string;
   tax_code: string;
   phone: string;
+  billing_street: string;
+  billing_street_number: string;
+  billing_postal_code: string;
+  billing_city: string;
+  billing_province: string;
   billing_address: string;
 }
 
@@ -31,7 +36,11 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
     date_of_birth: profile.date_of_birth || '',
     tax_code: profile.tax_code || '',
     phone: profile.phone || '',
-    billing_address: profile.billing_address || '',
+    billing_street: profile.billing_street || '',
+    billing_street_number: profile.billing_street_number || '',
+    billing_postal_code: profile.billing_postal_code || '',
+    billing_city: profile.billing_city || '',
+    billing_province: profile.billing_province || '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -44,6 +53,8 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
     setSaving(true);
 
     try {
+      const billingAddress = `${formData.billing_street} ${formData.billing_street_number}, ${formData.billing_postal_code} ${formData.billing_city}, ${formData.billing_province}`;
+
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -54,7 +65,12 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
           date_of_birth: formData.date_of_birth,
           tax_code: formData.tax_code,
           phone: formData.phone,
-          billing_address: formData.billing_address,
+          billing_street: formData.billing_street,
+          billing_street_number: formData.billing_street_number,
+          billing_postal_code: formData.billing_postal_code,
+          billing_city: formData.billing_city,
+          billing_province: formData.billing_province.toUpperCase(),
+          billing_address: billingAddress,
           full_name: `${formData.first_name} ${formData.last_name}`,
         })
         .eq('id', profile.id);
@@ -80,7 +96,11 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
       date_of_birth: profile.date_of_birth || '',
       tax_code: profile.tax_code || '',
       phone: profile.phone || '',
-      billing_address: profile.billing_address || '',
+      billing_street: profile.billing_street || '',
+      billing_street_number: profile.billing_street_number || '',
+      billing_postal_code: profile.billing_postal_code || '',
+      billing_city: profile.billing_city || '',
+      billing_province: profile.billing_province || '',
     });
     setIsEditing(false);
   };
@@ -260,15 +280,78 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
 
           <div className="md:col-span-2">
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Indirizzo di Fatturazione
+              Via/Piazza
             </label>
-            <textarea
-              name="billing_address"
-              value={formData.billing_address}
+            <input
+              type="text"
+              name="billing_street"
+              value={formData.billing_street}
               onChange={handleChange}
               required
-              rows={3}
+              placeholder="Es. Via Roma"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Numero
+            </label>
+            <input
+              type="text"
+              name="billing_street_number"
+              value={formData.billing_street_number}
+              onChange={handleChange}
+              required
+              placeholder="Es. 42"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              CAP
+            </label>
+            <input
+              type="text"
+              name="billing_postal_code"
+              value={formData.billing_postal_code}
+              onChange={handleChange}
+              required
+              placeholder="Es. 00100"
+              maxLength={5}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Città
+            </label>
+            <input
+              type="text"
+              name="billing_city"
+              value={formData.billing_city}
+              onChange={handleChange}
+              required
+              placeholder="Es. Roma"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Provincia
+            </label>
+            <input
+              type="text"
+              name="billing_province"
+              value={formData.billing_province}
+              onChange={handleChange}
+              required
+              placeholder="Es. RM"
+              maxLength={2}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
             />
           </div>
         </div>
