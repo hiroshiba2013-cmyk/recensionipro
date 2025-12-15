@@ -5,7 +5,7 @@ import { supabase, Profile } from '../lib/supabase';
 export interface CustomerData {
   firstName: string;
   lastName: string;
-  nickname: string;
+  nickname?: string;
   dateOfBirth: string;
   taxCode: string;
   phone: string;
@@ -91,21 +91,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
 
     if (authData.user) {
+      const profileData: any = {
+        id: authData.user.id,
+        email,
+        first_name: data.firstName,
+        last_name: data.lastName,
+        date_of_birth: data.dateOfBirth,
+        tax_code: data.taxCode,
+        phone: data.phone,
+        billing_address: data.billingAddress,
+        user_type: 'customer',
+        subscription_status: 'expired',
+      };
+
+      if (data.nickname) {
+        profileData.nickname = data.nickname;
+      }
+
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert({
-          id: authData.user.id,
-          email,
-          first_name: data.firstName,
-          last_name: data.lastName,
-          nickname: data.nickname,
-          date_of_birth: data.dateOfBirth,
-          tax_code: data.taxCode,
-          phone: data.phone,
-          billing_address: data.billingAddress,
-          user_type: 'customer',
-          subscription_status: 'expired',
-        });
+        .insert(profileData);
 
       if (profileError) throw profileError;
     }
