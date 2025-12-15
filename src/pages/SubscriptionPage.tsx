@@ -20,7 +20,7 @@ interface Subscription {
 }
 
 export function SubscriptionPage() {
-  const { profile } = useAuth();
+  const { profile, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
@@ -42,11 +42,18 @@ export function SubscriptionPage() {
   };
 
   useEffect(() => {
-    if (profile?.user_type === 'customer') {
+    if (!profile) {
+      console.log('SubscriptionPage: No profile yet');
+      return;
+    }
+
+    console.log('SubscriptionPage: Loading data for', profile.user_type);
+
+    if (profile.user_type === 'customer') {
       loadSubscription();
       loadFamilyMembers();
       loadCustomerPlans();
-    } else if (profile?.user_type === 'business') {
+    } else if (profile.user_type === 'business') {
       loadSubscription();
       loadBusinessLocations();
       loadBusinessPlans();
@@ -69,14 +76,20 @@ export function SubscriptionPage() {
   };
 
   const loadCustomerPlans = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('subscription_plans')
       .select('*')
       .not('name', 'like', '%Business%')
       .order('max_persons')
       .order('billing_period');
 
+    if (error) {
+      console.error('Error loading customer plans:', error);
+      return;
+    }
+
     if (data) {
+      console.log('Loaded customer plans:', data);
       setAvailablePlans(data);
     }
   };
@@ -189,7 +202,7 @@ export function SubscriptionPage() {
     }
   };
 
-  if (!profile) {
+  if (authLoading || !profile) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <p className="text-gray-600">Caricamento...</p>
