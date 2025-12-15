@@ -130,12 +130,19 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
 
   const getSubscriptionPrice = (persons: string, period: 'monthly' | 'yearly') => {
     const prices = {
-      '1': { monthly: 0.99, yearly: 9.90 },
-      '2': { monthly: 1.49, yearly: 14.90 },
-      '3': { monthly: 1.99, yearly: 19.90 },
-      '4': { monthly: 2.49, yearly: 24.90 },
+      '1': { monthly: 0.49, yearly: 4.90 },
+      '2': { monthly: 0.79, yearly: 7.90 },
+      '3': { monthly: 1.09, yearly: 10.90 },
+      '4': { monthly: 1.49, yearly: 14.90 },
     };
     return prices[persons as keyof typeof prices][period];
+  };
+
+  const getSavings = (persons: string) => {
+    const monthly = getSubscriptionPrice(persons, 'monthly');
+    const yearly = getSubscriptionPrice(persons, 'yearly');
+    const yearlyIfMonthly = monthly * 12;
+    return yearlyIfMonthly - yearly;
   };
 
   const getBusinessSubscriptionPrice = (locations: string, period: 'monthly' | 'yearly') => {
@@ -388,6 +395,9 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                   <div className="font-semibold">Annuale</div>
                   <div className="text-lg font-bold mt-1">{getSubscriptionPrice(numberOfPeople, 'yearly').toFixed(2)}€</div>
                   <div className="text-xs text-gray-600">all'anno</div>
+                  <div className="text-xs text-green-600 font-semibold mt-1">
+                    Risparmi {getSavings(numberOfPeople).toFixed(2)}€
+                  </div>
                 </button>
               </div>
             </div>

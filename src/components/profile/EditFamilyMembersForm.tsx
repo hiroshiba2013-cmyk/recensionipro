@@ -63,6 +63,53 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
     ]);
   };
 
+  const updateSubscription = async (totalPersons: number) => {
+    const { data: currentSub } = await supabase
+      .from('subscriptions')
+      .select('id, plan:subscription_plans(billing_period)')
+      .eq('customer_id', customerId)
+      .eq('status', 'active')
+      .maybeSingle();
+
+    if (!currentSub || !currentSub.plan) return;
+
+    const billingPeriod = (currentSub.plan as any).billing_period;
+
+    const personsKey = totalPersons > 4 ? 4 : totalPersons;
+
+    const { data: newPlan } = await supabase
+      .from('subscription_plans')
+      .select('id, price')
+      .eq('max_persons', personsKey)
+      .eq('billing_period', billingPeriod)
+      .like('name', 'Piano %Persona%')
+      .maybeSingle();
+
+    if (newPlan) {
+      const endDate = new Date();
+      if (billingPeriod === 'monthly') {
+        endDate.setMonth(endDate.getMonth() + 1);
+      } else {
+        endDate.setFullYear(endDate.getFullYear() + 1);
+      }
+
+      await supabase
+        .from('subscriptions')
+        .update({
+          plan_id: newPlan.id,
+          end_date: endDate.toISOString(),
+        })
+        .eq('id', currentSub.id);
+
+      await supabase
+        .from('profiles')
+        .update({
+          subscription_expires_at: endDate.toISOString(),
+        })
+        .eq('id', customerId);
+    }
+  };
+
   const handleRemoveMember = async (id: string) => {
     if (id.startsWith('new-')) {
       setFamilyMembers(familyMembers.filter(m => m.id !== id));
@@ -79,6 +126,8 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
         alert('Errore durante l\'eliminazione');
       } else {
         setFamilyMembers(familyMembers.filter(m => m.id !== id));
+        const newTotal = familyMembers.filter(m => m.id !== id).length + 1;
+        await updateSubscription(newTotal);
         onUpdate();
       }
     }
@@ -126,6 +175,9 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
           if (error) throw error;
         }
       }
+
+      const totalPersons = familyMembers.length + 1;
+      await updateSubscription(totalPersons);
 
       setIsEditing(false);
       await loadFamilyMembers();

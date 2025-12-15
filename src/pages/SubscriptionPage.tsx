@@ -28,6 +28,19 @@ export function SubscriptionPage() {
   const [familyMembersCount, setFamilyMembersCount] = useState(0);
   const [businessLocationsCount, setBusinessLocationsCount] = useState(0);
 
+  const calculateSavings = (plan: SubscriptionPlan) => {
+    if (plan.billing_period !== 'yearly') return null;
+
+    const monthlyPlan = availablePlans.find(
+      p => p.max_persons === plan.max_persons && p.billing_period === 'monthly'
+    );
+
+    if (!monthlyPlan) return null;
+
+    const yearlyIfMonthly = monthlyPlan.price * 12;
+    return yearlyIfMonthly - plan.price;
+  };
+
   useEffect(() => {
     if (profile?.user_type === 'customer') {
       loadSubscription();
@@ -190,7 +203,7 @@ export function SubscriptionPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Il Tuo Abbonamento
+              Prezzi Abbonamento
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Gestisci il tuo abbonamento e accedi a sconti esclusivi
@@ -283,6 +296,13 @@ export function SubscriptionPage() {
                         <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
                         <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
                       </div>
+                      {calculateSavings(plan) && (
+                        <div className="mt-2">
+                          <span className="inline-block bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">
+                            Risparmi €{calculateSavings(plan)!.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <button
                       onClick={() => handleSelectPlan(plan.id)}
@@ -320,6 +340,13 @@ export function SubscriptionPage() {
                         <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
                         <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
                       </div>
+                      {calculateSavings(plan) && (
+                        <div className="mt-2">
+                          <span className="inline-block bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">
+                            Risparmi €{calculateSavings(plan)!.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     {currentSubscription.plan.id === plan.id ? (
                       <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
