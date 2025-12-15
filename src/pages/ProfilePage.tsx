@@ -38,11 +38,15 @@ interface Review {
   content: string;
   created_at: string;
   business_id: string;
+  family_member_id?: string;
   business?: {
     name: string;
   };
   customer?: {
     full_name: string;
+  };
+  family_member?: {
+    nickname: string;
   };
 }
 
@@ -88,6 +92,11 @@ export function ProfilePage() {
     code: '',
     valid_until: '',
   });
+  const [reviewFilters, setReviewFilters] = useState({
+    nickname: '',
+    rating: '',
+    businessName: '',
+  });
 
   useEffect(() => {
     if (user) {
@@ -127,7 +136,8 @@ export function ProfilePage() {
       .from('reviews')
       .select(`
         *,
-        business:businesses(name)
+        business:businesses(name),
+        family_member:family_members(nickname)
       `)
       .eq('customer_id', user?.id)
       .order('created_at', { ascending: false });
@@ -165,7 +175,8 @@ export function ProfilePage() {
         .from('reviews')
         .select(`
           *,
-          customer:profiles(full_name)
+          customer:profiles(full_name),
+          family_member:family_members(nickname)
         `)
         .eq('business_id', businessData.id)
         .order('created_at', { ascending: false });
@@ -231,6 +242,20 @@ export function ProfilePage() {
       console.error('Error deleting discount:', error);
     }
   };
+
+  const filteredReviews = reviews.filter((review) => {
+    const nicknameMatch = !reviewFilters.nickname ||
+      review.family_member?.nickname?.toLowerCase().includes(reviewFilters.nickname.toLowerCase());
+
+    const ratingMatch = !reviewFilters.rating ||
+      review.rating === Number(reviewFilters.rating);
+
+    const businessNameMatch = !reviewFilters.businessName ||
+      review.business?.name?.toLowerCase().includes(reviewFilters.businessName.toLowerCase()) ||
+      review.customer?.full_name?.toLowerCase().includes(reviewFilters.businessName.toLowerCase());
+
+    return nicknameMatch && ratingMatch && businessNameMatch;
+  });
 
   if (loading) {
     return (
@@ -317,11 +342,64 @@ export function ProfilePage() {
                 <h2 className="text-2xl font-bold text-gray-900">Le Tue Recensioni</h2>
               </div>
 
+              {reviews.length > 0 && (
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Filtra Recensioni</h3>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Nickname</label>
+                      <input
+                        type="text"
+                        value={reviewFilters.nickname}
+                        onChange={(e) => setReviewFilters({ ...reviewFilters, nickname: e.target.value })}
+                        placeholder="Cerca per nickname"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Valutazione</label>
+                      <select
+                        value={reviewFilters.rating}
+                        onChange={(e) => setReviewFilters({ ...reviewFilters, rating: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="">Tutte le valutazioni</option>
+                        <option value="5">5 stelle</option>
+                        <option value="4">4 stelle</option>
+                        <option value="3">3 stelle</option>
+                        <option value="2">2 stelle</option>
+                        <option value="1">1 stella</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Nome Azienda</label>
+                      <input
+                        type="text"
+                        value={reviewFilters.businessName}
+                        onChange={(e) => setReviewFilters({ ...reviewFilters, businessName: e.target.value })}
+                        placeholder="Cerca per azienda"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  {(reviewFilters.nickname || reviewFilters.rating || reviewFilters.businessName) && (
+                    <button
+                      onClick={() => setReviewFilters({ nickname: '', rating: '', businessName: '' })}
+                      className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-semibold"
+                    >
+                      Resetta Filtri
+                    </button>
+                  )}
+                </div>
+              )}
+
               {reviews.length === 0 ? (
                 <p className="text-gray-600 text-center py-8">Non hai ancora scritto recensioni</p>
+              ) : filteredReviews.length === 0 ? (
+                <p className="text-gray-600 text-center py-8">Nessuna recensione trovata con questi filtri</p>
               ) : (
                 <div className="space-y-4">
-                  {reviews.map((review) => (
+                  {filteredReviews.map((review) => (
                     <div key={review.id} className="border border-gray-200 rounded-lg p-6 hover:border-blue-300 transition-colors">
                       <div className="flex items-start justify-between mb-3">
                         <div>
@@ -329,6 +407,11 @@ export function ProfilePage() {
                           <p className="text-sm text-gray-600 mt-1">
                             {review.business?.name}
                           </p>
+                          {review.family_member?.nickname && (
+                            <p className="text-xs text-blue-600 mt-1">
+                              Scritta da: {review.family_member.nickname}
+                            </p>
+                          )}
                         </div>
                         <div className="flex items-center gap-1">
                           {Array.from({ length: 5 }).map((_, i) => (
@@ -415,11 +498,64 @@ export function ProfilePage() {
                 <h2 className="text-2xl font-bold text-gray-900">Recensioni Ricevute</h2>
               </div>
 
+              {reviews.length > 0 && (
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Filtra Recensioni</h3>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Nickname</label>
+                      <input
+                        type="text"
+                        value={reviewFilters.nickname}
+                        onChange={(e) => setReviewFilters({ ...reviewFilters, nickname: e.target.value })}
+                        placeholder="Cerca per nickname"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Valutazione</label>
+                      <select
+                        value={reviewFilters.rating}
+                        onChange={(e) => setReviewFilters({ ...reviewFilters, rating: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="">Tutte le valutazioni</option>
+                        <option value="5">5 stelle</option>
+                        <option value="4">4 stelle</option>
+                        <option value="3">3 stelle</option>
+                        <option value="2">2 stelle</option>
+                        <option value="1">1 stella</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Nome Cliente</label>
+                      <input
+                        type="text"
+                        value={reviewFilters.businessName}
+                        onChange={(e) => setReviewFilters({ ...reviewFilters, businessName: e.target.value })}
+                        placeholder="Cerca per cliente"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  {(reviewFilters.nickname || reviewFilters.rating || reviewFilters.businessName) && (
+                    <button
+                      onClick={() => setReviewFilters({ nickname: '', rating: '', businessName: '' })}
+                      className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-semibold"
+                    >
+                      Resetta Filtri
+                    </button>
+                  )}
+                </div>
+              )}
+
               {reviews.length === 0 ? (
                 <p className="text-gray-600 text-center py-8">Nessuna recensione ricevuta</p>
+              ) : filteredReviews.length === 0 ? (
+                <p className="text-gray-600 text-center py-8">Nessuna recensione trovata con questi filtri</p>
               ) : (
                 <div className="space-y-4">
-                  {reviews.map((review) => (
+                  {filteredReviews.map((review) => (
                     <div key={review.id} className="border border-gray-200 rounded-lg p-6 hover:border-blue-300 transition-colors">
                       <div className="flex items-start justify-between mb-3">
                         <div>
@@ -427,6 +563,11 @@ export function ProfilePage() {
                           <p className="text-sm text-gray-600 mt-1">
                             Da: {review.customer?.full_name}
                           </p>
+                          {review.family_member?.nickname && (
+                            <p className="text-xs text-blue-600 mt-1">
+                              Scritta da: {review.family_member.nickname}
+                            </p>
+                          )}
                         </div>
                         <div className="flex items-center gap-1">
                           {Array.from({ length: 5 }).map((_, i) => (
