@@ -109,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const profileData: any = {
         id: authData.user.id,
         email,
+        full_name: `${data.firstName} ${data.lastName}`,
         first_name: data.firstName,
         last_name: data.lastName,
         date_of_birth: data.dateOfBirth,
