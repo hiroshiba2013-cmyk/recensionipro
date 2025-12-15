@@ -42,12 +42,7 @@ export function SubscriptionPage() {
   };
 
   useEffect(() => {
-    if (!profile) {
-      console.log('SubscriptionPage: No profile yet');
-      return;
-    }
-
-    console.log('SubscriptionPage: Loading data for', profile.user_type);
+    if (!profile) return;
 
     if (profile.user_type === 'customer') {
       loadSubscription();
@@ -63,15 +58,24 @@ export function SubscriptionPage() {
   const loadSubscription = async () => {
     if (!profile) return;
 
-    const { data, error } = await supabase
-      .from('subscriptions')
-      .select('id, status, start_date, end_date, plan:subscription_plans(id, name, price, billing_period, max_persons)')
-      .eq('customer_id', profile.id)
-      .eq('status', 'active')
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('id, status, start_date, end_date, plan:subscription_plans(id, name, price, billing_period, max_persons)')
+        .eq('customer_id', profile.id)
+        .eq('status', 'active')
+        .maybeSingle();
 
-    if (!error && data) {
-      setCurrentSubscription(data as any);
+      if (error) {
+        console.error('Error loading subscription:', error);
+        return;
+      }
+
+      if (data) {
+        setCurrentSubscription(data as any);
+      }
+    } catch (error) {
+      console.error('Error in loadSubscription:', error);
     }
   };
 
@@ -89,51 +93,87 @@ export function SubscriptionPage() {
     }
 
     if (data) {
-      console.log('Loaded customer plans:', data);
       setAvailablePlans(data);
     }
   };
 
   const loadBusinessPlans = async () => {
-    const { data } = await supabase
-      .from('subscription_plans')
-      .select('*')
-      .like('name', '%Business%')
-      .order('billing_period')
-      .order('max_persons');
+    try {
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .like('name', '%Business%')
+        .order('billing_period')
+        .order('max_persons');
 
-    if (data) {
-      setAvailablePlans(data);
+      if (error) {
+        console.error('Error loading business plans:', error);
+        return;
+      }
+
+      if (data) {
+        setAvailablePlans(data);
+      }
+    } catch (error) {
+      console.error('Error in loadBusinessPlans:', error);
     }
   };
 
   const loadFamilyMembers = async () => {
     if (!profile) return;
 
-    const { data } = await supabase
-      .from('customer_family_members')
-      .select('id')
-      .eq('customer_id', profile.id);
+    try {
+      const { data, error } = await supabase
+        .from('customer_family_members')
+        .select('id')
+        .eq('customer_id', profile.id);
 
-    setFamilyMembersCount((data?.length || 0) + 1);
+      if (error) {
+        console.error('Error loading family members:', error);
+        setFamilyMembersCount(1);
+        return;
+      }
+
+      setFamilyMembersCount((data?.length || 0) + 1);
+    } catch (error) {
+      console.error('Error in loadFamilyMembers:', error);
+      setFamilyMembersCount(1);
+    }
   };
 
   const loadBusinessLocations = async () => {
     if (!profile) return;
 
-    const { data: businesses } = await supabase
-      .from('businesses')
-      .select('id')
-      .eq('owner_id', profile.id)
-      .single();
-
-    if (businesses) {
-      const { data } = await supabase
-        .from('business_locations')
+    try {
+      const { data: businesses, error: businessError } = await supabase
+        .from('businesses')
         .select('id')
-        .eq('business_id', businesses.id);
+        .eq('owner_id', profile.id)
+        .maybeSingle();
 
-      setBusinessLocationsCount(data?.length || 0);
+      if (businessError) {
+        console.error('Error loading business:', businessError);
+        setBusinessLocationsCount(0);
+        return;
+      }
+
+      if (businesses) {
+        const { data, error: locationsError } = await supabase
+          .from('business_locations')
+          .select('id')
+          .eq('business_id', businesses.id);
+
+        if (locationsError) {
+          console.error('Error loading business locations:', locationsError);
+          setBusinessLocationsCount(0);
+          return;
+        }
+
+        setBusinessLocationsCount(data?.length || 0);
+      }
+    } catch (error) {
+      console.error('Error in loadBusinessLocations:', error);
+      setBusinessLocationsCount(0);
     }
   };
 
@@ -202,10 +242,29 @@ export function SubscriptionPage() {
     }
   };
 
-  if (authLoading || !profile) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-600">Caricamento...</p>
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600">Caricamento del profilo...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">Nessun profilo trovato.</p>
+          <button
+            onClick={() => window.history.pushState({}, '', '/')}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Torna alla Home
+          </button>
+        </div>
       </div>
     );
   }
@@ -287,6 +346,12 @@ export function SubscriptionPage() {
               message.includes('successo') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
             }`}>
               {message}
+            </div>
+          )}
+
+          {!currentSubscription && availablePlans.length === 0 && (
+            <div className="max-w-2xl mx-auto mb-8 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-yellow-800">Caricamento dei piani in corso...</p>
             </div>
           )}
 
@@ -468,6 +533,12 @@ export function SubscriptionPage() {
             message.includes('successo') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
           }`}>
             {message}
+          </div>
+        )}
+
+        {!currentSubscription && availablePlans.length === 0 && (
+          <div className="max-w-2xl mx-auto mb-8 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-yellow-800">Caricamento dei piani in corso...</p>
           </div>
         )}
 

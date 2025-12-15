@@ -41,6 +41,13 @@ export function Header() {
 
               {user && profile ? (
                 <>
+                  <a
+                    href="/subscription"
+                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors"
+                    title="Abbonamenti"
+                  >
+                    <CreditCard className="w-5 h-5" />
+                  </a>
                   <div className="flex items-center gap-3">
                     <a
                       href="/profile"
