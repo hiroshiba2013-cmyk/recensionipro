@@ -43,6 +43,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     firstName: '',
     lastName: '',
     nickname: '',
+    relationship: 'Titolare',
     dateOfBirth: '',
     taxCode: '',
     phone: '',
@@ -445,6 +446,26 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             </div>
 
             <div className="mb-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Relazione
+              </label>
+              <SearchableSelect
+                value={customerForm.relationship}
+                onChange={(value) => setCustomerForm({ ...customerForm, relationship: value })}
+                options={[
+                  { value: 'Titolare', label: 'Titolare' },
+                  { value: 'Coniuge', label: 'Coniuge' },
+                  { value: 'Figlio/a', label: 'Figlio/a' },
+                  { value: 'Genitore', label: 'Genitore' },
+                  { value: 'Fratello/Sorella', label: 'Fratello/Sorella' },
+                  { value: 'Amico/a', label: 'Amico/a' },
+                  { value: 'Altro', label: 'Altro familiare' },
+                ]}
+                placeholder="Seleziona relazione"
+              />
+            </div>
+
+            <div className="mb-3">
               <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">
                 Data di Nascita
               </label>
@@ -570,6 +591,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                     { value: 'Figlio/a', label: 'Figlio/a' },
                     { value: 'Genitore', label: 'Genitore' },
                     { value: 'Fratello/Sorella', label: 'Fratello/Sorella' },
+                    { value: 'Amico/a', label: 'Amico/a' },
                     { value: 'Altro', label: 'Altro familiare' },
                   ]}
                   placeholder="Seleziona relazione"

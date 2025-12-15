@@ -6,6 +6,7 @@ export interface CustomerData {
   firstName: string;
   lastName: string;
   nickname?: string;
+  relationship?: string;
   dateOfBirth: string;
   taxCode: string;
   phone: string;
@@ -106,6 +107,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (data.nickname) {
         profileData.nickname = data.nickname;
+      }
+
+      if (data.relationship) {
+        profileData.relationship = data.relationship;
       }
 
       const { error: profileError } = await supabase

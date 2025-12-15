@@ -3,12 +3,14 @@ import { Users, Edit, Save, X, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { FamilyMemberAvatarUpload } from './FamilyMemberAvatarUpload';
 import { FamilyMemberResumeUpload } from './FamilyMemberResumeUpload';
+import { SearchableSelect } from '../common/SearchableSelect';
 
 interface FamilyMember {
   id: string;
   first_name: string;
   last_name: string;
   nickname: string;
+  relationship: string;
   date_of_birth: string;
   tax_code: string;
   avatar_url: string | null;
@@ -52,6 +54,7 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
         first_name: '',
         last_name: '',
         nickname: '',
+        relationship: 'Coniuge',
         date_of_birth: '',
         tax_code: '',
         avatar_url: null,
@@ -101,6 +104,7 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
               first_name: member.first_name,
               last_name: member.last_name,
               nickname: member.nickname,
+              relationship: member.relationship,
               date_of_birth: member.date_of_birth,
               tax_code: member.tax_code,
             });
@@ -113,6 +117,7 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
               first_name: member.first_name,
               last_name: member.last_name,
               nickname: member.nickname,
+              relationship: member.relationship,
               date_of_birth: member.date_of_birth,
               tax_code: member.tax_code,
             })
@@ -193,6 +198,10 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Nickname</p>
                     <p className="text-lg font-semibold text-gray-900">{member.nickname}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Relazione</p>
+                    <p className="text-lg font-semibold text-gray-900">{member.relationship || 'Familiare'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Data di Nascita</p>
@@ -303,6 +312,25 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
                     onChange={(e) => handleChange(member.id, 'nickname', e.target.value)}
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Relazione
+                  </label>
+                  <SearchableSelect
+                    value={member.relationship}
+                    onChange={(value) => handleChange(member.id, 'relationship', value)}
+                    options={[
+                      { value: 'Coniuge', label: 'Coniuge' },
+                      { value: 'Figlio/a', label: 'Figlio/a' },
+                      { value: 'Genitore', label: 'Genitore' },
+                      { value: 'Fratello/Sorella', label: 'Fratello/Sorella' },
+                      { value: 'Amico/a', label: 'Amico/a' },
+                      { value: 'Altro', label: 'Altro familiare' },
+                    ]}
+                    placeholder="Seleziona relazione"
                   />
                 </div>
 

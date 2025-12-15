@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Edit, Save, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { SearchableSelect } from '../common/SearchableSelect';
 
 interface ProfileData {
   id: string;
   first_name: string;
   last_name: string;
   nickname: string;
+  relationship: string;
   date_of_birth: string;
   tax_code: string;
   phone: string;
@@ -25,6 +27,7 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
     first_name: profile.first_name || '',
     last_name: profile.last_name || '',
     nickname: profile.nickname || '',
+    relationship: profile.relationship || 'Titolare',
     date_of_birth: profile.date_of_birth || '',
     tax_code: profile.tax_code || '',
     phone: profile.phone || '',
@@ -47,6 +50,7 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
           first_name: formData.first_name,
           last_name: formData.last_name,
           nickname: formData.nickname,
+          relationship: formData.relationship,
           date_of_birth: formData.date_of_birth,
           tax_code: formData.tax_code,
           phone: formData.phone,
@@ -72,6 +76,7 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
       first_name: profile.first_name || '',
       last_name: profile.last_name || '',
       nickname: profile.nickname || '',
+      relationship: profile.relationship || 'Titolare',
       date_of_birth: profile.date_of_birth || '',
       tax_code: profile.tax_code || '',
       phone: profile.phone || '',
@@ -106,6 +111,10 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
           <div>
             <p className="text-sm text-gray-600 mb-1">Nickname</p>
             <p className="text-lg font-semibold text-gray-900">{profile.nickname || '-'}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Relazione</p>
+            <p className="text-lg font-semibold text-gray-900">{profile.relationship || 'Titolare'}</p>
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-1">Data di Nascita</p>
@@ -183,6 +192,26 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Relazione
+            </label>
+            <SearchableSelect
+              value={formData.relationship}
+              onChange={(value) => setFormData(prev => ({ ...prev, relationship: value }))}
+              options={[
+                { value: 'Titolare', label: 'Titolare' },
+                { value: 'Coniuge', label: 'Coniuge' },
+                { value: 'Figlio/a', label: 'Figlio/a' },
+                { value: 'Genitore', label: 'Genitore' },
+                { value: 'Fratello/Sorella', label: 'Fratello/Sorella' },
+                { value: 'Amico/a', label: 'Amico/a' },
+                { value: 'Altro', label: 'Altro familiare' },
+              ]}
+              placeholder="Seleziona relazione"
             />
           </div>
 
