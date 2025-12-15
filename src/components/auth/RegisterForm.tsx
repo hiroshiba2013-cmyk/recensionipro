@@ -42,6 +42,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     confirmPassword: '',
     firstName: '',
     lastName: '',
+    nickname: '',
     dateOfBirth: '',
     taxCode: '',
     phone: '',
@@ -425,6 +426,22 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />
               </div>
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="nickname" className="block text-sm font-medium text-gray-700 mb-1">
+                Nickname
+              </label>
+              <input
+                id="nickname"
+                name="nickname"
+                type="text"
+                value={customerForm.nickname}
+                onChange={handleCustomerChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                placeholder="Nome visibile per le review"
+              />
             </div>
 
             <div className="mb-3">
