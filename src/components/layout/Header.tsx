@@ -102,7 +102,10 @@ export function Header() {
             </div>
 
             {authMode === 'login' ? (
-              <LoginForm onSuccess={() => setShowAuthModal(false)} />
+              <LoginForm onSuccess={() => {
+                setShowAuthModal(false);
+                window.location.href = '/profile';
+              }} />
             ) : (
               <RegisterForm onSuccess={() => {
                 setShowAuthModal(false);
