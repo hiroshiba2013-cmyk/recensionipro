@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Edit, Save, X, Building2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -26,32 +26,71 @@ interface BusinessData {
 }
 
 interface EditBusinessFormProps {
-  business: BusinessData;
+  businessId: string;
   onUpdate: () => void;
 }
 
-export function EditBusinessForm({ business, onUpdate }: EditBusinessFormProps) {
+export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [business, setBusiness] = useState<BusinessData | null>(null);
   const [formData, setFormData] = useState({
-    name: business.name || '',
-    vat_number: business.vat_number || '',
-    unique_code: business.unique_code || '',
-    ateco_code: business.ateco_code || '',
-    pec_email: business.pec_email || '',
-    phone: business.phone || '',
-    billing_street: business.billing_street || '',
-    billing_street_number: business.billing_street_number || '',
-    billing_postal_code: business.billing_postal_code || '',
-    billing_city: business.billing_city || '',
-    billing_province: business.billing_province || '',
-    office_street: business.office_street || '',
-    office_street_number: business.office_street_number || '',
-    office_postal_code: business.office_postal_code || '',
-    office_city: business.office_city || '',
-    office_province: business.office_province || '',
-    website_url: business.website_url || '',
+    name: '',
+    vat_number: '',
+    unique_code: '',
+    ateco_code: '',
+    pec_email: '',
+    phone: '',
+    billing_street: '',
+    billing_street_number: '',
+    billing_postal_code: '',
+    billing_city: '',
+    billing_province: '',
+    office_street: '',
+    office_street_number: '',
+    office_postal_code: '',
+    office_city: '',
+    office_province: '',
+    website_url: '',
   });
+
+  useEffect(() => {
+    loadBusiness();
+  }, [businessId]);
+
+  const loadBusiness = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from('businesses')
+      .select('*')
+      .eq('id', businessId)
+      .maybeSingle();
+
+    if (data) {
+      setBusiness(data);
+      setFormData({
+        name: data.name || '',
+        vat_number: data.vat_number || '',
+        unique_code: data.unique_code || '',
+        ateco_code: data.ateco_code || '',
+        pec_email: data.pec_email || '',
+        phone: data.phone || '',
+        billing_street: data.billing_street || '',
+        billing_street_number: data.billing_street_number || '',
+        billing_postal_code: data.billing_postal_code || '',
+        billing_city: data.billing_city || '',
+        billing_province: data.billing_province || '',
+        office_street: data.office_street || '',
+        office_street_number: data.office_street_number || '',
+        office_postal_code: data.office_postal_code || '',
+        office_city: data.office_city || '',
+        office_province: data.office_province || '',
+        website_url: data.website_url || '',
+      });
+    }
+    setLoading(false);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -91,11 +130,12 @@ export function EditBusinessForm({ business, onUpdate }: EditBusinessFormProps) 
           office_address: officeAddress,
           website_url: formData.website_url,
         })
-        .eq('id', business.id);
+        .eq('id', businessId);
 
       if (error) throw error;
 
       setIsEditing(false);
+      await loadBusiness();
       onUpdate();
     } catch (error) {
       console.error('Error updating business:', error);
@@ -106,27 +146,43 @@ export function EditBusinessForm({ business, onUpdate }: EditBusinessFormProps) 
   };
 
   const handleCancel = () => {
-    setFormData({
-      name: business.name || '',
-      vat_number: business.vat_number || '',
-      unique_code: business.unique_code || '',
-      ateco_code: business.ateco_code || '',
-      pec_email: business.pec_email || '',
-      phone: business.phone || '',
-      billing_street: business.billing_street || '',
-      billing_street_number: business.billing_street_number || '',
-      billing_postal_code: business.billing_postal_code || '',
-      billing_city: business.billing_city || '',
-      billing_province: business.billing_province || '',
-      office_street: business.office_street || '',
-      office_street_number: business.office_street_number || '',
-      office_postal_code: business.office_postal_code || '',
-      office_city: business.office_city || '',
-      office_province: business.office_province || '',
-      website_url: business.website_url || '',
-    });
+    if (business) {
+      setFormData({
+        name: business.name || '',
+        vat_number: business.vat_number || '',
+        unique_code: business.unique_code || '',
+        ateco_code: business.ateco_code || '',
+        pec_email: business.pec_email || '',
+        phone: business.phone || '',
+        billing_street: business.billing_street || '',
+        billing_street_number: business.billing_street_number || '',
+        billing_postal_code: business.billing_postal_code || '',
+        billing_city: business.billing_city || '',
+        billing_province: business.billing_province || '',
+        office_street: business.office_street || '',
+        office_street_number: business.office_street_number || '',
+        office_postal_code: business.office_postal_code || '',
+        office_city: business.office_city || '',
+        office_province: business.office_province || '',
+        website_url: business.website_url || '',
+      });
+    }
     setIsEditing(false);
   };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-8 mb-8">
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!business) {
+    return null;
+  }
 
   if (!isEditing) {
     return (
