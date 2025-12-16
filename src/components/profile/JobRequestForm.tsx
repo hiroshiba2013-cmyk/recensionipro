@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Briefcase, Plus, X, Edit, Trash2 } from 'lucide-react';
+import { Briefcase, Plus, X, Edit, Trash2, User, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
 
@@ -13,6 +13,15 @@ interface JobRequest {
   experience_years: number;
   active: boolean;
   created_at: string;
+  family_member_id: string | null;
+}
+
+interface FamilyMember {
+  id: string;
+  first_name: string;
+  last_name: string;
+  nickname: string;
+  avatar_url: string | null;
 }
 
 interface JobRequestFormProps {
@@ -21,8 +30,9 @@ interface JobRequestFormProps {
 
 export function JobRequestForm({ customerId }: JobRequestFormProps) {
   const [jobRequests, setJobRequests] = useState<JobRequest[]>([]);
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -35,8 +45,14 @@ export function JobRequestForm({ customerId }: JobRequestFormProps) {
   });
 
   useEffect(() => {
-    loadJobRequests();
+    loadData();
   }, [customerId]);
+
+  const loadData = async () => {
+    setLoading(true);
+    await Promise.all([loadJobRequests(), loadFamilyMembers()]);
+    setLoading(false);
+  };
 
   const loadJobRequests = async () => {
     try {
@@ -50,8 +66,21 @@ export function JobRequestForm({ customerId }: JobRequestFormProps) {
       setJobRequests(data || []);
     } catch (error) {
       console.error('Error loading job requests:', error);
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const loadFamilyMembers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('customer_family_members')
+        .select('id, first_name, last_name, nickname, avatar_url')
+        .eq('customer_id', customerId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setFamilyMembers(data || []);
+    } catch (error) {
+      console.error('Error loading family members:', error);
     }
   };
 
@@ -79,6 +108,7 @@ export function JobRequestForm({ customerId }: JobRequestFormProps) {
           .from('job_requests')
           .insert({
             customer_id: customerId,
+            family_member_id: showForm === 'main' ? null : showForm,
             ...formData,
           });
 
@@ -148,36 +178,49 @@ export function JobRequestForm({ customerId }: JobRequestFormProps) {
       active: true,
     });
     setEditingId(null);
-    setShowForm(false);
+    setShowForm(null);
   };
 
-  if (loading) {
-    return (
-      <div className="bg-white rounded-xl shadow-md p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-      </div>
+  const renderJobRequestSection = (memberId: string | null, memberName: string, avatar?: string | null) => {
+    const memberRequests = jobRequests.filter(
+      req => (memberId === null && req.family_member_id === null) || req.family_member_id === memberId
     );
-  }
+    const isFormOpen = showForm === (memberId || 'main');
 
-  return (
-    <div className="bg-white rounded-xl shadow-md p-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Briefcase className="w-6 h-6 text-blue-600" />
-          <h2 className="text-2xl font-bold text-gray-900">I Miei Annunci "Cerco Lavoro"</h2>
+    return (
+      <div key={memberId || 'main'} className="bg-white rounded-xl shadow-md p-8 mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            {avatar ? (
+              <img src={avatar} alt={memberName} className="w-12 h-12 rounded-full object-cover" />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                {memberId ? (
+                  <Users className="w-6 h-6 text-blue-600" />
+                ) : (
+                  <User className="w-6 h-6 text-blue-600" />
+                )}
+              </div>
+            )}
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">{memberName}</h3>
+              <p className="text-sm text-gray-600">
+                {memberRequests.length} {memberRequests.length === 1 ? 'annuncio' : 'annunci'}
+              </p>
+            </div>
+          </div>
+          {!isFormOpen && (
+            <button
+              onClick={() => setShowForm(memberId || 'main')}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+            >
+              <Plus className="w-5 h-5" />
+              Nuovo Annuncio
+            </button>
+          )}
         </div>
-        {!showForm && (
-          <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-md"
-          >
-            <Plus className="w-5 h-5" />
-            Nuovo Annuncio
-          </button>
-        )}
-      </div>
 
-      {showForm && (
+      {isFormOpen && (
         <form onSubmit={handleSubmit} className="bg-gray-50 rounded-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">
@@ -310,11 +353,11 @@ export function JobRequestForm({ customerId }: JobRequestFormProps) {
         </form>
       )}
 
-      {jobRequests.length === 0 ? (
+      {memberRequests.length === 0 ? (
         <p className="text-gray-600 text-center py-8">Nessun annuncio creato</p>
       ) : (
         <div className="space-y-4">
-          {jobRequests.map((jobRequest) => (
+          {memberRequests.map((jobRequest) => (
             <div
               key={jobRequest.id}
               className={`border-2 rounded-lg p-6 transition-colors ${
@@ -382,6 +425,33 @@ export function JobRequestForm({ customerId }: JobRequestFormProps) {
             </div>
           ))}
         </div>
+      )}
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="border-t-4 border-blue-500 bg-gradient-to-r from-blue-50 to-white rounded-lg p-4 mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <Briefcase className="w-7 h-7 text-blue-600" />
+          Annunci "Cerco Lavoro"
+        </h2>
+        <p className="text-sm text-gray-600 mt-1">Gestisci gli annunci per te e i tuoi familiari</p>
+      </div>
+
+      {renderJobRequestSection(null, 'Account Principale')}
+
+      {familyMembers.map((member) =>
+        renderJobRequestSection(member.id, member.nickname, member.avatar_url)
       )}
     </div>
   );
