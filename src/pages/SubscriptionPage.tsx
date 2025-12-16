@@ -214,7 +214,7 @@ export function SubscriptionPage() {
   const handleSelectPlan = async (planId: string) => {
     if (!profile) {
       localStorage.setItem('selectedPlanId', planId);
-      window.history.pushState({}, '', '/');
+      window.location.href = '/';
       return;
     }
 

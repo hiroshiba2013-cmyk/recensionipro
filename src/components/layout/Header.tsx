@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LogOut, User, CreditCard } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from '../auth/LoginForm';
@@ -8,6 +8,14 @@ export function Header() {
   const { user, profile, signOut } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+
+  useEffect(() => {
+    const selectedPlanId = localStorage.getItem('selectedPlanId');
+    if (selectedPlanId && !user) {
+      setAuthMode('register');
+      setShowAuthModal(true);
+    }
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
@@ -116,7 +124,7 @@ export function Header() {
             ) : (
               <RegisterForm onSuccess={() => {
                 setShowAuthModal(false);
-                alert('Registrazione completata! Ora puoi effettuare il login.');
+                window.location.href = '/profile';
               }} />
             )}
 
