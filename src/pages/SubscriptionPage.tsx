@@ -213,10 +213,8 @@ export function SubscriptionPage() {
 
   const handleSelectPlan = async (planId: string) => {
     if (!profile) {
-      setMessage('Per sottoscrivere un abbonamento devi prima accedere o registrarti.');
-      setTimeout(() => {
-        window.history.pushState({}, '', '/');
-      }, 2000);
+      localStorage.setItem('selectedPlanId', planId);
+      window.history.pushState({}, '', '/');
       return;
     }
 

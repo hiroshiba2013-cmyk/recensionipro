@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth, CustomerData, BusinessData } from '../../contexts/AuthContext';
 import { SearchableSelect } from '../common/SearchableSelect';
 import { Plus, Trash2 } from 'lucide-react';
@@ -49,10 +49,99 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
   const [numberOfPeople, setNumberOfPeople] = useState('1');
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
+  const [preselectedPlanId, setPreselectedPlanId] = useState<string | null>(null);
 
   const [numberOfLocations, setNumberOfLocations] = useState('1');
   const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [businessBillingPeriod, setBusinessBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
+
+  useEffect(() => {
+    const selectedPlanId = localStorage.getItem('selectedPlanId');
+    if (selectedPlanId) {
+      setPreselectedPlanId(selectedPlanId);
+      loadPlanDetails(selectedPlanId);
+      localStorage.removeItem('selectedPlanId');
+    }
+  }, []);
+
+  const loadPlanDetails = async (planId: string) => {
+    try {
+      const { data: plan, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('id', planId)
+        .maybeSingle();
+
+      if (error || !plan) {
+        console.error('Error loading plan:', error);
+        return;
+      }
+
+      const isBusinessPlan = plan.name.includes('Business');
+
+      if (isBusinessPlan) {
+        setUserType('business');
+        setBillingPeriod(plan.billing_period);
+        setBusinessBillingPeriod(plan.billing_period);
+
+        let locationCount = 1;
+        if (plan.max_persons === 999) {
+          setNumberOfLocations('10+');
+          locationCount = 1;
+        } else if (plan.max_persons >= 6 && plan.max_persons <= 10) {
+          setNumberOfLocations('6-10');
+          locationCount = 6;
+        } else {
+          setNumberOfLocations(plan.max_persons.toString());
+          locationCount = plan.max_persons;
+        }
+
+        const defaultHours = { open: '09:00', close: '18:00', closed: false };
+        const newLocations: BusinessLocation[] = [];
+        for (let i = 0; i < locationCount; i++) {
+          newLocations.push({
+            name: i === 0 ? 'Sede Principale' : `Sede ${i + 1}`,
+            address: '',
+            city: '',
+            province: '',
+            postalCode: '',
+            phone: '',
+            email: '',
+            businessHours: {
+              monday: defaultHours,
+              tuesday: defaultHours,
+              wednesday: defaultHours,
+              thursday: defaultHours,
+              friday: defaultHours,
+              saturday: { ...defaultHours, closed: true },
+              sunday: { ...defaultHours, closed: true },
+            },
+          });
+        }
+        setBusinessLocations(newLocations);
+      } else {
+        setUserType('customer');
+        setBillingPeriod(plan.billing_period);
+        setNumberOfPeople(plan.max_persons.toString());
+
+        const num = plan.max_persons - 1;
+        const newMembers: FamilyMember[] = [];
+        for (let i = 0; i < num; i++) {
+          newMembers.push({
+            firstName: '',
+            lastName: '',
+            nickname: '',
+            dateOfBirth: '',
+            taxCode: '',
+            relationship: 'Coniuge',
+          });
+        }
+        setFamilyMembers(newMembers);
+      }
+    } catch (error) {
+      console.error('Error loading plan details:', error);
+    }
+  };
 
   const [customerForm, setCustomerForm] = useState<CustomerData & { email: string; password: string; confirmPassword: string }>({
     email: '',
