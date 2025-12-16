@@ -360,7 +360,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 { value: '1', label: '1 persona (solo io)' },
                 { value: '2', label: '2 persone' },
                 { value: '3', label: '3 persone' },
-                { value: '4', label: '4 o più persone' },
+                { value: '4', label: '4 persone' },
               ]}
               placeholder="Seleziona numero persone"
             />
@@ -822,7 +822,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 { value: '1', label: '1 sede' },
                 { value: '2', label: '2 sedi' },
                 { value: '3', label: '3 sedi' },
-                { value: '4', label: '4 o più sedi' },
+                { value: '4', label: '4 sedi' },
               ]}
               placeholder="Seleziona numero sedi"
             />
