@@ -47,6 +47,11 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
   };
 
   const handleAddMember = () => {
+    if (familyMembers.length >= 3) {
+      alert('Puoi aggiungere al massimo 3 membri della famiglia');
+      return;
+    }
+
     setFamilyMembers([
       ...familyMembers,
       {
@@ -211,7 +216,12 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <Users className="w-6 h-6 text-blue-600" />
-            <h2 className="text-2xl font-bold text-gray-900">Membri della Famiglia</h2>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Membri della Famiglia</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                {familyMembers.length}/3 membri aggiunti
+              </p>
+            </div>
           </div>
           <button
             onClick={() => setIsEditing(true)}
@@ -223,7 +233,10 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
         </div>
 
         {familyMembers.length === 0 ? (
-          <p className="text-gray-600 text-center py-8">Nessun membro della famiglia aggiunto</p>
+          <div className="text-center py-8">
+            <p className="text-gray-600 mb-2">Nessun membro della famiglia aggiunto</p>
+            <p className="text-sm text-gray-500">Puoi aggiungere fino a 3 membri</p>
+          </div>
         ) : (
           <div className="space-y-6">
             {familyMembers.map((member, index) => (
@@ -425,14 +438,22 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={handleAddMember}
-          className="flex items-center gap-2 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold mb-6 w-full"
-        >
-          <Plus className="w-5 h-5" />
-          Aggiungi Membro
-        </button>
+        {familyMembers.length < 3 ? (
+          <button
+            type="button"
+            onClick={handleAddMember}
+            className="flex items-center gap-2 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold mb-6 w-full"
+          >
+            <Plus className="w-5 h-5" />
+            Aggiungi Membro ({familyMembers.length}/3)
+          </button>
+        ) : (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 text-center">
+            <p className="text-yellow-800 font-semibold">
+              Hai raggiunto il limite massimo di 3 membri della famiglia
+            </p>
+          </div>
+        )}
 
         <div className="flex gap-3">
           <button
