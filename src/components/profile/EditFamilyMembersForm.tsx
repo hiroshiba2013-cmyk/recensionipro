@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Users, Edit, Save, X, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { FamilyMemberAvatarUpload } from './FamilyMemberAvatarUpload';
-import { FamilyMemberResumeUpload } from './FamilyMemberResumeUpload';
 import { SearchableSelect } from '../common/SearchableSelect';
 
 interface FamilyMember {
@@ -279,12 +278,6 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
                     <p className="text-lg font-semibold text-gray-900">{member.tax_code}</p>
                   </div>
                 </div>
-                <FamilyMemberResumeUpload
-                  memberId={member.id}
-                  currentResumeUrl={member.resume_url}
-                  memberName={member.nickname}
-                  onUpdate={loadFamilyMembers}
-                />
               </div>
             ))}
           </div>
@@ -426,14 +419,6 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
                   />
                 </div>
               </div>
-              {!member.id.startsWith('new-') && (
-                <FamilyMemberResumeUpload
-                  memberId={member.id}
-                  currentResumeUrl={member.resume_url}
-                  memberName={member.nickname}
-                  onUpdate={loadFamilyMembers}
-                />
-              )}
             </div>
           ))}
         </div>
