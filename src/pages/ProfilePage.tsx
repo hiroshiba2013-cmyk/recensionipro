@@ -136,7 +136,7 @@ export function ProfilePage() {
       .select(`
         *,
         business:businesses(name),
-        family_member:family_members(nickname)
+        family_member:customer_family_members(nickname)
       `)
       .eq('customer_id', user?.id)
       .order('created_at', { ascending: false });
@@ -175,7 +175,7 @@ export function ProfilePage() {
         .select(`
           *,
           customer:profiles(full_name),
-          family_member:family_members(nickname)
+          family_member:customer_family_members(nickname)
         `)
         .eq('business_id', businessData.id)
         .order('created_at', { ascending: false });
