@@ -1243,7 +1243,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
 
               <div className="mb-3">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Sede
+                  Email Sede (opzionale)
                 </label>
                 <input
                   type="email"

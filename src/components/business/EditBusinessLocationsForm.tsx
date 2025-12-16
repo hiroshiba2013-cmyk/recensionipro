@@ -436,7 +436,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Email Sede
+                    Email Sede (opzionale)
                   </label>
                   <input
                     type="email"
