@@ -51,22 +51,22 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const loadLocations = async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from('business_locations')
+        .select('*')
+        .eq('business_id', businessId)
+        .order('is_primary', { ascending: false });
+
+      if (data) {
+        setLocations(data);
+      }
+      setLoading(false);
+    };
+
     loadLocations();
   }, [businessId]);
-
-  const loadLocations = async () => {
-    setLoading(true);
-    const { data } = await supabase
-      .from('business_locations')
-      .select('*')
-      .eq('business_id', businessId)
-      .order('is_primary', { ascending: false });
-
-    if (data) {
-      setLocations(data);
-    }
-    setLoading(false);
-  };
 
   const handleAddLocation = () => {
     const defaultHours: DayHours = { open: '09:00', close: '18:00', closed: false };
@@ -210,7 +210,17 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
       }
 
       setIsEditing(false);
-      await loadLocations();
+
+      const { data: updatedData } = await supabase
+        .from('business_locations')
+        .select('*')
+        .eq('business_id', businessId)
+        .order('is_primary', { ascending: false });
+
+      if (updatedData) {
+        setLocations(updatedData);
+      }
+
       onUpdate();
     } catch (error) {
       console.error('Error updating locations:', error);
@@ -220,8 +230,18 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
     }
   };
 
-  const handleCancel = () => {
-    loadLocations();
+  const handleCancel = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from('business_locations')
+      .select('*')
+      .eq('business_id', businessId)
+      .order('is_primary', { ascending: false });
+
+    if (data) {
+      setLocations(data);
+    }
+    setLoading(false);
     setIsEditing(false);
   };
 
