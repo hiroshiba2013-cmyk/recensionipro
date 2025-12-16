@@ -3,6 +3,7 @@ import { MapPin, Edit, Save, X, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
 import { CITIES_BY_PROVINCE } from '../../lib/cities';
+import { BusinessLocationAvatarUpload } from './BusinessLocationAvatarUpload';
 
 const italianCities = Object.entries(CITIES_BY_PROVINCE).flatMap(([province, cities]) =>
   cities.map(city => ({ city, province }))
@@ -33,6 +34,7 @@ interface BusinessLocation {
   postal_code: string;
   phone: string;
   email: string;
+  avatar_url: string | null;
   business_hours: BusinessHours | null;
   is_primary: boolean;
 }
@@ -79,6 +81,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
         postal_code: '',
         phone: '',
         email: '',
+        avatar_url: null,
         business_hours: {
           monday: defaultHours,
           tuesday: defaultHours,
@@ -257,37 +260,52 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
               <div key={location.id} className={`border rounded-lg p-6 ${
                 location.is_primary ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-gray-50'
               }`}>
-                <div className="flex items-start justify-between mb-4">
-                  <h3 className="font-bold text-lg text-gray-900">{location.name}</h3>
-                  {location.is_primary && (
-                    <span className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                      PRINCIPALE
-                    </span>
+                <div className="flex items-start gap-6 mb-4">
+                  {!location.id.startsWith('new-') && (
+                    <BusinessLocationAvatarUpload
+                      locationId={location.id}
+                      currentAvatarUrl={location.avatar_url}
+                      onAvatarUpdate={(url) => {
+                        setLocations(locations.map(loc =>
+                          loc.id === location.id ? { ...loc, avatar_url: url } : loc
+                        ));
+                      }}
+                    />
                   )}
-                </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Indirizzo</p>
-                    <p className="text-lg font-semibold text-gray-900">{location.address}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Città</p>
-                    <p className="text-lg font-semibold text-gray-900">{location.city} ({location.province})</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">CAP</p>
-                    <p className="text-lg font-semibold text-gray-900">{location.postal_code}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Telefono</p>
-                    <p className="text-lg font-semibold text-gray-900">{location.phone}</p>
-                  </div>
-                  {location.email && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Email</p>
-                      <p className="text-lg font-semibold text-gray-900">{location.email}</p>
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between mb-4">
+                      <h3 className="font-bold text-lg text-gray-900">{location.name}</h3>
+                      {location.is_primary && (
+                        <span className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                          PRINCIPALE
+                        </span>
+                      )}
                     </div>
-                  )}
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Indirizzo</p>
+                        <p className="text-lg font-semibold text-gray-900">{location.address}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Città</p>
+                        <p className="text-lg font-semibold text-gray-900">{location.city} ({location.province})</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">CAP</p>
+                        <p className="text-lg font-semibold text-gray-900">{location.postal_code}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Telefono</p>
+                        <p className="text-lg font-semibold text-gray-900">{location.phone}</p>
+                      </div>
+                      {location.email && (
+                        <div>
+                          <p className="text-sm text-gray-600 mb-1">Email</p>
+                          <p className="text-lg font-semibold text-gray-900">{location.email}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 {location.business_hours && (
                   <div className="mt-4">
@@ -345,14 +363,32 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
             <div key={location.id} className={`border-2 rounded-lg p-6 ${
               location.is_primary ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-gray-50'
             }`}>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <h3 className="font-bold text-lg text-gray-900">Sede {index + 1}</h3>
-                  {location.is_primary && (
-                    <span className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                      PRINCIPALE
-                    </span>
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  {!location.id.startsWith('new-') && (
+                    <BusinessLocationAvatarUpload
+                      locationId={location.id}
+                      currentAvatarUrl={location.avatar_url}
+                      onAvatarUpdate={(url) => {
+                        setLocations(locations.map(loc =>
+                          loc.id === location.id ? { ...loc, avatar_url: url } : loc
+                        ));
+                      }}
+                    />
                   )}
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-bold text-lg text-gray-900">Sede {index + 1}</h3>
+                      {location.is_primary && (
+                        <span className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                          PRINCIPALE
+                        </span>
+                      )}
+                    </div>
+                    {location.id.startsWith('new-') && (
+                      <p className="text-xs text-gray-600 mt-1">Salva per caricare l'immagine della sede</p>
+                    )}
+                  </div>
                 </div>
                 <button
                   type="button"
