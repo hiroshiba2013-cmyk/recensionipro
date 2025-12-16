@@ -172,7 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('businesses')
         .insert({
           owner_id: authData.user.id,
-          category_id: '',
+          category_id: null,
           name: data.companyName,
           vat_number: data.vatNumber,
           unique_code: data.uniqueCode,
