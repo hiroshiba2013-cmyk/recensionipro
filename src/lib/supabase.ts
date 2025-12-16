@@ -82,3 +82,17 @@ export interface Discount {
   active: boolean;
   created_at: string;
 }
+
+export interface JobPosting {
+  id: string;
+  business_id: string;
+  title: string;
+  description: string;
+  requirements: string;
+  location: string;
+  salary_range: string;
+  employment_type: string;
+  active: boolean;
+  created_at: string;
+  expires_at: string;
+}

@@ -1,20 +1,26 @@
 import { useState, useEffect } from 'react';
-import { Plus, Star, Tag, Building, Briefcase } from 'lucide-react';
+import { Plus, Star, Tag, Building, Briefcase, MessageSquare } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase, Business, Review, Discount } from '../lib/supabase';
+import { supabase, Business, Review, Discount, JobPosting } from '../lib/supabase';
 import { BusinessJobForm } from '../components/jobs/BusinessJobForm';
 import { EditBusinessLocationsForm } from '../components/business/EditBusinessLocationsForm';
 import { EditBusinessForm } from '../components/business/EditBusinessForm';
 import { CreateBusinessForm } from '../components/business/CreateBusinessForm';
+import { DiscountForm } from '../components/discount/DiscountForm';
+import { ReviewResponseForm } from '../components/reviews/ReviewResponseForm';
 
 export function DashboardPage() {
   const { profile } = useAuth();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
+  const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [loading, setLoading] = useState(true);
   const [showJobForm, setShowJobForm] = useState(false);
   const [showCreateBusinessForm, setShowCreateBusinessForm] = useState(false);
+  const [showDiscountForm, setShowDiscountForm] = useState(false);
+  const [showResponseForm, setShowResponseForm] = useState<string | null>(null);
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -35,6 +41,10 @@ export function DashboardPage() {
 
         if (businessesData) {
           setBusinesses(businessesData);
+
+          if (businessesData.length > 0 && !selectedBusinessId) {
+            setSelectedBusinessId(businessesData[0].id);
+          }
 
           if (businessesData.length > 0) {
             const businessIds = businessesData.map(b => b.id);
@@ -61,6 +71,17 @@ export function DashboardPage() {
 
             if (discountsData) {
               setDiscounts(discountsData);
+            }
+
+            const { data: jobPostingsData } = await supabase
+              .from('job_postings')
+              .select('*')
+              .in('business_id', businessIds)
+              .eq('active', true)
+              .order('created_at', { ascending: false });
+
+            if (jobPostingsData) {
+              setJobPostings(jobPostingsData);
             }
           }
         }
@@ -169,12 +190,22 @@ export function DashboardPage() {
                           {businesses.map((business) => (
                             <div
                               key={business.id}
-                              className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+                              onClick={() => setSelectedBusinessId(business.id)}
+                              className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                                selectedBusinessId === business.id
+                                  ? 'border-blue-500 bg-blue-50'
+                                  : 'border-gray-200 hover:border-blue-300'
+                              }`}
                             >
                               <div className="flex items-center justify-between">
                                 <div>
                                   <h3 className="font-semibold text-lg">{business.name}</h3>
                                   <p className="text-gray-600 text-sm">{business.city}</p>
+                                  {selectedBusinessId === business.id && (
+                                    <p className="text-blue-600 text-sm mt-1 font-medium">
+                                      Selezionata per la modifica
+                                    </p>
+                                  )}
                                 </div>
                                 {business.verified ? (
                                   <span className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">
@@ -192,10 +223,10 @@ export function DashboardPage() {
                       )}
                     </div>
 
-                    {businesses.length > 0 && (
+                    {selectedBusinessId && (
                       <>
-                        <EditBusinessForm businessId={businesses[0].id} onUpdate={loadDashboardData} />
-                        <EditBusinessLocationsForm businessId={businesses[0].id} onUpdate={loadDashboardData} />
+                        <EditBusinessForm businessId={selectedBusinessId} onUpdate={loadDashboardData} />
+                        <EditBusinessLocationsForm businessId={selectedBusinessId} onUpdate={loadDashboardData} />
                       </>
                     )}
                   </>
@@ -237,11 +268,16 @@ export function DashboardPage() {
                           <h4 className="font-semibold mb-1">{review.title}</h4>
                           <p className="text-gray-700 text-sm">{review.content}</p>
                           {!review.responses || review.responses.length === 0 ? (
-                            <button className="mt-3 text-blue-600 text-sm hover:text-blue-700">
+                            <button
+                              onClick={() => setShowResponseForm(review.id)}
+                              className="mt-3 text-blue-600 text-sm hover:text-blue-700 flex items-center gap-1"
+                            >
+                              <MessageSquare className="w-4 h-4" />
                               Rispondi
                             </button>
                           ) : (
                             <div className="mt-3 pl-4 border-l-2 border-blue-200">
+                              <p className="text-sm font-medium text-gray-600 mb-1">La tua risposta:</p>
                               <p className="text-sm text-gray-700">{review.responses[0].content}</p>
                             </div>
                           )}
@@ -268,7 +304,39 @@ export function DashboardPage() {
 
                   {showJobForm && (
                     <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                      <BusinessJobForm onSuccess={() => setShowJobForm(false)} />
+                      <BusinessJobForm onSuccess={() => {
+                        setShowJobForm(false);
+                        loadDashboardData();
+                      }} />
+                    </div>
+                  )}
+
+                  {jobPostings.length === 0 && !showJobForm ? (
+                    <p className="text-gray-600 text-center py-8">
+                      Non hai ancora pubblicato annunci di lavoro
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {jobPostings.map((job) => (
+                        <div key={job.id} className="border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-lg">{job.title}</h4>
+                              <p className="text-gray-600 text-sm mt-1">{job.description}</p>
+                              <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                                <span>{job.location}</span>
+                                <span>{job.employment_type}</span>
+                                {job.salary_range && <span>{job.salary_range}</span>}
+                              </div>
+                            </div>
+                            <span className={`px-3 py-1 text-sm rounded-full ${
+                              job.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                            }`}>
+                              {job.active ? 'Attivo' : 'Non attivo'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -279,7 +347,10 @@ export function DashboardPage() {
                       <Tag className="w-6 h-6" />
                       Sconti Attivi
                     </h2>
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                    <button
+                      onClick={() => setShowDiscountForm(true)}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                    >
                       <Plus className="w-5 h-5" />
                       Crea Sconto
                     </button>
@@ -355,6 +426,28 @@ export function DashboardPage() {
               </div>
             )}
           </div>
+        )}
+
+        {showDiscountForm && selectedBusinessId && (
+          <DiscountForm
+            businessId={selectedBusinessId}
+            onClose={() => setShowDiscountForm(false)}
+            onSuccess={() => {
+              setShowDiscountForm(false);
+              loadDashboardData();
+            }}
+          />
+        )}
+
+        {showResponseForm && (
+          <ReviewResponseForm
+            reviewId={showResponseForm}
+            onClose={() => setShowResponseForm(null)}
+            onSuccess={() => {
+              setShowResponseForm(null);
+              loadDashboardData();
+            }}
+          />
         )}
       </div>
     </div>
