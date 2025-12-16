@@ -194,8 +194,11 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     const prices = {
       '1': { monthly: 2.49, yearly: 24.90 },
       '2': { monthly: 3.99, yearly: 39.90 },
-      '3': { monthly: 4.99, yearly: 49.90 },
-      '4': { monthly: 5.99, yearly: 59.90 },
+      '3': { monthly: 5.49, yearly: 54.90 },
+      '4': { monthly: 7.99, yearly: 79.90 },
+      '5': { monthly: 9.99, yearly: 99.90 },
+      '6-10': { monthly: 12.99, yearly: 129.90 },
+      '10+': { monthly: 14.99, yearly: 149.90 },
     };
     return prices[locations as keyof typeof prices][period];
   };
@@ -319,10 +322,17 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
       }
 
       if (user) {
+        let maxPersonsValue = parseInt(numberOfLocations);
+        if (numberOfLocations === '6-10') {
+          maxPersonsValue = 10;
+        } else if (numberOfLocations === '10+') {
+          maxPersonsValue = 999;
+        }
+
         const { data: plan } = await supabase
           .from('subscription_plans')
           .select('id')
-          .eq('max_persons', parseInt(numberOfLocations))
+          .eq('max_persons', maxPersonsValue)
           .eq('billing_period', businessBillingPeriod)
           .like('name', 'Piano Business%')
           .single();
@@ -855,7 +865,14 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
               value={numberOfLocations}
               onChange={(value) => {
                 setNumberOfLocations(value);
-                const num = parseInt(value);
+                let num = 1;
+                if (value === '6-10') {
+                  num = 6;
+                } else if (value === '10+') {
+                  num = 11;
+                } else {
+                  num = parseInt(value);
+                }
                 if (num > businessLocations.length) {
                   const toAdd = num - businessLocations.length;
                   for (let i = 0; i < toAdd; i++) {
@@ -870,6 +887,9 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 { value: '2', label: '2 sedi' },
                 { value: '3', label: '3 sedi' },
                 { value: '4', label: '4 sedi' },
+                { value: '5', label: '5 sedi' },
+                { value: '6-10', label: '6-10 sedi' },
+                { value: '10+', label: 'Oltre 10 sedi' },
               ]}
               placeholder="Seleziona numero sedi"
             />
@@ -917,7 +937,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 {businessBillingPeriod === 'monthly' ? '/mese' : '/anno'} + IVA
               </div>
               <div className="text-xs text-gray-600 mt-1">
-                Per {numberOfLocations} {parseInt(numberOfLocations) === 1 ? 'punto vendita' : 'punti vendita'}
+                Per {numberOfLocations} {numberOfLocations === '1' ? 'punto vendita' : 'punti vendita'}
               </div>
             </div>
           </div>
@@ -1310,16 +1330,14 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             </div>
           ))}
 
-          {parseInt(numberOfLocations) === 4 && (
-            <button
-              type="button"
-              onClick={addBusinessLocation}
-              className="w-full flex items-center justify-center gap-2 py-2 px-4 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors text-sm font-medium"
-            >
-              <Plus className="w-4 h-4" />
-              Aggiungi altra sede
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={addBusinessLocation}
+            className="w-full flex items-center justify-center gap-2 py-2 px-4 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors text-sm font-medium"
+          >
+            <Plus className="w-4 h-4" />
+            Aggiungi altra sede
+          </button>
 
           <div className="bg-gray-50 p-4 rounded-lg">
             <h3 className="text-sm font-bold text-gray-900 mb-3">Dati Accesso</h3>
