@@ -25,14 +25,17 @@ export function SubscriptionPage() {
   const [message, setMessage] = useState('');
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
   const [availablePlans, setAvailablePlans] = useState<SubscriptionPlan[]>([]);
+  const [customerPlans, setCustomerPlans] = useState<SubscriptionPlan[]>([]);
+  const [businessPlans, setBusinessPlans] = useState<SubscriptionPlan[]>([]);
   const [familyMembersCount, setFamilyMembersCount] = useState(0);
   const [businessLocationsCount, setBusinessLocationsCount] = useState(0);
 
   const calculateSavings = (plan: SubscriptionPlan) => {
     if (plan.billing_period !== 'yearly') return null;
 
-    const monthlyPlan = availablePlans.find(
-      p => p.max_persons === plan.max_persons && p.billing_period === 'monthly'
+    const allPlans = [...availablePlans, ...customerPlans, ...businessPlans];
+    const monthlyPlan = allPlans.find(
+      p => p.max_persons === plan.max_persons && p.billing_period === 'monthly' && p.name.includes('Business') === plan.name.includes('Business')
     );
 
     if (!monthlyPlan) return null;
@@ -43,8 +46,7 @@ export function SubscriptionPage() {
 
   useEffect(() => {
     if (!profile) {
-      loadCustomerPlans();
-      loadBusinessPlans();
+      loadAllPlansForGuest();
       return;
     }
 
@@ -80,6 +82,34 @@ export function SubscriptionPage() {
       }
     } catch (error) {
       console.error('Error in loadSubscription:', error);
+    }
+  };
+
+  const loadAllPlansForGuest = async () => {
+    const { data: customerData, error: customerError } = await supabase
+      .from('subscription_plans')
+      .select('*')
+      .not('name', 'like', '%Business%')
+      .order('max_persons')
+      .order('billing_period');
+
+    const { data: businessData, error: businessError } = await supabase
+      .from('subscription_plans')
+      .select('*')
+      .like('name', '%Business%')
+      .order('max_persons')
+      .order('billing_period');
+
+    if (customerError) {
+      console.error('Error loading customer plans:', customerError);
+    } else if (customerData) {
+      setCustomerPlans(customerData);
+    }
+
+    if (businessError) {
+      console.error('Error loading business plans:', businessError);
+    } else if (businessData) {
+      setBusinessPlans(businessData);
     }
   };
 
@@ -263,7 +293,136 @@ export function SubscriptionPage() {
     );
   }
 
-  if (!profile || profile?.user_type === 'customer') {
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Piani e Prezzi
+            </h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Scegli il piano perfetto per te o per la tua attività
+            </p>
+          </div>
+
+          <div className="max-w-3xl mx-auto mb-12 bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
+            <div className="flex items-center gap-4">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                  <Check className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                  Accedi per sottoscrivere un abbonamento
+                </h3>
+                <p className="text-gray-600">
+                  Registrati o accedi per attivare il tuo abbonamento e iniziare a usufruire degli sconti esclusivi.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {message && (
+            <div className={`max-w-2xl mx-auto mb-8 p-4 rounded-lg ${
+              message.includes('successo') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`}>
+              {message}
+            </div>
+          )}
+
+          <div className="space-y-16">
+            <div>
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Piani per Privati</h2>
+                <p className="text-gray-600">Perfetto per te e la tua famiglia</p>
+              </div>
+              {customerPlans.length === 0 ? (
+                <div className="max-w-2xl mx-auto p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-yellow-800 text-center">Caricamento piani in corso...</p>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {customerPlans.map((plan) => (
+                    <div
+                      key={plan.id}
+                      className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-blue-500 transition-all"
+                    >
+                      <h3 className="text-xl font-bold text-gray-900 mb-4">
+                        {plan.name}
+                      </h3>
+                      <div className="mb-6">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
+                          <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
+                        </div>
+                        {calculateSavings(plan) && (
+                          <div className="mt-2">
+                            <span className="inline-block bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">
+                              Risparmi €{calculateSavings(plan)!.toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleSelectPlan(plan.id)}
+                        disabled={loading}
+                        className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400"
+                      >
+                        {loading ? 'Attivazione...' : 'Seleziona Piano'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Piani per Professionisti</h2>
+                <p className="text-gray-600">Ideale per attività commerciali e professionisti</p>
+              </div>
+              {businessPlans.length === 0 ? (
+                <div className="max-w-2xl mx-auto p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-yellow-800 text-center">Caricamento piani in corso...</p>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {businessPlans.map((plan) => (
+                    <div
+                      key={plan.id}
+                      className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-blue-500 transition-all"
+                    >
+                      <h3 className="text-xl font-bold text-gray-900 mb-4">
+                        {plan.name}
+                      </h3>
+                      <div className="mb-6">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
+                          <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">+ IVA</p>
+                      </div>
+                      <button
+                        onClick={() => handleSelectPlan(plan.id)}
+                        disabled={loading}
+                        className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400"
+                      >
+                        {loading ? 'Attivazione...' : 'Seleziona Piano'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (profile?.user_type === 'customer') {
     return (
       <div className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -275,26 +434,6 @@ export function SubscriptionPage() {
               Gestisci il tuo abbonamento e accedi a sconti esclusivi
             </p>
           </div>
-
-          {!profile && (
-            <div className="max-w-3xl mx-auto mb-8 bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-                    <Check className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                    Accedi per sottoscrivere un abbonamento
-                  </h3>
-                  <p className="text-gray-600">
-                    Registrati o accedi per attivare il tuo abbonamento e iniziare a usufruire degli sconti esclusivi.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
 
           {currentSubscription && (
             <div className="max-w-3xl mx-auto mb-12">
