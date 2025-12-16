@@ -56,41 +56,41 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
   });
 
   useEffect(() => {
+    const loadBusiness = async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from('businesses')
+        .select('*')
+        .eq('id', businessId)
+        .maybeSingle();
+
+      if (data) {
+        setBusiness(data);
+        setFormData({
+          name: data.name || '',
+          vat_number: data.vat_number || '',
+          unique_code: data.unique_code || '',
+          ateco_code: data.ateco_code || '',
+          pec_email: data.pec_email || '',
+          phone: data.phone || '',
+          billing_street: data.billing_street || '',
+          billing_street_number: data.billing_street_number || '',
+          billing_postal_code: data.billing_postal_code || '',
+          billing_city: data.billing_city || '',
+          billing_province: data.billing_province || '',
+          office_street: data.office_street || '',
+          office_street_number: data.office_street_number || '',
+          office_postal_code: data.office_postal_code || '',
+          office_city: data.office_city || '',
+          office_province: data.office_province || '',
+          website_url: data.website_url || '',
+        });
+      }
+      setLoading(false);
+    };
+
     loadBusiness();
   }, [businessId]);
-
-  const loadBusiness = async () => {
-    setLoading(true);
-    const { data } = await supabase
-      .from('businesses')
-      .select('*')
-      .eq('id', businessId)
-      .maybeSingle();
-
-    if (data) {
-      setBusiness(data);
-      setFormData({
-        name: data.name || '',
-        vat_number: data.vat_number || '',
-        unique_code: data.unique_code || '',
-        ateco_code: data.ateco_code || '',
-        pec_email: data.pec_email || '',
-        phone: data.phone || '',
-        billing_street: data.billing_street || '',
-        billing_street_number: data.billing_street_number || '',
-        billing_postal_code: data.billing_postal_code || '',
-        billing_city: data.billing_city || '',
-        billing_province: data.billing_province || '',
-        office_street: data.office_street || '',
-        office_street_number: data.office_street_number || '',
-        office_postal_code: data.office_postal_code || '',
-        office_city: data.office_city || '',
-        office_province: data.office_province || '',
-        website_url: data.website_url || '',
-      });
-    }
-    setLoading(false);
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -134,8 +134,17 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
 
       if (error) throw error;
 
+      const { data: updatedData } = await supabase
+        .from('businesses')
+        .select('*')
+        .eq('id', businessId)
+        .maybeSingle();
+
+      if (updatedData) {
+        setBusiness(updatedData);
+      }
+
       setIsEditing(false);
-      await loadBusiness();
       onUpdate();
     } catch (error) {
       console.error('Error updating business:', error);
