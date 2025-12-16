@@ -127,6 +127,9 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
   };
 
   const addBusinessLocation = () => {
+    if (businessLocations.length >= 10) {
+      return;
+    }
     const defaultHours: DayHours = { open: '09:00', close: '18:00', closed: false };
     setBusinessLocations([...businessLocations, {
       name: 'Sede',
@@ -869,7 +872,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 if (value === '6-10') {
                   num = 6;
                 } else if (value === '10+') {
-                  num = 11;
+                  num = 6;
                 } else {
                   num = parseInt(value);
                 }
@@ -1330,14 +1333,16 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             </div>
           ))}
 
-          <button
-            type="button"
-            onClick={addBusinessLocation}
-            className="w-full flex items-center justify-center gap-2 py-2 px-4 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors text-sm font-medium"
-          >
-            <Plus className="w-4 h-4" />
-            Aggiungi altra sede
-          </button>
+          {(numberOfLocations === '6-10' || numberOfLocations === '10+') && businessLocations.length < 10 && (
+            <button
+              type="button"
+              onClick={addBusinessLocation}
+              className="w-full flex items-center justify-center gap-2 py-2 px-4 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors text-sm font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              Aggiungi altra sede
+            </button>
+          )}
 
           <div className="bg-gray-50 p-4 rounded-lg">
             <h3 className="text-sm font-bold text-gray-900 mb-3">Dati Accesso</h3>
