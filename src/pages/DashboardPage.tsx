@@ -5,6 +5,7 @@ import { supabase, Business, Review, Discount } from '../lib/supabase';
 import { BusinessJobForm } from '../components/jobs/BusinessJobForm';
 import { EditBusinessLocationsForm } from '../components/business/EditBusinessLocationsForm';
 import { EditBusinessForm } from '../components/business/EditBusinessForm';
+import { CreateBusinessForm } from '../components/business/CreateBusinessForm';
 
 export function DashboardPage() {
   const { profile } = useAuth();
@@ -13,6 +14,7 @@ export function DashboardPage() {
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [loading, setLoading] = useState(true);
   const [showJobForm, setShowJobForm] = useState(false);
+  const [showCreateBusinessForm, setShowCreateBusinessForm] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -132,54 +134,70 @@ export function DashboardPage() {
           <div className="space-y-8">
             {profile.user_type === 'business' ? (
               <>
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-2">
-                      <Building className="w-6 h-6" />
-                      Le Mie Attività
-                    </h2>
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
-                      <Plus className="w-5 h-5" />
-                      Aggiungi Attività
-                    </button>
-                  </div>
-
-                  {businesses.length === 0 ? (
-                    <p className="text-gray-600 text-center py-8">
-                      Non hai ancora registrato nessuna attività
-                    </p>
-                  ) : (
-                    <div className="grid gap-4">
-                      {businesses.map((business) => (
-                        <div
-                          key={business.id}
-                          className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h3 className="font-semibold text-lg">{business.name}</h3>
-                              <p className="text-gray-600 text-sm">{business.city}</p>
-                            </div>
-                            {business.verified ? (
-                              <span className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">
-                                Verificato
-                              </span>
-                            ) : (
-                              <span className="px-3 py-1 bg-yellow-100 text-yellow-700 text-sm rounded-full">
-                                In Attesa
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {businesses.length > 0 && (
+                {showCreateBusinessForm ? (
+                  <CreateBusinessForm
+                    ownerId={profile.id}
+                    onSuccess={() => {
+                      setShowCreateBusinessForm(false);
+                      loadDashboardData();
+                    }}
+                    onCancel={() => setShowCreateBusinessForm(false)}
+                  />
+                ) : (
                   <>
-                    <EditBusinessForm businessId={businesses[0].id} onUpdate={loadDashboardData} />
-                    <EditBusinessLocationsForm businessId={businesses[0].id} onUpdate={loadDashboardData} />
+                    <div className="bg-white rounded-lg shadow-sm p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-2">
+                          <Building className="w-6 h-6" />
+                          Le Mie Attività
+                        </h2>
+                        <button
+                          onClick={() => setShowCreateBusinessForm(true)}
+                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                        >
+                          <Plus className="w-5 h-5" />
+                          Aggiungi Attività
+                        </button>
+                      </div>
+
+                      {businesses.length === 0 ? (
+                        <p className="text-gray-600 text-center py-8">
+                          Non hai ancora registrato nessuna attività
+                        </p>
+                      ) : (
+                        <div className="grid gap-4">
+                          {businesses.map((business) => (
+                            <div
+                              key={business.id}
+                              className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <h3 className="font-semibold text-lg">{business.name}</h3>
+                                  <p className="text-gray-600 text-sm">{business.city}</p>
+                                </div>
+                                {business.verified ? (
+                                  <span className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">
+                                    Verificato
+                                  </span>
+                                ) : (
+                                  <span className="px-3 py-1 bg-yellow-100 text-yellow-700 text-sm rounded-full">
+                                    In Attesa
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {businesses.length > 0 && (
+                      <>
+                        <EditBusinessForm businessId={businesses[0].id} onUpdate={loadDashboardData} />
+                        <EditBusinessLocationsForm businessId={businesses[0].id} onUpdate={loadDashboardData} />
+                      </>
+                    )}
                   </>
                 )}
 
