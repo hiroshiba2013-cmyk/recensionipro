@@ -49,16 +49,32 @@ export interface Business {
   category?: BusinessCategory;
 }
 
+export interface FamilyMember {
+  id: string;
+  customer_id: string;
+  first_name: string;
+  last_name: string;
+  nickname: string;
+  date_of_birth: string;
+  tax_code: string;
+  relationship: string;
+  avatar_url: string | null;
+  resume_url: string | null;
+  created_at: string;
+}
+
 export interface Review {
   id: string;
   business_id: string;
   customer_id: string;
+  family_member_id: string | null;
   rating: number;
   title: string;
   content: string;
   created_at: string;
   updated_at: string;
   customer?: Profile;
+  family_member?: FamilyMember;
   responses?: ReviewResponse[];
 }
 

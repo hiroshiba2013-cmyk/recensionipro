@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Plus, Star, Tag, Building, Briefcase, MessageSquare } from 'lucide-react';
+import { Plus, Star, Tag, Building, Briefcase, MessageSquare, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase, Business, Review, Discount, JobPosting } from '../lib/supabase';
+import { supabase, Business, Review, Discount, JobPosting, FamilyMember } from '../lib/supabase';
 import { BusinessJobForm } from '../components/jobs/BusinessJobForm';
 import { EditBusinessLocationsForm } from '../components/business/EditBusinessLocationsForm';
 import { EditBusinessForm } from '../components/business/EditBusinessForm';
@@ -15,6 +15,7 @@ export function DashboardPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [showJobForm, setShowJobForm] = useState(false);
   const [showCreateBusinessForm, setShowCreateBusinessForm] = useState(false);
@@ -86,11 +87,22 @@ export function DashboardPage() {
           }
         }
       } else {
+        const { data: familyMembersData } = await supabase
+          .from('customer_family_members')
+          .select('*')
+          .eq('customer_id', profile.id)
+          .order('created_at', { ascending: true });
+
+        if (familyMembersData) {
+          setFamilyMembers(familyMembersData);
+        }
+
         const { data: reviewsData } = await supabase
           .from('reviews')
           .select(`
             *,
-            business:businesses(name)
+            business:businesses(name),
+            family_member:customer_family_members(*)
           `)
           .eq('customer_id', profile.id)
           .order('created_at', { ascending: false });
@@ -386,43 +398,89 @@ export function DashboardPage() {
                 </div>
               </>
             ) : (
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-                  <Star className="w-6 h-6" />
-                  Le Mie Recensioni
-                </h2>
+              <div className="space-y-6">
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h2 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                    <User className="w-6 h-6" />
+                    Le Tue Recensioni - {profile.full_name}
+                  </h2>
 
-                {reviews.length === 0 ? (
-                  <p className="text-gray-600 text-center py-8">
-                    Non hai ancora scritto recensioni
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {reviews.map((review) => (
-                      <div key={review.id} className="border border-gray-200 rounded-lg p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`w-4 h-4 ${
-                                  i < review.rating
-                                    ? 'fill-yellow-400 text-yellow-400'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
+                  {reviews.filter(r => !r.family_member_id).length === 0 ? (
+                    <p className="text-gray-600 text-center py-8">
+                      Non hai ancora scritto recensioni
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {reviews.filter(r => !r.family_member_id).map((review) => (
+                        <div key={review.id} className="border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-4 h-4 ${
+                                    i < review.rating
+                                      ? 'fill-yellow-400 text-yellow-400'
+                                      : 'text-gray-300'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-sm text-gray-500">
+                              {new Date(review.created_at).toLocaleDateString('it-IT')}
+                            </span>
                           </div>
-                          <span className="text-sm text-gray-500">
-                            {new Date(review.created_at).toLocaleDateString('it-IT')}
-                          </span>
+                          <h4 className="font-semibold mb-1">{review.title}</h4>
+                          <p className="text-gray-700 text-sm">{review.content}</p>
                         </div>
-                        <h4 className="font-semibold mb-1">{review.title}</h4>
-                        <p className="text-gray-700 text-sm">{review.content}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {familyMembers.map((member) => {
+                  const memberReviews = reviews.filter(r => r.family_member_id === member.id);
+                  return (
+                    <div key={member.id} className="bg-white rounded-lg shadow-sm p-6">
+                      <h2 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                        <User className="w-6 h-6" />
+                        Recensioni di {member.nickname || `${member.first_name} ${member.last_name}`}
+                      </h2>
+
+                      {memberReviews.length === 0 ? (
+                        <p className="text-gray-600 text-center py-8">
+                          Nessuna recensione ancora
+                        </p>
+                      ) : (
+                        <div className="space-y-4">
+                          {memberReviews.map((review) => (
+                            <div key={review.id} className="border border-gray-200 rounded-lg p-4">
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`w-4 h-4 ${
+                                        i < review.rating
+                                          ? 'fill-yellow-400 text-yellow-400'
+                                          : 'text-gray-300'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                                <span className="text-sm text-gray-500">
+                                  {new Date(review.created_at).toLocaleDateString('it-IT')}
+                                </span>
+                              </div>
+                              <h4 className="font-semibold mb-1">{review.title}</h4>
+                              <p className="text-gray-700 text-sm">{review.content}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
