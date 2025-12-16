@@ -16,6 +16,7 @@ interface BusinessLocation {
   province: string;
   postal_code: string;
   phone: string;
+  email: string;
   is_primary: boolean;
 }
 
@@ -59,6 +60,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
         province: '',
         postal_code: '',
         phone: '',
+        email: '',
         is_primary: locations.length === 0,
       },
     ]);
@@ -133,6 +135,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
               province: location.province,
               postal_code: location.postal_code,
               phone: location.phone,
+              email: location.email,
               is_primary: location.is_primary,
             });
 
@@ -147,6 +150,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
               province: location.province,
               postal_code: location.postal_code,
               phone: location.phone,
+              email: location.email,
               is_primary: location.is_primary,
             })
             .eq('id', location.id);
@@ -231,6 +235,12 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
                     <p className="text-sm text-gray-600 mb-1">Telefono</p>
                     <p className="text-lg font-semibold text-gray-900">{location.phone}</p>
                   </div>
+                  {location.email && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Email</p>
+                      <p className="text-lg font-semibold text-gray-900">{location.email}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -346,6 +356,19 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
                     value={location.phone}
                     onChange={(e) => handleChange(location.id, 'phone', e.target.value)}
                     required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Email Sede
+                  </label>
+                  <input
+                    type="email"
+                    value={location.email}
+                    onChange={(e) => handleChange(location.id, 'email', e.target.value)}
+                    placeholder="Es. sede@azienda.it"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>

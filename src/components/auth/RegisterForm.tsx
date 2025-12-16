@@ -20,6 +20,7 @@ interface BusinessLocation {
   province: string;
   postalCode: string;
   phone: string;
+  email: string;
 }
 
 export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
@@ -115,6 +116,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
       province: '',
       postalCode: '',
       phone: '',
+      email: '',
     }]);
   };
 
@@ -260,6 +262,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             province: location.province,
             postal_code: location.postalCode,
             phone: location.phone,
+            email: location.email,
             is_primary: index === 0,
           }));
 
@@ -1150,7 +1153,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 mb-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     CAP
@@ -1177,6 +1180,19 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   />
                 </div>
+              </div>
+
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Sede
+                </label>
+                <input
+                  type="email"
+                  value={location.email}
+                  onChange={(e) => updateBusinessLocation(index, 'email', e.target.value)}
+                  placeholder="Es. sede@azienda.it"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
               </div>
             </div>
           ))}
