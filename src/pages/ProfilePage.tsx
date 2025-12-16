@@ -5,7 +5,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { AvatarUpload } from '../components/profile/AvatarUpload';
 import { EditProfileForm } from '../components/profile/EditProfileForm';
 import { JobRequestForm } from '../components/profile/JobRequestForm';
-import { ResumeUpload } from '../components/profile/ResumeUpload';
 import { EditFamilyMembersForm } from '../components/profile/EditFamilyMembersForm';
 import { EditBusinessForm } from '../components/business/EditBusinessForm';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
@@ -312,12 +311,6 @@ export function ProfilePage() {
 
             <EditProfileForm
               profile={profile}
-              onUpdate={loadProfileData}
-            />
-
-            <ResumeUpload
-              userId={profile.id}
-              currentResumeUrl={profile.resume_url}
               onUpdate={loadProfileData}
             />
 
