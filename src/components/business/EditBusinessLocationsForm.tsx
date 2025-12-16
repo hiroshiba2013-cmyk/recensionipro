@@ -8,6 +8,22 @@ const italianCities = Object.entries(CITIES_BY_PROVINCE).flatMap(([province, cit
   cities.map(city => ({ city, province }))
 );
 
+interface DayHours {
+  open: string;
+  close: string;
+  closed: boolean;
+}
+
+interface BusinessHours {
+  monday: DayHours;
+  tuesday: DayHours;
+  wednesday: DayHours;
+  thursday: DayHours;
+  friday: DayHours;
+  saturday: DayHours;
+  sunday: DayHours;
+}
+
 interface BusinessLocation {
   id: string;
   name: string;
@@ -17,6 +33,7 @@ interface BusinessLocation {
   postal_code: string;
   phone: string;
   email: string;
+  business_hours: BusinessHours | null;
   is_primary: boolean;
 }
 
@@ -50,6 +67,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
   };
 
   const handleAddLocation = () => {
+    const defaultHours: DayHours = { open: '09:00', close: '18:00', closed: false };
     setLocations([
       ...locations,
       {
@@ -61,6 +79,15 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
         postal_code: '',
         phone: '',
         email: '',
+        business_hours: {
+          monday: defaultHours,
+          tuesday: defaultHours,
+          wednesday: defaultHours,
+          thursday: defaultHours,
+          friday: defaultHours,
+          saturday: { ...defaultHours, closed: true },
+          sunday: { ...defaultHours, closed: true },
+        },
         is_primary: locations.length === 0,
       },
     ]);
@@ -118,6 +145,24 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
     }
   };
 
+  const handleHoursChange = (id: string, day: keyof BusinessHours, field: keyof DayHours, value: string | boolean) => {
+    setLocations(locations.map(location => {
+      if (location.id === id && location.business_hours) {
+        return {
+          ...location,
+          business_hours: {
+            ...location.business_hours,
+            [day]: {
+              ...location.business_hours[day],
+              [field]: value,
+            },
+          },
+        };
+      }
+      return location;
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -136,6 +181,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
               postal_code: location.postal_code,
               phone: location.phone,
               email: location.email,
+              business_hours: location.business_hours,
               is_primary: location.is_primary,
             });
 
@@ -151,6 +197,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
               postal_code: location.postal_code,
               phone: location.phone,
               email: location.email,
+              business_hours: location.business_hours,
               is_primary: location.is_primary,
             })
             .eq('id', location.id);
@@ -242,6 +289,33 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
                     </div>
                   )}
                 </div>
+                {location.business_hours && (
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-600 mb-2 font-bold">Orari di Apertura</p>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      {(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const).map(day => {
+                        const dayNames = {
+                          monday: 'Lunedì',
+                          tuesday: 'Martedì',
+                          wednesday: 'Mercoledì',
+                          thursday: 'Giovedì',
+                          friday: 'Venerdì',
+                          saturday: 'Sabato',
+                          sunday: 'Domenica',
+                        };
+                        const hours = location.business_hours![day];
+                        return (
+                          <div key={day} className="flex justify-between">
+                            <span className="font-medium">{dayNames[day]}:</span>
+                            <span className={hours.closed ? 'text-gray-500 italic' : 'text-gray-900'}>
+                              {hours.closed ? 'Chiuso' : `${hours.open} - ${hours.close}`}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -387,6 +461,62 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
                   </label>
                 </div>
               </div>
+
+              {location.business_hours && (
+                <div className="mt-4">
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Orari di Apertura
+                  </label>
+                  <div className="space-y-2 bg-gray-50 p-4 rounded-lg">
+                    {(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const).map(day => {
+                      const dayNames = {
+                        monday: 'Lunedì',
+                        tuesday: 'Martedì',
+                        wednesday: 'Mercoledì',
+                        thursday: 'Giovedì',
+                        friday: 'Venerdì',
+                        saturday: 'Sabato',
+                        sunday: 'Domenica',
+                      };
+                      const dayHours = location.business_hours![day];
+
+                      return (
+                        <div key={day} className="flex items-center gap-3 text-sm">
+                          <label className="flex items-center gap-2 w-32">
+                            <input
+                              type="checkbox"
+                              checked={!dayHours.closed}
+                              onChange={(e) => handleHoursChange(location.id, day, 'closed', !e.target.checked)}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                            />
+                            <span className="font-medium">{dayNames[day]}</span>
+                          </label>
+                          {!dayHours.closed && (
+                            <>
+                              <input
+                                type="time"
+                                value={dayHours.open}
+                                onChange={(e) => handleHoursChange(location.id, day, 'open', e.target.value)}
+                                className="px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                              <span>-</span>
+                              <input
+                                type="time"
+                                value={dayHours.close}
+                                onChange={(e) => handleHoursChange(location.id, day, 'close', e.target.value)}
+                                className="px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            </>
+                          )}
+                          {dayHours.closed && (
+                            <span className="text-gray-500 italic">Chiuso</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

@@ -13,6 +13,22 @@ interface FamilyMember {
   relationship: string;
 }
 
+interface DayHours {
+  open: string;
+  close: string;
+  closed: boolean;
+}
+
+interface BusinessHours {
+  monday: DayHours;
+  tuesday: DayHours;
+  wednesday: DayHours;
+  thursday: DayHours;
+  friday: DayHours;
+  saturday: DayHours;
+  sunday: DayHours;
+}
+
 interface BusinessLocation {
   name: string;
   address: string;
@@ -21,6 +37,7 @@ interface BusinessLocation {
   postalCode: string;
   phone: string;
   email: string;
+  businessHours: BusinessHours;
 }
 
 export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
@@ -65,6 +82,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     atecoCode: '',
     pecEmail: '',
     phone: '',
+    website: '',
     billingStreet: '',
     billingStreetNumber: '',
     billingPostalCode: '',
@@ -109,6 +127,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
   };
 
   const addBusinessLocation = () => {
+    const defaultHours: DayHours = { open: '09:00', close: '18:00', closed: false };
     setBusinessLocations([...businessLocations, {
       name: 'Sede',
       address: '',
@@ -117,6 +136,15 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
       postalCode: '',
       phone: '',
       email: '',
+      businessHours: {
+        monday: defaultHours,
+        tuesday: defaultHours,
+        wednesday: defaultHours,
+        thursday: defaultHours,
+        friday: defaultHours,
+        saturday: { ...defaultHours, closed: true },
+        sunday: { ...defaultHours, closed: true },
+      },
     }]);
   };
 
@@ -127,6 +155,21 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
   const updateBusinessLocation = (index: number, field: keyof BusinessLocation, value: string) => {
     const updated = [...businessLocations];
     updated[index] = { ...updated[index], [field]: value };
+    setBusinessLocations(updated);
+  };
+
+  const updateBusinessHours = (locationIndex: number, day: keyof BusinessHours, field: keyof DayHours, value: string | boolean) => {
+    const updated = [...businessLocations];
+    updated[locationIndex] = {
+      ...updated[locationIndex],
+      businessHours: {
+        ...updated[locationIndex].businessHours,
+        [day]: {
+          ...updated[locationIndex].businessHours[day],
+          [field]: value,
+        },
+      },
+    };
     setBusinessLocations(updated);
   };
 
@@ -263,6 +306,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             postal_code: location.postalCode,
             phone: location.phone,
             email: location.email,
+            business_hours: location.businessHours,
             is_primary: index === 0,
           }));
 
@@ -992,6 +1036,21 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             </div>
 
             <div className="mb-3">
+              <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
+                Sito Web (opzionale)
+              </label>
+              <input
+                id="website"
+                name="website"
+                type="url"
+                value={businessForm.website}
+                onChange={handleBusinessChange}
+                placeholder="es. https://www.azienda.it"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+
+            <div className="mb-3">
               <label htmlFor="billingStreet" className="block text-sm font-medium text-gray-700 mb-1">
                 Via/Piazza (Fatturazione)
               </label>
@@ -1193,6 +1252,60 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                   placeholder="Es. sede@azienda.it"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />
+              </div>
+
+              <div className="mb-3">
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Orari di Apertura
+                </label>
+                <div className="space-y-2 bg-gray-50 p-3 rounded-lg">
+                  {(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const).map(day => {
+                    const dayNames = {
+                      monday: 'Lunedì',
+                      tuesday: 'Martedì',
+                      wednesday: 'Mercoledì',
+                      thursday: 'Giovedì',
+                      friday: 'Venerdì',
+                      saturday: 'Sabato',
+                      sunday: 'Domenica',
+                    };
+                    const dayHours = location.businessHours[day];
+
+                    return (
+                      <div key={day} className="flex items-center gap-2 text-sm">
+                        <label className="flex items-center gap-2 w-28">
+                          <input
+                            type="checkbox"
+                            checked={!dayHours.closed}
+                            onChange={(e) => updateBusinessHours(index, day, 'closed', !e.target.checked)}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                          />
+                          <span className="font-medium">{dayNames[day]}</span>
+                        </label>
+                        {!dayHours.closed && (
+                          <>
+                            <input
+                              type="time"
+                              value={dayHours.open}
+                              onChange={(e) => updateBusinessHours(index, day, 'open', e.target.value)}
+                              className="px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
+                            />
+                            <span>-</span>
+                            <input
+                              type="time"
+                              value={dayHours.close}
+                              onChange={(e) => updateBusinessHours(index, day, 'close', e.target.value)}
+                              className="px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
+                            />
+                          </>
+                        )}
+                        {dayHours.closed && (
+                          <span className="text-gray-500 italic">Chiuso</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           ))}
