@@ -88,6 +88,29 @@ export function HomePage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Attività in Evidenza</h2>
+          <p className="text-gray-600 mb-6">Le attività con più recensioni</p>
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : businesses.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-lg">
+              <p className="text-gray-600">Nessuna attività con recensioni al momento</p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {businesses.map((business) => (
+                <BusinessCard
+                  key={business.id}
+                  business={business}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-2xl shadow-lg p-8 mb-12">
           <div className="text-center">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
@@ -118,30 +141,6 @@ export function HomePage() {
             <h3 className="text-xl font-semibold mb-2">Attività Verificate</h3>
             <p className="text-gray-600">Tutte le attività sono verificate dal nostro team</p>
           </div>
-        </div>
-
-
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Attività in Evidenza</h2>
-          <p className="text-gray-600 mb-6">Le attività con più recensioni</p>
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-          ) : businesses.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-lg">
-              <p className="text-gray-600">Nessuna attività con recensioni al momento</p>
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {businesses.map((business) => (
-                <BusinessCard
-                  key={business.id}
-                  business={business}
-                />
-              ))}
-            </div>
-          )}
         </div>
 
         <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 rounded-2xl shadow-lg p-12 mt-16 text-center">
