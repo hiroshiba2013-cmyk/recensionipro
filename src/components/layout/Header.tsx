@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LogOut, User, CreditCard } from 'lucide-react';
+import { LogOut, User, CreditCard, Briefcase, Trophy } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
@@ -42,9 +42,17 @@ export function Header() {
             <nav className="flex items-center gap-6">
               <a
                 href="/jobs"
-                className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
               >
-                Lavoro
+                <Briefcase className="w-5 h-5" />
+                <span>Lavoro</span>
+              </a>
+              <a
+                href="/leaderboard"
+                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+              >
+                <Trophy className="w-5 h-5" />
+                <span>Classifica</span>
               </a>
 
               {user && profile ? (

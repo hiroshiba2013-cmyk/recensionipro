@@ -4,6 +4,7 @@ import { DashboardPage } from '../pages/DashboardPage';
 import { SubscriptionPage } from '../pages/SubscriptionPage';
 import { JobsPage } from '../pages/JobsPage';
 import { ProfilePage } from '../pages/ProfilePage';
+import { LeaderboardPage } from '../pages/LeaderboardPage';
 
 export function Router() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -41,6 +42,10 @@ export function Router() {
 
   if (currentPath === '/profile') {
     return <ProfilePage />;
+  }
+
+  if (currentPath === '/leaderboard') {
+    return <LeaderboardPage />;
   }
 
   return <HomePage />;
