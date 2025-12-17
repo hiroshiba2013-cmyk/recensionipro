@@ -133,6 +133,20 @@ export function HomePage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-2xl shadow-lg p-8 mb-12">
+          <div className="text-center">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+              Scrivi recensioni e vinci premi esclusivi!
+            </h2>
+            <p className="text-lg text-gray-700 max-w-4xl mx-auto leading-relaxed">
+              I migliori venti utenti che nel corso dell'anno scriveranno più recensioni saranno premiati con una gift card ricaricabile
+            </p>
+            <p className="text-base text-gray-600 mt-3 font-medium">
+              (Premi e classifica visibili nella sezione CLASSIFICA UTENTI)
+            </p>
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-3 gap-8 mb-12">
           <div className="bg-white p-6 rounded-xl shadow-sm text-center">
             <Star className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
