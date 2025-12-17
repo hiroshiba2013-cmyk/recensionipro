@@ -180,6 +180,15 @@ export function HomePage() {
             </div>
           )}
         </div>
+
+        <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 rounded-2xl shadow-lg p-12 mt-16 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+            Il tuo abbonamento vale il 10% di beneficenza
+          </h2>
+          <p className="text-lg text-gray-700 max-w-4xl mx-auto leading-relaxed">
+            Trovafacile ogni anno donerà il 10% del proprio FATTURATO, che sarà visibile con documenti certificati, ad associazioni che voterete voi utenti
+          </p>
+        </div>
       </div>
     </div>
   );
