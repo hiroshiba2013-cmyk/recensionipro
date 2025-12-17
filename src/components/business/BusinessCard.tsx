@@ -6,10 +6,9 @@ import { useAuth } from '../../contexts/AuthContext';
 
 interface BusinessCardProps {
   business: Business & { avg_rating?: number; review_count?: number };
-  onClick: () => void;
 }
 
-export function BusinessCard({ business, onClick }: BusinessCardProps) {
+export function BusinessCard({ business }: BusinessCardProps) {
   const { profile } = useAuth();
   const [showReviewForm, setShowReviewForm] = useState(false);
 
@@ -17,11 +16,21 @@ export function BusinessCard({ business, onClick }: BusinessCardProps) {
 
   const handleReviewClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     setShowReviewForm(true);
   };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (e.target !== e.currentTarget && (e.target as HTMLElement).closest('button, a')) {
+      return;
+    }
+    window.history.pushState({}, '', `/business/${business.id}`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
+
   return (
     <div
-      onClick={onClick}
+      onClick={handleCardClick}
       className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden border border-gray-100"
     >
       <div className="h-48 bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center">

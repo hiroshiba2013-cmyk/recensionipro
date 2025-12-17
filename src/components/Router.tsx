@@ -5,6 +5,7 @@ import { SubscriptionPage } from '../pages/SubscriptionPage';
 import { JobsPage } from '../pages/JobsPage';
 import { ProfilePage } from '../pages/ProfilePage';
 import { LeaderboardPage } from '../pages/LeaderboardPage';
+import { BusinessDetailPage } from '../pages/BusinessDetailPage';
 
 export function Router() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -46,6 +47,13 @@ export function Router() {
 
   if (currentPath === '/leaderboard') {
     return <LeaderboardPage />;
+  }
+
+  if (currentPath.startsWith('/business/')) {
+    const businessId = currentPath.split('/')[2];
+    if (businessId) {
+      return <BusinessDetailPage businessId={businessId} />;
+    }
   }
 
   return <HomePage />;

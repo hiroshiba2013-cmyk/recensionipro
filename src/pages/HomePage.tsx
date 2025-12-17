@@ -59,8 +59,7 @@ export function HomePage() {
         .select(`
           *,
           category:business_categories(*)
-        `)
-        .eq('verified', true);
+        `);
 
       if (filters.category) {
         query = query.eq('category_id', filters.category);
@@ -182,13 +181,6 @@ export function HomePage() {
                 <BusinessCard
                   key={business.id}
                   business={business}
-                  onClick={() => {
-                    if (user) {
-                      window.location.href = `/business/${business.id}`;
-                    } else {
-                      alert('Effettua il login per visualizzare i dettagli');
-                    }
-                  }}
                 />
               ))}
             </div>

@@ -34,7 +34,7 @@ export interface BusinessCategory {
 
 export interface Business {
   id: string;
-  owner_id: string;
+  owner_id: string | null;
   category_id: string;
   name: string;
   description: string;
@@ -43,8 +43,11 @@ export interface Business {
   phone: string;
   email: string;
   website: string;
+  website_url: string;
   logo_url: string;
   verified: boolean;
+  is_claimed: boolean;
+  ateco_code: string;
   created_at: string;
   category?: BusinessCategory;
 }
@@ -111,4 +114,21 @@ export interface JobPosting {
   active: boolean;
   created_at: string;
   expires_at: string;
+}
+
+export interface BusinessLocation {
+  id: string;
+  business_id: string;
+  location_name: string;
+  street: string;
+  street_number: string;
+  city: string;
+  province: string;
+  postal_code: string;
+  phone: string | null;
+  email: string | null;
+  avatar_url: string | null;
+  business_hours: string | null;
+  vat_number: string | null;
+  created_at: string;
 }
