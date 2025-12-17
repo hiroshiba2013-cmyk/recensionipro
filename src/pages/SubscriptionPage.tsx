@@ -299,8 +299,11 @@ export function SubscriptionPage() {
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
               Piani e Prezzi
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-4">
               Scegli il piano perfetto per te o per la tua attività
+            </p>
+            <p className="text-lg text-gray-700 max-w-3xl mx-auto">
+              I primi sei mesi di abbonamento sono gratuiti e dopo scegli se abbonarti o cancellare il profilo
             </p>
           </div>
 
