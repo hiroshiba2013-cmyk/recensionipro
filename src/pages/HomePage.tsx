@@ -4,6 +4,7 @@ import { supabase, Business, BusinessCategory } from '../lib/supabase';
 import { BusinessCard } from '../components/business/BusinessCard';
 import { AdvancedSearch, SearchFilters } from '../components/search/AdvancedSearch';
 import { useAuth } from '../contexts/AuthContext';
+import { PROVINCE_TO_CODE } from '../lib/cities';
 
 interface BusinessWithRating extends Business {
   avg_rating?: number;
@@ -63,6 +64,13 @@ export function HomePage() {
 
       if (filters.category) {
         query = query.eq('category_id', filters.category);
+      }
+
+      if (filters.province) {
+        const provinceCode = PROVINCE_TO_CODE[filters.province];
+        if (provinceCode) {
+          query = query.eq('office_province', provinceCode);
+        }
       }
 
       if (filters.city) {
