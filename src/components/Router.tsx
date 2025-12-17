@@ -6,6 +6,7 @@ import { JobsPage } from '../pages/JobsPage';
 import { ProfilePage } from '../pages/ProfilePage';
 import { LeaderboardPage } from '../pages/LeaderboardPage';
 import { BusinessDetailPage } from '../pages/BusinessDetailPage';
+import { SearchResultsPage } from '../pages/SearchResultsPage';
 
 export function Router() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -28,6 +29,10 @@ export function Router() {
       window.history.pushState = originalPushState;
     };
   }, []);
+
+  if (currentPath === '/search') {
+    return <SearchResultsPage />;
+  }
 
   if (currentPath === '/dashboard') {
     return <DashboardPage />;

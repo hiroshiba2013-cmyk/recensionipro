@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Star, TrendingUp, ShieldCheck } from 'lucide-react';
-import { supabase, Business, BusinessCategory } from '../lib/supabase';
+import { supabase, Business } from '../lib/supabase';
 import { BusinessCard } from '../components/business/BusinessCard';
-import { AdvancedSearch, SearchFilters } from '../components/search/AdvancedSearch';
+import { AdvancedSearch } from '../components/search/AdvancedSearch';
 import { useAuth } from '../contexts/AuthContext';
-import { PROVINCE_TO_CODE } from '../lib/cities';
 
 interface BusinessWithRating extends Business {
   avg_rating?: number;
@@ -13,75 +12,23 @@ interface BusinessWithRating extends Business {
 
 export function HomePage() {
   const [businesses, setBusinesses] = useState<BusinessWithRating[]>([]);
-  const [categories, setCategories] = useState<BusinessCategory[]>([]);
-  const [filters, setFilters] = useState<SearchFilters>({
-    category: '',
-    province: '',
-    city: '',
-    businessName: '',
-    minRating: 0,
-  });
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
   useEffect(() => {
-    loadData();
+    loadFeaturedBusinesses();
   }, []);
 
-  useEffect(() => {
-    if (categories.length > 0) {
-      applyFilters();
-    }
-  }, [filters]);
-
-  const loadData = async () => {
+  const loadFeaturedBusinesses = async () => {
     setLoading(true);
     try {
-      const { data: categoriesData } = await supabase
-        .from('business_categories')
-        .select('*')
-        .order('name');
-
-      if (categoriesData) {
-        setCategories(categoriesData);
-      }
-    } catch (error) {
-      console.error('Error loading categories:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const applyFilters = async () => {
-    setLoading(true);
-    try {
-      let query = supabase
+      const { data: businessesData } = await supabase
         .from('businesses')
         .select(`
           *,
           category:business_categories(*)
-        `);
-
-      if (filters.category) {
-        query = query.eq('category_id', filters.category);
-      }
-
-      if (filters.province) {
-        const provinceCode = PROVINCE_TO_CODE[filters.province];
-        if (provinceCode) {
-          query = query.eq('office_province', provinceCode);
-        }
-      }
-
-      if (filters.city) {
-        query = query.eq('city', filters.city);
-      }
-
-      if (filters.businessName) {
-        query = query.ilike('name', `%${filters.businessName}%`);
-      }
-
-      const { data: businessesData } = await query.order('created_at', { ascending: false });
+        `)
+        .order('created_at', { ascending: false });
 
       if (businessesData) {
         const businessesWithRatings = await Promise.all(
@@ -105,18 +52,15 @@ export function HomePage() {
           })
         );
 
-        let filtered = businessesWithRatings;
+        const sortedByReviews = businessesWithRatings
+          .filter(b => b.review_count > 0)
+          .sort((a, b) => b.review_count - a.review_count)
+          .slice(0, 12);
 
-        if (filters.minRating > 0) {
-          filtered = filtered.filter(b => (b.avg_rating || 0) >= filters.minRating);
-        }
-
-        filtered.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
-
-        setBusinesses(filtered);
+        setBusinesses(sortedByReviews);
       }
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error loading featured businesses:', error);
     } finally {
       setLoading(false);
     }
@@ -134,7 +78,11 @@ export function HomePage() {
               Tutto ciò che cerchi, recensioni verificate e scelte migliori. Più visibilità, più clienti, più crescita.
             </p>
 
-            <AdvancedSearch onSearch={setFilters} isLoading={loading} />
+            <AdvancedSearch
+              onSearch={() => {}}
+              isLoading={loading}
+              navigateToSearchPage={true}
+            />
           </div>
         </div>
       </div>
@@ -174,14 +122,15 @@ export function HomePage() {
 
 
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Attività in Evidenza</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Attività in Evidenza</h2>
+          <p className="text-gray-600 mb-6">Le attività con più recensioni</p>
           {loading ? (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
           ) : businesses.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-lg">
-              <p className="text-gray-600">Nessuna attività trovata</p>
+              <p className="text-gray-600">Nessuna attività con recensioni al momento</p>
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

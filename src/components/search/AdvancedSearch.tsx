@@ -15,9 +15,10 @@ export interface SearchFilters {
 interface AdvancedSearchProps {
   onSearch: (filters: SearchFilters) => void;
   isLoading?: boolean;
+  navigateToSearchPage?: boolean;
 }
 
-export function AdvancedSearch({ onSearch, isLoading = false }: AdvancedSearchProps) {
+export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPage = false }: AdvancedSearchProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [categories, setCategories] = useState<BusinessCategory[]>([]);
   const [availableCities, setAvailableCities] = useState<string[]>([]);
@@ -58,7 +59,11 @@ export function AdvancedSearch({ onSearch, isLoading = false }: AdvancedSearchPr
   };
 
   const handleSearchClick = () => {
-    onSearch(filters);
+    if (navigateToSearchPage) {
+      window.history.pushState({}, '', '/search');
+    } else {
+      onSearch(filters);
+    }
   };
 
   const handleReset = () => {
