@@ -471,10 +471,26 @@ export function ProfilePage() {
           <>
             {business && (
               <>
+                <div className="border-t-4 border-blue-500 bg-gradient-to-r from-blue-50 to-white rounded-lg p-4 mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <User className="w-6 h-6 text-blue-600" />
+                    Dati Aziendali
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">Informazioni generali dell'azienda</p>
+                </div>
+
                 <EditBusinessForm
-                  business={business}
+                  businessId={business.id}
                   onUpdate={loadBusinessData}
                 />
+
+                <div className="border-t-4 border-green-500 bg-gradient-to-r from-green-50 to-white rounded-lg p-4 mb-6 mt-8">
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <User className="w-6 h-6 text-green-600" />
+                    Punti Vendita
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">Gestisci i punti vendita dell'azienda</p>
+                </div>
 
                 <EditBusinessLocationsForm
                   businessId={business.id}
