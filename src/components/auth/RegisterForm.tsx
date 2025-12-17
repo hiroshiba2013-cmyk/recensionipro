@@ -32,11 +32,13 @@ interface BusinessHours {
 interface BusinessLocation {
   name: string;
   address: string;
+  streetNumber: string;
   city: string;
   province: string;
   postalCode: string;
   phone: string;
   email: string;
+  vatNumber: string;
   businessHours: BusinessHours;
 }
 
@@ -102,11 +104,13 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
           newLocations.push({
             name: i === 0 ? 'Sede Principale' : `Sede ${i + 1}`,
             address: '',
+            streetNumber: '',
             city: '',
             province: '',
             postalCode: '',
             phone: '',
             email: '',
+            vatNumber: '',
             businessHours: {
               monday: defaultHours,
               tuesday: defaultHours,
@@ -223,11 +227,13 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     setBusinessLocations([...businessLocations, {
       name: 'Sede',
       address: '',
+      streetNumber: '',
       city: '',
       province: '',
       postalCode: '',
       phone: '',
       email: '',
+      vatNumber: '',
       businessHours: {
         monday: defaultHours,
         tuesday: defaultHours,
@@ -396,11 +402,13 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             business_id: businesses.id,
             name: location.name,
             address: location.address,
+            street_number: location.streetNumber,
             city: location.city,
-            province: location.province,
+            province: location.province.toUpperCase(),
             postal_code: location.postalCode,
             phone: location.phone,
             email: location.email,
+            vat_number: location.vatNumber || null,
             business_hours: location.businessHours,
             is_primary: index === 0,
           }));
@@ -1280,21 +1288,52 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 />
               </div>
 
-              <div className="mb-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Indirizzo Completo
-                </label>
-                <input
-                  type="text"
-                  value={location.address}
-                  onChange={(e) => updateBusinessLocation(index, 'address', e.target.value)}
-                  required
-                  placeholder="Via/Piazza, numero civico"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                />
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Via/Piazza
+                  </label>
+                  <input
+                    type="text"
+                    value={location.address}
+                    onChange={(e) => updateBusinessLocation(index, 'address', e.target.value)}
+                    required
+                    placeholder="Es. Via Roma"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Numero
+                  </label>
+                  <input
+                    type="text"
+                    value={location.streetNumber}
+                    onChange={(e) => updateBusinessLocation(index, 'streetNumber', e.target.value)}
+                    required
+                    placeholder="Es. 42"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    CAP
+                  </label>
+                  <input
+                    type="text"
+                    value={location.postalCode}
+                    onChange={(e) => updateBusinessLocation(index, 'postalCode', e.target.value)}
+                    required
+                    placeholder="Es. 20121"
+                    maxLength={5}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Città
@@ -1316,29 +1355,16 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                   <input
                     type="text"
                     value={location.province}
-                    onChange={(e) => updateBusinessLocation(index, 'province', e.target.value)}
+                    onChange={(e) => updateBusinessLocation(index, 'province', e.target.value.toUpperCase())}
                     required
-                    placeholder="Es. MI"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    placeholder="MI"
+                    maxLength={2}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm uppercase"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3 mb-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    CAP
-                  </label>
-                  <input
-                    type="text"
-                    value={location.postalCode}
-                    onChange={(e) => updateBusinessLocation(index, 'postalCode', e.target.value)}
-                    required
-                    placeholder="Es. 20121"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                  />
-                </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Telefono Sede
@@ -1351,17 +1377,30 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Sede (opzionale)
+                  </label>
+                  <input
+                    type="email"
+                    value={location.email}
+                    onChange={(e) => updateBusinessLocation(index, 'email', e.target.value)}
+                    placeholder="Es. sede@azienda.it"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                </div>
               </div>
 
               <div className="mb-3">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Sede (opzionale)
+                  P.IVA Sede (opzionale)
                 </label>
                 <input
-                  type="email"
-                  value={location.email}
-                  onChange={(e) => updateBusinessLocation(index, 'email', e.target.value)}
-                  placeholder="Es. sede@azienda.it"
+                  type="text"
+                  value={location.vatNumber}
+                  onChange={(e) => updateBusinessLocation(index, 'vatNumber', e.target.value)}
+                  placeholder="Es. IT12345678900"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />
               </div>
