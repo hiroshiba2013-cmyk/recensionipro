@@ -10,7 +10,6 @@ interface LeaderboardUser {
   points: number;
   reviews_count: number;
   rank: number;
-  badges: string[];
 }
 
 interface Reward {
@@ -48,7 +47,7 @@ export function LeaderboardPage() {
           profile:profiles(id, full_name, avatar_url)
         `)
         .order('total_points', { ascending: false })
-        .limit(50);
+        .limit(20);
 
       if (error) throw error;
 
@@ -59,7 +58,6 @@ export function LeaderboardPage() {
         points: item.total_points || 0,
         reviews_count: item.reviews_count || 0,
         rank: index + 1,
-        badges: getBadges(item.total_points || 0, item.reviews_count || 0),
       }));
 
       setTopUsers(leaderboard);
@@ -88,7 +86,6 @@ export function LeaderboardPage() {
               points: userData.total_points || 0,
               reviews_count: userData.reviews_count || 0,
               rank: (totalUsers.count || 0) + 1,
-              badges: getBadges(userData.total_points || 0, userData.reviews_count || 0),
             });
           }
         }
@@ -113,23 +110,6 @@ export function LeaderboardPage() {
     } catch (error) {
       console.error('Error loading rewards:', error);
     }
-  };
-
-  const getBadges = (points: number, reviewsCount: number): string[] => {
-    const badges: string[] = [];
-
-    if (points >= 10000) badges.push('Leggenda');
-    else if (points >= 5000) badges.push('Maestro');
-    else if (points >= 2000) badges.push('Esperto');
-    else if (points >= 1000) badges.push('Veterano');
-    else if (points >= 500) badges.push('Avanzato');
-    else if (points >= 100) badges.push('Principiante');
-
-    if (reviewsCount >= 100) badges.push('Recensore d\'Oro');
-    else if (reviewsCount >= 50) badges.push('Recensore d\'Argento');
-    else if (reviewsCount >= 20) badges.push('Recensore di Bronzo');
-
-    return badges;
   };
 
   const getRankIcon = (rank: number) => {
@@ -237,16 +217,6 @@ export function LeaderboardPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-2 max-w-xs">
-                      {userRank.badges.map((badge) => (
-                        <span
-                          key={badge}
-                          className="bg-white text-blue-600 text-xs font-semibold px-3 py-1 rounded-full"
-                        >
-                          {badge}
-                        </span>
-                      ))}
-                    </div>
                   </div>
                 </div>
               </div>
@@ -255,7 +225,7 @@ export function LeaderboardPage() {
             <div className="max-w-4xl mx-auto">
               <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
-                  <h2 className="text-2xl font-bold text-white">Top 50 Utenti</h2>
+                  <h2 className="text-2xl font-bold text-white">Top 20 Utenti</h2>
                 </div>
 
                 <div className="divide-y divide-gray-200">
@@ -298,17 +268,6 @@ export function LeaderboardPage() {
                             </div>
                           </div>
                         </div>
-
-                        <div className="flex flex-wrap gap-2 max-w-xs justify-end">
-                          {user.badges.slice(0, 2).map((badge) => (
-                            <span
-                              key={badge}
-                              className="bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full"
-                            >
-                              {badge}
-                            </span>
-                          ))}
-                        </div>
                       </div>
                     </div>
                   ))}
@@ -328,19 +287,15 @@ export function LeaderboardPage() {
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex items-center gap-2">
                     <Award className="w-5 h-5 text-blue-600" />
-                    <span><strong>10 punti</strong> per ogni recensione pubblicata</span>
+                    <span><strong>15 punti</strong> per ogni recensione pubblicata</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Award className="w-5 h-5 text-blue-600" />
-                    <span><strong>5 punti</strong> per ogni foto caricata</span>
+                    <span><strong>25 punti</strong> per recensione completa con prova concreta (scontrino o fattura)</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Award className="w-5 h-5 text-blue-600" />
-                    <span><strong>20 punti</strong> per recensioni complete e dettagliate</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Award className="w-5 h-5 text-blue-600" />
-                    <span><strong>50 punti</strong> per ogni badge guadagnato</span>
+                    <span><strong>10 punti</strong> per inserimento di un'attività non presente</span>
                   </li>
                 </ul>
               </div>
