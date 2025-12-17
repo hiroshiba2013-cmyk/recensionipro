@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   MapPin, Phone, Mail, Globe, Star, Tag, Briefcase,
-  Building2, Clock, AlertCircle, CheckCircle
+  Building2, Clock, AlertCircle, CheckCircle, ArrowLeft
 } from 'lucide-react';
 import { supabase, Business, Review, Discount, JobPosting, BusinessLocation } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -196,6 +196,14 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <button
+          onClick={() => window.history.back()}
+          className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-medium"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Torna indietro
+        </button>
+
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="relative h-64 bg-gradient-to-r from-blue-600 to-blue-800">
             {business.logo_url && (
