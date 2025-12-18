@@ -14,6 +14,24 @@ export function SearchResultsPage() {
   const [businesses, setBusinesses] = useState<BusinessWithRating[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [initialFilters, setInitialFilters] = useState<SearchFilters | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const filters: SearchFilters = {
+      category: params.get('category') || '',
+      province: params.get('province') || '',
+      city: params.get('city') || '',
+      businessName: params.get('name') || '',
+      minRating: Number(params.get('rating')) || 0,
+    };
+
+    if (params.toString()) {
+      setInitialFilters(filters);
+      applyFilters(filters);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const applyFilters = async (filters: SearchFilters) => {
     setLoading(true);
@@ -109,7 +127,11 @@ export function SearchResultsPage() {
             </p>
           </div>
 
-          <AdvancedSearch onSearch={applyFilters} isLoading={loading} />
+          <AdvancedSearch
+            onSearch={applyFilters}
+            isLoading={loading}
+            initialFilters={initialFilters || undefined}
+          />
         </div>
       </div>
 

@@ -16,14 +16,15 @@ interface AdvancedSearchProps {
   onSearch: (filters: SearchFilters) => void;
   isLoading?: boolean;
   navigateToSearchPage?: boolean;
+  initialFilters?: SearchFilters;
 }
 
-export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPage = false }: AdvancedSearchProps) {
+export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPage = false, initialFilters }: AdvancedSearchProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [categories, setCategories] = useState<BusinessCategory[]>([]);
   const [availableCities, setAvailableCities] = useState<string[]>([]);
 
-  const [filters, setFilters] = useState<SearchFilters>({
+  const [filters, setFilters] = useState<SearchFilters>(initialFilters || {
     category: '',
     province: '',
     city: '',
@@ -32,15 +33,33 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
   });
 
   useEffect(() => {
+    if (initialFilters) {
+      setFilters(initialFilters);
+      if (initialFilters.province) {
+        setAvailableCities(CITIES_BY_PROVINCE[initialFilters.province] || []);
+      }
+      if (initialFilters.category || initialFilters.province || initialFilters.city || initialFilters.minRating > 0) {
+        setShowAdvanced(true);
+      }
+    }
+  }, [initialFilters]);
+
+  useEffect(() => {
     loadCategories();
   }, []);
 
   useEffect(() => {
     if (filters.province) {
-      setAvailableCities(CITIES_BY_PROVINCE[filters.province] || []);
-      setFilters(prev => ({ ...prev, city: '' }));
+      const cities = CITIES_BY_PROVINCE[filters.province] || [];
+      setAvailableCities(cities);
+      if (filters.city && !cities.includes(filters.city)) {
+        setFilters(prev => ({ ...prev, city: '' }));
+      }
     } else {
       setAvailableCities([]);
+      if (filters.city) {
+        setFilters(prev => ({ ...prev, city: '' }));
+      }
     }
   }, [filters.province]);
 
@@ -60,7 +79,16 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
 
   const handleSearchClick = () => {
     if (navigateToSearchPage) {
-      window.history.pushState({}, '', '/search');
+      const params = new URLSearchParams();
+      if (filters.category) params.set('category', filters.category);
+      if (filters.province) params.set('province', filters.province);
+      if (filters.city) params.set('city', filters.city);
+      if (filters.businessName) params.set('name', filters.businessName);
+      if (filters.minRating > 0) params.set('rating', String(filters.minRating));
+
+      const queryString = params.toString();
+      const url = queryString ? `/search?${queryString}` : '/search';
+      window.history.pushState({}, '', url);
     } else {
       onSearch(filters);
     }
