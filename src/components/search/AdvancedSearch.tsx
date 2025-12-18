@@ -97,7 +97,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
               value={filters.businessName}
               onChange={(e) => setFilters({ ...filters, businessName: e.target.value })}
               onKeyPress={(e) => e.key === 'Enter' && handleSearchClick()}
-              className="flex-1 py-2 text-gray-900 outline-none"
+              className="flex-1 py-2 text-gray-900 bg-transparent outline-none placeholder-gray-400"
               disabled={isLoading}
             />
           </div>
