@@ -8,6 +8,7 @@ import { EditBusinessForm } from '../components/business/EditBusinessForm';
 import { CreateBusinessForm } from '../components/business/CreateBusinessForm';
 import { DiscountForm } from '../components/discount/DiscountForm';
 import { ReviewResponseForm } from '../components/reviews/ReviewResponseForm';
+import { ImportBusinessesForm } from '../components/business/ImportBusinessesForm';
 
 export function DashboardPage() {
   const { profile } = useAuth();
@@ -243,6 +244,8 @@ export function DashboardPage() {
                     )}
                   </>
                 )}
+
+                <ImportBusinessesForm onImportComplete={loadDashboardData} />
 
                 <div className="bg-white rounded-lg shadow-sm p-6">
                   <div className="flex items-center justify-between mb-6">
