@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, X } from 'lucide-react';
 import { supabase, BusinessCategory } from '../../lib/supabase';
-import { ITALIAN_PROVINCES, CITIES_BY_PROVINCE } from '../../lib/cities';
+import { ITALIAN_REGIONS, PROVINCES_BY_REGION, ITALIAN_PROVINCES, CITIES_BY_PROVINCE } from '../../lib/cities';
 import { SearchableSelect } from '../common/SearchableSelect';
 
 export interface SearchFilters {
   category: string;
+  region: string;
   province: string;
   city: string;
   businessName: string;
@@ -22,10 +23,12 @@ interface AdvancedSearchProps {
 export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPage = false, initialFilters }: AdvancedSearchProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [categories, setCategories] = useState<BusinessCategory[]>([]);
+  const [availableProvinces, setAvailableProvinces] = useState<string[]>(ITALIAN_PROVINCES);
   const [availableCities, setAvailableCities] = useState<string[]>([]);
 
   const [filters, setFilters] = useState<SearchFilters>(initialFilters || {
     category: '',
+    region: '',
     province: '',
     city: '',
     businessName: '',
@@ -35,10 +38,13 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
   useEffect(() => {
     if (initialFilters) {
       setFilters(initialFilters);
+      if (initialFilters.region) {
+        setAvailableProvinces(PROVINCES_BY_REGION[initialFilters.region] || ITALIAN_PROVINCES);
+      }
       if (initialFilters.province) {
         setAvailableCities(CITIES_BY_PROVINCE[initialFilters.province] || []);
       }
-      if (initialFilters.category || initialFilters.province || initialFilters.city || initialFilters.minRating > 0) {
+      if (initialFilters.category || initialFilters.region || initialFilters.province || initialFilters.city || initialFilters.minRating > 0) {
         setShowAdvanced(true);
       }
     }
@@ -47,6 +53,19 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
   useEffect(() => {
     loadCategories();
   }, []);
+
+  useEffect(() => {
+    if (filters.region) {
+      const provinces = PROVINCES_BY_REGION[filters.region] || [];
+      setAvailableProvinces(provinces);
+      if (filters.province && !provinces.includes(filters.province)) {
+        setFilters(prev => ({ ...prev, province: '', city: '' }));
+        setAvailableCities([]);
+      }
+    } else {
+      setAvailableProvinces(ITALIAN_PROVINCES);
+    }
+  }, [filters.region]);
 
   useEffect(() => {
     if (filters.province) {
@@ -81,6 +100,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
     if (navigateToSearchPage) {
       const params = new URLSearchParams();
       if (filters.category) params.set('category', filters.category);
+      if (filters.region) params.set('region', filters.region);
       if (filters.province) params.set('province', filters.province);
       if (filters.city) params.set('city', filters.city);
       if (filters.businessName) params.set('name', filters.businessName);
@@ -97,6 +117,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
   const handleReset = () => {
     setFilters({
       category: '',
+      region: '',
       province: '',
       city: '',
       businessName: '',
@@ -104,6 +125,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
     });
     onSearch({
       category: '',
+      region: '',
       province: '',
       city: '',
       businessName: '',
@@ -111,7 +133,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
     });
   };
 
-  const hasActiveFilters = filters.category || filters.province || filters.city || filters.businessName || filters.minRating > 0;
+  const hasActiveFilters = filters.category || filters.region || filters.province || filters.city || filters.businessName || filters.minRating > 0;
 
   return (
     <div className="space-y-3">
@@ -143,7 +165,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
             <span className="text-sm font-medium">Filtri</span>
             {hasActiveFilters && (
               <span className="ml-1 px-2 py-0.5 bg-blue-600 text-white text-xs rounded-full">
-                {[filters.category, filters.province, filters.city, filters.minRating > 0 ? 'rating' : ''].filter(Boolean).length}
+                {[filters.category, filters.region, filters.province, filters.city, filters.minRating > 0 ? 'rating' : ''].filter(Boolean).length}
               </span>
             )}
           </button>
@@ -159,7 +181,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
 
         {showAdvanced && (
           <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Categoria
@@ -181,14 +203,34 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Regione
+                </label>
+                <SearchableSelect
+                  value={filters.region}
+                  onChange={(value) => setFilters({ ...filters, region: value })}
+                  options={[
+                    { value: '', label: 'Tutte le regioni' },
+                    ...ITALIAN_REGIONS.map((region) => ({
+                      value: region,
+                      label: region,
+                    }))
+                  ]}
+                  placeholder="Tutte le regioni"
+                  className="text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Provincia
                 </label>
                 <SearchableSelect
                   value={filters.province}
                   onChange={(value) => setFilters({ ...filters, province: value })}
+                  disabled={!filters.region && availableProvinces.length === 0}
                   options={[
                     { value: '', label: 'Tutte le province' },
-                    ...ITALIAN_PROVINCES.map((province) => ({
+                    ...availableProvinces.map((province) => ({
                       value: province,
                       label: province,
                     }))

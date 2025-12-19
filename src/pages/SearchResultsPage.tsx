@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { supabase, Business, BusinessCategory } from '../lib/supabase';
 import { BusinessCard } from '../components/business/BusinessCard';
 import { AdvancedSearch, SearchFilters } from '../components/search/AdvancedSearch';
-import { PROVINCE_TO_CODE } from '../lib/cities';
+import { PROVINCE_TO_CODE, PROVINCES_BY_REGION } from '../lib/cities';
 
 interface BusinessWithRating extends Business {
   avg_rating?: number;
@@ -20,6 +20,7 @@ export function SearchResultsPage() {
     const params = new URLSearchParams(window.location.search);
     const filters: SearchFilters = {
       category: params.get('category') || '',
+      region: params.get('region') || '',
       province: params.get('province') || '',
       city: params.get('city') || '',
       businessName: params.get('name') || '',
@@ -37,7 +38,36 @@ export function SearchResultsPage() {
     setLoading(true);
     setHasSearched(true);
     try {
-      let query = supabase
+      const businessIds = new Set<string>();
+
+      if (filters.region || filters.province || filters.city) {
+        let locationQuery = supabase
+          .from('business_locations')
+          .select('business_id, province, city');
+
+        if (filters.region) {
+          const provincesInRegion = PROVINCES_BY_REGION[filters.region] || [];
+          if (provincesInRegion.length > 0) {
+            locationQuery = locationQuery.in('province', provincesInRegion);
+          }
+        }
+
+        if (filters.province) {
+          locationQuery = locationQuery.eq('province', filters.province);
+        }
+
+        if (filters.city) {
+          locationQuery = locationQuery.eq('city', filters.city);
+        }
+
+        const { data: locationsData } = await locationQuery;
+
+        if (locationsData) {
+          locationsData.forEach((loc) => businessIds.add(loc.business_id));
+        }
+      }
+
+      let businessQuery = supabase
         .from('businesses')
         .select(`
           *,
@@ -45,25 +75,18 @@ export function SearchResultsPage() {
         `);
 
       if (filters.category) {
-        query = query.eq('category_id', filters.category);
-      }
-
-      if (filters.province) {
-        const provinceCode = PROVINCE_TO_CODE[filters.province];
-        if (provinceCode) {
-          query = query.eq('office_province', provinceCode);
-        }
-      }
-
-      if (filters.city) {
-        query = query.eq('city', filters.city);
+        businessQuery = businessQuery.eq('category_id', filters.category);
       }
 
       if (filters.businessName) {
-        query = query.ilike('name', `%${filters.businessName}%`);
+        businessQuery = businessQuery.ilike('name', `%${filters.businessName}%`);
       }
 
-      const { data: businessesData } = await query.order('created_at', { ascending: false });
+      if (businessIds.size > 0) {
+        businessQuery = businessQuery.in('id', Array.from(businessIds));
+      }
+
+      const { data: businessesData } = await businessQuery.order('created_at', { ascending: false });
 
       if (businessesData) {
         const businessesWithRatings = await Promise.all(
