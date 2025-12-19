@@ -109,9 +109,8 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
       const queryString = params.toString();
       const url = queryString ? `/search?${queryString}` : '/search';
       window.history.pushState({}, '', url);
-    } else {
-      onSearch(filters);
     }
+    onSearch(filters);
   };
 
   const handleReset = () => {

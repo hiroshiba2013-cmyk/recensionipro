@@ -38,9 +38,10 @@ export function SearchResultsPage() {
     setLoading(true);
     setHasSearched(true);
     try {
-      const businessIds = new Set<string>();
+      let businessIds: Set<string> | null = null;
 
       if (filters.region || filters.province || filters.city) {
+        businessIds = new Set<string>();
         let locationQuery = supabase
           .from('business_locations')
           .select('business_id, province, city');
@@ -48,12 +49,18 @@ export function SearchResultsPage() {
         if (filters.region) {
           const provincesInRegion = PROVINCES_BY_REGION[filters.region] || [];
           if (provincesInRegion.length > 0) {
-            locationQuery = locationQuery.in('province', provincesInRegion);
+            const provinceCodes = provincesInRegion.map(p => PROVINCE_TO_CODE[p]).filter(Boolean);
+            if (provinceCodes.length > 0) {
+              locationQuery = locationQuery.in('province', provinceCodes);
+            }
           }
         }
 
         if (filters.province) {
-          locationQuery = locationQuery.eq('province', filters.province);
+          const provinceCode = PROVINCE_TO_CODE[filters.province];
+          if (provinceCode) {
+            locationQuery = locationQuery.eq('province', provinceCode);
+          }
         }
 
         if (filters.city) {
@@ -63,7 +70,7 @@ export function SearchResultsPage() {
         const { data: locationsData } = await locationQuery;
 
         if (locationsData) {
-          locationsData.forEach((loc) => businessIds.add(loc.business_id));
+          locationsData.forEach((loc) => businessIds!.add(loc.business_id));
         }
       }
 
@@ -82,8 +89,12 @@ export function SearchResultsPage() {
         businessQuery = businessQuery.ilike('name', `%${filters.businessName}%`);
       }
 
-      if (businessIds.size > 0) {
+      if (businessIds !== null && businessIds.size > 0) {
         businessQuery = businessQuery.in('id', Array.from(businessIds));
+      } else if (businessIds !== null && businessIds.size === 0) {
+        setBusinesses([]);
+        setLoading(false);
+        return;
       }
 
       const { data: businessesData } = await businessQuery.order('created_at', { ascending: false });
