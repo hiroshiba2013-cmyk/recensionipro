@@ -279,28 +279,32 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">Informazioni di Contatto</h2>
                   <div className="space-y-3">
-                    {business.address && (
+                    {(business.address || (locations.length > 0 && locations[0].address)) && (
                       <div className="flex items-start gap-3">
                         <MapPin className="w-5 h-5 text-gray-400 mt-1" />
                         <div>
-                          <p className="text-gray-900">{business.address}</p>
-                          <p className="text-gray-600">{business.city}</p>
+                          <p className="text-gray-900">
+                            {business.address || (locations[0]?.address && `${locations[0].address}${locations[0].street_number ? ', ' + locations[0].street_number : ''}`)}
+                          </p>
+                          <p className="text-gray-600">
+                            {business.city || (locations[0]?.postal_code && locations[0]?.city ? `${locations[0].postal_code} ${locations[0].city} (${locations[0].province})` : locations[0]?.city)}
+                          </p>
                         </div>
                       </div>
                     )}
-                    {business.phone && (
+                    {(business.phone || (locations.length > 0 && locations[0].phone)) && (
                       <div className="flex items-center gap-3">
                         <Phone className="w-5 h-5 text-gray-400" />
-                        <a href={`tel:${business.phone}`} className="text-blue-600 hover:underline">
-                          {business.phone}
+                        <a href={`tel:${business.phone || locations[0]?.phone}`} className="text-blue-600 hover:underline">
+                          {business.phone || locations[0]?.phone}
                         </a>
                       </div>
                     )}
-                    {business.email && (
+                    {(business.email || (locations.length > 0 && locations[0].email)) && (
                       <div className="flex items-center gap-3">
                         <Mail className="w-5 h-5 text-gray-400" />
-                        <a href={`mailto:${business.email}`} className="text-blue-600 hover:underline">
-                          {business.email}
+                        <a href={`mailto:${business.email || locations[0]?.email}`} className="text-blue-600 hover:underline">
+                          {business.email || locations[0]?.email}
                         </a>
                       </div>
                     )}
@@ -320,24 +324,37 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                   </div>
                 </div>
 
-                {locations.length > 0 && (
+                {locations.length > 1 && (
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Sedi</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Altre Sedi</h2>
                     <div className="space-y-4">
-                      {locations.map((location) => (
+                      {locations.slice(1).map((location) => (
                         <div key={location.id} className="border border-gray-200 rounded-lg p-4">
-                          <h3 className="font-semibold text-lg mb-2">{location.location_name}</h3>
+                          <h3 className="font-semibold text-lg mb-2">{location.name || 'Sede'}</h3>
                           <div className="space-y-2 text-sm">
                             <p className="text-gray-700">
-                              {location.street} {location.street_number}, {location.city}
+                              {location.address}{location.street_number ? ', ' + location.street_number : ''}, {location.postal_code} {location.city} ({location.province})
                             </p>
                             {location.phone && (
-                              <p className="text-gray-600">Tel: {location.phone}</p>
+                              <div className="flex items-center gap-2">
+                                <Phone className="w-4 h-4 text-gray-400" />
+                                <a href={`tel:${location.phone}`} className="text-blue-600 hover:underline">
+                                  {location.phone}
+                                </a>
+                              </div>
+                            )}
+                            {location.email && (
+                              <div className="flex items-center gap-2">
+                                <Mail className="w-4 h-4 text-gray-400" />
+                                <a href={`mailto:${location.email}`} className="text-blue-600 hover:underline">
+                                  {location.email}
+                                </a>
+                              </div>
                             )}
                             {location.business_hours && (
                               <div className="flex items-start gap-2">
                                 <Clock className="w-4 h-4 text-gray-400 mt-0.5" />
-                                <p className="text-gray-600">{location.business_hours}</p>
+                                <p className="text-gray-600">{typeof location.business_hours === 'string' ? location.business_hours : JSON.stringify(location.business_hours)}</p>
                               </div>
                             )}
                           </div>

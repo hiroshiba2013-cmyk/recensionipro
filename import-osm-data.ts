@@ -241,21 +241,103 @@ async function importBusinesses(city: string, province: string) {
 }
 
 async function main() {
+  // Città principali per ogni regione italiana
   const cities = [
-    { name: 'Varese', province: 'VA' },
+    // Lombardia
+    { name: 'Milano', province: 'MI' },
+    { name: 'Bergamo', province: 'BG' },
+    { name: 'Brescia', province: 'BS' },
     { name: 'Como', province: 'CO' },
-    { name: 'Busto Arsizio', province: 'VA' },
+    { name: 'Monza', province: 'MB' },
+
+    // Piemonte
+    { name: 'Torino', province: 'TO' },
+    { name: 'Alessandria', province: 'AL' },
+    { name: 'Novara', province: 'NO' },
+
+    // Veneto
+    { name: 'Venezia', province: 'VE' },
+    { name: 'Verona', province: 'VR' },
+    { name: 'Padova', province: 'PD' },
+    { name: 'Vicenza', province: 'VI' },
+
+    // Emilia-Romagna
+    { name: 'Bologna', province: 'BO' },
+    { name: 'Modena', province: 'MO' },
+    { name: 'Parma', province: 'PR' },
+    { name: 'Rimini', province: 'RN' },
+
+    // Toscana
+    { name: 'Firenze', province: 'FI' },
+    { name: 'Pisa', province: 'PI' },
+    { name: 'Siena', province: 'SI' },
+    { name: 'Lucca', province: 'LU' },
+
+    // Lazio
+    { name: 'Roma', province: 'RM' },
+    { name: 'Latina', province: 'LT' },
+
+    // Campania
+    { name: 'Napoli', province: 'NA' },
+    { name: 'Salerno', province: 'SA' },
+
+    // Puglia
+    { name: 'Bari', province: 'BA' },
+    { name: 'Lecce', province: 'LE' },
+    { name: 'Taranto', province: 'TA' },
+
+    // Sicilia
+    { name: 'Palermo', province: 'PA' },
+    { name: 'Catania', province: 'CT' },
+    { name: 'Messina', province: 'ME' },
+
+    // Sardegna
+    { name: 'Cagliari', province: 'CA' },
+    { name: 'Sassari', province: 'SS' },
+
+    // Liguria
+    { name: 'Genova', province: 'GE' },
+    { name: 'La Spezia', province: 'SP' },
+
+    // Marche
+    { name: 'Ancona', province: 'AN' },
+    { name: 'Pesaro', province: 'PU' },
+
+    // Umbria
+    { name: 'Perugia', province: 'PG' },
+    { name: 'Terni', province: 'TR' },
+
+    // Abruzzo
+    { name: 'L\'Aquila', province: 'AQ' },
+    { name: 'Pescara', province: 'PE' },
+
+    // Calabria
+    { name: 'Reggio Calabria', province: 'RC' },
+    { name: 'Catanzaro', province: 'CZ' },
+
+    // Trentino-Alto Adige
+    { name: 'Trento', province: 'TN' },
+    { name: 'Bolzano', province: 'BZ' },
+
+    // Friuli-Venezia Giulia
+    { name: 'Trieste', province: 'TS' },
+    { name: 'Udine', province: 'UD' },
   ];
 
-  console.log('🚀 Starting OSM data import...\n');
+  console.log('🚀 Starting OSM data import for all Italian regions...\n');
+  console.log(`📊 Total cities to process: ${cities.length}\n`);
+
+  let totalImported = 0;
+  let successfulCities = 0;
 
   for (const city of cities) {
     await importBusinesses(city.name, city.province);
-    // Wait 5 seconds between requests to respect API rate limits
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Wait 8 seconds between requests to respect API rate limits
+    await new Promise(resolve => setTimeout(resolve, 8000));
   }
 
   console.log('\n✅ Import completed!');
+  console.log(`📈 Summary: Processed ${cities.length} cities`);
 }
 
 main();
