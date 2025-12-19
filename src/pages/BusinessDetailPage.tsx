@@ -276,53 +276,68 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                   </div>
                 )}
 
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Informazioni di Contatto</h2>
-                  <div className="space-y-3">
-                    {(business.address || (locations.length > 0 && locations[0].address)) && (
-                      <div className="flex items-start gap-3">
-                        <MapPin className="w-5 h-5 text-gray-400 mt-1" />
-                        <div>
-                          <p className="text-gray-900">
-                            {business.address || (locations[0]?.address && `${locations[0].address}${locations[0].street_number ? ', ' + locations[0].street_number : ''}`)}
-                          </p>
-                          <p className="text-gray-600">
-                            {business.city || (locations[0]?.postal_code && locations[0]?.city ? `${locations[0].postal_code} ${locations[0].city} (${locations[0].province})` : locations[0]?.city)}
-                          </p>
-                        </div>
+                {(() => {
+                  const primaryLocation = locations.length > 0 ? locations[0] : null;
+                  const displayAddress = business.address || primaryLocation?.address;
+                  const displayCity = business.city || primaryLocation?.city;
+                  const displayPhone = business.phone || primaryLocation?.phone;
+                  const displayEmail = business.email || primaryLocation?.email;
+                  const displayWebsite = business.website || business.website_url;
+
+                  const hasContactInfo = displayAddress || displayPhone || displayEmail || displayWebsite;
+
+                  if (!hasContactInfo) return null;
+
+                  return (
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900 mb-4">Informazioni di Contatto</h2>
+                      <div className="space-y-3">
+                        {displayAddress && (
+                          <div className="flex items-start gap-3">
+                            <MapPin className="w-5 h-5 text-gray-400 mt-1" />
+                            <div>
+                              <p className="text-gray-900">
+                                {business.address || (primaryLocation?.address && `${primaryLocation.address}${primaryLocation.street_number ? ', ' + primaryLocation.street_number : ''}`)}
+                              </p>
+                              <p className="text-gray-600">
+                                {business.city || (primaryLocation?.postal_code && primaryLocation?.city ? `${primaryLocation.postal_code} ${primaryLocation.city} (${primaryLocation.province})` : primaryLocation?.city)}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        {displayPhone && (
+                          <div className="flex items-center gap-3">
+                            <Phone className="w-5 h-5 text-gray-400" />
+                            <a href={`tel:${displayPhone}`} className="text-blue-600 hover:underline">
+                              {displayPhone}
+                            </a>
+                          </div>
+                        )}
+                        {displayEmail && (
+                          <div className="flex items-center gap-3">
+                            <Mail className="w-5 h-5 text-gray-400" />
+                            <a href={`mailto:${displayEmail}`} className="text-blue-600 hover:underline">
+                              {displayEmail}
+                            </a>
+                          </div>
+                        )}
+                        {displayWebsite && (
+                          <div className="flex items-center gap-3">
+                            <Globe className="w-5 h-5 text-gray-400" />
+                            <a
+                              href={displayWebsite}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              {displayWebsite}
+                            </a>
+                          </div>
+                        )}
                       </div>
-                    )}
-                    {(business.phone || (locations.length > 0 && locations[0].phone)) && (
-                      <div className="flex items-center gap-3">
-                        <Phone className="w-5 h-5 text-gray-400" />
-                        <a href={`tel:${business.phone || locations[0]?.phone}`} className="text-blue-600 hover:underline">
-                          {business.phone || locations[0]?.phone}
-                        </a>
-                      </div>
-                    )}
-                    {(business.email || (locations.length > 0 && locations[0].email)) && (
-                      <div className="flex items-center gap-3">
-                        <Mail className="w-5 h-5 text-gray-400" />
-                        <a href={`mailto:${business.email || locations[0]?.email}`} className="text-blue-600 hover:underline">
-                          {business.email || locations[0]?.email}
-                        </a>
-                      </div>
-                    )}
-                    {(business.website || business.website_url) && (
-                      <div className="flex items-center gap-3">
-                        <Globe className="w-5 h-5 text-gray-400" />
-                        <a
-                          href={business.website || business.website_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline"
-                        >
-                          {business.website || business.website_url}
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                    </div>
+                  );
+                })()}
 
                 {locations.length > 1 && (
                   <div>
