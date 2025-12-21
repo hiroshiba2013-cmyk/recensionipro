@@ -76,9 +76,6 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
       }
     } else {
       setAvailableCities([]);
-      if (filters.city) {
-        setFilters(prev => ({ ...prev, city: '' }));
-      }
     }
   }, [filters.province]);
 
@@ -206,7 +203,16 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
                 </label>
                 <SearchableSelect
                   value={filters.region}
-                  onChange={(value) => setFilters({ ...filters, region: value })}
+                  onChange={(value) => {
+                    const newProvinces = value ? PROVINCES_BY_REGION[value] || [] : ITALIAN_PROVINCES;
+                    const shouldResetProvince = filters.province && value && !newProvinces.includes(filters.province);
+                    setFilters({
+                      ...filters,
+                      region: value,
+                      province: shouldResetProvince ? '' : filters.province,
+                      city: shouldResetProvince ? '' : filters.city
+                    });
+                  }}
                   options={[
                     { value: '', label: 'Tutte le regioni' },
                     ...ITALIAN_REGIONS.map((region) => ({
@@ -225,8 +231,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
                 </label>
                 <SearchableSelect
                   value={filters.province}
-                  onChange={(value) => setFilters({ ...filters, province: value })}
-                  disabled={!filters.region && availableProvinces.length === 0}
+                  onChange={(value) => setFilters({ ...filters, province: value, city: value ? filters.city : '' })}
                   options={[
                     { value: '', label: 'Tutte le province' },
                     ...availableProvinces.map((province) => ({
@@ -248,13 +253,13 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
                   onChange={(value) => setFilters({ ...filters, city: value })}
                   disabled={!filters.province}
                   options={[
-                    { value: '', label: filters.province ? 'Tutte le città' : 'Seleziona prima una provincia' },
+                    { value: '', label: filters.province ? 'Tutte le città' : 'Seleziona prima provincia' },
                     ...availableCities.map((city) => ({
                       value: city,
                       label: city,
                     }))
                   ]}
-                  placeholder={filters.province ? 'Tutte le città' : 'Seleziona prima una provincia'}
+                  placeholder={filters.province ? 'Tutte le città' : 'Seleziona prima provincia'}
                   className="text-sm"
                 />
               </div>
