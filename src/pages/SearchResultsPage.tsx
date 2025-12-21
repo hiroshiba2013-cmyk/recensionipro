@@ -38,13 +38,20 @@ export function SearchResultsPage() {
     setLoading(true);
     setHasSearched(true);
     try {
-      let businessIds: Set<string> | null = null;
+      const hasLocationFilter = filters.region || filters.province || filters.city;
+      let businessesMap = new Map<string, Business>();
 
-      if (filters.region || filters.province || filters.city) {
-        businessIds = new Set<string>();
+      if (hasLocationFilter) {
         let locationQuery = supabase
           .from('business_locations')
-          .select('business_id, province, city');
+          .select(`
+            business_id,
+            businesses!inner (
+              *,
+              category:business_categories(*)
+            )
+          `)
+          .range(0, 4999);
 
         if (filters.region) {
           const provincesInRegion = PROVINCES_BY_REGION[filters.region] || [];
@@ -70,67 +77,80 @@ export function SearchResultsPage() {
         const { data: locationsData } = await locationQuery;
 
         if (locationsData) {
-          locationsData.forEach((loc) => businessIds!.add(loc.business_id));
+          locationsData.forEach((loc: any) => {
+            if (loc.businesses && !businessesMap.has(loc.businesses.id)) {
+              businessesMap.set(loc.businesses.id, loc.businesses);
+            }
+          });
+        }
+      } else {
+        let businessQuery = supabase
+          .from('businesses')
+          .select(`
+            *,
+            category:business_categories(*)
+          `)
+          .range(0, 4999);
+
+        if (filters.category) {
+          businessQuery = businessQuery.eq('category_id', filters.category);
+        }
+
+        if (filters.businessName) {
+          businessQuery = businessQuery.ilike('name', `%${filters.businessName}%`);
+        }
+
+        const { data: businessesData } = await businessQuery.order('created_at', { ascending: false });
+
+        if (businessesData) {
+          businessesData.forEach((business) => {
+            businessesMap.set(business.id, business);
+          });
         }
       }
 
-      let businessQuery = supabase
-        .from('businesses')
-        .select(`
-          *,
-          category:business_categories(*)
-        `);
+      let businessesArray = Array.from(businessesMap.values());
 
-      if (filters.category) {
-        businessQuery = businessQuery.eq('category_id', filters.category);
+      if (hasLocationFilter && filters.category) {
+        businessesArray = businessesArray.filter(b => b.category_id === filters.category);
       }
 
-      if (filters.businessName) {
-        businessQuery = businessQuery.ilike('name', `%${filters.businessName}%`);
-      }
-
-      if (businessIds !== null && businessIds.size > 0) {
-        businessQuery = businessQuery.in('id', Array.from(businessIds));
-      } else if (businessIds !== null && businessIds.size === 0) {
-        setBusinesses([]);
-        setLoading(false);
-        return;
-      }
-
-      const { data: businessesData } = await businessQuery.order('created_at', { ascending: false });
-
-      if (businessesData) {
-        const businessesWithRatings = await Promise.all(
-          businessesData.map(async (business) => {
-            const { data: reviews } = await supabase
-              .from('reviews')
-              .select('rating')
-              .eq('business_id', business.id);
-
-            const avg_rating = reviews && reviews.length > 0
-              ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-              : 0;
-
-            const review_count = reviews?.length || 0;
-
-            return {
-              ...business,
-              avg_rating,
-              review_count,
-            };
-          })
+      if (hasLocationFilter && filters.businessName) {
+        businessesArray = businessesArray.filter(b =>
+          b.name.toLowerCase().includes(filters.businessName.toLowerCase())
         );
-
-        let filtered = businessesWithRatings;
-
-        if (filters.minRating > 0) {
-          filtered = filtered.filter(b => (b.avg_rating || 0) >= filters.minRating);
-        }
-
-        filtered.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
-
-        setBusinesses(filtered);
       }
+
+      const businessesWithRatings = await Promise.all(
+        businessesArray.map(async (business) => {
+          const { data: reviews } = await supabase
+            .from('reviews')
+            .select('rating')
+            .eq('business_id', business.id);
+
+          const avg_rating = reviews && reviews.length > 0
+            ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+            : 0;
+
+          const review_count = reviews?.length || 0;
+
+          return {
+            ...business,
+            avg_rating,
+            review_count,
+          };
+        })
+      );
+
+      let filtered = businessesWithRatings;
+
+      if (filters.minRating > 0) {
+        filtered = filtered.filter(b => (b.avg_rating || 0) >= filters.minRating);
+      }
+
+      filtered.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
+
+      setBusinesses(filtered);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {

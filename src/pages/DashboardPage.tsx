@@ -79,7 +79,7 @@ export function DashboardPage() {
               .from('job_postings')
               .select('*')
               .in('business_id', businessIds)
-              .eq('active', true)
+              .eq('status', 'active')
               .order('created_at', { ascending: false });
 
             if (jobPostingsData) {

@@ -80,7 +80,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           .from('discounts')
           .select('*')
           .eq('business_id', businessId)
-          .eq('active', true);
+          .eq('status', 'active');
 
         if (discountsData) {
           setDiscounts(discountsData);
@@ -90,7 +90,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           .from('job_postings')
           .select('*')
           .eq('business_id', businessId)
-          .eq('active', true);
+          .eq('status', 'active');
 
         if (jobsData) {
           setJobPostings(jobsData);
