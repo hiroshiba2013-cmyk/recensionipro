@@ -254,16 +254,22 @@ export function SearchResultsPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Risultati della Ricerca
-            {hasSearched && (
-              <span className="ml-3 text-lg font-normal text-gray-600">
-                ({businesses.length} {businesses.length === 1 ? 'attività trovata' : 'attività trovate'})
-              </span>
-            )}
-          </h2>
-        </div>
+        {hasSearched && (
+          <div className="mb-6 flex items-center justify-between bg-white rounded-lg shadow-sm p-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Risultati della Ricerca</h2>
+              <p className="text-gray-600 mt-1">Trova le attività che corrispondono ai tuoi criteri</p>
+            </div>
+            <div className="bg-blue-50 px-6 py-3 rounded-lg border-2 border-blue-200">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600">{businesses.length}</div>
+                <div className="text-sm text-blue-800 font-medium mt-1">
+                  {businesses.length === 1 ? 'Attività Trovata' : 'Attività Trovate'}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-12">
