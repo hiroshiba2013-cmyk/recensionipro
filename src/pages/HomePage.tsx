@@ -22,17 +22,31 @@ export function HomePage() {
   const loadFeaturedBusinesses = async () => {
     setLoading(true);
     try {
-      const { data: businessesData } = await supabase
-        .from('businesses')
-        .select(`
-          *,
-          category:business_categories(*)
-        `)
-        .order('created_at', { ascending: false });
+      const allBusinesses: Business[] = [];
+      let from = 0;
+      const batchSize = 1000;
 
-      if (businessesData) {
+      while (true) {
+        const { data: batch } = await supabase
+          .from('businesses')
+          .select(`
+            *,
+            category:business_categories(*)
+          `)
+          .range(from, from + batchSize - 1)
+          .order('created_at', { ascending: false });
+
+        if (!batch || batch.length === 0) break;
+
+        allBusinesses.push(...batch);
+
+        if (batch.length < batchSize) break;
+        from += batchSize;
+      }
+
+      if (allBusinesses.length > 0) {
         const businessesWithRatings = await Promise.all(
-          businessesData.map(async (business) => {
+          allBusinesses.map(async (business) => {
             const { data: reviews } = await supabase
               .from('reviews')
               .select('rating')
@@ -53,9 +67,7 @@ export function HomePage() {
         );
 
         const sortedByReviews = businessesWithRatings
-          .filter(b => b.review_count > 0)
-          .sort((a, b) => b.review_count - a.review_count)
-          .slice(0, 12);
+          .sort((a, b) => (b.review_count || 0) - (a.review_count || 0));
 
         setBusinesses(sortedByReviews);
       }
@@ -89,15 +101,27 @@ export function HomePage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Attività in Evidenza</h2>
-          <p className="text-gray-600 mb-6">Le attività con più recensioni</p>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Tutte le Attività</h2>
+              <p className="text-gray-600">Ordinate per numero di recensioni</p>
+            </div>
+            <div className="bg-blue-50 px-6 py-3 rounded-lg border-2 border-blue-200">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600">{businesses.length}</div>
+                <div className="text-sm text-blue-800 font-medium mt-1">
+                  {businesses.length === 1 ? 'Attività' : 'Attività'}
+                </div>
+              </div>
+            </div>
+          </div>
           {loading ? (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
           ) : businesses.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-lg">
-              <p className="text-gray-600">Nessuna attività con recensioni al momento</p>
+              <p className="text-gray-600">Nessuna attività al momento</p>
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
