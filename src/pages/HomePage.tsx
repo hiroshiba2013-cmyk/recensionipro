@@ -1,82 +1,7 @@
-import { useState, useEffect } from 'react';
 import { Star, TrendingUp, ShieldCheck } from 'lucide-react';
-import { supabase, Business } from '../lib/supabase';
-import { BusinessCard } from '../components/business/BusinessCard';
 import { AdvancedSearch } from '../components/search/AdvancedSearch';
-import { useAuth } from '../contexts/AuthContext';
-
-interface BusinessWithRating extends Business {
-  avg_rating?: number;
-  review_count?: number;
-}
 
 export function HomePage() {
-  const [businesses, setBusinesses] = useState<BusinessWithRating[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-
-  useEffect(() => {
-    loadFeaturedBusinesses();
-  }, []);
-
-  const loadFeaturedBusinesses = async () => {
-    setLoading(true);
-    try {
-      const allBusinesses: Business[] = [];
-      let from = 0;
-      const batchSize = 1000;
-
-      while (true) {
-        const { data: batch } = await supabase
-          .from('businesses')
-          .select(`
-            *,
-            category:business_categories(*)
-          `)
-          .range(from, from + batchSize - 1)
-          .order('created_at', { ascending: false });
-
-        if (!batch || batch.length === 0) break;
-
-        allBusinesses.push(...batch);
-
-        if (batch.length < batchSize) break;
-        from += batchSize;
-      }
-
-      if (allBusinesses.length > 0) {
-        const businessesWithRatings = await Promise.all(
-          allBusinesses.map(async (business) => {
-            const { data: reviews } = await supabase
-              .from('reviews')
-              .select('rating')
-              .eq('business_id', business.id);
-
-            const avg_rating = reviews && reviews.length > 0
-              ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-              : 0;
-
-            const review_count = reviews?.length || 0;
-
-            return {
-              ...business,
-              avg_rating,
-              review_count,
-            };
-          })
-        );
-
-        const sortedByReviews = businessesWithRatings
-          .sort((a, b) => (b.review_count || 0) - (a.review_count || 0));
-
-        setBusinesses(sortedByReviews);
-      }
-    } catch (error) {
-      console.error('Error loading featured businesses:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -92,7 +17,7 @@ export function HomePage() {
 
             <AdvancedSearch
               onSearch={() => {}}
-              isLoading={loading}
+              isLoading={false}
               navigateToSearchPage={true}
             />
           </div>
@@ -100,41 +25,6 @@ export function HomePage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Tutte le Attività</h2>
-              <p className="text-gray-600">Ordinate per numero di recensioni</p>
-            </div>
-            <div className="bg-blue-50 px-6 py-3 rounded-lg border-2 border-blue-200">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">{businesses.length}</div>
-                <div className="text-sm text-blue-800 font-medium mt-1">
-                  {businesses.length === 1 ? 'Attività' : 'Attività'}
-                </div>
-              </div>
-            </div>
-          </div>
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-          ) : businesses.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-lg">
-              <p className="text-gray-600">Nessuna attività al momento</p>
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {businesses.map((business) => (
-                <BusinessCard
-                  key={business.id}
-                  business={business}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
         <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-2xl shadow-lg p-8 mb-12">
           <div className="text-center">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
