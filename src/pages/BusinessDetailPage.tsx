@@ -30,6 +30,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
   const [claimingBusiness, setClaimingBusiness] = useState(false);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     loadBusinessData();
   }, [businessId]);
 
