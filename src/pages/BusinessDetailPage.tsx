@@ -193,6 +193,8 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
   const canReview = profile?.user_type === 'customer' && profile?.subscription_status === 'active';
   const isOwner = profile && business.owner_id === profile.id;
   const canClaim = profile?.user_type === 'business' && !business.is_claimed && !business.owner_id;
+  const canShowClaimButton = !business.is_claimed && !business.owner_id;
+  const needsBusinessAccount = canShowClaimButton && profile?.user_type !== 'business';
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -253,9 +255,12 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                     )}
                   </div>
                 </div>
-                {canClaim && (
+                {canShowClaimButton && (
                   <button
-                    onClick={handleClaimBusiness}
+                    onClick={needsBusinessAccount ? () => {
+                      sessionStorage.setItem('claimBusinessId', businessId);
+                      window.location.href = '/?register=business';
+                    } : handleClaimBusiness}
                     disabled={claimingBusiness}
                     className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:opacity-50 flex items-center gap-2"
                   >
@@ -464,20 +469,24 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
 
                 <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
                   <h3 className="font-semibold text-gray-900 mb-3">
-                    {canClaim ? 'Sei il proprietario?' : 'Informazioni'}
+                    {canShowClaimButton ? 'Sei il proprietario?' : 'Informazioni'}
                   </h3>
-                  {canClaim ? (
+                  {canShowClaimButton ? (
                     <>
                       <p className="text-sm text-gray-700 mb-4">
-                        Se sei il proprietario di questa attività, puoi rivenindicarla per gestirla
-                        e rispondere alle recensioni.
+                        {needsBusinessAccount
+                          ? 'Se sei il proprietario di questa attività, crea un account business per rivenindicarla e gestirla.'
+                          : 'Se sei il proprietario di questa attività, puoi rivenindicarla per gestirla e rispondere alle recensioni.'}
                       </p>
                       <button
-                        onClick={handleClaimBusiness}
+                        onClick={needsBusinessAccount ? () => {
+                          sessionStorage.setItem('claimBusinessId', businessId);
+                          window.location.href = '/?register=business';
+                        } : handleClaimBusiness}
                         disabled={claimingBusiness}
                         className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
                       >
-                        {claimingBusiness ? 'Rivendicazione...' : 'Rivendica Ora'}
+                        {claimingBusiness ? 'Rivendicazione...' : needsBusinessAccount ? 'Crea Account Business' : 'Rivendica Ora'}
                       </button>
                     </>
                   ) : (

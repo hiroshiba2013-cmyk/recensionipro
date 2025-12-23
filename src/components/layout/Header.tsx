@@ -11,7 +11,13 @@ export function Header() {
 
   useEffect(() => {
     const selectedPlanId = localStorage.getItem('selectedPlanId');
+    const urlParams = new URLSearchParams(window.location.search);
+    const registerType = urlParams.get('register');
+
     if (selectedPlanId && !user) {
+      setAuthMode('register');
+      setShowAuthModal(true);
+    } else if (registerType === 'business' && !user) {
       setAuthMode('register');
       setShowAuthModal(true);
     }
@@ -132,7 +138,12 @@ export function Header() {
             ) : (
               <RegisterForm onSuccess={() => {
                 setShowAuthModal(false);
-                window.location.href = '/profile';
+                const claimBusinessId = sessionStorage.getItem('claimBusinessId');
+                if (claimBusinessId) {
+                  window.location.href = '/dashboard';
+                } else {
+                  window.location.href = '/profile';
+                }
               }} />
             )}
 

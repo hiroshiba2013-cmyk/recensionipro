@@ -59,10 +59,15 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
 
   useEffect(() => {
     const selectedPlanId = localStorage.getItem('selectedPlanId');
+    const urlParams = new URLSearchParams(window.location.search);
+    const registerType = urlParams.get('register');
+
     if (selectedPlanId) {
       setPreselectedPlanId(selectedPlanId);
       loadPlanDetails(selectedPlanId);
       localStorage.removeItem('selectedPlanId');
+    } else if (registerType === 'business') {
+      setUserType('business');
     }
   }, []);
 
@@ -455,6 +460,29 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             });
 
           if (subscriptionError) throw subscriptionError;
+        }
+      }
+
+      const claimBusinessId = sessionStorage.getItem('claimBusinessId');
+      if (claimBusinessId && user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profile) {
+          await supabase
+            .from('businesses')
+            .update({
+              owner_id: profile.id,
+              is_claimed: true,
+              verified: false,
+            })
+            .eq('id', claimBusinessId)
+            .eq('is_claimed', false);
+
+          sessionStorage.removeItem('claimBusinessId');
         }
       }
 
