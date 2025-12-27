@@ -441,10 +441,18 @@ async function insertBusiness(data, region) {
   }
 }
 
+function formatTime(seconds) {
+  if (seconds < 60) return `${Math.round(seconds)}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`;
+  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+}
+
 async function processPBFForRegion(region) {
   console.log(`\n${'='.repeat(70)}`);
   console.log(`📍 PROCESSAMENTO REGIONE: ${region.name.toUpperCase()}`);
   console.log(`${'='.repeat(70)}\n`);
+
+  const startTime = Date.now();
 
   const stats = {
     total: 0,
@@ -522,7 +530,9 @@ async function processPBFForRegion(region) {
         if (businesses.length > 0) {
           console.log(`💾 Importazione nel database...\n`);
 
+          const importStartTime = Date.now();
           const batchSize = 100;
+
           for (let i = 0; i < businesses.length; i += batchSize) {
             const batch = businesses.slice(i, i + batchSize);
 
@@ -539,7 +549,13 @@ async function processPBFForRegion(region) {
             }
 
             const percent = ((i + batch.length) / businesses.length * 100).toFixed(1);
-            process.stdout.write(`\r   ✓ Inserite: ${stats.inserted} | Saltate: ${stats.skipped} | Errori: ${stats.errors} (${percent}%)`);
+            const processed = i + batch.length;
+            const elapsed = (Date.now() - importStartTime) / 1000;
+            const rate = processed / elapsed;
+            const remaining = businesses.length - processed;
+            const eta = remaining / rate;
+
+            process.stdout.write(`\r   ✓ ${percent}% | Inserite: ${stats.inserted} | ETA: ${formatTime(eta)} | Trascorso: ${formatTime(elapsed)}`);
           }
           console.log('\n');
         }
@@ -551,6 +567,8 @@ async function processPBFForRegion(region) {
 }
 
 async function main() {
+  const overallStartTime = Date.now();
+
   console.log('\n╔══════════════════════════════════════════════════════════════════╗');
   console.log('║    IMPORTAZIONE TUTTE LE REGIONI ITALIANE DA GEOFABRIK         ║');
   console.log('║              Attività commerciali e professionali               ║');
@@ -575,6 +593,7 @@ async function main() {
   }
 
   console.log(`📍 Regioni da importare: ${regionsToImport.map(r => r.name).join(', ')}\n`);
+  console.log(`⏱️  Stima tempo totale: ${regionsToImport.length < 5 ? '15-60 minuti' : regionsToImport.length < 10 ? '1-3 ore' : '4-8 ore'}\n`);
 
   const globalStats = {
     totalInserted: 0,
@@ -599,7 +618,12 @@ async function main() {
       }
     }
 
-    for (const region of regionsToImport) {
+    for (let idx = 0; idx < regionsToImport.length; idx++) {
+      const region = regionsToImport[idx];
+      const regionStartTime = Date.now();
+
+      console.log(`\n[${idx + 1}/${regionsToImport.length}] Inizio ${region.name}...`);
+
       const stats = await processPBFForRegion(region);
 
       globalStats.totalInserted += stats.inserted;
@@ -607,13 +631,24 @@ async function main() {
       globalStats.totalErrors += stats.errors;
       globalStats.byRegion[region.name] = stats.inserted;
 
-      console.log(`✅ ${region.name}: ${stats.inserted} attività inserite\n`);
+      const regionElapsed = (Date.now() - regionStartTime) / 1000;
+      console.log(`✅ ${region.name}: ${stats.inserted} attività inserite in ${formatTime(regionElapsed)}`);
+
+      if (idx < regionsToImport.length - 1) {
+        const avgTimePerRegion = (Date.now() - overallStartTime) / (idx + 1) / 1000;
+        const remainingRegions = regionsToImport.length - (idx + 1);
+        const etaTotal = avgTimePerRegion * remainingRegions;
+        console.log(`⏱️  Tempo stimato rimanente: ${formatTime(etaTotal)}\n`);
+      }
     }
+
+    const totalElapsed = (Date.now() - overallStartTime) / 1000;
 
     console.log('\n╔══════════════════════════════════════════════════════════════════╗');
     console.log('║                  ✅ IMPORTAZIONE COMPLETATA                      ║');
     console.log('╚══════════════════════════════════════════════════════════════════╝\n');
 
+    console.log(`⏱️  Tempo totale impiegato: ${formatTime(totalElapsed)}\n`);
     console.log(`📊 Riepilogo Globale:\n`);
     console.log(`   ✅ Totale inserite:  ${globalStats.totalInserted.toLocaleString()}`);
     console.log(`   ⏭️  Totale saltate:   ${globalStats.totalSkipped.toLocaleString()}`);
