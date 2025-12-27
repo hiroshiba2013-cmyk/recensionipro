@@ -13,6 +13,9 @@
     "import:osm:fast": "node import-osm-optimized.js",
     "import:geofabrik": "node import-from-geofabrik.js",
     "import:valle-aosta": "node import-valle-aosta.js",
+    "import:professionals": "node import-professionals.js",
+    "import:italy": "node import-italy-complete.js",
+    "import:italy:all": "node import-all-italy-overpass.js",
     "import:all-regions": "node import-all-regions.js",
     "import:region": "node import-all-regions.js",
     "progress": "node check-progress.js"
