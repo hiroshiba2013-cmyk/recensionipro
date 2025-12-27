@@ -370,6 +370,13 @@ export const CITIES_BY_PROVINCE: Record<string, string[]> = {
   'Viterbo': ['Viterbo', 'Civita Castellana', 'Montefiascone', 'Tarquinia', 'Orte', 'Acquapendente', 'Tuscania', 'Vetralla', 'Sutri', 'Nepi', 'Ronciglione', 'Soriano nel Cimino', 'Bolsena', 'Bagnoregio', 'Capranica', 'Caprarola', 'Vignanello', 'Montalto di Castro', 'Canino', 'Valentano', 'Marta', 'Grotte di Castro', 'Gradoli', 'Bassano Romano', 'Bassano in Teverina'].sort(),
 };
 
+export const CITY_TO_PROVINCE: Record<string, string> = {};
+Object.entries(CITIES_BY_PROVINCE).forEach(([province, cities]) => {
+  cities.forEach(city => {
+    CITY_TO_PROVINCE[city] = province;
+  });
+});
+
 export const PROVINCE_TO_CODE: Record<string, string> = {
   'Agrigento': 'AG',
   'Alessandria': 'AL',

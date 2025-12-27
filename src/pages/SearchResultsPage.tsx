@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { supabase, Business, BusinessCategory } from '../lib/supabase';
 import { BusinessCard } from '../components/business/BusinessCard';
 import { AdvancedSearch, SearchFilters } from '../components/search/AdvancedSearch';
-import { PROVINCE_TO_CODE, PROVINCES_BY_REGION } from '../lib/cities';
+import { PROVINCE_TO_CODE, PROVINCES_BY_REGION, CITY_TO_PROVINCE } from '../lib/cities';
 
 interface BusinessWithRating extends Business {
   avg_rating?: number;
@@ -95,26 +95,36 @@ export function SearchResultsPage() {
       let filteredBusinesses = businessData;
 
       if (filters.city) {
-        filteredBusinesses = businessData.filter(b =>
-          businessIdsFromLocations.has(b.id) ||
-          b.city === filters.city ||
-          b.office_city === filters.city
-        );
+        filteredBusinesses = businessData.filter(b => {
+          if (businessIdsFromLocations.size > 0 && businessIdsFromLocations.has(b.id)) return true;
+          if (b.city === filters.city) return true;
+          if (b.office_city === filters.city) return true;
+          if (b.billing_city === filters.city) return true;
+          return false;
+        });
       } else if (filters.province) {
         const provinceCode = PROVINCE_TO_CODE[filters.province];
-        filteredBusinesses = businessData.filter(b =>
-          businessIdsFromLocations.has(b.id) ||
-          b.office_province === provinceCode ||
-          b.billing_province === provinceCode
-        );
+        filteredBusinesses = businessData.filter(b => {
+          if (businessIdsFromLocations.size > 0 && businessIdsFromLocations.has(b.id)) return true;
+          if (b.office_province === provinceCode) return true;
+          if (b.billing_province === provinceCode) return true;
+          if (b.city && CITY_TO_PROVINCE[b.city] === filters.province) return true;
+          if (b.office_city && CITY_TO_PROVINCE[b.office_city] === filters.province) return true;
+          if (b.billing_city && CITY_TO_PROVINCE[b.billing_city] === filters.province) return true;
+          return false;
+        });
       } else if (filters.region) {
         const provincesInRegion = PROVINCES_BY_REGION[filters.region] || [];
         const provinceCodes = provincesInRegion.map(p => PROVINCE_TO_CODE[p]).filter(Boolean);
-        filteredBusinesses = businessData.filter(b =>
-          businessIdsFromLocations.has(b.id) ||
-          (b.office_province && provinceCodes.includes(b.office_province)) ||
-          (b.billing_province && provinceCodes.includes(b.billing_province))
-        );
+        filteredBusinesses = businessData.filter(b => {
+          if (businessIdsFromLocations.size > 0 && businessIdsFromLocations.has(b.id)) return true;
+          if (b.office_province && provinceCodes.includes(b.office_province)) return true;
+          if (b.billing_province && provinceCodes.includes(b.billing_province)) return true;
+          if (b.city && provincesInRegion.includes(CITY_TO_PROVINCE[b.city])) return true;
+          if (b.office_city && provincesInRegion.includes(CITY_TO_PROVINCE[b.office_city])) return true;
+          if (b.billing_city && provincesInRegion.includes(CITY_TO_PROVINCE[b.billing_city])) return true;
+          return false;
+        });
       }
 
       if (filteredBusinesses.length === 0) {
