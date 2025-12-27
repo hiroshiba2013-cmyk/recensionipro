@@ -39,7 +39,7 @@ export function SearchResultsPage() {
     setHasSearched(true);
     try {
       const hasLocationFilter = filters.region || filters.province || filters.city;
-      let businessIds: string[] | null = null;
+      let businessIdsFromLocations = new Set<string>();
 
       if (hasLocationFilter) {
         let locationQuery = supabase
@@ -67,14 +67,12 @@ export function SearchResultsPage() {
           locationQuery = locationQuery.eq('city', filters.city);
         }
 
-        const { data: locationData } = await locationQuery.limit(5000);
+        const { data: locationData } = await locationQuery;
 
         if (locationData) {
-          const uniqueIds = new Set<string>();
           locationData.forEach((loc: any) => {
-            if (loc.business_id) uniqueIds.add(loc.business_id);
+            if (loc.business_id) businessIdsFromLocations.add(loc.business_id);
           });
-          businessIds = Array.from(uniqueIds);
         }
       }
 
@@ -85,14 +83,6 @@ export function SearchResultsPage() {
           category:business_categories(*)
         `);
 
-      if (businessIds !== null) {
-        if (businessIds.length === 0) {
-          setBusinesses([]);
-          return;
-        }
-        query = query.in('id', businessIds);
-      }
-
       if (filters.category) {
         query = query.eq('category_id', filters.category);
       }
@@ -101,7 +91,11 @@ export function SearchResultsPage() {
         query = query.ilike('name', `%${filters.businessName}%`);
       }
 
-      query = query.limit(500);
+      if (hasLocationFilter) {
+        if (filters.city) {
+          query = query.eq('city', filters.city);
+        }
+      }
 
       const { data: businessData, error: businessError } = await query;
 
@@ -111,7 +105,21 @@ export function SearchResultsPage() {
         return;
       }
 
-      const businessIdsList = businessData.map(b => b.id);
+      let filteredBusinesses = businessData;
+
+      if (hasLocationFilter && businessIdsFromLocations.size > 0) {
+        filteredBusinesses = businessData.filter(b =>
+          businessIdsFromLocations.has(b.id) ||
+          (filters.city && b.city === filters.city)
+        );
+      }
+
+      if (filteredBusinesses.length === 0) {
+        setBusinesses([]);
+        return;
+      }
+
+      const businessIdsList = filteredBusinesses.map(b => b.id);
 
       const { data: ratingsData } = await supabase
         .rpc('get_business_ratings', { business_ids: businessIdsList });
@@ -127,7 +135,7 @@ export function SearchResultsPage() {
         });
       }
 
-      let businessesWithRatings = businessData.map(business => {
+      let businessesWithRatings = filteredBusinesses.map(business => {
         const ratings = ratingsMap.get(business.id) || { avg_rating: 0, review_count: 0 };
         return {
           ...business,
