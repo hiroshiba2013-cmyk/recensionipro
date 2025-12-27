@@ -36,34 +36,77 @@ interface GooglePlace {
 
 // Map Google Place types to our categories
 const categoryMapping: Record<string, string> = {
+  // Food & Drink
   restaurant: "Ristoranti",
-  cafe: "Bar e Caffetterie",
-  bar: "Bar e Caffetterie",
-  bakery: "Alimentari e Gastronomia",
-  supermarket: "Alimentari e Gastronomia",
-  pharmacy: "Farmacie e Salute",
-  doctor: "Farmacie e Salute",
-  dentist: "Farmacie e Salute",
-  hospital: "Farmacie e Salute",
-  hair_care: "Parrucchieri e Centri Estetici",
-  beauty_salon: "Parrucchieri e Centri Estetici",
-  spa: "Parrucchieri e Centri Estetici",
-  lodging: "Hotel e Alloggi",
-  car_repair: "Officine e Autofficine",
-  gym: "Palestre e Fitness",
-  bank: "Servizi Finanziari",
-  lawyer: "Servizi Professionali",
-  accounting: "Servizi Professionali",
-  real_estate_agency: "Immobiliare",
-  clothing_store: "Abbigliamento e Moda",
-  shoe_store: "Abbigliamento e Moda",
-  furniture_store: "Arredamento",
-  electronics_store: "Elettronica",
-  book_store: "Librerie ed Edicole",
+  cafe: "Bar e Caffè",
+  bar: "Bar e Caffè",
+  bakery: "Panifici e Pasticcerie",
+  meal_delivery: "Fast Food",
+  meal_takeaway: "Fast Food",
+  pizza_restaurant: "Pizzerie",
+  supermarket: "Supermercati",
+  convenience_store: "Alimentari",
+  grocery_or_supermarket: "Supermercati",
+  butcher_shop: "Macellerie",
+
+  // Health & Beauty
+  pharmacy: "Farmacie",
+  drugstore: "Farmacie",
+  doctor: "Medici",
+  dentist: "Dentisti",
+  hospital: "Medici",
+  physiotherapist: "Medici",
+  hair_care: "Parrucchieri e Barbieri",
+  beauty_salon: "Centri Estetici",
+  spa: "Centri Estetici",
+
+  // Accommodation
+  lodging: "Hotel",
+  hotel: "Hotel",
+  guest_house: "B&B",
+
+  // Automotive
+  car_repair: "Autofficine",
+  car_dealer: "Autofficine",
+  car_wash: "Autolavaggi",
+  gas_station: "Distributori di Carburante",
+
+  // Fitness
+  gym: "Palestre",
+  stadium: "Palestre",
+
+  // Financial & Professional Services
+  bank: "Banche",
+  atm: "Banche",
+  lawyer: "Avvocati",
+  accounting: "Commercialisti",
+  notary_public: "Notai",
+  insurance_agency: "Assicurazioni",
+  architect: "Architetti",
+
+  // Real Estate
+  real_estate_agency: "Agenzie Immobiliari",
+
+  // Retail
+  clothing_store: "Abbigliamento",
+  shoe_store: "Abbigliamento",
+  book_store: "Librerie",
   florist: "Fioristi",
   jewelry_store: "Gioiellerie",
-  pet_store: "Animali",
-  veterinary_care: "Animali",
+  pet_store: "Veterinari",
+  veterinary_care: "Veterinari",
+
+  // Tradespeople & Artisans
+  plumber: "Idraulici",
+  electrician: "Elettricisti",
+  painter: "Imbianchini",
+  carpenter: "Falegnami",
+  locksmith: "Serramenti",
+  roofing_contractor: "Imprese Edili",
+  general_contractor: "Imprese Edili",
+  home_goods_store: "Ferramenta",
+  hardware_store: "Ferramenta",
+  hvac: "Climatizzazione",
 };
 
 function getCategoryFromGoogle(types: string[]): string | null {
