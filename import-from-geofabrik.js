@@ -117,8 +117,14 @@ const stats = {
 async function downloadFile(url, dest) {
   return new Promise((resolve, reject) => {
     if (fs.existsSync(dest)) {
-      console.log(`\n✓ File già scaricato: ${dest}`);
-      return resolve();
+      const stats = fs.statSync(dest);
+      if (stats.size > 1000000) { // Se > 1MB è probabilmente valido
+        console.log(`\n✓ File già scaricato: ${dest} (${(stats.size / 1024 / 1024).toFixed(1)} MB)`);
+        return resolve();
+      } else {
+        // File troppo piccolo, è probabilmente un redirect HTML
+        fs.unlinkSync(dest);
+      }
     }
 
     console.log(`\n📥 Download da Geofabrik...`);
@@ -130,33 +136,48 @@ async function downloadFile(url, dest) {
     let totalBytes = 0;
     let lastLog = Date.now();
 
-    https.get(url, (response) => {
-      totalBytes = parseInt(response.headers['content-length'], 10);
-
-      response.on('data', (chunk) => {
-        downloadedBytes += chunk.length;
-        const now = Date.now();
-
-        if (now - lastLog > 2000) {
-          const percent = ((downloadedBytes / totalBytes) * 100).toFixed(1);
-          const mb = (downloadedBytes / 1024 / 1024).toFixed(1);
-          const totalMb = (totalBytes / 1024 / 1024).toFixed(1);
-          process.stdout.write(`\r📦 Download: ${percent}% (${mb}/${totalMb} MB)`);
-          lastLog = now;
+    const doDownload = (downloadUrl) => {
+      https.get(downloadUrl, (response) => {
+        // Gestisci redirect
+        if (response.statusCode === 302 || response.statusCode === 301) {
+          file.close();
+          fs.unlinkSync(dest);
+          console.log(`↪️  Seguendo redirect...`);
+          return doDownload(response.headers.location);
         }
-      });
 
-      response.pipe(file);
+        totalBytes = parseInt(response.headers['content-length'], 10);
+        console.log(`📦 Dimensione file: ${(totalBytes / 1024 / 1024).toFixed(1)} MB\n`);
 
-      file.on('finish', () => {
-        file.close();
-        console.log(`\n✅ Download completato!\n`);
-        resolve();
+        response.on('data', (chunk) => {
+          downloadedBytes += chunk.length;
+          const now = Date.now();
+
+          if (now - lastLog > 2000) {
+            const percent = ((downloadedBytes / totalBytes) * 100).toFixed(1);
+            const mb = (downloadedBytes / 1024 / 1024).toFixed(1);
+            const totalMb = (totalBytes / 1024 / 1024).toFixed(1);
+            process.stdout.write(`\r📥 Download: ${percent}% (${mb}/${totalMb} MB)`);
+            lastLog = now;
+          }
+        });
+
+        response.pipe(file);
+
+        file.on('finish', () => {
+          file.close();
+          console.log(`\n✅ Download completato!\n`);
+          resolve();
+        });
+      }).on('error', (err) => {
+        if (fs.existsSync(dest)) {
+          fs.unlinkSync(dest);
+        }
+        reject(err);
       });
-    }).on('error', (err) => {
-      fs.unlinkSync(dest);
-      reject(err);
-    });
+    };
+
+    doDownload(url);
   });
 }
 
