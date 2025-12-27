@@ -38,7 +38,7 @@ export function SearchResultsPage() {
     setLoading(true);
     setHasSearched(true);
     try {
-      let businessIdsFromLocations = new Set<string>();
+      let businessIdsFromLocations: string[] = [];
 
       if (filters.region || filters.province || filters.city) {
         let locationQuery = supabase
@@ -53,19 +53,20 @@ export function SearchResultsPage() {
             locationQuery = locationQuery.eq('province', provinceCode);
           }
         } else if (filters.region) {
-          const provincesInRegion = PROVINCES_BY_REGION[filters.region] || [];
-          const provinceCodes = provincesInRegion.map(p => PROVINCE_TO_CODE[p]).filter(Boolean);
-          if (provinceCodes.length > 0) {
-            locationQuery = locationQuery.in('province', provinceCodes);
-          }
+          locationQuery = locationQuery.eq('region', filters.region);
         }
 
         const { data: locationData } = await locationQuery;
 
-        if (locationData) {
-          locationData.forEach((loc: any) => {
-            if (loc.business_id) businessIdsFromLocations.add(loc.business_id);
-          });
+        if (locationData && locationData.length > 0) {
+          businessIdsFromLocations = locationData
+            .map((loc: any) => loc.business_id)
+            .filter((id: string) => id != null);
+        }
+
+        if (businessIdsFromLocations.length === 0) {
+          setBusinesses([]);
+          return;
         }
       }
 
@@ -75,6 +76,10 @@ export function SearchResultsPage() {
           *,
           category:business_categories(*)
         `);
+
+      if (businessIdsFromLocations.length > 0) {
+        query = query.in('id', businessIdsFromLocations);
+      }
 
       if (filters.category) {
         query = query.eq('category_id', filters.category);
@@ -93,39 +98,6 @@ export function SearchResultsPage() {
       }
 
       let filteredBusinesses = businessData;
-
-      if (filters.city) {
-        filteredBusinesses = businessData.filter(b => {
-          if (businessIdsFromLocations.size > 0 && businessIdsFromLocations.has(b.id)) return true;
-          if (b.city === filters.city) return true;
-          if (b.office_city === filters.city) return true;
-          if (b.billing_city === filters.city) return true;
-          return false;
-        });
-      } else if (filters.province) {
-        const provinceCode = PROVINCE_TO_CODE[filters.province];
-        filteredBusinesses = businessData.filter(b => {
-          if (businessIdsFromLocations.size > 0 && businessIdsFromLocations.has(b.id)) return true;
-          if (b.office_province === provinceCode) return true;
-          if (b.billing_province === provinceCode) return true;
-          if (b.city && CITY_TO_PROVINCE[b.city] === filters.province) return true;
-          if (b.office_city && CITY_TO_PROVINCE[b.office_city] === filters.province) return true;
-          if (b.billing_city && CITY_TO_PROVINCE[b.billing_city] === filters.province) return true;
-          return false;
-        });
-      } else if (filters.region) {
-        const provincesInRegion = PROVINCES_BY_REGION[filters.region] || [];
-        const provinceCodes = provincesInRegion.map(p => PROVINCE_TO_CODE[p]).filter(Boolean);
-        filteredBusinesses = businessData.filter(b => {
-          if (businessIdsFromLocations.size > 0 && businessIdsFromLocations.has(b.id)) return true;
-          if (b.office_province && provinceCodes.includes(b.office_province)) return true;
-          if (b.billing_province && provinceCodes.includes(b.billing_province)) return true;
-          if (b.city && provincesInRegion.includes(CITY_TO_PROVINCE[b.city])) return true;
-          if (b.office_city && provincesInRegion.includes(CITY_TO_PROVINCE[b.office_city])) return true;
-          if (b.billing_city && provincesInRegion.includes(CITY_TO_PROVINCE[b.billing_city])) return true;
-          return false;
-        });
-      }
 
       if (filteredBusinesses.length === 0) {
         setBusinesses([]);
