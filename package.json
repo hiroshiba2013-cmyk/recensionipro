@@ -12,7 +12,9 @@
     "import:osm": "node import-from-overpass.js",
     "import:osm:fast": "node import-osm-optimized.js",
     "import:geofabrik": "node import-from-geofabrik.js",
-    "import:valle-aosta": "node import-valle-aosta.js"
+    "import:valle-aosta": "node import-valle-aosta.js",
+    "import:all-regions": "node import-all-regions.js",
+    "import:region": "node import-all-regions.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
