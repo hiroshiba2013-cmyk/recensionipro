@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "import:osm": "node import-from-overpass.js",
     "import:osm:fast": "node import-osm-optimized.js",
-    "import:geofabrik": "node import-from-geofabrik.js"
+    "import:geofabrik": "node import-from-geofabrik.js",
+    "import:valle-aosta": "node import-valle-aosta.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
