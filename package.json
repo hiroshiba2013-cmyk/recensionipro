@@ -18,7 +18,8 @@
     "import:italy:all": "node import-all-italy-overpass.js",
     "import:all-regions": "node import-all-regions.js",
     "import:region": "node import-all-regions.js",
-    "progress": "node check-progress.js"
+    "progress": "node check-progress.js",
+    "monitor": "node monitor-import.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
