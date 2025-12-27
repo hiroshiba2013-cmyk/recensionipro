@@ -48,6 +48,10 @@ export interface Business {
   verified: boolean;
   is_claimed: boolean;
   ateco_code: string;
+  office_city?: string;
+  office_province?: string;
+  billing_city?: string;
+  billing_province?: string;
   created_at: string;
   category?: BusinessCategory;
 }
