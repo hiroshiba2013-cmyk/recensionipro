@@ -2,7 +2,7 @@
 > vite-react-typescript-starter@0.0.0 import:by-city
 > node import-by-city-major.js
 
-[dotenv@17.2.3] injecting env (2) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[dotenv@17.2.3] injecting env (2) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
 
 ╔════════════════════════════════════════════════════════════════════╗
 ║      IMPORTAZIONE OSM PER CATEGORIA - CITTÀ PRINCIPALI            ║
@@ -17,4 +17,7 @@
    [  1/491] Roma                           ✅ 765
    [  2/491] Milano                         ✅ 330
    [  3/491] Napoli                         ✅ 136
-   [  4/491] Torino                         
+   [  4/491] Torino                         ⏭️  SKIP (HTTP 504)
+   [  5/491] Palermo                        ✅ 262
+   [  6/491] Genova                         ✅ 241
+   [  7/491] Bologna                        ✅ 110

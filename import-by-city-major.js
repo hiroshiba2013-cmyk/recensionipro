@@ -554,8 +554,27 @@ const CATEGORIES = [
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Funzione per ottenere dati da Overpass API per città
-async function fetchFromOverpass(city, category, retries = 3) {
+async function fetchWithTimeout(url, options, timeoutMs = 30000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('TIMEOUT');
+    }
+    throw error;
+  }
+}
+
+async function fetchFromOverpass(city, category, retries = 2) {
   const overpassUrl = 'https://overpass-api.de/api/interpreter';
 
   let filters = Object.entries(category.tags)
@@ -563,7 +582,7 @@ async function fetchFromOverpass(city, category, retries = 3) {
     .join('');
 
   const query = `
-    [out:json][timeout:90];
+    [out:json][timeout:60];
     area["name"="${city.name}"]["admin_level"~"^(8|9)$"]->.searchArea;
     (
       node${filters}(area.searchArea);
@@ -575,17 +594,16 @@ async function fetchFromOverpass(city, category, retries = 3) {
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const response = await fetch(overpassUrl, {
+      const response = await fetchWithTimeout(overpassUrl, {
         method: 'POST',
         body: `data=${encodeURIComponent(query)}`,
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-      });
+      }, 35000);
 
       if (!response.ok) {
         if (response.status === 429 || response.status === 504) {
           if (attempt < retries) {
-            const waitTime = attempt * 15000;
-            await delay(waitTime);
+            await delay(10000);
             continue;
           }
         }
@@ -593,17 +611,24 @@ async function fetchFromOverpass(city, category, retries = 3) {
       }
 
       const data = await response.json();
-      return data.elements || [];
+      return { success: true, data: data.elements || [] };
 
     } catch (error) {
-      if (attempt === retries) {
-        return [];
+      if (error.message === 'TIMEOUT') {
+        if (attempt < retries) {
+          await delay(5000);
+          continue;
+        }
+        return { success: false, error: 'TIMEOUT' };
       }
-      await delay(attempt * 10000);
+      if (attempt === retries) {
+        return { success: false, error: error.message };
+      }
+      await delay(5000);
     }
   }
 
-  return [];
+  return { success: false, error: 'MAX_RETRIES' };
 }
 
 // Trova o crea categoria
@@ -660,7 +685,6 @@ async function saveBusinesses(businesses, categoryId, city) {
   return records.length;
 }
 
-// Main
 async function main() {
   console.log('\n╔════════════════════════════════════════════════════════════════════╗');
   console.log('║      IMPORTAZIONE OSM PER CATEGORIA - CITTÀ PRINCIPALI            ║');
@@ -671,6 +695,7 @@ async function main() {
   const startTime = Date.now();
   let totalImported = 0;
   const results = [];
+  const failedCities = [];
 
   for (let catIndex = 0; catIndex < CATEGORIES.length; catIndex++) {
     const category = CATEGORIES[catIndex];
@@ -687,21 +712,28 @@ async function main() {
 
       process.stdout.write(`   [${(cityIndex + 1).toString().padStart(3)}/${MAJOR_CITIES.length}] ${city.name.padEnd(30)} `);
 
-      // Fetch da Overpass
-      const businesses = await fetchFromOverpass(city, category);
+      const result = await fetchFromOverpass(city, category);
 
-      // Salva nel DB
-      const saved = await saveBusinesses(businesses, categoryId, city);
-      categoryTotal += saved;
-      totalImported += saved;
+      if (result.success) {
+        const saved = await saveBusinesses(result.data, categoryId, city);
+        categoryTotal += saved;
+        totalImported += saved;
 
-      if (saved > 0) {
-        console.log(`✅ ${saved}`);
+        if (saved > 0) {
+          console.log(`✅ ${saved}`);
+        } else {
+          console.log(`⚪ 0`);
+        }
       } else {
-        console.log(`⚪ 0`);
+        console.log(`⏭️  SKIP (${result.error})`);
+        failedCities.push({
+          city: city.name,
+          category: category.name,
+          error: result.error,
+          categoryId
+        });
       }
 
-      // Delay tra città
       await delay(1500);
     }
 
@@ -711,9 +743,45 @@ async function main() {
     });
 
     console.log(`\n   📊 Totale categoria: ${categoryTotal} attività`);
+    await delay(3000);
+  }
 
-    // Delay tra categorie
-    await delay(5000);
+  if (failedCities.length > 0) {
+    console.log('\n' + '='.repeat(70));
+    console.log(`🔄 RIPROVO ${failedCities.length} CITTÀ FALLITE`);
+    console.log('='.repeat(70));
+
+    const stillFailed = [];
+    let retryImported = 0;
+
+    for (let i = 0; i < failedCities.length; i++) {
+      const { city, category, categoryId } = failedCities[i];
+      const cityData = MAJOR_CITIES.find(c => c.name === city);
+      const categoryData = CATEGORIES.find(c => c.name === category);
+
+      process.stdout.write(`   [${(i + 1).toString().padStart(3)}/${failedCities.length}] ${city.padEnd(25)} (${category.substring(0, 15).padEnd(15)}) `);
+
+      const result = await fetchFromOverpass(cityData, categoryData);
+
+      if (result.success) {
+        const saved = await saveBusinesses(result.data, categoryId, cityData);
+        retryImported += saved;
+        totalImported += saved;
+        console.log(`✅ ${saved}`);
+      } else {
+        console.log(`❌ ${result.error}`);
+        stillFailed.push(failedCities[i]);
+      }
+
+      await delay(2000);
+    }
+
+    console.log(`\n   📊 Recuperate: ${retryImported} attività aggiuntive`);
+
+    if (stillFailed.length > 0) {
+      writeFileSync('failed-cities.json', JSON.stringify(stillFailed, null, 2));
+      console.log(`   ⚠️  ${stillFailed.length} città ancora problematiche (salvate in failed-cities.json)`);
+    }
   }
 
   const elapsed = ((Date.now() - startTime) / 1000 / 60).toFixed(1);
