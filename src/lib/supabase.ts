@@ -76,6 +76,10 @@ export interface Review {
   customer_id: string;
   family_member_id: string | null;
   rating: number;
+  price_rating: number;
+  service_rating: number;
+  quality_rating: number;
+  overall_rating: number;
   title: string;
   content: string;
   created_at: string;

@@ -49,11 +49,11 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
       if (businessData) {
         const { data: reviewsData } = await supabase
           .from('reviews')
-          .select('rating')
+          .select('overall_rating')
           .eq('business_id', businessId);
 
         const avg_rating = reviewsData && reviewsData.length > 0
-          ? reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length
+          ? reviewsData.reduce((sum, r) => sum + r.overall_rating, 0) / reviewsData.length
           : 0;
 
         setBusiness({

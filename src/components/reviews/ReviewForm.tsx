@@ -12,8 +12,14 @@ interface ReviewFormProps {
 
 export function ReviewForm({ businessId, businessName, onClose, onSuccess }: ReviewFormProps) {
   const { profile } = useAuth();
-  const [rating, setRating] = useState(0);
-  const [hoveredRating, setHoveredRating] = useState(0);
+  const [priceRating, setPriceRating] = useState(0);
+  const [serviceRating, setServiceRating] = useState(0);
+  const [qualityRating, setQualityRating] = useState(0);
+  const [overallRating, setOverallRating] = useState(0);
+  const [hoveredPriceRating, setHoveredPriceRating] = useState(0);
+  const [hoveredServiceRating, setHoveredServiceRating] = useState(0);
+  const [hoveredQualityRating, setHoveredQualityRating] = useState(0);
+  const [hoveredOverallRating, setHoveredOverallRating] = useState(0);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
@@ -37,8 +43,8 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
       return;
     }
 
-    if (rating === 0) {
-      setError('Seleziona una valutazione');
+    if (priceRating === 0 || serviceRating === 0 || qualityRating === 0 || overallRating === 0) {
+      setError('Completa tutte le valutazioni');
       return;
     }
 
@@ -64,12 +70,18 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
         return;
       }
 
+      const avgRating = Math.round((priceRating + serviceRating + qualityRating + overallRating) / 4);
+
       const { error: insertError } = await supabase
         .from('reviews')
         .insert({
           business_id: businessId,
           customer_id: profile.id,
-          rating,
+          rating: avgRating,
+          price_rating: priceRating,
+          service_rating: serviceRating,
+          quality_rating: qualityRating,
+          overall_rating: overallRating,
           title: title.trim(),
           content: content.trim(),
         });
@@ -109,39 +121,146 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
             </div>
           )}
 
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Valutazione *
-            </label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setRating(star)}
-                  onMouseEnter={() => setHoveredRating(star)}
-                  onMouseLeave={() => setHoveredRating(0)}
-                  className="focus:outline-none transition-transform hover:scale-110"
-                >
-                  <Star
-                    className={`w-12 h-12 transition-colors ${
-                      star <= (hoveredRating || rating)
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                </button>
-              ))}
+          <div className="mb-6 space-y-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Prezzo *
+              </label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setPriceRating(star)}
+                    onMouseEnter={() => setHoveredPriceRating(star)}
+                    onMouseLeave={() => setHoveredPriceRating(0)}
+                    className="focus:outline-none transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className={`w-10 h-10 transition-colors ${
+                        star <= (hoveredPriceRating || priceRating)
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              {priceRating > 0 && (
+                <p className="text-sm text-gray-600 mt-2">
+                  {priceRating === 1 && 'Pessimo'}
+                  {priceRating === 2 && 'Discreto'}
+                  {priceRating === 3 && 'Buono'}
+                  {priceRating === 4 && 'Eccellente'}
+                  {priceRating === 5 && 'Ottimo'}
+                </p>
+              )}
             </div>
-            {rating > 0 && (
-              <p className="text-sm text-gray-600 mt-2">
-                {rating === 1 && 'Pessimo'}
-                {rating === 2 && 'Scarso'}
-                {rating === 3 && 'Sufficiente'}
-                {rating === 4 && 'Buono'}
-                {rating === 5 && 'Eccellente'}
-              </p>
-            )}
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Servizio *
+              </label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setServiceRating(star)}
+                    onMouseEnter={() => setHoveredServiceRating(star)}
+                    onMouseLeave={() => setHoveredServiceRating(0)}
+                    className="focus:outline-none transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className={`w-10 h-10 transition-colors ${
+                        star <= (hoveredServiceRating || serviceRating)
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              {serviceRating > 0 && (
+                <p className="text-sm text-gray-600 mt-2">
+                  {serviceRating === 1 && 'Pessimo'}
+                  {serviceRating === 2 && 'Discreto'}
+                  {serviceRating === 3 && 'Buono'}
+                  {serviceRating === 4 && 'Eccellente'}
+                  {serviceRating === 5 && 'Ottimo'}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Qualità *
+              </label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setQualityRating(star)}
+                    onMouseEnter={() => setHoveredQualityRating(star)}
+                    onMouseLeave={() => setHoveredQualityRating(0)}
+                    className="focus:outline-none transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className={`w-10 h-10 transition-colors ${
+                        star <= (hoveredQualityRating || qualityRating)
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              {qualityRating > 0 && (
+                <p className="text-sm text-gray-600 mt-2">
+                  {qualityRating === 1 && 'Pessimo'}
+                  {qualityRating === 2 && 'Discreto'}
+                  {qualityRating === 3 && 'Buono'}
+                  {qualityRating === 4 && 'Eccellente'}
+                  {qualityRating === 5 && 'Ottimo'}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Voto Finale *
+              </label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setOverallRating(star)}
+                    onMouseEnter={() => setHoveredOverallRating(star)}
+                    onMouseLeave={() => setHoveredOverallRating(0)}
+                    className="focus:outline-none transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className={`w-10 h-10 transition-colors ${
+                        star <= (hoveredOverallRating || overallRating)
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              {overallRating > 0 && (
+                <p className="text-sm text-gray-600 mt-2">
+                  {overallRating === 1 && 'Pessimo'}
+                  {overallRating === 2 && 'Discreto'}
+                  {overallRating === 3 && 'Buono'}
+                  {overallRating === 4 && 'Eccellente'}
+                  {overallRating === 5 && 'Ottimo'}
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="mb-6">
@@ -162,12 +281,12 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
 
           <div className="mb-6">
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Descrizione *
+              Descrizione della tua esperienza *
             </label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Descrivi la tua esperienza in dettaglio..."
+              placeholder="Racconta la tua esperienza in dettaglio: cosa ti è piaciuto, cosa potrebbe essere migliorato, consiglieresti questa attività ad altri..."
               rows={6}
               maxLength={1000}
               required
@@ -179,7 +298,7 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
           <div className="flex gap-3">
             <button
               type="submit"
-              disabled={loading || rating === 0}
+              disabled={loading || priceRating === 0 || serviceRating === 0 || qualityRating === 0 || overallRating === 0}
               className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               {loading ? 'Invio in corso...' : 'Pubblica recensione'}
