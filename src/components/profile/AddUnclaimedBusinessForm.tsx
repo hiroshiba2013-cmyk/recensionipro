@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, X, Award } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { supabase, BusinessCategory } from '../../lib/supabase';
 import { CITIES_BY_PROVINCE, CITY_TO_PROVINCE, PROVINCES_BY_REGION } from '../../lib/cities';
 
 interface AddUnclaimedBusinessFormProps {
@@ -21,8 +21,10 @@ const ALL_CITIES = Object.entries(CITIES_BY_PROVINCE).flatMap(([province, cities
 export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimedBusinessFormProps) {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<BusinessCategory[]>([]);
   const [formData, setFormData] = useState({
     name: '',
+    category_id: '',
     street: '',
     city: '',
     province: '',
@@ -30,6 +32,21 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
     postal_code: '',
     website: '',
   });
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    const { data } = await supabase
+      .from('business_categories')
+      .select('*')
+      .order('name');
+
+    if (data) {
+      setCategories(data);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,6 +57,7 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
         .from('unclaimed_business_locations')
         .insert({
           name: formData.name,
+          category_id: formData.category_id || null,
           street: formData.street,
           city: formData.city,
           province: formData.province,
@@ -62,6 +80,7 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
 
       setFormData({
         name: '',
+        category_id: '',
         street: '',
         city: '',
         province: '',
@@ -144,6 +163,25 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
                 placeholder="Es: Ristorante Da Mario"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Categoria *
+              </label>
+              <select
+                value={formData.category_id}
+                onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Seleziona categoria</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="md:col-span-2">
