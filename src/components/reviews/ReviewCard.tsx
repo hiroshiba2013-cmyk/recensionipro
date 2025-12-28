@@ -1,11 +1,15 @@
-import { Star } from 'lucide-react';
+import { Star, Clock, CheckCircle } from 'lucide-react';
 import { Review } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ReviewCardProps {
   review: Review;
 }
 
 export function ReviewCard({ review }: ReviewCardProps) {
+  const { user } = useAuth();
+  const isOwnReview = user?.id === review.customer_id;
+
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('it-IT', {
       year: 'numeric',
@@ -46,10 +50,22 @@ export function ReviewCard({ review }: ReviewCardProps) {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
       <div className="flex items-start justify-between mb-4">
-        <div>
+        <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             {renderStars(review.overall_rating, 'md')}
             <span className="text-sm font-medium text-gray-700">{getRatingLabel(review.overall_rating)}</span>
+            {isOwnReview && review.review_status === 'pending' && (
+              <span className="flex items-center gap-1 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                <Clock className="w-3 h-3" />
+                In attesa di approvazione
+              </span>
+            )}
+            {review.review_status === 'approved' && review.points_awarded > 0 && (
+              <span className="flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                <CheckCircle className="w-3 h-3" />
+                +{review.points_awarded} punti
+              </span>
+            )}
           </div>
           {review.customer && (
             <p className="text-sm font-medium text-gray-900">{review.customer.full_name}</p>
@@ -60,23 +76,25 @@ export function ReviewCard({ review }: ReviewCardProps) {
 
       <h4 className="font-semibold text-gray-900 mb-3">{review.title}</h4>
 
-      <div className="grid grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
-        <div>
-          <p className="text-xs font-medium text-gray-600 mb-1">Prezzo</p>
-          {renderStars(review.price_rating)}
-          <p className="text-xs text-gray-500 mt-1">{getRatingLabel(review.price_rating)}</p>
+      {review.price_rating && review.service_rating && review.quality_rating && (
+        <div className="grid grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+          <div>
+            <p className="text-xs font-medium text-gray-600 mb-1">Prezzo</p>
+            {renderStars(review.price_rating)}
+            <p className="text-xs text-gray-500 mt-1">{getRatingLabel(review.price_rating)}</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-gray-600 mb-1">Servizio</p>
+            {renderStars(review.service_rating)}
+            <p className="text-xs text-gray-500 mt-1">{getRatingLabel(review.service_rating)}</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-gray-600 mb-1">Qualità</p>
+            {renderStars(review.quality_rating)}
+            <p className="text-xs text-gray-500 mt-1">{getRatingLabel(review.quality_rating)}</p>
+          </div>
         </div>
-        <div>
-          <p className="text-xs font-medium text-gray-600 mb-1">Servizio</p>
-          {renderStars(review.service_rating)}
-          <p className="text-xs text-gray-500 mt-1">{getRatingLabel(review.service_rating)}</p>
-        </div>
-        <div>
-          <p className="text-xs font-medium text-gray-600 mb-1">Qualità</p>
-          {renderStars(review.quality_rating)}
-          <p className="text-xs text-gray-500 mt-1">{getRatingLabel(review.quality_rating)}</p>
-        </div>
-      </div>
+      )}
 
       <p className="text-gray-700 leading-relaxed">{review.content}</p>
 

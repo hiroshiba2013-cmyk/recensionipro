@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Star, X } from 'lucide-react';
+import { Star, X, Upload, Image as ImageIcon, Award } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -22,8 +22,42 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
   const [hoveredOverallRating, setHoveredOverallRating] = useState(0);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [proofImage, setProofImage] = useState<File | null>(null);
+  const [proofImagePreview, setProofImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const hasDetailedRatings = priceRating > 0 && serviceRating > 0 && qualityRating > 0;
+  const estimatedPoints = hasDetailedRatings
+    ? (proofImage ? 25 : 15)
+    : (proofImage ? 10 : 5);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setError('L\'immagine deve essere massimo 5MB');
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        setError('Seleziona un\'immagine valida');
+        return;
+      }
+      setProofImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProofImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      setError('');
+    }
+  };
+
+  const removeImage = () => {
+    setProofImage(null);
+    setProofImagePreview(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,8 +77,8 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
       return;
     }
 
-    if (priceRating === 0 || serviceRating === 0 || qualityRating === 0 || overallRating === 0) {
-      setError('Completa tutte le valutazioni');
+    if (overallRating === 0) {
+      setError('Inserisci almeno il voto finale');
       return;
     }
 
@@ -70,7 +104,41 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
         return;
       }
 
-      const avgRating = Math.round((priceRating + serviceRating + qualityRating + overallRating) / 4);
+      let proofImageUrl = null;
+
+      // Upload dell'immagine di prova se presente
+      if (proofImage) {
+        setUploadingImage(true);
+        const fileExt = proofImage.name.split('.').pop();
+        const fileName = `${profile.id}-${Date.now()}.${fileExt}`;
+        const filePath = `review-proofs/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('review-proofs')
+          .upload(filePath, proofImage);
+
+        if (uploadError) {
+          console.error('Error uploading proof:', uploadError);
+          setError('Errore durante il caricamento dell\'immagine');
+          setLoading(false);
+          setUploadingImage(false);
+          return;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('review-proofs')
+          .getPublicUrl(filePath);
+
+        proofImageUrl = publicUrl;
+        setUploadingImage(false);
+      }
+
+      const avgRating = hasDetailedRatings
+        ? Math.round((priceRating + serviceRating + qualityRating + overallRating) / 4)
+        : overallRating;
+
+      const reviewStatus = proofImage ? 'pending' : 'approved';
+      const pointsAwarded = proofImage ? 0 : estimatedPoints;
 
       const { error: insertError } = await supabase
         .from('reviews')
@@ -78,15 +146,33 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
           business_id: businessId,
           customer_id: profile.id,
           rating: avgRating,
-          price_rating: priceRating,
-          service_rating: serviceRating,
-          quality_rating: qualityRating,
+          price_rating: priceRating || null,
+          service_rating: serviceRating || null,
+          quality_rating: qualityRating || null,
           overall_rating: overallRating,
           title: title.trim(),
           content: content.trim(),
+          proof_image_url: proofImageUrl,
+          review_status: reviewStatus,
+          points_awarded: pointsAwarded,
         });
 
+      // Se la recensione è approvata automaticamente (senza prova), assegna i punti
+      if (reviewStatus === 'approved' && pointsAwarded > 0) {
+        await supabase.rpc('award_points', {
+          user_id: profile.id,
+          points: pointsAwarded,
+          activity_type: 'review',
+          reference_id: businessId,
+        });
+      }
+
       if (insertError) throw insertError;
+
+      // Mostra messaggio appropriato
+      if (proofImage) {
+        alert('✅ Recensione inviata con successo!\n\nLa tua recensione è in attesa di approvazione. Riceverai i punti dopo che lo staff avrà verificato la prova di acquisto.');
+      }
 
       onSuccess();
       onClose();
@@ -121,10 +207,34 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
             </div>
           )}
 
+          <div className="mb-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Award className="w-5 h-5 text-blue-600" />
+                <p className="font-semibold text-blue-900">Punti Stimati: {estimatedPoints} punti</p>
+              </div>
+              <p className="text-sm text-blue-700">
+                {hasDetailedRatings && proofImage && "Recensione completa con prova: 25 punti"}
+                {hasDetailedRatings && !proofImage && "Recensione completa: 15 punti"}
+                {!hasDetailedRatings && proofImage && "Recensione con prova: 10 punti"}
+                {!hasDetailedRatings && !proofImage && "Recensione base: 5 punti"}
+              </p>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              Valutazioni Dettagliate (Opzionale)
+            </h3>
+            <p className="text-xs text-gray-500 mb-4">
+              Completa tutte e tre le valutazioni per ottenere più punti
+            </p>
+          </div>
+
           <div className="mb-6 space-y-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Prezzo *
+                Prezzo
               </label>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -159,7 +269,7 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Servizio *
+                Servizio
               </label>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -194,7 +304,7 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Qualità *
+                Qualità
               </label>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -281,6 +391,52 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
 
           <div className="mb-6">
             <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Prova di Acquisto (Opzionale)
+            </label>
+            <p className="text-xs text-gray-500 mb-3">
+              Carica uno scontrino o fattura per ottenere più punti. L'immagine sarà visibile solo allo staff e verrà cancellata dopo l'approvazione.
+            </p>
+
+            {!proofImagePreview ? (
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-500">
+                    Clicca per caricare uno scontrino o fattura
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">PNG, JPG, JPEG (max 5MB)</p>
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </label>
+            ) : (
+              <div className="relative">
+                <img
+                  src={proofImagePreview}
+                  alt="Preview"
+                  className="w-full h-48 object-cover rounded-lg"
+                />
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
+                  <ImageIcon className="w-4 h-4" />
+                  <span>Immagine caricata</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Descrizione della tua esperienza *
             </label>
             <textarea
@@ -298,10 +454,10 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
           <div className="flex gap-3">
             <button
               type="submit"
-              disabled={loading || priceRating === 0 || serviceRating === 0 || qualityRating === 0 || overallRating === 0}
+              disabled={loading || uploadingImage || overallRating === 0}
               className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {loading ? 'Invio in corso...' : 'Pubblica recensione'}
+              {uploadingImage ? 'Caricamento immagine...' : loading ? 'Invio in corso...' : proofImage ? 'Invia per approvazione' : 'Pubblica recensione'}
             </button>
             <button
               type="button"
