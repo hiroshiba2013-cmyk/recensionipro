@@ -41,45 +41,68 @@ export function SearchResultsPage() {
       let businessIdsFromLocations: string[] = [];
 
       if (filters.region || filters.province || filters.city) {
-        let locationQuery = supabase
+        // Query per business_locations (attività reclamate)
+        let claimedQuery = supabase
           .from('business_locations')
           .select('business_id');
 
         if (filters.city) {
-          locationQuery = locationQuery.eq('city', filters.city);
+          claimedQuery = claimedQuery.eq('city', filters.city);
         } else if (filters.province) {
           const provinceCode = PROVINCE_TO_CODE[filters.province];
           if (provinceCode) {
-            locationQuery = locationQuery.eq('province', provinceCode);
+            claimedQuery = claimedQuery.eq('province', provinceCode);
           }
         } else if (filters.region) {
-          locationQuery = locationQuery.eq('region', filters.region);
+          claimedQuery = claimedQuery.eq('region', filters.region);
         }
 
-        locationQuery = locationQuery.limit(10000);
+        // Query per unclaimed_business_locations (attività non reclamate)
+        let unclaimedQuery = supabase
+          .from('unclaimed_business_locations')
+          .select('id');
 
-        const { data: locationData, error: locationError } = await locationQuery;
+        if (filters.city) {
+          unclaimedQuery = unclaimedQuery.eq('city', filters.city);
+        } else if (filters.province) {
+          const provinceCode = PROVINCE_TO_CODE[filters.province];
+          if (provinceCode) {
+            unclaimedQuery = unclaimedQuery.eq('province', provinceCode);
+          }
+        } else if (filters.region) {
+          unclaimedQuery = unclaimedQuery.eq('region', filters.region);
+        }
 
-        if (locationError) {
-          console.error('Location query error:', locationError);
+        // Esegui entrambe le query in parallelo
+        const [claimedResult, unclaimedResult] = await Promise.all([
+          claimedQuery,
+          unclaimedQuery
+        ]);
+
+        if (claimedResult.error) {
+          console.error('Claimed location query error:', claimedResult.error);
+        }
+
+        if (unclaimedResult.error) {
+          console.error('Unclaimed location query error:', unclaimedResult.error);
+        }
+
+        // Separa i risultati
+        const claimedIds = claimedResult.data?.map((loc: any) => loc.business_id).filter((id: string) => id != null) || [];
+        const unclaimedIds = unclaimedResult.data?.map((loc: any) => loc.id).filter((id: string) => id != null) || [];
+
+        if (claimedIds.length === 0 && unclaimedIds.length === 0) {
           setBusinesses([]);
           return;
         }
 
-        if (locationData && locationData.length > 0) {
-          businessIdsFromLocations = locationData
-            .map((loc: any) => loc.business_id)
-            .filter((id: string) => id != null);
-        }
-
-        if (businessIdsFromLocations.length === 0) {
-          setBusinesses([]);
-          return;
-        }
+        businessIdsFromLocations = claimedIds;
       }
 
       let allBusinesses: any[] = [];
+      let unclaimedBusinesses: any[] = [];
 
+      // Recupera le attività reclamate
       if (businessIdsFromLocations.length > 0) {
         const batchSize = 100;
         const batches = Math.ceil(businessIdsFromLocations.length / batchSize);
@@ -114,7 +137,85 @@ export function SearchResultsPage() {
             allBusinesses.push(...batchData);
           }
         }
-      } else {
+      }
+
+      // Recupera le attività non reclamate se ci sono filtri geografici
+      if (filters.region || filters.province || filters.city) {
+        let unclaimedQuery = supabase
+          .from('unclaimed_business_locations')
+          .select(`
+            id,
+            name,
+            category_id,
+            address,
+            city,
+            province,
+            region,
+            postal_code,
+            latitude,
+            longitude,
+            phone,
+            email,
+            website,
+            business_hours,
+            category:business_categories(*)
+          `);
+
+        if (filters.city) {
+          unclaimedQuery = unclaimedQuery.eq('city', filters.city);
+        } else if (filters.province) {
+          const provinceCode = PROVINCE_TO_CODE[filters.province];
+          if (provinceCode) {
+            unclaimedQuery = unclaimedQuery.eq('province', provinceCode);
+          }
+        } else if (filters.region) {
+          unclaimedQuery = unclaimedQuery.eq('region', filters.region);
+        }
+
+        if (filters.category) {
+          unclaimedQuery = unclaimedQuery.eq('category_id', filters.category);
+        }
+
+        if (filters.businessName) {
+          unclaimedQuery = unclaimedQuery.ilike('name', `%${filters.businessName}%`);
+        }
+
+        const { data: unclaimedData, error: unclaimedError } = await unclaimedQuery;
+
+        if (unclaimedError) {
+          console.error('Unclaimed query error:', unclaimedError);
+        } else if (unclaimedData) {
+          // Trasforma unclaimed_business_locations in formato Business
+          unclaimedBusinesses = unclaimedData.map((ub: any) => ({
+            id: ub.id,
+            name: ub.name,
+            category_id: ub.category_id,
+            category: ub.category,
+            is_claimed: false,
+            created_at: new Date().toISOString(),
+            locations: [{
+              id: ub.id,
+              business_id: ub.id,
+              address: ub.address,
+              city: ub.city,
+              province: ub.province,
+              region: ub.region,
+              postal_code: ub.postal_code,
+              latitude: ub.latitude,
+              longitude: ub.longitude,
+              phone: ub.phone,
+              email: ub.email,
+              website: ub.website,
+              business_hours: ub.business_hours,
+            }]
+          }));
+        }
+      }
+
+      // Combina attività reclamate e non reclamate
+      allBusinesses = [...allBusinesses, ...unclaimedBusinesses];
+
+      if (allBusinesses.length === 0) {
         let query = supabase
           .from('businesses')
           .select(`
