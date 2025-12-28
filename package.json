@@ -18,6 +18,7 @@
     "import:italy:all": "node import-all-italy-overpass.js",
     "import:all-regions": "node import-all-regions.js",
     "import:region": "node import-all-regions.js",
+    "import:provinces": "node import-all-provinces-comprehensive.js",
     "progress": "node check-progress.js",
     "monitor": "node monitor-import.js",
     "status": "node check-status.js"
