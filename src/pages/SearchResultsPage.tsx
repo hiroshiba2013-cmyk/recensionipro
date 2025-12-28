@@ -38,205 +38,133 @@ export function SearchResultsPage() {
     setLoading(true);
     setHasSearched(true);
     try {
-      let businessIdsFromLocations: string[] = [];
-
-      if (filters.region || filters.province || filters.city) {
-        // Query per business_locations (attività reclamate)
-        let claimedQuery = supabase
-          .from('business_locations')
-          .select('business_id');
-
-        if (filters.city) {
-          claimedQuery = claimedQuery.eq('city', filters.city);
-        } else if (filters.province) {
-          const provinceCode = PROVINCE_TO_CODE[filters.province];
-          if (provinceCode) {
-            claimedQuery = claimedQuery.eq('province', provinceCode);
-          }
-        } else if (filters.region) {
-          claimedQuery = claimedQuery.eq('region', filters.region);
-        }
-
-        // Query per unclaimed_business_locations (attività non reclamate)
-        let unclaimedQuery = supabase
-          .from('unclaimed_business_locations')
-          .select('id');
-
-        if (filters.city) {
-          unclaimedQuery = unclaimedQuery.eq('city', filters.city);
-        } else if (filters.province) {
-          const provinceCode = PROVINCE_TO_CODE[filters.province];
-          if (provinceCode) {
-            unclaimedQuery = unclaimedQuery.eq('province', provinceCode);
-          }
-        } else if (filters.region) {
-          unclaimedQuery = unclaimedQuery.eq('region', filters.region);
-        }
-
-        // Esegui entrambe le query in parallelo
-        const [claimedResult, unclaimedResult] = await Promise.all([
-          claimedQuery,
-          unclaimedQuery
-        ]);
-
-        if (claimedResult.error) {
-          console.error('Claimed location query error:', claimedResult.error);
-        }
-
-        if (unclaimedResult.error) {
-          console.error('Unclaimed location query error:', unclaimedResult.error);
-        }
-
-        // Separa i risultati
-        const claimedIds = claimedResult.data?.map((loc: any) => loc.business_id).filter((id: string) => id != null) || [];
-        const unclaimedIds = unclaimedResult.data?.map((loc: any) => loc.id).filter((id: string) => id != null) || [];
-
-        if (claimedIds.length === 0 && unclaimedIds.length === 0) {
-          setBusinesses([]);
-          return;
-        }
-
-        businessIdsFromLocations = claimedIds;
-      }
-
       let allBusinesses: any[] = [];
-      let unclaimedBusinesses: any[] = [];
 
-      // Recupera le attività reclamate
-      if (businessIdsFromLocations.length > 0) {
-        const batchSize = 100;
-        const batches = Math.ceil(businessIdsFromLocations.length / batchSize);
+      // Limite di risultati per evitare sovraccarico
+      const QUERY_LIMIT = 1000;
 
-        for (let i = 0; i < batches; i++) {
-          const batchIds = businessIdsFromLocations.slice(i * batchSize, (i + 1) * batchSize);
+      // Query 1: businesses con business_locations (importate da OSM nella tabella businesses)
+      let businessQuery = supabase
+        .from('businesses')
+        .select(`
+          *,
+          category:business_categories(*),
+          locations:business_locations(*)
+        `)
+        .limit(QUERY_LIMIT);
 
-          let query = supabase
-            .from('businesses')
-            .select(`
-              *,
-              category:business_categories(*)
-            `)
-            .in('id', batchIds);
-
-          if (filters.category) {
-            query = query.eq('category_id', filters.category);
-          }
-
-          if (filters.businessName) {
-            query = query.ilike('name', `%${filters.businessName}%`);
-          }
-
-          const { data: batchData, error: batchError } = await query;
-
-          if (batchError) {
-            console.error('Batch query error:', batchError);
-            continue;
-          }
-
-          if (batchData) {
-            allBusinesses.push(...batchData);
-          }
-        }
+      if (filters.category) {
+        businessQuery = businessQuery.eq('category_id', filters.category);
       }
 
-      // Recupera le attività non reclamate se ci sono filtri geografici
-      if (filters.region || filters.province || filters.city) {
-        let unclaimedQuery = supabase
-          .from('unclaimed_business_locations')
-          .select(`
-            id,
-            name,
-            category_id,
-            address,
-            city,
-            province,
-            region,
-            postal_code,
-            latitude,
-            longitude,
-            phone,
-            email,
-            website,
-            business_hours,
-            category:business_categories(*)
-          `);
+      if (filters.businessName) {
+        businessQuery = businessQuery.ilike('name', `%${filters.businessName}%`);
+      }
 
-        if (filters.city) {
-          unclaimedQuery = unclaimedQuery.eq('city', filters.city);
-        } else if (filters.province) {
-          const provinceCode = PROVINCE_TO_CODE[filters.province];
-          if (provinceCode) {
-            unclaimedQuery = unclaimedQuery.eq('province', provinceCode);
-          }
-        } else if (filters.region) {
-          unclaimedQuery = unclaimedQuery.eq('region', filters.region);
+      // Query 2: unclaimed_business_locations (importate da OSM direttamente)
+      let unclaimedQuery = supabase
+        .from('unclaimed_business_locations')
+        .select(`
+          id,
+          name,
+          category_id,
+          address,
+          city,
+          province,
+          region,
+          postal_code,
+          latitude,
+          longitude,
+          phone,
+          email,
+          website,
+          business_hours,
+          category:business_categories(*)
+        `)
+        .limit(QUERY_LIMIT);
+
+      if (filters.category) {
+        unclaimedQuery = unclaimedQuery.eq('category_id', filters.category);
+      }
+
+      if (filters.businessName) {
+        unclaimedQuery = unclaimedQuery.ilike('name', `%${filters.businessName}%`);
+      }
+
+      // Applica filtri geografici direttamente nella query per unclaimed
+      if (filters.city) {
+        unclaimedQuery = unclaimedQuery.eq('city', filters.city);
+      } else if (filters.province) {
+        const provinceCode = PROVINCE_TO_CODE[filters.province];
+        if (provinceCode) {
+          unclaimedQuery = unclaimedQuery.eq('province', provinceCode);
+        }
+      } else if (filters.region) {
+        unclaimedQuery = unclaimedQuery.eq('region', filters.region);
+      }
+
+      // Esegui entrambe le query in parallelo
+      const [businessResult, unclaimedResult] = await Promise.all([
+        businessQuery,
+        unclaimedQuery
+      ]);
+
+      if (businessResult.error) {
+        console.error('Business query error:', businessResult.error);
+      } else if (businessResult.data) {
+        // Filtra per location se necessario
+        let filteredBusinesses = businessResult.data;
+
+        if (filters.region || filters.province || filters.city) {
+          filteredBusinesses = filteredBusinesses.filter((business: any) => {
+            if (!business.locations || business.locations.length === 0) return false;
+
+            return business.locations.some((loc: any) => {
+              if (filters.city) {
+                return loc.city === filters.city;
+              } else if (filters.province) {
+                const provinceCode = PROVINCE_TO_CODE[filters.province];
+                return loc.province === provinceCode;
+              } else if (filters.region) {
+                return loc.region === filters.region;
+              }
+              return true;
+            });
+          });
         }
 
-        if (filters.category) {
-          unclaimedQuery = unclaimedQuery.eq('category_id', filters.category);
-        }
+        allBusinesses.push(...filteredBusinesses);
+      }
 
-        if (filters.businessName) {
-          unclaimedQuery = unclaimedQuery.ilike('name', `%${filters.businessName}%`);
-        }
-
-        const { data: unclaimedData, error: unclaimedError } = await unclaimedQuery;
-
-        if (unclaimedError) {
-          console.error('Unclaimed query error:', unclaimedError);
-        } else if (unclaimedData) {
-          // Trasforma unclaimed_business_locations in formato Business
-          unclaimedBusinesses = unclaimedData.map((ub: any) => ({
+      if (unclaimedResult.error) {
+        console.error('Unclaimed query error:', unclaimedResult.error);
+      } else if (unclaimedResult.data) {
+        // Trasforma unclaimed_business_locations in formato Business
+        const unclaimedBusinesses = unclaimedResult.data.map((ub: any) => ({
+          id: ub.id,
+          name: ub.name,
+          category_id: ub.category_id,
+          category: ub.category,
+          is_claimed: false,
+          created_at: new Date().toISOString(),
+          locations: [{
             id: ub.id,
-            name: ub.name,
-            category_id: ub.category_id,
-            category: ub.category,
-            is_claimed: false,
-            created_at: new Date().toISOString(),
-            locations: [{
-              id: ub.id,
-              business_id: ub.id,
-              address: ub.address,
-              city: ub.city,
-              province: ub.province,
-              region: ub.region,
-              postal_code: ub.postal_code,
-              latitude: ub.latitude,
-              longitude: ub.longitude,
-              phone: ub.phone,
-              email: ub.email,
-              website: ub.website,
-              business_hours: ub.business_hours,
-            }]
-          }));
-        }
-      }
+            business_id: ub.id,
+            address: ub.address,
+            city: ub.city,
+            province: ub.province,
+            region: ub.region,
+            postal_code: ub.postal_code,
+            latitude: ub.latitude,
+            longitude: ub.longitude,
+            phone: ub.phone,
+            email: ub.email,
+            website: ub.website,
+            business_hours: ub.business_hours,
+          }]
+        }));
 
-      // Combina attività reclamate e non reclamate
-      allBusinesses = [...allBusinesses, ...unclaimedBusinesses];
-
-      if (allBusinesses.length === 0) {
-        let query = supabase
-          .from('businesses')
-          .select(`
-            *,
-            category:business_categories(*)
-          `);
-
-        if (filters.category) {
-          query = query.eq('category_id', filters.category);
-        }
-
-        if (filters.businessName) {
-          query = query.ilike('name', `%${filters.businessName}%`);
-        }
-
-        const { data: businessData, error: businessError } = await query;
-
-        if (businessError) throw businessError;
-        if (businessData) {
-          allBusinesses = businessData;
-        }
+        allBusinesses.push(...unclaimedBusinesses);
       }
 
       if (allBusinesses.length === 0) {
