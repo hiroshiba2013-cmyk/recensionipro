@@ -6,6 +6,7 @@ import { AvatarUpload } from '../components/profile/AvatarUpload';
 import { EditProfileForm } from '../components/profile/EditProfileForm';
 import { JobRequestForm } from '../components/profile/JobRequestForm';
 import { EditFamilyMembersForm } from '../components/profile/EditFamilyMembersForm';
+import { AddUnclaimedBusinessForm } from '../components/profile/AddUnclaimedBusinessForm';
 import { EditBusinessForm } from '../components/business/EditBusinessForm';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
 import { EditBusinessLocationsForm } from '../components/business/EditBusinessLocationsForm';
@@ -325,6 +326,11 @@ export function ProfilePage() {
             <EditFamilyMembersForm
               customerId={profile.id}
               onUpdate={loadProfileData}
+            />
+
+            <AddUnclaimedBusinessForm
+              customerId={profile.id}
+              onSuccess={loadProfileData}
             />
 
             <JobRequestForm customerId={profile.id} />
