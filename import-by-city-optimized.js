@@ -540,7 +540,7 @@ async function importCity(cityData, cityIndex, totalCities) {
       if (!categoryId) {
         console.log('⚠️  cat. non trovata - SKIP');
         skippedCategories++;
-        await sleep(500);
+        await sleep(1000);
         continue;
       }
 
@@ -548,7 +548,7 @@ async function importCity(cityData, cityIndex, totalCities) {
 
       if (elements.length === 0) {
         console.log('⚪ 0');
-        await sleep(1000); // Pausa più breve per città
+        await sleep(2500);
         continue;
       }
 
@@ -610,12 +610,12 @@ async function importCity(cityData, cityIndex, totalCities) {
       cityTotal += imported;
       stats.totalProcessed += elements.length;
 
-      await sleep(1500); // Pausa più breve tra categorie
+      await sleep(3500);
     } catch (error) {
       console.log(`❌ Errore - SKIP`);
       skippedCategories++;
       stats.errors++;
-      await sleep(2000);
+      await sleep(4000);
       continue;
     }
   }
@@ -662,13 +662,17 @@ async function main() {
   console.log('║' + ' '.repeat(68) + '║');
   console.log('║' + ` Totale città: ${ITALIAN_CITIES.length}`.padEnd(68) + '║');
   console.log('║' + ` Totale categorie: ${COMPREHENSIVE_CATEGORIES.length}`.padEnd(68) + '║');
+  console.log('║' + ' 🎯 Inizio dalle città PICCOLE (meno timeout!)'.padEnd(68) + '║');
   console.log('╚' + '═'.repeat(68) + '╝\n');
 
   let grandTotal = 0;
   let cityCount = 0;
-  const totalCities = ITALIAN_CITIES.length;
 
-  for (const cityData of ITALIAN_CITIES) {
+  const sortedCities = [...ITALIAN_CITIES].filter(c => c.population < 500000).reverse();
+  const totalCities = sortedCities.length;
+  console.log(`📊 Città selezionate (< 500k ab.): ${totalCities}/${ITALIAN_CITIES.length}\n`);
+
+  for (const cityData of sortedCities) {
     try {
       cityCount++;
       const count = await importCity(cityData, cityCount, totalCities);
