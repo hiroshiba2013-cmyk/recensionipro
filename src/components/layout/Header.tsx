@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LogOut, User, CreditCard, Briefcase, Trophy } from 'lucide-react';
+import { LogOut, User, CreditCard, Briefcase, Trophy, Package } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
@@ -46,6 +46,13 @@ export function Header() {
             </a>
 
             <nav className="flex items-center gap-6">
+              <a
+                href="/products"
+                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+              >
+                <Package className="w-5 h-5" />
+                <span>Prodotti</span>
+              </a>
               <a
                 href="/jobs"
                 className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"

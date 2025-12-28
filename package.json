@@ -27,7 +27,8 @@
     "import:liguria:fast": "node import-liguria-optimized.js",
     "progress": "node check-progress.js",
     "monitor": "node monitor-import.js",
-    "status": "node check-status.js"
+    "status": "node check-status.js",
+    "generate:products": "node generate-products.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
