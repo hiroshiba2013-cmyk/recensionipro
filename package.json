@@ -22,6 +22,7 @@
     "import:by-category": "node import-by-category.js",
     "import:by-city": "node import-by-city-major.js",
     "import:cities": "node import-by-city-optimized.js",
+    "import:slow": "node import-slow-and-steady.js",
     "progress": "node check-progress.js",
     "monitor": "node monitor-import.js",
     "status": "node check-status.js"
