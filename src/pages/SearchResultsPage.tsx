@@ -63,73 +63,14 @@ export function SearchResultsPage() {
       // Limite di risultati per evitare sovraccarico
       const QUERY_LIMIT = 1000;
 
-      // Query 1: businesses con business_locations
-      // Se ci sono filtri geografici, prima troviamo i business_id dalle locations
-      let businessIdsFromLocations: string[] = [];
-
-      if (filters.region || filters.province || filters.city) {
-        let locationQuery = supabase
-          .from('business_locations')
-          .select('business_id')
-          .limit(QUERY_LIMIT);
-
-        if (filters.city) {
-          locationQuery = locationQuery.eq('city', filters.city);
-        } else if (filters.province) {
-          const provinceCode = PROVINCE_TO_CODE[filters.province];
-          if (provinceCode) {
-            locationQuery = locationQuery.eq('province', provinceCode);
-          }
-        } else if (filters.region) {
-          locationQuery = locationQuery.eq('region', filters.region);
-        }
-
-        const { data: locationData, error: locationError } = await locationQuery;
-
-        if (locationError) {
-          console.error('Location query error:', locationError);
-        } else if (locationData) {
-          businessIdsFromLocations = locationData
-            .map((loc: any) => loc.business_id)
-            .filter((id: string) => id != null);
-        }
-      }
-
-      let businessQuery = supabase
-        .from('businesses')
-        .select(`
-          *,
-          category:business_categories(*),
-          locations:business_locations(*)
-        `)
-        .limit(QUERY_LIMIT);
-
-      if (filters.category) {
-        businessQuery = businessQuery.eq('category_id', filters.category);
-      }
-
-      if (filters.businessName) {
-        businessQuery = businessQuery.ilike('name', `%${filters.businessName}%`);
-      }
-
-      // Se abbiamo filtri geografici e abbiamo trovato location IDs, filtra per business_id
-      // Se abbiamo filtri geografici ma non abbiamo trovato location IDs, significa che non ci sono risultati
-      if (filters.region || filters.province || filters.city) {
-        if (businessIdsFromLocations.length > 0) {
-          businessQuery = businessQuery.in('id', businessIdsFromLocations);
-        } else {
-          businessQuery = null;
-        }
-      }
-
-      // Query 2: unclaimed_business_locations (importate da OSM direttamente)
+      // Query unclaimed_business_locations (tutte le attività non reclamate)
       let unclaimedQuery = supabase
         .from('unclaimed_business_locations')
         .select(`
           id,
           name,
           category_id,
-          address,
+          street,
           city,
           province,
           region,
@@ -142,6 +83,7 @@ export function SearchResultsPage() {
           business_hours,
           category:business_categories(*)
         `)
+        .eq('is_claimed', false)
         .limit(QUERY_LIMIT);
 
       if (filters.category) {
@@ -152,7 +94,7 @@ export function SearchResultsPage() {
         unclaimedQuery = unclaimedQuery.ilike('name', `%${filters.businessName}%`);
       }
 
-      // Applica filtri geografici direttamente nella query per unclaimed
+      // Applica filtri geografici
       if (filters.city) {
         unclaimedQuery = unclaimedQuery.eq('city', filters.city);
       } else if (filters.province) {
@@ -163,25 +105,11 @@ export function SearchResultsPage() {
       } else if (filters.region) {
         unclaimedQuery = unclaimedQuery.eq('region', filters.region);
       }
-      // Esegui entrambe le query in parallelo
-      const queries = [];
-      if (businessQuery) {
-        queries.push(businessQuery);
-      } else {
-        queries.push(Promise.resolve({ data: null, error: null }));
-      }
-      queries.push(unclaimedQuery);
 
-      const [businessResult, unclaimedResult] = await Promise.all(queries);
-
-      if (businessResult.error) {
-        console.error('Business query error:', businessResult.error);
-      } else if (businessResult.data) {
-        allBusinesses.push(...businessResult.data);
-      }
+      const unclaimedResult = await unclaimedQuery;
 
       if (unclaimedResult.error) {
-        console.error('Unclaimed query error:', unclaimedResult.error);
+        console.error('Query error:', unclaimedResult.error);
       } else if (unclaimedResult.data) {
         // Trasforma unclaimed_business_locations in formato Business
         const unclaimedBusinesses = unclaimedResult.data.map((ub: any) => ({
@@ -194,7 +122,7 @@ export function SearchResultsPage() {
           locations: [{
             id: ub.id,
             business_id: ub.id,
-            address: ub.address,
+            address: ub.street,
             city: ub.city,
             province: ub.province,
             region: ub.region,
