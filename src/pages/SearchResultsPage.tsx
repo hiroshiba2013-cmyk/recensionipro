@@ -15,9 +15,28 @@ export function SearchResultsPage() {
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [initialFilters, setInitialFilters] = useState<SearchFilters | null>(null);
+  const [currentSearch, setCurrentSearch] = useState(window.location.search);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const handleLocationChange = () => {
+      setCurrentSearch(window.location.search);
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+
+    const originalPushState = window.history.pushState;
+    window.history.pushState = function(...args) {
+      originalPushState.apply(window.history, args);
+      handleLocationChange();
+    };
+
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(currentSearch);
     const filters: SearchFilters = {
       category: params.get('category') || '',
       region: params.get('region') || '',
@@ -27,12 +46,13 @@ export function SearchResultsPage() {
       minRating: Number(params.get('rating')) || 0,
     };
 
+    setInitialFilters(filters);
+
     if (params.toString()) {
-      setInitialFilters(filters);
       applyFilters(filters);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentSearch]);
 
   const applyFilters = async (filters: SearchFilters) => {
     setLoading(true);
@@ -43,7 +63,38 @@ export function SearchResultsPage() {
       // Limite di risultati per evitare sovraccarico
       const QUERY_LIMIT = 1000;
 
-      // Query 1: businesses con business_locations (importate da OSM nella tabella businesses)
+      // Query 1: businesses con business_locations
+      // Se ci sono filtri geografici, prima troviamo i business_id dalle locations
+      let businessIdsFromLocations: string[] = [];
+
+      if (filters.region || filters.province || filters.city) {
+        let locationQuery = supabase
+          .from('business_locations')
+          .select('business_id')
+          .limit(QUERY_LIMIT);
+
+        if (filters.city) {
+          locationQuery = locationQuery.eq('city', filters.city);
+        } else if (filters.province) {
+          const provinceCode = PROVINCE_TO_CODE[filters.province];
+          if (provinceCode) {
+            locationQuery = locationQuery.eq('province', provinceCode);
+          }
+        } else if (filters.region) {
+          locationQuery = locationQuery.eq('region', filters.region);
+        }
+
+        const { data: locationData, error: locationError } = await locationQuery;
+
+        if (locationError) {
+          console.error('Location query error:', locationError);
+        } else if (locationData) {
+          businessIdsFromLocations = locationData
+            .map((loc: any) => loc.business_id)
+            .filter((id: string) => id != null);
+        }
+      }
+
       let businessQuery = supabase
         .from('businesses')
         .select(`
@@ -59,6 +110,16 @@ export function SearchResultsPage() {
 
       if (filters.businessName) {
         businessQuery = businessQuery.ilike('name', `%${filters.businessName}%`);
+      }
+
+      // Se abbiamo filtri geografici e abbiamo trovato location IDs, filtra per business_id
+      // Se abbiamo filtri geografici ma non abbiamo trovato location IDs, significa che non ci sono risultati
+      if (filters.region || filters.province || filters.city) {
+        if (businessIdsFromLocations.length > 0) {
+          businessQuery = businessQuery.in('id', businessIdsFromLocations);
+        } else {
+          businessQuery = null;
+        }
       }
 
       // Query 2: unclaimed_business_locations (importate da OSM direttamente)
@@ -102,38 +163,21 @@ export function SearchResultsPage() {
       } else if (filters.region) {
         unclaimedQuery = unclaimedQuery.eq('region', filters.region);
       }
-
       // Esegui entrambe le query in parallelo
-      const [businessResult, unclaimedResult] = await Promise.all([
-        businessQuery,
-        unclaimedQuery
-      ]);
+      const queries = [];
+      if (businessQuery) {
+        queries.push(businessQuery);
+      } else {
+        queries.push(Promise.resolve({ data: null, error: null }));
+      }
+      queries.push(unclaimedQuery);
+
+      const [businessResult, unclaimedResult] = await Promise.all(queries);
 
       if (businessResult.error) {
         console.error('Business query error:', businessResult.error);
       } else if (businessResult.data) {
-        // Filtra per location se necessario
-        let filteredBusinesses = businessResult.data;
-
-        if (filters.region || filters.province || filters.city) {
-          filteredBusinesses = filteredBusinesses.filter((business: any) => {
-            if (!business.locations || business.locations.length === 0) return false;
-
-            return business.locations.some((loc: any) => {
-              if (filters.city) {
-                return loc.city === filters.city;
-              } else if (filters.province) {
-                const provinceCode = PROVINCE_TO_CODE[filters.province];
-                return loc.province === provinceCode;
-              } else if (filters.region) {
-                return loc.region === filters.region;
-              }
-              return true;
-            });
-          });
-        }
-
-        allBusinesses.push(...filteredBusinesses);
+        allBusinesses.push(...businessResult.data);
       }
 
       if (unclaimedResult.error) {
@@ -172,14 +216,7 @@ export function SearchResultsPage() {
         return;
       }
 
-      let filteredBusinesses = allBusinesses;
-
-      if (filteredBusinesses.length === 0) {
-        setBusinesses([]);
-        return;
-      }
-
-      const businessIdsList = filteredBusinesses.map(b => b.id);
+      const businessIdsList = allBusinesses.map(b => b.id);
 
       const { data: ratingsData } = await supabase
         .rpc('get_business_ratings', { business_ids: businessIdsList });
@@ -195,7 +232,7 @@ export function SearchResultsPage() {
         });
       }
 
-      let businessesWithRatings = filteredBusinesses.map(business => {
+      let businessesWithRatings = allBusinesses.map(business => {
         const ratings = ratingsMap.get(business.id) || { avg_rating: 0, review_count: 0 };
         return {
           ...business,
