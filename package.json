@@ -24,6 +24,7 @@
     "import:cities": "node import-by-city-optimized.js",
     "import:slow": "node import-slow-and-steady.js",
     "import:liguria": "node import-liguria-complete.js",
+    "import:liguria:fast": "node import-liguria-optimized.js",
     "progress": "node check-progress.js",
     "monitor": "node monitor-import.js",
     "status": "node check-status.js"
