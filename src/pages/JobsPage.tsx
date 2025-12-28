@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Briefcase, MapPin, DollarSign, Filter, X } from 'lucide-react';
+import { Briefcase, MapPin, DollarSign, Filter, X, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -34,7 +34,9 @@ export function JobsPage() {
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [userApplications, setUserApplications] = useState<string[]>([]);
+  const [viewedJobs, setViewedJobs] = useState<string[]>([]);
   const [appliedJobId, setAppliedJobId] = useState<string | null>(null);
+  const [markingAsViewed, setMarkingAsViewed] = useState<string | null>(null);
   const { user, profile } = useAuth();
 
   const [filters, setFilters] = useState<SearchFilters>({
@@ -48,6 +50,7 @@ export function JobsPage() {
     loadJobs();
     if (user) {
       loadUserApplications();
+      loadViewedJobs();
     }
   }, [user]);
 
@@ -106,6 +109,19 @@ export function JobsPage() {
     }
   };
 
+  const loadViewedJobs = async () => {
+    try {
+      const { data } = await supabase
+        .from('job_views')
+        .select('job_posting_id')
+        .eq('user_id', user?.id);
+
+      setViewedJobs(data?.map(v => v.job_posting_id) || []);
+    } catch (error) {
+      console.error('Error loading viewed jobs:', error);
+    }
+  };
+
   const handleApply = async (jobId: string) => {
     if (!user) {
       alert('Devi accedere per candidarti');
@@ -138,6 +154,32 @@ export function JobsPage() {
       }
     } finally {
       setAppliedJobId(null);
+    }
+  };
+
+  const handleMarkAsViewed = async (jobId: string) => {
+    if (!user) {
+      return;
+    }
+
+    try {
+      setMarkingAsViewed(jobId);
+      const { error } = await supabase
+        .from('job_views')
+        .insert({
+          job_posting_id: jobId,
+          user_id: user.id,
+        });
+
+      if (error) throw error;
+
+      setViewedJobs([...viewedJobs, jobId]);
+    } catch (error: any) {
+      if (error.code !== '23505') {
+        console.error('Error marking as viewed:', error);
+      }
+    } finally {
+      setMarkingAsViewed(null);
     }
   };
 
@@ -319,17 +361,37 @@ export function JobsPage() {
                   <span className="text-xs text-gray-500">
                     Scade il {new Date(job.expires_at).toLocaleDateString('it-IT')}
                   </span>
-                  <button
-                    onClick={() => handleApply(job.id)}
-                    disabled={userApplications.includes(job.id) || appliedJobId === job.id || !user || profile?.user_type === 'business'}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                      userApplications.includes(job.id)
-                        ? 'bg-gray-300 text-gray-700 cursor-not-allowed'
-                        : 'bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400'
-                    }`}
-                  >
-                    {userApplications.includes(job.id) ? 'Già candidato' : appliedJobId === job.id ? 'Candidatura...' : 'Candidati'}
-                  </button>
+                  <div className="flex items-center gap-3">
+                    {user && profile?.user_type !== 'business' && (
+                      viewedJobs.includes(job.id) ? (
+                        <div className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg font-medium">
+                          <Check className="w-4 h-4" />
+                          <span>Visionato</span>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleMarkAsViewed(job.id)}
+                          disabled={markingAsViewed === job.id}
+                          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors disabled:bg-gray-100"
+                        >
+                          {markingAsViewed === job.id ? 'Salvataggio...' : 'Segna come visionato'}
+                        </button>
+                      )
+                    )}
+                    {user && profile?.user_type !== 'business' && (
+                      <button
+                        onClick={() => handleApply(job.id)}
+                        disabled={userApplications.includes(job.id) || appliedJobId === job.id}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                          userApplications.includes(job.id)
+                            ? 'bg-gray-300 text-gray-700 cursor-not-allowed'
+                            : 'bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400'
+                        }`}
+                      >
+                        {userApplications.includes(job.id) ? 'Già candidato' : appliedJobId === job.id ? 'Candidatura...' : 'Candidati'}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
