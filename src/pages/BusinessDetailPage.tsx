@@ -37,7 +37,10 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
   const loadBusinessData = async () => {
     setLoading(true);
     try {
-      const { data: businessData } = await supabase
+      let businessData: any = null;
+
+      // Prima cerca in businesses (attività reclamate)
+      const { data: claimedData } = await supabase
         .from('businesses')
         .select(`
           *,
@@ -45,6 +48,40 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
         `)
         .eq('id', businessId)
         .maybeSingle();
+
+      if (claimedData) {
+        businessData = claimedData;
+      } else {
+        // Se non trovata, cerca in unclaimed_business_locations
+        const { data: unclaimedData } = await supabase
+          .from('unclaimed_business_locations')
+          .select(`
+            *,
+            category:business_categories(*)
+          `)
+          .eq('id', businessId)
+          .maybeSingle();
+
+        if (unclaimedData) {
+          // Trasforma in formato business
+          businessData = {
+            id: unclaimedData.id,
+            name: unclaimedData.name,
+            category_id: unclaimedData.category_id,
+            category: unclaimedData.category,
+            is_claimed: false,
+            owner_id: null,
+            verified: false,
+            created_at: unclaimedData.created_at,
+            address: unclaimedData.street,
+            city: unclaimedData.city,
+            phone: unclaimedData.phone,
+            email: unclaimedData.email,
+            website: unclaimedData.website,
+            website_url: unclaimedData.website,
+          };
+        }
+      }
 
       if (businessData) {
         const { data: reviewsData } = await supabase
@@ -136,17 +173,61 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
 
     setClaimingBusiness(true);
     try {
-      const { error } = await supabase
+      // Recupera i dati dall'unclaimed_business_locations
+      const { data: unclaimedData, error: fetchError } = await supabase
+        .from('unclaimed_business_locations')
+        .select('*')
+        .eq('id', businessId)
+        .maybeSingle();
+
+      if (fetchError || !unclaimedData) {
+        throw new Error('Attività non trovata');
+      }
+
+      // Crea la nuova business
+      const { data: newBusiness, error: insertError } = await supabase
         .from('businesses')
-        .update({
+        .insert({
+          name: unclaimedData.name,
+          category_id: unclaimedData.category_id,
           owner_id: profile.id,
           is_claimed: true,
           verified: false,
         })
-        .eq('id', businessId)
-        .eq('is_claimed', false);
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (insertError || !newBusiness) {
+        throw insertError || new Error('Errore creazione business');
+      }
+
+      // Crea la business_location
+      const { error: locationError } = await supabase
+        .from('business_locations')
+        .insert({
+          business_id: newBusiness.id,
+          address: unclaimedData.street,
+          city: unclaimedData.city,
+          province: unclaimedData.province,
+          region: unclaimedData.region,
+          postal_code: unclaimedData.postal_code,
+          latitude: unclaimedData.latitude,
+          longitude: unclaimedData.longitude,
+          phone: unclaimedData.phone,
+          email: unclaimedData.email,
+          website: unclaimedData.website,
+          business_hours: unclaimedData.business_hours,
+        });
+
+      if (locationError) throw locationError;
+
+      // Elimina da unclaimed_business_locations
+      const { error: deleteError } = await supabase
+        .from('unclaimed_business_locations')
+        .delete()
+        .eq('id', businessId);
+
+      if (deleteError) throw deleteError;
 
       alert(
         'Rivendicazione completata!\n\n' +
@@ -206,6 +287,41 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           <ArrowLeft className="w-5 h-5" />
           Torna indietro
         </button>
+
+        {!business.is_claimed && (
+          <div className="mb-6 bg-gradient-to-r from-blue-50 to-green-50 border-l-4 border-blue-600 rounded-lg p-4">
+            <p className="text-sm text-gray-700">
+              I dati di questa attività sono forniti da{' '}
+              <a
+                href="https://www.openstreetmap.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 font-semibold underline"
+              >
+                OpenStreetMap
+              </a>
+              {' '}e{' '}
+              <a
+                href="https://www.geofabrik.de"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 font-semibold underline"
+              >
+                Geofabrik
+              </a>
+              , rilasciati sotto licenza{' '}
+              <a
+                href="https://www.openstreetmap.org/copyright"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 font-semibold underline"
+              >
+                ODbL
+              </a>
+              .
+            </p>
+          </div>
+        )}
 
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="relative h-64 bg-gradient-to-r from-blue-600 to-blue-800">
@@ -501,6 +617,41 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
             </div>
           </div>
         </div>
+
+        {!business.is_claimed && (
+          <div className="mt-8 bg-gradient-to-r from-blue-50 to-green-50 border-l-4 border-blue-600 rounded-lg p-4">
+            <p className="text-sm text-gray-700">
+              I dati di questa attività sono forniti da{' '}
+              <a
+                href="https://www.openstreetmap.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 font-semibold underline"
+              >
+                OpenStreetMap
+              </a>
+              {' '}e{' '}
+              <a
+                href="https://www.geofabrik.de"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 font-semibold underline"
+              >
+                Geofabrik
+              </a>
+              , rilasciati sotto licenza{' '}
+              <a
+                href="https://www.openstreetmap.org/copyright"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 font-semibold underline"
+              >
+                ODbL
+              </a>
+              .
+            </p>
+          </div>
+        )}
       </div>
 
       {showReviewForm && (

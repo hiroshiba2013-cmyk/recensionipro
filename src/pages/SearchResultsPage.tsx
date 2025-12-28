@@ -217,6 +217,39 @@ export function SearchResultsPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="mb-6 bg-gradient-to-r from-blue-50 to-green-50 border-l-4 border-blue-600 rounded-lg p-4">
+          <p className="text-sm text-gray-700">
+            I dati delle attività sono forniti da{' '}
+            <a
+              href="https://www.openstreetmap.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 font-semibold underline"
+            >
+              OpenStreetMap
+            </a>
+            {' '}e{' '}
+            <a
+              href="https://www.geofabrik.de"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 font-semibold underline"
+            >
+              Geofabrik
+            </a>
+            , rilasciati sotto licenza{' '}
+            <a
+              href="https://www.openstreetmap.org/copyright"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 font-semibold underline"
+            >
+              ODbL
+            </a>
+            .
+          </p>
+        </div>
+
         {hasSearched && (
           <div className="mb-6 flex items-center justify-between bg-white rounded-lg shadow-sm p-6">
             <div>
@@ -255,6 +288,41 @@ export function SearchResultsPage() {
                 business={business}
               />
             ))}
+          </div>
+        )}
+
+        {hasSearched && businesses.length > 0 && (
+          <div className="mt-8 bg-gradient-to-r from-blue-50 to-green-50 border-l-4 border-blue-600 rounded-lg p-4">
+            <p className="text-sm text-gray-700">
+              I dati delle attività sono forniti da{' '}
+              <a
+                href="https://www.openstreetmap.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 font-semibold underline"
+              >
+                OpenStreetMap
+              </a>
+              {' '}e{' '}
+              <a
+                href="https://www.geofabrik.de"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 font-semibold underline"
+              >
+                Geofabrik
+              </a>
+              , rilasciati sotto licenza{' '}
+              <a
+                href="https://www.openstreetmap.org/copyright"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 font-semibold underline"
+              >
+                ODbL
+              </a>
+              .
+            </p>
           </div>
         )}
       </div>
