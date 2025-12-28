@@ -56,7 +56,15 @@ export function SearchResultsPage() {
           locationQuery = locationQuery.eq('region', filters.region);
         }
 
-        const { data: locationData } = await locationQuery;
+        locationQuery = locationQuery.limit(10000);
+
+        const { data: locationData, error: locationError } = await locationQuery;
+
+        if (locationError) {
+          console.error('Location query error:', locationError);
+          setBusinesses([]);
+          return;
+        }
 
         if (locationData && locationData.length > 0) {
           businessIdsFromLocations = locationData
@@ -70,34 +78,72 @@ export function SearchResultsPage() {
         }
       }
 
-      let query = supabase
-        .from('businesses')
-        .select(`
-          *,
-          category:business_categories(*)
-        `);
+      let allBusinesses: any[] = [];
 
       if (businessIdsFromLocations.length > 0) {
-        query = query.in('id', businessIdsFromLocations);
+        const batchSize = 100;
+        const batches = Math.ceil(businessIdsFromLocations.length / batchSize);
+
+        for (let i = 0; i < batches; i++) {
+          const batchIds = businessIdsFromLocations.slice(i * batchSize, (i + 1) * batchSize);
+
+          let query = supabase
+            .from('businesses')
+            .select(`
+              *,
+              category:business_categories(*)
+            `)
+            .in('id', batchIds);
+
+          if (filters.category) {
+            query = query.eq('category_id', filters.category);
+          }
+
+          if (filters.businessName) {
+            query = query.ilike('name', `%${filters.businessName}%`);
+          }
+
+          const { data: batchData, error: batchError } = await query;
+
+          if (batchError) {
+            console.error('Batch query error:', batchError);
+            continue;
+          }
+
+          if (batchData) {
+            allBusinesses.push(...batchData);
+          }
+        }
+      } else {
+        let query = supabase
+          .from('businesses')
+          .select(`
+            *,
+            category:business_categories(*)
+          `);
+
+        if (filters.category) {
+          query = query.eq('category_id', filters.category);
+        }
+
+        if (filters.businessName) {
+          query = query.ilike('name', `%${filters.businessName}%`);
+        }
+
+        const { data: businessData, error: businessError } = await query;
+
+        if (businessError) throw businessError;
+        if (businessData) {
+          allBusinesses = businessData;
+        }
       }
 
-      if (filters.category) {
-        query = query.eq('category_id', filters.category);
-      }
-
-      if (filters.businessName) {
-        query = query.ilike('name', `%${filters.businessName}%`);
-      }
-
-      const { data: businessData, error: businessError } = await query;
-
-      if (businessError) throw businessError;
-      if (!businessData || businessData.length === 0) {
+      if (allBusinesses.length === 0) {
         setBusinesses([]);
         return;
       }
 
-      let filteredBusinesses = businessData;
+      let filteredBusinesses = allBusinesses;
 
       if (filteredBusinesses.length === 0) {
         setBusinesses([]);
