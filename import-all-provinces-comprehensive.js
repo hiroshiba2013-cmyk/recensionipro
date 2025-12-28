@@ -476,28 +476,48 @@ async function queryOverpass(bbox, osmTag) {
     out center;
   `;
 
-  try {
-    const response = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: query,
-      headers: { 'Content-Type': 'text/plain' }
-    });
+  // Retry logic per errori di rete
+  let retries = 0;
+  const maxRetries = 3;
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        console.log('   ⏳ Rate limit, attendo 60 secondi...');
-        await sleep(60000);
-        return queryOverpass(bbox, osmTag);
+  while (retries < maxRetries) {
+    try {
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        body: query,
+        headers: { 'Content-Type': 'text/plain' },
+        signal: AbortSignal.timeout(30000) // timeout 30 secondi
+      });
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          console.log('   ⏳ Rate limit, attendo 60 secondi...');
+          await sleep(60000);
+          return queryOverpass(bbox, osmTag);
+        }
+        if (response.status >= 500) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+        return [];
       }
-      return [];
-    }
 
-    const data = await response.json();
-    return data.elements || [];
-  } catch (error) {
-    console.log(`   ⚠️  Errore query: ${error.message}`);
-    return [];
+      const data = await response.json();
+      return data.elements || [];
+    } catch (error) {
+      retries++;
+      if (retries < maxRetries) {
+        const waitTime = retries * 10000; // 10s, 20s, 30s
+        console.log(`   ⚠️  Errore (tentativo ${retries}/${maxRetries}): ${error.message}`);
+        console.log(`   ⏳ Riprovo tra ${waitTime/1000} secondi...`);
+        await sleep(waitTime);
+      } else {
+        console.log(`   ❌ Errore definitivo dopo ${maxRetries} tentativi: ${error.message}`);
+        return [];
+      }
+    }
   }
+
+  return [];
 }
 
 function extractData(element, provinceName, provinceData) {

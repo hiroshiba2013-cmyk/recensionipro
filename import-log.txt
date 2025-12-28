@@ -1,4 +1,4 @@
-[dotenv@17.2.3] injecting env (2) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+[dotenv@17.2.3] injecting env (2) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
 
 ╔════════════════════════════════════════════════════════════════════╗
 ║ IMPORTAZIONE COMPLETA OSM - TUTTE LE PROVINCE ITALIANE             ║
@@ -15,118 +15,17 @@
    [2/235] Alimentari                          ⚪ 0
    [3/235] Panifici e Pasticcerie              ⚪ 0
    [4/235] Macellerie                          ⚪ 0
-   [5/235] Frutta e Verdura                    ⚪ 0
+   [5/235] Frutta e Verdura                       ⚠️  Errore (tentativo 1/3): Server error: 504
+   ⏳ Riprovo tra 10 secondi...
+⚪ 0
    [6/235] Enoteche                            ⚪ 0
    [7/235] Negozi di Bevande                   ⚪ 0
    [8/235] Pescherie                           ⚪ 0
-   [9/235] Formaggerie                         ⚪ 0
-   [10/235] Cioccolaterie                       ⚪ 0
-   [11/235] Torrefazioni                        ⚪ 0
-   [12/235] Pasticcerie                         ⚪ 0
-   [13/235] Gastronomie                         ⚪ 0
-   [14/235] Latterie                            ⚪ 0
-   [15/235] Pastifici                           ⚪ 0
-   [16/235] Spezierie                           ⚪ 0
-   [17/235] Negozi di Tè                        ⚪ 0
-   [18/235] Abbigliamento                       ⚪ 0
-   [19/235] Calzature                           ⚪ 0
-   [20/235] Gioiellerie                         ⚪ 0
-   [21/235] Orologerie                          ⚪ 0
-   [22/235] Pelletterie                         ⚪ 0
-   [23/235] Boutique                            ⚪ 0
-   [24/235] Moda                                ⚪ 0
-   [25/235] Tessuti                             ⚪ 0
-   [26/235] Sarti                               ⚪ 0
-   [27/235] Articoli in Pelle                   ⚪ 0
-   [28/235] Parrucchieri e Barbieri             ⚪ 0
-   [29/235] Centri Estetici                     ⚪ 0
-   [30/235] Profumerie                          ⚪ 0
-   [31/235] Profumerie                          ⚪ 0
-   [32/235] Centri Massaggi                     ⚪ 0
-   [33/235] Tatuatori                           ⚪ 0
-   [34/235] Forniture Parrucchieri              ⚪ 0
-   [35/235] Ferramenta                          ⚪ 0
-   [36/235] Fai da Te                           ⚪ 0
-   [37/235] Arredamento                         ⚪ 0
-   [38/235] Arredamento                         ⚪ 0
-   [39/235] Materassi e Letti                   ⚪ 0
-   [40/235] Arredo Bagno                        ⚪ 0
-   [41/235] Cucine                              ⚪ 0
-   [42/235] Fioristi                            ⚪ 0
-   [43/235] Giardinaggio                        ⚪ 0
-   [44/235] Consorzi Agrari                     ⚪ 0
-   [45/235] Colorifici                          ⚪ 0
-   [46/235] Tappeti                             ⚪ 0
-   [47/235] Tendaggi                            ⚪ 0
-   [48/235] Illuminazione                       ⚪ 0
-   [49/235] Piastrelle                          ⚪ 0
-   [50/235] Vetrai                              ⚪ 0
-   [51/235] Infissi                             ⚪ 0
-   [52/235] Elettronica                         ⚪ 0
-   [53/235] Negozi di Computer                  ⚪ 0
-   [54/235] Negozi di Telefonia                 ⚪ 0
-   [55/235] Hi-Fi                               ⚪ 0
-   [56/235] Videonoleggi                        ⚪ 0
-   [57/235] Fotografia                          ⚪ 0
-   [58/235] Videogiochi                         ⚪ 0
-   [59/235] Fotocamere                          ⚪ 0
-   [60/235] Librerie                            ⚪ 0
-   [61/235] Librerie                            ⚪ 0
-   [62/235] Cartolerie                          ⚪ 0
-   [63/235] Edicole                             ⚪ 0
-   [64/235] Edicole                             ⚪ 0
-   [65/235] Negozi di Musica                    ⚪ 0
-   [66/235] Strumenti Musicali                  ⚪ 0
-   [67/235] Gallerie d'Arte                     ⚪ 0
-   [68/235] Cornici                             ⚪ 0
-   [69/235] Hobby e Bricolage                   ⚪ 0
-   [70/235] Modellismo                          ⚪ 0
-   [71/235] Farmacie                            ⚪ 0
-   [72/235] Farmacie                            ⚪ 0
-   [73/235] Ottici                              ⚪ 0
-   [74/235] Sanitaria                           ⚪ 0
-   [75/235] Apparecchi Acustici                 ⚪ 0
-   [76/235] Negozi di Sport                     ⚪ 0
-   [77/235] Negozi di Biciclette                ⚪ 0
-   [78/235] Pesca e Caccia                      ⚪ 0
-   [79/235] Pesca e Caccia                      ⚪ 0
-   [80/235] Outdoor e Camping                   ⚪ 0
-   [81/235] Golf                                ⚪ 0
-   [82/235] Sub e Diving                        ⚪ 0
-   [83/235] Piscine                             ⚪ 0
-   [84/235] Sci e Snowboard                     ⚪ 0
-   [85/235] Negozi per Animali                  ⚪ 0
-   [86/235] Toelettatura Animali                ⚪ 0
-   [87/235] Concessionarie Auto                 ⚪ 0
-   [88/235] Autofficine                         ⚪ 0
-   [89/235] Ricambi Auto                        ⚪ 0
-   [90/235] Moto                                ⚪ 0
-   [91/235] Pneumatici                          ⚪ 0
-   [92/235] Autolavaggi                         ⚪ 0
-   [93/235] Grandi Magazzini                    ⚪ 0
-   [94/235] Centri Commerciali                  ⚪ 0
-   [95/235] Regali                              ⚪ 0
-   [96/235] Giocattoli                          ⚪ 0
-   [97/235] Articoli per Bambini                ⚪ 0
-   [98/235] Bazar                               ⚪ 0
-   [99/235] Antiquari                           ⚪ 0
-   [100/235] Usato                               ⚪ 0
-   [101/235] Mercatini Solidali                  ⚪ 0
-   [102/235] Tabaccherie                         ⚪ 0
-   [103/235] Sigarette Elettroniche              ⚪ 0
-   [104/235] Ricevitorie                         ⚪ 0
-   [105/235] Onoranze Funebri                    ⚪ 0
-   [106/235] Fuochi d'Artificio                  ⚪ 0
-   [107/235] Armerie                             ⚪ 0
-   [108/235] Sexy Shop                              ⚠️  Errore query: fetch failed
+   [9/235] Formaggerie                            ⚠️  Errore (tentativo 1/3): Server error: 504
+   ⏳ Riprovo tra 10 secondi...
 ⚪ 0
-   [109/235] Ristoranti                          ⚪ 0
-   [110/235] Bar e Caffè                         ⚪ 0
-   [111/235] Bar e Caffè                         ⚪ 0
-   [112/235] Pub e Locali                        ⚪ 0
-   [113/235] Fast Food                           ⚪ 0
-   [114/235] Food Court                          ⚪ 0
-   [115/235] Gelaterie                           ⚪ 0
-   [116/235] Birrerie                            ⚪ 0
-   [117/235] Discoteche                          ⚪ 0
-   [118/235] Banche                              
+   [10/235] Cioccolaterie                          ⚠️  Errore (tentativo 1/3): Server error: 504
+   ⏳ Riprovo tra 10 secondi...
+⚪ 0
+   [11/235] Torrefazioni                        ⚪ 0
+   [12/235] Pasticcerie                         
