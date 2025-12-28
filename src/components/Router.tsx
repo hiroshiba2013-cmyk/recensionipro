@@ -9,6 +9,9 @@ import { BusinessDetailPage } from '../pages/BusinessDetailPage';
 import { SearchResultsPage } from '../pages/SearchResultsPage';
 import { ProductsPage } from '../pages/ProductsPage';
 import { ProductDetailPage } from '../pages/ProductDetailPage';
+import { ClassifiedAdsPage } from '../pages/ClassifiedAdsPage';
+import { ClassifiedAdDetailPage } from '../pages/ClassifiedAdDetailPage';
+import { MessagesPage } from '../pages/MessagesPage';
 
 const RouterContext = createContext<{ params: Record<string, string> }>({ params: {} });
 
@@ -86,6 +89,21 @@ export function Router() {
         </RouterContext.Provider>
       );
     }
+  }
+
+  if (currentPath === '/classified') {
+    return <ClassifiedAdsPage />;
+  }
+
+  if (currentPath.startsWith('/classified/')) {
+    const adId = currentPath.split('/')[2];
+    if (adId) {
+      return <ClassifiedAdDetailPage />;
+    }
+  }
+
+  if (currentPath === '/messages') {
+    return <MessagesPage />;
   }
 
   if (currentPath.startsWith('/business/')) {

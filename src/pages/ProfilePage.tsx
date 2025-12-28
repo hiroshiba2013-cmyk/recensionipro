@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { User, Star, Tag, Plus, Calendar, Percent, X } from 'lucide-react';
+import { User, Star, Tag, Plus, Calendar, Percent, X, Package } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { ClassifiedAdCard } from '../components/classifieds/ClassifiedAdCard';
 import { AvatarUpload } from '../components/profile/AvatarUpload';
 import { EditProfileForm } from '../components/profile/EditProfileForm';
 import { JobRequestForm } from '../components/profile/JobRequestForm';
@@ -77,12 +78,34 @@ interface Business {
   website_url: string;
 }
 
+interface ClassifiedAd {
+  id: string;
+  title: string;
+  description: string;
+  price: number | null;
+  location: string;
+  city: string;
+  province: string;
+  images: string[] | null;
+  views_count: number;
+  created_at: string;
+  profiles: {
+    full_name: string;
+    avatar_url: string | null;
+  };
+  classified_categories: {
+    name: string;
+    icon: string;
+  };
+}
+
 export function ProfilePage() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [business, setBusiness] = useState<Business | null>(null);
+  const [classifiedAds, setClassifiedAds] = useState<ClassifiedAd[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDiscountForm, setShowDiscountForm] = useState(false);
   const [newDiscount, setNewDiscount] = useState({
@@ -159,6 +182,25 @@ export function ProfilePage() {
     if (discountsData) {
       setDiscounts(discountsData);
     }
+
+    await loadClassifiedAds();
+  };
+
+  const loadClassifiedAds = async () => {
+    const { data: adsData } = await supabase
+      .from('classified_ads')
+      .select(`
+        *,
+        profiles:user_id(full_name, avatar_url),
+        classified_categories:category_id(name, icon)
+      `)
+      .eq('user_id', user?.id)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false });
+
+    if (adsData) {
+      setClassifiedAds(adsData);
+    }
   };
 
   const loadBusinessData = async () => {
@@ -194,6 +236,8 @@ export function ProfilePage() {
       if (discountsData) {
         setDiscounts(discountsData);
       }
+
+      await loadClassifiedAds();
     }
   };
 
@@ -433,7 +477,7 @@ export function ProfilePage() {
               )}
             </div>
 
-            <div className="bg-white rounded-xl shadow-md p-8">
+            <div className="bg-white rounded-xl shadow-md p-8 mb-8">
               <div className="flex items-center gap-3 mb-6">
                 <Tag className="w-6 h-6 text-green-600" />
                 <h2 className="text-2xl font-bold text-gray-900">Sconti Disponibili</h2>
@@ -468,6 +512,41 @@ export function ProfilePage() {
                         </p>
                       )}
                     </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white rounded-xl shadow-md p-8">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <Package className="w-6 h-6 text-blue-600" />
+                  <h2 className="text-2xl font-bold text-gray-900">I Tuoi Annunci</h2>
+                </div>
+                <a
+                  href="/classified"
+                  className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-md"
+                >
+                  <Plus className="w-5 h-5" />
+                  Crea Annuncio
+                </a>
+              </div>
+
+              {classifiedAds.length === 0 ? (
+                <div className="text-center py-8">
+                  <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 mb-4">Non hai ancora pubblicato annunci</p>
+                  <a
+                    href="/classified"
+                    className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Pubblica il tuo primo annuncio
+                  </a>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {classifiedAds.map((ad) => (
+                    <ClassifiedAdCard key={ad.id} ad={ad} />
                   ))}
                 </div>
               )}
@@ -770,6 +849,41 @@ export function ProfilePage() {
                         </button>
                       </div>
                     </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white rounded-xl shadow-md p-8">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <Package className="w-6 h-6 text-blue-600" />
+                  <h2 className="text-2xl font-bold text-gray-900">I Tuoi Annunci</h2>
+                </div>
+                <a
+                  href="/classified"
+                  className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-md"
+                >
+                  <Plus className="w-5 h-5" />
+                  Crea Annuncio
+                </a>
+              </div>
+
+              {classifiedAds.length === 0 ? (
+                <div className="text-center py-8">
+                  <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 mb-4">Non hai ancora pubblicato annunci</p>
+                  <a
+                    href="/classified"
+                    className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Pubblica il tuo primo annuncio
+                  </a>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {classifiedAds.map((ad) => (
+                    <ClassifiedAdCard key={ad.id} ad={ad} />
                   ))}
                 </div>
               )}
