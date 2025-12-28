@@ -442,6 +442,7 @@ let stats = {
   byRegion: {},
   byCategory: {},
   errors: 0,
+  skippedProvinces: 0,
 };
 
 async function getCategoryId(name) {
@@ -467,7 +468,7 @@ async function sleep(ms) {
 async function queryOverpass(bbox, osmTag) {
   const bboxStr = `${bbox[0]},${bbox[1]},${bbox[2]},${bbox[3]}`;
   const query = `
-    [out:json][timeout:90];
+    [out:json][timeout:120];
     (
       node[${osmTag}](${bboxStr});
       way[${osmTag}](${bboxStr});
@@ -486,7 +487,7 @@ async function queryOverpass(bbox, osmTag) {
         method: 'POST',
         body: query,
         headers: { 'Content-Type': 'text/plain' },
-        signal: AbortSignal.timeout(30000) // timeout 30 secondi
+        signal: AbortSignal.timeout(60000) // timeout 60 secondi (aumentato)
       });
 
       if (!response.ok) {
@@ -494,6 +495,9 @@ async function queryOverpass(bbox, osmTag) {
           console.log('   ⏳ Rate limit, attendo 60 secondi...');
           await sleep(60000);
           return queryOverpass(bbox, osmTag);
+        }
+        if (response.status === 504) {
+          throw new Error('Gateway timeout - server sovraccarico');
         }
         if (response.status >= 500) {
           throw new Error(`Server error: ${response.status}`);
@@ -506,12 +510,12 @@ async function queryOverpass(bbox, osmTag) {
     } catch (error) {
       retries++;
       if (retries < maxRetries) {
-        const waitTime = retries * 10000; // 10s, 20s, 30s
+        const waitTime = retries * 15000; // 15s, 30s, 45s (aumentato)
         console.log(`   ⚠️  Errore (tentativo ${retries}/${maxRetries}): ${error.message}`);
         console.log(`   ⏳ Riprovo tra ${waitTime/1000} secondi...`);
         await sleep(waitTime);
       } else {
-        console.log(`   ❌ Errore definitivo dopo ${maxRetries} tentativi: ${error.message}`);
+        console.log(`   ⏹️  Categoria saltata dopo ${maxRetries} tentativi`);
         return [];
       }
     }
@@ -574,27 +578,39 @@ async function importProvince(provinceName, provinceData) {
 
   let provinceTotal = 0;
   let categoryCount = 0;
+  let skippedCategories = 0;
 
   for (const category of COMPREHENSIVE_CATEGORIES) {
     categoryCount++;
     process.stdout.write(`   [${categoryCount}/${COMPREHENSIVE_CATEGORIES.length}] ${category.db.padEnd(35)} `);
 
-    const categoryId = await getCategoryId(category.db);
-    if (!categoryId) {
-      console.log('❌ categoria non trovata');
-      await sleep(500);
-      continue;
-    }
+    try {
+      const categoryId = await getCategoryId(category.db);
+      if (!categoryId) {
+        console.log('⚠️  categoria non trovata - SKIP');
+        skippedCategories++;
+        await sleep(500);
+        continue;
+      }
 
-    const elements = await queryOverpass(provinceData.bbox, category.osm);
+      const elements = await queryOverpass(provinceData.bbox, category.osm);
 
-    if (elements.length === 0) {
-      console.log('⚪ 0');
-      await sleep(1500);
+      if (elements.length === 0) {
+        console.log('⚪ 0');
+        await sleep(1500);
+        continue;
+      }
+    } catch (error) {
+      console.log(`❌ Errore - SKIP`);
+      skippedCategories++;
+      stats.errors++;
+      await sleep(2000);
       continue;
     }
 
     let imported = 0;
+    let insertErrors = 0;
+
     for (const element of elements) {
       const businessData = extractData(element, provinceName, provinceData);
       if (!businessData) continue;
@@ -640,10 +656,13 @@ async function importProvince(provinceName, provinceData) {
           stats.byCategory[category.db] = (stats.byCategory[category.db] || 0) + 1;
           stats.byRegion[provinceData.region] = (stats.byRegion[provinceData.region] || 0) + 1;
         } else {
+          insertErrors++;
           stats.errors++;
         }
       } catch (error) {
+        insertErrors++;
         stats.errors++;
+        // Continua con il prossimo elemento senza fermarsi
       }
     }
 
@@ -663,6 +682,9 @@ async function importProvince(provinceName, provinceData) {
   stats.byProvince[provinceName] = provinceTotal;
 
   console.log(`\n   🎯 TOTALE ${provinceName}: ${provinceTotal} attività importate`);
+  if (skippedCategories > 0) {
+    console.log(`   ⚠️  Categorie saltate per errori: ${skippedCategories}`);
+  }
   console.log(`   📊 Totale complessivo finora: ${stats.totalImported.toLocaleString()}\n`);
 
   return provinceTotal;
@@ -720,9 +742,13 @@ async function main() {
       await sleep(10000);
 
     } catch (error) {
-      console.error(`❌ Errore in ${provinceName}:`, error.message);
+      console.error(`\n❌ ERRORE CRITICO in ${provinceName}:`, error.message);
+      console.error(`   Provincia SALTATA - continuo con la prossima...\n`);
       stats.errors++;
-      await sleep(5000);
+      stats.skippedProvinces++;
+      stats.byProvince[provinceName] = 0;
+      provinceCount++;
+      await sleep(10000); // Pausa anche in caso di errore
     }
   }
 
@@ -736,6 +762,8 @@ async function main() {
   console.log('🎉 STATISTICHE FINALI');
   console.log('='.repeat(70));
   console.log(`Province processate: ${provinceCount}/${totalProvinces}`);
+  console.log(`Province completate: ${provinceCount - stats.skippedProvinces}`);
+  console.log(`Province saltate: ${stats.skippedProvinces}`);
   console.log(`Totale attività importate: ${grandTotal.toLocaleString()}`);
   console.log(`Errori totali: ${stats.errors}`);
   console.log('='.repeat(70) + '\n');
