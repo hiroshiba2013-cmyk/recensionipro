@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Grid, Map } from 'lucide-react';
 import { supabase, Business, BusinessCategory } from '../lib/supabase';
 import { BusinessCard } from '../components/business/BusinessCard';
 import { AdvancedSearch, SearchFilters } from '../components/search/AdvancedSearch';
 import { PROVINCE_TO_CODE, PROVINCES_BY_REGION, CITY_TO_PROVINCE } from '../lib/cities';
+import BusinessMap from '../components/map/BusinessMap';
 
 interface BusinessWithRating extends Business {
   avg_rating?: number;
@@ -16,6 +17,7 @@ export function SearchResultsPage() {
   const [hasSearched, setHasSearched] = useState(false);
   const [initialFilters, setInitialFilters] = useState<SearchFilters | null>(null);
   const [currentSearch, setCurrentSearch] = useState(window.location.search);
+  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
 
   useEffect(() => {
     const handleLocationChange = () => {
@@ -275,13 +277,41 @@ export function SearchResultsPage() {
               <h2 className="text-2xl font-bold text-gray-900">Risultati della Ricerca</h2>
               <p className="text-gray-600 mt-1">Trova le attività che corrispondono ai tuoi criteri</p>
             </div>
-            <div className="bg-blue-50 px-6 py-3 rounded-lg border-2 border-blue-200">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">{businesses.length}</div>
-                <div className="text-sm text-blue-800 font-medium mt-1">
-                  {businesses.length === 1 ? 'Attività Trovata' : 'Attività Trovate'}
+            <div className="flex items-center gap-4">
+              <div className="bg-blue-50 px-6 py-3 rounded-lg border-2 border-blue-200">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600">{businesses.length}</div>
+                  <div className="text-sm text-blue-800 font-medium mt-1">
+                    {businesses.length === 1 ? 'Attività Trovata' : 'Attività Trovate'}
+                  </div>
                 </div>
               </div>
+              {businesses.length > 0 && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-3 rounded-lg transition-colors ${
+                      viewMode === 'grid'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                    title="Vista griglia"
+                  >
+                    <Grid className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('map')}
+                    className={`p-3 rounded-lg transition-colors ${
+                      viewMode === 'map'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                    title="Vista mappa"
+                  >
+                    <Map className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -298,6 +328,16 @@ export function SearchResultsPage() {
           <div className="text-center py-12 bg-white rounded-lg">
             <p className="text-gray-600 text-lg">Nessuna attività trovata</p>
             <p className="text-gray-500 mt-2">Prova a modificare i filtri di ricerca</p>
+          </div>
+        ) : viewMode === 'map' ? (
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <BusinessMap
+              city={initialFilters?.city}
+              category={initialFilters?.category}
+              limit={100}
+              height="600px"
+              showSearch={true}
+            />
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -3,6 +3,7 @@ import { User, Briefcase, Trophy, Package, MessageCircle, Tag, Heart, Menu, X, H
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
+import NotificationBell from '../notifications/NotificationBell';
 
 export function Header() {
   const { user, profile } = useAuth();
@@ -94,6 +95,7 @@ export function Header() {
                   >
                     <MessageCircle className="w-5 h-5" />
                   </a>
+                  <NotificationBell />
                   <a
                     href="/contact"
                     className="text-gray-700 hover:text-blue-600 transition-colors"

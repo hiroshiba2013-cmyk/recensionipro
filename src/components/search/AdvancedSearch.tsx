@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, X } from 'lucide-react';
+import { Search, Filter, X, CheckCircle, Tag } from 'lucide-react';
 import { supabase, BusinessCategory } from '../../lib/supabase';
 import { ITALIAN_REGIONS, PROVINCES_BY_REGION, ITALIAN_PROVINCES, CITIES_BY_PROVINCE } from '../../lib/cities';
 import { SearchableSelect } from '../common/SearchableSelect';
+import BusinessAutocomplete from './BusinessAutocomplete';
 
 export interface SearchFilters {
   category: string;
@@ -11,6 +12,8 @@ export interface SearchFilters {
   city: string;
   businessName: string;
   minRating: number;
+  verifiedOnly?: boolean;
+  hasDiscounts?: boolean;
 }
 
 interface AdvancedSearchProps {
@@ -33,6 +36,8 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
     city: '',
     businessName: '',
     minRating: 0,
+    verifiedOnly: false,
+    hasDiscounts: false,
   });
 
   useEffect(() => {
@@ -134,18 +139,14 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
   return (
     <div className="space-y-3">
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-4">
-        <div className="flex items-center gap-2 px-4">
-          <Search className="w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Nome attività..."
-            value={filters.businessName}
-            onChange={(e) => setFilters({ ...filters, businessName: e.target.value })}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearchClick()}
-            className="flex-1 py-2 text-gray-900 bg-transparent outline-none placeholder-gray-400"
-            disabled={isLoading}
-          />
-        </div>
+        <BusinessAutocomplete
+          value={filters.businessName}
+          onChange={(value) => setFilters({ ...filters, businessName: value })}
+          onSelect={(businessId) => {
+            window.location.href = `/business/${businessId}`;
+          }}
+          placeholder="Cerca attività per nome..."
+        />
 
         {showAdvanced && (
           <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
@@ -268,6 +269,34 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
                   Azzera
                 </button>
               </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3 mt-4">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={filters.verifiedOnly || false}
+                  onChange={(e) => setFilters({ ...filters, verifiedOnly: e.target.checked })}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <CheckCircle className="w-4 h-4 text-gray-500 group-hover:text-green-600 transition-colors" />
+                <span className="text-sm text-gray-700 group-hover:text-gray-900 font-medium">
+                  Solo verificate
+                </span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={filters.hasDiscounts || false}
+                  onChange={(e) => setFilters({ ...filters, hasDiscounts: e.target.checked })}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <Tag className="w-4 h-4 text-gray-500 group-hover:text-orange-600 transition-colors" />
+                <span className="text-sm text-gray-700 group-hover:text-gray-900 font-medium">
+                  Con sconti attivi
+                </span>
+              </label>
             </div>
           </div>
         )}

@@ -1,6 +1,7 @@
 import { Star, Clock, CheckCircle } from 'lucide-react';
 import { Review } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import ReportButton from '../moderation/ReportButton';
 
 interface ReviewCardProps {
   review: Review;
@@ -97,6 +98,12 @@ export function ReviewCard({ review }: ReviewCardProps) {
       )}
 
       <p className="text-gray-700 leading-relaxed">{review.content}</p>
+
+      {!isOwnReview && (
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <ReportButton entityType="review" entityId={review.id} />
+        </div>
+      )}
 
       {review.responses && review.responses.length > 0 && (
         <div className="mt-4 pl-4 border-l-2 border-blue-200">

@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ReviewForm } from '../components/reviews/ReviewForm';
 import { ReviewCard } from '../components/reviews/ReviewCard';
 import { DiscountCard } from '../components/discount/DiscountCard';
+import BusinessMap from '../components/map/BusinessMap';
 
 interface BusinessDetailPageProps {
   businessId: string;
@@ -484,6 +485,18 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                           </div>
                         )}
                       </div>
+                    </div>
+                  );
+                })()}
+
+                {(() => {
+                  const hasValidLocation = locations.some(loc => loc.latitude && loc.longitude);
+                  if (!hasValidLocation) return null;
+
+                  return (
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900 mb-4">Posizione</h2>
+                      <BusinessMap businessId={businessId} height="400px" />
                     </div>
                   );
                 })()}
