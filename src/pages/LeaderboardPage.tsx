@@ -290,12 +290,16 @@ export function LeaderboardPage() {
                     <span><strong>15 punti</strong> per ogni recensione pubblicata</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Award className="w-5 h-5 text-blue-600" />
-                    <span><strong>25 punti</strong> per recensione completa con prova concreta (scontrino o fattura)</span>
+                    <Award className="w-5 h-5 text-green-600" />
+                    <span><strong>15 punti</strong> per ogni prodotto completo inserito</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Award className="w-5 h-5 text-blue-600" />
-                    <span><strong>10 punti</strong> per inserimento di un'attività non presente</span>
+                    <Award className="w-5 h-5 text-orange-600" />
+                    <span><strong>20 punti</strong> per inserimento di un'attività non presente</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Award className="w-5 h-5 text-purple-600" />
+                    <span><strong>50 punti</strong> per recensione completa con prova concreta (scontrino o fattura)</span>
                   </li>
                 </ul>
               </div>
