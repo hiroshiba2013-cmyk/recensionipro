@@ -191,11 +191,18 @@ export function RulesPage() {
                 </div>
 
                 <div className="bg-blue-50 border border-blue-400 p-6 rounded-lg">
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Sistema di Verifica</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">Sistema di Verifica e Approvazione</h3>
                   <p className="text-sm text-gray-700 mb-3">
                     Le recensioni con prove documentali (foto, scontrini, documenti) ricevono un badge "Verificata"
                     e conferiscono più punti nella classifica.
                   </p>
+                  <div className="bg-white border-2 border-blue-300 p-4 rounded-lg mb-3">
+                    <p className="text-sm font-bold text-blue-900 mb-2">Tempi di Approvazione</p>
+                    <p className="text-sm text-gray-700">
+                      Tutte le recensioni vengono sottoposte a moderazione e saranno <strong>confermate o negate entro 7 giorni</strong>
+                      dalla pubblicazione. Durante questo periodo la recensione sarà visibile ma contrassegnata come "In revisione".
+                    </p>
+                  </div>
                   <p className="text-sm text-gray-700">
                     Le aziende possono rispondere alle recensioni per fornire chiarimenti o risolvere problemi.
                   </p>
@@ -484,7 +491,7 @@ export function RulesPage() {
                   L'utilizzo continuato della piattaforma dopo le modifiche costituisce accettazione delle stesse.
                 </p>
                 <p className="text-sm text-gray-700 mt-3">
-                  <strong>Ultimo aggiornamento:</strong> Dicembre 2024
+                  <strong>Ultimo aggiornamento:</strong> Dicembre 2025
                 </p>
               </div>
             </section>
