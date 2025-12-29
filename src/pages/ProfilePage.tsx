@@ -112,6 +112,8 @@ interface FamilyMember {
   nickname: string;
   avatar_url: string | null;
   reviews_count: number;
+  total_points: number;
+  rank: number;
 }
 
 export function ProfilePage() {
@@ -237,21 +239,35 @@ export function ProfilePage() {
       .eq('customer_id', user.id);
 
     if (membersData) {
-      const membersWithReviews = await Promise.all(
+      const membersWithStats = await Promise.all(
         membersData.map(async (member) => {
-          const { count } = await supabase
+          const { data: reviewsData } = await supabase
             .from('reviews')
-            .select('id', { count: 'exact', head: true })
+            .select('id, proof_image_url')
             .eq('family_member_id', member.id);
+
+          const reviews_count = reviewsData?.length || 0;
+          const total_points = (reviewsData || []).reduce((sum, review) => {
+            return sum + (review.proof_image_url ? 50 : 15);
+          }, 0);
+
+          const { count: betterUsersCount } = await supabase
+            .from('user_activity')
+            .select('user_id', { count: 'exact', head: true })
+            .gt('total_points', total_points);
+
+          const rank = (betterUsersCount || 0) + 1;
 
           return {
             ...member,
-            reviews_count: count || 0,
+            reviews_count,
+            total_points,
+            rank,
           };
         })
       );
 
-      setFamilyMembers(membersWithReviews);
+      setFamilyMembers(membersWithStats);
     }
   };
 
@@ -466,34 +482,42 @@ export function ProfilePage() {
                   {familyMembers.map((member) => (
                     <div
                       key={member.id}
-                      className="bg-white rounded-lg p-4 border-2 border-gray-200 hover:border-blue-300 transition-colors"
+                      className="bg-white rounded-lg p-5 border-2 border-gray-200 hover:border-blue-300 transition-colors shadow-sm"
                     >
-                      <div className="flex items-center gap-3 mb-3">
+                      <div className="flex items-center gap-3 mb-4">
                         {member.avatar_url ? (
                           <img
                             src={member.avatar_url}
                             alt={member.nickname || `${member.first_name} ${member.last_name}`}
-                            className="w-12 h-12 rounded-full"
+                            className="w-14 h-14 rounded-full border-2 border-blue-200"
                           />
                         ) : (
-                          <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-bold">
+                          <div className="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-bold border-2 border-blue-200">
                             {member.first_name.charAt(0)}
                           </div>
                         )}
                         <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900">
+                          <h4 className="font-bold text-gray-900">
                             {member.nickname || `${member.first_name} ${member.last_name}`}
                           </h4>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-xs text-gray-600">
                             {member.first_name} {member.last_name}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <TrendingUp className="w-4 h-4 text-blue-500" />
-                        <span className="text-gray-700">
-                          <strong>{member.reviews_count}</strong> recensioni
-                        </span>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between bg-yellow-50 rounded-lg px-3 py-2">
+                          <span className="text-sm text-gray-700 font-medium">Posizione</span>
+                          <span className="text-lg font-bold text-yellow-600">#{member.rank}</span>
+                        </div>
+                        <div className="flex items-center justify-between bg-blue-50 rounded-lg px-3 py-2">
+                          <span className="text-sm text-gray-700 font-medium">Punti</span>
+                          <span className="text-lg font-bold text-blue-600">{member.total_points}</span>
+                        </div>
+                        <div className="flex items-center justify-between bg-green-50 rounded-lg px-3 py-2">
+                          <span className="text-sm text-gray-700 font-medium">Recensioni</span>
+                          <span className="text-lg font-bold text-green-600">{member.reviews_count}</span>
+                        </div>
                       </div>
                     </div>
                   ))}
