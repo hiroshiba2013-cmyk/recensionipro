@@ -167,7 +167,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     }
   };
 
-  const [customerForm, setCustomerForm] = useState<CustomerData & { email: string; password: string; confirmPassword: string }>({
+  const [customerForm, setCustomerForm] = useState<CustomerData & { email: string; password: string; confirmPassword: string; referredByNickname?: string }>({
     email: '',
     password: '',
     confirmPassword: '',
@@ -183,6 +183,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     billingPostalCode: '',
     billingCity: '',
     billingProvince: '',
+    referredByNickname: '',
   });
 
   const [businessForm, setBusinessForm] = useState<BusinessData & { email: string; password: string; confirmPassword: string }>({
@@ -340,10 +341,21 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     setLoading(true);
 
     try {
-      const { email, password, confirmPassword, ...data } = customerForm;
+      const { email, password, confirmPassword, referredByNickname, ...data } = customerForm;
       await signUpCustomer(email, password, data as CustomerData);
 
       const { data: { user } } = await supabase.auth.getUser();
+
+      if (user && referredByNickname && referredByNickname.trim() !== '') {
+        const { error: referralError } = await supabase.rpc('process_referral', {
+          p_new_user_id: user.id,
+          p_referrer_nickname: referredByNickname.trim()
+        });
+
+        if (referralError) {
+          console.error('Errore elaborazione referral:', referralError);
+        }
+      }
 
       if (user && familyMembers.length > 0) {
         const membersToInsert = familyMembers.map(member => ({
@@ -1021,6 +1033,27 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm uppercase"
                 />
               </div>
+            </div>
+
+            <div className="mb-3 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg">
+              <label htmlFor="referredByNickname" className="block text-sm font-bold text-gray-900 mb-1">
+                Ti presenta un amico? (opzionale)
+              </label>
+              <input
+                id="referredByNickname"
+                name="referredByNickname"
+                type="text"
+                value={customerForm.referredByNickname}
+                onChange={handleCustomerChange}
+                placeholder="Inserisci il nickname del tuo amico"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+              <p className="text-xs text-gray-700 mt-2 flex items-center gap-1">
+                <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                </svg>
+                Il tuo amico riceverà 30 punti per la classifica se inserisci il suo nickname!
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
