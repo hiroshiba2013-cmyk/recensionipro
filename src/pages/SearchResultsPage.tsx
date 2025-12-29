@@ -74,7 +74,7 @@ export function SearchResultsPage() {
       let allBusinesses: any[] = [];
 
       // Limite di risultati per evitare sovraccarico
-      const QUERY_LIMIT = 1000;
+      const QUERY_LIMIT = 2000;
 
       // Query unclaimed_business_locations (tutte le attività non reclamate)
       let unclaimedQuery = supabase
@@ -227,9 +227,10 @@ export function SearchResultsPage() {
           </div>
 
           <AdvancedSearch
-            onSearch={applyFilters}
+            onSearch={() => {}}
             isLoading={loading}
             initialFilters={initialFilters || undefined}
+            navigateToSearchPage={true}
           />
         </div>
       </div>

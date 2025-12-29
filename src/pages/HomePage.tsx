@@ -368,7 +368,9 @@ function AuthenticatedHomePage() {
             </p>
 
             <AdvancedSearch
-              onSearch={() => {}}
+              onSearch={() => {
+                setTimeout(() => navigate('/search' + window.location.search), 100);
+              }}
               isLoading={false}
               navigateToSearchPage={true}
             />
