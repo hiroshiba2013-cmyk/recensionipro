@@ -350,15 +350,23 @@ export function RulesPage() {
                   <ul className="list-disc list-inside space-y-2 ml-4 text-sm">
                     <li>Specifica la posizione che cerchi</li>
                     <li>Indica le tue competenze principali</li>
-                    <li>Carica il curriculum vitae</li>
+                    <li>Descrivi la tua esperienza e qualifiche nel testo dell'annuncio</li>
                     <li>Ricevi messaggi dalle aziende interessate</li>
                   </ul>
                 </div>
 
-                <div className="bg-yellow-50 border border-yellow-400 p-6 rounded-lg">
+                <div className="bg-yellow-50 border border-yellow-400 p-6 rounded-lg mb-4">
                   <p className="text-sm text-gray-700">
                     <strong>Nota Importante:</strong> Non è mai richiesto alcun pagamento per candidarsi agli annunci.
                     Diffida di offerte sospette che richiedono denaro in anticipo.
+                  </p>
+                </div>
+
+                <div className="bg-red-50 border border-red-400 p-6 rounded-lg">
+                  <p className="text-sm text-gray-700">
+                    <strong>Caricamento CV:</strong> Non è possibile caricare curriculum vitae sulla piattaforma.
+                    Le competenze e l'esperienza devono essere descritte direttamente nel testo dell'annuncio.
+                    Eventuali documenti possono essere condivisi privatamente tramite la chat con le aziende interessate.
                   </p>
                 </div>
               </div>
