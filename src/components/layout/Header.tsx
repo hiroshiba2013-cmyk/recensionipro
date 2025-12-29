@@ -149,6 +149,13 @@ export function Header() {
                     <FileText className="w-5 h-5" />
                     <span>Regolamento</span>
                   </a>
+                  <a
+                    href="/subscription"
+                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                  >
+                    <CreditCard className="w-5 h-5" />
+                    <span>Abbonamenti</span>
+                  </a>
                   <button
                     onClick={() => {
                       setAuthMode('login');
@@ -289,6 +296,14 @@ export function Header() {
                     >
                       <FileText className="w-5 h-5" />
                       <span>Regolamento</span>
+                    </a>
+                    <a
+                      href="/subscription"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <CreditCard className="w-5 h-5" />
+                      <span>Abbonamenti</span>
                     </a>
                     <button
                       onClick={() => {
