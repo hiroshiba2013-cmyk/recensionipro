@@ -172,7 +172,7 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
 
         if (plan) {
           const trialEndDate = new Date();
-          trialEndDate.setDate(trialEndDate.getDate() + 30);
+          trialEndDate.setMonth(trialEndDate.getMonth() + 3);
 
           const { error: subscriptionError } = await supabase
             .from('subscriptions')
