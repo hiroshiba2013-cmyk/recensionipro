@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Briefcase, Trophy, Package, MessageCircle, Tag, Heart, Menu, X, Home, Phone, FileText, CreditCard } from 'lucide-react';
+import { User, Briefcase, Trophy, Package, MessageCircle, Tag, Heart, Menu, X, Home, Phone, FileText, CreditCard, Percent } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
@@ -66,6 +66,13 @@ export function Header() {
                     title="Prodotti"
                   >
                     <Package className="w-5 h-5" />
+                  </a>
+                  <a
+                    href="/discounts"
+                    className="text-gray-700 hover:text-orange-600 transition-colors"
+                    title="Sconti"
+                  >
+                    <Percent className="w-5 h-5" />
                   </a>
                   <a
                     href="/classified"
@@ -205,6 +212,14 @@ export function Header() {
                     >
                       <Package className="w-5 h-5" />
                       <span>Prodotti</span>
+                    </a>
+                    <a
+                      href="/discounts"
+                      className="flex items-center gap-2 text-gray-700 hover:text-orange-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Percent className="w-5 h-5" />
+                      <span>Sconti</span>
                     </a>
                     <a
                       href="/classified"

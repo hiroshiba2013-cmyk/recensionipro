@@ -15,6 +15,7 @@ import { MessagesPage } from '../pages/MessagesPage';
 import { SolidarityPage } from '../pages/SolidarityPage';
 import { ContactPage } from '../pages/ContactPage';
 import { RulesPage } from '../pages/RulesPage';
+import { DiscountsPage } from '../pages/DiscountsPage';
 
 const RouterContext = createContext<{ params: Record<string, string> }>({ params: {} });
 
@@ -92,6 +93,10 @@ export function Router() {
         </RouterContext.Provider>
       );
     }
+  }
+
+  if (currentPath === '/discounts') {
+    return <DiscountsPage />;
   }
 
   if (currentPath === '/classified' || currentPath === '/classified-ads') {
