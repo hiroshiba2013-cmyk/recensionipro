@@ -61,7 +61,7 @@ export function MessagesPage() {
         {
           event: '*',
           schema: 'public',
-          table: 'messages',
+          table: 'ad_messages',
         },
         () => {
           if (selectedConversation) {
@@ -99,12 +99,12 @@ export function MessagesPage() {
       setLoading(true);
 
       const { data, error } = await supabase
-        .from('conversations')
+        .from('ad_conversations')
         .select(`
           *,
           classified_ads:ad_id(title, images)
         `)
-        .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
+        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
         .order('last_message_at', { ascending: false });
 
       if (error) throw error;
@@ -112,9 +112,9 @@ export function MessagesPage() {
       const conversationsWithProfiles = await Promise.all(
         (data || []).map(async (conv) => {
           const otherUserId =
-            conv.participant1_id === user.id
-              ? conv.participant2_id
-              : conv.participant1_id;
+            conv.buyer_id === user.id
+              ? conv.seller_id
+              : conv.buyer_id;
 
           const { data: profileData } = await supabase
             .from('profiles')
@@ -123,7 +123,7 @@ export function MessagesPage() {
             .single();
 
           const { count } = await supabase
-            .from('messages')
+            .from('ad_messages')
             .select('*', { count: 'exact', head: true })
             .eq('conversation_id', conv.id)
             .eq('is_read', false)
@@ -131,6 +131,8 @@ export function MessagesPage() {
 
           return {
             ...conv,
+            participant1_id: conv.buyer_id,
+            participant2_id: conv.seller_id,
             profiles: profileData,
             unread_count: count || 0,
           };
@@ -148,8 +150,8 @@ export function MessagesPage() {
   const loadMessages = async (conversationId: string) => {
     try {
       const { data, error } = await supabase
-        .from('messages')
-        .select('*')
+        .from('ad_messages')
+        .select('id, sender_id, message as content, created_at, is_read')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 
@@ -165,7 +167,7 @@ export function MessagesPage() {
 
     try {
       await supabase
-        .from('messages')
+        .from('ad_messages')
         .update({ is_read: true })
         .eq('conversation_id', conversationId)
         .neq('sender_id', user.id);
@@ -181,20 +183,15 @@ export function MessagesPage() {
     setSending(true);
 
     try {
-      const { error: messageError } = await supabase.from('messages').insert([
+      const { error: messageError } = await supabase.from('ad_messages').insert([
         {
           conversation_id: selectedConversation,
           sender_id: user.id,
-          content: newMessage.trim(),
+          message: newMessage.trim(),
         },
       ]);
 
       if (messageError) throw messageError;
-
-      await supabase
-        .from('conversations')
-        .update({ last_message_at: new Date().toISOString() })
-        .eq('id', selectedConversation);
 
       setNewMessage('');
       loadMessages(selectedConversation);

@@ -120,11 +120,13 @@ export function ClassifiedAdDetailPage() {
     if (!ad) return;
 
     try {
+      // Check if conversation already exists
       const { data: existingConv, error: convError } = await supabase
-        .from('conversations')
+        .from('ad_conversations')
         .select('id')
-        .or(`and(participant1_id.eq.${user.id},participant2_id.eq.${ad.user_id}),and(participant1_id.eq.${ad.user_id},participant2_id.eq.${user.id})`)
         .eq('ad_id', ad.id)
+        .eq('buyer_id', user.id)
+        .eq('seller_id', ad.user_id)
         .maybeSingle();
 
       if (convError) throw convError;
@@ -134,13 +136,14 @@ export function ClassifiedAdDetailPage() {
         return;
       }
 
+      // Create new conversation
       const { data: newConv, error: createError } = await supabase
-        .from('conversations')
+        .from('ad_conversations')
         .insert([
           {
             ad_id: ad.id,
-            participant1_id: user.id,
-            participant2_id: ad.user_id,
+            buyer_id: user.id,
+            seller_id: ad.user_id,
           },
         ])
         .select()
