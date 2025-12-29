@@ -99,20 +99,23 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
   };
 
   const handleSearchClick = () => {
-    if (navigateToSearchPage) {
-      const params = new URLSearchParams();
-      if (filters.category) params.set('category', filters.category);
-      if (filters.region) params.set('region', filters.region);
-      if (filters.province) params.set('province', filters.province);
-      if (filters.city) params.set('city', filters.city);
-      if (filters.businessName) params.set('name', filters.businessName);
-      if (filters.minRating > 0) params.set('rating', String(filters.minRating));
+    const params = new URLSearchParams();
+    if (filters.category) params.set('category', filters.category);
+    if (filters.region) params.set('region', filters.region);
+    if (filters.province) params.set('province', filters.province);
+    if (filters.city) params.set('city', filters.city);
+    if (filters.businessName) params.set('name', filters.businessName);
+    if (filters.minRating > 0) params.set('rating', String(filters.minRating));
 
-      const queryString = params.toString();
-      const url = queryString ? `/search?${queryString}` : '/search';
+    const queryString = params.toString();
+    const url = queryString ? `/search?${queryString}` : '/search';
+
+    if (navigateToSearchPage) {
+      window.location.href = url;
+    } else {
       window.history.pushState({}, '', url);
+      onSearch(filters);
     }
-    onSearch(filters);
   };
 
   const handleReset = () => {
