@@ -334,10 +334,9 @@ export function RulesPage() {
                     <h4 className="font-bold text-gray-900 mb-2">Come Candidarsi:</h4>
                     <ol className="list-decimal list-inside space-y-2 ml-4 text-sm">
                       <li>Completa il tuo profilo con tutte le informazioni</li>
-                      <li>Carica il tuo CV (PDF)</li>
                       <li>Cerca gli annunci di tuo interesse</li>
-                      <li>Clicca su "Candidati"</li>
-                      <li>L'azienda riceverà la tua candidatura</li>
+                      <li>Clicca su "Contatta"</li>
+                      <li>L'azienda riceverà il tuo messaggio e potrà contattarti</li>
                     </ol>
                   </div>
                 </div>
