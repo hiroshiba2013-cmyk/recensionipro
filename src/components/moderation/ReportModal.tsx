@@ -10,10 +10,12 @@ interface ReportModalProps {
 }
 
 const REPORT_REASONS = [
+  { value: 'false_review', label: 'Recensione falsa o incentivata' },
+  { value: 'offensive', label: 'Linguaggio offensivo, volgare o discriminatorio' },
+  { value: 'defamation', label: 'Diffamazione o accuse infondate' },
+  { value: 'privacy', label: 'Violazione privacy (dati personali di terzi)' },
   { value: 'spam', label: 'Spam o pubblicità ingannevole' },
-  { value: 'inappropriate', label: 'Contenuto inappropriato' },
-  { value: 'offensive', label: 'Linguaggio offensivo' },
-  { value: 'false_info', label: 'Informazioni false o ingannevoli' },
+  { value: 'inappropriate', label: 'Contenuto inappropriato o illegale' },
   { value: 'harassment', label: 'Molestie o bullismo' },
   { value: 'copyright', label: 'Violazione copyright' },
   { value: 'other', label: 'Altro' },

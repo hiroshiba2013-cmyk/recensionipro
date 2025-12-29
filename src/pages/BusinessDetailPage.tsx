@@ -9,6 +9,7 @@ import { ReviewForm } from '../components/reviews/ReviewForm';
 import { ReviewCard } from '../components/reviews/ReviewCard';
 import { DiscountCard } from '../components/discount/DiscountCard';
 import BusinessMap from '../components/map/BusinessMap';
+import ReportButton from '../components/moderation/ReportButton';
 
 interface BusinessDetailPageProps {
   businessId: string;
@@ -387,19 +388,26 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                     )}
                   </div>
                 </div>
-                {canShowClaimButton && (
-                  <button
-                    onClick={needsBusinessAccount ? () => {
-                      sessionStorage.setItem('claimBusinessId', businessId);
-                      window.location.href = '/?register=business';
-                    } : handleClaimBusiness}
-                    disabled={claimingBusiness}
-                    className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:opacity-50 flex items-center gap-2"
-                  >
-                    <Building2 className="w-5 h-5" />
-                    {claimingBusiness ? 'Rivendicazione...' : 'Rivendica Attività'}
-                  </button>
-                )}
+                <div className="flex items-center gap-3">
+                  {user && !isOwner && (
+                    <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg px-3 py-2">
+                      <ReportButton entityType="business" entityId={businessId} compact />
+                    </div>
+                  )}
+                  {canShowClaimButton && (
+                    <button
+                      onClick={needsBusinessAccount ? () => {
+                        sessionStorage.setItem('claimBusinessId', businessId);
+                        window.location.href = '/?register=business';
+                      } : handleClaimBusiness}
+                      disabled={claimingBusiness}
+                      className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:opacity-50 flex items-center gap-2"
+                    >
+                      <Building2 className="w-5 h-5" />
+                      {claimingBusiness ? 'Rivendicazione...' : 'Rivendica Attività'}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>

@@ -15,6 +15,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { ClassifiedAdForm } from '../components/classifieds/ClassifiedAdForm';
+import ReportButton from '../components/moderation/ReportButton';
 
 interface ClassifiedAd {
   id: string;
@@ -316,24 +317,28 @@ export function ClassifiedAdDetailPage() {
                   )}
                 </div>
 
-                {isOwner && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowEditForm(true)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Modifica"
-                    >
-                      <Edit className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={handleDelete}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Elimina"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </div>
-                )}
+                <div className="flex gap-2">
+                  {isOwner ? (
+                    <>
+                      <button
+                        onClick={() => setShowEditForm(true)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Modifica"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={handleDelete}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Elimina"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </>
+                  ) : user ? (
+                    <ReportButton entityType="classified_ad" entityId={ad.id} />
+                  ) : null}
+                </div>
               </div>
 
               <div className="flex items-center gap-6 text-gray-600 text-sm mb-6 pb-6 border-b">

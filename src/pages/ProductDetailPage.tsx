@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from '../components/Router';
 import { ArrowLeft, Star, ShoppingCart, Package, Truck, Shield, Heart } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import ReportButton from '../components/moderation/ReportButton';
 
 interface Product {
   id: string;
@@ -32,6 +34,7 @@ interface Product {
 export function ProductDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -154,8 +157,15 @@ export function ProductDetailPage() {
             </div>
 
             <div>
-              <p className="text-sm text-blue-600 font-medium mb-2">{product.brand.name}</p>
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex-1">
+                  <p className="text-sm text-blue-600 font-medium mb-2">{product.brand.name}</p>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
+                </div>
+                {user && (
+                  <ReportButton entityType="product" entityId={product.id} />
+                )}
+              </div>
 
               <div className="flex items-center gap-2 mb-6">
                 <div className="flex items-center gap-1">
