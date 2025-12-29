@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Percent, Calendar, Tag as TagIcon, Store, MapPin, Clock, Search, Filter } from 'lucide-react';
 import { supabase, BusinessCategory } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Header } from '../components/layout/Header';
 import { ITALIAN_REGIONS, PROVINCES_BY_REGION, PROVINCE_TO_CODE } from '../lib/cities';
 
 interface Discount {
@@ -196,31 +195,26 @@ export function DiscountsPage() {
 
   if (!user) {
     return (
-      <>
-        <Header />
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
-            <Percent className="w-16 h-16 text-orange-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-4">Accedi per vedere gli sconti</h2>
-            <p className="text-gray-600 mb-6">
-              Devi effettuare l'accesso per visualizzare gli sconti disponibili dalle attività locali.
-            </p>
-            <a
-              href="/?login=true"
-              className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Accedi ora
-            </a>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
+          <Percent className="w-16 h-16 text-orange-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-4">Accedi per vedere gli sconti</h2>
+          <p className="text-gray-600 mb-6">
+            Devi effettuare l'accesso per visualizzare gli sconti disponibili dalle attività locali.
+          </p>
+          <a
+            href="/?login=true"
+            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Accedi ora
+          </a>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <Header />
-      <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-4">
@@ -276,36 +270,33 @@ export function DiscountsPage() {
                 ))}
               </select>
 
-              {selectedRegion && (
-                <select
-                  value={selectedProvince}
-                  onChange={(e) => setSelectedProvince(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                >
-                  <option value="">Tutte le province</option>
-                  {provinces.map((province) => (
-                    <option key={province} value={province}>
-                      {province}
-                    </option>
-                  ))}
-                </select>
-              )}
+              <select
+                value={selectedProvince}
+                onChange={(e) => setSelectedProvince(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                disabled={!selectedRegion}
+              >
+                <option value="">Tutte le province</option>
+                {provinces.map((province) => (
+                  <option key={province} value={province}>
+                    {province}
+                  </option>
+                ))}
+              </select>
 
-              {selectedProvince && (
-                <select
-                  value={selectedCity}
-                  onChange={(e) => setSelectedCity(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  disabled={cities.length === 0}
-                >
-                  <option value="">Tutte le città</option>
-                  {cities.map((city) => (
-                    <option key={city} value={city}>
-                      {city}
-                    </option>
-                  ))}
-                </select>
-              )}
+              <select
+                value={selectedCity}
+                onChange={(e) => setSelectedCity(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                disabled={!selectedProvince || cities.length === 0}
+              >
+                <option value="">Tutte le città</option>
+                {cities.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {(searchTerm || selectedCategory || selectedRegion || selectedProvince || selectedCity) && (
@@ -423,6 +414,5 @@ export function DiscountsPage() {
           )}
         </div>
       </div>
-    </>
   );
 }
