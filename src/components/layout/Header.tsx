@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LogOut, User, CreditCard, Briefcase, Trophy, Package, MessageCircle, Tag, Heart, Menu, X } from 'lucide-react';
+import { LogOut, User, CreditCard, Briefcase, Trophy, Package, MessageCircle, Tag, Heart, Menu, X, Home } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
@@ -46,7 +46,7 @@ export function Header() {
               />
             </a>
 
-            <nav className="hidden lg:flex items-center gap-6">
+            <nav className="hidden lg:flex items-center gap-8">
               <a
                 href="/solidarity"
                 className="flex items-center gap-2 text-gray-700 hover:text-green-600 transition-colors font-medium"
@@ -57,6 +57,13 @@ export function Header() {
 
               {user && profile ? (
                 <>
+                  <a
+                    href="/"
+                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                  >
+                    <Home className="w-5 h-5" />
+                    <span>Home</span>
+                  </a>
                   <a
                     href="/products"
                     className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
@@ -151,7 +158,7 @@ export function Header() {
 
           {showMobileMenu && (
             <div className="lg:hidden border-t border-gray-200 py-4">
-              <nav className="flex flex-col gap-4">
+              <nav className="flex flex-col gap-5">
                 <a
                   href="/solidarity"
                   className="flex items-center gap-2 text-gray-700 hover:text-green-600 transition-colors font-medium"
@@ -163,6 +170,14 @@ export function Header() {
 
                 {user && profile ? (
                   <>
+                    <a
+                      href="/"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Home className="w-5 h-5" />
+                      <span>Home</span>
+                    </a>
                     <a
                       href="/products"
                       className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
