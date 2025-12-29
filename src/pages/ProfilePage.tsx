@@ -322,8 +322,6 @@ export function ProfilePage() {
       if (discountsData) {
         setDiscounts(discountsData);
       }
-
-      await loadClassifiedAds();
     }
   };
 
@@ -823,6 +821,25 @@ export function ProfilePage() {
               </>
             )}
 
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl shadow-md p-6 mb-8 border-2 border-yellow-200">
+              <div className="flex items-center gap-3 mb-4">
+                <Trophy className="w-7 h-7 text-yellow-600" />
+                <h2 className="text-2xl font-bold text-gray-900">Premi e Riconoscimenti</h2>
+              </div>
+              <div className="bg-white rounded-lg p-6">
+                <p className="text-lg text-gray-700 leading-relaxed mb-4">
+                  Ricevi recensioni positive e scala la classifica per vincere premi
+                </p>
+                <a
+                  href="/leaderboard"
+                  className="inline-flex items-center gap-2 bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors font-semibold shadow-md"
+                >
+                  <Trophy className="w-5 h-5" />
+                  Vedi Classifica
+                </a>
+              </div>
+            </div>
+
             <div className="bg-white rounded-xl shadow-md p-8 mb-8">
               <div className="flex items-center gap-3 mb-6">
                 <Star className="w-6 h-6 text-yellow-500" />
@@ -1086,41 +1103,6 @@ export function ProfilePage() {
                         </button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="bg-white rounded-xl shadow-md p-8">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <Package className="w-6 h-6 text-blue-600" />
-                  <h2 className="text-2xl font-bold text-gray-900">I Tuoi Annunci</h2>
-                </div>
-                <a
-                  href="/classified"
-                  className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-md"
-                >
-                  <Plus className="w-5 h-5" />
-                  Crea Annuncio
-                </a>
-              </div>
-
-              {classifiedAds.length === 0 ? (
-                <div className="text-center py-8">
-                  <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-4">Non hai ancora pubblicato annunci</p>
-                  <a
-                    href="/classified"
-                    className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Pubblica il tuo primo annuncio
-                  </a>
-                </div>
-              ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {classifiedAds.map((ad) => (
-                    <ClassifiedAdCard key={ad.id} ad={ad} />
                   ))}
                 </div>
               )}
