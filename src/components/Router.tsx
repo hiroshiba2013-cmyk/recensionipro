@@ -92,12 +92,12 @@ export function Router() {
     }
   }
 
-  if (currentPath === '/classified') {
+  if (currentPath === '/classified' || currentPath === '/classified-ads') {
     return <ClassifiedAdsPage />;
   }
 
-  if (currentPath.startsWith('/classified/')) {
-    const adId = currentPath.split('/')[2];
+  if (currentPath.startsWith('/classified/') || currentPath.startsWith('/classified-ads/')) {
+    const adId = currentPath.replace('/classified/', '').replace('/classified-ads/', '');
     if (adId) {
       return <ClassifiedAdDetailPage />;
     }

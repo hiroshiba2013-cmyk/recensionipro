@@ -1,6 +1,9 @@
-import { Star, TrendingUp, ShieldCheck, Search, Award, Package, Tag, Briefcase, Heart, Users, Building2, Gift } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Star, TrendingUp, ShieldCheck, Search, Award, Package, Tag, Briefcase, Heart, Users, Building2, Gift, MapPin, Clock, Euro, ArrowRight } from 'lucide-react';
 import { AdvancedSearch } from '../components/search/AdvancedSearch';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+import { useNavigate } from '../components/Router';
 
 export function HomePage() {
   const { user } = useAuth();
@@ -266,16 +269,89 @@ function LandingPage() {
 }
 
 function AuthenticatedHomePage() {
+  const navigate = useNavigate();
+  const [jobPostings, setJobPostings] = useState<any[]>([]);
+  const [classifiedAds, setClassifiedAds] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [topBusinesses, setTopBusinesses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadHomeData();
+  }, []);
+
+  const loadHomeData = async () => {
+    try {
+      setLoading(true);
+
+      const [jobsResult, adsResult, productsResult, businessesResult] = await Promise.all([
+        supabase
+          .from('job_postings')
+          .select(`
+            *,
+            business:business_id(
+              name,
+              business_locations(city, province)
+            ),
+            category:category_id(name)
+          `)
+          .eq('status', 'open')
+          .order('created_at', { ascending: false })
+          .limit(3),
+
+        supabase
+          .from('classified_ads')
+          .select(`
+            *,
+            profiles:user_id(full_name)
+          `)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(6),
+
+        supabase
+          .from('products')
+          .select(`
+            *,
+            business:business_id(name),
+            business_location:location_id(city, province)
+          `)
+          .eq('is_available', true)
+          .order('created_at', { ascending: false })
+          .limit(6),
+
+        supabase
+          .from('businesses')
+          .select(`
+            id,
+            name,
+            business_locations(city, province, address),
+            business_categories(name)
+          `)
+          .limit(4)
+      ]);
+
+      if (jobsResult.data) setJobPostings(jobsResult.data);
+      if (adsResult.data) setClassifiedAds(adsResult.data);
+      if (productsResult.data) setProducts(productsResult.data);
+      if (businessesResult.data) setTopBusinesses(businessesResult.data);
+    } catch (error) {
+      console.error('Error loading home data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-24">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-6xl font-extrabold mb-8 leading-tight tracking-tight">
-              La scelta di chi cerca.<br />L'opportunità di chi lavora.
+            <h1 className="text-5xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tight">
+              Trova quello che cerchi
             </h1>
-            <p className="text-2xl text-blue-50 mb-12 max-w-4xl mx-auto leading-relaxed font-light">
-              Tutto ciò che cerchi, recensioni verificate e scelte migliori. Più visibilità, più clienti, più crescita.
+            <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
+              Attività locali, prodotti, offerte di lavoro e annunci nella tua zona
             </p>
 
             <AdvancedSearch
@@ -288,46 +364,261 @@ function AuthenticatedHomePage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid md:grid-cols-4 gap-6 mb-12">
+          <QuickActionCard
+            icon={<Search className="w-8 h-8" />}
+            title="Cerca Attività"
+            description="Trova negozi e servizi"
+            color="from-blue-500 to-blue-600"
+            onClick={() => navigate('/search')}
+          />
+          <QuickActionCard
+            icon={<Briefcase className="w-8 h-8" />}
+            title="Offerte Lavoro"
+            description="Scopri opportunità"
+            color="from-green-500 to-green-600"
+            onClick={() => navigate('/jobs')}
+          />
+          <QuickActionCard
+            icon={<Tag className="w-8 h-8" />}
+            title="Annunci"
+            description="Compra e vendi"
+            color="from-orange-500 to-orange-600"
+            onClick={() => navigate('/classified-ads')}
+          />
+          <QuickActionCard
+            icon={<Package className="w-8 h-8" />}
+            title="Prodotti"
+            description="Sfoglia il catalogo"
+            color="from-purple-500 to-purple-600"
+            onClick={() => navigate('/products')}
+          />
+        </div>
+
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
+          </div>
+        ) : (
+          <>
+            {jobPostings.length > 0 && (
+              <section className="mb-12">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-green-100 p-3 rounded-lg">
+                      <Briefcase className="w-6 h-6 text-green-600" />
+                    </div>
+                    <h2 className="text-3xl font-bold text-gray-900">Ultime Offerte di Lavoro</h2>
+                  </div>
+                  <button
+                    onClick={() => navigate('/jobs')}
+                    className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold"
+                  >
+                    Vedi tutte <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="grid md:grid-cols-3 gap-6">
+                  {jobPostings.map((job) => (
+                    <JobCard key={job.id} job={job} onClick={() => navigate('/jobs')} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {classifiedAds.length > 0 && (
+              <section className="mb-12">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-orange-100 p-3 rounded-lg">
+                      <Tag className="w-6 h-6 text-orange-600" />
+                    </div>
+                    <h2 className="text-3xl font-bold text-gray-900">Ultimi Annunci</h2>
+                  </div>
+                  <button
+                    onClick={() => navigate('/classified-ads')}
+                    className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold"
+                  >
+                    Vedi tutti <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  {classifiedAds.map((ad) => (
+                    <ClassifiedAdCard key={ad.id} ad={ad} onClick={() => navigate(`/classified-ads/${ad.id}`)} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {products.length > 0 && (
+              <section className="mb-12">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-purple-100 p-3 rounded-lg">
+                      <Package className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <h2 className="text-3xl font-bold text-gray-900">Nuovi Prodotti</h2>
+                  </div>
+                  <button
+                    onClick={() => navigate('/products')}
+                    className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold"
+                  >
+                    Vedi tutti <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  {products.map((product) => (
+                    <ProductCard key={product.id} product={product} onClick={() => navigate(`/products/${product.id}`)} />
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
+
         <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-2xl shadow-lg p-8 mb-12">
-          <div className="text-center">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-              Scrivi recensioni e vinci premi esclusivi!
-            </h2>
-            <p className="text-lg text-gray-700 max-w-4xl mx-auto leading-relaxed">
-              I migliori venti utenti che nel corso dell'anno scriveranno più recensioni saranno premiati con una gift card ricaricabile
-            </p>
-            <p className="text-base text-gray-600 mt-3 font-medium">
-              (Premi e classifica visibili nella sezione CLASSIFICA UTENTI)
-            </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="bg-yellow-400 p-4 rounded-full">
+                <Award className="w-10 h-10 text-white" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                  Scrivi recensioni e vinci premi!
+                </h3>
+                <p className="text-gray-700">
+                  I migliori 20 utenti dell'anno vincono gift card ricaricabili
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/leaderboard')}
+              className="bg-yellow-400 text-gray-900 px-6 py-3 rounded-lg font-bold hover:bg-yellow-500 transition-colors whitespace-nowrap"
+            >
+              Vedi Classifica
+            </button>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 mb-12">
-          <div className="bg-white p-6 rounded-xl shadow-sm text-center">
-            <Star className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Recensioni Autentiche</h3>
-            <p className="text-gray-600">Solo utenti verificati possono lasciare recensioni</p>
+        <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 rounded-2xl shadow-lg p-8">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="bg-gradient-to-br from-green-500 to-blue-500 p-4 rounded-full">
+              <Heart className="w-10 h-10 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900">
+              Il 10% del fatturato in beneficenza
+            </h3>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm text-center">
-            <TrendingUp className="w-12 h-12 text-green-500 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Sconti Esclusivi</h3>
-            <p className="text-gray-600">Accedi a offerte speciali riservate agli iscritti</p>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm text-center">
-            <ShieldCheck className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Attività Verificate</h3>
-            <p className="text-gray-600">Tutte le attività sono verificate dal nostro team</p>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 rounded-2xl shadow-lg p-12 mt-16 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-            Il tuo abbonamento vale il 10% di beneficenza
-          </h2>
-          <p className="text-lg text-gray-700 max-w-4xl mx-auto leading-relaxed">
-            Trovafacile ogni anno donerà il 10% del proprio FATTURATO, che sarà visibile con documenti certificati, ad associazioni che voterete voi utenti
+          <p className="text-gray-700 leading-relaxed">
+            Trovafacile dona ogni anno il 10% del proprio fatturato ad associazioni no profit e progetti di beneficenza.
+            Tutti i documenti sono pubblicati nella sezione Solidarietà per garantire massima trasparenza.
           </p>
+          <button
+            onClick={() => navigate('/solidarity')}
+            className="mt-4 text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-2"
+          >
+            Scopri di più <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function QuickActionCard({ icon, title, description, color, onClick }: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  color: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`bg-gradient-to-br ${color} text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 text-left`}
+    >
+      <div className="mb-3">{icon}</div>
+      <h3 className="text-xl font-bold mb-1">{title}</h3>
+      <p className="text-sm opacity-90">{description}</p>
+    </button>
+  );
+}
+
+function JobCard({ job, onClick }: { job: any; onClick: () => void }) {
+  return (
+    <div
+      onClick={onClick}
+      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all p-6 cursor-pointer border border-gray-200"
+    >
+      <div className="flex items-start justify-between mb-3">
+        <h3 className="font-bold text-lg text-gray-900 line-clamp-2">{job.title}</h3>
+      </div>
+      <p className="text-sm text-gray-600 mb-3">{job.business?.name}</p>
+      <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+        <MapPin className="w-4 h-4" />
+        <span>{job.business?.business_locations?.[0]?.city}</span>
+      </div>
+      {job.salary_range && (
+        <div className="flex items-center gap-2 text-sm text-green-600 font-semibold">
+          <Euro className="w-4 h-4" />
+          <span>{job.salary_range}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ClassifiedAdCard({ ad, onClick }: { ad: any; onClick: () => void }) {
+  return (
+    <div
+      onClick={onClick}
+      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden border border-gray-200"
+    >
+      {ad.images?.[0] ? (
+        <img
+          src={ad.images[0]}
+          alt={ad.title}
+          className="w-full h-32 object-cover"
+        />
+      ) : (
+        <div className="w-full h-32 bg-gray-200 flex items-center justify-center">
+          <Tag className="w-8 h-8 text-gray-400" />
+        </div>
+      )}
+      <div className="p-3">
+        <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 mb-2">{ad.title}</h3>
+        {ad.price > 0 ? (
+          <p className="text-green-600 font-bold">€{ad.price.toFixed(2)}</p>
+        ) : (
+          <p className="text-gray-500 text-sm">
+            {ad.ad_type === 'gift' ? 'Regalo' : ad.ad_type === 'exchange' ? 'Scambio' : 'Vendita'}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ProductCard({ product, onClick }: { product: any; onClick: () => void }) {
+  return (
+    <div
+      onClick={onClick}
+      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden border border-gray-200"
+    >
+      {product.images?.[0] ? (
+        <img
+          src={product.images[0]}
+          alt={product.name}
+          className="w-full h-32 object-cover"
+        />
+      ) : (
+        <div className="w-full h-32 bg-gray-200 flex items-center justify-center">
+          <Package className="w-8 h-8 text-gray-400" />
+        </div>
+      )}
+      <div className="p-3">
+        <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 mb-2">{product.name}</h3>
+        <p className="text-green-600 font-bold">€{product.price.toFixed(2)}</p>
+        <p className="text-xs text-gray-500 mt-1 line-clamp-1">{product.business?.name}</p>
       </div>
     </div>
   );
