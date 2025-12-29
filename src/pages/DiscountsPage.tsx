@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Percent, Calendar, Tag as TagIcon, Store, MapPin, Clock, Search } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { Percent, Calendar, Tag as TagIcon, Store, MapPin, Clock, Search, Filter } from 'lucide-react';
+import { supabase, BusinessCategory } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Header } from '../components/layout/Header';
+import { ITALIAN_REGIONS, PROVINCES_BY_REGION, PROVINCE_TO_CODE } from '../lib/cities';
 
 interface Discount {
   id: string;
@@ -20,7 +21,12 @@ interface Discount {
 interface Business {
   id: string;
   business_name: string;
-  category: string;
+  category_id: string;
+  locations?: {
+    city: string;
+    province: string;
+    region: string;
+  }[];
 }
 
 interface DiscountWithBusiness extends Discount {
@@ -33,11 +39,75 @@ export function DiscountsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedRegion, setSelectedRegion] = useState<string>('');
+  const [selectedProvince, setSelectedProvince] = useState<string>('');
+  const [selectedCity, setSelectedCity] = useState<string>('');
+  const [categories, setCategories] = useState<BusinessCategory[]>([]);
+  const [provinces, setProvinces] = useState<string[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
 
   useEffect(() => {
     loadDiscounts();
+    loadCategories();
   }, []);
+
+  useEffect(() => {
+    if (selectedRegion) {
+      setProvinces(PROVINCES_BY_REGION[selectedRegion] || []);
+      setSelectedProvince('');
+      setSelectedCity('');
+      setCities([]);
+    } else {
+      setProvinces([]);
+      setSelectedProvince('');
+    }
+  }, [selectedRegion]);
+
+  useEffect(() => {
+    if (selectedProvince) {
+      loadCitiesForProvince();
+    } else {
+      setCities([]);
+      setSelectedCity('');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProvince]);
+
+  const loadCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('business_categories')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      if (data) setCategories(data);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
+
+  const loadCitiesForProvince = async () => {
+    try {
+      const provinceCode = PROVINCE_TO_CODE[selectedProvince];
+      if (!provinceCode) return;
+
+      const { data, error } = await supabase
+        .from('business_locations')
+        .select('city')
+        .eq('province', provinceCode)
+        .not('city', 'is', null);
+
+      if (error) throw error;
+
+      if (data) {
+        const uniqueCities = Array.from(new Set(data.map(d => d.city).filter(Boolean)));
+        setCities(uniqueCities.sort());
+      }
+    } catch (error) {
+      console.error('Error loading cities:', error);
+    }
+  };
 
   const loadDiscounts = async () => {
     try {
@@ -50,7 +120,12 @@ export function DiscountsPage() {
           business:businesses!inner(
             id,
             business_name,
-            category
+            category_id,
+            locations:business_locations(
+              city,
+              province,
+              region
+            )
           )
         `)
         .eq('active', true)
@@ -61,11 +136,6 @@ export function DiscountsPage() {
 
       const typedData = data as unknown as DiscountWithBusiness[];
       setDiscounts(typedData);
-
-      const uniqueCategories = Array.from(
-        new Set(typedData.map(d => d.business.category).filter(Boolean))
-      );
-      setCategories(uniqueCategories);
     } catch (error) {
       console.error('Error loading discounts:', error);
     } finally {
@@ -79,10 +149,31 @@ export function DiscountsPage() {
       discount.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       discount.business.business_name.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesCategory = !selectedCategory || discount.business.category === selectedCategory;
+    const matchesCategory = !selectedCategory || discount.business.category_id === selectedCategory;
 
-    return matchesSearch && matchesCategory;
+    let matchesLocation = true;
+    if (discount.business.locations && discount.business.locations.length > 0) {
+      const locations = discount.business.locations;
+
+      if (selectedCity) {
+        matchesLocation = locations.some(loc => loc.city === selectedCity);
+      } else if (selectedProvince) {
+        const provinceCode = PROVINCE_TO_CODE[selectedProvince];
+        matchesLocation = locations.some(loc => loc.province === provinceCode);
+      } else if (selectedRegion) {
+        matchesLocation = locations.some(loc => loc.region === selectedRegion);
+      }
+    } else if (selectedRegion || selectedProvince || selectedCity) {
+      matchesLocation = false;
+    }
+
+    return matchesSearch && matchesCategory && matchesLocation;
   });
+
+  const getCategoryName = (categoryId: string) => {
+    const category = categories.find(c => c.id === categoryId);
+    return category?.name || 'Categoria sconosciuta';
+  };
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('it-IT', {
@@ -142,7 +233,12 @@ export function DiscountsPage() {
           </div>
 
           <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Filter className="w-5 h-5 text-gray-600" />
+              <h3 className="font-semibold text-gray-900">Filtra Sconti</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
@@ -161,12 +257,73 @@ export function DiscountsPage() {
               >
                 <option value="">Tutte le categorie</option>
                 {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
+                  <option key={category.id} value={category.id}>
+                    {category.name}
                   </option>
                 ))}
               </select>
+
+              <select
+                value={selectedRegion}
+                onChange={(e) => setSelectedRegion(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              >
+                <option value="">Tutte le regioni</option>
+                {ITALIAN_REGIONS.map((region) => (
+                  <option key={region} value={region}>
+                    {region}
+                  </option>
+                ))}
+              </select>
+
+              {selectedRegion && (
+                <select
+                  value={selectedProvince}
+                  onChange={(e) => setSelectedProvince(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                >
+                  <option value="">Tutte le province</option>
+                  {provinces.map((province) => (
+                    <option key={province} value={province}>
+                      {province}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {selectedProvince && (
+                <select
+                  value={selectedCity}
+                  onChange={(e) => setSelectedCity(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  disabled={cities.length === 0}
+                >
+                  <option value="">Tutte le città</option>
+                  {cities.map((city) => (
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
+
+            {(searchTerm || selectedCategory || selectedRegion || selectedProvince || selectedCity) && (
+              <div className="mt-4 flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setSelectedCategory('');
+                    setSelectedRegion('');
+                    setSelectedProvince('');
+                    setSelectedCity('');
+                  }}
+                  className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+                >
+                  Cancella tutti i filtri
+                </button>
+              </div>
+            )}
           </div>
 
           {loading ? (
@@ -237,10 +394,18 @@ export function DiscountsPage() {
                           {getDaysRemaining(discount.valid_until)}
                         </span>
                       </div>
-                      {discount.business.category && (
+                      {discount.business.category_id && (
                         <div className="flex items-center gap-2">
                           <TagIcon className="w-4 h-4 text-gray-400" />
-                          <span>{discount.business.category}</span>
+                          <span>{getCategoryName(discount.business.category_id)}</span>
+                        </div>
+                      )}
+                      {discount.business.locations && discount.business.locations.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-gray-400" />
+                          <span>
+                            {discount.business.locations[0].city}, {discount.business.locations[0].region}
+                          </span>
                         </div>
                       )}
                     </div>
