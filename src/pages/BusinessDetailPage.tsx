@@ -420,8 +420,9 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                   const displayPhone = business.phone || primaryLocation?.phone;
                   const displayEmail = business.email || primaryLocation?.email;
                   const displayWebsite = business.website || business.website_url;
+                  const displayBusinessHours = primaryLocation?.business_hours;
 
-                  const hasContactInfo = displayAddress || displayPhone || displayEmail || displayWebsite;
+                  const hasContactInfo = displayAddress || displayPhone || displayEmail || displayWebsite || displayBusinessHours;
 
                   if (!hasContactInfo) return null;
 
@@ -469,6 +470,17 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                             >
                               {displayWebsite}
                             </a>
+                          </div>
+                        )}
+                        {displayBusinessHours && (
+                          <div className="flex items-start gap-3">
+                            <Clock className="w-5 h-5 text-gray-400 mt-1" />
+                            <div>
+                              <p className="font-medium text-gray-900 mb-1">Orari di apertura</p>
+                              <p className="text-gray-700 whitespace-pre-line">
+                                {typeof displayBusinessHours === 'string' ? displayBusinessHours : JSON.stringify(displayBusinessHours, null, 2)}
+                              </p>
+                            </div>
                           </div>
                         )}
                       </div>
