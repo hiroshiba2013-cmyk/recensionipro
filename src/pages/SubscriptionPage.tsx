@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { Check } from 'lucide-react';
+import { Check, Heart, Star, Shield, TrendingUp, Users, Gift } from 'lucide-react';
 
 interface SubscriptionPlan {
   id: string;
@@ -310,13 +310,35 @@ export function SubscriptionPage() {
             </p>
           </div>
 
-          <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 rounded-2xl shadow-lg p-12 mb-12 text-center">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-              Il tuo abbonamento vale il 10% di beneficenza
-            </h2>
-            <p className="text-lg text-gray-700 max-w-4xl mx-auto leading-relaxed">
-              Trovafacile ogni anno donerà il 10% del proprio FATTURATO, che sarà visibile con documenti certificati, ad associazioni che voterete voi utenti
+          <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-400 rounded-2xl shadow-xl p-12 mb-12">
+            <div className="flex items-center justify-center mb-6">
+              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mr-4">
+                <Heart className="w-8 h-8 text-white" fill="currentColor" />
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
+                10% di Beneficenza
+              </h2>
+            </div>
+            <p className="text-xl text-gray-800 max-w-4xl mx-auto leading-relaxed text-center mb-6">
+              Il tuo abbonamento fa la differenza! Ogni anno Trovafacile donerà il <strong>10% del fatturato totale</strong> ad associazioni di beneficenza.
             </p>
+            <div className="grid md:grid-cols-3 gap-4 max-w-5xl mx-auto mt-8">
+              <div className="bg-white/80 backdrop-blur rounded-xl p-4 text-center">
+                <Gift className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <p className="text-sm font-semibold text-gray-900">Trasparenza Totale</p>
+                <p className="text-xs text-gray-600 mt-1">Documenti certificati pubblici</p>
+              </div>
+              <div className="bg-white/80 backdrop-blur rounded-xl p-4 text-center">
+                <Users className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <p className="text-sm font-semibold text-gray-900">Voti degli Utenti</p>
+                <p className="text-xs text-gray-600 mt-1">Tu scegli le associazioni</p>
+              </div>
+              <div className="bg-white/80 backdrop-blur rounded-xl p-4 text-center">
+                <TrendingUp className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <p className="text-sm font-semibold text-gray-900">Impatto Reale</p>
+                <p className="text-xs text-gray-600 mt-1">Aiuto concreto ogni anno</p>
+              </div>
+            </div>
           </div>
 
           <div className="max-w-3xl mx-auto mb-12 bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
@@ -357,36 +379,77 @@ export function SubscriptionPage() {
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {customerPlans.map((plan) => (
-                    <div
-                      key={plan.id}
-                      className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-blue-500 transition-all"
-                    >
-                      <h3 className="text-xl font-bold text-gray-900 mb-4">
-                        {plan.name}
-                      </h3>
-                      <div className="mb-6">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
-                          <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
-                        </div>
-                        {calculateSavings(plan) && (
-                          <div className="mt-2">
-                            <span className="inline-block bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">
-                              Risparmi €{calculateSavings(plan)!.toFixed(2)}
+                  {customerPlans.map((plan) => {
+                    const savings = calculateSavings(plan);
+                    const isAnnual = plan.billing_period === 'yearly';
+                    return (
+                      <div
+                        key={plan.id}
+                        className={`bg-white rounded-xl shadow-lg p-6 border-2 transition-all relative ${
+                          isAnnual ? 'border-green-400 ring-2 ring-green-200' : 'border-gray-200 hover:border-blue-500'
+                        }`}
+                      >
+                        {isAnnual && (
+                          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                            <span className="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                              <Star className="w-3 h-3" fill="currentColor" />
+                              RISPARMIO
                             </span>
                           </div>
                         )}
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                          {plan.name}
+                        </h3>
+                        <p className="text-xs text-gray-500 mb-4">Fino a {plan.max_persons} {plan.max_persons === 1 ? 'persona' : 'persone'}</p>
+                        <div className="mb-6">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
+                            <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
+                          </div>
+                          {savings && (
+                            <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3">
+                              <p className="text-lg font-bold text-green-700">Risparmi €{savings.toFixed(2)}</p>
+                              <p className="text-xs text-green-600">rispetto al piano mensile</p>
+                            </div>
+                          )}
+                          {!isAnnual && (
+                            <p className="text-xs text-gray-500 mt-2">€{(Number(plan.price) * 12).toFixed(2)} all'anno</p>
+                          )}
+                        </div>
+                        <div className="mb-6 space-y-2">
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <span>Recensioni illimitate</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <span>Sconti esclusivi</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <span>Salva preferiti</span>
+                          </div>
+                          {isAnnual && (
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Star className="w-4 h-4 text-yellow-500 flex-shrink-0" fill="currentColor" />
+                              <span className="font-semibold">Vantaggi extra</span>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleSelectPlan(plan.id)}
+                          disabled={loading}
+                          className={`w-full py-3 px-6 rounded-lg transition-colors font-semibold disabled:bg-gray-400 ${
+                            isAnnual
+                              ? 'bg-green-600 text-white hover:bg-green-700'
+                              : 'bg-blue-600 text-white hover:bg-blue-700'
+                          }`}
+                        >
+                          {loading ? 'Attivazione...' : 'Seleziona Piano'}
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleSelectPlan(plan.id)}
-                        disabled={loading}
-                        className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400"
-                      >
-                        {loading ? 'Attivazione...' : 'Seleziona Piano'}
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -402,30 +465,88 @@ export function SubscriptionPage() {
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {businessPlans.map((plan) => (
-                    <div
-                      key={plan.id}
-                      className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-blue-500 transition-all"
-                    >
-                      <h3 className="text-xl font-bold text-gray-900 mb-4">
-                        {plan.name}
-                      </h3>
-                      <div className="mb-6">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
-                          <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">+ IVA</p>
-                      </div>
-                      <button
-                        onClick={() => handleSelectPlan(plan.id)}
-                        disabled={loading}
-                        className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400"
+                  {businessPlans.map((plan) => {
+                    const monthlyEquivalent = businessPlans.find(
+                      p => p.max_persons === plan.max_persons && p.billing_period === 'monthly'
+                    );
+                    const isAnnual = plan.billing_period === 'yearly';
+                    const savings = isAnnual && monthlyEquivalent
+                      ? (monthlyEquivalent.price * 12) - plan.price
+                      : null;
+
+                    return (
+                      <div
+                        key={plan.id}
+                        className={`bg-white rounded-xl shadow-lg p-6 border-2 transition-all relative ${
+                          isAnnual ? 'border-green-400 ring-2 ring-green-200' : 'border-gray-200 hover:border-blue-500'
+                        }`}
                       >
-                        {loading ? 'Attivazione...' : 'Seleziona Piano'}
-                      </button>
-                    </div>
-                  ))}
+                        {isAnnual && (
+                          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                            <span className="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                              <Star className="w-3 h-3" fill="currentColor" />
+                              RISPARMIO
+                            </span>
+                          </div>
+                        )}
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                          {plan.name}
+                        </h3>
+                        <p className="text-xs text-gray-500 mb-4">Fino a {plan.max_persons} {plan.max_persons === 1 ? 'sede' : 'sedi'}</p>
+                        <div className="mb-6">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
+                            <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">+ IVA</p>
+                          {savings && (
+                            <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3">
+                              <p className="text-lg font-bold text-green-700">Risparmi €{savings.toFixed(2)}</p>
+                              <p className="text-xs text-green-600">rispetto al piano mensile</p>
+                            </div>
+                          )}
+                          {!isAnnual && (
+                            <p className="text-xs text-gray-500 mt-2">€{(Number(plan.price) * 12).toFixed(2)} all'anno</p>
+                          )}
+                        </div>
+                        <div className="mb-6 space-y-2">
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <Shield className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                            <span>Profilo verificato</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <span>Sconti illimitati</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <span>Risposte recensioni</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <TrendingUp className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                            <span>Statistiche avanzate</span>
+                          </div>
+                          {isAnnual && (
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Star className="w-4 h-4 text-yellow-500 flex-shrink-0" fill="currentColor" />
+                              <span className="font-semibold">Priorità visibilità</span>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleSelectPlan(plan.id)}
+                          disabled={loading}
+                          className={`w-full py-3 px-6 rounded-lg transition-colors font-semibold disabled:bg-gray-400 ${
+                            isAnnual
+                              ? 'bg-green-600 text-white hover:bg-green-700'
+                              : 'bg-blue-600 text-white hover:bg-blue-700'
+                          }`}
+                        >
+                          {loading ? 'Attivazione...' : 'Seleziona Piano'}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -448,13 +569,35 @@ export function SubscriptionPage() {
             </p>
           </div>
 
-          <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 rounded-2xl shadow-lg p-12 mb-12 text-center">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-              Il tuo abbonamento vale il 10% di beneficenza
-            </h2>
-            <p className="text-lg text-gray-700 max-w-4xl mx-auto leading-relaxed">
-              Trovafacile ogni anno donerà il 10% del proprio FATTURATO, che sarà visibile con documenti certificati, ad associazioni che voterete voi utenti
+          <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-400 rounded-2xl shadow-xl p-12 mb-12">
+            <div className="flex items-center justify-center mb-6">
+              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mr-4">
+                <Heart className="w-8 h-8 text-white" fill="currentColor" />
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
+                10% di Beneficenza
+              </h2>
+            </div>
+            <p className="text-xl text-gray-800 max-w-4xl mx-auto leading-relaxed text-center mb-6">
+              Il tuo abbonamento fa la differenza! Ogni anno Trovafacile donerà il <strong>10% del fatturato totale</strong> ad associazioni di beneficenza.
             </p>
+            <div className="grid md:grid-cols-3 gap-4 max-w-5xl mx-auto mt-8">
+              <div className="bg-white/80 backdrop-blur rounded-xl p-4 text-center">
+                <Gift className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <p className="text-sm font-semibold text-gray-900">Trasparenza Totale</p>
+                <p className="text-xs text-gray-600 mt-1">Documenti certificati pubblici</p>
+              </div>
+              <div className="bg-white/80 backdrop-blur rounded-xl p-4 text-center">
+                <Users className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <p className="text-sm font-semibold text-gray-900">Voti degli Utenti</p>
+                <p className="text-xs text-gray-600 mt-1">Tu scegli le associazioni</p>
+              </div>
+              <div className="bg-white/80 backdrop-blur rounded-xl p-4 text-center">
+                <TrendingUp className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <p className="text-sm font-semibold text-gray-900">Impatto Reale</p>
+                <p className="text-xs text-gray-600 mt-1">Aiuto concreto ogni anno</p>
+              </div>
+            </div>
           </div>
 
           {currentSubscription && (
@@ -569,36 +712,57 @@ export function SubscriptionPage() {
                 Scegli il Tuo Piano
               </h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {availablePlans.map((plan) => (
-                  <div
-                    key={plan.id}
-                    className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-blue-500 transition-all"
-                  >
-                    <h3 className="text-xl font-bold text-gray-900 mb-4">
-                      {plan.name}
-                    </h3>
-                    <div className="mb-6">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
-                        <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
-                      </div>
-                      {calculateSavings(plan) && (
-                        <div className="mt-2">
-                          <span className="inline-block bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">
-                            Risparmi €{calculateSavings(plan)!.toFixed(2)}
+                {availablePlans.map((plan) => {
+                  const savings = calculateSavings(plan);
+                  const isAnnual = plan.billing_period === 'yearly';
+                  return (
+                    <div
+                      key={plan.id}
+                      className={`bg-white rounded-xl shadow-lg p-6 border-2 transition-all relative ${
+                        isAnnual ? 'border-green-400 ring-2 ring-green-200' : 'border-gray-200 hover:border-blue-500'
+                      }`}
+                    >
+                      {isAnnual && (
+                        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                          <span className="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                            <Star className="w-3 h-3" fill="currentColor" />
+                            RISPARMIO
                           </span>
                         </div>
                       )}
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">
+                        {plan.name}
+                      </h3>
+                      <p className="text-xs text-gray-500 mb-4">Fino a {plan.max_persons} {plan.max_persons === 1 ? 'persona' : 'persone'}</p>
+                      <div className="mb-6">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
+                          <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
+                        </div>
+                        {savings && (
+                          <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3">
+                            <p className="text-lg font-bold text-green-700">Risparmi €{savings.toFixed(2)}</p>
+                            <p className="text-xs text-green-600">rispetto al piano mensile</p>
+                          </div>
+                        )}
+                        {!isAnnual && (
+                          <p className="text-xs text-gray-500 mt-2">€{(Number(plan.price) * 12).toFixed(2)} all'anno</p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleSelectPlan(plan.id)}
+                        disabled={loading}
+                        className={`w-full py-3 px-6 rounded-lg transition-colors font-semibold disabled:bg-gray-400 ${
+                          isAnnual
+                            ? 'bg-green-600 text-white hover:bg-green-700'
+                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                        }`}
+                      >
+                        {loading ? 'Attivazione...' : 'Seleziona Piano'}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleSelectPlan(plan.id)}
-                      disabled={loading}
-                      className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400"
-                    >
-                      {loading ? 'Attivazione...' : 'Seleziona Piano'}
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -609,46 +773,68 @@ export function SubscriptionPage() {
                 Cambia Piano
               </h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {availablePlans.map((plan) => (
-                  <div
-                    key={plan.id}
-                    className={`bg-white rounded-xl shadow-lg p-6 border-2 transition-all ${
-                      currentSubscription.plan.id === plan.id
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-gray-200 hover:border-blue-500'
-                    }`}
-                  >
-                    <h3 className="text-xl font-bold text-gray-900 mb-4">
-                      {plan.name}
-                    </h3>
-                    <div className="mb-6">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
-                        <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
-                      </div>
-                      {calculateSavings(plan) && (
-                        <div className="mt-2">
-                          <span className="inline-block bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">
-                            Risparmi €{calculateSavings(plan)!.toFixed(2)}
+                {availablePlans.map((plan) => {
+                  const savings = calculateSavings(plan);
+                  const isAnnual = plan.billing_period === 'yearly';
+                  const isCurrent = currentSubscription.plan.id === plan.id;
+                  return (
+                    <div
+                      key={plan.id}
+                      className={`bg-white rounded-xl shadow-lg p-6 border-2 transition-all relative ${
+                        isCurrent
+                          ? 'border-green-500 bg-green-50'
+                          : isAnnual
+                          ? 'border-green-400 ring-2 ring-green-200'
+                          : 'border-gray-200 hover:border-blue-500'
+                      }`}
+                    >
+                      {isAnnual && !isCurrent && (
+                        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                          <span className="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                            <Star className="w-3 h-3" fill="currentColor" />
+                            RISPARMIO
                           </span>
                         </div>
                       )}
-                    </div>
-                    {currentSubscription.plan.id === plan.id ? (
-                      <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
-                        Piano Attuale
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">
+                        {plan.name}
+                      </h3>
+                      <p className="text-xs text-gray-500 mb-4">Fino a {plan.max_persons} {plan.max_persons === 1 ? 'persona' : 'persone'}</p>
+                      <div className="mb-6">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
+                          <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
+                        </div>
+                        {savings && (
+                          <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3">
+                            <p className="text-lg font-bold text-green-700">Risparmi €{savings.toFixed(2)}</p>
+                            <p className="text-xs text-green-600">rispetto al piano mensile</p>
+                          </div>
+                        )}
+                        {!isAnnual && (
+                          <p className="text-xs text-gray-500 mt-2">€{(Number(plan.price) * 12).toFixed(2)} all'anno</p>
+                        )}
                       </div>
-                    ) : (
-                      <button
-                        onClick={() => handleSelectPlan(plan.id)}
-                        disabled={loading}
-                        className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400"
-                      >
-                        {loading ? 'Cambio...' : 'Cambia Piano'}
-                      </button>
-                    )}
-                  </div>
-                ))}
+                      {isCurrent ? (
+                        <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
+                          Piano Attuale
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleSelectPlan(plan.id)}
+                          disabled={loading}
+                          className={`w-full py-3 px-6 rounded-lg transition-colors font-semibold disabled:bg-gray-400 ${
+                            isAnnual
+                              ? 'bg-green-600 text-white hover:bg-green-700'
+                              : 'bg-blue-600 text-white hover:bg-blue-700'
+                          }`}
+                        >
+                          {loading ? 'Cambio...' : 'Cambia Piano'}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -798,29 +984,64 @@ export function SubscriptionPage() {
               Scegli il Tuo Piano
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {availablePlans.map((plan) => (
-                <div
-                  key={plan.id}
-                  className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-blue-500 transition-all"
-                >
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">
-                    {plan.name}
-                  </h3>
-                  <div className="mb-6">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
-                      <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleSelectPlan(plan.id)}
-                    disabled={loading}
-                    className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400"
+              {availablePlans.map((plan) => {
+                const monthlyEquivalent = availablePlans.find(
+                  p => p.max_persons === plan.max_persons && p.billing_period === 'monthly'
+                );
+                const isAnnual = plan.billing_period === 'yearly';
+                const savings = isAnnual && monthlyEquivalent
+                  ? (monthlyEquivalent.price * 12) - plan.price
+                  : null;
+
+                return (
+                  <div
+                    key={plan.id}
+                    className={`bg-white rounded-xl shadow-lg p-6 border-2 transition-all relative ${
+                      isAnnual ? 'border-green-400 ring-2 ring-green-200' : 'border-gray-200 hover:border-blue-500'
+                    }`}
                   >
-                    {loading ? 'Attivazione...' : 'Seleziona Piano'}
-                  </button>
-                </div>
-              ))}
+                    {isAnnual && (
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <span className="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                          <Star className="w-3 h-3" fill="currentColor" />
+                          RISPARMIO
+                        </span>
+                      </div>
+                    )}
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      {plan.name}
+                    </h3>
+                    <p className="text-xs text-gray-500 mb-4">Fino a {plan.max_persons} {plan.max_persons === 1 ? 'sede' : 'sedi'}</p>
+                    <div className="mb-6">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
+                        <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">+ IVA</p>
+                      {savings && (
+                        <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3">
+                          <p className="text-lg font-bold text-green-700">Risparmi €{savings.toFixed(2)}</p>
+                          <p className="text-xs text-green-600">rispetto al piano mensile</p>
+                        </div>
+                      )}
+                      {!isAnnual && (
+                        <p className="text-xs text-gray-500 mt-2">€{(Number(plan.price) * 12).toFixed(2)} all'anno</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleSelectPlan(plan.id)}
+                      disabled={loading}
+                      className={`w-full py-3 px-6 rounded-lg transition-colors font-semibold disabled:bg-gray-400 ${
+                        isAnnual
+                          ? 'bg-green-600 text-white hover:bg-green-700'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                    >
+                      {loading ? 'Attivazione...' : 'Seleziona Piano'}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -831,39 +1052,75 @@ export function SubscriptionPage() {
               Cambia Piano
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {availablePlans.map((plan) => (
-                <div
-                  key={plan.id}
-                  className={`bg-white rounded-xl shadow-lg p-6 border-2 transition-all ${
-                    currentSubscription.plan.id === plan.id
-                      ? 'border-green-500 bg-green-50'
-                      : 'border-gray-200 hover:border-blue-500'
-                  }`}
-                >
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">
-                    {plan.name}
-                  </h3>
-                  <div className="mb-6">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
-                      <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
+              {availablePlans.map((plan) => {
+                const monthlyEquivalent = availablePlans.find(
+                  p => p.max_persons === plan.max_persons && p.billing_period === 'monthly'
+                );
+                const isAnnual = plan.billing_period === 'yearly';
+                const savings = isAnnual && monthlyEquivalent
+                  ? (monthlyEquivalent.price * 12) - plan.price
+                  : null;
+                const isCurrent = currentSubscription.plan.id === plan.id;
+
+                return (
+                  <div
+                    key={plan.id}
+                    className={`bg-white rounded-xl shadow-lg p-6 border-2 transition-all relative ${
+                      isCurrent
+                        ? 'border-green-500 bg-green-50'
+                        : isAnnual
+                        ? 'border-green-400 ring-2 ring-green-200'
+                        : 'border-gray-200 hover:border-blue-500'
+                    }`}
+                  >
+                    {isAnnual && !isCurrent && (
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <span className="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                          <Star className="w-3 h-3" fill="currentColor" />
+                          RISPARMIO
+                        </span>
+                      </div>
+                    )}
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      {plan.name}
+                    </h3>
+                    <p className="text-xs text-gray-500 mb-4">Fino a {plan.max_persons} {plan.max_persons === 1 ? 'sede' : 'sedi'}</p>
+                    <div className="mb-6">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
+                        <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">+ IVA</p>
+                      {savings && (
+                        <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3">
+                          <p className="text-lg font-bold text-green-700">Risparmi €{savings.toFixed(2)}</p>
+                          <p className="text-xs text-green-600">rispetto al piano mensile</p>
+                        </div>
+                      )}
+                      {!isAnnual && (
+                        <p className="text-xs text-gray-500 mt-2">€{(Number(plan.price) * 12).toFixed(2)} all'anno</p>
+                      )}
                     </div>
+                    {isCurrent ? (
+                      <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
+                        Piano Attuale
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleSelectPlan(plan.id)}
+                        disabled={loading}
+                        className={`w-full py-3 px-6 rounded-lg transition-colors font-semibold disabled:bg-gray-400 ${
+                          isAnnual
+                            ? 'bg-green-600 text-white hover:bg-green-700'
+                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                        }`}
+                      >
+                        {loading ? 'Cambio...' : 'Cambia Piano'}
+                      </button>
+                    )}
                   </div>
-                  {currentSubscription.plan.id === plan.id ? (
-                    <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
-                      Piano Attuale
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => handleSelectPlan(plan.id)}
-                      disabled={loading}
-                      className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400"
-                    >
-                      {loading ? 'Cambio...' : 'Cambia Piano'}
-                    </button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
