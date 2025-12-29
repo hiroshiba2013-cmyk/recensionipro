@@ -4,7 +4,6 @@ import { AdvancedSearch } from '../components/search/AdvancedSearch';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from '../components/Router';
-import AnalyticsDashboard from '../components/analytics/AnalyticsDashboard';
 
 export function HomePage() {
   const { user } = useAuth();
@@ -487,10 +486,6 @@ function AuthenticatedHomePage() {
             )}
           </>
         )}
-
-        <section className="mb-12">
-          <AnalyticsDashboard />
-        </section>
 
         <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-2xl shadow-lg p-8 mb-12">
           <div className="flex items-center justify-between">
