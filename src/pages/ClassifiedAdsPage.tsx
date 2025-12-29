@@ -44,7 +44,7 @@ export function ClassifiedAdsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   // Filters
-  const [adType, setAdType] = useState<'all' | 'sell' | 'buy'>('all');
+  const [adType, setAdType] = useState<'all' | 'sell' | 'buy' | 'gift'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
@@ -147,10 +147,10 @@ export function ClassifiedAdsPage() {
 
         {/* Ad Type Tabs */}
         <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             <button
               onClick={() => setAdType('all')}
-              className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all ${
+              className={`px-6 py-3 rounded-lg font-medium transition-all ${
                 adType === 'all'
                   ? 'bg-gray-800 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -160,7 +160,7 @@ export function ClassifiedAdsPage() {
             </button>
             <button
               onClick={() => setAdType('sell')}
-              className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all ${
+              className={`px-6 py-3 rounded-lg font-medium transition-all ${
                 adType === 'sell'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -170,13 +170,23 @@ export function ClassifiedAdsPage() {
             </button>
             <button
               onClick={() => setAdType('buy')}
-              className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all ${
+              className={`px-6 py-3 rounded-lg font-medium transition-all ${
                 adType === 'buy'
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
               🔍 Cerco
+            </button>
+            <button
+              onClick={() => setAdType('gift')}
+              className={`px-6 py-3 rounded-lg font-medium transition-all ${
+                adType === 'gift'
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              🎁 Regalo
             </button>
           </div>
         </div>

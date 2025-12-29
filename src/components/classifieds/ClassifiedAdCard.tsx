@@ -2,7 +2,7 @@ import { MapPin, Eye, Calendar } from 'lucide-react';
 
 interface ClassifiedAd {
   id: string;
-  ad_type: 'sell' | 'buy';
+  ad_type: 'sell' | 'buy' | 'gift';
   title: string;
   description: string;
   price: number | null;
@@ -70,9 +70,11 @@ export function ClassifiedAdCard({ ad }: ClassifiedAdCardProps) {
         <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-sm font-bold shadow-sm ${
           ad.ad_type === 'sell'
             ? 'bg-blue-600 text-white'
-            : 'bg-green-600 text-white'
+            : ad.ad_type === 'buy'
+            ? 'bg-green-600 text-white'
+            : 'bg-orange-600 text-white'
         }`}>
-          {ad.ad_type === 'sell' ? '💰 Vendo' : '🔍 Cerco'}
+          {ad.ad_type === 'sell' ? '💰 Vendo' : ad.ad_type === 'buy' ? '🔍 Cerco' : '🎁 Regalo'}
         </div>
 
         {/* Category Badge */}

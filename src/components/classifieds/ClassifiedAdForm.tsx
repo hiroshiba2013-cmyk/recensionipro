@@ -21,7 +21,7 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
   const [categories, setCategories] = useState<Category[]>([]);
 
   const [formData, setFormData] = useState({
-    ad_type: 'sell' as 'sell' | 'buy',
+    ad_type: 'sell' as 'sell' | 'buy' | 'gift',
     category_id: '',
     title: '',
     description: '',
@@ -237,7 +237,7 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Tipo Annuncio *
           </label>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <button
               type="button"
               onClick={() => setFormData({ ...formData, ad_type: 'sell' })}
@@ -261,6 +261,18 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
             >
               <div className="text-2xl mb-1">🔍</div>
               <div>Cerco</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, ad_type: 'gift' })}
+              className={`px-6 py-4 rounded-lg border-2 font-medium transition-all ${
+                formData.ad_type === 'gift'
+                  ? 'border-orange-600 bg-orange-50 text-orange-700'
+                  : 'border-gray-300 text-gray-700 hover:border-gray-400'
+              }`}
+            >
+              <div className="text-2xl mb-1">🎁</div>
+              <div>Regalo</div>
             </button>
           </div>
         </div>
