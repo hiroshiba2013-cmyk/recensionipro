@@ -303,62 +303,77 @@ export function LeaderboardPage() {
                   </li>
                 </ul>
               </div>
+
+              {rewards.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-6">Badge Disponibili</h3>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {rewards.map((reward) => (
+                      <div
+                        key={reward.id}
+                        className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-blue-500 transition-all"
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className={`w-16 h-16 rounded-full flex items-center justify-center ${reward.color}`}>
+                            {reward.icon === 'trophy' && <Trophy className="w-8 h-8" />}
+                            {reward.icon === 'medal' && <Medal className="w-8 h-8" />}
+                            {reward.icon === 'award' && <Award className="w-8 h-8" />}
+                            {reward.icon === 'gift' && <Gift className="w-8 h-8" />}
+                            {reward.icon === 'star' && <Star className="w-8 h-8" />}
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-xl font-bold text-gray-900 mb-2">
+                              {reward.title}
+                            </h4>
+                            <p className="text-gray-600 mb-4">
+                              {reward.description}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <span className="bg-blue-100 text-blue-700 text-sm font-semibold px-3 py-1 rounded-full">
+                                {reward.points_required} punti richiesti
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </>
         ) : (
           <div className="max-w-4xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-6">
-              {rewards.length === 0 ? (
-                <div className="col-span-2 text-center py-12">
-                  <Gift className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                  <p className="text-lg text-gray-500">Nessun premio disponibile al momento</p>
-                  <p className="text-sm text-gray-400 mt-2">Controlla più tardi per nuove ricompense!</p>
+            <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-12 text-center">
+              <Gift className="w-20 h-20 mx-auto mb-6 text-yellow-600" />
+              <h3 className="text-3xl font-bold text-gray-900 mb-4">
+                Premi Annuali in Arrivo!
+              </h3>
+              <p className="text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed mb-6">
+                I migliori 20 utenti dell'anno riceveranno fantastici premi: gift card ricaricabili e altri riconoscimenti esclusivi.
+              </p>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                Continua a guadagnare punti scrivendo recensioni verificate con foto e dettagli.
+                Maggiore è il tuo contributo alla community, maggiori saranno le tue possibilità di vincere!
+              </p>
+              <div className="mt-8 grid md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <Trophy className="w-10 h-10 mx-auto mb-2 text-yellow-500" />
+                  <p className="font-bold text-gray-900">1° Posto</p>
+                  <p className="text-sm text-gray-600">Premio speciale</p>
                 </div>
-              ) : (
-                rewards.map((reward) => (
-                  <div
-                    key={reward.id}
-                    className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-blue-500 transition-all"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className={`w-16 h-16 rounded-full flex items-center justify-center ${reward.color}`}>
-                        {reward.icon === 'trophy' && <Trophy className="w-8 h-8" />}
-                        {reward.icon === 'medal' && <Medal className="w-8 h-8" />}
-                        {reward.icon === 'award' && <Award className="w-8 h-8" />}
-                        {reward.icon === 'gift' && <Gift className="w-8 h-8" />}
-                        {reward.icon === 'star' && <Star className="w-8 h-8" />}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">
-                          {reward.title}
-                        </h3>
-                        <p className="text-gray-600 mb-4">
-                          {reward.description}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <span className="bg-blue-100 text-blue-700 text-sm font-semibold px-3 py-1 rounded-full">
-                            {reward.points_required} punti richiesti
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {rewards.length === 0 && (
-              <div className="mt-8 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-8 text-center">
-                <Gift className="w-16 h-16 mx-auto mb-4 text-yellow-600" />
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                  Premi in Arrivo!
-                </h3>
-                <p className="text-gray-700 max-w-2xl mx-auto">
-                  Stiamo preparando fantastici premi per i nostri utenti più attivi.
-                  Continua a guadagnare punti e sarai tra i primi a riscattare le ricompense!
-                </p>
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <Medal className="w-10 h-10 mx-auto mb-2 text-gray-400" />
+                  <p className="font-bold text-gray-900">2° - 5° Posto</p>
+                  <p className="text-sm text-gray-600">Gift card premium</p>
+                </div>
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <Award className="w-10 h-10 mx-auto mb-2 text-amber-700" />
+                  <p className="font-bold text-gray-900">6° - 20° Posto</p>
+                  <p className="text-sm text-gray-600">Gift card</p>
+                </div>
               </div>
-            )}
+            </div>
           </div>
         )}
       </div>
