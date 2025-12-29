@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LogOut, User, CreditCard, Briefcase, Trophy, Package, MessageCircle, Tag, Heart } from 'lucide-react';
+import { LogOut, User, CreditCard, Briefcase, Trophy, Package, MessageCircle, Tag, Heart, Menu, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
@@ -8,6 +8,7 @@ export function Header() {
   const { user, profile, signOut } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useEffect(() => {
     const selectedPlanId = localStorage.getItem('selectedPlanId');
@@ -45,7 +46,7 @@ export function Header() {
               />
             </a>
 
-            <nav className="flex items-center gap-6">
+            <nav className="hidden lg:flex items-center gap-6">
               <a
                 href="/products"
                 className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
@@ -139,7 +140,121 @@ export function Header() {
                 </>
               )}
             </nav>
+
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="lg:hidden text-gray-700 hover:text-blue-600"
+            >
+              {showMobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
+
+          {showMobileMenu && (
+            <div className="lg:hidden border-t border-gray-200 py-4">
+              <nav className="flex flex-col gap-4">
+                <a
+                  href="/products"
+                  className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  <Package className="w-5 h-5" />
+                  <span>Prodotti</span>
+                </a>
+                <a
+                  href="/classified"
+                  className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  <Tag className="w-5 h-5" />
+                  <span>Annunci</span>
+                </a>
+                <a
+                  href="/jobs"
+                  className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  <Briefcase className="w-5 h-5" />
+                  <span>Lavoro</span>
+                </a>
+                <a
+                  href="/leaderboard"
+                  className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  <Trophy className="w-5 h-5" />
+                  <span>Classifica</span>
+                </a>
+                <a
+                  href="/solidarity"
+                  className="flex items-center gap-2 text-gray-700 hover:text-green-600 transition-colors font-medium"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  <Heart className="w-5 h-5" />
+                  <span>Solidarietà</span>
+                </a>
+
+                {user && profile ? (
+                  <>
+                    <a
+                      href="/messages"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <MessageCircle className="w-5 h-5" />
+                      <span>Messaggi</span>
+                    </a>
+                    <a
+                      href="/subscription"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <CreditCard className="w-5 h-5" />
+                      <span>Abbonamenti</span>
+                    </a>
+                    <a
+                      href="/profile"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <User className="w-5 h-5" />
+                      <span>{profile.full_name}</span>
+                    </a>
+                    <button
+                      onClick={() => {
+                        handleSignOut();
+                        setShowMobileMenu(false);
+                      }}
+                      className="flex items-center gap-2 text-gray-700 hover:text-red-600 transition-colors font-medium"
+                    >
+                      <LogOut className="w-5 h-5" />
+                      <span>Esci</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <a
+                      href="/subscription"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <CreditCard className="w-5 h-5" />
+                      <span>Abbonamenti</span>
+                    </a>
+                    <button
+                      onClick={() => {
+                        setAuthMode('login');
+                        setShowAuthModal(true);
+                        setShowMobileMenu(false);
+                      }}
+                      className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors text-left font-medium"
+                    >
+                      Accedi
+                    </button>
+                  </>
+                )}
+              </nav>
+            </div>
+          )}
         </div>
       </header>
 
