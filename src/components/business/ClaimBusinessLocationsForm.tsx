@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Search, MapPin, CheckCircle2, Building2, X } from 'lucide-react';
+import { Search, MapPin, CheckCircle2, Building2, X, CreditCard, TrendingUp } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { getPlanSummary } from '../../lib/subscription-helper';
 
 interface UnclaimedLocation {
   id: string;
@@ -17,7 +18,7 @@ interface UnclaimedLocation {
 }
 
 interface ClaimBusinessLocationsFormProps {
-  onLocationsSelected: (locations: UnclaimedLocation[]) => void;
+  onLocationsSelected: (locations: UnclaimedLocation[], billingPeriod: 'monthly' | 'yearly') => void;
   onCancel: () => void;
 }
 
@@ -29,6 +30,7 @@ export function ClaimBusinessLocationsForm({
   const [searchResults, setSearchResults] = useState<UnclaimedLocation[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<UnclaimedLocation[]>([]);
   const [searching, setSearching] = useState(false);
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) return;
@@ -72,7 +74,7 @@ export function ClaimBusinessLocationsForm({
       alert('Seleziona almeno una sede da rivendicare');
       return;
     }
-    onLocationsSelected(selectedLocations);
+    onLocationsSelected(selectedLocations, billingPeriod);
   };
 
   return (
@@ -121,43 +123,126 @@ export function ClaimBusinessLocationsForm({
       </div>
 
       {selectedLocations.length > 0 && (
-        <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-green-900">
-              Sedi selezionate ({selectedLocations.length})
-            </h3>
-            <button
-              onClick={() => setSelectedLocations([])}
-              className="text-sm text-green-700 hover:text-green-900 font-medium"
-            >
-              Deseleziona tutte
-            </button>
-          </div>
-          <div className="space-y-2">
-            {selectedLocations.map((location) => (
-              <div
-                key={location.id}
-                className="flex items-center justify-between bg-white rounded-lg p-3 border border-green-300"
+        <>
+          <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-green-900">
+                Sedi selezionate ({selectedLocations.length})
+              </h3>
+              <button
+                onClick={() => setSelectedLocations([])}
+                className="text-sm text-green-700 hover:text-green-900 font-medium"
               >
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-gray-900">{location.name}</p>
-                    <p className="text-sm text-gray-600">
-                      {location.street}, {location.city} ({location.province})
+                Deseleziona tutte
+              </button>
+            </div>
+            <div className="space-y-2">
+              {selectedLocations.map((location) => (
+                <div
+                  key={location.id}
+                  className="flex items-center justify-between bg-white rounded-lg p-3 border border-green-300"
+                >
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-gray-900">{location.name}</p>
+                      <p className="text-sm text-gray-600">
+                        {location.street}, {location.city} ({location.province})
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => toggleLocation(location)}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-6 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-300 rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-blue-600 text-white p-3 rounded-lg">
+                <CreditCard className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Piano Abbonamento Consigliato</h3>
+                <p className="text-sm text-gray-600">In base al numero di sedi selezionate</p>
+              </div>
+            </div>
+
+            <div className="mb-4 flex gap-2">
+              <button
+                onClick={() => setBillingPeriod('monthly')}
+                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all ${
+                  billingPeriod === 'monthly'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                Mensile
+              </button>
+              <button
+                onClick={() => setBillingPeriod('yearly')}
+                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all relative ${
+                  billingPeriod === 'yearly'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                Annuale
+                <span className="ml-1 text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">
+                  Risparmia
+                </span>
+              </button>
+            </div>
+
+            {(() => {
+              const plan = getPlanSummary(selectedLocations.length, billingPeriod);
+              const monthlyPrice = billingPeriod === 'monthly' ? plan.price : plan.pricePerMonth;
+              const savings = billingPeriod === 'yearly' ? (getPlanSummary(selectedLocations.length, 'monthly').price * 12 - plan.price).toFixed(2) : '0';
+
+              return (
+                <div className="bg-white rounded-lg p-4 border-2 border-blue-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-lg font-bold text-gray-900">{plan.name}</p>
+                      <p className="text-sm text-gray-600">
+                        {selectedLocations.length} {selectedLocations.length === 1 ? 'sede' : 'sedi'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-3xl font-bold text-blue-600">€{plan.price.toFixed(2)}</p>
+                      <p className="text-sm text-gray-600">/{plan.period}</p>
+                    </div>
+                  </div>
+
+                  {billingPeriod === 'yearly' && (
+                    <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg p-3">
+                      <TrendingUp className="w-5 h-5 text-green-600" />
+                      <div>
+                        <p className="text-sm font-semibold text-green-900">
+                          Risparmia €{savings} all'anno
+                        </p>
+                        <p className="text-xs text-green-700">
+                          Solo €{monthlyPrice.toFixed(2)}/mese
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <p className="text-xs text-gray-500">
+                      Prezzi esclusi IVA. Il piano verrà attivato dopo la conferma dei dati dell'attività.
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => toggleLocation(location)}
-                  className="text-red-600 hover:text-red-800"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            ))}
+              );
+            })()}
           </div>
-        </div>
+        </>
       )}
 
       {searchResults.length > 0 && (

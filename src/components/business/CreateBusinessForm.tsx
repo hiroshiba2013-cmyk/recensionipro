@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
 import { CITIES_BY_PROVINCE } from '../../lib/cities';
 import { ClaimBusinessLocationsForm } from './ClaimBusinessLocationsForm';
+import { getPlanDisplayName } from '../../lib/subscription-helper';
 
 const italianCities = Object.entries(CITIES_BY_PROVINCE).flatMap(([province, cities]) =>
   cities.map(city => ({ city, province }))
@@ -47,6 +48,7 @@ interface CreateBusinessFormProps {
 export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusinessFormProps) {
   const [step, setStep] = useState<'choice' | 'claim' | 'form'>('choice');
   const [claimedLocations, setClaimedLocations] = useState<UnclaimedLocation[]>([]);
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -72,8 +74,9 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
     });
   };
 
-  const handleLocationsSelected = (locations: UnclaimedLocation[]) => {
+  const handleLocationsSelected = (locations: UnclaimedLocation[], selectedBillingPeriod: 'monthly' | 'yearly') => {
     setClaimedLocations(locations);
+    setBillingPeriod(selectedBillingPeriod);
 
     if (locations.length > 0) {
       const firstLocation = locations[0];
@@ -157,6 +160,35 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
           .in('id', locationIds);
 
         if (claimError) throw claimError;
+
+        const planName = getPlanDisplayName(claimedLocations.length, billingPeriod);
+        const { data: plan, error: planError } = await supabase
+          .from('subscription_plans')
+          .select('*')
+          .eq('name', planName)
+          .maybeSingle();
+
+        if (planError) throw planError;
+
+        if (plan) {
+          const trialEndDate = new Date();
+          trialEndDate.setDate(trialEndDate.getDate() + 30);
+
+          const { error: subscriptionError } = await supabase
+            .from('subscriptions')
+            .insert({
+              customer_id: ownerId,
+              plan_id: plan.id,
+              status: 'trial',
+              start_date: new Date().toISOString(),
+              trial_end_date: trialEndDate.toISOString(),
+              end_date: trialEndDate.toISOString(),
+              payment_method_added: false,
+              reminder_sent: false,
+            });
+
+          if (subscriptionError) throw subscriptionError;
+        }
       }
 
       onSuccess();
