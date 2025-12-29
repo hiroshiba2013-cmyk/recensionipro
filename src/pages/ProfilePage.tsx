@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Star, Tag, Plus, Calendar, Percent, X, Package, LogOut } from 'lucide-react';
+import { User, Star, Tag, Plus, Calendar, Percent, X, Package, LogOut, Trophy, TrendingUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ClassifiedAdCard } from '../components/classifieds/ClassifiedAdCard';
@@ -99,6 +99,21 @@ interface ClassifiedAd {
   };
 }
 
+interface UserRank {
+  rank: number;
+  total_points: number;
+  reviews_count: number;
+}
+
+interface FamilyMember {
+  id: string;
+  first_name: string;
+  last_name: string;
+  nickname: string;
+  avatar_url: string | null;
+  reviews_count: number;
+}
+
 export function ProfilePage() {
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -106,6 +121,8 @@ export function ProfilePage() {
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [business, setBusiness] = useState<Business | null>(null);
   const [classifiedAds, setClassifiedAds] = useState<ClassifiedAd[]>([]);
+  const [userRank, setUserRank] = useState<UserRank | null>(null);
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDiscountForm, setShowDiscountForm] = useState(false);
   const [newDiscount, setNewDiscount] = useState({
@@ -184,6 +201,58 @@ export function ProfilePage() {
     }
 
     await loadClassifiedAds();
+    await loadLeaderboardData();
+    await loadFamilyMembersData();
+  };
+
+  const loadLeaderboardData = async () => {
+    if (!user) return;
+
+    const { data: userActivity } = await supabase
+      .from('user_activity')
+      .select('total_points, reviews_count')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (userActivity) {
+      const { count } = await supabase
+        .from('user_activity')
+        .select('user_id', { count: 'exact', head: true })
+        .gt('total_points', userActivity.total_points || 0);
+
+      setUserRank({
+        rank: (count || 0) + 1,
+        total_points: userActivity.total_points || 0,
+        reviews_count: userActivity.reviews_count || 0,
+      });
+    }
+  };
+
+  const loadFamilyMembersData = async () => {
+    if (!user) return;
+
+    const { data: membersData } = await supabase
+      .from('customer_family_members')
+      .select('id, first_name, last_name, nickname, avatar_url')
+      .eq('customer_id', user.id);
+
+    if (membersData) {
+      const membersWithReviews = await Promise.all(
+        membersData.map(async (member) => {
+          const { count } = await supabase
+            .from('reviews')
+            .select('id', { count: 'exact', head: true })
+            .eq('family_member_id', member.id);
+
+          return {
+            ...member,
+            reviews_count: count || 0,
+          };
+        })
+      );
+
+      setFamilyMembers(membersWithReviews);
+    }
   };
 
   const loadClassifiedAds = async () => {
@@ -362,6 +431,87 @@ export function ProfilePage() {
           currentSubscriptionStatus={profile.subscription_status}
           onUpdate={loadProfileData}
         />
+
+        {profile.user_type === 'customer' && userRank && (
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl shadow-md p-6 mb-8 border-2 border-yellow-200">
+            <div className="flex items-center gap-3 mb-4">
+              <Trophy className="w-7 h-7 text-yellow-600" />
+              <h2 className="text-2xl font-bold text-gray-900">La Tua Posizione in Classifica</h2>
+            </div>
+
+            <div className="bg-white rounded-lg p-6 mb-4">
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-yellow-600 mb-2">#{userRank.rank}</div>
+                  <p className="text-gray-600 font-medium">Posizione</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-blue-600 mb-2">{userRank.total_points}</div>
+                  <p className="text-gray-600 font-medium">Punti Totali</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-green-600 mb-2">{userRank.reviews_count}</div>
+                  <p className="text-gray-600 font-medium">Recensioni</p>
+                </div>
+              </div>
+            </div>
+
+            {familyMembers.length > 0 && (
+              <>
+                <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <User className="w-5 h-5 text-blue-600" />
+                  Attività dei Membri della Famiglia
+                </h3>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {familyMembers.map((member) => (
+                    <div
+                      key={member.id}
+                      className="bg-white rounded-lg p-4 border-2 border-gray-200 hover:border-blue-300 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        {member.avatar_url ? (
+                          <img
+                            src={member.avatar_url}
+                            alt={member.nickname || `${member.first_name} ${member.last_name}`}
+                            className="w-12 h-12 rounded-full"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-bold">
+                            {member.first_name.charAt(0)}
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900">
+                            {member.nickname || `${member.first_name} ${member.last_name}`}
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            {member.first_name} {member.last_name}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <TrendingUp className="w-4 h-4 text-blue-500" />
+                        <span className="text-gray-700">
+                          <strong>{member.reviews_count}</strong> recensioni
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            <div className="mt-4 text-center">
+              <a
+                href="/leaderboard"
+                className="inline-flex items-center gap-2 bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors font-semibold shadow-md"
+              >
+                <Trophy className="w-5 h-5" />
+                Vedi Classifica Completa
+              </a>
+            </div>
+          </div>
+        )}
 
         {profile.user_type === 'customer' ? (
           <>
