@@ -40,8 +40,14 @@ export function LoginForm({ onSuccess }: { onSuccess?: () => void }) {
       }
 
       onSuccess?.();
-    } catch (err) {
-      setError('Email o password non validi');
+    } catch (err: any) {
+      if (err.message?.includes('Email not confirmed')) {
+        setError('Devi confermare il tuo indirizzo email prima di accedere. Controlla la tua casella di posta.');
+      } else if (err.message?.includes('Invalid login credentials')) {
+        setError('Email o password non validi');
+      } else {
+        setError(err.message || 'Errore durante l\'accesso');
+      }
     } finally {
       setLoading(false);
     }
