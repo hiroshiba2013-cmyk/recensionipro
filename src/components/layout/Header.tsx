@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Briefcase, Trophy, Package, MessageCircle, Tag, Heart, Menu, X, Home, Phone, FileText } from 'lucide-react';
+import { User, Briefcase, Trophy, Package, MessageCircle, Tag, Heart, Menu, X, Home, Phone, FileText, CreditCard } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
@@ -109,6 +109,13 @@ export function Header() {
                     title="Regolamento"
                   >
                     <FileText className="w-5 h-5" />
+                  </a>
+                  <a
+                    href="/subscription"
+                    className="text-gray-700 hover:text-blue-600 transition-colors"
+                    title="Abbonamenti"
+                  >
+                    <CreditCard className="w-5 h-5" />
                   </a>
                   <a
                     href="/profile"
@@ -239,6 +246,14 @@ export function Header() {
                     >
                       <FileText className="w-5 h-5" />
                       <span>Regolamento</span>
+                    </a>
+                    <a
+                      href="/subscription"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <CreditCard className="w-5 h-5" />
+                      <span>Abbonamenti</span>
                     </a>
                     <a
                       href="/profile"
