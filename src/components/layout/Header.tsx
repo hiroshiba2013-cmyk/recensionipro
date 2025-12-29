@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Briefcase, Trophy, Package, MessageCircle, Tag, Heart, Menu, X, Home, Phone } from 'lucide-react';
+import { User, Briefcase, Trophy, Package, MessageCircle, Tag, Heart, Menu, X, Home, Phone, FileText } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
@@ -102,6 +102,13 @@ export function Header() {
                     <Phone className="w-5 h-5" />
                   </a>
                   <a
+                    href="/rules"
+                    className="text-gray-700 hover:text-blue-600 transition-colors"
+                    title="Regolamento"
+                  >
+                    <FileText className="w-5 h-5" />
+                  </a>
+                  <a
                     href="/profile"
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium ml-2"
                     title="Mio Profilo"
@@ -125,6 +132,13 @@ export function Header() {
                   >
                     <Phone className="w-5 h-5" />
                     <span>Contatti</span>
+                  </a>
+                  <a
+                    href="/rules"
+                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                  >
+                    <FileText className="w-5 h-5" />
+                    <span>Regolamento</span>
                   </a>
                   <button
                     onClick={() => {
@@ -217,6 +231,14 @@ export function Header() {
                       <span>Contatti</span>
                     </a>
                     <a
+                      href="/rules"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <FileText className="w-5 h-5" />
+                      <span>Regolamento</span>
+                    </a>
+                    <a
                       href="/profile"
                       className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                       onClick={() => setShowMobileMenu(false)}
@@ -242,6 +264,14 @@ export function Header() {
                     >
                       <Phone className="w-5 h-5" />
                       <span>Contatti</span>
+                    </a>
+                    <a
+                      href="/rules"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <FileText className="w-5 h-5" />
+                      <span>Regolamento</span>
                     </a>
                     <button
                       onClick={() => {
