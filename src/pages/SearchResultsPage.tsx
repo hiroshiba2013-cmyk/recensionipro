@@ -49,10 +49,7 @@ export function SearchResultsPage() {
     };
 
     setInitialFilters(filters);
-
-    if (params.toString()) {
-      applyFilters(filters);
-    }
+    applyFilters(filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSearch]);
 
