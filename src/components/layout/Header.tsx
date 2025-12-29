@@ -48,34 +48,6 @@ export function Header() {
 
             <nav className="hidden lg:flex items-center gap-6">
               <a
-                href="/products"
-                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-              >
-                <Package className="w-5 h-5" />
-                <span>Prodotti</span>
-              </a>
-              <a
-                href="/classified"
-                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-              >
-                <Tag className="w-5 h-5" />
-                <span>Annunci</span>
-              </a>
-              <a
-                href="/jobs"
-                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-              >
-                <Briefcase className="w-5 h-5" />
-                <span>Lavoro</span>
-              </a>
-              <a
-                href="/leaderboard"
-                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-              >
-                <Trophy className="w-5 h-5" />
-                <span>Classifica</span>
-              </a>
-              <a
                 href="/solidarity"
                 className="flex items-center gap-2 text-gray-700 hover:text-green-600 transition-colors font-medium"
               >
@@ -85,6 +57,34 @@ export function Header() {
 
               {user && profile ? (
                 <>
+                  <a
+                    href="/products"
+                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                  >
+                    <Package className="w-5 h-5" />
+                    <span>Prodotti</span>
+                  </a>
+                  <a
+                    href="/classified"
+                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                  >
+                    <Tag className="w-5 h-5" />
+                    <span>Annunci</span>
+                  </a>
+                  <a
+                    href="/jobs"
+                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                  >
+                    <Briefcase className="w-5 h-5" />
+                    <span>Lavoro</span>
+                  </a>
+                  <a
+                    href="/leaderboard"
+                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                  >
+                    <Trophy className="w-5 h-5" />
+                    <span>Classifica</span>
+                  </a>
                   <a
                     href="/messages"
                     className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
@@ -153,38 +153,6 @@ export function Header() {
             <div className="lg:hidden border-t border-gray-200 py-4">
               <nav className="flex flex-col gap-4">
                 <a
-                  href="/products"
-                  className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  <Package className="w-5 h-5" />
-                  <span>Prodotti</span>
-                </a>
-                <a
-                  href="/classified"
-                  className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  <Tag className="w-5 h-5" />
-                  <span>Annunci</span>
-                </a>
-                <a
-                  href="/jobs"
-                  className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  <Briefcase className="w-5 h-5" />
-                  <span>Lavoro</span>
-                </a>
-                <a
-                  href="/leaderboard"
-                  className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  <Trophy className="w-5 h-5" />
-                  <span>Classifica</span>
-                </a>
-                <a
                   href="/solidarity"
                   className="flex items-center gap-2 text-gray-700 hover:text-green-600 transition-colors font-medium"
                   onClick={() => setShowMobileMenu(false)}
@@ -195,6 +163,38 @@ export function Header() {
 
                 {user && profile ? (
                   <>
+                    <a
+                      href="/products"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Package className="w-5 h-5" />
+                      <span>Prodotti</span>
+                    </a>
+                    <a
+                      href="/classified"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Tag className="w-5 h-5" />
+                      <span>Annunci</span>
+                    </a>
+                    <a
+                      href="/jobs"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Briefcase className="w-5 h-5" />
+                      <span>Lavoro</span>
+                    </a>
+                    <a
+                      href="/leaderboard"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Trophy className="w-5 h-5" />
+                      <span>Classifica</span>
+                    </a>
                     <a
                       href="/messages"
                       className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
