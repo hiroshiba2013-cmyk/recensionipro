@@ -14,12 +14,16 @@ export function Header() {
     const selectedPlanId = localStorage.getItem('selectedPlanId');
     const urlParams = new URLSearchParams(window.location.search);
     const registerType = urlParams.get('register');
+    const loginParam = urlParams.get('login');
 
     if (selectedPlanId && !user) {
       setAuthMode('register');
       setShowAuthModal(true);
-    } else if (registerType === 'business' && !user) {
+    } else if (registerType && !user) {
       setAuthMode('register');
+      setShowAuthModal(true);
+    } else if (loginParam && !user) {
+      setAuthMode('login');
       setShowAuthModal(true);
     }
   }, [user]);
