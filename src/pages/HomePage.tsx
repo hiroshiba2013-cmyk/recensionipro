@@ -153,6 +153,10 @@ function LandingPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
+                <span>Trova prodotti di ogni genere</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-300 font-bold text-xl">✓</span>
                 <span>Scrivi recensioni e vinci premi</span>
               </li>
               <li className="flex items-start gap-2">
@@ -166,6 +170,10 @@ function LandingPage() {
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
                 <span>Cerca offerte di lavoro locali</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-300 font-bold text-xl">✓</span>
+                <span>Il tuo abbonamento vale il 10% di beneficenza</span>
               </li>
             </ul>
             <button
@@ -204,12 +212,16 @@ function LandingPage() {
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
                 <span>Ricevi e rispondi alle recensioni</span>
               </li>
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-300 font-bold text-xl">✓</span>
+                <span>Il tuo abbonamento vale il 10% di beneficenza</span>
+              </li>
             </ul>
             <button
-              onClick={() => window.location.href = '/subscription'}
+              onClick={() => window.location.href = '/?register=business'}
               className="w-full bg-yellow-400 text-gray-900 px-6 py-3 rounded-lg text-lg font-bold hover:bg-yellow-300 transition-all mt-6"
             >
-              Scopri gli Abbonamenti
+              Inizia Ora
             </button>
           </div>
         </div>
