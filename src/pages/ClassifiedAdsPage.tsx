@@ -37,7 +37,7 @@ interface ClassifiedAd {
 }
 
 export function ClassifiedAdsPage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [ads, setAds] = useState<ClassifiedAd[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,6 +122,36 @@ export function ClassifiedAdsPage() {
     setShowCreateForm(false);
     loadAds();
   };
+
+  if (profile?.user_type === 'business') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-3xl">🏢</span>
+          </div>
+          <h2 className="text-2xl font-bold mb-4">Sezione non disponibile</h2>
+          <p className="text-gray-600 mb-6">
+            La sezione annunci è riservata ai clienti. Come attività puoi accedere a sconti, prodotti e pubblicare annunci di lavoro dalla tua dashboard.
+          </p>
+          <div className="flex flex-col gap-3">
+            <a
+              href="/dashboard"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Vai alla Dashboard
+            </a>
+            <a
+              href="/"
+              className="text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              Torna alla Home
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -74,13 +74,15 @@ export function Header() {
                   >
                     <Percent className="w-5 h-5" />
                   </a>
-                  <a
-                    href="/classified"
-                    className="text-gray-700 hover:text-blue-600 transition-colors"
-                    title="Annunci"
-                  >
-                    <Tag className="w-5 h-5" />
-                  </a>
+                  {profile.user_type === 'customer' && (
+                    <a
+                      href="/classified"
+                      className="text-gray-700 hover:text-blue-600 transition-colors"
+                      title="Annunci"
+                    >
+                      <Tag className="w-5 h-5" />
+                    </a>
+                  )}
                   <a
                     href="/jobs"
                     className="text-gray-700 hover:text-blue-600 transition-colors"
@@ -221,14 +223,16 @@ export function Header() {
                       <Percent className="w-5 h-5" />
                       <span>Sconti</span>
                     </a>
-                    <a
-                      href="/classified"
-                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                      onClick={() => setShowMobileMenu(false)}
-                    >
-                      <Tag className="w-5 h-5" />
-                      <span>Annunci</span>
-                    </a>
+                    {profile.user_type === 'customer' && (
+                      <a
+                        href="/classified"
+                        className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                        onClick={() => setShowMobileMenu(false)}
+                      >
+                        <Tag className="w-5 h-5" />
+                        <span>Annunci</span>
+                      </a>
+                    )}
                     <a
                       href="/jobs"
                       className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
