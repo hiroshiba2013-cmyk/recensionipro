@@ -28,7 +28,10 @@
     "progress": "node check-progress.js",
     "monitor": "node monitor-import.js",
     "status": "node check-status.js",
-    "generate:products": "node generate-products.js"
+    "generate:products": "node generate-products.js",
+    "notify:businesses": "node notify-businesses.js",
+    "notify:all": "node notify-businesses.js all",
+    "check:emails": "node check-businesses-with-email.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
