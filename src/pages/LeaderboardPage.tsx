@@ -28,30 +28,39 @@ export function LeaderboardPage() {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'leaderboard' | 'rewards'>('leaderboard');
+  const [userTypeFilter, setUserTypeFilter] = useState<'all' | 'customer' | 'business'>('all');
 
   useEffect(() => {
     loadLeaderboard();
     loadRewards();
-  }, [profile]);
+  }, [profile, userTypeFilter]);
 
   const loadLeaderboard = async () => {
     try {
       setLoading(true);
 
-      const { data: activityData, error } = await supabase
+      let query = supabase
         .from('user_activity')
         .select(`
           user_id,
           total_points,
           reviews_count,
-          profile:profiles(id, full_name, avatar_url)
+          profile:profiles(id, full_name, avatar_url, user_type)
         `)
         .order('total_points', { ascending: false })
-        .limit(20);
+        .limit(100);
+
+      const { data: activityData, error } = await query;
 
       if (error) throw error;
 
-      const leaderboard: LeaderboardUser[] = (activityData || []).map((item: any, index: number) => ({
+      let filteredData = activityData || [];
+      if (userTypeFilter !== 'all') {
+        filteredData = filteredData.filter((item: any) => item.profile?.user_type === userTypeFilter);
+      }
+      filteredData = filteredData.slice(0, 20);
+
+      const leaderboard: LeaderboardUser[] = filteredData.map((item: any, index: number) => ({
         id: item.profile.id,
         full_name: item.profile.full_name,
         avatar_url: item.profile.avatar_url,
@@ -164,7 +173,7 @@ export function LeaderboardPage() {
           </p>
         </div>
 
-        <div className="flex justify-center mb-8">
+        <div className="flex flex-col items-center gap-4 mb-8">
           <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1">
             <button
               onClick={() => setActiveTab('leaderboard')}
@@ -187,6 +196,41 @@ export function LeaderboardPage() {
               Premi
             </button>
           </div>
+
+          {activeTab === 'leaderboard' && (
+            <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1">
+              <button
+                onClick={() => setUserTypeFilter('all')}
+                className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
+                  userTypeFilter === 'all'
+                    ? 'bg-green-600 text-white'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Tutti
+              </button>
+              <button
+                onClick={() => setUserTypeFilter('customer')}
+                className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
+                  userTypeFilter === 'customer'
+                    ? 'bg-green-600 text-white'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Utenti Privati
+              </button>
+              <button
+                onClick={() => setUserTypeFilter('business')}
+                className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
+                  userTypeFilter === 'business'
+                    ? 'bg-green-600 text-white'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Professionisti
+              </button>
+            </div>
+          )}
         </div>
 
         {activeTab === 'leaderboard' ? (
@@ -343,34 +387,68 @@ export function LeaderboardPage() {
             </div>
           </>
         ) : (
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-12 text-center">
-              <Gift className="w-20 h-20 mx-auto mb-6 text-yellow-600" />
-              <h3 className="text-3xl font-bold text-gray-900 mb-4">
-                Premi Annuali in Arrivo!
-              </h3>
-              <p className="text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed mb-6">
-                I migliori 20 utenti dell'anno riceveranno fantastici premi: gift card ricaricabili e altri riconoscimenti esclusivi.
+          <div className="max-w-6xl mx-auto space-y-8">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl p-12">
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <Trophy className="w-16 h-16 text-blue-600" />
+                <h3 className="text-3xl font-bold text-gray-900">
+                  Premi per Utenti Privati
+                </h3>
+              </div>
+              <p className="text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed mb-6 text-center">
+                I migliori 20 utenti privati dell'anno riceveranno fantastici premi: gift card ricaricabili e altri riconoscimenti esclusivi.
               </p>
-              <p className="text-gray-600 max-w-2xl mx-auto">
+              <p className="text-gray-600 max-w-2xl mx-auto text-center mb-8">
                 Continua a guadagnare punti scrivendo recensioni verificate con foto e dettagli.
                 Maggiore è il tuo contributo alla community, maggiori saranno le tue possibilità di vincere!
               </p>
-              <div className="mt-8 grid md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <Trophy className="w-10 h-10 mx-auto mb-2 text-yellow-500" />
-                  <p className="font-bold text-gray-900">1° Posto</p>
-                  <p className="text-sm text-gray-600">Premio speciale</p>
+              <div className="grid md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+                <div className="bg-white rounded-lg p-6 shadow-md">
+                  <Trophy className="w-12 h-12 mx-auto mb-3 text-yellow-500" />
+                  <p className="font-bold text-gray-900 text-lg">1° Posto</p>
+                  <p className="text-sm text-gray-600 mt-2">Gift card da 500€</p>
                 </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <Medal className="w-10 h-10 mx-auto mb-2 text-gray-400" />
-                  <p className="font-bold text-gray-900">2° - 5° Posto</p>
-                  <p className="text-sm text-gray-600">Gift card premium</p>
+                <div className="bg-white rounded-lg p-6 shadow-md">
+                  <Medal className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                  <p className="font-bold text-gray-900 text-lg">2° - 5° Posto</p>
+                  <p className="text-sm text-gray-600 mt-2">Gift card da 200€</p>
                 </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <Award className="w-10 h-10 mx-auto mb-2 text-amber-700" />
-                  <p className="font-bold text-gray-900">6° - 20° Posto</p>
-                  <p className="text-sm text-gray-600">Gift card</p>
+                <div className="bg-white rounded-lg p-6 shadow-md">
+                  <Award className="w-12 h-12 mx-auto mb-3 text-amber-700" />
+                  <p className="font-bold text-gray-900 text-lg">6° - 20° Posto</p>
+                  <p className="text-sm text-gray-600 mt-2">Gift card da 50€</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 rounded-xl p-12">
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <Trophy className="w-16 h-16 text-green-600" />
+                <h3 className="text-3xl font-bold text-gray-900">
+                  Premi per Professionisti
+                </h3>
+              </div>
+              <p className="text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed mb-6 text-center">
+                I migliori 20 professionisti dell'anno riceveranno riconoscimenti speciali per la loro eccellenza nel servizio clienti.
+              </p>
+              <p className="text-gray-600 max-w-2xl mx-auto text-center mb-8">
+                Ricevi recensioni positive e scala la classifica per ottenere visibilità e premi esclusivi!
+              </p>
+              <div className="grid md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+                <div className="bg-white rounded-lg p-6 shadow-md">
+                  <Trophy className="w-12 h-12 mx-auto mb-3 text-yellow-500" />
+                  <p className="font-bold text-gray-900 text-lg">1° Posto</p>
+                  <p className="text-sm text-gray-600 mt-2">Certificato Eccellenza + Visibilità Premium</p>
+                </div>
+                <div className="bg-white rounded-lg p-6 shadow-md">
+                  <Medal className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                  <p className="font-bold text-gray-900 text-lg">2° - 5° Posto</p>
+                  <p className="text-sm text-gray-600 mt-2">Badge Qualità + Promozione Premium</p>
+                </div>
+                <div className="bg-white rounded-lg p-6 shadow-md">
+                  <Award className="w-12 h-12 mx-auto mb-3 text-amber-700" />
+                  <p className="font-bold text-gray-900 text-lg">6° - 20° Posto</p>
+                  <p className="text-sm text-gray-600 mt-2">Badge Riconoscimento + Visibilità Extra</p>
                 </div>
               </div>
             </div>
