@@ -44,6 +44,7 @@ export function ClassifiedAdsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   // Filters
+  const [adType, setAdType] = useState<'all' | 'sell' | 'buy'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
@@ -53,7 +54,7 @@ export function ClassifiedAdsPage() {
   useEffect(() => {
     loadCategories();
     loadAds();
-  }, [selectedCategory, searchQuery, selectedCity, minPrice, maxPrice]);
+  }, [adType, selectedCategory, searchQuery, selectedCity, minPrice, maxPrice]);
 
   const loadCategories = async () => {
     try {
@@ -81,6 +82,10 @@ export function ClassifiedAdsPage() {
         `)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
+
+      if (adType !== 'all') {
+        query = query.eq('ad_type', adType);
+      }
 
       if (selectedCategory) {
         query = query.eq('category_id', selectedCategory);
@@ -138,6 +143,42 @@ export function ClassifiedAdsPage() {
               Pubblica Annuncio
             </button>
           )}
+        </div>
+
+        {/* Ad Type Tabs */}
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setAdType('all')}
+              className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all ${
+                adType === 'all'
+                  ? 'bg-gray-800 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Tutti gli annunci
+            </button>
+            <button
+              onClick={() => setAdType('sell')}
+              className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all ${
+                adType === 'sell'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              💰 Vendo
+            </button>
+            <button
+              onClick={() => setAdType('buy')}
+              className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all ${
+                adType === 'buy'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              🔍 Cerco
+            </button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -221,9 +262,10 @@ export function ClassifiedAdsPage() {
           </div>
 
           {/* Clear Filters */}
-          {(selectedCategory || searchQuery || selectedCity || minPrice || maxPrice) && (
+          {(adType !== 'all' || selectedCategory || searchQuery || selectedCity || minPrice || maxPrice) && (
             <button
               onClick={() => {
+                setAdType('all');
                 setSelectedCategory('');
                 setSearchQuery('');
                 setSelectedCity('');

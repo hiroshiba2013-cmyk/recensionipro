@@ -2,6 +2,7 @@ import { MapPin, Eye, Calendar } from 'lucide-react';
 
 interface ClassifiedAd {
   id: string;
+  ad_type: 'sell' | 'buy';
   title: string;
   description: string;
   price: number | null;
@@ -65,14 +66,23 @@ export function ClassifiedAdCard({ ad }: ClassifiedAdCardProps) {
           </div>
         )}
 
+        {/* Ad Type Badge */}
+        <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-sm font-bold shadow-sm ${
+          ad.ad_type === 'sell'
+            ? 'bg-blue-600 text-white'
+            : 'bg-green-600 text-white'
+        }`}>
+          {ad.ad_type === 'sell' ? '💰 Vendo' : '🔍 Cerco'}
+        </div>
+
         {/* Category Badge */}
-        <div className="absolute top-3 left-3 bg-white px-3 py-1 rounded-full text-sm font-medium text-gray-900 shadow-sm">
+        <div className="absolute bottom-3 left-3 bg-white px-3 py-1 rounded-full text-xs font-medium text-gray-900 shadow-sm">
           {ad.classified_categories.name}
         </div>
 
         {/* Price Badge */}
         {ad.price && (
-          <div className="absolute top-3 right-3 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-sm">
+          <div className="absolute top-3 right-3 bg-white text-gray-900 px-3 py-1 rounded-full text-sm font-bold shadow-sm">
             €{ad.price.toLocaleString('it-IT')}
           </div>
         )}

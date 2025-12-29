@@ -21,6 +21,7 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
   const [categories, setCategories] = useState<Category[]>([]);
 
   const [formData, setFormData] = useState({
+    ad_type: 'sell' as 'sell' | 'buy',
     category_id: '',
     title: '',
     description: '',
@@ -71,6 +72,7 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
       if (error) throw error;
 
       setFormData({
+        ad_type: data.ad_type || 'sell',
         category_id: data.category_id,
         title: data.title,
         description: data.description,
@@ -176,6 +178,7 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
 
       const adData = {
         user_id: user.id,
+        ad_type: formData.ad_type,
         category_id: formData.category_id,
         title: formData.title,
         description: formData.description,
@@ -229,6 +232,39 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Ad Type */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Tipo Annuncio *
+          </label>
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, ad_type: 'sell' })}
+              className={`px-6 py-4 rounded-lg border-2 font-medium transition-all ${
+                formData.ad_type === 'sell'
+                  ? 'border-blue-600 bg-blue-50 text-blue-700'
+                  : 'border-gray-300 text-gray-700 hover:border-gray-400'
+              }`}
+            >
+              <div className="text-2xl mb-1">💰</div>
+              <div>Vendo</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, ad_type: 'buy' })}
+              className={`px-6 py-4 rounded-lg border-2 font-medium transition-all ${
+                formData.ad_type === 'buy'
+                  ? 'border-green-600 bg-green-50 text-green-700'
+                  : 'border-gray-300 text-gray-700 hover:border-gray-400'
+              }`}
+            >
+              <div className="text-2xl mb-1">🔍</div>
+              <div>Cerco</div>
+            </button>
+          </div>
+        </div>
+
         {/* Category */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">

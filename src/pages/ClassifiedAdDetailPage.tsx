@@ -19,6 +19,7 @@ import { ClassifiedAdForm } from '../components/classifieds/ClassifiedAdForm';
 interface ClassifiedAd {
   id: string;
   user_id: string;
+  ad_type: 'sell' | 'buy';
   title: string;
   description: string;
   price: number | null;
@@ -291,9 +292,18 @@ export function ClassifiedAdDetailPage() {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-3">
-                    {ad.classified_categories.name}
-                  </span>
+                  <div className="flex gap-2 mb-3">
+                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${
+                      ad.ad_type === 'sell'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-green-600 text-white'
+                    }`}>
+                      {ad.ad_type === 'sell' ? '💰 Vendo' : '🔍 Cerco'}
+                    </span>
+                    <span className="inline-block px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">
+                      {ad.classified_categories.name}
+                    </span>
+                  </div>
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">
                     {ad.title}
                   </h1>
