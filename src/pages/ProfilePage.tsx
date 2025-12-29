@@ -8,6 +8,7 @@ import { EditProfileForm } from '../components/profile/EditProfileForm';
 import { JobRequestForm } from '../components/profile/JobRequestForm';
 import { EditFamilyMembersForm } from '../components/profile/EditFamilyMembersForm';
 import { AddUnclaimedBusinessForm } from '../components/profile/AddUnclaimedBusinessForm';
+import { CreateBusinessForm } from '../components/business/CreateBusinessForm';
 import { EditBusinessForm } from '../components/business/EditBusinessForm';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
 import { EditBusinessLocationsForm } from '../components/business/EditBusinessLocationsForm';
@@ -759,6 +760,28 @@ export function ProfilePage() {
               profile={profile}
               onUpdate={loadProfileData}
             />
+
+            {!business && user && (
+              <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-8 mb-8">
+                <h3 className="text-xl font-bold text-gray-900 mb-4">Completa la Registrazione Aziendale</h3>
+                <p className="text-gray-700 mb-6">
+                  Per accedere a tutte le funzionalità business (gestione sedi, annunci di lavoro, sconti, ecc.)
+                  devi prima completare i dati della tua azienda.
+                </p>
+                <div className="border-t-4 border-green-500 bg-gradient-to-r from-green-50 to-white rounded-lg p-4 mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <User className="w-6 h-6 text-green-600" />
+                    Crea la Tua Azienda
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">Inserisci i dati della tua azienda per iniziare</p>
+                </div>
+                <CreateBusinessForm
+                  ownerId={user.id}
+                  onSuccess={loadBusinessData}
+                  onCancel={() => {}}
+                />
+              </div>
+            )}
 
             {business && (
               <>
