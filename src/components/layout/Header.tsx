@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { LogOut, User, CreditCard, Briefcase, Trophy, Package, MessageCircle, Tag, Heart, Menu, X, Home } from 'lucide-react';
+import { User, Briefcase, Trophy, Package, MessageCircle, Tag, Heart, Menu, X, Home } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
 
 export function Header() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -24,15 +24,6 @@ export function Header() {
     }
   }, [user]);
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      window.location.href = '/';
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
-
   return (
     <>
       <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -47,14 +38,6 @@ export function Header() {
             </a>
 
             <nav className="hidden lg:flex items-center gap-8">
-              <a
-                href="/solidarity"
-                className="flex items-center gap-2 text-gray-700 hover:text-green-600 transition-colors font-medium"
-              >
-                <Heart className="w-5 h-5" />
-                <span>Solidarietà</span>
-              </a>
-
               {user && profile ? (
                 <>
                   <a
@@ -63,6 +46,13 @@ export function Header() {
                   >
                     <Home className="w-5 h-5" />
                     <span>Home</span>
+                  </a>
+                  <a
+                    href="/solidarity"
+                    className="flex items-center gap-2 text-gray-700 hover:text-green-600 transition-colors font-medium"
+                  >
+                    <Heart className="w-5 h-5" />
+                    <span>Solidarietà</span>
                   </a>
                   <a
                     href="/products"
@@ -95,45 +85,27 @@ export function Header() {
                   <a
                     href="/messages"
                     className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                    title="Messaggi"
                   >
                     <MessageCircle className="w-5 h-5" />
                     <span>Messaggi</span>
                   </a>
                   <a
-                    href="/subscription"
+                    href="/profile"
                     className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                    title="Abbonamenti"
+                    title="Mio Profilo"
                   >
-                    <CreditCard className="w-5 h-5" />
-                    <span>Abbonamenti</span>
+                    <User className="w-5 h-5" />
+                    <span>{profile.full_name}</span>
                   </a>
-                  <div className="flex items-center gap-3">
-                    <a
-                      href="/profile"
-                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors"
-                      title="Mio Profilo"
-                    >
-                      <User className="w-5 h-5" />
-                      <span>{profile.full_name}</span>
-                    </a>
-                    <button
-                      onClick={handleSignOut}
-                      className="text-gray-700 hover:text-red-600 transition-colors"
-                      title="Esci"
-                    >
-                      <LogOut className="w-5 h-5" />
-                    </button>
-                  </div>
                 </>
               ) : (
                 <>
                   <a
-                    href="/subscription"
-                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    href="/solidarity"
+                    className="flex items-center gap-2 text-gray-700 hover:text-green-600 transition-colors font-medium"
                   >
-                    <CreditCard className="w-5 h-5" />
-                    <span>Abbonamenti</span>
+                    <Heart className="w-5 h-5" />
+                    <span>Solidarietà</span>
                   </a>
                   <button
                     onClick={() => {
@@ -159,15 +131,6 @@ export function Header() {
           {showMobileMenu && (
             <div className="lg:hidden border-t border-gray-200 py-4">
               <nav className="flex flex-col gap-5">
-                <a
-                  href="/solidarity"
-                  className="flex items-center gap-2 text-gray-700 hover:text-green-600 transition-colors font-medium"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  <Heart className="w-5 h-5" />
-                  <span>Solidarietà</span>
-                </a>
-
                 {user && profile ? (
                   <>
                     <a
@@ -177,6 +140,14 @@ export function Header() {
                     >
                       <Home className="w-5 h-5" />
                       <span>Home</span>
+                    </a>
+                    <a
+                      href="/solidarity"
+                      className="flex items-center gap-2 text-gray-700 hover:text-green-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Heart className="w-5 h-5" />
+                      <span>Solidarietà</span>
                     </a>
                     <a
                       href="/products"
@@ -219,14 +190,6 @@ export function Header() {
                       <span>Messaggi</span>
                     </a>
                     <a
-                      href="/subscription"
-                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                      onClick={() => setShowMobileMenu(false)}
-                    >
-                      <CreditCard className="w-5 h-5" />
-                      <span>Abbonamenti</span>
-                    </a>
-                    <a
                       href="/profile"
                       className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                       onClick={() => setShowMobileMenu(false)}
@@ -234,26 +197,16 @@ export function Header() {
                       <User className="w-5 h-5" />
                       <span>{profile.full_name}</span>
                     </a>
-                    <button
-                      onClick={() => {
-                        handleSignOut();
-                        setShowMobileMenu(false);
-                      }}
-                      className="flex items-center gap-2 text-gray-700 hover:text-red-600 transition-colors font-medium"
-                    >
-                      <LogOut className="w-5 h-5" />
-                      <span>Esci</span>
-                    </button>
                   </>
                 ) : (
                   <>
                     <a
-                      href="/subscription"
-                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      href="/solidarity"
+                      className="flex items-center gap-2 text-gray-700 hover:text-green-600 transition-colors font-medium"
                       onClick={() => setShowMobileMenu(false)}
                     >
-                      <CreditCard className="w-5 h-5" />
-                      <span>Abbonamenti</span>
+                      <Heart className="w-5 h-5" />
+                      <span>Solidarietà</span>
                     </a>
                     <button
                       onClick={() => {
