@@ -13,6 +13,7 @@ import { ClassifiedAdsPage } from '../pages/ClassifiedAdsPage';
 import { ClassifiedAdDetailPage } from '../pages/ClassifiedAdDetailPage';
 import { MessagesPage } from '../pages/MessagesPage';
 import { SolidarityPage } from '../pages/SolidarityPage';
+import { ContactPage } from '../pages/ContactPage';
 
 const RouterContext = createContext<{ params: Record<string, string> }>({ params: {} });
 
@@ -109,6 +110,10 @@ export function Router() {
 
   if (currentPath === '/solidarity') {
     return <SolidarityPage />;
+  }
+
+  if (currentPath === '/contact' || currentPath === '/contatti') {
+    return <ContactPage />;
   }
 
   if (currentPath.startsWith('/business/')) {

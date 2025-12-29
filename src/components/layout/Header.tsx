@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Briefcase, Trophy, Package, MessageCircle, Tag, Heart, Menu, X, Home } from 'lucide-react';
+import { User, Briefcase, Trophy, Package, MessageCircle, Tag, Heart, Menu, X, Home, Phone } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
@@ -41,65 +41,73 @@ export function Header() {
               />
             </a>
 
-            <nav className="hidden lg:flex items-center gap-8">
+            <nav className="hidden lg:flex items-center gap-4">
               {user && profile ? (
                 <>
                   <a
                     href="/"
-                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    title="Home"
                   >
                     <Home className="w-5 h-5" />
-                    <span>Home</span>
+                    <span className="text-sm">Home</span>
                   </a>
                   <a
                     href="/solidarity"
-                    className="flex items-center gap-2 text-gray-700 hover:text-green-600 transition-colors font-medium"
+                    className="text-gray-700 hover:text-green-600 transition-colors"
+                    title="Solidarietà"
                   >
                     <Heart className="w-5 h-5" />
-                    <span>Solidarietà</span>
                   </a>
                   <a
                     href="/products"
-                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="text-gray-700 hover:text-blue-600 transition-colors"
+                    title="Prodotti"
                   >
                     <Package className="w-5 h-5" />
-                    <span>Prodotti</span>
                   </a>
                   <a
                     href="/classified"
-                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="text-gray-700 hover:text-blue-600 transition-colors"
+                    title="Annunci"
                   >
                     <Tag className="w-5 h-5" />
-                    <span>Annunci</span>
                   </a>
                   <a
                     href="/jobs"
-                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="text-gray-700 hover:text-blue-600 transition-colors"
+                    title="Lavoro"
                   >
                     <Briefcase className="w-5 h-5" />
-                    <span>Lavoro</span>
                   </a>
                   <a
                     href="/leaderboard"
-                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="text-gray-700 hover:text-blue-600 transition-colors"
+                    title="Classifica"
                   >
                     <Trophy className="w-5 h-5" />
-                    <span>Classifica</span>
                   </a>
                   <a
                     href="/messages"
-                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="text-gray-700 hover:text-blue-600 transition-colors"
+                    title="Messaggi"
                   >
                     <MessageCircle className="w-5 h-5" />
-                    <span>Messaggi</span>
+                  </a>
+                  <a
+                    href="/contact"
+                    className="text-gray-700 hover:text-blue-600 transition-colors"
+                    title="Contatti"
+                  >
+                    <Phone className="w-5 h-5" />
                   </a>
                   <a
                     href="/profile"
-                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium ml-2"
                     title="Mio Profilo"
                   >
                     <User className="w-5 h-5" />
-                    <span>{profile.full_name}</span>
+                    <span className="text-sm">{profile.full_name}</span>
                   </a>
                 </>
               ) : (
@@ -110,6 +118,13 @@ export function Header() {
                   >
                     <Heart className="w-5 h-5" />
                     <span>Solidarietà</span>
+                  </a>
+                  <a
+                    href="/contact"
+                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                  >
+                    <Phone className="w-5 h-5" />
+                    <span>Contatti</span>
                   </a>
                   <button
                     onClick={() => {
@@ -194,6 +209,14 @@ export function Header() {
                       <span>Messaggi</span>
                     </a>
                     <a
+                      href="/contact"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Phone className="w-5 h-5" />
+                      <span>Contatti</span>
+                    </a>
+                    <a
                       href="/profile"
                       className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                       onClick={() => setShowMobileMenu(false)}
@@ -211,6 +234,14 @@ export function Header() {
                     >
                       <Heart className="w-5 h-5" />
                       <span>Solidarietà</span>
+                    </a>
+                    <a
+                      href="/contact"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Phone className="w-5 h-5" />
+                      <span>Contatti</span>
                     </a>
                     <button
                       onClick={() => {
