@@ -747,11 +747,24 @@ export function ProfilePage() {
           </>
         ) : (
           <>
+            <div className="border-t-4 border-blue-500 bg-gradient-to-r from-blue-50 to-white rounded-lg p-4 mb-6">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <User className="w-6 h-6 text-blue-600" />
+                Dati Personali Account
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">Informazioni del titolare dell'account business</p>
+            </div>
+
+            <EditProfileForm
+              profile={profile}
+              onUpdate={loadProfileData}
+            />
+
             {business && (
               <>
-                <div className="border-t-4 border-blue-500 bg-gradient-to-r from-blue-50 to-white rounded-lg p-4 mb-6">
+                <div className="border-t-4 border-green-500 bg-gradient-to-r from-green-50 to-white rounded-lg p-4 mb-6 mt-8">
                   <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <User className="w-6 h-6 text-blue-600" />
+                    <User className="w-6 h-6 text-green-600" />
                     Dati Aziendali
                   </h2>
                   <p className="text-sm text-gray-600 mt-1">Informazioni generali dell'azienda</p>
@@ -762,9 +775,9 @@ export function ProfilePage() {
                   onUpdate={loadBusinessData}
                 />
 
-                <div className="border-t-4 border-green-500 bg-gradient-to-r from-green-50 to-white rounded-lg p-4 mb-6 mt-8">
+                <div className="border-t-4 border-orange-500 bg-gradient-to-r from-orange-50 to-white rounded-lg p-4 mb-6 mt-8">
                   <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <User className="w-6 h-6 text-green-600" />
+                    <User className="w-6 h-6 text-orange-600" />
                     Punti Vendita
                   </h2>
                   <p className="text-sm text-gray-600 mt-1">Gestisci i punti vendita dell'azienda</p>
