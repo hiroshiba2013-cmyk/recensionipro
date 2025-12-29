@@ -1,12 +1,13 @@
 /*
-  # Aggiorna Sistema di Abbonamento con Trial
+  # Aggiorna Sistema di Abbonamento con Trial di 3 Mesi
 
   1. Modifiche
     - Aggiunge 'trial' come stato valido per le subscriptions
     - Aggiunge campo 'payment_method_added' per tracciare se l'utente ha aggiunto un metodo di pagamento
     - Aggiunge campo 'reminder_sent' per tracciare se è stata inviata l'email di promemoria
     - Aggiunge campo 'trial_end_date' per distinguere la fine del trial dalla fine del periodo pagato
-    
+    - Periodo di trial: 90 giorni (3 mesi) gratuiti
+
   2. Sicurezza
     - Mantiene le policy RLS esistenti
 */
