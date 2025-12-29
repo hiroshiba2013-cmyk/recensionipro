@@ -30,7 +30,7 @@ function LandingPage() {
               Recensioni verificate, prodotti, annunci, lavoro e solidarietà in un unico posto.
             </p>
             <p className="text-lg text-blue-200 mb-8 max-w-2xl mx-auto">
-              Primi 6 mesi gratuiti per tutti! Poi a partire da €0.49/mese per privati e €2.49/mese + IVA per attività.
+              Tre mesi di prova gratuiti per tutti! Poi a partire da €0.49/mese per privati e €2.49/mese + IVA per attività.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
@@ -144,7 +144,7 @@ function LandingPage() {
             <h3 className="text-3xl font-bold mb-4">Per i Cittadini</h3>
             <div className="mb-4">
               <p className="text-2xl font-bold text-yellow-300">A partire da €0.49/mese</p>
-              <p className="text-sm text-blue-100">Primi 6 mesi gratuiti</p>
+              <p className="text-sm text-blue-100">Tre mesi di prova gratuiti</p>
             </div>
             <ul className="space-y-3 text-lg">
               <li className="flex items-start gap-2">
@@ -189,7 +189,7 @@ function LandingPage() {
             <h3 className="text-3xl font-bold mb-4">Per le Attività</h3>
             <div className="mb-4">
               <p className="text-2xl font-bold text-yellow-300">A partire da €2.49/mese</p>
-              <p className="text-sm text-green-100">+ IVA - Primi 6 mesi gratuiti</p>
+              <p className="text-sm text-green-100">+ IVA - Tre mesi di prova gratuiti</p>
             </div>
             <ul className="space-y-3 text-lg">
               <li className="flex items-start gap-2">
@@ -258,7 +258,7 @@ function LandingPage() {
             Unisciti alla community di Trovafacile e scopri tutto quello che il tuo territorio ha da offrire
           </p>
           <p className="text-lg text-green-600 font-semibold mb-8">
-            Primi 6 mesi gratuiti - Nessuna carta di credito richiesta
+            Tre mesi di prova gratuiti - Nessuna carta di credito richiesta
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
