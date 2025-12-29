@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Star, Tag, Plus, Calendar, Percent, X, Package } from 'lucide-react';
+import { User, Star, Tag, Plus, Calendar, Percent, X, Package, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ClassifiedAdCard } from '../components/classifieds/ClassifiedAdCard';
@@ -100,7 +100,7 @@ interface ClassifiedAd {
 }
 
 export function ProfilePage() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
@@ -317,23 +317,42 @@ export function ProfilePage() {
     );
   }
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-xl shadow-md p-8 mb-8">
-          <div className="flex items-center gap-6">
-            <AvatarUpload
-              userId={profile.id}
-              currentAvatarUrl={profile.avatar_url}
-              onAvatarUpdate={() => loadProfileData()}
-            />
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">{profile.full_name}</h1>
-              <p className="text-gray-600 mt-1">{profile.email}</p>
-              <span className="inline-block mt-2 px-4 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
-                {profile.user_type === 'customer' ? 'Cliente' : 'Azienda'}
-              </span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <AvatarUpload
+                userId={profile.id}
+                currentAvatarUrl={profile.avatar_url}
+                onAvatarUpdate={() => loadProfileData()}
+              />
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">{profile.full_name}</h1>
+                <p className="text-gray-600 mt-1">{profile.email}</p>
+                <span className="inline-block mt-2 px-4 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
+                  {profile.user_type === 'customer' ? 'Cliente' : 'Azienda'}
+                </span>
+              </div>
             </div>
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors font-semibold shadow-md"
+              title="Esci"
+            >
+              <LogOut className="w-5 h-5" />
+              Esci
+            </button>
           </div>
         </div>
 
