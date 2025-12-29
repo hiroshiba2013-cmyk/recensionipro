@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Briefcase, MapPin, DollarSign, Filter, X, Check } from 'lucide-react';
+import { Briefcase, MapPin, DollarSign, Filter, X, Check, MessageCircle, Plus, Building2, UserCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { JobSeekerForm } from '../components/jobs/JobSeekerForm';
+import { JobSeekerCard } from '../components/jobs/JobSeekerCard';
+import { JobConversation } from '../components/jobs/JobConversation';
 
 interface JobPosting {
   id: string;
@@ -16,9 +19,36 @@ interface JobPosting {
   experience_level: string;
   published_at: string;
   expires_at: string;
+  company_name: string | null;
+  gross_annual_salary: number | null;
+  benefits: string[];
+  remote_work: boolean;
   business: {
     id: string;
     name: string;
+    owner_id: string;
+  };
+}
+
+interface JobSeeker {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string;
+  skills: string[];
+  contract_type: string;
+  desired_salary_min: number | null;
+  desired_salary_max: number | null;
+  salary_currency: string;
+  location: string;
+  available_from: string | null;
+  experience_years: number;
+  education_level: string | null;
+  created_at: string;
+  user: {
+    profiles: {
+      full_name: string;
+    };
   };
 }
 
@@ -30,13 +60,21 @@ interface SearchFilters {
 }
 
 export function JobsPage() {
+  const [activeTab, setActiveTab] = useState<'offers' | 'seekers'>('offers');
   const [jobs, setJobs] = useState<JobPosting[]>([]);
+  const [jobSeekers, setJobSeekers] = useState<JobSeeker[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const [showJobSeekerForm, setShowJobSeekerForm] = useState(false);
   const [userApplications, setUserApplications] = useState<string[]>([]);
   const [viewedJobs, setViewedJobs] = useState<string[]>([]);
   const [appliedJobId, setAppliedJobId] = useState<string | null>(null);
   const [markingAsViewed, setMarkingAsViewed] = useState<string | null>(null);
+  const [conversationData, setConversationData] = useState<{
+    conversationId: string;
+    type: 'job_seeker' | 'job_offer';
+    otherUserName: string;
+  } | null>(null);
   const { user, profile } = useAuth();
 
   const [filters, setFilters] = useState<SearchFilters>({
@@ -47,16 +85,16 @@ export function JobsPage() {
   });
 
   useEffect(() => {
-    loadJobs();
-    if (user) {
-      loadUserApplications();
-      loadViewedJobs();
+    if (activeTab === 'offers') {
+      loadJobs();
+      if (user) {
+        loadUserApplications();
+        loadViewedJobs();
+      }
+    } else {
+      loadJobSeekers();
     }
-  }, [user]);
-
-  useEffect(() => {
-    loadJobs();
-  }, [filters]);
+  }, [activeTab, user, filters]);
 
   const loadJobs = async () => {
     setLoading(true);
@@ -65,7 +103,7 @@ export function JobsPage() {
         .from('job_postings')
         .select(`
           *,
-          business:businesses(id, name)
+          business:businesses(id, name, owner_id)
         `)
         .eq('status', 'active')
         .gt('expires_at', new Date().toISOString())
@@ -91,6 +129,41 @@ export function JobsPage() {
       setJobs(data || []);
     } catch (error) {
       console.error('Error loading jobs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadJobSeekers = async () => {
+    setLoading(true);
+    try {
+      let query = supabase
+        .from('job_seekers')
+        .select(`
+          *,
+          user:auth.users!inner(
+            profiles!inner(full_name)
+          )
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (filters.position_type) {
+        query = query.eq('contract_type', filters.position_type);
+      }
+
+      if (filters.location) {
+        query = query.ilike('location', `%${filters.location}%`);
+      }
+
+      if (filters.searchTerm) {
+        query = query.or(`title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`);
+      }
+
+      const { data } = await query;
+      setJobSeekers(data || []);
+    } catch (error) {
+      console.error('Error loading job seekers:', error);
     } finally {
       setLoading(false);
     }
@@ -122,45 +195,110 @@ export function JobsPage() {
     }
   };
 
-  const handleApply = async (jobId: string) => {
+  const handleContactJobSeeker = async (jobSeekerId: string) => {
     if (!user) {
-      alert('Devi accedere per candidarti');
+      alert('Devi accedere per contattare');
       return;
     }
 
-    if (profile?.user_type === 'business') {
-      alert('Solo gli utenti privati possono candidarsi');
+    if (profile?.user_type !== 'business') {
+      alert('Solo gli utenti professionali possono contattare chi cerca lavoro');
       return;
     }
 
     try {
-      setAppliedJobId(jobId);
-      const { error } = await supabase
-        .from('job_applications')
-        .insert({
-          job_posting_id: jobId,
-          user_id: user.id,
-        });
+      const jobSeeker = jobSeekers.find(js => js.id === jobSeekerId);
+      if (!jobSeeker) return;
 
-      if (error) throw error;
+      const { data: existingConv } = await supabase
+        .from('job_seeker_conversations')
+        .select('id')
+        .eq('job_seeker_id', jobSeekerId)
+        .eq('employer_id', user.id)
+        .eq('seeker_id', jobSeeker.user_id)
+        .maybeSingle();
 
-      setUserApplications([...userApplications, jobId]);
-      alert('Candidatura inviata con successo!');
-    } catch (error: any) {
-      if (error.code === '23505') {
-        alert('Ti sei già candidato a questo annuncio');
-      } else {
-        alert('Errore durante l\'invio della candidatura');
+      let conversationId = existingConv?.id;
+
+      if (!conversationId) {
+        const { data: newConv, error } = await supabase
+          .from('job_seeker_conversations')
+          .insert({
+            job_seeker_id: jobSeekerId,
+            employer_id: user.id,
+            seeker_id: jobSeeker.user_id,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        conversationId = newConv.id;
       }
-    } finally {
-      setAppliedJobId(null);
+
+      setConversationData({
+        conversationId,
+        type: 'job_seeker',
+        otherUserName: jobSeeker.user.profiles.full_name,
+      });
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      alert('Errore nell\'apertura della chat');
+    }
+  };
+
+  const handleContactEmployer = async (jobId: string) => {
+    if (!user) {
+      alert('Devi accedere per contattare');
+      return;
+    }
+
+    if (profile?.user_type === 'business') {
+      alert('Solo gli utenti privati possono contattare per offerte di lavoro');
+      return;
+    }
+
+    try {
+      const job = jobs.find(j => j.id === jobId);
+      if (!job) return;
+
+      const { data: existingConv } = await supabase
+        .from('job_offer_conversations')
+        .select('id')
+        .eq('job_posting_id', jobId)
+        .eq('applicant_id', user.id)
+        .eq('employer_id', job.business.owner_id)
+        .maybeSingle();
+
+      let conversationId = existingConv?.id;
+
+      if (!conversationId) {
+        const { data: newConv, error } = await supabase
+          .from('job_offer_conversations')
+          .insert({
+            job_posting_id: jobId,
+            applicant_id: user.id,
+            employer_id: job.business.owner_id,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        conversationId = newConv.id;
+      }
+
+      setConversationData({
+        conversationId,
+        type: 'job_offer',
+        otherUserName: job.company_name || job.business.name,
+      });
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      alert('Errore nell\'apertura della chat');
     }
   };
 
   const handleMarkAsViewed = async (jobId: string) => {
-    if (!user) {
-      return;
-    }
+    if (!user) return;
 
     try {
       setMarkingAsViewed(jobId);
@@ -172,7 +310,6 @@ export function JobsPage() {
         });
 
       if (error) throw error;
-
       setViewedJobs([...viewedJobs, jobId]);
     } catch (error: any) {
       if (error.code !== '23505') {
@@ -196,20 +333,67 @@ export function JobsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-r from-green-600 to-green-800 text-white py-16">
+      <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3 mb-4">
             <Briefcase className="w-10 h-10" />
-            <h1 className="text-5xl font-bold">Opportunità di Lavoro</h1>
+            <h1 className="text-5xl font-bold">Lavoro</h1>
           </div>
           <p className="text-green-100 text-lg">
-            Trova le migliori opportunità lavorative nelle aziende registrate
+            Trova opportunità di lavoro o trova i candidati ideali
           </p>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-8">
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => setActiveTab('offers')}
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                activeTab === 'offers'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <Building2 className="w-5 h-5" />
+              Trova Lavoro
+            </button>
+            <button
+              onClick={() => setActiveTab('seekers')}
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                activeTab === 'seekers'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <UserCircle className="w-5 h-5" />
+              Cerco Lavoro
+            </button>
+          </div>
+
+          {activeTab === 'seekers' && user && profile?.user_type !== 'business' && !showJobSeekerForm && (
+            <button
+              onClick={() => setShowJobSeekerForm(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors mb-6"
+            >
+              <Plus className="w-5 h-5" />
+              Crea Annuncio Cerco Lavoro
+            </button>
+          )}
+
+          {showJobSeekerForm && (
+            <div className="mb-6">
+              <JobSeekerForm
+                onSuccess={() => {
+                  setShowJobSeekerForm(false);
+                  loadJobSeekers();
+                }}
+                onCancel={() => setShowJobSeekerForm(false)}
+              />
+            </div>
+          )}
+
           <div className="bg-white rounded-lg shadow-md p-4 mb-6">
             <input
               type="text"
@@ -242,7 +426,7 @@ export function JobsPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tipo di Posizione
+                    Tipo di Contratto
                   </label>
                   <select
                     value={filters.position_type}
@@ -258,21 +442,23 @@ export function JobsPage() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Livello di Esperienza
-                  </label>
-                  <select
-                    value={filters.experience_level}
-                    onChange={(e) => setFilters({ ...filters, experience_level: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  >
-                    <option value="">Tutti</option>
-                    <option value="Junior">Junior</option>
-                    <option value="Mid">Mid</option>
-                    <option value="Senior">Senior</option>
-                  </select>
-                </div>
+                {activeTab === 'offers' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Livello di Esperienza
+                    </label>
+                    <select
+                      value={filters.experience_level}
+                      onChange={(e) => setFilters({ ...filters, experience_level: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    >
+                      <option value="">Tutti</option>
+                      <option value="Junior">Junior</option>
+                      <option value="Mid">Mid</option>
+                      <option value="Senior">Senior</option>
+                    </select>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -303,101 +489,139 @@ export function JobsPage() {
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
           </div>
-        ) : jobs.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-md p-12 text-center">
-            <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg">Nessuna opportunità trovata</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {jobs.map((job) => (
-              <div key={job.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900">{job.title}</h3>
-                    <p className="text-gray-600 font-medium">{job.business.name}</p>
+        ) : activeTab === 'offers' ? (
+          jobs.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-md p-12 text-center">
+              <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 text-lg">Nessuna opportunità trovata</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {jobs.map((job) => (
+                <div key={job.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">{job.title}</h3>
+                      <p className="text-gray-600 font-medium">{job.company_name || job.business.name}</p>
+                    </div>
+                    <span className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
+                      {job.position_type}
+                    </span>
                   </div>
-                  <span className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
-                    {job.position_type}
-                  </span>
-                </div>
 
-                <p className="text-gray-700 mb-4 line-clamp-2">{job.description}</p>
+                  <p className="text-gray-700 mb-4 line-clamp-2">{job.description}</p>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">{job.location}</span>
-                  </div>
-                  {job.salary_min && job.salary_max && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">
-                        {job.salary_min} - {job.salary_max} {job.salary_currency}
-                      </span>
+                      <MapPin className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm text-gray-600">{job.location}</span>
                     </div>
-                  )}
-                  <div className="text-sm text-gray-600">
-                    <span className="font-medium">Esperienza:</span> {job.experience_level}
-                  </div>
-                  {job.required_skills.length > 0 && (
+                    {job.gross_annual_salary && (
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">
+                          {job.gross_annual_salary.toLocaleString()} {job.salary_currency}/anno
+                        </span>
+                      </div>
+                    )}
                     <div className="text-sm text-gray-600">
-                      <span className="font-medium">{job.required_skills.length} skills</span>
+                      <span className="font-medium">Esperienza:</span> {job.experience_level}
+                    </div>
+                    {job.remote_work && (
+                      <div className="text-sm text-green-600 font-medium">
+                        Lavoro Remoto
+                      </div>
+                    )}
+                  </div>
+
+                  {job.required_skills.length > 0 && (
+                    <div className="mb-4 flex flex-wrap gap-2">
+                      {job.required_skills.map((skill) => (
+                        <span key={skill} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                          {skill}
+                        </span>
+                      ))}
                     </div>
                   )}
-                </div>
 
-                {job.required_skills.length > 0 && (
-                  <div className="mb-4 flex flex-wrap gap-2">
-                    {job.required_skills.map((skill) => (
-                      <span key={skill} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                  {job.benefits.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-sm font-medium text-gray-700 mb-2">Benefit:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {job.benefits.map((benefit, index) => (
+                          <span key={index} className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded">
+                            {benefit}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">
-                    Scade il {new Date(job.expires_at).toLocaleDateString('it-IT')}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    {user && profile?.user_type !== 'business' && (
-                      viewedJobs.includes(job.id) ? (
-                        <div className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg font-medium">
-                          <Check className="w-4 h-4" />
-                          <span>Visionato</span>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => handleMarkAsViewed(job.id)}
-                          disabled={markingAsViewed === job.id}
-                          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors disabled:bg-gray-100"
-                        >
-                          {markingAsViewed === job.id ? 'Salvataggio...' : 'Segna come visionato'}
-                        </button>
-                      )
-                    )}
-                    {user && profile?.user_type !== 'business' && (
-                      <button
-                        onClick={() => handleApply(job.id)}
-                        disabled={userApplications.includes(job.id) || appliedJobId === job.id}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                          userApplications.includes(job.id)
-                            ? 'bg-gray-300 text-gray-700 cursor-not-allowed'
-                            : 'bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400'
-                        }`}
-                      >
-                        {userApplications.includes(job.id) ? 'Già candidato' : appliedJobId === job.id ? 'Candidatura...' : 'Candidati'}
-                      </button>
-                    )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">
+                      Scade il {new Date(job.expires_at).toLocaleDateString('it-IT')}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      {user && profile?.user_type !== 'business' && (
+                        <>
+                          {viewedJobs.includes(job.id) ? (
+                            <div className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg font-medium">
+                              <Check className="w-4 h-4" />
+                              <span>Visionato</span>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleMarkAsViewed(job.id)}
+                              disabled={markingAsViewed === job.id}
+                              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors disabled:bg-gray-100"
+                            >
+                              {markingAsViewed === job.id ? 'Salvataggio...' : 'Segna come visionato'}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleContactEmployer(job.id)}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                            Contatta
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )
+        ) : (
+          jobSeekers.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-md p-12 text-center">
+              <UserCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 text-lg">Nessun annuncio trovato</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {jobSeekers.map((jobSeeker) => (
+                <JobSeekerCard
+                  key={jobSeeker.id}
+                  jobSeeker={jobSeeker}
+                  onContact={handleContactJobSeeker}
+                  showContactButton={user ? profile?.user_type === 'business' : false}
+                />
+              ))}
+            </div>
+          )
         )}
       </div>
+
+      {conversationData && (
+        <JobConversation
+          conversationId={conversationData.conversationId}
+          conversationType={conversationData.type}
+          otherUserName={conversationData.otherUserName}
+          onClose={() => setConversationData(null)}
+        />
+      )}
     </div>
   );
 }
