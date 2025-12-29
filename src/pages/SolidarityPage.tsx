@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Heart, FileText, Download, Calendar, Euro, Plus } from 'lucide-react';
+import { Heart, FileText, Download, Calendar, Euro } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
-import { SolidaryDocumentUploadForm } from '../components/solidarity/SolidaryDocumentUploadForm';
 
 interface SolidarityDocument {
   id: string;
@@ -20,10 +18,8 @@ interface SolidarityDocument {
 }
 
 export function SolidarityPage() {
-  const { user } = useAuth();
   const [documents, setDocuments] = useState<SolidarityDocument[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showUploadForm, setShowUploadForm] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
 
   useEffect(() => {
@@ -49,11 +45,6 @@ export function SolidarityPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDocumentUploaded = () => {
-    setShowUploadForm(false);
-    loadDocuments();
   };
 
   const years = [...new Set(documents.map((d) => d.year))].sort((a, b) => b - a);
@@ -113,18 +104,6 @@ export function SolidarityPage() {
               </p>
             </div>
           </div>
-
-          {user && (
-            <div className="flex justify-center mt-8">
-              <button
-                onClick={() => setShowUploadForm(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-blue-600 text-white px-8 py-3 rounded-lg hover:from-green-700 hover:to-blue-700 transition-all shadow-lg font-medium"
-              >
-                <Plus className="w-5 h-5" />
-                Carica Documento
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Statistics */}
@@ -261,13 +240,6 @@ export function SolidarityPage() {
           </p>
         </div>
       </div>
-
-      {showUploadForm && (
-        <SolidaryDocumentUploadForm
-          onDocumentUploaded={handleDocumentUploaded}
-          onCancel={() => setShowUploadForm(false)}
-        />
-      )}
     </div>
   );
 }
