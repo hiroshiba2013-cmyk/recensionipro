@@ -173,7 +173,7 @@ function LandingPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
-                <span>Il tuo abbonamento vale il 10% di beneficenza</span>
+                <span>Il 10% andrà in beneficenza</span>
               </li>
             </ul>
             <button
@@ -214,7 +214,7 @@ function LandingPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
-                <span>Il tuo abbonamento vale il 10% di beneficenza</span>
+                <span>Il 10% andrà in beneficenza</span>
               </li>
             </ul>
             <button
