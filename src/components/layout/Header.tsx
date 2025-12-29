@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LogOut, User, CreditCard, Briefcase, Trophy, Package, MessageCircle, Tag } from 'lucide-react';
+import { LogOut, User, CreditCard, Briefcase, Trophy, Package, MessageCircle, Tag, Heart } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
@@ -73,6 +73,13 @@ export function Header() {
               >
                 <Trophy className="w-5 h-5" />
                 <span>Classifica</span>
+              </a>
+              <a
+                href="/solidarity"
+                className="flex items-center gap-2 text-gray-700 hover:text-green-600 transition-colors font-medium"
+              >
+                <Heart className="w-5 h-5" />
+                <span>Solidarietà</span>
               </a>
 
               {user && profile ? (
