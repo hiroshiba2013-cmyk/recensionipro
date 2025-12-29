@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Star, Tag, Plus, Calendar, Percent, X, Package, LogOut, Trophy, TrendingUp } from 'lucide-react';
+import { User, Star, Tag, Plus, Calendar, Percent, X, Package, LogOut, Trophy, TrendingUp, Briefcase } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ClassifiedAdCard } from '../components/classifieds/ClassifiedAdCard';
@@ -787,6 +787,14 @@ export function ProfilePage() {
                   businessId={business.id}
                   onUpdate={loadBusinessData}
                 />
+
+                <div className="border-t-4 border-slate-500 bg-gradient-to-r from-slate-50 to-white rounded-lg p-4 mb-6 mt-8">
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <Briefcase className="w-6 h-6 text-slate-600" />
+                    Annunci di Lavoro
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">Pubblica e gestisci i tuoi annunci di ricerca personale</p>
+                </div>
 
                 <BusinessJobPostingForm businessId={business.id} />
               </>
