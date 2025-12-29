@@ -54,6 +54,20 @@ export function SearchResultsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSearch]);
 
+  useEffect(() => {
+    const shouldRestore = sessionStorage.getItem('shouldRestoreScroll');
+    const targetPosition = sessionStorage.getItem('targetScrollPosition');
+
+    if (shouldRestore === 'true' && targetPosition && !loading && businesses.length > 0) {
+      const position = parseInt(targetPosition, 10);
+      setTimeout(() => {
+        window.scrollTo(0, position);
+        sessionStorage.removeItem('shouldRestoreScroll');
+        sessionStorage.removeItem('targetScrollPosition');
+      }, 100);
+    }
+  }, [loading, businesses]);
+
   const applyFilters = async (filters: SearchFilters) => {
     setLoading(true);
     setHasSearched(true);

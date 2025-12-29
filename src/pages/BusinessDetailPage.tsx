@@ -283,8 +283,14 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
         <button
           onClick={() => {
             const returnUrl = sessionStorage.getItem('searchReturnUrl');
+            const scrollPosition = sessionStorage.getItem('searchScrollPosition');
             if (returnUrl) {
               sessionStorage.removeItem('searchReturnUrl');
+              sessionStorage.setItem('shouldRestoreScroll', 'true');
+              if (scrollPosition) {
+                sessionStorage.setItem('targetScrollPosition', scrollPosition);
+                sessionStorage.removeItem('searchScrollPosition');
+              }
               window.history.pushState({}, '', returnUrl);
               window.dispatchEvent(new PopStateEvent('popstate'));
             } else {

@@ -25,6 +25,7 @@ export function BusinessCard({ business }: BusinessCardProps) {
       return;
     }
     sessionStorage.setItem('searchReturnUrl', window.location.pathname + window.location.search);
+    sessionStorage.setItem('searchScrollPosition', window.scrollY.toString());
     window.history.pushState({}, '', `/business/${business.id}`);
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
