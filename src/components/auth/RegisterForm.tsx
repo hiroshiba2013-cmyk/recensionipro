@@ -372,20 +372,19 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
           .single();
 
         if (plan) {
-          const endDate = new Date();
-          if (billingPeriod === 'monthly') {
-            endDate.setMonth(endDate.getMonth() + 1);
-          } else {
-            endDate.setFullYear(endDate.getFullYear() + 1);
-          }
+          const trialEndDate = new Date();
+          trialEndDate.setMonth(trialEndDate.getMonth() + 3);
 
           const { error: subscriptionError } = await supabase
             .from('subscriptions')
             .insert({
               customer_id: user.id,
               plan_id: plan.id,
-              status: 'active',
-              end_date: endDate.toISOString(),
+              status: 'trial',
+              trial_end_date: trialEndDate.toISOString(),
+              end_date: trialEndDate.toISOString(),
+              payment_method_added: false,
+              reminder_sent: false,
             });
 
           if (subscriptionError) throw subscriptionError;
@@ -472,20 +471,19 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
           .single();
 
         if (plan) {
-          const endDate = new Date();
-          if (businessBillingPeriod === 'monthly') {
-            endDate.setMonth(endDate.getMonth() + 1);
-          } else {
-            endDate.setFullYear(endDate.getFullYear() + 1);
-          }
+          const trialEndDate = new Date();
+          trialEndDate.setMonth(trialEndDate.getMonth() + 3);
 
           const { error: subscriptionError } = await supabase
             .from('subscriptions')
             .insert({
               customer_id: user.id,
               plan_id: plan.id,
-              status: 'active',
-              end_date: endDate.toISOString(),
+              status: 'trial',
+              trial_end_date: trialEndDate.toISOString(),
+              end_date: trialEndDate.toISOString(),
+              payment_method_added: false,
+              reminder_sent: false,
             });
 
           if (subscriptionError) throw subscriptionError;
@@ -538,10 +536,27 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
           <p className="text-lg text-gray-700 mb-4">
             Abbiamo inviato un'email di conferma al tuo indirizzo di posta elettronica.
           </p>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 mb-4">
             Per attivare il tuo account, clicca sul link di conferma contenuto nell'email.
             Controlla anche la cartella spam se non dovessi riceverla entro pochi minuti.
           </p>
+
+          <div className="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-300 rounded-lg p-5 mb-4">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h4 className="text-lg font-bold text-gray-900">3 Mesi di Prova Gratuita!</h4>
+            </div>
+            <p className="text-sm text-gray-700 mb-2">
+              Il tuo account include <span className="font-bold">3 mesi di prova gratuita</span> senza alcun impegno.
+            </p>
+            <p className="text-xs text-gray-600">
+              Nessuna carta di credito richiesta ora. Riceverai un promemoria 7 giorni prima della scadenza.
+              Potrai aggiungere il metodo di pagamento in qualsiasi momento, ma l'addebito avverrà solo alla fine del periodo di prova.
+            </p>
+          </div>
+
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-gray-700">
             <p className="font-semibold mb-2">Importante:</p>
             <p>Il tuo account sarà attivo solo dopo aver confermato l'indirizzo email.</p>

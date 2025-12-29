@@ -17,6 +17,9 @@ interface Subscription {
   status: string;
   start_date: string;
   end_date: string;
+  trial_end_date?: string;
+  payment_method_added?: boolean;
+  reminder_sent?: boolean;
 }
 
 export function SubscriptionPage() {
@@ -67,9 +70,9 @@ export function SubscriptionPage() {
     try {
       const { data, error } = await supabase
         .from('subscriptions')
-        .select('id, status, start_date, end_date, plan:subscription_plans(id, name, price, billing_period, max_persons)')
+        .select('id, status, start_date, end_date, trial_end_date, payment_method_added, reminder_sent, plan:subscription_plans(id, name, price, billing_period, max_persons)')
         .eq('customer_id', profile.id)
-        .eq('status', 'active')
+        .in('status', ['active', 'trial'])
         .maybeSingle();
 
       if (error) {
@@ -303,7 +306,7 @@ export function SubscriptionPage() {
               Scegli il piano perfetto per te o per la tua attività
             </p>
             <p className="text-lg text-gray-700 max-w-3xl mx-auto">
-              I primi sei mesi di abbonamento sono gratuiti e dopo scegli se abbonarti o cancellare il profilo
+              I primi 3 mesi di abbonamento sono gratuiti e dopo scegli se abbonarti o cancellare il profilo
             </p>
           </div>
 
@@ -468,25 +471,58 @@ export function SubscriptionPage() {
                   </div>
                   <div className="text-right">
                     <div className="text-3xl font-bold text-blue-600">
-                      {currentSubscription.plan.price.toFixed(2)}€
+                      {currentSubscription.status === 'trial' ? 'GRATIS' : `${currentSubscription.plan.price.toFixed(2)}€`}
                     </div>
                     <div className="text-sm text-gray-600">
-                      {currentSubscription.plan.billing_period === 'monthly' ? 'al mese' : 'all\'anno'}
+                      {currentSubscription.status === 'trial' ? 'per 3 mesi' : currentSubscription.plan.billing_period === 'monthly' ? 'al mese' : 'all\'anno'}
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-green-800">Abbonamento Attivo</p>
-                      <p className="text-sm text-green-700">
-                        Scade il {new Date(currentSubscription.end_date).toLocaleDateString('it-IT')}
+                {currentSubscription.status === 'trial' ? (
+                  <div>
+                    <div className="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-300 rounded-lg p-5 mb-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p className="font-semibold text-blue-900">Periodo di Prova Gratuita Attivo</p>
+                      </div>
+                      <p className="text-sm text-gray-700 mb-2">
+                        Il tuo periodo di prova scade il <span className="font-bold">{new Date(currentSubscription.trial_end_date!).toLocaleDateString('it-IT')}</span>
                       </p>
+                      <p className="text-xs text-gray-600 mb-4">
+                        Riceverai un promemoria 7 giorni prima della scadenza. Nessuna carta di credito richiesta ora.
+                      </p>
+                      {!currentSubscription.payment_method_added && (
+                        <button
+                          onClick={() => setMessage('La funzionalità di pagamento sarà disponibile a breve. L\'addebito avverrà solo alla fine del periodo di prova.')}
+                          className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                        >
+                          Aggiungi Metodo di Pagamento
+                        </button>
+                      )}
+                      {currentSubscription.payment_method_added && (
+                        <div className="flex items-center gap-2 text-green-700 text-sm">
+                          <Check className="w-5 h-5" />
+                          <span>Metodo di pagamento aggiunto - L'addebito avverrà il {new Date(currentSubscription.trial_end_date!).toLocaleDateString('it-IT')}</span>
+                        </div>
+                      )}
                     </div>
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                   </div>
-                </div>
+                ) : (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-green-800">Abbonamento Attivo</p>
+                        <p className="text-sm text-green-700">
+                          Scade il {new Date(currentSubscription.end_date).toLocaleDateString('it-IT')}
+                        </p>
+                      </div>
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="mt-6 space-y-3">
                   <h3 className="font-semibold text-gray-900 mb-3">Incluso nel tuo piano:</h3>
@@ -656,25 +692,58 @@ export function SubscriptionPage() {
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold text-blue-600">
-                    {Number(currentSubscription.plan.price).toFixed(2)}€
+                    {currentSubscription.status === 'trial' ? 'GRATIS' : `${Number(currentSubscription.plan.price).toFixed(2)}€`}
                   </div>
                   <div className="text-sm text-gray-600">
-                    {currentSubscription.plan.billing_period === 'monthly' ? 'al mese' : 'all\'anno'} + IVA
+                    {currentSubscription.status === 'trial' ? 'per 3 mesi' : `${currentSubscription.plan.billing_period === 'monthly' ? 'al mese' : 'all\'anno'} + IVA`}
                   </div>
                 </div>
               </div>
 
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-green-800">Abbonamento Attivo</p>
-                    <p className="text-sm text-green-700">
-                      Scade il {new Date(currentSubscription.end_date).toLocaleDateString('it-IT')}
+              {currentSubscription.status === 'trial' ? (
+                <div>
+                  <div className="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-300 rounded-lg p-5 mb-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="font-semibold text-blue-900">Periodo di Prova Gratuita Attivo</p>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-2">
+                      Il tuo periodo di prova scade il <span className="font-bold">{new Date(currentSubscription.trial_end_date!).toLocaleDateString('it-IT')}</span>
                     </p>
+                    <p className="text-xs text-gray-600 mb-4">
+                      Riceverai un promemoria 7 giorni prima della scadenza. Nessuna carta di credito richiesta ora.
+                    </p>
+                    {!currentSubscription.payment_method_added && (
+                      <button
+                        onClick={() => setMessage('La funzionalità di pagamento sarà disponibile a breve. L\'addebito avverrà solo alla fine del periodo di prova.')}
+                        className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                      >
+                        Aggiungi Metodo di Pagamento
+                      </button>
+                    )}
+                    {currentSubscription.payment_method_added && (
+                      <div className="flex items-center gap-2 text-green-700 text-sm">
+                        <Check className="w-5 h-5" />
+                        <span>Metodo di pagamento aggiunto - L'addebito avverrà il {new Date(currentSubscription.trial_end_date!).toLocaleDateString('it-IT')}</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-green-800">Abbonamento Attivo</p>
+                      <p className="text-sm text-green-700">
+                        Scade il {new Date(currentSubscription.end_date).toLocaleDateString('it-IT')}
+                      </p>
+                    </div>
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  </div>
+                </div>
+              )}
 
               <div className="mt-6 space-y-3">
                 <h3 className="font-semibold text-gray-900 mb-3">Incluso nel tuo piano:</h3>
