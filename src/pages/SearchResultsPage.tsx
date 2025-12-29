@@ -133,6 +133,11 @@ export function SearchResultsPage() {
           category: ub.category,
           is_claimed: false,
           created_at: new Date().toISOString(),
+          city: ub.city,
+          address: ub.street,
+          phone: ub.phone,
+          email: ub.email,
+          website: ub.website,
           locations: [{
             id: ub.id,
             business_id: ub.id,
