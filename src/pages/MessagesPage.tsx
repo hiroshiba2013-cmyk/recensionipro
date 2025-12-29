@@ -31,7 +31,7 @@ interface Conversation {
 }
 
 export function MessagesPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -41,6 +41,8 @@ export function MessagesPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (authLoading) return;
+
     if (!user) {
       window.location.href = '/';
       return;
@@ -75,7 +77,7 @@ export function MessagesPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, authLoading]);
 
   useEffect(() => {
     if (selectedConversation) {
@@ -222,7 +224,7 @@ export function MessagesPage() {
 
   const selectedConv = conversations.find((c) => c.id === selectedConversation);
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
