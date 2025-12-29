@@ -250,7 +250,7 @@ export function Header() {
             {authMode === 'login' ? (
               <LoginForm onSuccess={() => {
                 setShowAuthModal(false);
-                window.location.href = '/profile';
+                window.location.href = '/';
               }} />
             ) : (
               <RegisterForm onSuccess={() => {
@@ -259,7 +259,7 @@ export function Header() {
                 if (claimBusinessId) {
                   window.location.href = '/dashboard';
                 } else {
-                  window.location.href = '/profile';
+                  window.location.href = '/';
                 }
               }} />
             )}
