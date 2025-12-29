@@ -281,7 +281,16 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <button
-          onClick={() => window.history.back()}
+          onClick={() => {
+            const returnUrl = sessionStorage.getItem('searchReturnUrl');
+            if (returnUrl) {
+              sessionStorage.removeItem('searchReturnUrl');
+              window.history.pushState({}, '', returnUrl);
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            } else {
+              window.history.back();
+            }
+          }}
           className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-medium"
         >
           <ArrowLeft className="w-5 h-5" />

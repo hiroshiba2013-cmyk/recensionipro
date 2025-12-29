@@ -24,6 +24,7 @@ export function BusinessCard({ business }: BusinessCardProps) {
     if (e.target !== e.currentTarget && (e.target as HTMLElement).closest('button, a')) {
       return;
     }
+    sessionStorage.setItem('searchReturnUrl', window.location.pathname + window.location.search);
     window.history.pushState({}, '', `/business/${business.id}`);
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
