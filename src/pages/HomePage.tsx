@@ -22,22 +22,25 @@ function LandingPage() {
               Benvenuto su<br />
               <span className="text-yellow-300">Trovafacile</span>
             </h1>
-            <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-blue-100 mb-4 max-w-3xl mx-auto leading-relaxed">
               La piattaforma italiana che connette cittadini e attività locali.
               Recensioni verificate, prodotti, annunci, lavoro e solidarietà in un unico posto.
+            </p>
+            <p className="text-lg text-blue-200 mb-8 max-w-2xl mx-auto">
+              Primi 6 mesi gratuiti per tutti! Poi a partire da €0.49/mese per privati e €2.49/mese + IVA per attività.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => window.location.href = '/?register=user'}
                 className="bg-yellow-400 text-gray-900 px-8 py-4 rounded-lg text-lg font-bold hover:bg-yellow-300 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
               >
-                Registrati Gratis
+                Inizia Gratis
               </button>
               <button
                 onClick={() => window.location.href = '/subscription'}
                 className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-bold hover:bg-gray-100 transition-all shadow-lg"
               >
-                Abbonamenti Business
+                Vedi i Piani
               </button>
             </div>
           </div>
@@ -136,11 +139,11 @@ function LandingPage() {
           <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-xl p-8 text-white">
             <Users className="w-16 h-16 mb-4" />
             <h3 className="text-3xl font-bold mb-4">Per i Cittadini</h3>
+            <div className="mb-4">
+              <p className="text-2xl font-bold text-yellow-300">A partire da €0.49/mese</p>
+              <p className="text-sm text-blue-100">Primi 6 mesi gratuiti</p>
+            </div>
             <ul className="space-y-3 text-lg">
-              <li className="flex items-start gap-2">
-                <span className="text-yellow-300 font-bold text-xl">✓</span>
-                <span>Registrazione e utilizzo completamente gratuiti</span>
-              </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
                 <span>Trova attività verificate nella tua zona</span>
@@ -166,13 +169,17 @@ function LandingPage() {
               onClick={() => window.location.href = '/?register=user'}
               className="w-full bg-yellow-400 text-gray-900 px-6 py-3 rounded-lg text-lg font-bold hover:bg-yellow-300 transition-all mt-6"
             >
-              Registrati Gratis
+              Inizia Ora
             </button>
           </div>
 
           <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl shadow-xl p-8 text-white">
             <Building2 className="w-16 h-16 mb-4" />
             <h3 className="text-3xl font-bold mb-4">Per le Attività</h3>
+            <div className="mb-4">
+              <p className="text-2xl font-bold text-yellow-300">A partire da €2.49/mese</p>
+              <p className="text-sm text-green-100">+ IVA - Primi 6 mesi gratuiti</p>
+            </div>
             <ul className="space-y-3 text-lg">
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
@@ -193,10 +200,6 @@ function LandingPage() {
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
                 <span>Ricevi e rispondi alle recensioni</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-yellow-300 font-bold text-xl">✓</span>
-                <span>Piani flessibili per ogni esigenza</span>
               </li>
             </ul>
             <button
@@ -236,15 +239,18 @@ function LandingPage() {
           <h3 className="text-3xl font-bold text-gray-900 mb-4">
             Pronto a iniziare?
           </h3>
-          <p className="text-xl text-gray-600 mb-8">
+          <p className="text-xl text-gray-600 mb-2">
             Unisciti alla community di Trovafacile e scopri tutto quello che il tuo territorio ha da offrire
+          </p>
+          <p className="text-lg text-green-600 font-semibold mb-8">
+            Primi 6 mesi gratuiti - Nessuna carta di credito richiesta
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => window.location.href = '/?register=user'}
               className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-bold hover:bg-blue-700 transition-all shadow-lg"
             >
-              Registrati Ora
+              Inizia Gratis
             </button>
             <button
               onClick={() => window.location.href = '/?login=true'}
