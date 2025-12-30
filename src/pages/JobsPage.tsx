@@ -57,6 +57,11 @@ interface SearchFilters {
   experience_level: string;
   location: string;
   searchTerm: string;
+  salary_min: string;
+  salary_max: string;
+  remote_work: string;
+  education_level: string;
+  skill: string;
 }
 
 export function JobsPage() {
@@ -82,6 +87,11 @@ export function JobsPage() {
     experience_level: '',
     location: '',
     searchTerm: '',
+    salary_min: '',
+    salary_max: '',
+    remote_work: '',
+    education_level: '',
+    skill: '',
   });
 
   useEffect(() => {
@@ -125,6 +135,22 @@ export function JobsPage() {
         query = query.or(`title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`);
       }
 
+      if (filters.salary_min) {
+        query = query.gte('gross_annual_salary', parseInt(filters.salary_min));
+      }
+
+      if (filters.salary_max) {
+        query = query.lte('gross_annual_salary', parseInt(filters.salary_max));
+      }
+
+      if (filters.remote_work) {
+        query = query.eq('remote_work', filters.remote_work === 'true');
+      }
+
+      if (filters.skill) {
+        query = query.contains('required_skills', [filters.skill]);
+      }
+
       const { data } = await query;
       setJobs(data || []);
     } catch (error) {
@@ -158,6 +184,22 @@ export function JobsPage() {
 
       if (filters.searchTerm) {
         query = query.or(`title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`);
+      }
+
+      if (filters.salary_min) {
+        query = query.gte('desired_salary_min', parseInt(filters.salary_min));
+      }
+
+      if (filters.salary_max) {
+        query = query.lte('desired_salary_max', parseInt(filters.salary_max));
+      }
+
+      if (filters.education_level) {
+        query = query.eq('education_level', filters.education_level);
+      }
+
+      if (filters.skill) {
+        query = query.contains('skills', [filters.skill]);
       }
 
       const { data } = await query;
@@ -326,10 +368,24 @@ export function JobsPage() {
       experience_level: '',
       location: '',
       searchTerm: '',
+      salary_min: '',
+      salary_max: '',
+      remote_work: '',
+      education_level: '',
+      skill: '',
     });
   };
 
-  const hasActiveFilters = filters.position_type || filters.experience_level || filters.location || filters.searchTerm;
+  const hasActiveFilters =
+    filters.position_type ||
+    filters.experience_level ||
+    filters.location ||
+    filters.searchTerm ||
+    filters.salary_min ||
+    filters.salary_max ||
+    filters.remote_work ||
+    filters.education_level ||
+    filters.skill;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -416,13 +472,13 @@ export function JobsPage() {
             <span>Filtri</span>
             {hasActiveFilters && (
               <span className="ml-2 px-2 py-0.5 bg-white text-green-600 text-xs rounded-full font-medium">
-                {[filters.position_type, filters.experience_level, filters.location].filter(Boolean).length}
+                {[filters.position_type, filters.experience_level, filters.location, filters.salary_min, filters.salary_max, filters.remote_work, filters.education_level, filters.skill].filter(Boolean).length}
               </span>
             )}
           </button>
 
           {showFilters && (
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6 space-y-4">
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -460,6 +516,26 @@ export function JobsPage() {
                   </div>
                 )}
 
+                {activeTab === 'seekers' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Livello di Istruzione
+                    </label>
+                    <select
+                      value={filters.education_level}
+                      onChange={(e) => setFilters({ ...filters, education_level: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    >
+                      <option value="">Tutti</option>
+                      <option value="Licenza Media">Licenza Media</option>
+                      <option value="Diploma">Diploma</option>
+                      <option value="Laurea Triennale">Laurea Triennale</option>
+                      <option value="Laurea Magistrale">Laurea Magistrale</option>
+                      <option value="Master/PhD">Master/PhD</option>
+                    </select>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Città
@@ -471,6 +547,75 @@ export function JobsPage() {
                     onChange={(e) => setFilters({ ...filters, location: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">Fascia Salariale (€/anno)</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Minimo
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Es. 20000"
+                      value={filters.salary_min}
+                      onChange={(e) => setFilters({ ...filters, salary_min: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Massimo
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Es. 50000"
+                      value={filters.salary_max}
+                      onChange={(e) => setFilters({ ...filters, salary_max: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {activeTab === 'offers' && (
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-semibold text-gray-900 mb-3">Modalità di Lavoro</h4>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Lavoro Remoto
+                    </label>
+                    <select
+                      value={filters.remote_work}
+                      onChange={(e) => setFilters({ ...filters, remote_work: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    >
+                      <option value="">Tutti</option>
+                      <option value="true">Si</option>
+                      <option value="false">No</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">Competenze</h4>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Cerca per competenza
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Es. Python, JavaScript, Marketing..."
+                    value={filters.skill}
+                    onChange={(e) => setFilters({ ...filters, skill: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {activeTab === 'offers' ? 'Cerca offerte che richiedono questa competenza' : 'Cerca candidati con questa competenza'}
+                  </p>
                 </div>
               </div>
 
