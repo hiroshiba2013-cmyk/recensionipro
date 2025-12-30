@@ -333,49 +333,49 @@ export function LeaderboardPage() {
               {userTypeFilter !== 'business' && (
                 <div className="mt-8 bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
                   <h3 className="text-lg font-bold text-gray-900 mb-3">Come Guadagnare Punti</h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li className="flex items-center gap-2">
-                    <Award className="w-5 h-5 text-gray-600" />
-                    <span><strong>5 punti</strong> per ogni annuncio pubblicato</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Award className="w-5 h-5 text-green-600" />
-                    <span><strong>15 punti</strong> per ogni prodotto completo inserito</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Award className="w-5 h-5 text-orange-600" />
-                    <span><strong>20 punti</strong> per inserimento di un'attività non presente</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Award className="w-5 h-5 text-yellow-600" />
-                    <span><strong>30 punti</strong> per ogni amico che si registra con il tuo nickname</span>
-                  </li>
-                </ul>
+                  <ul className="space-y-2 text-gray-700">
+                    <li className="flex items-center gap-2">
+                      <Award className="w-5 h-5 text-gray-600" />
+                      <span><strong>5 punti</strong> per ogni annuncio pubblicato</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Award className="w-5 h-5 text-green-600" />
+                      <span><strong>15 punti</strong> per ogni prodotto completo inserito</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Award className="w-5 h-5 text-orange-600" />
+                      <span><strong>20 punti</strong> per inserimento di un'attività non presente</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Award className="w-5 h-5 text-yellow-600" />
+                      <span><strong>30 punti</strong> per ogni amico che si registra con il tuo nickname</span>
+                    </li>
+                  </ul>
 
-                <h4 className="text-md font-bold text-gray-900 mt-4 mb-2">Punti per Recensioni (in base alle stelle):</h4>
-                <ul className="space-y-2 text-gray-700">
-                  <li className="flex items-center gap-2">
-                    <Star className="w-5 h-5 text-red-600" />
-                    <span><strong>2 punti</strong> per recensione a 1 stella</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Star className="w-5 h-5 text-orange-600" />
-                    <span><strong>4 punti</strong> per recensione a 2 stelle</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Star className="w-5 h-5 text-yellow-600" />
-                    <span><strong>10 punti</strong> per recensione a 3 stelle</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Star className="w-5 h-5 text-blue-600" />
-                    <span><strong>25 punti</strong> per recensione a 4 stelle</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Star className="w-5 h-5 text-green-600" />
-                    <span><strong>50 punti</strong> per recensione a 5 stelle</span>
-                  </li>
-                </ul>
-              </div>
+                  <h4 className="text-md font-bold text-gray-900 mt-4 mb-2">Punti per Recensioni (in base alle stelle):</h4>
+                  <ul className="space-y-2 text-gray-700">
+                    <li className="flex items-center gap-2">
+                      <Star className="w-5 h-5 text-red-600" />
+                      <span><strong>2 punti</strong> per recensione a 1 stella</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Star className="w-5 h-5 text-orange-600" />
+                      <span><strong>4 punti</strong> per recensione a 2 stelle</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Star className="w-5 h-5 text-yellow-600" />
+                      <span><strong>10 punti</strong> per recensione a 3 stelle</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Star className="w-5 h-5 text-blue-600" />
+                      <span><strong>25 punti</strong> per recensione a 4 stelle</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Star className="w-5 h-5 text-green-600" />
+                      <span><strong>50 punti</strong> per recensione a 5 stelle</span>
+                    </li>
+                  </ul>
+                </div>
               )}
 
               {rewards.length > 0 && (
