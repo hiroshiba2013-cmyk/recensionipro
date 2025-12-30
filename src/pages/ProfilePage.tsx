@@ -278,8 +278,8 @@ export function ProfilePage() {
       .from('classified_ads')
       .select(`
         *,
-        profiles:user_id(full_name, avatar_url),
-        classified_categories:category_id(name, icon)
+        profiles!classified_ads_user_id_fkey(full_name, avatar_url),
+        classified_categories!classified_ads_category_id_fkey(name, icon)
       `)
       .eq('user_id', user?.id)
       .eq('status', 'active')
