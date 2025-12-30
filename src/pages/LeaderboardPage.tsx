@@ -348,7 +348,7 @@ export function LeaderboardPage() {
                     </li>
                     <li className="flex items-center gap-2">
                       <Award className="w-5 h-5 text-yellow-600" />
-                      <span><strong>30 punti</strong> per ogni amico che si registra con il tuo nickname</span>
+                      <span><strong>30 punti</strong> quando un amico si abbona usando il tuo nickname</span>
                     </li>
                   </ul>
 
@@ -375,6 +375,13 @@ export function LeaderboardPage() {
                       <span><strong>50 punti</strong> per recensione a 5 stelle</span>
                     </li>
                   </ul>
+
+                  <div className="mt-4 bg-amber-50 border border-amber-300 rounded-lg p-4">
+                    <p className="text-sm text-gray-700">
+                      <strong>Nota:</strong> I punti delle recensioni vengono assegnati solo dopo l'approvazione dello staff.
+                      I punti "Porta un Amico" vengono assegnati quando l'amico effettua l'abbonamento.
+                    </p>
+                  </div>
                 </div>
               )}
 

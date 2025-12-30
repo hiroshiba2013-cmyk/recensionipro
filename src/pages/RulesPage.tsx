@@ -203,6 +203,13 @@ export function RulesPage() {
                       dalla pubblicazione. Durante questo periodo la recensione sarà visibile ma contrassegnata come "In revisione".
                     </p>
                   </div>
+                  <div className="bg-amber-50 border-2 border-amber-400 p-4 rounded-lg mb-3">
+                    <p className="text-sm font-bold text-amber-900 mb-2">Assegnazione Punti</p>
+                    <p className="text-sm text-gray-700">
+                      <strong>Importante:</strong> Il punteggio delle recensioni verrà assegnato <strong>solo quando la recensione verrà approvata dallo staff</strong>.
+                      Se una recensione viene rifiutata o rimossa per violazione del regolamento, non verranno assegnati punti.
+                    </p>
+                  </div>
                   <p className="text-sm text-gray-700">
                     Le aziende possono rispondere alle recensioni per fornire chiarimenti o risolvere problemi.
                   </p>
@@ -405,7 +412,7 @@ export function RulesPage() {
                         <h4 className="font-bold text-gray-900">Presenta un Amico</h4>
                         <span className="text-2xl font-bold text-yellow-600">30 pt</span>
                       </div>
-                      <p className="text-sm text-gray-600">Per ogni amico registrato con il tuo nickname</p>
+                      <p className="text-sm text-gray-600">Quando l'amico si abbona alla piattaforma</p>
                     </div>
 
                     <div className="bg-white border-2 border-orange-200 p-4 rounded-lg">
@@ -467,7 +474,7 @@ export function RulesPage() {
                     Sistema "Presenta un Amico"
                   </h3>
                   <p className="text-gray-700 mb-4">
-                    Invita i tuoi amici a registrarsi su TrovaFacile e guadagna 30 punti per ogni amico che si iscrive usando il tuo nickname!
+                    Invita i tuoi amici a registrarsi su TrovaFacile e guadagna 30 punti quando si abbonano alla piattaforma usando il tuo nickname!
                   </p>
 
                   <div className="bg-white rounded-lg p-4 mb-4">
@@ -475,9 +482,17 @@ export function RulesPage() {
                     <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700 ml-2">
                       <li>Condividi il tuo nickname con amici e familiari</li>
                       <li>Quando si registrano, devono inserire il tuo nickname nel campo "Ti presenta un amico?"</li>
-                      <li>Ricevi automaticamente 30 punti alla conferma della registrazione</li>
+                      <li>Ricevi automaticamente 30 punti quando l'amico effettua l'abbonamento alla piattaforma</li>
                       <li>Più amici inviti, più punti accumuli nella classifica!</li>
                     </ol>
+                  </div>
+
+                  <div className="bg-amber-50 border-2 border-amber-400 rounded-lg p-4 mb-4">
+                    <p className="text-sm font-bold text-amber-900 mb-2">Condizioni per l'Assegnazione dei Punti</p>
+                    <p className="text-sm text-gray-700">
+                      <strong>Importante:</strong> Il punteggio del "Porta un Amico" (30 punti) verrà assegnato <strong>solo quando l'amico portato effettuerà l'abbonamento</strong> alla piattaforma.
+                      La semplice registrazione non è sufficiente per ricevere i punti.
+                    </p>
                   </div>
 
                   <div className="bg-white rounded-lg p-4 border-2 border-green-300">
@@ -543,6 +558,8 @@ export function RulesPage() {
                   <h3 className="text-xl font-bold text-gray-900 mb-3">Regole della Classifica</h3>
                   <ul className="list-disc list-inside space-y-2 ml-4">
                     <li>I punti vengono assegnati solo per attività legittime</li>
+                    <li>I punti per le recensioni vengono assegnati solo dopo l'approvazione dello staff</li>
+                    <li>I punti "Porta un Amico" vengono assegnati solo quando l'amico effettua l'abbonamento</li>
                     <li>Recensioni false o spam comportano la perdita di tutti i punti e la sospensione</li>
                     <li>La classifica viene azzerata ogni anno il 1° gennaio</li>
                     <li>I premi mensili vengono consegnati entro il 10 del mese successivo</li>
