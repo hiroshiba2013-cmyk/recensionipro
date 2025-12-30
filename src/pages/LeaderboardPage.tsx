@@ -256,7 +256,9 @@ export function LeaderboardPage() {
                         <p className="text-2xl font-bold">{userRank.full_name}</p>
                         <div className="flex items-center gap-4 mt-1">
                           <span className="text-sm">#{userRank.rank}</span>
-                          <span className="text-sm">{userRank.points} punti</span>
+                          {userTypeFilter !== 'business' && (
+                            <span className="text-sm">{userRank.points} punti</span>
+                          )}
                           <span className="text-sm">{userRank.reviews_count} recensioni</span>
                         </div>
                       </div>
@@ -301,10 +303,12 @@ export function LeaderboardPage() {
                               {user.full_name}
                             </h3>
                             <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
-                              <span className="flex items-center gap-1">
-                                <Star className="w-4 h-4 text-yellow-500" />
-                                {user.points} punti
-                              </span>
+                              {userTypeFilter !== 'business' && (
+                                <span className="flex items-center gap-1">
+                                  <Star className="w-4 h-4 text-yellow-500" />
+                                  {user.points} punti
+                                </span>
+                              )}
                               <span className="flex items-center gap-1">
                                 <TrendingUp className="w-4 h-4 text-blue-500" />
                                 {user.reviews_count} recensioni
@@ -326,8 +330,9 @@ export function LeaderboardPage() {
                 )}
               </div>
 
-              <div className="mt-8 bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-3">Come Guadagnare Punti</h3>
+              {userTypeFilter !== 'business' && (
+                <div className="mt-8 bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">Come Guadagnare Punti</h3>
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex items-center gap-2">
                     <Award className="w-5 h-5 text-gray-600" />
@@ -371,6 +376,7 @@ export function LeaderboardPage() {
                   </li>
                 </ul>
               </div>
+              )}
 
               {rewards.length > 0 && (
                 <div className="mt-8">
