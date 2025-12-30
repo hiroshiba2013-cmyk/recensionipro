@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { JobSeekerForm } from '../components/jobs/JobSeekerForm';
 import { JobSeekerCard } from '../components/jobs/JobSeekerCard';
 import { JobConversation } from '../components/jobs/JobConversation';
+import { FavoriteButton } from '../components/favorites/FavoriteButton';
 
 interface JobPosting {
   id: string;
@@ -709,6 +710,7 @@ export function JobsPage() {
                     <div className="flex items-center gap-3">
                       {user && profile?.user_type !== 'business' && (
                         <>
+                          <FavoriteButton type="job" itemId={job.id} />
                           {viewedJobs.includes(job.id) ? (
                             <div className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg font-medium">
                               <Check className="w-4 h-4" />

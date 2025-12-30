@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { ClassifiedAdForm } from '../components/classifieds/ClassifiedAdForm';
 import ReportButton from '../components/moderation/ReportButton';
+import { FavoriteButton } from '../components/favorites/FavoriteButton';
 
 interface ClassifiedAd {
   id: string;
@@ -336,7 +337,10 @@ export function ClassifiedAdDetailPage() {
                       </button>
                     </>
                   ) : user ? (
-                    <ReportButton entityType="classified_ad" entityId={ad.id} />
+                    <>
+                      <FavoriteButton type="ad" itemId={ad.id} />
+                      <ReportButton entityType="classified_ad" entityId={ad.id} />
+                    </>
                   ) : null}
                 </div>
               </div>

@@ -10,6 +10,7 @@ import { ReviewCard } from '../components/reviews/ReviewCard';
 import { DiscountCard } from '../components/discount/DiscountCard';
 import BusinessMap from '../components/map/BusinessMap';
 import ReportButton from '../components/moderation/ReportButton';
+import { FavoriteButton } from '../components/favorites/FavoriteButton';
 
 interface BusinessDetailPageProps {
   businessId: string;
@@ -390,9 +391,14 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                 </div>
                 <div className="flex items-center gap-3">
                   {user && !isOwner && (
-                    <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg px-3 py-2">
-                      <ReportButton entityType="business" entityId={businessId} compact />
-                    </div>
+                    <>
+                      <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg">
+                        <FavoriteButton type="business" itemId={businessId} />
+                      </div>
+                      <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg px-3 py-2">
+                        <ReportButton entityType="business" entityId={businessId} compact />
+                      </div>
+                    </>
                   )}
                   {canShowClaimButton && (
                     <button
