@@ -73,7 +73,7 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
 
       await supabase.rpc('award_points', {
         p_user_id: customerId,
-        p_points: 10,
+        p_points: 20,
         p_activity_type: 'business_submission',
         p_description: `Aggiunta attività: ${formData.name}`
       });
@@ -89,7 +89,7 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
         website: '',
       });
       setShowForm(false);
-      alert('Attività aggiunta con successo! Hai guadagnato 10 punti!');
+      alert('Attività aggiunta con successo! Hai guadagnato 20 punti!');
       onSuccess();
     } catch (error) {
       console.error('Error adding business:', error);
@@ -120,7 +120,7 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
             <h2 className="text-2xl font-bold text-gray-900">Aggiungi Attività</h2>
           </div>
           <p className="text-gray-600">
-            Aggiungi un'attività che conosci e guadagna <span className="font-bold text-blue-600">10 punti</span> per la classifica!
+            Aggiungi un'attività che conosci e guadagna <span className="font-bold text-blue-600">20 punti</span> per la classifica!
           </p>
         </div>
         {!showForm && (
@@ -139,7 +139,7 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2 text-blue-600">
               <Award className="w-5 h-5" />
-              <span className="font-semibold">Guadagna 10 punti!</span>
+              <span className="font-semibold">Guadagna 20 punti!</span>
             </div>
             <button
               type="button"
@@ -247,7 +247,7 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
 
           <div className="bg-blue-100 border border-blue-200 rounded-lg p-4 mb-4">
             <p className="text-sm text-blue-800">
-              <strong>Nota:</strong> L'attività verrà aggiunta al database e potrà essere rivendicata dal proprietario in futuro. Riceverai 10 punti per questo contributo!
+              <strong>Nota:</strong> L'attività verrà aggiunta al database e potrà essere rivendicata dal proprietario in futuro. Riceverai 20 punti per questo contributo!
             </p>
           </div>
 
@@ -257,7 +257,7 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
               disabled={loading}
               className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {loading ? 'Invio in corso...' : 'Aggiungi Attività e Guadagna 10 Punti'}
+              {loading ? 'Invio in corso...' : 'Aggiungi Attività e Guadagna 20 Punti'}
             </button>
             <button
               type="button"
@@ -284,7 +284,7 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">3.</span>
-              <span>Guadagni <strong>10 punti</strong> per la classifica premi!</span>
+              <span>Guadagni <strong>20 punti</strong> per la classifica premi!</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">4.</span>
