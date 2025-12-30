@@ -782,7 +782,7 @@ export function SubscriptionPage() {
                       key={plan.id}
                       className={`bg-white rounded-xl shadow-lg p-6 border-2 transition-all relative ${
                         isCurrent
-                          ? 'border-green-500 bg-green-50'
+                          ? 'border-yellow-500 bg-yellow-50'
                           : isAnnual
                           ? 'border-green-400 ring-2 ring-green-200'
                           : 'border-gray-200 hover:border-blue-500'
@@ -1067,7 +1067,7 @@ export function SubscriptionPage() {
                     key={plan.id}
                     className={`bg-white rounded-xl shadow-lg p-6 border-2 transition-all relative ${
                       isCurrent
-                        ? 'border-green-500 bg-green-50'
+                        ? 'border-yellow-500 bg-yellow-50'
                         : isAnnual
                         ? 'border-green-400 ring-2 ring-green-200'
                         : 'border-gray-200 hover:border-blue-500'
