@@ -495,7 +495,7 @@ function AuthenticatedHomePage() {
               </div>
               <div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-1">
-                  Scrivi recensioni e vinci premi!
+                  Ricevi recensioni e vinci premi!
                 </h3>
                 <p className="text-gray-700">
                   I migliori 20 utenti dell'anno vincono gift card ricaricabili
