@@ -352,34 +352,47 @@ export function LeaderboardPage() {
                     </li>
                   </ul>
 
-                  <h4 className="text-md font-bold text-gray-900 mt-4 mb-2">Punti per Recensioni (in base alle stelle):</h4>
+                  <div className="mt-4 bg-amber-50 border border-amber-300 rounded-lg p-4">
+                    <p className="text-sm text-gray-700">
+                      <strong>Nota:</strong> I punti "Porta un Amico" vengono assegnati quando l'amico effettua l'abbonamento.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {userTypeFilter === 'business' && (
+                <div className="mt-8 bg-green-50 border-2 border-green-200 rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">Punti per Recensioni Ricevute</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    I professionisti guadagnano punti in base alle recensioni ricevute dai clienti.
+                  </p>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-center gap-2">
                       <Star className="w-5 h-5 text-red-600" />
-                      <span><strong>2 punti</strong> per recensione a 1 stella</span>
+                      <span><strong>2 punti</strong> per recensione a 1 stella ricevuta</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Star className="w-5 h-5 text-orange-600" />
-                      <span><strong>4 punti</strong> per recensione a 2 stelle</span>
+                      <span><strong>4 punti</strong> per recensione a 2 stelle ricevuta</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Star className="w-5 h-5 text-yellow-600" />
-                      <span><strong>10 punti</strong> per recensione a 3 stelle</span>
+                      <span><strong>10 punti</strong> per recensione a 3 stelle ricevuta</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Star className="w-5 h-5 text-blue-600" />
-                      <span><strong>25 punti</strong> per recensione a 4 stelle</span>
+                      <span><strong>25 punti</strong> per recensione a 4 stelle ricevuta</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Star className="w-5 h-5 text-green-600" />
-                      <span><strong>50 punti</strong> per recensione a 5 stelle</span>
+                      <span><strong>50 punti</strong> per recensione a 5 stelle ricevuta</span>
                     </li>
                   </ul>
 
                   <div className="mt-4 bg-amber-50 border border-amber-300 rounded-lg p-4">
                     <p className="text-sm text-gray-700">
                       <strong>Nota:</strong> I punti delle recensioni vengono assegnati solo dopo l'approvazione dello staff.
-                      I punti "Porta un Amico" vengono assegnati quando l'amico effettua l'abbonamento.
+                      Maggiore è la qualità del servizio, maggiori saranno i punti guadagnati.
                     </p>
                   </div>
                 </div>
