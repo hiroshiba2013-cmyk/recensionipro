@@ -569,7 +569,90 @@ export function RulesPage() {
               </div>
             </section>
 
-            <section id="modifiche-regolamento">
+            <section id="eliminazione-account">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-red-200">
+                <AlertCircle className="w-8 h-8 text-red-600" />
+                <h2 className="text-3xl font-bold text-gray-900">Eliminazione Account</h2>
+              </div>
+
+              <div className="space-y-6 text-gray-700">
+                <div className="bg-red-50 border-l-4 border-red-600 p-6 rounded-r-lg">
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Come Eliminare il Tuo Account</h3>
+                  <p className="mb-3">
+                    Puoi eliminare il tuo account in qualsiasi momento dalla pagina del tuo profilo.
+                    Questa azione è permanente e non può essere annullata.
+                  </p>
+                  <ol className="list-decimal list-inside space-y-2 ml-4">
+                    <li>Accedi al tuo account</li>
+                    <li>Vai nella pagina "Profilo"</li>
+                    <li>Scorri fino alla sezione "Zona Pericolosa" in fondo alla pagina</li>
+                    <li>Clicca su "Elimina Account"</li>
+                    <li>Leggi attentamente l'avviso e conferma digitando il testo richiesto</li>
+                    <li>Clicca su "Elimina Definitivamente"</li>
+                  </ol>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-400 p-6 rounded-lg">
+                  <h3 className="text-lg font-bold text-orange-900 mb-3 flex items-center gap-2">
+                    <AlertCircle className="w-6 h-6" />
+                    Cosa Viene Eliminato
+                  </h3>
+                  <p className="mb-3 font-semibold text-gray-900">
+                    Eliminando il tuo account, tutti i seguenti dati verranno rimossi permanentemente:
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    <li><strong>Recensioni:</strong> Tutte le recensioni che hai scritto verranno eliminate</li>
+                    <li><strong>Annunci Gratuiti:</strong> Tutti i tuoi annunci di vendita, cerco o regalo verranno rimossi</li>
+                    <li><strong>Membri della Famiglia:</strong> Tutti i profili dei membri della famiglia collegati al tuo account</li>
+                    <li><strong>Richieste di Lavoro:</strong> Le tue candidature e profili "Cerco Lavoro"</li>
+                    <li><strong>Messaggi:</strong> Tutte le conversazioni e messaggi privati</li>
+                    <li><strong>Punteggio e Classifica:</strong> Il tuo punteggio e posizione in classifica</li>
+                    <li><strong>Referral:</strong> I dati relativi agli amici che hai presentato</li>
+                    <li><strong>Notifiche:</strong> Tutte le notifiche e segnalazioni</li>
+                  </ul>
+
+                  <div className="mt-4 bg-white border-2 border-orange-400 rounded-lg p-4">
+                    <h4 className="font-bold text-gray-900 mb-2">Se hai un Account Business:</h4>
+                    <ul className="list-disc list-inside space-y-2 ml-4 text-sm">
+                      <li>L'azienda e tutti i punti vendita</li>
+                      <li>Gli annunci di lavoro pubblicati</li>
+                      <li>Gli sconti e le promozioni create</li>
+                      <li>Le recensioni ricevute dalla tua azienda</li>
+                      <li>Gli abbonamenti attivi (senza rimborso)</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="bg-red-50 border-2 border-red-400 p-6 rounded-lg">
+                  <h3 className="text-lg font-bold text-red-900 mb-2 flex items-center gap-2">
+                    <AlertCircle className="w-6 h-6" />
+                    Avvertenze Importanti
+                  </h3>
+                  <ul className="list-disc list-inside space-y-2 text-sm text-gray-700 ml-4">
+                    <li>L'eliminazione dell'account è <strong>permanente e irreversibile</strong></li>
+                    <li>Non sarà possibile recuperare nessuno dei dati eliminati</li>
+                    <li>Non sono previsti rimborsi per abbonamenti attivi</li>
+                    <li>Dovrai creare un nuovo account se vorrai utilizzare nuovamente la piattaforma</li>
+                    <li>Le recensioni eliminate non potranno essere ripristinate</li>
+                  </ul>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-400 p-6 rounded-lg">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">Alternative all'Eliminazione</h3>
+                  <p className="text-sm text-gray-700 mb-3">
+                    Se non sei sicuro di voler eliminare definitivamente il tuo account, considera queste alternative:
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 text-sm text-gray-700 ml-4">
+                    <li>Puoi semplicemente non utilizzare più la piattaforma senza eliminare l'account</li>
+                    <li>Puoi rimuovere le informazioni personali dal tuo profilo</li>
+                    <li>Puoi cancellare singolarmente recensioni e annunci che non vuoi più mantenere</li>
+                    <li>Puoi contattare il supporto per risolvere eventuali problemi</li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            <section id="modifiche-regolamento" className="mt-12">
               <div className="bg-gray-100 p-6 rounded-lg">
                 <h3 className="text-lg font-bold text-gray-900 mb-2">Modifiche al Regolamento</h3>
                 <p className="text-sm text-gray-700">

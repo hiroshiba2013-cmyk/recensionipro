@@ -13,6 +13,7 @@ import { EditBusinessForm } from '../components/business/EditBusinessForm';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
 import { EditBusinessLocationsForm } from '../components/business/EditBusinessLocationsForm';
 import { SubscriptionManagement } from '../components/subscription/SubscriptionManagement';
+import { DeleteAccountButton } from '../components/profile/DeleteAccountButton';
 
 interface Profile {
   id: string;
@@ -408,6 +409,11 @@ export function ProfilePage() {
     } catch (error) {
       console.error('Error signing out:', error);
     }
+  };
+
+  const handleAccountDeleted = async () => {
+    await signOut();
+    window.location.href = '/';
   };
 
   return (
@@ -1109,6 +1115,8 @@ export function ProfilePage() {
             </div>
           </>
         )}
+
+        <DeleteAccountButton onAccountDeleted={handleAccountDeleted} />
       </div>
     </div>
   );
