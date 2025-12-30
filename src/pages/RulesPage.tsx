@@ -413,7 +413,7 @@ export function RulesPage() {
                         <h4 className="font-bold text-gray-900">Annuncio Pubblicato</h4>
                         <span className="text-2xl font-bold text-purple-600">5 pt</span>
                       </div>
-                      <p className="text-sm text-gray-600">Per ogni annuncio gratuito attivo</p>
+                      <p className="text-sm text-gray-600">Per ogni annuncio pubblicato</p>
                     </div>
 
                     <div className="bg-white border-2 border-yellow-200 p-4 rounded-lg">

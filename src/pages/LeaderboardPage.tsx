@@ -330,6 +330,10 @@ export function LeaderboardPage() {
                 <h3 className="text-lg font-bold text-gray-900 mb-3">Come Guadagnare Punti</h3>
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex items-center gap-2">
+                    <Award className="w-5 h-5 text-gray-600" />
+                    <span><strong>5 punti</strong> per ogni annuncio pubblicato</span>
+                  </li>
+                  <li className="flex items-center gap-2">
                     <Award className="w-5 h-5 text-blue-600" />
                     <span><strong>15 punti</strong> per ogni recensione pubblicata</span>
                   </li>
