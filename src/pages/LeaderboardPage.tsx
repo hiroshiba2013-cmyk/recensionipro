@@ -342,6 +342,10 @@ export function LeaderboardPage() {
                     <span><strong>20 punti</strong> per inserimento di un'attività non presente</span>
                   </li>
                   <li className="flex items-center gap-2">
+                    <Award className="w-5 h-5 text-yellow-600" />
+                    <span><strong>30 punti</strong> per ogni amico che si registra con il tuo nickname</span>
+                  </li>
+                  <li className="flex items-center gap-2">
                     <Award className="w-5 h-5 text-purple-600" />
                     <span><strong>50 punti</strong> per recensione completa con prova concreta (scontrino o fattura)</span>
                   </li>

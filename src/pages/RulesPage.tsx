@@ -416,6 +416,14 @@ export function RulesPage() {
                       <p className="text-sm text-gray-600">Per ogni annuncio gratuito attivo</p>
                     </div>
 
+                    <div className="bg-white border-2 border-yellow-200 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-900">Presenta un Amico</h4>
+                        <span className="text-2xl font-bold text-yellow-600">30 pt</span>
+                      </div>
+                      <p className="text-sm text-gray-600">Per ogni amico registrato con il tuo nickname</p>
+                    </div>
+
                     <div className="bg-white border-2 border-orange-200 p-4 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-bold text-gray-900">Azienda Rivendicata</h4>
@@ -423,6 +431,34 @@ export function RulesPage() {
                       </div>
                       <p className="text-sm text-gray-600">Bonus una tantum per rivendicazione verificata</p>
                     </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <Award className="w-6 h-6 text-yellow-600" />
+                    Sistema "Presenta un Amico"
+                  </h3>
+                  <p className="text-gray-700 mb-4">
+                    Invita i tuoi amici a registrarsi su TrovaFacile e guadagna 30 punti per ogni amico che si iscrive usando il tuo nickname!
+                  </p>
+
+                  <div className="bg-white rounded-lg p-4 mb-4">
+                    <h4 className="font-bold text-gray-900 mb-2">Come Funziona:</h4>
+                    <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700 ml-2">
+                      <li>Condividi il tuo nickname con amici e familiari</li>
+                      <li>Quando si registrano, devono inserire il tuo nickname nel campo "Ti presenta un amico?"</li>
+                      <li>Ricevi automaticamente 30 punti alla conferma della registrazione</li>
+                      <li>Più amici inviti, più punti accumuli nella classifica!</li>
+                    </ol>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-4 border-2 border-green-300">
+                    <p className="text-sm text-gray-700">
+                      <strong className="text-green-700">Consiglio:</strong> Il campo per inserire il nickname è ben visibile
+                      nel form di registrazione con sfondo giallo-arancione. Ricorda ai tuoi amici di non dimenticare
+                      di inserire il tuo nickname per farti guadagnare punti!
+                    </p>
                   </div>
                 </div>
 
