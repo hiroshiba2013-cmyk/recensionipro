@@ -364,7 +364,7 @@ export function RulesPage() {
                 <div className="bg-red-50 border border-red-400 p-6 rounded-lg">
                   <p className="text-sm text-gray-700">
                     <strong>Caricamento CV:</strong> Non è possibile caricare curriculum vitae sulla piattaforma.
-                    Le competenze e l'esperienza devono essere descritte direttamente nel testo dell'annuncio.
+                    Le competenze e l'esperienza devono essere descritte direttamente nel testo dell\'annuncio.
                     Eventuali documenti possono essere condivisi privatamente tramite la chat con le aziende interessate.
                   </p>
                 </div>
