@@ -391,23 +391,7 @@ export function RulesPage() {
 
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 mb-3">Come Guadagnare Punti</h3>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="bg-white border-2 border-green-200 p-4 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-bold text-gray-900">Recensione Standard</h4>
-                        <span className="text-2xl font-bold text-green-600">10 pt</span>
-                      </div>
-                      <p className="text-sm text-gray-600">Per ogni recensione pubblicata</p>
-                    </div>
-
-                    <div className="bg-white border-2 border-blue-200 p-4 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-bold text-gray-900">Recensione Verificata</h4>
-                        <span className="text-2xl font-bold text-blue-600">25 pt</span>
-                      </div>
-                      <p className="text-sm text-gray-600">Recensione con foto/documenti di prova</p>
-                    </div>
-
+                  <div className="grid md:grid-cols-2 gap-4 mb-6">
                     <div className="bg-white border-2 border-purple-200 p-4 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-bold text-gray-900">Annuncio Pubblicato</h4>
@@ -430,6 +414,49 @@ export function RulesPage() {
                         <span className="text-2xl font-bold text-orange-600">50 pt</span>
                       </div>
                       <p className="text-sm text-gray-600">Bonus una tantum per rivendicazione verificata</p>
+                    </div>
+                  </div>
+
+                  <h4 className="text-lg font-bold text-gray-900 mb-3 mt-6">Punti per Recensioni (in base alle stelle):</h4>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-white border-2 border-red-200 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-900">Recensione 1 Stella</h4>
+                        <span className="text-2xl font-bold text-red-600">2 pt</span>
+                      </div>
+                      <p className="text-sm text-gray-600">Recensione con valutazione 1 stella</p>
+                    </div>
+
+                    <div className="bg-white border-2 border-orange-200 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-900">Recensione 2 Stelle</h4>
+                        <span className="text-2xl font-bold text-orange-600">4 pt</span>
+                      </div>
+                      <p className="text-sm text-gray-600">Recensione con valutazione 2 stelle</p>
+                    </div>
+
+                    <div className="bg-white border-2 border-yellow-200 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-900">Recensione 3 Stelle</h4>
+                        <span className="text-2xl font-bold text-yellow-600">10 pt</span>
+                      </div>
+                      <p className="text-sm text-gray-600">Recensione con valutazione 3 stelle</p>
+                    </div>
+
+                    <div className="bg-white border-2 border-blue-200 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-900">Recensione 4 Stelle</h4>
+                        <span className="text-2xl font-bold text-blue-600">25 pt</span>
+                      </div>
+                      <p className="text-sm text-gray-600">Recensione con valutazione 4 stelle</p>
+                    </div>
+
+                    <div className="bg-white border-2 border-green-200 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-900">Recensione 5 Stelle</h4>
+                        <span className="text-2xl font-bold text-green-600">50 pt</span>
+                      </div>
+                      <p className="text-sm text-gray-600">Recensione con valutazione 5 stelle</p>
                     </div>
                   </div>
                 </div>
