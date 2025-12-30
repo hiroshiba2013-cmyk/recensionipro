@@ -340,11 +340,19 @@ export function LeaderboardPage() {
                     </li>
                     <li className="flex items-center gap-2">
                       <Award className="w-5 h-5 text-green-600" />
-                      <span><strong>15 punti</strong> per ogni prodotto completo inserito</span>
+                      <span><strong>10 punti</strong> per ogni prodotto completo inserito</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Award className="w-5 h-5 text-orange-600" />
                       <span><strong>20 punti</strong> per inserimento di un'attività non presente</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Star className="w-5 h-5 text-blue-600" />
+                      <span><strong>25 punti</strong> per una recensione base</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Star className="w-5 h-5 text-green-600" />
+                      <span><strong>50 punti</strong> per recensione completa con prove (scontrini o fatture)</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Award className="w-5 h-5 text-yellow-600" />
@@ -354,7 +362,8 @@ export function LeaderboardPage() {
 
                   <div className="mt-4 bg-amber-50 border border-amber-300 rounded-lg p-4">
                     <p className="text-sm text-gray-700">
-                      <strong>Nota:</strong> I punti "Porta un Amico" vengono assegnati quando l'amico effettua l'abbonamento.
+                      <strong>Nota:</strong> I punti delle recensioni vengono assegnati solo dopo l'approvazione dello staff.
+                      I punti "Porta un Amico" vengono assegnati quando l'amico effettua l'abbonamento.
                     </p>
                   </div>
                 </div>
