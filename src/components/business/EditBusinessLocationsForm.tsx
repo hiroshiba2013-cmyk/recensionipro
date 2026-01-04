@@ -49,10 +49,13 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
   const [saving, setSaving] = useState(false);
   const [locations, setLocations] = useState<BusinessLocation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [maxLocations, setMaxLocations] = useState<number>(1);
+  const [subscriptionPlan, setSubscriptionPlan] = useState<string>('');
 
   useEffect(() => {
     const loadLocations = async () => {
       setLoading(true);
+
       const { data } = await supabase
         .from('business_locations')
         .select('*')
@@ -62,6 +65,33 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
       if (data) {
         setLocations(data);
       }
+
+      const { data: businessData } = await supabase
+        .from('businesses')
+        .select('owner_id')
+        .eq('id', businessId)
+        .maybeSingle();
+
+      if (businessData) {
+        const { data: subscriptionData } = await supabase
+          .from('subscriptions')
+          .select(`
+            subscription_plan_id,
+            subscription_plans (
+              name,
+              max_persons
+            )
+          `)
+          .eq('profile_id', businessData.owner_id)
+          .eq('status', 'active')
+          .maybeSingle();
+
+        if (subscriptionData?.subscription_plans) {
+          setMaxLocations(subscriptionData.subscription_plans.max_persons || 1);
+          setSubscriptionPlan(subscriptionData.subscription_plans.name || '');
+        }
+      }
+
       setLoading(false);
     };
 
@@ -69,6 +99,11 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
   }, [businessId]);
 
   const handleAddLocation = () => {
+    if (locations.length >= maxLocations) {
+      alert(`Hai raggiunto il limite massimo di ${maxLocations} ${maxLocations === 1 ? 'sede' : 'sedi'} per il tuo piano "${subscriptionPlan}". Per aggiungere più sedi, aggiorna il tuo abbonamento.`);
+      return;
+    }
+
     const defaultHours: DayHours = { open: '09:00', close: '18:00', closed: false };
     setLocations([
       ...locations,
@@ -577,14 +612,28 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={handleAddLocation}
-          className="flex items-center gap-2 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold mb-6 w-full"
-        >
-          <Plus className="w-5 h-5" />
-          Aggiungi Sede
-        </button>
+        <div className="mb-6">
+          <button
+            type="button"
+            onClick={handleAddLocation}
+            disabled={locations.length >= maxLocations}
+            className="flex items-center gap-2 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold w-full disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Plus className="w-5 h-5" />
+            Aggiungi Sede
+          </button>
+          <p className="text-sm text-gray-600 mt-2 text-center">
+            {locations.length >= maxLocations ? (
+              <span className="text-red-600 font-semibold">
+                Limite raggiunto: {locations.length}/{maxLocations} {maxLocations === 1 ? 'sede' : 'sedi'}. Aggiorna l'abbonamento per aggiungere più sedi.
+              </span>
+            ) : (
+              <span>
+                Sedi utilizzate: {locations.length}/{maxLocations} - Piano: {subscriptionPlan}
+              </span>
+            )}
+          </p>
+        </div>
 
         <div className="flex gap-3">
           <button

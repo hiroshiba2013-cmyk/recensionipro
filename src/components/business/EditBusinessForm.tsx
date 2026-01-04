@@ -6,6 +6,7 @@ interface BusinessData {
   id: string;
   owner_id: string;
   name: string;
+  description: string;
   vat_number: string;
   unique_code: string;
   ateco_code: string;
@@ -136,7 +137,7 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
           office_city: ownerData?.office_city || data.office_city || '',
           office_province: ownerData?.office_province || data.office_province || '',
           website_url: ownerData?.website_url || data.website_url || '',
-          description: ownerData?.description || '',
+          description: data.description || ownerData?.description || '',
         });
       }
       setLoading(false);
@@ -198,6 +199,7 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
         .from('businesses')
         .update({
           name: formData.name,
+          description: formData.description,
           vat_number: formData.vat_number,
           unique_code: formData.unique_code,
           ateco_code: formData.ateco_code,
@@ -266,7 +268,7 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
         office_city: owner.office_city || business.office_city || '',
         office_province: owner.office_province || business.office_province || '',
         website_url: owner.website_url || business.website_url || '',
-        description: owner.description || '',
+        description: business.description || owner.description || '',
       });
     }
     setIsEditing(false);
@@ -353,10 +355,12 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
           </div>
         </div>
 
-        {owner?.description && (
+        {(business.description || owner?.description) && (
           <div className="border-t pt-6">
             <p className="text-sm text-gray-600 mb-2">Descrizione Azienda</p>
-            <p className="text-base text-gray-900 leading-relaxed whitespace-pre-line">{owner.description}</p>
+            <p className="text-base text-gray-900 leading-relaxed whitespace-pre-line">
+              {business.description || owner?.description}
+            </p>
           </div>
         )}
       </div>
