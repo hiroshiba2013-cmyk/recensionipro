@@ -31,6 +31,8 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
     region: '',
     postal_code: '',
     website: '',
+    email: '',
+    phone: '',
   });
 
   useEffect(() => {
@@ -64,6 +66,8 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
           region: formData.region,
           postal_code: formData.postal_code,
           website: formData.website,
+          email: formData.email || null,
+          phone: formData.phone || null,
           country: 'Italia',
         })
         .select()
@@ -87,6 +91,8 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
         region: '',
         postal_code: '',
         website: '',
+        email: '',
+        phone: '',
       });
       setShowForm(false);
       alert('Attività aggiunta con successo! Hai guadagnato 20 punti!');
@@ -240,6 +246,32 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
                 value={formData.website}
                 onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                 placeholder="https://www.esempio.it"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Email (opzionale)
+              </label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="info@esempio.it"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Telefono (opzionale)
+              </label>
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="+39 123 456 7890"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
