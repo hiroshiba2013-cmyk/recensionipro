@@ -38,13 +38,13 @@ export function DeleteAccountButton({ onAccountDeleted }: DeleteAccountButtonPro
 
   if (!showConfirmation) {
     return (
-      <div className="bg-white rounded-xl shadow-md p-8 border-2 border-red-200">
+      <div className="bg-white rounded-xl shadow-md p-8 border-2 border-gray-200">
         <div className="flex items-center gap-3 mb-4">
-          <AlertTriangle className="w-7 h-7 text-red-600" />
-          <h2 className="text-2xl font-bold text-gray-900">Zona Pericolosa</h2>
+          <Trash2 className="w-7 h-7 text-gray-600" />
+          <h2 className="text-2xl font-bold text-gray-900">Eliminazione Account</h2>
         </div>
         <p className="text-gray-700 mb-4">
-          Eliminando il tuo account, perderai tutti i tuoi dati in modo permanente e irreversibile.
+          Se desideri eliminare il tuo account, perderai tutti i tuoi dati in modo permanente e irreversibile.
         </p>
         <button
           onClick={() => setShowConfirmation(true)}
