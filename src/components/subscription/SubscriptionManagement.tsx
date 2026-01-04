@@ -35,7 +35,6 @@ export function SubscriptionManagement({
   const [message, setMessage] = useState('');
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
   const [availablePlans, setAvailablePlans] = useState<SubscriptionPlan[]>([]);
-  const [showPlans, setShowPlans] = useState(false);
 
   useEffect(() => {
     loadSubscription();
@@ -56,11 +55,10 @@ export function SubscriptionManagement({
   };
 
   const loadPlans = async () => {
-    const filter = userType === 'customer' ? 'Piano %Persona%' : '%Business%';
     const { data } = await supabase
       .from('subscription_plans')
       .select('*')
-      .like('name', filter)
+      .not('name', 'like', '%Business%')
       .order('billing_period')
       .order('max_persons');
 
@@ -120,7 +118,6 @@ export function SubscriptionManagement({
       if (profileError) throw profileError;
 
       setMessage('Abbonamento attivato con successo!');
-      setShowPlans(false);
 
       setTimeout(() => {
         onUpdate();
@@ -136,26 +133,9 @@ export function SubscriptionManagement({
 
   return (
     <div className="bg-white rounded-xl shadow-md p-8 mb-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <CreditCard className="w-6 h-6 text-blue-600" />
-          <h2 className="text-2xl font-bold text-gray-900">Abbonamento</h2>
-        </div>
-        {currentSubscription ? (
-          <button
-            onClick={() => setShowPlans(!showPlans)}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-          >
-            {showPlans ? 'Nascondi Piani' : 'Cambia Piano'}
-          </button>
-        ) : (
-          <button
-            onClick={() => setShowPlans(!showPlans)}
-            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors font-semibold"
-          >
-            {showPlans ? 'Nascondi' : 'Attiva Abbonamento'}
-          </button>
-        )}
+      <div className="flex items-center gap-3 mb-6">
+        <CreditCard className="w-6 h-6 text-blue-600" />
+        <h2 className="text-2xl font-bold text-gray-900">Gestione Abbonamento</h2>
       </div>
 
       {message && (
@@ -234,54 +214,158 @@ export function SubscriptionManagement({
         </div>
       )}
 
-      {!currentSubscription && !showPlans && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+      {!currentSubscription && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center mb-6">
           <p className="text-yellow-800 font-semibold mb-2">Nessun abbonamento attivo</p>
           <p className="text-yellow-700 text-sm">
-            Attiva un abbonamento per accedere a tutte le funzionalità
+            Scegli un piano per accedere a tutte le funzionalità
           </p>
         </div>
       )}
 
-      {showPlans && availablePlans.length > 0 && (
+      {availablePlans.length > 0 && (
         <div className="mt-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">
-            {currentSubscription ? 'Piani Disponibili' : 'Scegli il Tuo Piano'}
+          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            {currentSubscription ? 'Cambia Piano' : 'Piani Disponibili'}
           </h3>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {availablePlans.map((plan) => (
-              <div
-                key={plan.id}
-                className={`border-2 rounded-lg p-4 transition-all ${
-                  currentSubscription?.plan.id === plan.id
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-200 hover:border-blue-500'
-                }`}
-              >
-                <h4 className="font-bold text-gray-900 mb-2">{plan.name}</h4>
-                <div className="mb-4">
-                  <span className="text-3xl font-bold text-blue-600">
-                    €{Number(plan.price).toFixed(2)}
-                  </span>
-                  <span className="text-sm text-gray-600">
-                    /{plan.billing_period === 'monthly' ? 'mese' : 'anno'}
-                  </span>
-                </div>
-                {currentSubscription?.plan.id === plan.id ? (
-                  <div className="w-full bg-green-600 text-white py-2 px-4 rounded-lg font-semibold text-center text-sm">
-                    Piano Attuale
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => handleSelectPlan(plan.id)}
-                    disabled={loading}
-                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400 text-sm"
-                  >
-                    {loading ? 'Attivazione...' : 'Seleziona'}
-                  </button>
-                )}
+
+          <div className="space-y-8">
+            <div>
+              <h4 className="text-lg font-semibold text-gray-700 mb-4">Piani Mensili</h4>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {availablePlans
+                  .filter(plan => plan.billing_period === 'monthly')
+                  .map((plan) => (
+                    <div
+                      key={plan.id}
+                      className={`border-2 rounded-xl p-6 transition-all ${
+                        currentSubscription?.plan.id === plan.id
+                          ? 'border-green-500 bg-green-50 shadow-lg'
+                          : 'border-gray-200 hover:border-blue-500 hover:shadow-md'
+                      }`}
+                    >
+                      <div className="text-center mb-4">
+                        <h5 className="font-bold text-lg text-gray-900 mb-2">{plan.name}</h5>
+                        <div className="mb-3">
+                          <span className="text-4xl font-bold text-blue-600">
+                            €{Number(plan.price).toFixed(2)}
+                          </span>
+                          <span className="text-sm text-gray-600">/mese</span>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          Fino a {plan.max_persons} {plan.max_persons === 1 ? 'persona' : 'persone'}
+                        </p>
+                      </div>
+
+                      <div className="mb-4 space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <Check className="w-4 h-4 text-green-600" />
+                          <span>Recensioni illimitate</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <Check className="w-4 h-4 text-green-600" />
+                          <span>Accesso agli sconti</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <Check className="w-4 h-4 text-green-600" />
+                          <span>Supporto prioritario</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <Check className="w-4 h-4 text-green-600" />
+                          <span>Sistema punti fedeltà</span>
+                        </div>
+                      </div>
+
+                      {currentSubscription?.plan.id === plan.id ? (
+                        <div className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold text-center flex items-center justify-center gap-2">
+                          <Check className="w-5 h-5" />
+                          Piano Attuale
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleSelectPlan(plan.id)}
+                          disabled={loading}
+                          className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400"
+                        >
+                          {loading ? 'Attivazione...' : 'Seleziona Piano'}
+                        </button>
+                      )}
+                    </div>
+                  ))}
               </div>
-            ))}
+            </div>
+
+            <div>
+              <h4 className="text-lg font-semibold text-gray-700 mb-4">Piani Annuali</h4>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {availablePlans
+                  .filter(plan => plan.billing_period === 'yearly')
+                  .map((plan) => (
+                    <div
+                      key={plan.id}
+                      className={`border-2 rounded-xl p-6 transition-all relative ${
+                        currentSubscription?.plan.id === plan.id
+                          ? 'border-green-500 bg-green-50 shadow-lg'
+                          : 'border-gray-200 hover:border-blue-500 hover:shadow-md'
+                      }`}
+                    >
+                      <div className="absolute -top-3 right-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                        RISPARMIA
+                      </div>
+
+                      <div className="text-center mb-4">
+                        <h5 className="font-bold text-lg text-gray-900 mb-2">{plan.name}</h5>
+                        <div className="mb-3">
+                          <span className="text-4xl font-bold text-blue-600">
+                            €{Number(plan.price).toFixed(2)}
+                          </span>
+                          <span className="text-sm text-gray-600">/anno</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mb-1">
+                          €{(Number(plan.price) / 12).toFixed(2)}/mese
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Fino a {plan.max_persons} {plan.max_persons === 1 ? 'persona' : 'persone'}
+                        </p>
+                      </div>
+
+                      <div className="mb-4 space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <Check className="w-4 h-4 text-green-600" />
+                          <span>Recensioni illimitate</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <Check className="w-4 h-4 text-green-600" />
+                          <span>Accesso agli sconti</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <Check className="w-4 h-4 text-green-600" />
+                          <span>Supporto prioritario</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <Check className="w-4 h-4 text-green-600" />
+                          <span>Sistema punti fedeltà</span>
+                        </div>
+                      </div>
+
+                      {currentSubscription?.plan.id === plan.id ? (
+                        <div className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold text-center flex items-center justify-center gap-2">
+                          <Check className="w-5 h-5" />
+                          Piano Attuale
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleSelectPlan(plan.id)}
+                          disabled={loading}
+                          className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400"
+                        >
+                          {loading ? 'Attivazione...' : 'Seleziona Piano'}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
