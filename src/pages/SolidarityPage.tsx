@@ -90,7 +90,7 @@ export function SolidarityPage() {
             </p>
 
             <p className="leading-relaxed">
-              La scelta dei destinatari viene effettuata dal nostro team con attenzione e trasparenza,
+              La scelta dei destinatari viene effettuata dai nostri iscritti con un sondaggio, con attenzione e trasparenza,
               privilegiando realtà locali e progetti che abbiano un impatto positivo e misurabile sulla società.
             </p>
 

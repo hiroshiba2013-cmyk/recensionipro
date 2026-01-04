@@ -128,7 +128,7 @@ function LandingPage() {
               </h3>
               <p className="text-lg text-gray-700 leading-relaxed mb-3">
                 Trovafacile dona ogni anno il <span className="font-bold text-green-600">10% del proprio fatturato</span> ad
-                associazioni no profit e progetti di beneficenza scelti dal nostro team.
+                associazioni no profit e progetti di beneficenza scelti dai nostri iscritti con un sondaggio.
               </p>
               <p className="text-base text-gray-600">
                 Tutti i documenti che attestano il fatturato e le donazioni sono pubblicati nella sezione
