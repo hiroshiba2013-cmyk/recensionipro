@@ -21,10 +21,29 @@ export function SolidarityPage() {
   const [documents, setDocuments] = useState<SolidarityDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
+  const [totalRevenue, setTotalRevenue] = useState<number>(0);
+  const [loadingRevenue, setLoadingRevenue] = useState(true);
 
   useEffect(() => {
     loadDocuments();
+    loadRevenue();
   }, []);
+
+  const loadRevenue = async () => {
+    try {
+      setLoadingRevenue(true);
+      // Usa la funzione RPC per ottenere il fatturato totale
+      const { data, error } = await supabase.rpc('get_total_revenue');
+
+      if (error) throw error;
+
+      setTotalRevenue(parseFloat(data || 0));
+    } catch (error) {
+      console.error('Error loading revenue:', error);
+    } finally {
+      setLoadingRevenue(false);
+    }
+  };
 
   const loadDocuments = async () => {
     try {
@@ -103,6 +122,56 @@ export function SolidarityPage() {
                 e le donazioni effettuate, perché crediamo che la trasparenza sia fondamentale per costruire fiducia.
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* Revenue and Solidarity Counters */}
+        <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+            Contatori in Tempo Reale
+          </h2>
+
+          {loadingRevenue ? (
+            <div className="text-center py-8">
+              <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
+              <p className="text-gray-600 mt-4">Caricamento dati...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Fatturato Counter */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-8 text-center border-2 border-blue-200 shadow-md">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="bg-blue-500 p-4 rounded-full">
+                    <Euro className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Fatturato Totale</h3>
+                <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2">
+                  €{totalRevenue.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+                <p className="text-sm text-gray-600">Da tutti gli abbonamenti attivi</p>
+              </div>
+
+              {/* Solidarietà Counter */}
+              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-8 text-center border-2 border-green-200 shadow-md">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="bg-green-500 p-4 rounded-full">
+                    <Heart className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Solidarietà (10%)</h3>
+                <div className="text-4xl md:text-5xl font-bold text-green-600 mb-2">
+                  €{(totalRevenue * 0.1).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+                <p className="text-sm text-gray-600">Destinato alla beneficenza</p>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-6 text-center text-sm text-gray-600 bg-blue-50 rounded-lg p-4">
+            <p className="font-medium">
+              Questi contatori si aggiornano automaticamente ad ogni nuovo abbonamento ricevuto dalla piattaforma
+            </p>
           </div>
         </div>
 
