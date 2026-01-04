@@ -30,6 +30,6 @@ INSERT INTO subscription_plans (name, price, billing_period, max_persons) VALUES
   ('Piano Business Annuale - 2 Punti Vendita', 39.90, 'yearly', 2),
   ('Piano Business Mensile - 3 Punti Vendita', 4.99, 'monthly', 3),
   ('Piano Business Annuale - 3 Punti Vendita', 49.90, 'yearly', 3),
-  ('Piano Business Mensile - 4+ Punti Vendita', 5.99, 'monthly', 4),
-  ('Piano Business Annuale - 4+ Punti Vendita', 59.90, 'yearly', 4)
+  ('Piano Business Mensile - 4 Punti Vendita', 5.99, 'monthly', 4),
+  ('Piano Business Annuale - 4 Punti Vendita', 59.90, 'yearly', 4)
 ON CONFLICT DO NOTHING;
