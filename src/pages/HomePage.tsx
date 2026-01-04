@@ -109,7 +109,7 @@ function LandingPage() {
                 Classifica Utenti con Premi Esclusivi
               </h3>
               <p className="text-lg text-gray-700 leading-relaxed">
-                Scrivi recensioni verificate e accumula punti per scalare la classifica!
+                Scrivi recensioni (utenti privati) e ricevi recensioni (professionisti) per scalare la classifica!
                 I migliori 20 utenti dell'anno riceveranno gift card ricaricabili come premio per il loro contributo.
                 Più recensioni scrivi con foto e dettagli, più punti guadagni!
               </p>
@@ -141,7 +141,7 @@ function LandingPage() {
         <div className="grid md:grid-cols-2 gap-8 mb-16">
           <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-xl p-8 text-white">
             <Users className="w-16 h-16 mb-4" />
-            <h3 className="text-3xl font-bold mb-4">Per i Cittadini</h3>
+            <h3 className="text-3xl font-bold mb-4">Per i Privati</h3>
             <div className="mb-4">
               <p className="text-2xl font-bold text-yellow-300">A partire da €0.49/mese</p>
               <p className="text-sm text-blue-100">Tre mesi di prova gratuiti</p>
