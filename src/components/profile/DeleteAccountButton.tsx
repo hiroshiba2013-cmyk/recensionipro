@@ -29,9 +29,10 @@ export function DeleteAccountButton({ onAccountDeleted }: DeleteAccountButtonPro
       }
 
       onAccountDeleted();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Errore durante l\'eliminazione dell\'account:', err);
-      setError('Errore durante l\'eliminazione dell\'account. Riprova più tardi.');
+      const errorMessage = err?.message || 'Errore durante l\'eliminazione dell\'account. Riprova più tardi.';
+      setError(errorMessage);
       setIsDeleting(false);
     }
   };
