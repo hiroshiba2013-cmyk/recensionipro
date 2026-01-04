@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Edit, Save, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
 
 interface ProfileData {
   id: string;
+  email: string;
   first_name: string;
   last_name: string;
   nickname: string;
@@ -23,6 +24,16 @@ interface ProfileData {
   vat_number?: string;
   unique_code?: string;
   pec_email?: string;
+  ateco_code?: string;
+  website_url?: string;
+  office_street?: string;
+  office_street_number?: string;
+  office_postal_code?: string;
+  office_city?: string;
+  office_province?: string;
+  office_address?: string;
+  business_category_id?: string;
+  description?: string;
 }
 
 interface EditProfileFormProps {
@@ -30,9 +41,15 @@ interface EditProfileFormProps {
   onUpdate: () => void;
 }
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState({
     first_name: profile.first_name || '',
     last_name: profile.last_name || '',
@@ -50,7 +67,33 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
     vat_number: profile.vat_number || '',
     unique_code: profile.unique_code || '',
     pec_email: profile.pec_email || '',
+    ateco_code: profile.ateco_code || '',
+    website_url: profile.website_url || '',
+    office_street: profile.office_street || '',
+    office_street_number: profile.office_street_number || '',
+    office_postal_code: profile.office_postal_code || '',
+    office_city: profile.office_city || '',
+    office_province: profile.office_province || '',
+    business_category_id: profile.business_category_id || '',
+    description: profile.description || '',
   });
+
+  useEffect(() => {
+    if (profile.user_type === 'business') {
+      loadCategories();
+    }
+  }, [profile.user_type]);
+
+  const loadCategories = async () => {
+    const { data } = await supabase
+      .from('business_categories')
+      .select('id, name')
+      .order('name');
+
+    if (data) {
+      setCategories(data);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -86,6 +129,20 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
         updateData.vat_number = formData.vat_number;
         updateData.unique_code = formData.unique_code;
         updateData.pec_email = formData.pec_email;
+        updateData.ateco_code = formData.ateco_code;
+        updateData.website_url = formData.website_url;
+        updateData.office_street = formData.office_street;
+        updateData.office_street_number = formData.office_street_number;
+        updateData.office_postal_code = formData.office_postal_code;
+        updateData.office_city = formData.office_city;
+        updateData.office_province = formData.office_province?.toUpperCase();
+        updateData.business_category_id = formData.business_category_id || null;
+        updateData.description = formData.description;
+
+        const officeAddress = formData.office_street && formData.office_street_number
+          ? `${formData.office_street} ${formData.office_street_number}, ${formData.office_postal_code} ${formData.office_city}, ${formData.office_province}`
+          : '';
+        updateData.office_address = officeAddress;
       }
 
       const { error } = await supabase
@@ -123,6 +180,15 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
       vat_number: profile.vat_number || '',
       unique_code: profile.unique_code || '',
       pec_email: profile.pec_email || '',
+      ateco_code: profile.ateco_code || '',
+      website_url: profile.website_url || '',
+      office_street: profile.office_street || '',
+      office_street_number: profile.office_street_number || '',
+      office_postal_code: profile.office_postal_code || '',
+      office_city: profile.office_city || '',
+      office_province: profile.office_province || '',
+      business_category_id: profile.business_category_id || '',
+      description: profile.description || '',
     });
     setIsEditing(false);
   };
@@ -158,8 +224,44 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
                 <p className="text-lg font-semibold text-gray-900">{profile.unique_code || '-'}</p>
               </div>
               <div>
+                <p className="text-sm text-gray-600 mb-1">Codice ATECO</p>
+                <p className="text-lg font-semibold text-gray-900">{profile.ateco_code || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Email</p>
+                <p className="text-lg font-semibold text-gray-900">{profile.email || '-'}</p>
+              </div>
+              <div>
                 <p className="text-sm text-gray-600 mb-1">PEC</p>
                 <p className="text-lg font-semibold text-gray-900">{profile.pec_email || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Telefono</p>
+                <p className="text-lg font-semibold text-gray-900">{profile.phone || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Sito Web</p>
+                <p className="text-lg font-semibold text-gray-900">{profile.website_url || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Categoria</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {profile.business_category_id
+                    ? categories.find(c => c.id === profile.business_category_id)?.name || '-'
+                    : '-'}
+                </p>
+              </div>
+              <div className="md:col-span-2">
+                <p className="text-sm text-gray-600 mb-1">Descrizione Attività</p>
+                <p className="text-lg font-semibold text-gray-900">{profile.description || '-'}</p>
+              </div>
+              <div className="md:col-span-2">
+                <p className="text-sm text-gray-600 mb-1">Indirizzo di Fatturazione</p>
+                <p className="text-lg font-semibold text-gray-900">{profile.billing_address || '-'}</p>
+              </div>
+              <div className="md:col-span-2">
+                <p className="text-sm text-gray-600 mb-1">Indirizzo Sede Operativa</p>
+                <p className="text-lg font-semibold text-gray-900">{profile.office_address || 'Uguale all\'indirizzo di fatturazione'}</p>
               </div>
             </div>
             <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2 mt-6">Dati del Titolare</h3>
@@ -270,7 +372,22 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
                 />
               </div>
 
-              <div className="md:col-span-2">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Codice ATECO *
+                </label>
+                <input
+                  type="text"
+                  name="ateco_code"
+                  value={formData.ateco_code}
+                  onChange={handleChange}
+                  required
+                  placeholder="Es. 47.11.10"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   PEC *
                 </label>
@@ -282,6 +399,201 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
                   required
                   placeholder="Es. azienda@pec.it"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Sito Web
+                </label>
+                <input
+                  type="url"
+                  name="website_url"
+                  value={formData.website_url}
+                  onChange={handleChange}
+                  placeholder="Es. https://www.azienda.it"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Categoria
+                </label>
+                <SearchableSelect
+                  value={formData.business_category_id}
+                  onChange={(value) => setFormData(prev => ({ ...prev, business_category_id: value }))}
+                  options={categories.map(cat => ({ value: cat.id, label: cat.name }))}
+                  placeholder="Seleziona categoria"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Descrizione Attività
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={3}
+                  placeholder="Descrivi la tua attività..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <h4 className="text-md font-bold text-gray-900 mb-4">Indirizzo di Fatturazione</h4>
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Via/Piazza *
+                </label>
+                <input
+                  type="text"
+                  name="billing_street"
+                  value={formData.billing_street}
+                  onChange={handleChange}
+                  required
+                  placeholder="Es. Via Roma"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Numero *
+                </label>
+                <input
+                  type="text"
+                  name="billing_street_number"
+                  value={formData.billing_street_number}
+                  onChange={handleChange}
+                  required
+                  placeholder="Es. 42"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  CAP *
+                </label>
+                <input
+                  type="text"
+                  name="billing_postal_code"
+                  value={formData.billing_postal_code}
+                  onChange={handleChange}
+                  required
+                  placeholder="Es. 00100"
+                  maxLength={5}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Città *
+                </label>
+                <input
+                  type="text"
+                  name="billing_city"
+                  value={formData.billing_city}
+                  onChange={handleChange}
+                  required
+                  placeholder="Es. Roma"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Provincia *
+                </label>
+                <input
+                  type="text"
+                  name="billing_province"
+                  value={formData.billing_province}
+                  onChange={handleChange}
+                  required
+                  placeholder="Es. RM"
+                  maxLength={2}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+                />
+              </div>
+            </div>
+
+            <h4 className="text-md font-bold text-gray-900 mb-4">Indirizzo Sede Operativa (se diverso)</h4>
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Via/Piazza
+                </label>
+                <input
+                  type="text"
+                  name="office_street"
+                  value={formData.office_street}
+                  onChange={handleChange}
+                  placeholder="Es. Via Milano (lascia vuoto se uguale a fatturazione)"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Numero
+                </label>
+                <input
+                  type="text"
+                  name="office_street_number"
+                  value={formData.office_street_number}
+                  onChange={handleChange}
+                  placeholder="Es. 15"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  CAP
+                </label>
+                <input
+                  type="text"
+                  name="office_postal_code"
+                  value={formData.office_postal_code}
+                  onChange={handleChange}
+                  placeholder="Es. 20100"
+                  maxLength={5}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Città
+                </label>
+                <input
+                  type="text"
+                  name="office_city"
+                  value={formData.office_city}
+                  onChange={handleChange}
+                  placeholder="Es. Milano"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Provincia
+                </label>
+                <input
+                  type="text"
+                  name="office_province"
+                  value={formData.office_province}
+                  onChange={handleChange}
+                  placeholder="Es. MI"
+                  maxLength={2}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
                 />
               </div>
             </div>
@@ -395,84 +707,91 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Via/Piazza
-            </label>
-            <input
-              type="text"
-              name="billing_street"
-              value={formData.billing_street}
-              onChange={handleChange}
-              required
-              placeholder="Es. Via Roma"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Numero
-            </label>
-            <input
-              type="text"
-              name="billing_street_number"
-              value={formData.billing_street_number}
-              onChange={handleChange}
-              required
-              placeholder="Es. 42"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              CAP
-            </label>
-            <input
-              type="text"
-              name="billing_postal_code"
-              value={formData.billing_postal_code}
-              onChange={handleChange}
-              required
-              placeholder="Es. 00100"
-              maxLength={5}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Città
-            </label>
-            <input
-              type="text"
-              name="billing_city"
-              value={formData.billing_city}
-              onChange={handleChange}
-              required
-              placeholder="Es. Roma"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Provincia
-            </label>
-            <input
-              type="text"
-              name="billing_province"
-              value={formData.billing_province}
-              onChange={handleChange}
-              required
-              placeholder="Es. RM"
-              maxLength={2}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
-            />
-          </div>
         </div>
+
+        {profile.user_type !== 'business' && (
+          <>
+            <h4 className="text-md font-bold text-gray-900 mb-4 mt-6">Indirizzo di Fatturazione</h4>
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Via/Piazza
+                </label>
+                <input
+                  type="text"
+                  name="billing_street"
+                  value={formData.billing_street}
+                  onChange={handleChange}
+                  required
+                  placeholder="Es. Via Roma"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Numero
+                </label>
+                <input
+                  type="text"
+                  name="billing_street_number"
+                  value={formData.billing_street_number}
+                  onChange={handleChange}
+                  required
+                  placeholder="Es. 42"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  CAP
+                </label>
+                <input
+                  type="text"
+                  name="billing_postal_code"
+                  value={formData.billing_postal_code}
+                  onChange={handleChange}
+                  required
+                  placeholder="Es. 00100"
+                  maxLength={5}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Città
+                </label>
+                <input
+                  type="text"
+                  name="billing_city"
+                  value={formData.billing_city}
+                  onChange={handleChange}
+                  required
+                  placeholder="Es. Roma"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Provincia
+                </label>
+                <input
+                  type="text"
+                  name="billing_province"
+                  value={formData.billing_province}
+                  onChange={handleChange}
+                  required
+                  placeholder="Es. RM"
+                  maxLength={2}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+                />
+              </div>
+            </div>
+          </>
+        )}
 
         <div className="flex gap-3">
           <button
