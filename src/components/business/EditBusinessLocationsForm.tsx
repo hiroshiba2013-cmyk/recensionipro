@@ -73,22 +73,28 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
         .maybeSingle();
 
       if (businessData) {
-        const { data: subscriptionData } = await supabase
+        const { data: subscriptionData, error: subError } = await supabase
           .from('subscriptions')
           .select(`
-            subscription_plan_id,
+            plan_id,
             subscription_plans (
               name,
               max_persons
             )
           `)
-          .eq('profile_id', businessData.owner_id)
+          .eq('customer_id', businessData.owner_id)
           .eq('status', 'active')
           .maybeSingle();
 
         if (subscriptionData?.subscription_plans) {
-          setMaxLocations(subscriptionData.subscription_plans.max_persons || 1);
-          setSubscriptionPlan(subscriptionData.subscription_plans.name || '');
+          const plan = Array.isArray(subscriptionData.subscription_plans)
+            ? subscriptionData.subscription_plans[0]
+            : subscriptionData.subscription_plans;
+
+          if (plan) {
+            setMaxLocations(plan.max_persons || 1);
+            setSubscriptionPlan(plan.name || '');
+          }
         }
       }
 
