@@ -18,6 +18,11 @@ interface ProfileData {
   billing_city: string;
   billing_province: string;
   billing_address: string;
+  user_type?: 'customer' | 'business';
+  company_name?: string;
+  vat_number?: string;
+  unique_code?: string;
+  pec_email?: string;
 }
 
 interface EditProfileFormProps {
@@ -41,6 +46,10 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
     billing_postal_code: profile.billing_postal_code || '',
     billing_city: profile.billing_city || '',
     billing_province: profile.billing_province || '',
+    company_name: profile.company_name || '',
+    vat_number: profile.vat_number || '',
+    unique_code: profile.unique_code || '',
+    pec_email: profile.pec_email || '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -55,24 +64,33 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
     try {
       const billingAddress = `${formData.billing_street} ${formData.billing_street_number}, ${formData.billing_postal_code} ${formData.billing_city}, ${formData.billing_province}`;
 
+      const updateData: any = {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        nickname: formData.nickname,
+        relationship: formData.relationship,
+        date_of_birth: formData.date_of_birth,
+        tax_code: formData.tax_code,
+        phone: formData.phone,
+        billing_street: formData.billing_street,
+        billing_street_number: formData.billing_street_number,
+        billing_postal_code: formData.billing_postal_code,
+        billing_city: formData.billing_city,
+        billing_province: formData.billing_province.toUpperCase(),
+        billing_address: billingAddress,
+        full_name: `${formData.first_name} ${formData.last_name}`,
+      };
+
+      if (profile.user_type === 'business') {
+        updateData.company_name = formData.company_name;
+        updateData.vat_number = formData.vat_number;
+        updateData.unique_code = formData.unique_code;
+        updateData.pec_email = formData.pec_email;
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          nickname: formData.nickname,
-          relationship: formData.relationship,
-          date_of_birth: formData.date_of_birth,
-          tax_code: formData.tax_code,
-          phone: formData.phone,
-          billing_street: formData.billing_street,
-          billing_street_number: formData.billing_street_number,
-          billing_postal_code: formData.billing_postal_code,
-          billing_city: formData.billing_city,
-          billing_province: formData.billing_province.toUpperCase(),
-          billing_address: billingAddress,
-          full_name: `${formData.first_name} ${formData.last_name}`,
-        })
+        .update(updateData)
         .eq('id', profile.id);
 
       if (error) throw error;
@@ -101,6 +119,10 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
       billing_postal_code: profile.billing_postal_code || '',
       billing_city: profile.billing_city || '',
       billing_province: profile.billing_province || '',
+      company_name: profile.company_name || '',
+      vat_number: profile.vat_number || '',
+      unique_code: profile.unique_code || '',
+      pec_email: profile.pec_email || '',
     });
     setIsEditing(false);
   };
@@ -118,6 +140,31 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
             Modifica
           </button>
         </div>
+
+        {profile.user_type === 'business' && (
+          <>
+            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Dati Aziendali</h3>
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Ragione Sociale</p>
+                <p className="text-lg font-semibold text-gray-900">{profile.company_name || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Partita IVA</p>
+                <p className="text-lg font-semibold text-gray-900">{profile.vat_number || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Codice Univoco (SDI)</p>
+                <p className="text-lg font-semibold text-gray-900">{profile.unique_code || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">PEC</p>
+                <p className="text-lg font-semibold text-gray-900">{profile.pec_email || '-'}</p>
+              </div>
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2 mt-6">Dati del Titolare</h3>
+          </>
+        )}
 
         <div className="grid md:grid-cols-2 gap-6">
           <div>
@@ -172,6 +219,77 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
       </div>
 
       <form onSubmit={handleSubmit}>
+        {profile.user_type === 'business' && (
+          <>
+            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Dati Aziendali</h3>
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Ragione Sociale *
+                </label>
+                <input
+                  type="text"
+                  name="company_name"
+                  value={formData.company_name}
+                  onChange={handleChange}
+                  required
+                  placeholder="Es. Azienda S.r.l."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Partita IVA *
+                </label>
+                <input
+                  type="text"
+                  name="vat_number"
+                  value={formData.vat_number}
+                  onChange={handleChange}
+                  required
+                  maxLength={11}
+                  placeholder="Es. 12345678901"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Codice Univoco (SDI) *
+                </label>
+                <input
+                  type="text"
+                  name="unique_code"
+                  value={formData.unique_code}
+                  onChange={handleChange}
+                  required
+                  maxLength={7}
+                  placeholder="Es. ABCDEFG"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  PEC *
+                </label>
+                <input
+                  type="email"
+                  name="pec_email"
+                  value={formData.pec_email}
+                  onChange={handleChange}
+                  required
+                  placeholder="Es. azienda@pec.it"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2 mt-6">Dati del Titolare</h3>
+          </>
+        )}
+
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
