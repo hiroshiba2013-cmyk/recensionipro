@@ -532,12 +532,14 @@ export function SubscriptionPage() {
                             <TrendingUp className="w-4 h-4 text-blue-600 flex-shrink-0" />
                             <span>Statistiche avanzate</span>
                           </div>
-                          {isAnnual && (
-                            <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Star className="w-4 h-4 text-yellow-500 flex-shrink-0" fill="currentColor" />
-                              <span className="font-semibold">Priorità visibilità</span>
-                            </div>
-                          )}
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <Star className="w-4 h-4 text-yellow-500 flex-shrink-0" fill="currentColor" />
+                            <span className="font-semibold">Priorità visibilità</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <span>Inserire annunci di lavoro</span>
+                          </div>
                         </div>
                         <button
                           onClick={() => handleSelectPlan(plan.id)}
