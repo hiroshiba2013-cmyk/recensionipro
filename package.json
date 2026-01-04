@@ -26,6 +26,7 @@
     "import:liguria": "node import-liguria-complete.js",
     "import:liguria:fast": "node import-liguria-optimized.js",
     "import:major-cities": "node import-major-cities.js",
+    "import:small-towns": "node import-small-towns.js",
     "progress": "node check-progress.js",
     "monitor": "node monitor-import.js",
     "status": "node check-status.js",
