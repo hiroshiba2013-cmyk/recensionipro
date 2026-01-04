@@ -32,6 +32,26 @@ interface OwnerData {
   email: string;
   phone: string;
   tax_code: string;
+  billing_street: string;
+  billing_street_number: string;
+  billing_postal_code: string;
+  billing_city: string;
+  billing_province: string;
+  billing_address: string;
+  company_name: string;
+  vat_number: string;
+  unique_code: string;
+  pec_email: string;
+  ateco_code: string;
+  website_url: string;
+  office_street: string;
+  office_street_number: string;
+  office_postal_code: string;
+  office_city: string;
+  office_province: string;
+  office_address: string;
+  business_category_id: string;
+  description: string;
 }
 
 interface EditBusinessFormProps {
@@ -84,7 +104,7 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
 
         const { data: ownerData } = await supabase
           .from('profiles')
-          .select('first_name, last_name, email, phone, tax_code')
+          .select('*')
           .eq('id', data.owner_id)
           .maybeSingle();
 
@@ -98,23 +118,23 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
           owner_email: ownerData?.email || '',
           owner_phone: ownerData?.phone || '',
           owner_tax_code: ownerData?.tax_code || '',
-          name: data.name || '',
-          vat_number: data.vat_number || '',
-          unique_code: data.unique_code || '',
-          ateco_code: data.ateco_code || '',
-          pec_email: data.pec_email || '',
-          phone: data.phone || '',
-          billing_street: data.billing_street || '',
-          billing_street_number: data.billing_street_number || '',
-          billing_postal_code: data.billing_postal_code || '',
-          billing_city: data.billing_city || '',
-          billing_province: data.billing_province || '',
-          office_street: data.office_street || '',
-          office_street_number: data.office_street_number || '',
-          office_postal_code: data.office_postal_code || '',
-          office_city: data.office_city || '',
-          office_province: data.office_province || '',
-          website_url: data.website_url || '',
+          name: ownerData?.company_name || data.name || '',
+          vat_number: ownerData?.vat_number || data.vat_number || '',
+          unique_code: ownerData?.unique_code || data.unique_code || '',
+          ateco_code: ownerData?.ateco_code || data.ateco_code || '',
+          pec_email: ownerData?.pec_email || data.pec_email || '',
+          phone: ownerData?.phone || data.phone || '',
+          billing_street: ownerData?.billing_street || data.billing_street || '',
+          billing_street_number: ownerData?.billing_street_number || data.billing_street_number || '',
+          billing_postal_code: ownerData?.billing_postal_code || data.billing_postal_code || '',
+          billing_city: ownerData?.billing_city || data.billing_city || '',
+          billing_province: ownerData?.billing_province || data.billing_province || '',
+          office_street: ownerData?.office_street || data.office_street || '',
+          office_street_number: ownerData?.office_street_number || data.office_street_number || '',
+          office_postal_code: ownerData?.office_postal_code || data.office_postal_code || '',
+          office_city: ownerData?.office_city || data.office_city || '',
+          office_province: ownerData?.office_province || data.office_province || '',
+          website_url: ownerData?.website_url || data.website_url || '',
         });
       }
       setLoading(false);
@@ -133,6 +153,11 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
     setSaving(true);
 
     try {
+      const billingAddress = `${formData.billing_street} ${formData.billing_street_number}, ${formData.billing_postal_code} ${formData.billing_city}, ${formData.billing_province}`;
+      const officeAddress = formData.office_street && formData.office_street_number && formData.office_postal_code && formData.office_city && formData.office_province
+        ? `${formData.office_street} ${formData.office_street_number}, ${formData.office_postal_code} ${formData.office_city}, ${formData.office_province}`
+        : '';
+
       if (business) {
         const { error: ownerError } = await supabase
           .from('profiles')
@@ -142,16 +167,29 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
             phone: formData.owner_phone,
             tax_code: formData.owner_tax_code,
             full_name: `${formData.owner_first_name} ${formData.owner_last_name}`,
+            company_name: formData.name,
+            vat_number: formData.vat_number,
+            unique_code: formData.unique_code,
+            ateco_code: formData.ateco_code,
+            pec_email: formData.pec_email,
+            website_url: formData.website_url,
+            billing_street: formData.billing_street,
+            billing_street_number: formData.billing_street_number,
+            billing_postal_code: formData.billing_postal_code,
+            billing_city: formData.billing_city,
+            billing_province: formData.billing_province.toUpperCase(),
+            billing_address: billingAddress,
+            office_street: formData.office_street || null,
+            office_street_number: formData.office_street_number || null,
+            office_postal_code: formData.office_postal_code || null,
+            office_city: formData.office_city || null,
+            office_province: formData.office_province ? formData.office_province.toUpperCase() : null,
+            office_address: officeAddress,
           })
           .eq('id', business.owner_id);
 
         if (ownerError) throw ownerError;
       }
-
-      const billingAddress = `${formData.billing_street} ${formData.billing_street_number}, ${formData.billing_postal_code} ${formData.billing_city}, ${formData.billing_province}`;
-      const officeAddress = formData.office_street && formData.office_street_number && formData.office_postal_code && formData.office_city && formData.office_province
-        ? `${formData.office_street} ${formData.office_street_number}, ${formData.office_postal_code} ${formData.office_city}, ${formData.office_province}`
-        : '';
 
       const { error } = await supabase
         .from('businesses')
@@ -208,23 +246,23 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
         owner_email: owner.email || '',
         owner_phone: owner.phone || '',
         owner_tax_code: owner.tax_code || '',
-        name: business.name || '',
-        vat_number: business.vat_number || '',
-        unique_code: business.unique_code || '',
-        ateco_code: business.ateco_code || '',
-        pec_email: business.pec_email || '',
-        phone: business.phone || '',
-        billing_street: business.billing_street || '',
-        billing_street_number: business.billing_street_number || '',
-        billing_postal_code: business.billing_postal_code || '',
-        billing_city: business.billing_city || '',
-        billing_province: business.billing_province || '',
-        office_street: business.office_street || '',
-        office_street_number: business.office_street_number || '',
-        office_postal_code: business.office_postal_code || '',
-        office_city: business.office_city || '',
-        office_province: business.office_province || '',
-        website_url: business.website_url || '',
+        name: owner.company_name || business.name || '',
+        vat_number: owner.vat_number || business.vat_number || '',
+        unique_code: owner.unique_code || business.unique_code || '',
+        ateco_code: owner.ateco_code || business.ateco_code || '',
+        pec_email: owner.pec_email || business.pec_email || '',
+        phone: owner.phone || business.phone || '',
+        billing_street: owner.billing_street || business.billing_street || '',
+        billing_street_number: owner.billing_street_number || business.billing_street_number || '',
+        billing_postal_code: owner.billing_postal_code || business.billing_postal_code || '',
+        billing_city: owner.billing_city || business.billing_city || '',
+        billing_province: owner.billing_province || business.billing_province || '',
+        office_street: owner.office_street || business.office_street || '',
+        office_street_number: owner.office_street_number || business.office_street_number || '',
+        office_postal_code: owner.office_postal_code || business.office_postal_code || '',
+        office_city: owner.office_city || business.office_city || '',
+        office_province: owner.office_province || business.office_province || '',
+        website_url: owner.website_url || business.website_url || '',
       });
     }
     setIsEditing(false);
@@ -302,38 +340,38 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <p className="text-sm text-gray-600 mb-1">Ragione Sociale</p>
-            <p className="text-lg font-semibold text-gray-900">{business.name || '-'}</p>
+            <p className="text-lg font-semibold text-gray-900">{owner?.company_name || business.name || '-'}</p>
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-1">Partita IVA</p>
-            <p className="text-lg font-semibold text-gray-900">{business.vat_number || '-'}</p>
+            <p className="text-lg font-semibold text-gray-900">{owner?.vat_number || business.vat_number || '-'}</p>
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-1">Codice Univoco</p>
-            <p className="text-lg font-semibold text-gray-900">{business.unique_code || '-'}</p>
+            <p className="text-lg font-semibold text-gray-900">{owner?.unique_code || business.unique_code || '-'}</p>
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-1">Codice ATECO</p>
-            <p className="text-lg font-semibold text-gray-900">{business.ateco_code || '-'}</p>
+            <p className="text-lg font-semibold text-gray-900">{owner?.ateco_code || business.ateco_code || '-'}</p>
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-1">PEC</p>
-            <p className="text-lg font-semibold text-gray-900">{business.pec_email || '-'}</p>
+            <p className="text-lg font-semibold text-gray-900">{owner?.pec_email || business.pec_email || '-'}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-600 mb-1">Telefono</p>
-            <p className="text-lg font-semibold text-gray-900">{business.phone || '-'}</p>
+            <p className="text-sm text-gray-600 mb-1">Telefono Azienda</p>
+            <p className="text-lg font-semibold text-gray-900">{business.phone || owner?.phone || '-'}</p>
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-1">Sito Web</p>
-            {business.website_url ? (
+            {(owner?.website_url || business.website_url) ? (
               <a
-                href={business.website_url}
+                href={owner?.website_url || business.website_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-lg font-semibold text-blue-600 hover:text-blue-700 hover:underline"
               >
-                {business.website_url}
+                {owner?.website_url || business.website_url}
               </a>
             ) : (
               <p className="text-lg font-semibold text-gray-900">-</p>
@@ -341,11 +379,11 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
           </div>
           <div className="md:col-span-2">
             <p className="text-sm text-gray-600 mb-1">Indirizzo di Fatturazione</p>
-            <p className="text-lg font-semibold text-gray-900">{business.billing_address || '-'}</p>
+            <p className="text-lg font-semibold text-gray-900">{owner?.billing_address || business.billing_address || '-'}</p>
           </div>
           <div className="md:col-span-2">
-            <p className="text-sm text-gray-600 mb-1">Indirizzo Sede</p>
-            <p className="text-lg font-semibold text-gray-900">{business.office_address || '-'}</p>
+            <p className="text-sm text-gray-600 mb-1">Indirizzo Sede Operativa</p>
+            <p className="text-lg font-semibold text-gray-900">{owner?.office_address || business.office_address || '-'}</p>
           </div>
         </div>
       </div>
