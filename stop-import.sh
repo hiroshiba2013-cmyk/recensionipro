@@ -1,28 +1,26 @@
 #!/bin/bash
 
-PID_FILE="import-process.pid"
+PID=$(pgrep -f "node import-comprehensive.js")
 
-if [ ! -f "$PID_FILE" ]; then
-    echo "❌ Nessun processo in esecuzione (file PID non trovato)"
-    exit 1
+if [ -z "$PID" ]; then
+    echo "⚪ Nessuna importazione in esecuzione"
+    exit 0
 fi
 
-PID=$(cat "$PID_FILE")
+echo "🛑 Fermo importazione..."
+echo "PID: $PID"
+kill $PID 2>/dev/null
 
-if ps -p $PID > /dev/null; then
-    echo "🛑 Fermando il processo (PID: $PID)..."
-    kill $PID
-    sleep 2
+sleep 2
 
-    # Forza la chiusura se ancora attivo
-    if ps -p $PID > /dev/null; then
-        echo "⚠️ Processo ancora attivo, forzando la chiusura..."
-        kill -9 $PID
-    fi
+if pgrep -f "node import-comprehensive.js" > /dev/null; then
+    echo "⚠️  Processo non risponde, forzo terminazione..."
+    kill -9 $PID 2>/dev/null
+    sleep 1
+fi
 
-    rm "$PID_FILE"
-    echo "✅ Processo fermato!"
+if ! pgrep -f "node import-comprehensive.js" > /dev/null; then
+    echo "✅ Importazione fermata"
 else
-    echo "⚠️ Processo non trovato (probabilmente già terminato)"
-    rm "$PID_FILE"
+    echo "❌ Impossibile fermare il processo"
 fi
