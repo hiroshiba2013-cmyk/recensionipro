@@ -61,8 +61,15 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
     email: '',
     website: '',
     vat_number: '',
+    unique_code: '',
+    pec_email: '',
     ateco_code: '',
     description: '',
+    billing_street: '',
+    billing_street_number: '',
+    billing_postal_code: '',
+    billing_city: '',
+    billing_province: '',
   });
 
   const handleCityChange = (city: string) => {
@@ -91,8 +98,15 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
         email: firstLocation.email || '',
         website: firstLocation.website || '',
         vat_number: '',
+        unique_code: '',
+        pec_email: '',
         ateco_code: '',
         description: '',
+        billing_street: '',
+        billing_street_number: '',
+        billing_postal_code: '',
+        billing_city: '',
+        billing_province: '',
       });
     }
 
@@ -104,6 +118,8 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
     setSaving(true);
 
     try {
+      const billingAddress = `${formData.billing_street} ${formData.billing_street_number}, ${formData.billing_postal_code} ${formData.billing_city}, ${formData.billing_province}`;
+
       const { data: business, error: businessError } = await supabase
         .from('businesses')
         .insert({
@@ -115,10 +131,18 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
           address: formData.address,
           phone: formData.phone,
           email: formData.email,
-          website: formData.website || null,
+          website_url: formData.website || null,
           vat_number: formData.vat_number,
+          unique_code: formData.unique_code,
+          pec_email: formData.pec_email,
           ateco_code: formData.ateco_code || null,
           description: formData.description || null,
+          billing_street: formData.billing_street,
+          billing_street_number: formData.billing_street_number,
+          billing_postal_code: formData.billing_postal_code,
+          billing_city: formData.billing_city,
+          billing_province: formData.billing_province.toUpperCase(),
+          billing_address: billingAddress,
           verified: false,
           is_claimed: claimedLocations.length > 0,
         })
@@ -308,175 +332,295 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Nome Attività *
-          </label>
-          <input
-            type="text"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
-            placeholder="Es. Ristorante Da Mario"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Informazioni Aziendali</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Ragione Sociale *
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+                placeholder="Es. Ristorante Da Mario S.r.l."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Categoria *
-            </label>
-            <select
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Seleziona categoria</option>
-              {businessCategories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Partita IVA *
+                </label>
+                <input
+                  type="text"
+                  value={formData.vat_number}
+                  onChange={(e) => setFormData({ ...formData, vat_number: e.target.value })}
+                  required
+                  maxLength={11}
+                  placeholder="Es. 12345678901"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Partita IVA *
-            </label>
-            <input
-              type="text"
-              value={formData.vat_number}
-              onChange={(e) => setFormData({ ...formData, vat_number: e.target.value })}
-              required
-              maxLength={11}
-              placeholder="Es. 12345678901"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-        </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Codice Univoco (SDI) *
+                </label>
+                <input
+                  type="text"
+                  value={formData.unique_code}
+                  onChange={(e) => setFormData({ ...formData, unique_code: e.target.value })}
+                  required
+                  maxLength={7}
+                  placeholder="Es. ABCDEFG"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Città *
-            </label>
-            <SearchableSelect
-              value={formData.city}
-              onChange={handleCityChange}
-              options={italianCities.map(city => ({
-                value: city.city,
-                label: `${city.city} (${city.province})`,
-              }))}
-              placeholder="Seleziona città"
-            />
-          </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  PEC *
+                </label>
+                <input
+                  type="email"
+                  value={formData.pec_email}
+                  onChange={(e) => setFormData({ ...formData, pec_email: e.target.value })}
+                  required
+                  placeholder="Es. azienda@pec.it"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              CAP *
-            </label>
-            <input
-              type="text"
-              value={formData.postal_code}
-              onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
-              required
-              maxLength={5}
-              placeholder="Es. 00100"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-        </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Codice ATECO (opzionale)
+                </label>
+                <input
+                  type="text"
+                  value={formData.ateco_code}
+                  onChange={(e) => setFormData({ ...formData, ateco_code: e.target.value })}
+                  placeholder="Es. 56.10.11"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
 
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Indirizzo Sede Legale *
-          </label>
-          <input
-            type="text"
-            value={formData.address}
-            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-            required
-            placeholder="Via, numero civico"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Telefono *
+                </label>
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  required
+                  placeholder="Es. +39 06 1234567"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Telefono *
-            </label>
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              required
-              placeholder="Es. +39 06 1234567"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                  placeholder="Es. info@attivita.it"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Email *
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
-              placeholder="Es. info@attivita.it"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Sito Web (opzionale)
+              </label>
+              <input
+                type="url"
+                value={formData.website}
+                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                placeholder="https://www.esempio.it"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Sito Web (opzionale)
-            </label>
-            <input
-              type="url"
-              value={formData.website}
-              onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-              placeholder="https://www.esempio.it"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+        <div className="border-t pt-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Indirizzo di Fatturazione</h3>
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Via/Piazza *
+                </label>
+                <input
+                  type="text"
+                  value={formData.billing_street}
+                  onChange={(e) => setFormData({ ...formData, billing_street: e.target.value })}
+                  required
+                  placeholder="Es. Via Roma"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Codice ATECO (opzionale)
-            </label>
-            <input
-              type="text"
-              value={formData.ateco_code}
-              onChange={(e) => setFormData({ ...formData, ateco_code: e.target.value })}
-              placeholder="Es. 56.10.11"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Numero *
+                </label>
+                <input
+                  type="text"
+                  value={formData.billing_street_number}
+                  onChange={(e) => setFormData({ ...formData, billing_street_number: e.target.value })}
+                  required
+                  placeholder="Es. 42"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Città *
+                </label>
+                <input
+                  type="text"
+                  value={formData.billing_city}
+                  onChange={(e) => setFormData({ ...formData, billing_city: e.target.value })}
+                  required
+                  placeholder="Es. Roma"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Provincia *
+                </label>
+                <input
+                  type="text"
+                  value={formData.billing_province}
+                  onChange={(e) => setFormData({ ...formData, billing_province: e.target.value.toUpperCase() })}
+                  required
+                  placeholder="RM"
+                  maxLength={2}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  CAP *
+                </label>
+                <input
+                  type="text"
+                  value={formData.billing_postal_code}
+                  onChange={(e) => setFormData({ ...formData, billing_postal_code: e.target.value })}
+                  required
+                  placeholder="00100"
+                  maxLength={5}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Descrizione (opzionale)
-          </label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows={4}
-            placeholder="Descrivi brevemente la tua attività..."
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-          />
+        <div className="border-t pt-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Sede Operativa</h3>
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Città Sede *
+                </label>
+                <SearchableSelect
+                  value={formData.city}
+                  onChange={handleCityChange}
+                  options={italianCities.map(city => ({
+                    value: city.city,
+                    label: `${city.city} (${city.province})`,
+                  }))}
+                  placeholder="Seleziona città"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  CAP Sede *
+                </label>
+                <input
+                  type="text"
+                  value={formData.postal_code}
+                  onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
+                  required
+                  maxLength={5}
+                  placeholder="Es. 00100"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Indirizzo Sede *
+              </label>
+              <input
+                type="text"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                required
+                placeholder="Via, numero civico"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Categoria *
+              </label>
+              <select
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Seleziona categoria</option>
+                {businessCategories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Descrizione (opzionale)
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={4}
+                placeholder="Descrivi brevemente la tua attività..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="flex gap-3 pt-4">
+        <div className="flex gap-3 pt-4 border-t">
           <button
             type="submit"
             disabled={saving}
