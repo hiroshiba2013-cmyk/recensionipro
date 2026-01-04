@@ -429,12 +429,18 @@ export function SubscriptionPage() {
                             <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
                             <span>Salva preferiti</span>
                           </div>
-                          {isAnnual && (
-                            <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Star className="w-4 h-4 text-yellow-500 flex-shrink-0" fill="currentColor" />
-                              <span className="font-semibold">Vantaggi extra</span>
-                            </div>
-                          )}
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <span>Pubblicare annunci</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <span>Ricerca offerte di lavoro</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <span>Ricerca prodotti di ogni genere</span>
+                          </div>
                         </div>
                         <button
                           onClick={() => handleSelectPlan(plan.id)}
@@ -684,7 +690,15 @@ export function SubscriptionPage() {
                     </li>
                     <li className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      Supporto clienti prioritario
+                      Pubblicare annunci
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      Ricerca offerte di lavoro
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      Ricerca prodotti di ogni genere
                     </li>
                   </ul>
                 </div>
@@ -747,6 +761,63 @@ export function SubscriptionPage() {
                         )}
                         {!isAnnual && (
                           <p className="text-xs text-gray-500 mt-2">€{(Number(plan.price) * 12).toFixed(2)} all'anno</p>
+                        )}
+                      </div>
+                      <div className="mb-6 space-y-2">
+                        {plan.name.includes('Business') ? (
+                          <>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Shield className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                              <span>Profilo verificato</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span>Sconti illimitati</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span>Risposte recensioni</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <TrendingUp className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                              <span>Statistiche avanzate</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Star className="w-4 h-4 text-yellow-500 flex-shrink-0" fill="currentColor" />
+                              <span>Priorità visibilità</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span>Inserire annunci di lavoro</span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span>Recensioni illimitate</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span>Sconti esclusivi</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span>Salva preferiti</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span>Pubblicare annunci</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span>Ricerca offerte di lavoro</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span>Ricerca prodotti di ogni genere</span>
+                            </div>
+                          </>
                         )}
                       </div>
                       <button
@@ -813,6 +884,63 @@ export function SubscriptionPage() {
                         )}
                         {!isAnnual && (
                           <p className="text-xs text-gray-500 mt-2">€{(Number(plan.price) * 12).toFixed(2)} all'anno</p>
+                        )}
+                      </div>
+                      <div className="mb-6 space-y-2">
+                        {plan.name.includes('Business') ? (
+                          <>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Shield className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                              <span>Profilo verificato</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span>Sconti illimitati</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span>Risposte recensioni</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <TrendingUp className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                              <span>Statistiche avanzate</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Star className="w-4 h-4 text-yellow-500 flex-shrink-0" fill="currentColor" />
+                              <span>Priorità visibilità</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span>Inserire annunci di lavoro</span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span>Recensioni illimitate</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span>Sconti esclusivi</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span>Salva preferiti</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span>Pubblicare annunci</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span>Ricerca offerte di lavoro</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span>Ricerca prodotti di ogni genere</span>
+                            </div>
+                          </>
                         )}
                       </div>
                       {isCurrent ? (
