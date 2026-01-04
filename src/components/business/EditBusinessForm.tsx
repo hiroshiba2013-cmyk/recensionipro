@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Edit, Save, X, Building2 } from 'lucide-react';
+import { Edit, Save, X, Building2, User } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface BusinessData {
   id: string;
+  owner_id: string;
   name: string;
   vat_number: string;
   unique_code: string;
@@ -25,6 +26,14 @@ interface BusinessData {
   website_url: string;
 }
 
+interface OwnerData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  tax_code: string;
+}
+
 interface EditBusinessFormProps {
   businessId: string;
   onUpdate: () => void;
@@ -35,7 +44,13 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [business, setBusiness] = useState<BusinessData | null>(null);
+  const [owner, setOwner] = useState<OwnerData | null>(null);
   const [formData, setFormData] = useState({
+    owner_first_name: '',
+    owner_last_name: '',
+    owner_email: '',
+    owner_phone: '',
+    owner_tax_code: '',
     name: '',
     vat_number: '',
     unique_code: '',
@@ -66,7 +81,23 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
 
       if (data) {
         setBusiness(data);
+
+        const { data: ownerData } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, email, phone, tax_code')
+          .eq('id', data.owner_id)
+          .maybeSingle();
+
+        if (ownerData) {
+          setOwner(ownerData);
+        }
+
         setFormData({
+          owner_first_name: ownerData?.first_name || '',
+          owner_last_name: ownerData?.last_name || '',
+          owner_email: ownerData?.email || '',
+          owner_phone: ownerData?.phone || '',
+          owner_tax_code: ownerData?.tax_code || '',
           name: data.name || '',
           vat_number: data.vat_number || '',
           unique_code: data.unique_code || '',
@@ -102,6 +133,21 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
     setSaving(true);
 
     try {
+      if (business) {
+        const { error: ownerError } = await supabase
+          .from('profiles')
+          .update({
+            first_name: formData.owner_first_name,
+            last_name: formData.owner_last_name,
+            phone: formData.owner_phone,
+            tax_code: formData.owner_tax_code,
+            full_name: `${formData.owner_first_name} ${formData.owner_last_name}`,
+          })
+          .eq('id', business.owner_id);
+
+        if (ownerError) throw ownerError;
+      }
+
       const billingAddress = `${formData.billing_street} ${formData.billing_street_number}, ${formData.billing_postal_code} ${formData.billing_city}, ${formData.billing_province}`;
       const officeAddress = formData.office_street && formData.office_street_number && formData.office_postal_code && formData.office_city && formData.office_province
         ? `${formData.office_street} ${formData.office_street_number}, ${formData.office_postal_code} ${formData.office_city}, ${formData.office_province}`
@@ -155,8 +201,13 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
   };
 
   const handleCancel = () => {
-    if (business) {
+    if (business && owner) {
       setFormData({
+        owner_first_name: owner.first_name || '',
+        owner_last_name: owner.last_name || '',
+        owner_email: owner.email || '',
+        owner_phone: owner.phone || '',
+        owner_tax_code: owner.tax_code || '',
         name: business.name || '',
         vat_number: business.vat_number || '',
         unique_code: business.unique_code || '',
@@ -209,6 +260,44 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
             Modifica
           </button>
         </div>
+
+        {owner && (
+          <>
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-4 border-b pb-2">
+                <User className="w-5 h-5 text-gray-600" />
+                <h3 className="text-lg font-bold text-gray-900">Dati Titolare</h3>
+              </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Nome</p>
+                  <p className="text-lg font-semibold text-gray-900">{owner.first_name || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Cognome</p>
+                  <p className="text-lg font-semibold text-gray-900">{owner.last_name || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Email</p>
+                  <p className="text-lg font-semibold text-gray-900">{owner.email || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Telefono</p>
+                  <p className="text-lg font-semibold text-gray-900">{owner.phone || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Codice Fiscale</p>
+                  <p className="text-lg font-semibold text-gray-900">{owner.tax_code || '-'}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 mb-4 border-b pb-2">
+              <Building2 className="w-5 h-5 text-gray-600" />
+              <h3 className="text-lg font-bold text-gray-900">Dati Azienda</h3>
+            </div>
+          </>
+        )}
 
         <div className="grid md:grid-cols-2 gap-6">
           <div>
@@ -279,6 +368,90 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
       </div>
 
       <form onSubmit={handleSubmit}>
+        <div className="flex items-center gap-2 mb-4 border-b pb-2">
+          <User className="w-5 h-5 text-gray-600" />
+          <h3 className="text-lg font-bold text-gray-900">Dati Titolare</h3>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Nome
+            </label>
+            <input
+              type="text"
+              name="owner_first_name"
+              value={formData.owner_first_name}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Cognome
+            </label>
+            <input
+              type="text"
+              name="owner_last_name"
+              value={formData.owner_last_name}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Email
+            </label>
+            <input
+              type="email"
+              name="owner_email"
+              value={formData.owner_email}
+              onChange={handleChange}
+              required
+              disabled
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Telefono
+            </label>
+            <input
+              type="tel"
+              name="owner_phone"
+              value={formData.owner_phone}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Codice Fiscale
+            </label>
+            <input
+              type="text"
+              name="owner_tax_code"
+              value={formData.owner_tax_code}
+              onChange={handleChange}
+              required
+              maxLength={16}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 mb-4 border-b pb-2">
+          <Building2 className="w-5 h-5 text-gray-600" />
+          <h3 className="text-lg font-bold text-gray-900">Dati Azienda</h3>
+        </div>
+
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">

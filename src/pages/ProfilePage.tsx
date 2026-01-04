@@ -793,19 +793,6 @@ export function ProfilePage() {
           </>
         ) : (
           <>
-            <div className="border-t-4 border-blue-500 bg-gradient-to-r from-blue-50 to-white rounded-lg p-4 mb-6">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <User className="w-6 h-6 text-blue-600" />
-                Dati Personali Account
-              </h2>
-              <p className="text-sm text-gray-600 mt-1">Informazioni del titolare dell'account business</p>
-            </div>
-
-            <EditProfileForm
-              profile={profile}
-              onUpdate={loadProfileData}
-            />
-
             {!business && user && (
               <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-8 mb-8">
                 <h3 className="text-xl font-bold text-gray-900 mb-4">Completa la Registrazione Aziendale</h3>
