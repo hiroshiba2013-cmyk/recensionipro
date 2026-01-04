@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
 import NotificationBell from '../notifications/NotificationBell';
+import { ActiveProfileIndicator } from '../profile/ActiveProfileIndicator';
 
 export function Header() {
   const { user, profile } = useAuth();
@@ -126,13 +127,13 @@ export function Header() {
                   >
                     <CreditCard className="w-5 h-5" />
                   </a>
+                  <ActiveProfileIndicator />
                   <a
                     href="/profile"
-                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium ml-2"
+                    className="text-gray-700 hover:text-blue-600 transition-colors"
                     title="Mio Profilo"
                   >
                     <User className="w-5 h-5" />
-                    <span className="text-sm">{profile.full_name}</span>
                   </a>
                 </>
               ) : (

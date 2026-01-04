@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
-import { supabase, Profile } from '../lib/supabase';
+import { supabase, Profile, FamilyMember } from '../lib/supabase';
 
 export interface CustomerData {
   firstName: string;
@@ -37,14 +37,27 @@ export interface BusinessData {
   officeProvince?: string;
 }
 
+export interface ActiveProfile {
+  id: string;
+  name: string;
+  nickname?: string;
+  avatarUrl?: string | null;
+  isOwner: boolean;
+}
+
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
+  familyMembers: FamilyMember[];
+  activeProfile: ActiveProfile | null;
+  needsProfileSelection: boolean;
   signUpCustomer: (email: string, password: string, data: CustomerData) => Promise<void>;
   signUpBusiness: (email: string, password: string, data: BusinessData) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  setActiveProfile: (profileId: string, isOwner: boolean) => void;
+  loadFamilyMembers: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,6 +66,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [activeProfile, setActiveProfileState] = useState<ActiveProfile | null>(null);
+  const [needsProfileSelection, setNeedsProfileSelection] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -71,6 +87,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await loadProfile(session.user.id);
         } else {
           setProfile(null);
+          setFamilyMembers([]);
+          setActiveProfileState(null);
+          setNeedsProfileSelection(false);
           setLoading(false);
         }
       })();
@@ -89,11 +108,90 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error;
       setProfile(data);
+
+      if (data && data.user_type === 'customer') {
+        await loadFamilyMembersInternal(userId, data);
+      } else {
+        const ownerProfile: ActiveProfile = {
+          id: userId,
+          name: data?.full_name || '',
+          nickname: (data as any)?.nickname,
+          avatarUrl: (data as any)?.avatar_url,
+          isOwner: true,
+        };
+        setActiveProfileState(ownerProfile);
+        setLoading(false);
+      }
     } catch (error) {
       console.error('Error loading profile:', error);
+      setLoading(false);
+    }
+  };
+
+  const loadFamilyMembersInternal = async (userId: string, profileData: Profile) => {
+    try {
+      const { data: members } = await supabase
+        .from('customer_family_members')
+        .select('*')
+        .eq('customer_id', userId);
+
+      setFamilyMembers(members || []);
+
+      const savedProfileId = localStorage.getItem(`activeProfile_${userId}`);
+      const savedIsOwner = localStorage.getItem(`activeProfileIsOwner_${userId}`) === 'true';
+
+      if (savedProfileId) {
+        if (savedIsOwner) {
+          setActiveProfileState({
+            id: userId,
+            name: profileData.full_name,
+            nickname: (profileData as any)?.nickname,
+            avatarUrl: (profileData as any)?.avatar_url,
+            isOwner: true,
+          });
+          setNeedsProfileSelection(false);
+        } else {
+          const member = members?.find(m => m.id === savedProfileId);
+          if (member) {
+            setActiveProfileState({
+              id: member.id,
+              name: `${member.first_name} ${member.last_name}`,
+              nickname: member.nickname,
+              avatarUrl: member.avatar_url,
+              isOwner: false,
+            });
+            setNeedsProfileSelection(false);
+          } else {
+            setNeedsProfileSelection((members?.length || 0) > 0);
+          }
+        }
+      } else {
+        if ((members?.length || 0) > 0) {
+          setNeedsProfileSelection(true);
+        } else {
+          setActiveProfileState({
+            id: userId,
+            name: profileData.full_name,
+            nickname: (profileData as any)?.nickname,
+            avatarUrl: (profileData as any)?.avatar_url,
+            isOwner: true,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error loading family members:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadFamilyMembers = async () => {
+    if (!user?.id) return;
+    const { data: members } = await supabase
+      .from('customer_family_members')
+      .select('*')
+      .eq('customer_id', user.id);
+    setFamilyMembers(members || []);
   };
 
   const signUpCustomer = async (email: string, password: string, data: CustomerData) => {
@@ -210,16 +308,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+    if (user?.id) {
+      localStorage.removeItem(`activeProfile_${user.id}`);
+      localStorage.removeItem(`activeProfileIsOwner_${user.id}`);
+    }
+  };
+
+  const setActiveProfile = (profileId: string, isOwner: boolean) => {
+    if (!user?.id || !profile) return;
+
+    if (isOwner) {
+      const ownerProfile: ActiveProfile = {
+        id: user.id,
+        name: profile.full_name,
+        nickname: (profile as any)?.nickname,
+        avatarUrl: (profile as any)?.avatar_url,
+        isOwner: true,
+      };
+      setActiveProfileState(ownerProfile);
+    } else {
+      const member = familyMembers.find(m => m.id === profileId);
+      if (member) {
+        const memberProfile: ActiveProfile = {
+          id: member.id,
+          name: `${member.first_name} ${member.last_name}`,
+          nickname: member.nickname,
+          avatarUrl: member.avatar_url,
+          isOwner: false,
+        };
+        setActiveProfileState(memberProfile);
+      }
+    }
+
+    localStorage.setItem(`activeProfile_${user.id}`, profileId);
+    localStorage.setItem(`activeProfileIsOwner_${user.id}`, String(isOwner));
+    setNeedsProfileSelection(false);
   };
 
   const value = {
     user,
     profile,
     loading,
+    familyMembers,
+    activeProfile,
+    needsProfileSelection,
     signUpCustomer,
     signUpBusiness,
     signIn,
     signOut,
+    setActiveProfile,
+    loadFamilyMembers,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -16,6 +16,8 @@ import { SolidarityPage } from '../pages/SolidarityPage';
 import { ContactPage } from '../pages/ContactPage';
 import { RulesPage } from '../pages/RulesPage';
 import { DiscountsPage } from '../pages/DiscountsPage';
+import { ProfileSelectionPage } from '../pages/ProfileSelectionPage';
+import { useAuth } from '../contexts/AuthContext';
 
 const RouterContext = createContext<{ params: Record<string, string> }>({ params: {} });
 
@@ -32,6 +34,7 @@ export function useNavigate() {
 export function Router() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
   const [params, setParams] = useState<Record<string, string>>({});
+  const { needsProfileSelection, loading } = useAuth();
 
   useEffect(() => {
     const handlePopState = () => {
@@ -51,6 +54,17 @@ export function Router() {
       window.history.pushState = originalPushState;
     };
   }, []);
+
+  useEffect(() => {
+    if (!loading && needsProfileSelection && currentPath !== '/select-profile') {
+      window.history.pushState({}, '', '/select-profile');
+      setCurrentPath('/select-profile');
+    }
+  }, [needsProfileSelection, loading, currentPath]);
+
+  if (currentPath === '/select-profile') {
+    return <ProfileSelectionPage />;
+  }
 
   if (currentPath === '/search') {
     return <SearchResultsPage />;
