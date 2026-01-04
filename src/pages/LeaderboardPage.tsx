@@ -330,9 +330,9 @@ export function LeaderboardPage() {
                 )}
               </div>
 
-              {userTypeFilter !== 'business' && (
+              {(userTypeFilter === 'customer' || userTypeFilter === 'all') && (
                 <div className="mt-8 bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">Come Guadagnare Punti</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">Come Guadagnare Punti - Utenti Privati</h3>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-center gap-2">
                       <Award className="w-5 h-5 text-gray-600" />
@@ -369,9 +369,9 @@ export function LeaderboardPage() {
                 </div>
               )}
 
-              {userTypeFilter === 'business' && (
+              {(userTypeFilter === 'business' || userTypeFilter === 'all') && (
                 <div className="mt-8 bg-green-50 border-2 border-green-200 rounded-xl p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">Punti per Recensioni Ricevute</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">Come Guadagnare Punti - Professionisti</h3>
                   <p className="text-sm text-gray-600 mb-4">
                     I professionisti guadagnano punti in base alle recensioni ricevute dai clienti.
                   </p>
