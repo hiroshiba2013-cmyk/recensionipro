@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Trophy, Medal, Award, Star, TrendingUp, Gift } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { ActivityFeed } from '../components/activity/ActivityFeed';
 
 interface LeaderboardUser {
   id: string;
@@ -27,7 +28,7 @@ export function LeaderboardPage() {
   const [userRank, setUserRank] = useState<LeaderboardUser | null>(null);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'leaderboard' | 'rewards'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'leaderboard' | 'rewards' | 'activity'>('leaderboard');
   const [userTypeFilter, setUserTypeFilter] = useState<'all' | 'customer' | 'business'>('all');
 
   useEffect(() => {
@@ -186,6 +187,16 @@ export function LeaderboardPage() {
               Classifica
             </button>
             <button
+              onClick={() => setActiveTab('activity')}
+              className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                activeTab === 'activity'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              La Mia Attività
+            </button>
+            <button
               onClick={() => setActiveTab('rewards')}
               className={`px-6 py-2 rounded-lg font-medium transition-all ${
                 activeTab === 'rewards'
@@ -233,7 +244,11 @@ export function LeaderboardPage() {
           )}
         </div>
 
-        {activeTab === 'leaderboard' ? (
+        {activeTab === 'activity' ? (
+          <div className="max-w-6xl mx-auto">
+            <ActivityFeed />
+          </div>
+        ) : activeTab === 'leaderboard' ? (
           <>
             {userRank && (
               <div className="max-w-4xl mx-auto mb-8">
