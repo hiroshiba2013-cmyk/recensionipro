@@ -578,9 +578,18 @@ export function ProfilePage() {
             <JobRequestForm customerId={profile.id} />
 
             <div className="bg-white rounded-xl shadow-md p-8 mb-8">
-              <div className="flex items-center gap-3 mb-6">
-                <Star className="w-6 h-6 text-yellow-500" />
-                <h2 className="text-2xl font-bold text-gray-900">Le Tue Recensioni</h2>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <Star className="w-6 h-6 text-yellow-500" />
+                  <h2 className="text-2xl font-bold text-gray-900">Le Tue Recensioni</h2>
+                </div>
+                <a
+                  href="/"
+                  className="flex items-center gap-2 bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors font-semibold shadow-md"
+                >
+                  <Star className="w-5 h-5" />
+                  Scrivi Recensioni
+                </a>
               </div>
 
               {reviews.length > 0 && (
@@ -728,6 +737,15 @@ export function ProfilePage() {
                   <Plus className="w-5 h-5" />
                   Crea Annuncio
                 </a>
+              </div>
+
+              <div className="mb-6 bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200 rounded-lg p-4">
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="w-6 h-6 text-green-600" />
+                  <p className="text-gray-800 font-semibold">
+                    Guadagna <span className="text-green-600 font-bold">5 punti</span> in classifica per ogni annuncio pubblicato!
+                  </p>
+                </div>
               </div>
 
               {classifiedAds.length === 0 ? (
