@@ -1028,6 +1028,32 @@ export function SubscriptionPage() {
                         <p className="text-xs text-gray-500 mt-2">€{(Number(plan.price) * 12).toFixed(2)} all'anno</p>
                       )}
                     </div>
+                    <div className="mb-6 space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <Shield className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                        <span>Profilo verificato</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span>Sconti illimitati</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span>Risposte recensioni</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <TrendingUp className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                        <span>Statistiche avanzate</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <Star className="w-4 h-4 text-yellow-500 flex-shrink-0" fill="currentColor" />
+                        <span>Priorità visibilità</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span>Inserire annunci di lavoro</span>
+                      </div>
+                    </div>
                     <button
                       onClick={() => handleSelectPlan(plan.id)}
                       disabled={loading}
@@ -1100,6 +1126,32 @@ export function SubscriptionPage() {
                       {!isAnnual && (
                         <p className="text-xs text-gray-500 mt-2">€{(Number(plan.price) * 12).toFixed(2)} all'anno</p>
                       )}
+                    </div>
+                    <div className="mb-6 space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <Shield className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                        <span>Profilo verificato</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span>Sconti illimitati</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span>Risposte recensioni</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <TrendingUp className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                        <span>Statistiche avanzate</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <Star className="w-4 h-4 text-yellow-500 flex-shrink-0" fill="currentColor" />
+                        <span>Priorità visibilità</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span>Inserire annunci di lavoro</span>
+                      </div>
                     </div>
                     {isCurrent ? (
                       <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
