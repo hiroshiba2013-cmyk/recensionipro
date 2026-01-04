@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Plus, Star, Tag, Building, Briefcase, MessageSquare, User } from 'lucide-react';
+import { Plus, Star, Tag, Building, MessageSquare, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase, Business, Review, Discount, JobPosting, FamilyMember } from '../lib/supabase';
-import { BusinessJobForm } from '../components/jobs/BusinessJobForm';
+import { supabase, Business, Review, Discount, FamilyMember } from '../lib/supabase';
+import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
 import { EditBusinessLocationsForm } from '../components/business/EditBusinessLocationsForm';
 import { EditBusinessForm } from '../components/business/EditBusinessForm';
 import { CreateBusinessForm } from '../components/business/CreateBusinessForm';
@@ -16,10 +16,8 @@ export function DashboardPage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
-  const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showJobForm, setShowJobForm] = useState(false);
   const [showCreateBusinessForm, setShowCreateBusinessForm] = useState(false);
   const [showDiscountForm, setShowDiscountForm] = useState(false);
   const [showResponseForm, setShowResponseForm] = useState<string | null>(null);
@@ -74,17 +72,6 @@ export function DashboardPage() {
 
             if (discountsData) {
               setDiscounts(discountsData);
-            }
-
-            const { data: jobPostingsData } = await supabase
-              .from('job_postings')
-              .select('*')
-              .in('business_id', businessIds)
-              .eq('status', 'active')
-              .order('created_at', { ascending: false });
-
-            if (jobPostingsData) {
-              setJobPostings(jobPostingsData);
             }
           }
         }
@@ -305,59 +292,7 @@ export function DashboardPage() {
                   )}
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-2">
-                      <Briefcase className="w-6 h-6" />
-                      Annunci di Lavoro
-                    </h2>
-                    <button
-                      onClick={() => setShowJobForm(!showJobForm)}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-                    >
-                      <Plus className="w-5 h-5" />
-                      Pubblica Annuncio
-                    </button>
-                  </div>
-
-                  {showJobForm && (
-                    <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                      <BusinessJobForm onSuccess={() => {
-                        setShowJobForm(false);
-                        loadDashboardData();
-                      }} />
-                    </div>
-                  )}
-
-                  {jobPostings.length === 0 && !showJobForm ? (
-                    <p className="text-gray-600 text-center py-8">
-                      Non hai ancora pubblicato annunci di lavoro
-                    </p>
-                  ) : (
-                    <div className="space-y-4">
-                      {jobPostings.map((job) => (
-                        <div key={job.id} className="border border-gray-200 rounded-lg p-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-lg">{job.title}</h4>
-                              <p className="text-gray-600 text-sm mt-1">{job.description}</p>
-                              <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                                <span>{job.location}</span>
-                                <span>{job.employment_type}</span>
-                                {job.salary_range && <span>{job.salary_range}</span>}
-                              </div>
-                            </div>
-                            <span className={`px-3 py-1 text-sm rounded-full ${
-                              job.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                            }`}>
-                              {job.active ? 'Attivo' : 'Non attivo'}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+{selectedBusinessId && <BusinessJobPostingForm businessId={selectedBusinessId} />}
 
                 <div className="bg-white rounded-lg shadow-sm p-6">
                   <div className="flex items-center justify-between mb-6">
