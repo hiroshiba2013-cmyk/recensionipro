@@ -1,6 +1,134 @@
-import { Shield, FileText, AlertCircle, CheckCircle, Award, Tag, Briefcase, Building, Star } from 'lucide-react';
+import { Shield, FileText, AlertCircle, CheckCircle, Award, Tag, Briefcase, Building, Star, HelpCircle } from 'lucide-react';
+import { useState } from 'react';
+
+interface FAQItem {
+  question: string;
+  answer: string;
+  category: string;
+}
+
+const faqs: FAQItem[] = [
+  {
+    category: 'Punti e Classifica',
+    question: 'Come funziona il sistema dei punti?',
+    answer: 'Guadagni punti per ogni attività sulla piattaforma: pubblicare annunci (5 punti), inserire prodotti (10 punti), segnalare attività (20 punti), scrivere recensioni approvate (25-50 punti), e presentare amici che si abbonano (30 punti). I punti ti posizionano nella classifica e ti fanno guadagnare badge e premi.'
+  },
+  {
+    category: 'Punti e Classifica',
+    question: 'Quando ricevo i punti per una recensione?',
+    answer: 'I punti vengono assegnati solo quando la tua recensione viene approvata dallo staff (entro 7 giorni). Ricevi 25 punti per una recensione base o 50 punti se alleghi prove documentali come scontrini o fatture. Se la recensione viene rifiutata, non riceverai punti.'
+  },
+  {
+    category: 'Punti e Classifica',
+    question: 'Come funziona il "Presenta un Amico"?',
+    answer: 'Condividi il tuo nickname con amici e familiari. Quando si registrano inserendo il tuo nickname nel campo apposito e poi effettuano l\'abbonamento alla piattaforma, guadagni automaticamente 30 punti. La semplice registrazione non è sufficiente: l\'amico deve completare l\'abbonamento.'
+  },
+  {
+    category: 'Punti e Classifica',
+    question: 'Posso perdere i punti guadagnati?',
+    answer: 'Sì, recensioni false, spam o comportamenti scorretti possono portare alla perdita di tutti i punti e alla sospensione dell\'account. La classifica viene azzerata ogni anno il 1° gennaio, ma i badge e i premi guadagnati restano nel tuo profilo.'
+  },
+  {
+    category: 'Recensioni',
+    question: 'Posso modificare una recensione dopo averla pubblicata?',
+    answer: 'No, una volta pubblicata la recensione non può essere modificata. Tuttavia puoi contattare il supporto se hai commesso un errore. Le aziende possono rispondere alle recensioni per fornire chiarimenti.'
+  },
+  {
+    category: 'Recensioni',
+    question: 'Cosa devo allegare per avere 50 punti invece di 25?',
+    answer: 'Per ricevere 50 punti devi caricare una prova documentale come foto dello scontrino, fattura o altro documento che dimostri di aver utilizzato il servizio. La recensione riceverà anche un badge "Verificata" che la rende più affidabile.'
+  },
+  {
+    category: 'Recensioni',
+    question: 'Quanto tempo ci vuole per approvare una recensione?',
+    answer: 'Le recensioni vengono verificate e approvate entro 7 giorni dalla pubblicazione. Durante questo periodo la recensione sarà visibile ma contrassegnata come "In revisione". I punti vengono assegnati solo dopo l\'approvazione.'
+  },
+  {
+    category: 'Abbonamenti',
+    question: 'Quali sono i piani di abbonamento disponibili?',
+    answer: 'Offriamo piani mensili e annuali per account cliente (da 1 a 5 persone) e business. Puoi iniziare con 15 giorni di prova gratuita. Gli abbonamenti includono accesso completo a tutte le funzionalità della piattaforma.'
+  },
+  {
+    category: 'Abbonamenti',
+    question: 'Come funziona la prova gratuita?',
+    answer: 'Puoi attivare 15 giorni di prova gratuita senza inserire metodo di pagamento. Prima della scadenza riceverai un promemoria. Se non rinnovi, l\'abbonamento scade automaticamente senza addebiti.'
+  },
+  {
+    category: 'Abbonamenti',
+    question: 'Posso disdire l\'abbonamento in qualsiasi momento?',
+    answer: 'Sì, puoi disdire l\'abbonamento in qualsiasi momento dalla pagina Abbonamento. Se hai pagato per un periodo (mensile o annuale), manterrai l\'accesso fino alla scadenza del periodo già pagato.'
+  },
+  {
+    category: 'Annunci',
+    question: 'Quanti annunci gratuiti posso pubblicare?',
+    answer: 'Puoi pubblicare fino a 20 annunci gratuiti contemporaneamente. Gli annunci scadono dopo 30 giorni ma possono essere rinnovati gratuitamente. Ogni annuncio pubblicato ti fa guadagnare 5 punti.'
+  },
+  {
+    category: 'Annunci',
+    question: 'Cosa succede se il mio annuncio contiene prodotti vietati?',
+    answer: 'Gli annunci con prodotti vietati (armi, droga, contraffazioni, ecc.) vengono rimossi immediatamente e l\'account può essere sospeso. Consulta la sezione "Prodotti Vietati" nel regolamento per l\'elenco completo.'
+  },
+  {
+    category: 'Annunci',
+    question: 'Come funziona la messaggistica con gli interessati?',
+    answer: 'Gli utenti interessati possono contattarti tramite il sistema di messaggistica interno. Per sicurezza, incontra sempre gli acquirenti in luoghi pubblici e non condividere dati personali sensibili prima di aver valutato l\'affidabilità della persona.'
+  },
+  {
+    category: 'Aziende',
+    question: 'Come posso rivendicare la mia azienda?',
+    answer: 'Registrati come account Business, cerca la tua azienda nel database e clicca su "Rivendica". Dovrai fornire Partita IVA, Codice Fiscale, Codice Univoco SDI, PEC e Codice ATECO. La verifica richiede solitamente 24-48 ore.'
+  },
+  {
+    category: 'Aziende',
+    question: 'Posso gestire più punti vendita della stessa azienda?',
+    answer: 'Sì, una volta rivendicata l\'azienda puoi aggiungere e gestire tutti i punti vendita dalla sezione "Le Mie Sedi". Ogni sede può avere orari, contatti e informazioni indipendenti.'
+  },
+  {
+    category: 'Aziende',
+    question: 'Gli annunci di lavoro sono gratuiti per le aziende?',
+    answer: 'Sì, le aziende registrate e verificate possono pubblicare annunci di lavoro gratuitamente senza limiti. Gli annunci restano attivi fino alla data di scadenza che imposti.'
+  },
+  {
+    category: 'Account e Privacy',
+    question: 'I miei dati personali sono al sicuro?',
+    answer: 'Sì, trattiamo i dati in conformità al GDPR. I dati vengono usati solo per fornire i servizi della piattaforma e non vengono condivisi con terze parti senza il tuo consenso. Le password sono crittografate.'
+  },
+  {
+    category: 'Account e Privacy',
+    question: 'Come posso eliminare il mio account?',
+    answer: 'Vai su Profilo, scorri fino alla "Zona Pericolosa" e clicca su "Elimina Account". L\'eliminazione è permanente e cancellerà tutti i tuoi dati (recensioni, annunci, messaggi, punti). Non sono previsti rimborsi per abbonamenti attivi.'
+  },
+  {
+    category: 'Account e Privacy',
+    question: 'Posso avere più account sulla piattaforma?',
+    answer: 'No, ogni utente può avere un solo account. Tuttavia, gli account cliente possono aggiungere fino a 4 membri della famiglia con profili separati. È vietato creare account multipli per guadagnare punti o aggirare le regole.'
+  },
+  {
+    category: 'Generale',
+    question: 'Cosa devo fare se trovo contenuti inappropriati?',
+    answer: 'Usa il pulsante "Segnala" presente su recensioni, annunci e altri contenuti. Il nostro team esaminerà la segnalazione e prenderà provvedimenti se necessario. Le segnalazioni sono anonime.'
+  },
+  {
+    category: 'Generale',
+    question: 'Come posso aggiungere un\'attività non presente nel database?',
+    answer: 'Vai su Profilo e clicca su "Aggiungi Attività Mancante". Inserisci nome, categoria, indirizzo e contatti dell\'attività. Una volta verificata, l\'attività sarà aggiunta al database e riceverai 20 punti.'
+  },
+  {
+    category: 'Generale',
+    question: 'La piattaforma è disponibile su mobile?',
+    answer: 'Sì, TrovaFacile è completamente ottimizzato per dispositivi mobile. Puoi accedere da qualsiasi browser su smartphone e tablet. Non è necessario scaricare un\'app.'
+  }
+];
 
 export function RulesPage() {
+  const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Tutte');
+
+  const categories = ['Tutte', ...Array.from(new Set(faqs.map(faq => faq.category)))];
+  const filteredFAQs = selectedCategory === 'Tutte'
+    ? faqs
+    : faqs.filter(faq => faq.category === selectedCategory);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-12">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -634,6 +762,80 @@ export function RulesPage() {
                     <li>Puoi contattare il supporto per risolvere eventuali problemi</li>
                   </ul>
                 </div>
+              </div>
+            </section>
+
+            <section id="faq">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-blue-200">
+                <HelpCircle className="w-8 h-8 text-blue-600" />
+                <h2 className="text-3xl font-bold text-gray-900">Domande Frequenti (FAQ)</h2>
+              </div>
+
+              <div className="space-y-6">
+                <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-r-lg">
+                  <p className="text-gray-700">
+                    Qui trovi le risposte alle domande più comuni sulla piattaforma. Se non trovi la risposta che cerchi,
+                    contatta il nostro team di supporto.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                        selectedCategory === category
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="space-y-3">
+                  {filteredFAQs.map((faq, index) => (
+                    <div
+                      key={index}
+                      className="bg-white border-2 border-gray-200 rounded-lg overflow-hidden hover:border-blue-300 transition-colors"
+                    >
+                      <button
+                        onClick={() => setExpandedFAQ(expandedFAQ === index ? null : index)}
+                        className="w-full px-6 py-4 text-left flex items-center justify-between gap-4 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <div className="text-xs font-semibold text-blue-600 mb-1">
+                            {faq.category}
+                          </div>
+                          <div className="font-bold text-gray-900 text-lg">
+                            {faq.question}
+                          </div>
+                        </div>
+                        <div className={`flex-shrink-0 transition-transform ${expandedFAQ === index ? 'rotate-180' : ''}`}>
+                          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </button>
+                      {expandedFAQ === index && (
+                        <div className="px-6 pb-4 pt-2 border-t border-gray-200 bg-gray-50">
+                          <p className="text-gray-700 leading-relaxed">
+                            {faq.answer}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {filteredFAQs.length === 0 && (
+                  <div className="text-center py-12 bg-gray-50 rounded-lg">
+                    <HelpCircle className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                    <p className="text-gray-600">Nessuna domanda trovata in questa categoria</p>
+                  </div>
+                )}
               </div>
             </section>
 
