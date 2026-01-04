@@ -592,6 +592,29 @@ export function ProfilePage() {
                 </a>
               </div>
 
+              <div className="mb-6 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-lg p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <Trophy className="w-6 h-6 text-yellow-600" />
+                  <p className="text-gray-800 font-semibold text-lg">Guadagna Punti Scrivendo Recensioni!</p>
+                </div>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <div className="bg-white rounded-lg p-3 border border-yellow-300">
+                    <div className="flex items-center gap-2">
+                      <Star className="w-5 h-5 text-yellow-600" />
+                      <span className="text-gray-700 font-medium">Recensione Base:</span>
+                      <span className="text-yellow-600 font-bold text-lg">25 punti</span>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-lg p-3 border border-orange-300">
+                    <div className="flex items-center gap-2">
+                      <Star className="w-5 h-5 text-orange-600 fill-orange-600" />
+                      <span className="text-gray-700 font-medium">Recensione Completa:</span>
+                      <span className="text-orange-600 font-bold text-lg">50 punti</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {reviews.length > 0 && (
                 <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                   <h3 className="text-sm font-semibold text-gray-700 mb-3">Filtra Recensioni</h3>
