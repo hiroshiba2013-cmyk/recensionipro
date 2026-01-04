@@ -264,46 +264,47 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
                 <p className="text-lg font-semibold text-gray-900">{profile.office_address || 'Uguale all\'indirizzo di fatturazione'}</p>
               </div>
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2 mt-6">Dati del Titolare</h3>
           </>
         )}
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Nome</p>
-            <p className="text-lg font-semibold text-gray-900">{profile.first_name || '-'}</p>
+        {profile.user_type !== 'business' && (
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Nome</p>
+              <p className="text-lg font-semibold text-gray-900">{profile.first_name || '-'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Cognome</p>
+              <p className="text-lg font-semibold text-gray-900">{profile.last_name || '-'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Nickname</p>
+              <p className="text-lg font-semibold text-gray-900">{profile.nickname || '-'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Relazione</p>
+              <p className="text-lg font-semibold text-gray-900">{profile.relationship || 'Titolare'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Data di Nascita</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {profile.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString('it-IT') : '-'}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Codice Fiscale</p>
+              <p className="text-lg font-semibold text-gray-900">{profile.tax_code || '-'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Telefono</p>
+              <p className="text-lg font-semibold text-gray-900">{profile.phone || '-'}</p>
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-sm text-gray-600 mb-1">Indirizzo di Fatturazione</p>
+              <p className="text-lg font-semibold text-gray-900">{profile.billing_address || '-'}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Cognome</p>
-            <p className="text-lg font-semibold text-gray-900">{profile.last_name || '-'}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Nickname</p>
-            <p className="text-lg font-semibold text-gray-900">{profile.nickname || '-'}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Relazione</p>
-            <p className="text-lg font-semibold text-gray-900">{profile.relationship || 'Titolare'}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Data di Nascita</p>
-            <p className="text-lg font-semibold text-gray-900">
-              {profile.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString('it-IT') : '-'}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Codice Fiscale</p>
-            <p className="text-lg font-semibold text-gray-900">{profile.tax_code || '-'}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Telefono</p>
-            <p className="text-lg font-semibold text-gray-900">{profile.phone || '-'}</p>
-          </div>
-          <div className="md:col-span-2">
-            <p className="text-sm text-gray-600 mb-1">Indirizzo di Fatturazione</p>
-            <p className="text-lg font-semibold text-gray-900">{profile.billing_address || '-'}</p>
-          </div>
-        </div>
+        )}
       </div>
     );
   }
@@ -597,117 +598,117 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
                 />
               </div>
             </div>
-
-            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2 mt-6">Dati del Titolare</h3>
           </>
         )}
 
-        <div className="grid md:grid-cols-2 gap-6 mb-6">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Nome
-            </label>
-            <input
-              type="text"
-              name="first_name"
-              value={formData.first_name}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+        {profile.user_type !== 'business' && (
+          <div className="grid md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Nome
+              </label>
+              <input
+                type="text"
+                name="first_name"
+                value={formData.first_name}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Cognome
-            </label>
-            <input
-              type="text"
-              name="last_name"
-              value={formData.last_name}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Cognome
+              </label>
+              <input
+                type="text"
+                name="last_name"
+                value={formData.last_name}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Nickname
-            </label>
-            <input
-              type="text"
-              name="nickname"
-              value={formData.nickname}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Nickname
+              </label>
+              <input
+                type="text"
+                name="nickname"
+                value={formData.nickname}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Relazione
-            </label>
-            <SearchableSelect
-              value={formData.relationship}
-              onChange={(value) => setFormData(prev => ({ ...prev, relationship: value }))}
-              options={[
-                { value: 'Titolare', label: 'Titolare' },
-                { value: 'Coniuge', label: 'Coniuge' },
-                { value: 'Figlio/a', label: 'Figlio/a' },
-                { value: 'Genitore', label: 'Genitore' },
-                { value: 'Fratello/Sorella', label: 'Fratello/Sorella' },
-                { value: 'Amico/a', label: 'Amico/a' },
-                { value: 'Altro', label: 'Altro familiare' },
-              ]}
-              placeholder="Seleziona relazione"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Relazione
+              </label>
+              <SearchableSelect
+                value={formData.relationship}
+                onChange={(value) => setFormData(prev => ({ ...prev, relationship: value }))}
+                options={[
+                  { value: 'Titolare', label: 'Titolare' },
+                  { value: 'Coniuge', label: 'Coniuge' },
+                  { value: 'Figlio/a', label: 'Figlio/a' },
+                  { value: 'Genitore', label: 'Genitore' },
+                  { value: 'Fratello/Sorella', label: 'Fratello/Sorella' },
+                  { value: 'Amico/a', label: 'Amico/a' },
+                  { value: 'Altro', label: 'Altro familiare' },
+                ]}
+                placeholder="Seleziona relazione"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Data di Nascita
-            </label>
-            <input
-              type="date"
-              name="date_of_birth"
-              value={formData.date_of_birth}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Data di Nascita
+              </label>
+              <input
+                type="date"
+                name="date_of_birth"
+                value={formData.date_of_birth}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Codice Fiscale
-            </label>
-            <input
-              type="text"
-              name="tax_code"
-              value={formData.tax_code}
-              onChange={handleChange}
-              required
-              maxLength={16}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Codice Fiscale
+              </label>
+              <input
+                type="text"
+                name="tax_code"
+                value={formData.tax_code}
+                onChange={handleChange}
+                required
+                maxLength={16}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Telefono
-            </label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Telefono
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {profile.user_type !== 'business' && (
           <>
