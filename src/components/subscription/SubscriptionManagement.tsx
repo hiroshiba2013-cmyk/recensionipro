@@ -35,6 +35,7 @@ export function SubscriptionManagement({
   const [message, setMessage] = useState('');
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
   const [availablePlans, setAvailablePlans] = useState<SubscriptionPlan[]>([]);
+  const [showPlans, setShowPlans] = useState(false);
 
   useEffect(() => {
     loadSubscription();
@@ -118,6 +119,7 @@ export function SubscriptionManagement({
       if (profileError) throw profileError;
 
       setMessage('Abbonamento attivato con successo!');
+      setShowPlans(false);
 
       setTimeout(() => {
         onUpdate();
@@ -133,9 +135,23 @@ export function SubscriptionManagement({
 
   return (
     <div className="bg-white rounded-xl shadow-md p-8 mb-8">
-      <div className="flex items-center gap-3 mb-6">
-        <CreditCard className="w-6 h-6 text-blue-600" />
-        <h2 className="text-2xl font-bold text-gray-900">Gestione Abbonamento</h2>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <CreditCard className="w-6 h-6 text-blue-600" />
+          <h2 className="text-2xl font-bold text-gray-900">Gestione Abbonamento</h2>
+        </div>
+        <button
+          onClick={() => setShowPlans(!showPlans)}
+          className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+            showPlans
+              ? 'bg-gray-500 text-white hover:bg-gray-600'
+              : currentSubscription
+              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              : 'bg-green-600 text-white hover:bg-green-700'
+          }`}
+        >
+          {showPlans ? 'Nascondi Piani' : currentSubscription ? 'Cambia Piano' : 'Attiva Abbonamento'}
+        </button>
       </div>
 
       {message && (
@@ -214,16 +230,16 @@ export function SubscriptionManagement({
         </div>
       )}
 
-      {!currentSubscription && (
+      {!currentSubscription && !showPlans && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center mb-6">
           <p className="text-yellow-800 font-semibold mb-2">Nessun abbonamento attivo</p>
           <p className="text-yellow-700 text-sm">
-            Scegli un piano per accedere a tutte le funzionalità
+            Clicca su "Attiva Abbonamento" per scegliere un piano
           </p>
         </div>
       )}
 
-      {availablePlans.length > 0 && (
+      {showPlans && availablePlans.length > 0 && (
         <div className="mt-6">
           <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
             {currentSubscription ? 'Cambia Piano' : 'Piani Disponibili'}
