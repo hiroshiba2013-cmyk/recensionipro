@@ -25,6 +25,7 @@ export interface BusinessData {
   pecEmail: string;
   phone: string;
   website?: string;
+  description?: string;
   billingStreet: string;
   billingStreetNumber: string;
   billingPostalCode: string;
@@ -278,6 +279,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           pec_email: data.pecEmail,
           phone: data.phone,
           website_url: data.website || null,
+          description: data.description || null,
           billing_street: data.billingStreet,
           billing_street_number: data.billingStreetNumber,
           billing_postal_code: data.billingPostalCode,

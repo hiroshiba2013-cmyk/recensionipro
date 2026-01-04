@@ -197,6 +197,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     pecEmail: '',
     phone: '',
     website: '',
+    description: '',
     billingStreet: '',
     billingStreetNumber: '',
     billingPostalCode: '',
@@ -214,7 +215,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     setCustomerForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleBusinessChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBusinessChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setBusinessForm(prev => ({ ...prev, [name]: value }));
   };
@@ -1337,6 +1338,24 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 placeholder="es. https://www.azienda.it"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                Descrizione Azienda
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                value={businessForm.description}
+                onChange={handleBusinessChange}
+                rows={4}
+                placeholder="Descrivi la tua azienda, i servizi offerti e cosa ti distingue dalla concorrenza..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
+              />
+              <p className="text-xs text-gray-600 mt-1">
+                Una buona descrizione aiuta i clienti a conoscerti meglio e migliora la tua visibilità
+              </p>
             </div>
 
             <div className="mb-3">
