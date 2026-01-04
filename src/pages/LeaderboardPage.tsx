@@ -388,7 +388,7 @@ export function LeaderboardPage() {
                 <div className="mt-8 bg-green-50 border-2 border-green-200 rounded-xl p-6">
                   <h3 className="text-lg font-bold text-gray-900 mb-3">Come Guadagnare Punti - Professionisti</h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    I professionisti guadagnano punti in base alle recensioni ricevute dai clienti.
+                    I professionisti guadagnano punti in base alle recensioni ricevute dai clienti e alle attività pubblicate.
                   </p>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-center gap-2">
@@ -410,6 +410,10 @@ export function LeaderboardPage() {
                     <li className="flex items-center gap-2">
                       <Star className="w-5 h-5 text-green-600" />
                       <span><strong>50 punti</strong> per recensione a 5 stelle ricevuta</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Award className="w-5 h-5 text-blue-600" />
+                      <span><strong>30 punti</strong> per ogni annuncio di lavoro pubblicato</span>
                     </li>
                   </ul>
 
