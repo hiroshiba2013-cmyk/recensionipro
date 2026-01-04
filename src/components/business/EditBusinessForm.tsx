@@ -88,6 +88,7 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
     office_city: '',
     office_province: '',
     website_url: '',
+    description: '',
   });
 
   useEffect(() => {
@@ -135,6 +136,7 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
           office_city: ownerData?.office_city || data.office_city || '',
           office_province: ownerData?.office_province || data.office_province || '',
           website_url: ownerData?.website_url || data.website_url || '',
+          description: ownerData?.description || '',
         });
       }
       setLoading(false);
@@ -173,6 +175,7 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
             ateco_code: formData.ateco_code,
             pec_email: formData.pec_email,
             website_url: formData.website_url,
+            description: formData.description,
             billing_street: formData.billing_street,
             billing_street_number: formData.billing_street_number,
             billing_postal_code: formData.billing_postal_code,
@@ -263,6 +266,7 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
         office_city: owner.office_city || business.office_city || '',
         office_province: owner.office_province || business.office_province || '',
         website_url: owner.website_url || business.website_url || '',
+        description: owner.description || '',
       });
     }
     setIsEditing(false);
@@ -299,45 +303,7 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
           </button>
         </div>
 
-        {owner && (
-          <>
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-4 border-b pb-2">
-                <User className="w-5 h-5 text-gray-600" />
-                <h3 className="text-lg font-bold text-gray-900">Dati Titolare</h3>
-              </div>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Nome</p>
-                  <p className="text-lg font-semibold text-gray-900">{owner.first_name || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Cognome</p>
-                  <p className="text-lg font-semibold text-gray-900">{owner.last_name || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Email</p>
-                  <p className="text-lg font-semibold text-gray-900">{owner.email || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Telefono</p>
-                  <p className="text-lg font-semibold text-gray-900">{owner.phone || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Codice Fiscale</p>
-                  <p className="text-lg font-semibold text-gray-900">{owner.tax_code || '-'}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 mb-4 border-b pb-2">
-              <Building2 className="w-5 h-5 text-gray-600" />
-              <h3 className="text-lg font-bold text-gray-900">Dati Azienda</h3>
-            </div>
-          </>
-        )}
-
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-6 mb-6">
           <div>
             <p className="text-sm text-gray-600 mb-1">Ragione Sociale</p>
             <p className="text-lg font-semibold text-gray-900">{owner?.company_name || business.name || '-'}</p>
@@ -386,6 +352,13 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
             <p className="text-lg font-semibold text-gray-900">{owner?.office_address || business.office_address || '-'}</p>
           </div>
         </div>
+
+        {owner?.description && (
+          <div className="border-t pt-6">
+            <p className="text-sm text-gray-600 mb-2">Descrizione Azienda</p>
+            <p className="text-base text-gray-900 leading-relaxed whitespace-pre-line">{owner.description}</p>
+          </div>
+        )}
       </div>
     );
   }
@@ -587,6 +560,20 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
               onChange={handleChange}
               placeholder="https://www.esempio.it"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Descrizione Azienda
+            </label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows={4}
+              placeholder="Descrivi la tua attività, i servizi offerti, i punti di forza..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             />
           </div>
 
