@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Edit, Save, X, Plus, Trash2 } from 'lucide-react';
+import { Users, Edit, Save, X, Plus, Trash2, TrendingUp, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { FamilyMemberAvatarUpload } from './FamilyMemberAvatarUpload';
 import { SearchableSelect } from '../common/SearchableSelect';
@@ -16,6 +16,20 @@ interface FamilyMember {
   resume_url: string | null;
 }
 
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price: number;
+  billing_period: 'monthly' | 'yearly';
+  max_persons: number;
+}
+
+interface Subscription {
+  id: string;
+  plan: SubscriptionPlan;
+  status: string;
+}
+
 interface EditFamilyMembersFormProps {
   customerId: string;
   onUpdate: () => void;
@@ -26,9 +40,13 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
   const [saving, setSaving] = useState(false);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
+  const [nextPlan, setNextPlan] = useState<SubscriptionPlan | null>(null);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   useEffect(() => {
     loadFamilyMembers();
+    loadSubscriptionData();
   }, [customerId]);
 
   const loadFamilyMembers = async () => {
@@ -45,9 +63,48 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
     setLoading(false);
   };
 
+  const loadSubscriptionData = async () => {
+    try {
+      const { data: subscriptionData } = await supabase
+        .from('subscriptions')
+        .select('id, status, plan:subscription_plans(id, name, price, billing_period, max_persons)')
+        .eq('customer_id', customerId)
+        .in('status', ['active', 'trial'])
+        .maybeSingle();
+
+      if (subscriptionData) {
+        setCurrentSubscription(subscriptionData as any);
+
+        const currentMaxPersons = (subscriptionData.plan as any).max_persons;
+        const billingPeriod = (subscriptionData.plan as any).billing_period;
+
+        const { data: nextPlanData } = await supabase
+          .from('subscription_plans')
+          .select('*')
+          .not('name', 'like', '%Business%')
+          .eq('billing_period', billingPeriod)
+          .gt('max_persons', currentMaxPersons)
+          .order('max_persons', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (nextPlanData) {
+          setNextPlan(nextPlanData);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading subscription data:', error);
+    }
+  };
+
   const handleAddMember = () => {
-    if (familyMembers.length >= 3) {
-      alert('Puoi aggiungere al massimo 3 membri della famiglia');
+    if (!currentSubscription) return;
+
+    const maxPersons = currentSubscription.plan.max_persons;
+    const totalPersons = familyMembers.length + 1;
+
+    if (totalPersons >= maxPersons) {
+      setShowUpgradePrompt(true);
       return;
     }
 
@@ -199,6 +256,44 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
     setIsEditing(false);
   };
 
+  const handleUpgradePlan = async () => {
+    if (!nextPlan || !currentSubscription) return;
+
+    try {
+      const endDate = new Date();
+      if (nextPlan.billing_period === 'monthly') {
+        endDate.setMonth(endDate.getMonth() + 1);
+      } else {
+        endDate.setFullYear(endDate.getFullYear() + 1);
+      }
+
+      const { error: updateError } = await supabase
+        .from('subscriptions')
+        .update({
+          plan_id: nextPlan.id,
+          end_date: endDate.toISOString(),
+        })
+        .eq('id', currentSubscription.id);
+
+      if (updateError) throw updateError;
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          subscription_expires_at: endDate.toISOString(),
+        })
+        .eq('id', customerId);
+
+      if (profileError) throw profileError;
+
+      alert('Piano aggiornato con successo! La pagina verrà ricaricata.');
+      window.location.reload();
+    } catch (error) {
+      console.error('Error upgrading plan:', error);
+      alert('Errore durante l\'aggiornamento del piano');
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-white rounded-xl shadow-md p-8 mb-8">
@@ -210,6 +305,10 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
   }
 
   if (!isEditing) {
+    const maxPersons = currentSubscription?.plan.max_persons || 1;
+    const totalPersons = familyMembers.length + 1;
+    const isAtLimit = totalPersons >= maxPersons;
+
     return (
       <div className="bg-white rounded-xl shadow-md p-8 mb-8">
         <div className="flex items-center justify-between mb-6">
@@ -218,8 +317,13 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Membri della Famiglia</h2>
               <p className="text-sm text-gray-600 mt-1">
-                {familyMembers.length}/3 membri aggiunti
+                {familyMembers.length}/{maxPersons - 1} membri aggiunti
               </p>
+              {currentSubscription && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Piano: {currentSubscription.plan.name} (fino a {maxPersons} persone totali)
+                </p>
+              )}
             </div>
           </div>
           <button
@@ -231,10 +335,50 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
           </button>
         </div>
 
+        {isAtLimit && nextPlan && (
+          <div className="mb-6 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                  Limite Piano Raggiunto
+                </h3>
+                <p className="text-gray-700 mb-4">
+                  Hai raggiunto il limite massimo di {maxPersons} persone totali per il tuo piano attuale.
+                  Per aggiungere altri membri della famiglia, effettua l'upgrade al piano superiore.
+                </p>
+                <div className="bg-white rounded-lg p-4 mb-4 border border-yellow-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="font-bold text-gray-900">{nextPlan.name}</p>
+                      <p className="text-sm text-gray-600">Fino a {nextPlan.max_persons} persone</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-blue-600">€{nextPlan.price.toFixed(2)}</p>
+                      <p className="text-xs text-gray-600">{nextPlan.billing_period === 'monthly' ? 'al mese' : 'all\'anno'}</p>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={handleUpgradePlan}
+                  className="w-full flex items-center justify-center gap-2 bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition-colors font-semibold"
+                >
+                  <TrendingUp className="w-5 h-5" />
+                  Passa a {nextPlan.name}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {familyMembers.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-gray-600 mb-2">Nessun membro della famiglia aggiunto</p>
-            <p className="text-sm text-gray-500">Puoi aggiungere fino a 3 membri</p>
+            <p className="text-sm text-gray-500">Puoi aggiungere fino a {maxPersons - 1} membri</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -286,12 +430,23 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
     );
   }
 
+  const maxPersons = currentSubscription?.plan.max_persons || 1;
+  const totalPersons = familyMembers.length + 1;
+  const isAtLimit = totalPersons >= maxPersons;
+
   return (
     <div className="bg-white rounded-xl shadow-md p-8 mb-8">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Users className="w-6 h-6 text-blue-600" />
-          <h2 className="text-2xl font-bold text-gray-900">Modifica Membri della Famiglia</h2>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Modifica Membri della Famiglia</h2>
+            {currentSubscription && (
+              <p className="text-xs text-gray-500 mt-1">
+                Piano: {currentSubscription.plan.name} (fino a {maxPersons} persone totali)
+              </p>
+            )}
+          </div>
         </div>
         <button
           onClick={handleCancel}
@@ -300,6 +455,56 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
           <X className="w-6 h-6" />
         </button>
       </div>
+
+      {showUpgradePrompt && nextPlan && (
+        <div className="mb-6 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-xl p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-white" />
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                Limite Piano Raggiunto
+              </h3>
+              <p className="text-gray-700 mb-4">
+                Hai raggiunto il limite massimo di {maxPersons} persone totali per il tuo piano attuale.
+                Per aggiungere altri membri della famiglia, effettua l'upgrade al piano superiore.
+              </p>
+              <div className="bg-white rounded-lg p-4 mb-4 border border-yellow-200">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="font-bold text-gray-900">{nextPlan.name}</p>
+                    <p className="text-sm text-gray-600">Fino a {nextPlan.max_persons} persone</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-blue-600">€{nextPlan.price.toFixed(2)}</p>
+                    <p className="text-xs text-gray-600">{nextPlan.billing_period === 'monthly' ? 'al mese' : 'all\'anno'}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleUpgradePlan}
+                  className="flex-1 flex items-center justify-center gap-2 bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition-colors font-semibold"
+                >
+                  <TrendingUp className="w-5 h-5" />
+                  Passa a {nextPlan.name}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowUpgradePrompt(false)}
+                  className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+                >
+                  Chiudi
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <div className="space-y-6 mb-6">
@@ -423,20 +628,34 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
           ))}
         </div>
 
-        {familyMembers.length < 3 ? (
+        {!isAtLimit ? (
           <button
             type="button"
             onClick={handleAddMember}
             className="flex items-center gap-2 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold mb-6 w-full"
           >
             <Plus className="w-5 h-5" />
-            Aggiungi Membro ({familyMembers.length}/3)
+            Aggiungi Membro ({familyMembers.length}/{maxPersons - 1})
           </button>
         ) : (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 text-center">
-            <p className="text-yellow-800 font-semibold">
-              Hai raggiunto il limite massimo di 3 membri della famiglia
-            </p>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-yellow-600" />
+              <div className="flex-1">
+                <p className="text-yellow-800 font-semibold">
+                  Limite piano raggiunto ({totalPersons}/{maxPersons} persone)
+                </p>
+                {nextPlan && (
+                  <button
+                    type="button"
+                    onClick={() => setShowUpgradePrompt(true)}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium mt-1 underline"
+                  >
+                    Passa a {nextPlan.name} per aggiungere più membri
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
