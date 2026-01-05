@@ -370,21 +370,49 @@ function AuthenticatedHomePage() {
                 business_categories(name)
               `)
               .in('id', topBusinessIds)
-          : { data: [] }
+          : supabase
+              .from('unclaimed_business_locations')
+              .select(`
+                id,
+                name,
+                city,
+                province,
+                address,
+                avatar_url,
+                category:business_categories(name)
+              `)
+              .limit(8)
       ]);
 
       if (jobsResult.data) setJobPostings(jobsResult.data);
       if (adsResult.data) setClassifiedAds(adsResult.data);
       if (productsResult.data) setProducts(productsResult.data);
 
-      if (businessesResult.data && topBusinessIds.length > 0) {
-        const businessIds = businessesResult.data.map((b: any) => b.id);
+      if (businessesResult.data && businessesResult.data.length > 0) {
+        const normalizedBusinesses = businessesResult.data.map((business: any) => {
+          if (business.city) {
+            return {
+              id: business.id,
+              name: business.name,
+              business_categories: business.category,
+              business_locations: [{
+                city: business.city,
+                province: business.province,
+                address: business.address,
+                avatar_url: business.avatar_url
+              }]
+            };
+          }
+          return business;
+        });
+
+        const businessIds = normalizedBusinesses.map((b: any) => b.id);
         const ratingsResult = await supabase.rpc('get_business_ratings', {
           business_ids: businessIds
         });
 
         if (ratingsResult.data) {
-          const businessesWithRatings = businessesResult.data.map((business: any) => {
+          const businessesWithRatings = normalizedBusinesses.map((business: any) => {
             const rating = ratingsResult.data.find((r: any) => r.business_id === business.id);
             return {
               ...business,

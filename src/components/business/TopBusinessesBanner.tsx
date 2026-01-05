@@ -33,8 +33,8 @@ export default function TopBusinessesBanner({ businesses }: TopBusinessesBannerP
           <TrendingUp className="w-6 h-6 text-yellow-600" />
         </div>
         <div>
-          <h2 className="text-3xl font-bold text-gray-900">Attività Più Recensite</h2>
-          <p className="text-gray-600">Le attività con il maggior numero di recensioni</p>
+          <h2 className="text-3xl font-bold text-gray-900">Attività in Evidenza</h2>
+          <p className="text-gray-600">Scopri le attività locali e lascia la tua recensione</p>
         </div>
       </div>
 
@@ -90,15 +90,23 @@ export default function TopBusinessesBanner({ businesses }: TopBusinessesBannerP
               )}
 
               <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                <div className="flex items-center gap-1">
-                  <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                  <span className="font-bold text-gray-900">
-                    {business.avg_rating > 0 ? business.avg_rating.toFixed(1) : 'N/A'}
-                  </span>
-                </div>
-                <div className="text-sm text-gray-600 font-medium">
-                  {business.review_count} {business.review_count === 1 ? 'recensione' : 'recensioni'}
-                </div>
+                {business.review_count > 0 ? (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                      <span className="font-bold text-gray-900">
+                        {business.avg_rating.toFixed(1)}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-600 font-medium">
+                      {business.review_count} {business.review_count === 1 ? 'recensione' : 'recensioni'}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-sm text-gray-500 italic w-full text-center">
+                    Nessuna recensione ancora
+                  </div>
+                )}
               </div>
             </div>
           </div>
