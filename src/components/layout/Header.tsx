@@ -94,55 +94,62 @@ export function Header() {
                 <nav className="hidden lg:flex items-center gap-4">
                   <a
                     href="/products"
-                    className="text-gray-700 hover:text-blue-600 transition-colors"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Prodotti"
                   >
                     <Package className="w-5 h-5" />
+                    <span className="text-sm">Prodotti</span>
                   </a>
                   <a
                     href="/discounts"
-                    className="text-gray-700 hover:text-orange-600 transition-colors"
+                    className="flex items-center gap-1 text-gray-700 hover:text-orange-600 transition-colors font-medium"
                     title="Sconti"
                   >
                     <Percent className="w-5 h-5" />
+                    <span className="text-sm">Sconti</span>
                   </a>
                   {profile.user_type === 'customer' && (
                     <a
                       href="/classified"
-                      className="text-gray-700 hover:text-blue-600 transition-colors"
+                      className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                       title="Annunci"
                     >
                       <Tag className="w-5 h-5" />
+                      <span className="text-sm">Annunci</span>
                     </a>
                   )}
                   <a
                     href="/jobs"
-                    className="text-gray-700 hover:text-blue-600 transition-colors"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Lavoro"
                   >
                     <Briefcase className="w-5 h-5" />
+                    <span className="text-sm">Lavoro</span>
                   </a>
                   <a
                     href="/leaderboard"
-                    className="text-gray-700 hover:text-blue-600 transition-colors"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Classifica"
                   >
                     <Trophy className="w-5 h-5" />
+                    <span className="text-sm">Classifica</span>
                   </a>
                   <a
                     href="/subscription"
-                    className="text-gray-700 hover:text-blue-600 transition-colors"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Abbonamenti"
                   >
                     <CreditCard className="w-5 h-5" />
+                    <span className="text-sm">Abbonamenti</span>
                   </a>
                   <ActiveProfileIndicator />
                   <a
                     href="/profile"
-                    className="text-gray-700 hover:text-blue-600 transition-colors"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Mio Profilo"
                   >
                     <User className="w-5 h-5" />
+                    <span className="text-sm">Profilo</span>
                   </a>
                 </nav>
               </>
