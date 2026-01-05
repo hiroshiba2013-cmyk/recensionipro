@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ProfileSelector } from '../components/profile/ProfileSelector';
 
 export function ProfileSelectionPage() {
-  const { profile, familyMembers, setActiveProfile, needsProfileSelection, loading } = useAuth();
+  const { profile, familyMembers, businessLocations, setActiveProfile, needsProfileSelection, loading } = useAuth();
 
   useEffect(() => {
     if (!loading && !needsProfileSelection) {
@@ -47,6 +47,8 @@ export function ProfileSelectionPage() {
     <ProfileSelector
       ownerProfile={ownerProfile}
       familyMembers={familyMembers}
+      businessLocations={businessLocations}
+      userType={profile.user_type}
       onSelectProfile={handleSelectProfile}
     />
   );

@@ -38,6 +38,15 @@ export interface BusinessData {
   officeProvince?: string;
 }
 
+export interface BusinessLocation {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  province: string;
+  avatar_url?: string | null;
+}
+
 export interface ActiveProfile {
   id: string;
   name: string;
@@ -51,6 +60,7 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   familyMembers: FamilyMember[];
+  businessLocations: BusinessLocation[];
   activeProfile: ActiveProfile | null;
   needsProfileSelection: boolean;
   signUpCustomer: (email: string, password: string, data: CustomerData) => Promise<void>;
@@ -68,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [activeProfile, setActiveProfileState] = useState<ActiveProfile | null>(null);
   const [needsProfileSelection, setNeedsProfileSelection] = useState(false);
 
@@ -89,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setProfile(null);
           setFamilyMembers([]);
+          setBusinessLocations([]);
           setActiveProfileState(null);
           setNeedsProfileSelection(false);
           setLoading(false);
@@ -112,6 +124,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (data && data.user_type === 'customer') {
         await loadFamilyMembersInternal(userId, data);
+      } else if (data && data.user_type === 'business') {
+        await loadBusinessLocationsInternal(userId, data);
       } else {
         const ownerProfile: ActiveProfile = {
           id: userId,
@@ -193,6 +207,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .select('*')
       .eq('customer_id', user.id);
     setFamilyMembers(members || []);
+  };
+
+  const loadBusinessLocationsInternal = async (userId: string, profileData: Profile) => {
+    try {
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('owner_id', userId)
+        .maybeSingle();
+
+      if (!business) {
+        const ownerProfile: ActiveProfile = {
+          id: userId,
+          name: profileData.full_name,
+          nickname: (profileData as any)?.nickname,
+          avatarUrl: (profileData as any)?.avatar_url,
+          isOwner: true,
+        };
+        setActiveProfileState(ownerProfile);
+        setLoading(false);
+        return;
+      }
+
+      const { data: locations } = await supabase
+        .from('business_locations')
+        .select('id, name, address, city, province, avatar_url')
+        .eq('business_id', business.id);
+
+      setBusinessLocations(locations || []);
+
+      const savedLocationId = localStorage.getItem(`activeLocation_${userId}`);
+      const savedIsOwner = localStorage.getItem(`activeLocationIsOwner_${userId}`) === 'true';
+
+      if (savedLocationId) {
+        if (savedIsOwner) {
+          setActiveProfileState({
+            id: userId,
+            name: profileData.full_name,
+            nickname: (profileData as any)?.nickname,
+            avatarUrl: (profileData as any)?.avatar_url,
+            isOwner: true,
+          });
+          setNeedsProfileSelection(false);
+        } else {
+          const location = locations?.find(l => l.id === savedLocationId);
+          if (location) {
+            setActiveProfileState({
+              id: location.id,
+              name: location.name,
+              nickname: `${location.city}, ${location.province}`,
+              avatarUrl: location.avatar_url,
+              isOwner: false,
+            });
+            setNeedsProfileSelection(false);
+          } else {
+            setNeedsProfileSelection((locations?.length || 0) > 0);
+          }
+        }
+      } else {
+        if ((locations?.length || 0) > 0) {
+          setNeedsProfileSelection(true);
+        } else {
+          setActiveProfileState({
+            id: userId,
+            name: profileData.full_name,
+            nickname: (profileData as any)?.nickname,
+            avatarUrl: (profileData as any)?.avatar_url,
+            isOwner: true,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error loading business locations:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const signUpCustomer = async (email: string, password: string, data: CustomerData) => {
@@ -313,6 +403,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user?.id) {
       localStorage.removeItem(`activeProfile_${user.id}`);
       localStorage.removeItem(`activeProfileIsOwner_${user.id}`);
+      localStorage.removeItem(`activeLocation_${user.id}`);
+      localStorage.removeItem(`activeLocationIsOwner_${user.id}`);
     }
   };
 
@@ -329,21 +421,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       setActiveProfileState(ownerProfile);
     } else {
-      const member = familyMembers.find(m => m.id === profileId);
-      if (member) {
-        const memberProfile: ActiveProfile = {
-          id: member.id,
-          name: `${member.first_name} ${member.last_name}`,
-          nickname: member.nickname,
-          avatarUrl: member.avatar_url,
-          isOwner: false,
-        };
-        setActiveProfileState(memberProfile);
+      if (profile.user_type === 'customer') {
+        const member = familyMembers.find(m => m.id === profileId);
+        if (member) {
+          const memberProfile: ActiveProfile = {
+            id: member.id,
+            name: `${member.first_name} ${member.last_name}`,
+            nickname: member.nickname,
+            avatarUrl: member.avatar_url,
+            isOwner: false,
+          };
+          setActiveProfileState(memberProfile);
+        }
+        localStorage.setItem(`activeProfile_${user.id}`, profileId);
+        localStorage.setItem(`activeProfileIsOwner_${user.id}`, String(isOwner));
+      } else if (profile.user_type === 'business') {
+        const location = businessLocations.find(l => l.id === profileId);
+        if (location) {
+          const locationProfile: ActiveProfile = {
+            id: location.id,
+            name: location.name,
+            nickname: `${location.city}, ${location.province}`,
+            avatarUrl: location.avatar_url,
+            isOwner: false,
+          };
+          setActiveProfileState(locationProfile);
+        }
+        localStorage.setItem(`activeLocation_${user.id}`, profileId);
+        localStorage.setItem(`activeLocationIsOwner_${user.id}`, String(isOwner));
       }
     }
 
-    localStorage.setItem(`activeProfile_${user.id}`, profileId);
-    localStorage.setItem(`activeProfileIsOwner_${user.id}`, String(isOwner));
     setNeedsProfileSelection(false);
   };
 
@@ -352,6 +460,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     profile,
     loading,
     familyMembers,
+    businessLocations,
     activeProfile,
     needsProfileSelection,
     signUpCustomer,

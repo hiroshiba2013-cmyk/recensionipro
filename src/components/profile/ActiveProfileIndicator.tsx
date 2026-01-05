@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { UserCircle2, ChevronDown } from 'lucide-react';
+import { UserCircle2, ChevronDown, Building2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 export function ActiveProfileIndicator() {
-  const { profile, activeProfile, familyMembers, setActiveProfile } = useAuth();
+  const { profile, activeProfile, familyMembers, businessLocations, setActiveProfile } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -20,7 +20,14 @@ export function ActiveProfileIndicator() {
 
   if (!activeProfile || !profile) return null;
 
-  if (profile.user_type === 'business' || familyMembers.length === 0) {
+  const isCustomer = profile.user_type === 'customer';
+  const isBusiness = profile.user_type === 'business';
+
+  if (isCustomer && familyMembers.length === 0) {
+    return null;
+  }
+
+  if (isBusiness && businessLocations.length === 0) {
     return null;
   }
 
@@ -32,13 +39,19 @@ export function ActiveProfileIndicator() {
       avatarUrl: (profile as any)?.avatar_url,
       isOwner: true,
     },
-    ...familyMembers.map(member => ({
+    ...(isCustomer ? familyMembers.map(member => ({
       id: member.id,
       name: `${member.first_name} ${member.last_name}`,
       nickname: member.nickname,
       avatarUrl: member.avatar_url,
       isOwner: false,
-    })),
+    })) : businessLocations.map(location => ({
+      id: location.id,
+      name: location.name,
+      nickname: `${location.city}, ${location.province}`,
+      avatarUrl: location.avatar_url,
+      isOwner: false,
+    }))),
   ];
 
   return (
@@ -55,7 +68,11 @@ export function ActiveProfileIndicator() {
           />
         ) : (
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-            <UserCircle2 className="w-6 h-6 text-white" />
+            {isBusiness && !activeProfile.isOwner ? (
+              <Building2 className="w-6 h-6 text-white" />
+            ) : (
+              <UserCircle2 className="w-6 h-6 text-white" />
+            )}
           </div>
         )}
         <div className="hidden md:block text-left">
@@ -69,7 +86,9 @@ export function ActiveProfileIndicator() {
       {showDropdown && (
         <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
           <div className="px-4 py-2 border-b border-gray-100">
-            <p className="text-xs text-gray-500 font-semibold uppercase">Cambia Profilo</p>
+            <p className="text-xs text-gray-500 font-semibold uppercase">
+              {isCustomer ? 'Cambia Profilo' : 'Cambia Sede'}
+            </p>
           </div>
           {profiles.map((prof) => (
             <button
@@ -90,7 +109,11 @@ export function ActiveProfileIndicator() {
                 />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center flex-shrink-0">
-                  <UserCircle2 className="w-7 h-7 text-white" />
+                  {isBusiness && !prof.isOwner ? (
+                    <Building2 className="w-7 h-7 text-white" />
+                  ) : (
+                    <UserCircle2 className="w-7 h-7 text-white" />
+                  )}
                 </div>
               )}
               <div className="flex-1 text-left">
