@@ -420,6 +420,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isOwner: true,
       };
       setActiveProfileState(ownerProfile);
+
+      if (profile.user_type === 'customer') {
+        localStorage.setItem(`activeProfile_${user.id}`, user.id);
+        localStorage.setItem(`activeProfileIsOwner_${user.id}`, 'true');
+      } else if (profile.user_type === 'business') {
+        localStorage.setItem(`activeLocation_${user.id}`, user.id);
+        localStorage.setItem(`activeLocationIsOwner_${user.id}`, 'true');
+      }
     } else {
       if (profile.user_type === 'customer') {
         const member = familyMembers.find(m => m.id === profileId);
