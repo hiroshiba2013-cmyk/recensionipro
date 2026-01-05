@@ -4,6 +4,7 @@ import { AdvancedSearch } from '../components/search/AdvancedSearch';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from '../components/Router';
+import TopBusinessesBanner from '../components/business/TopBusinessesBanner';
 
 export function HomePage() {
   const { user } = useAuth();
@@ -281,20 +282,47 @@ function LandingPage() {
 }
 
 function AuthenticatedHomePage() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [jobPostings, setJobPostings] = useState<any[]>([]);
   const [classifiedAds, setClassifiedAds] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [topBusinesses, setTopBusinesses] = useState<any[]>([]);
+  const [userType, setUserType] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadHomeData();
-  }, []);
+  }, [user]);
 
   const loadHomeData = async () => {
     try {
       setLoading(true);
+
+      const profileResult = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('id', user?.id)
+        .single();
+
+      if (profileResult.data) {
+        setUserType(profileResult.data.user_type);
+      }
+
+      const reviewStatsResult = await supabase
+        .from('reviews')
+        .select('business_id')
+        .order('created_at', { ascending: false });
+
+      const businessCounts = reviewStatsResult.data?.reduce((acc: any, review: any) => {
+        acc[review.business_id] = (acc[review.business_id] || 0) + 1;
+        return acc;
+      }, {});
+
+      const topBusinessIds = Object.entries(businessCounts || {})
+        .sort(([, a]: any, [, b]: any) => b - a)
+        .slice(0, 8)
+        .map(([id]) => id);
 
       const [jobsResult, adsResult, productsResult, businessesResult] = await Promise.all([
         supabase
@@ -332,21 +360,43 @@ function AuthenticatedHomePage() {
           .order('created_at', { ascending: false })
           .limit(6),
 
-        supabase
-          .from('businesses')
-          .select(`
-            id,
-            name,
-            business_locations(city, province, address),
-            business_categories(name)
-          `)
-          .limit(4)
+        topBusinessIds.length > 0
+          ? supabase
+              .from('businesses')
+              .select(`
+                id,
+                name,
+                business_locations(city, province, address, avatar_url),
+                business_categories(name)
+              `)
+              .in('id', topBusinessIds)
+          : { data: [] }
       ]);
 
       if (jobsResult.data) setJobPostings(jobsResult.data);
       if (adsResult.data) setClassifiedAds(adsResult.data);
       if (productsResult.data) setProducts(productsResult.data);
-      if (businessesResult.data) setTopBusinesses(businessesResult.data);
+
+      if (businessesResult.data && topBusinessIds.length > 0) {
+        const businessIds = businessesResult.data.map((b: any) => b.id);
+        const ratingsResult = await supabase.rpc('get_business_ratings', {
+          business_ids: businessIds
+        });
+
+        if (ratingsResult.data) {
+          const businessesWithRatings = businessesResult.data.map((business: any) => {
+            const rating = ratingsResult.data.find((r: any) => r.business_id === business.id);
+            return {
+              ...business,
+              avg_rating: rating?.avg_rating || 0,
+              review_count: rating?.review_count || 0
+            };
+          });
+
+          businessesWithRatings.sort((a: any, b: any) => b.review_count - a.review_count);
+          setTopBusinesses(businessesWithRatings);
+        }
+      }
     } catch (error) {
       console.error('Error loading home data:', error);
     } finally {
@@ -413,6 +463,10 @@ function AuthenticatedHomePage() {
           </div>
         ) : (
           <>
+            {userType === 'customer' && topBusinesses.length > 0 && (
+              <TopBusinessesBanner businesses={topBusinesses} />
+            )}
+
             {jobPostings.length > 0 && (
               <section className="mb-12">
                 <div className="flex items-center justify-between mb-6">
