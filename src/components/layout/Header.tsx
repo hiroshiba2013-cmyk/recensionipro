@@ -34,8 +34,8 @@ export function Header() {
     <>
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <a href="/" className="flex items-center">
+          <div className="flex items-center h-16">
+            <a href="/" className="flex items-center flex-shrink-0">
               <img
                 src="/chatgpt_image_4_dic_2025,_22_51_45.png"
                 alt="TrovaFacile"
@@ -43,9 +43,9 @@ export function Header() {
               />
             </a>
 
-            <nav className="hidden lg:flex items-center gap-4">
-              {user && profile ? (
-                <>
+            {user && profile ? (
+              <>
+                <nav className="hidden lg:flex items-center gap-4 ml-6">
                   <a
                     href="/"
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
@@ -56,11 +56,42 @@ export function Header() {
                   </a>
                   <a
                     href="/solidarity"
-                    className="text-gray-700 hover:text-green-600 transition-colors"
+                    className="flex items-center gap-1 text-gray-700 hover:text-green-600 transition-colors font-medium"
                     title="Solidarietà"
                   >
                     <Heart className="w-5 h-5" />
+                    <span className="text-sm">Solidarietà</span>
                   </a>
+                  <a
+                    href="/messages"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    title="Messaggi"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    <span className="text-sm">Messaggi</span>
+                  </a>
+                  <NotificationBell />
+                  <a
+                    href="/contact"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    title="Contatti"
+                  >
+                    <Phone className="w-5 h-5" />
+                    <span className="text-sm">Contatti</span>
+                  </a>
+                  <a
+                    href="/rules"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    title="Regolamento"
+                  >
+                    <FileText className="w-5 h-5" />
+                    <span className="text-sm">Regolamento</span>
+                  </a>
+                </nav>
+
+                <div className="flex-1"></div>
+
+                <nav className="hidden lg:flex items-center gap-4">
                   <a
                     href="/products"
                     className="text-gray-700 hover:text-blue-600 transition-colors"
@@ -99,28 +130,6 @@ export function Header() {
                     <Trophy className="w-5 h-5" />
                   </a>
                   <a
-                    href="/messages"
-                    className="text-gray-700 hover:text-blue-600 transition-colors"
-                    title="Messaggi"
-                  >
-                    <MessageCircle className="w-5 h-5" />
-                  </a>
-                  <NotificationBell />
-                  <a
-                    href="/contact"
-                    className="text-gray-700 hover:text-blue-600 transition-colors"
-                    title="Contatti"
-                  >
-                    <Phone className="w-5 h-5" />
-                  </a>
-                  <a
-                    href="/rules"
-                    className="text-gray-700 hover:text-blue-600 transition-colors"
-                    title="Regolamento"
-                  >
-                    <FileText className="w-5 h-5" />
-                  </a>
-                  <a
                     href="/subscription"
                     className="text-gray-700 hover:text-blue-600 transition-colors"
                     title="Abbonamenti"
@@ -135,9 +144,12 @@ export function Header() {
                   >
                     <User className="w-5 h-5" />
                   </a>
-                </>
-              ) : (
-                <>
+                </nav>
+              </>
+            ) : (
+              <>
+                <div className="flex-1"></div>
+                <nav className="hidden lg:flex items-center gap-4">
                   <a
                     href="/solidarity"
                     className="flex items-center gap-2 text-gray-700 hover:text-green-600 transition-colors font-medium"
@@ -175,13 +187,13 @@ export function Header() {
                   >
                     Accedi
                   </button>
-                </>
-              )}
-            </nav>
+                </nav>
+              </>
+            )}
 
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="lg:hidden text-gray-700 hover:text-blue-600"
+              className="lg:hidden text-gray-700 hover:text-blue-600 ml-auto"
             >
               {showMobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
