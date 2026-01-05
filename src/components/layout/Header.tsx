@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle } from 'lucide-react';
+import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle, Heart } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
@@ -45,47 +45,55 @@ export function Header() {
 
             {user && profile ? (
               <>
-                <nav className="hidden lg:flex items-center gap-2 ml-4">
+                <nav className="hidden lg:flex items-center gap-3 ml-6">
                   <a
                     href="/"
-                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
                     title="Home"
                   >
                     <Home className="w-4 h-4" />
-                    <span className="text-xs">Home</span>
+                    <span className="text-sm">Home</span>
                   </a>
                   <a
                     href="/messages"
-                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
                     title="Messaggi"
                   >
                     <MessageCircle className="w-4 h-4" />
-                    <span className="text-xs">Messaggi</span>
+                    <span className="text-sm">Messaggi</span>
                   </a>
                   <NotificationBell />
                   <a
                     href="/contact"
-                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
                     title="Contatti"
                   >
                     <Phone className="w-4 h-4" />
-                    <span className="text-xs">Contatti</span>
+                    <span className="text-sm">Contatti</span>
+                  </a>
+                  <a
+                    href="/solidarity"
+                    className="flex items-center gap-1 text-gray-700 hover:text-pink-600 transition-colors font-medium px-2"
+                    title="Solidarietà"
+                  >
+                    <Heart className="w-4 h-4" />
+                    <span className="text-sm">Solidarietà</span>
                   </a>
                   <a
                     href="/subscription"
-                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
                     title="Abbonamenti"
                   >
                     <CreditCard className="w-4 h-4" />
-                    <span className="text-xs">Piani</span>
+                    <span className="text-sm">Piani</span>
                   </a>
                   <a
                     href="/rules"
-                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
                     title="Regolamento"
                   >
                     <FileText className="w-4 h-4" />
-                    <span className="text-xs">Regole</span>
+                    <span className="text-sm">Regole</span>
                   </a>
                 </nav>
 
@@ -106,34 +114,41 @@ export function Header() {
             ) : (
               <>
                 <div className="flex-1"></div>
-                <nav className="hidden lg:flex items-center gap-2">
+                <nav className="hidden lg:flex items-center gap-4">
                   <a
                     href="/contact"
-                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
                   >
                     <Phone className="w-4 h-4" />
-                    <span className="text-xs">Contatti</span>
+                    <span className="text-sm">Contatti</span>
+                  </a>
+                  <a
+                    href="/solidarity"
+                    className="flex items-center gap-1 text-gray-700 hover:text-pink-600 transition-colors font-medium px-2"
+                  >
+                    <Heart className="w-4 h-4" />
+                    <span className="text-sm">Solidarietà</span>
                   </a>
                   <a
                     href="/subscription"
-                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
                   >
                     <CreditCard className="w-4 h-4" />
-                    <span className="text-xs">Piani</span>
+                    <span className="text-sm">Piani</span>
                   </a>
                   <a
                     href="/rules"
-                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
                   >
                     <FileText className="w-4 h-4" />
-                    <span className="text-xs">Regole</span>
+                    <span className="text-sm">Regole</span>
                   </a>
                   <button
                     onClick={() => {
                       setAuthMode('login');
                       setShowAuthModal(true);
                     }}
-                    className="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition-colors text-xs"
+                    className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium ml-2"
                   >
                     Accedi
                   </button>
@@ -179,6 +194,14 @@ export function Header() {
                       <span>Contatti</span>
                     </a>
                     <a
+                      href="/solidarity"
+                      className="flex items-center gap-2 text-gray-700 hover:text-pink-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Heart className="w-5 h-5" />
+                      <span>Solidarietà</span>
+                    </a>
+                    <a
                       href="/subscription"
                       className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                       onClick={() => setShowMobileMenu(false)}
@@ -212,6 +235,14 @@ export function Header() {
                     >
                       <Phone className="w-5 h-5" />
                       <span>Contatti</span>
+                    </a>
+                    <a
+                      href="/solidarity"
+                      className="flex items-center gap-2 text-gray-700 hover:text-pink-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Heart className="w-5 h-5" />
+                      <span>Solidarietà</span>
                     </a>
                     <a
                       href="/subscription"
