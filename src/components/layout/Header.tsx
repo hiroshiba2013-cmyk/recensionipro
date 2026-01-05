@@ -45,152 +45,152 @@ export function Header() {
 
             {user && profile ? (
               <>
-                <nav className="hidden lg:flex items-center gap-3 ml-6">
+                <nav className="hidden lg:flex items-center gap-2 ml-4">
                   <a
                     href="/"
-                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Home"
                   >
                     <Home className="w-4 h-4" />
-                    <span className="text-sm">Home</span>
+                    <span className="text-xs">Home</span>
                   </a>
                   <a
                     href="/solidarity"
-                    className="flex items-center gap-1 text-gray-700 hover:text-green-600 transition-colors font-medium"
+                    className="flex items-center gap-0.5 text-gray-700 hover:text-green-600 transition-colors font-medium"
                     title="Solidarietà"
                   >
                     <Heart className="w-4 h-4" />
-                    <span className="text-sm">Solidarietà</span>
+                    <span className="text-xs">Solidarietà</span>
                   </a>
                   <a
                     href="/messages"
-                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Messaggi"
                   >
                     <MessageCircle className="w-4 h-4" />
-                    <span className="text-sm">Messaggi</span>
+                    <span className="text-xs">Messaggi</span>
                   </a>
                   <NotificationBell />
                   <a
                     href="/contact"
-                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Contatti"
                   >
                     <Phone className="w-4 h-4" />
-                    <span className="text-sm">Contatti</span>
+                    <span className="text-xs">Contatti</span>
                   </a>
                   <a
                     href="/rules"
-                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Regolamento"
                   >
                     <FileText className="w-4 h-4" />
-                    <span className="text-sm">Regolamento</span>
+                    <span className="text-xs">Regole</span>
                   </a>
                 </nav>
 
                 <div className="flex-1"></div>
 
-                <nav className="hidden lg:flex items-center gap-3">
+                <nav className="hidden lg:flex items-center gap-2">
                   <a
                     href="/products"
-                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Prodotti"
                   >
                     <Package className="w-4 h-4" />
-                    <span className="text-sm">Prodotti</span>
+                    <span className="text-xs">Prodotti</span>
                   </a>
                   <a
                     href="/discounts"
-                    className="flex items-center gap-1 text-gray-700 hover:text-orange-600 transition-colors font-medium"
+                    className="flex items-center gap-0.5 text-gray-700 hover:text-orange-600 transition-colors font-medium"
                     title="Sconti"
                   >
                     <Percent className="w-4 h-4" />
-                    <span className="text-sm">Sconti</span>
+                    <span className="text-xs">Sconti</span>
                   </a>
                   {profile.user_type === 'customer' && (
                     <a
                       href="/classified"
-                      className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                       title="Annunci"
                     >
                       <Tag className="w-4 h-4" />
-                      <span className="text-sm">Annunci</span>
+                      <span className="text-xs">Annunci</span>
                     </a>
                   )}
                   <a
                     href="/jobs"
-                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Lavoro"
                   >
                     <Briefcase className="w-4 h-4" />
-                    <span className="text-sm">Lavoro</span>
+                    <span className="text-xs">Lavoro</span>
                   </a>
                   <a
                     href="/leaderboard"
-                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Classifica"
                   >
                     <Trophy className="w-4 h-4" />
-                    <span className="text-sm">Classifica</span>
+                    <span className="text-xs">Punti</span>
                   </a>
                   <a
                     href="/subscription"
-                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Abbonamenti"
                   >
                     <CreditCard className="w-4 h-4" />
-                    <span className="text-sm">Abbonamenti</span>
+                    <span className="text-xs">Piani</span>
                   </a>
                   <ActiveProfileIndicator />
                   <a
                     href="/profile"
-                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Mio Profilo"
                   >
                     <User className="w-4 h-4" />
-                    <span className="text-sm">Profilo</span>
+                    <span className="text-xs">Profilo</span>
                   </a>
                 </nav>
               </>
             ) : (
               <>
                 <div className="flex-1"></div>
-                <nav className="hidden lg:flex items-center gap-3">
+                <nav className="hidden lg:flex items-center gap-2">
                   <a
                     href="/solidarity"
-                    className="flex items-center gap-1 text-gray-700 hover:text-green-600 transition-colors font-medium"
+                    className="flex items-center gap-0.5 text-gray-700 hover:text-green-600 transition-colors font-medium"
                   >
                     <Heart className="w-4 h-4" />
-                    <span className="text-sm">Solidarietà</span>
+                    <span className="text-xs">Solidarietà</span>
                   </a>
                   <a
                     href="/contact"
-                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                   >
                     <Phone className="w-4 h-4" />
-                    <span className="text-sm">Contatti</span>
+                    <span className="text-xs">Contatti</span>
                   </a>
                   <a
                     href="/rules"
-                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                   >
                     <FileText className="w-4 h-4" />
-                    <span className="text-sm">Regolamento</span>
+                    <span className="text-xs">Regole</span>
                   </a>
                   <a
                     href="/subscription"
-                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                   >
                     <CreditCard className="w-4 h-4" />
-                    <span className="text-sm">Abbonamenti</span>
+                    <span className="text-xs">Piani</span>
                   </a>
                   <button
                     onClick={() => {
                       setAuthMode('login');
                       setShowAuthModal(true);
                     }}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    className="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition-colors text-xs"
                   >
                     Accedi
                   </button>
