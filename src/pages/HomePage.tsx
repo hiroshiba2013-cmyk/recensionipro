@@ -19,6 +19,55 @@ export function HomePage() {
 function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
+      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-16 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center gap-2 md:gap-6 lg:gap-8 py-3">
+            <a
+              href="/products"
+              className="flex flex-col items-center gap-1 px-3 md:px-4 py-2 rounded-lg hover:bg-blue-50 transition-all group"
+            >
+              <Package className="w-7 h-7 md:w-8 md:h-8 text-blue-600 group-hover:scale-110 transition-transform" />
+              <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-blue-600">Prodotti</span>
+            </a>
+            <a
+              href="/discounts"
+              className="flex flex-col items-center gap-1 px-3 md:px-4 py-2 rounded-lg hover:bg-orange-50 transition-all group"
+            >
+              <Percent className="w-7 h-7 md:w-8 md:h-8 text-orange-600 group-hover:scale-110 transition-transform" />
+              <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-orange-600">Sconti</span>
+            </a>
+            <a
+              href="/classified-ads"
+              className="flex flex-col items-center gap-1 px-3 md:px-4 py-2 rounded-lg hover:bg-green-50 transition-all group"
+            >
+              <Tag className="w-7 h-7 md:w-8 md:h-8 text-green-600 group-hover:scale-110 transition-transform" />
+              <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-green-600">Annunci</span>
+            </a>
+            <a
+              href="/jobs"
+              className="flex flex-col items-center gap-1 px-3 md:px-4 py-2 rounded-lg hover:bg-purple-50 transition-all group"
+            >
+              <Briefcase className="w-7 h-7 md:w-8 md:h-8 text-purple-600 group-hover:scale-110 transition-transform" />
+              <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-purple-600">Lavoro</span>
+            </a>
+            <a
+              href="/solidarity"
+              className="flex flex-col items-center gap-1 px-3 md:px-4 py-2 rounded-lg hover:bg-pink-50 transition-all group"
+            >
+              <Heart className="w-7 h-7 md:w-8 md:h-8 text-pink-600 group-hover:scale-110 transition-transform" />
+              <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-pink-600">Solidarietà</span>
+            </a>
+            <a
+              href="/leaderboard"
+              className="flex flex-col items-center gap-1 px-3 md:px-4 py-2 rounded-lg hover:bg-yellow-50 transition-all group"
+            >
+              <Award className="w-7 h-7 md:w-8 md:h-8 text-yellow-600 group-hover:scale-110 transition-transform" />
+              <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-yellow-600">Classifica</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
           <div className="text-center">
