@@ -472,6 +472,20 @@ function AuthenticatedHomePage() {
               <Briefcase className="w-7 h-7 md:w-8 md:h-8 text-purple-600 group-hover:scale-110 transition-transform" />
               <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-purple-600">Lavoro</span>
             </a>
+            <a
+              href="/solidarity"
+              className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-pink-50 transition-all group"
+            >
+              <Heart className="w-7 h-7 md:w-8 md:h-8 text-pink-600 group-hover:scale-110 transition-transform" />
+              <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-pink-600">Solidarietà</span>
+            </a>
+            <a
+              href="/leaderboard"
+              className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-yellow-50 transition-all group"
+            >
+              <Award className="w-7 h-7 md:w-8 md:h-8 text-yellow-600 group-hover:scale-110 transition-transform" />
+              <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-yellow-600">Classifica</span>
+            </a>
           </div>
         </div>
       </div>

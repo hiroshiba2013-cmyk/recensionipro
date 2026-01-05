@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Briefcase, Trophy, Package, MessageCircle, Tag, Heart, Menu, X, Home, Phone, FileText, CreditCard, Percent } from 'lucide-react';
+import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
@@ -55,14 +55,6 @@ export function Header() {
                     <span className="text-xs">Home</span>
                   </a>
                   <a
-                    href="/solidarity"
-                    className="flex items-center gap-0.5 text-gray-700 hover:text-green-600 transition-colors font-medium"
-                    title="Solidarietà"
-                  >
-                    <Heart className="w-4 h-4" />
-                    <span className="text-xs">Solidarietà</span>
-                  </a>
-                  <a
                     href="/messages"
                     className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Messaggi"
@@ -80,6 +72,14 @@ export function Header() {
                     <span className="text-xs">Contatti</span>
                   </a>
                   <a
+                    href="/subscription"
+                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    title="Abbonamenti"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    <span className="text-xs">Piani</span>
+                  </a>
+                  <a
                     href="/rules"
                     className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Regolamento"
@@ -92,22 +92,6 @@ export function Header() {
                 <div className="flex-1"></div>
 
                 <nav className="hidden lg:flex items-center gap-2">
-                  <a
-                    href="/leaderboard"
-                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                    title="Classifica"
-                  >
-                    <Trophy className="w-4 h-4" />
-                    <span className="text-xs">Punti</span>
-                  </a>
-                  <a
-                    href="/subscription"
-                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                    title="Abbonamenti"
-                  >
-                    <CreditCard className="w-4 h-4" />
-                    <span className="text-xs">Piani</span>
-                  </a>
                   <ActiveProfileIndicator />
                   <a
                     href="/profile"
@@ -124,13 +108,6 @@ export function Header() {
                 <div className="flex-1"></div>
                 <nav className="hidden lg:flex items-center gap-2">
                   <a
-                    href="/solidarity"
-                    className="flex items-center gap-0.5 text-gray-700 hover:text-green-600 transition-colors font-medium"
-                  >
-                    <Heart className="w-4 h-4" />
-                    <span className="text-xs">Solidarietà</span>
-                  </a>
-                  <a
                     href="/contact"
                     className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                   >
@@ -138,18 +115,18 @@ export function Header() {
                     <span className="text-xs">Contatti</span>
                   </a>
                   <a
-                    href="/rules"
-                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                  >
-                    <FileText className="w-4 h-4" />
-                    <span className="text-xs">Regole</span>
-                  </a>
-                  <a
                     href="/subscription"
                     className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                   >
                     <CreditCard className="w-4 h-4" />
                     <span className="text-xs">Piani</span>
+                  </a>
+                  <a
+                    href="/rules"
+                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span className="text-xs">Regole</span>
                   </a>
                   <button
                     onClick={() => {
@@ -186,22 +163,6 @@ export function Header() {
                       <span>Home</span>
                     </a>
                     <a
-                      href="/solidarity"
-                      className="flex items-center gap-2 text-gray-700 hover:text-green-600 transition-colors font-medium"
-                      onClick={() => setShowMobileMenu(false)}
-                    >
-                      <Heart className="w-5 h-5" />
-                      <span>Solidarietà</span>
-                    </a>
-                    <a
-                      href="/leaderboard"
-                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                      onClick={() => setShowMobileMenu(false)}
-                    >
-                      <Trophy className="w-5 h-5" />
-                      <span>Classifica</span>
-                    </a>
-                    <a
                       href="/messages"
                       className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                       onClick={() => setShowMobileMenu(false)}
@@ -218,20 +179,20 @@ export function Header() {
                       <span>Contatti</span>
                     </a>
                     <a
-                      href="/rules"
-                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                      onClick={() => setShowMobileMenu(false)}
-                    >
-                      <FileText className="w-5 h-5" />
-                      <span>Regolamento</span>
-                    </a>
-                    <a
                       href="/subscription"
                       className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                       onClick={() => setShowMobileMenu(false)}
                     >
                       <CreditCard className="w-5 h-5" />
                       <span>Abbonamenti</span>
+                    </a>
+                    <a
+                      href="/rules"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <FileText className="w-5 h-5" />
+                      <span>Regolamento</span>
                     </a>
                     <a
                       href="/profile"
@@ -245,14 +206,6 @@ export function Header() {
                 ) : (
                   <>
                     <a
-                      href="/solidarity"
-                      className="flex items-center gap-2 text-gray-700 hover:text-green-600 transition-colors font-medium"
-                      onClick={() => setShowMobileMenu(false)}
-                    >
-                      <Heart className="w-5 h-5" />
-                      <span>Solidarietà</span>
-                    </a>
-                    <a
                       href="/contact"
                       className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                       onClick={() => setShowMobileMenu(false)}
@@ -261,20 +214,20 @@ export function Header() {
                       <span>Contatti</span>
                     </a>
                     <a
-                      href="/rules"
-                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                      onClick={() => setShowMobileMenu(false)}
-                    >
-                      <FileText className="w-5 h-5" />
-                      <span>Regolamento</span>
-                    </a>
-                    <a
                       href="/subscription"
                       className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                       onClick={() => setShowMobileMenu(false)}
                     >
                       <CreditCard className="w-5 h-5" />
                       <span>Abbonamenti</span>
+                    </a>
+                    <a
+                      href="/rules"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <FileText className="w-5 h-5" />
+                      <span>Regolamento</span>
                     </a>
                     <button
                       onClick={() => {
