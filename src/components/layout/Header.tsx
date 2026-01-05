@@ -45,13 +45,13 @@ export function Header() {
 
             {user && profile ? (
               <>
-                <nav className="hidden lg:flex items-center gap-4 ml-6">
+                <nav className="hidden lg:flex items-center gap-3 ml-6">
                   <a
                     href="/"
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Home"
                   >
-                    <Home className="w-5 h-5" />
+                    <Home className="w-4 h-4" />
                     <span className="text-sm">Home</span>
                   </a>
                   <a
@@ -59,7 +59,7 @@ export function Header() {
                     className="flex items-center gap-1 text-gray-700 hover:text-green-600 transition-colors font-medium"
                     title="Solidarietà"
                   >
-                    <Heart className="w-5 h-5" />
+                    <Heart className="w-4 h-4" />
                     <span className="text-sm">Solidarietà</span>
                   </a>
                   <a
@@ -67,7 +67,7 @@ export function Header() {
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Messaggi"
                   >
-                    <MessageCircle className="w-5 h-5" />
+                    <MessageCircle className="w-4 h-4" />
                     <span className="text-sm">Messaggi</span>
                   </a>
                   <NotificationBell />
@@ -76,7 +76,7 @@ export function Header() {
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Contatti"
                   >
-                    <Phone className="w-5 h-5" />
+                    <Phone className="w-4 h-4" />
                     <span className="text-sm">Contatti</span>
                   </a>
                   <a
@@ -84,20 +84,20 @@ export function Header() {
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Regolamento"
                   >
-                    <FileText className="w-5 h-5" />
+                    <FileText className="w-4 h-4" />
                     <span className="text-sm">Regolamento</span>
                   </a>
                 </nav>
 
                 <div className="flex-1"></div>
 
-                <nav className="hidden lg:flex items-center gap-4">
+                <nav className="hidden lg:flex items-center gap-3">
                   <a
                     href="/products"
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Prodotti"
                   >
-                    <Package className="w-5 h-5" />
+                    <Package className="w-4 h-4" />
                     <span className="text-sm">Prodotti</span>
                   </a>
                   <a
@@ -105,7 +105,7 @@ export function Header() {
                     className="flex items-center gap-1 text-gray-700 hover:text-orange-600 transition-colors font-medium"
                     title="Sconti"
                   >
-                    <Percent className="w-5 h-5" />
+                    <Percent className="w-4 h-4" />
                     <span className="text-sm">Sconti</span>
                   </a>
                   {profile.user_type === 'customer' && (
@@ -114,7 +114,7 @@ export function Header() {
                       className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                       title="Annunci"
                     >
-                      <Tag className="w-5 h-5" />
+                      <Tag className="w-4 h-4" />
                       <span className="text-sm">Annunci</span>
                     </a>
                   )}
@@ -123,7 +123,7 @@ export function Header() {
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Lavoro"
                   >
-                    <Briefcase className="w-5 h-5" />
+                    <Briefcase className="w-4 h-4" />
                     <span className="text-sm">Lavoro</span>
                   </a>
                   <a
@@ -131,7 +131,7 @@ export function Header() {
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Classifica"
                   >
-                    <Trophy className="w-5 h-5" />
+                    <Trophy className="w-4 h-4" />
                     <span className="text-sm">Classifica</span>
                   </a>
                   <a
@@ -139,7 +139,7 @@ export function Header() {
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Abbonamenti"
                   >
-                    <CreditCard className="w-5 h-5" />
+                    <CreditCard className="w-4 h-4" />
                     <span className="text-sm">Abbonamenti</span>
                   </a>
                   <ActiveProfileIndicator />
@@ -148,7 +148,7 @@ export function Header() {
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Mio Profilo"
                   >
-                    <User className="w-5 h-5" />
+                    <User className="w-4 h-4" />
                     <span className="text-sm">Profilo</span>
                   </a>
                 </nav>
@@ -156,34 +156,34 @@ export function Header() {
             ) : (
               <>
                 <div className="flex-1"></div>
-                <nav className="hidden lg:flex items-center gap-4">
+                <nav className="hidden lg:flex items-center gap-3">
                   <a
                     href="/solidarity"
-                    className="flex items-center gap-2 text-gray-700 hover:text-green-600 transition-colors font-medium"
+                    className="flex items-center gap-1 text-gray-700 hover:text-green-600 transition-colors font-medium"
                   >
-                    <Heart className="w-5 h-5" />
-                    <span>Solidarietà</span>
+                    <Heart className="w-4 h-4" />
+                    <span className="text-sm">Solidarietà</span>
                   </a>
                   <a
                     href="/contact"
-                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                   >
-                    <Phone className="w-5 h-5" />
-                    <span>Contatti</span>
+                    <Phone className="w-4 h-4" />
+                    <span className="text-sm">Contatti</span>
                   </a>
                   <a
                     href="/rules"
-                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                   >
-                    <FileText className="w-5 h-5" />
-                    <span>Regolamento</span>
+                    <FileText className="w-4 h-4" />
+                    <span className="text-sm">Regolamento</span>
                   </a>
                   <a
                     href="/subscription"
-                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                   >
-                    <CreditCard className="w-5 h-5" />
-                    <span>Abbonamenti</span>
+                    <CreditCard className="w-4 h-4" />
+                    <span className="text-sm">Abbonamenti</span>
                   </a>
                   <button
                     onClick={() => {
