@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Star, TrendingUp, ShieldCheck, Search, Award, Package, Tag, Briefcase, Heart, Users, Building2, Gift, MapPin, Clock, Euro, ArrowRight } from 'lucide-react';
+import { Star, TrendingUp, ShieldCheck, Search, Award, Package, Tag, Briefcase, Heart, Users, Building2, Gift, MapPin, Clock, Euro, ArrowRight, Percent } from 'lucide-react';
 import { AdvancedSearch } from '../components/search/AdvancedSearch';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -305,12 +305,8 @@ function AuthenticatedHomePage() {
         .eq('id', user?.id)
         .single();
 
-      console.log('Profile result:', profileResult);
       if (profileResult.data) {
-        console.log('User type:', profileResult.data.user_type);
         setUserType(profileResult.data.user_type);
-      } else {
-        console.log('No profile data found');
       }
 
       const reviewStatsResult = await supabase
@@ -410,14 +406,10 @@ function AuthenticatedHomePage() {
           return business;
         });
 
-        console.log('Normalized businesses:', normalizedBusinesses);
-
         const businessIds = normalizedBusinesses.map((b: any) => b.id);
         const ratingsResult = await supabase.rpc('get_business_ratings', {
           business_ids: businessIds
         });
-
-        console.log('Ratings result:', ratingsResult);
 
         if (ratingsResult.data) {
           const businessesWithRatings = normalizedBusinesses.map((business: any) => {
@@ -430,7 +422,6 @@ function AuthenticatedHomePage() {
           });
 
           businessesWithRatings.sort((a: any, b: any) => b.review_count - a.review_count);
-          console.log('Businesses with ratings:', businessesWithRatings);
           setTopBusinesses(businessesWithRatings);
         } else {
           const businessesWithRatings = normalizedBusinesses.map((business: any) => ({
@@ -438,7 +429,6 @@ function AuthenticatedHomePage() {
             avg_rating: 0,
             review_count: 0
           }));
-          console.log('Setting businesses without ratings:', businessesWithRatings);
           setTopBusinesses(businessesWithRatings);
         }
       }
@@ -451,6 +441,41 @@ function AuthenticatedHomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-16 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center gap-2 md:gap-8 py-3">
+            <a
+              href="/products"
+              className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-blue-50 transition-all group"
+            >
+              <Package className="w-7 h-7 md:w-8 md:h-8 text-blue-600 group-hover:scale-110 transition-transform" />
+              <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-blue-600">Prodotti</span>
+            </a>
+            <a
+              href="/discounts"
+              className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-orange-50 transition-all group"
+            >
+              <Percent className="w-7 h-7 md:w-8 md:h-8 text-orange-600 group-hover:scale-110 transition-transform" />
+              <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-orange-600">Sconti</span>
+            </a>
+            <a
+              href="/classified-ads"
+              className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-green-50 transition-all group"
+            >
+              <Tag className="w-7 h-7 md:w-8 md:h-8 text-green-600 group-hover:scale-110 transition-transform" />
+              <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-green-600">Annunci</span>
+            </a>
+            <a
+              href="/jobs"
+              className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-purple-50 transition-all group"
+            >
+              <Briefcase className="w-7 h-7 md:w-8 md:h-8 text-purple-600 group-hover:scale-110 transition-transform" />
+              <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-purple-600">Lavoro</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
@@ -508,10 +533,6 @@ function AuthenticatedHomePage() {
           </div>
         ) : (
           <>
-            {(() => {
-              console.log('Render check - userType:', userType, 'topBusinesses length:', topBusinesses.length, 'topBusinesses:', topBusinesses);
-              return null;
-            })()}
             {topBusinesses.length > 0 && (
               <TopBusinessesBanner businesses={topBusinesses} />
             )}

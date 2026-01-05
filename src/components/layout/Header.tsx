@@ -93,40 +93,6 @@ export function Header() {
 
                 <nav className="hidden lg:flex items-center gap-2">
                   <a
-                    href="/products"
-                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                    title="Prodotti"
-                  >
-                    <Package className="w-4 h-4" />
-                    <span className="text-xs">Prodotti</span>
-                  </a>
-                  <a
-                    href="/discounts"
-                    className="flex items-center gap-0.5 text-gray-700 hover:text-orange-600 transition-colors font-medium"
-                    title="Sconti"
-                  >
-                    <Percent className="w-4 h-4" />
-                    <span className="text-xs">Sconti</span>
-                  </a>
-                  {profile.user_type === 'customer' && (
-                    <a
-                      href="/classified"
-                      className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                      title="Annunci"
-                    >
-                      <Tag className="w-4 h-4" />
-                      <span className="text-xs">Annunci</span>
-                    </a>
-                  )}
-                  <a
-                    href="/jobs"
-                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                    title="Lavoro"
-                  >
-                    <Briefcase className="w-4 h-4" />
-                    <span className="text-xs">Lavoro</span>
-                  </a>
-                  <a
                     href="/leaderboard"
                     className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                     title="Classifica"
@@ -226,40 +192,6 @@ export function Header() {
                     >
                       <Heart className="w-5 h-5" />
                       <span>Solidarietà</span>
-                    </a>
-                    <a
-                      href="/products"
-                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                      onClick={() => setShowMobileMenu(false)}
-                    >
-                      <Package className="w-5 h-5" />
-                      <span>Prodotti</span>
-                    </a>
-                    <a
-                      href="/discounts"
-                      className="flex items-center gap-2 text-gray-700 hover:text-orange-600 transition-colors font-medium"
-                      onClick={() => setShowMobileMenu(false)}
-                    >
-                      <Percent className="w-5 h-5" />
-                      <span>Sconti</span>
-                    </a>
-                    {profile.user_type === 'customer' && (
-                      <a
-                        href="/classified"
-                        className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                        onClick={() => setShowMobileMenu(false)}
-                      >
-                        <Tag className="w-5 h-5" />
-                        <span>Annunci</span>
-                      </a>
-                    )}
-                    <a
-                      href="/jobs"
-                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                      onClick={() => setShowMobileMenu(false)}
-                    >
-                      <Briefcase className="w-5 h-5" />
-                      <span>Lavoro</span>
                     </a>
                     <a
                       href="/leaderboard"
