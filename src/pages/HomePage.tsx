@@ -305,8 +305,12 @@ function AuthenticatedHomePage() {
         .eq('id', user?.id)
         .single();
 
+      console.log('Profile result:', profileResult);
       if (profileResult.data) {
+        console.log('User type:', profileResult.data.user_type);
         setUserType(profileResult.data.user_type);
+      } else {
+        console.log('No profile data found');
       }
 
       const reviewStatsResult = await supabase
@@ -406,10 +410,14 @@ function AuthenticatedHomePage() {
           return business;
         });
 
+        console.log('Normalized businesses:', normalizedBusinesses);
+
         const businessIds = normalizedBusinesses.map((b: any) => b.id);
         const ratingsResult = await supabase.rpc('get_business_ratings', {
           business_ids: businessIds
         });
+
+        console.log('Ratings result:', ratingsResult);
 
         if (ratingsResult.data) {
           const businessesWithRatings = normalizedBusinesses.map((business: any) => {
@@ -422,6 +430,15 @@ function AuthenticatedHomePage() {
           });
 
           businessesWithRatings.sort((a: any, b: any) => b.review_count - a.review_count);
+          console.log('Businesses with ratings:', businessesWithRatings);
+          setTopBusinesses(businessesWithRatings);
+        } else {
+          const businessesWithRatings = normalizedBusinesses.map((business: any) => ({
+            ...business,
+            avg_rating: 0,
+            review_count: 0
+          }));
+          console.log('Setting businesses without ratings:', businessesWithRatings);
           setTopBusinesses(businessesWithRatings);
         }
       }
@@ -491,7 +508,11 @@ function AuthenticatedHomePage() {
           </div>
         ) : (
           <>
-            {userType === 'customer' && topBusinesses.length > 0 && (
+            {(() => {
+              console.log('Render check - userType:', userType, 'topBusinesses length:', topBusinesses.length, 'topBusinesses:', topBusinesses);
+              return null;
+            })()}
+            {topBusinesses.length > 0 && (
               <TopBusinessesBanner businesses={topBusinesses} />
             )}
 
