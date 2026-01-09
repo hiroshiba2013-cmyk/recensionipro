@@ -50,6 +50,11 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const { signUpCustomer, signUpBusiness } = useAuth();
 
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [acceptPrivacy, setAcceptPrivacy] = useState(false);
+  const [acceptCookies, setAcceptCookies] = useState(false);
+  const [acceptMarketing, setAcceptMarketing] = useState(false);
+
   const [numberOfPeople, setNumberOfPeople] = useState('1');
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
@@ -328,6 +333,11 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     setError('');
     setPasswordError('');
 
+    if (!acceptTerms || !acceptPrivacy || !acceptCookies) {
+      setError('Devi accettare i Termini e Condizioni, la Privacy Policy e la Cookie Policy per procedere');
+      return;
+    }
+
     const passwordValidation = validatePassword(customerForm.password);
     if (passwordValidation) {
       setPasswordError(passwordValidation);
@@ -416,6 +426,11 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     e.preventDefault();
     setError('');
     setPasswordError('');
+
+    if (!acceptTerms || !acceptPrivacy || !acceptCookies) {
+      setError('Devi accettare i Termini e Condizioni, la Privacy Policy e la Cookie Policy per procedere');
+      return;
+    }
 
     const passwordValidation = validatePassword(businessForm.password);
     if (passwordValidation) {
@@ -1104,10 +1119,98 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
           {passwordError && <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{passwordError}</div>}
           {error && <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{error}</div>}
 
+          <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-lg space-y-3">
+            <h3 className="text-sm font-bold text-gray-900 mb-2">Accettazione Termini e Condizioni</h3>
+
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(e) => setAcceptTerms(e.target.checked)}
+                className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">
+                Accetto i{' '}
+                <a
+                  href="/rules#termini-condizioni"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline font-semibold"
+                >
+                  Termini e Condizioni di Utilizzo
+                </a>{' '}
+                <span className="text-red-600 font-bold">*</span>
+              </span>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={acceptPrivacy}
+                onChange={(e) => setAcceptPrivacy(e.target.checked)}
+                className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">
+                Accetto la{' '}
+                <a
+                  href="/rules#privacy-gdpr"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline font-semibold"
+                >
+                  Privacy Policy e GDPR
+                </a>{' '}
+                e autorizzo il trattamento dei miei dati personali{' '}
+                <span className="text-red-600 font-bold">*</span>
+              </span>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={acceptCookies}
+                onChange={(e) => setAcceptCookies(e.target.checked)}
+                className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">
+                Accetto la{' '}
+                <a
+                  href="/rules#cookie-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline font-semibold"
+                >
+                  Cookie Policy
+                </a>{' '}
+                e l'utilizzo dei cookie tecnici necessari al funzionamento del sito{' '}
+                <span className="text-red-600 font-bold">*</span>
+              </span>
+            </label>
+
+            <div className="border-t border-blue-300 pt-3 mt-3">
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={acceptMarketing}
+                  onChange={(e) => setAcceptMarketing(e.target.checked)}
+                  className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">
+                  Acconsento a ricevere comunicazioni marketing, newsletter e offerte promozionali{' '}
+                  <span className="text-gray-500 italic">(opzionale)</span>
+                </span>
+              </label>
+            </div>
+
+            <p className="text-xs text-gray-600 mt-3">
+              <span className="text-red-600 font-bold">*</span> Campi obbligatori per completare la registrazione
+            </p>
+          </div>
+
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 text-sm font-medium"
+            disabled={loading || !acceptTerms || !acceptPrivacy || !acceptCookies}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed text-sm font-medium"
           >
             {loading ? 'Registrazione...' : 'Registrati'}
           </button>
@@ -1710,10 +1813,98 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
           {passwordError && <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{passwordError}</div>}
           {error && <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{error}</div>}
 
+          <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-lg space-y-3">
+            <h3 className="text-sm font-bold text-gray-900 mb-2">Accettazione Termini e Condizioni</h3>
+
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(e) => setAcceptTerms(e.target.checked)}
+                className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">
+                Accetto i{' '}
+                <a
+                  href="/rules#termini-condizioni"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline font-semibold"
+                >
+                  Termini e Condizioni di Utilizzo
+                </a>{' '}
+                <span className="text-red-600 font-bold">*</span>
+              </span>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={acceptPrivacy}
+                onChange={(e) => setAcceptPrivacy(e.target.checked)}
+                className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">
+                Accetto la{' '}
+                <a
+                  href="/rules#privacy-gdpr"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline font-semibold"
+                >
+                  Privacy Policy e GDPR
+                </a>{' '}
+                e autorizzo il trattamento dei dati aziendali{' '}
+                <span className="text-red-600 font-bold">*</span>
+              </span>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={acceptCookies}
+                onChange={(e) => setAcceptCookies(e.target.checked)}
+                className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">
+                Accetto la{' '}
+                <a
+                  href="/rules#cookie-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline font-semibold"
+                >
+                  Cookie Policy
+                </a>{' '}
+                e l'utilizzo dei cookie tecnici necessari al funzionamento del sito{' '}
+                <span className="text-red-600 font-bold">*</span>
+              </span>
+            </label>
+
+            <div className="border-t border-blue-300 pt-3 mt-3">
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={acceptMarketing}
+                  onChange={(e) => setAcceptMarketing(e.target.checked)}
+                  className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">
+                  Acconsento a ricevere comunicazioni marketing, newsletter e offerte promozionali{' '}
+                  <span className="text-gray-500 italic">(opzionale)</span>
+                </span>
+              </label>
+            </div>
+
+            <p className="text-xs text-gray-600 mt-3">
+              <span className="text-red-600 font-bold">*</span> Campi obbligatori per completare la registrazione
+            </p>
+          </div>
+
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 text-sm font-medium"
+            disabled={loading || !acceptTerms || !acceptPrivacy || !acceptCookies}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed text-sm font-medium"
           >
             {loading ? 'Registrazione...' : 'Registrati'}
           </button>
