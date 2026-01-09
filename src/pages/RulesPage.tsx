@@ -985,20 +985,28 @@ export function RulesPage() {
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 mb-3">Come Guadagnare Punti</h3>
                   <div className="grid md:grid-cols-2 gap-4 mb-6">
-                    <div className="bg-white border-2 border-purple-200 p-4 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-bold text-gray-900">Annuncio Pubblicato</h4>
-                        <span className="text-2xl font-bold text-purple-600">5 pt</span>
-                      </div>
-                      <p className="text-sm text-gray-600">Per ogni annuncio pubblicato</p>
-                    </div>
-
                     <div className="bg-white border-2 border-green-200 p-4 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-bold text-gray-900">Prodotto Inserito</h4>
-                        <span className="text-2xl font-bold text-green-600">10 pt</span>
+                        <h4 className="font-bold text-gray-900">Recensione Completa</h4>
+                        <span className="text-2xl font-bold text-green-600">50 pt</span>
                       </div>
-                      <p className="text-sm text-gray-600">Per ogni prodotto completo inserito</p>
+                      <p className="text-sm text-gray-600">Con prove (scontrini o fatture)</p>
+                    </div>
+
+                    <div className="bg-white border-2 border-yellow-200 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-900">Presenta un Amico</h4>
+                        <span className="text-2xl font-bold text-yellow-600">30 pt</span>
+                      </div>
+                      <p className="text-sm text-gray-600">Quando l'amico si abbona alla piattaforma</p>
+                    </div>
+
+                    <div className="bg-white border-2 border-blue-200 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-900">Recensione Base</h4>
+                        <span className="text-2xl font-bold text-blue-600">25 pt</span>
+                      </div>
+                      <p className="text-sm text-gray-600">Recensione senza documentazione</p>
                     </div>
 
                     <div className="bg-white border-2 border-orange-200 p-4 rounded-lg">
@@ -1009,32 +1017,28 @@ export function RulesPage() {
                       <p className="text-sm text-gray-600">Per inserimento di un'attività non presente</p>
                     </div>
 
-                    <div className="bg-white border-2 border-yellow-200 p-4 rounded-lg">
+                    <div className="bg-white border-2 border-green-200 p-4 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-bold text-gray-900">Presenta un Amico</h4>
-                        <span className="text-2xl font-bold text-yellow-600">30 pt</span>
+                        <h4 className="font-bold text-gray-900">Prodotto Inserito</h4>
+                        <span className="text-2xl font-bold text-green-600">10 pt</span>
                       </div>
-                      <p className="text-sm text-gray-600">Quando l'amico si abbona alla piattaforma</p>
+                      <p className="text-sm text-gray-600">Per ogni prodotto completo inserito</p>
+                    </div>
+
+                    <div className="bg-white border-2 border-purple-200 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-900">Annuncio Pubblicato</h4>
+                        <span className="text-2xl font-bold text-purple-600">5 pt</span>
+                      </div>
+                      <p className="text-sm text-gray-600">Per ogni annuncio pubblicato</p>
                     </div>
                   </div>
 
-                  <h4 className="text-lg font-bold text-gray-900 mb-3 mt-6">Punti per Recensioni:</h4>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="bg-white border-2 border-blue-200 p-4 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-bold text-gray-900">Recensione Base</h4>
-                        <span className="text-2xl font-bold text-blue-600">25 pt</span>
-                      </div>
-                      <p className="text-sm text-gray-600">Recensione senza documentazione</p>
-                    </div>
-
-                    <div className="bg-white border-2 border-green-200 p-4 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-bold text-gray-900">Recensione Completa</h4>
-                        <span className="text-2xl font-bold text-green-600">50 pt</span>
-                      </div>
-                      <p className="text-sm text-gray-600">Con prove (scontrini o fatture)</p>
-                    </div>
+                  <div className="mt-4 bg-amber-50 border border-amber-300 rounded-lg p-4">
+                    <p className="text-sm text-gray-700">
+                      <strong>Nota:</strong> I punti delle recensioni vengono assegnati solo dopo l'approvazione dello staff.
+                      I punti "Porta un Amico" vengono assegnati quando l'amico effettua l'abbonamento.
+                    </p>
                   </div>
                 </div>
 
