@@ -510,35 +510,97 @@ function AuthenticatedHomePage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid md:grid-cols-4 gap-6 mb-12">
-          <QuickActionCard
-            icon={<Search className="w-8 h-8" />}
-            title="Cerca Attività"
-            description="Trova negozi e servizi"
-            color="from-blue-500 to-blue-600"
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          <div
             onClick={() => navigate('/search')}
-          />
-          <QuickActionCard
-            icon={<Briefcase className="w-8 h-8" />}
-            title="Offerte Lavoro"
-            description="Scopri opportunità"
-            color="from-green-500 to-green-600"
-            onClick={() => navigate('/jobs')}
-          />
-          <QuickActionCard
-            icon={<Tag className="w-8 h-8" />}
-            title="Annunci"
-            description="Compra e vendi"
-            color="from-orange-500 to-orange-600"
-            onClick={() => navigate('/classified-ads')}
-          />
-          <QuickActionCard
-            icon={<Package className="w-8 h-8" />}
-            title="Prodotti"
-            description="Sfoglia il catalogo"
-            color="from-purple-500 to-purple-600"
+            className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all cursor-pointer"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <Star className="w-8 h-8" />
+              <h3 className="text-2xl font-bold">Recensioni</h3>
+            </div>
+            <p className="text-blue-100 text-sm leading-relaxed">
+              Leggi e scrivi recensioni verificate sulle attività locali. Condividi la tua esperienza e guadagna punti per ogni recensione approvata.
+            </p>
+          </div>
+
+          <div
             onClick={() => navigate('/products')}
-          />
+            className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all cursor-pointer"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <Package className="w-8 h-8" />
+              <h3 className="text-2xl font-bold">Prodotti</h3>
+            </div>
+            <p className="text-purple-100 text-sm leading-relaxed">
+              Scopri i prodotti delle attività locali. Sfoglia cataloghi, confronta prezzi e trova quello che cerchi vicino a te.
+            </p>
+          </div>
+
+          <div
+            onClick={() => navigate('/discounts')}
+            className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all cursor-pointer"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <Percent className="w-8 h-8" />
+              <h3 className="text-2xl font-bold">Sconti</h3>
+            </div>
+            <p className="text-orange-100 text-sm leading-relaxed">
+              Approfitta delle offerte esclusive delle attività nella tua zona. Risparmia su prodotti e servizi con sconti riservati agli utenti.
+            </p>
+          </div>
+
+          <div
+            onClick={() => navigate('/classified-ads')}
+            className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all cursor-pointer"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <Tag className="w-8 h-8" />
+              <h3 className="text-2xl font-bold">Annunci</h3>
+            </div>
+            <p className="text-green-100 text-sm leading-relaxed">
+              Compra, vendi o scambia oggetti usati nella tua zona. Pubblica annunci gratuiti e trova occasioni vicino a casa tua.
+            </p>
+          </div>
+
+          <div
+            onClick={() => navigate('/jobs')}
+            className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all cursor-pointer"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <Briefcase className="w-8 h-8" />
+              <h3 className="text-2xl font-bold">Lavoro</h3>
+            </div>
+            <p className="text-indigo-100 text-sm leading-relaxed">
+              Cerca opportunità di lavoro nella tua zona o pubblica annunci se sei un'attività. Connetti talenti locali con le aziende.
+            </p>
+          </div>
+
+          <div
+            onClick={() => navigate('/solidarity')}
+            className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all cursor-pointer"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <Heart className="w-8 h-8" />
+              <h3 className="text-2xl font-bold">Solidarietà</h3>
+            </div>
+            <p className="text-pink-100 text-sm leading-relaxed">
+              Aiuta chi è in difficoltà nella tua comunità. Richiedi o offri supporto solidale documentato e verificato dalla piattaforma.
+            </p>
+          </div>
+
+          <div
+            onClick={() => navigate('/leaderboard')}
+            className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all cursor-pointer"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <Award className="w-8 h-8" />
+              <h3 className="text-2xl font-bold">Classifica</h3>
+            </div>
+            <p className="text-yellow-100 text-sm leading-relaxed">
+              Guadagna punti con le tue recensioni e scala la classifica. I primi 20 utenti dell'anno vincono gift card ricaricabili.
+            </p>
+          </div>
         </div>
 
         {loading ? (
