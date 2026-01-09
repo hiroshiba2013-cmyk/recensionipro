@@ -983,7 +983,7 @@ export function RulesPage() {
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">Come Guadagnare Punti</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Come Guadagnare Punti - Utenti Privati</h3>
                   <div className="grid md:grid-cols-2 gap-4 mb-6">
                     <div className="bg-white border-2 border-green-200 p-4 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
@@ -1038,6 +1038,69 @@ export function RulesPage() {
                     <p className="text-sm text-gray-700">
                       <strong>Nota:</strong> I punti delle recensioni vengono assegnati solo dopo l'approvazione dello staff.
                       I punti "Porta un Amico" vengono assegnati quando l'amico effettua l'abbonamento.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Come Guadagnare Punti - Professionisti</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    I professionisti guadagnano punti in base alle recensioni ricevute dai clienti e alle attività pubblicate.
+                  </p>
+                  <div className="grid md:grid-cols-2 gap-4 mb-4">
+                    <div className="bg-white border-2 border-green-200 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-900">Recensione 5 Stelle</h4>
+                        <span className="text-2xl font-bold text-green-600">50 pt</span>
+                      </div>
+                      <p className="text-sm text-gray-600">Massima qualità del servizio</p>
+                    </div>
+
+                    <div className="bg-white border-2 border-blue-200 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-900">Annuncio Lavoro</h4>
+                        <span className="text-2xl font-bold text-blue-600">30 pt</span>
+                      </div>
+                      <p className="text-sm text-gray-600">Per ogni annuncio di lavoro pubblicato</p>
+                    </div>
+
+                    <div className="bg-white border-2 border-blue-200 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-900">Recensione 4 Stelle</h4>
+                        <span className="text-2xl font-bold text-blue-600">25 pt</span>
+                      </div>
+                      <p className="text-sm text-gray-600">Ottimo servizio</p>
+                    </div>
+
+                    <div className="bg-white border-2 border-yellow-200 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-900">Recensione 3 Stelle</h4>
+                        <span className="text-2xl font-bold text-yellow-600">10 pt</span>
+                      </div>
+                      <p className="text-sm text-gray-600">Servizio nella media</p>
+                    </div>
+
+                    <div className="bg-white border-2 border-orange-200 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-900">Recensione 2 Stelle</h4>
+                        <span className="text-2xl font-bold text-orange-600">4 pt</span>
+                      </div>
+                      <p className="text-sm text-gray-600">Servizio migliorabile</p>
+                    </div>
+
+                    <div className="bg-white border-2 border-red-200 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-900">Recensione 1 Stella</h4>
+                        <span className="text-2xl font-bold text-red-600">2 pt</span>
+                      </div>
+                      <p className="text-sm text-gray-600">Servizio non soddisfacente</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-amber-50 border border-amber-300 rounded-lg p-4">
+                    <p className="text-sm text-gray-700">
+                      <strong>Nota:</strong> I punti delle recensioni vengono assegnati solo dopo l'approvazione dello staff.
+                      Maggiore è la qualità del servizio, maggiori saranno i punti guadagnati.
                     </p>
                   </div>
                 </div>
