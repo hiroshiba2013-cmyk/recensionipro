@@ -144,58 +144,514 @@ export function RulesPage() {
           </div>
 
           <div className="p-8 space-y-12">
-            <section id="note-legali">
+            <section id="termini-condizioni">
               <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-blue-200">
                 <FileText className="w-8 h-8 text-blue-600" />
-                <h2 className="text-3xl font-bold text-gray-900">Note Legali e Privacy</h2>
+                <h2 className="text-3xl font-bold text-gray-900">Termini e Condizioni di Utilizzo</h2>
               </div>
 
               <div className="space-y-6 text-gray-700">
                 <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-r-lg">
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">1. Informazioni Generali</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">1. Oggetto del Servizio</h3>
                   <p className="mb-3">
-                    TrovaFacile è una piattaforma digitale che collega cittadini e imprese sul territorio italiano,
-                    facilitando la ricerca di servizi, prodotti e opportunità lavorative.
+                    TrovaFacile è una piattaforma digitale che offre servizi di marketplace, recensioni, annunci classificati e opportunità di lavoro sul territorio italiano.
+                    La piattaforma mette in contatto utenti privati e imprese, facilitando la ricerca di servizi, prodotti e opportunità lavorative.
                   </p>
                   <p>
-                    L'utilizzo della piattaforma comporta l'accettazione integrale del presente regolamento.
+                    L'utilizzo della piattaforma comporta l'accettazione integrale e incondizionata dei presenti Termini e Condizioni e di tutte le normative applicabili.
                   </p>
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">2. Privacy e Trattamento Dati</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">2. Registrazione e Account</h3>
                   <ul className="list-disc list-inside space-y-2 ml-4">
-                    <li>I dati personali vengono trattati in conformità al GDPR (Regolamento UE 2016/679)</li>
-                    <li>I dati vengono utilizzati esclusivamente per fornire i servizi della piattaforma</li>
-                    <li>Gli utenti hanno diritto di accesso, rettifica e cancellazione dei propri dati</li>
-                    <li>I dati non vengono condivisi con terze parti senza consenso esplicito</li>
-                    <li>Le password vengono crittografate e non sono mai visibili al personale</li>
+                    <li>La registrazione è riservata a persone fisiche maggiorenni e persone giuridiche regolarmente costituite</li>
+                    <li>È vietato creare account multipli per lo stesso utente o azienda</li>
+                    <li>L'utente è responsabile della custodia delle proprie credenziali di accesso</li>
+                    <li>Ogni attività effettuata con il proprio account è sotto la responsabilità dell'intestatario</li>
+                    <li>TrovaFacile si riserva il diritto di sospendere o cancellare account che violano i termini di servizio</li>
                   </ul>
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">3. Cookie e Tecnologie di Tracciamento</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">3. Obblighi degli Utenti</h3>
+                  <p className="mb-2 font-semibold">Gli utenti si impegnano a:</p>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    <li>Fornire informazioni veritiere, accurate e aggiornate</li>
+                    <li>Non utilizzare la piattaforma per scopi illeciti o fraudolenti</li>
+                    <li>Non pubblicare contenuti diffamatori, offensivi, discriminatori o che violino diritti di terzi</li>
+                    <li>Non utilizzare bot, script automatizzati o altri mezzi per manipolare il sistema</li>
+                    <li>Rispettare i diritti di proprietà intellettuale altrui</li>
+                    <li>Non tentare di accedere in modo non autorizzato ai sistemi della piattaforma</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">4. Contenuti degli Utenti</h3>
                   <p className="mb-2">
-                    Il sito utilizza cookie tecnici necessari al funzionamento della piattaforma.
-                    Non vengono utilizzati cookie di profilazione o di terze parti senza consenso esplicito.
+                    Gli utenti mantengono la proprietà dei contenuti pubblicati (recensioni, annunci, foto, ecc.) ma concedono a TrovaFacile
+                    una licenza mondiale, non esclusiva, gratuita e trasferibile per utilizzare, riprodurre, distribuire e visualizzare
+                    tali contenuti nell'ambito del servizio offerto.
+                  </p>
+                  <p className="mb-2">
+                    TrovaFacile si riserva il diritto di rimuovere contenuti che violano questi termini o la legge vigente,
+                    senza preavviso e senza obbligo di motivazione.
                   </p>
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">4. Responsabilità</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">5. Limitazioni di Responsabilità</h3>
                   <ul className="list-disc list-inside space-y-2 ml-4">
-                    <li>TrovaFacile funge da intermediario tra utenti e aziende</li>
-                    <li>La piattaforma non è responsabile della qualità dei servizi offerti dalle aziende</li>
-                    <li>Gli utenti sono responsabili della veridicità delle informazioni fornite</li>
-                    <li>Contenuti diffamatori, offensivi o illegali verranno rimossi e potranno comportare la sospensione dell'account</li>
+                    <li>TrovaFacile agisce come intermediario e non è parte dei contratti tra utenti e aziende</li>
+                    <li>Non garantiamo l'accuratezza, completezza o affidabilità dei contenuti pubblicati dagli utenti</li>
+                    <li>Non siamo responsabili per danni diretti o indiretti derivanti dall'uso della piattaforma</li>
+                    <li>Non garantiamo la disponibilità ininterrotta del servizio</li>
+                    <li>Gli utenti sono responsabili della sicurezza delle transazioni effettuate tramite la piattaforma</li>
                   </ul>
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">5. Proprietà Intellettuale</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">6. Proprietà Intellettuale</h3>
+                  <p className="mb-2">
+                    Tutti i contenuti del sito (design, grafica, software, loghi, marchi, testi) sono di proprietà esclusiva di TrovaFacile
+                    o dei rispettivi titolari e sono protetti dalle leggi italiane ed internazionali sul diritto d'autore e sulla proprietà industriale.
+                  </p>
                   <p>
-                    Tutti i contenuti del sito (testi, immagini, loghi) sono protetti da copyright.
-                    È vietata la riproduzione senza autorizzazione scritta.
+                    È vietata la riproduzione, distribuzione, modifica o utilizzazione per qualsiasi scopo senza autorizzazione scritta.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">7. Modifiche ai Termini</h3>
+                  <p>
+                    TrovaFacile si riserva il diritto di modificare i presenti Termini e Condizioni in qualsiasi momento.
+                    Le modifiche saranno comunicate via email agli utenti registrati. L'utilizzo continuato della piattaforma
+                    dopo le modifiche costituisce accettazione delle stesse.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">8. Legge Applicabile e Foro Competente</h3>
+                  <p className="mb-2">
+                    I presenti Termini e Condizioni sono regolati dalla legge italiana. Per qualsiasi controversia è competente
+                    in via esclusiva il Foro del luogo di residenza o sede del consumatore, ai sensi degli artt. 63 e ss. del D.Lgs. 206/2005 (Codice del Consumo).
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <section id="privacy-gdpr">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-green-200">
+                <Shield className="w-8 h-8 text-green-600" />
+                <h2 className="text-3xl font-bold text-gray-900">Privacy Policy e GDPR</h2>
+              </div>
+
+              <div className="space-y-6 text-gray-700">
+                <div className="bg-green-50 border-l-4 border-green-600 p-6 rounded-r-lg">
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Informativa sul Trattamento dei Dati Personali</h3>
+                  <p className="mb-2">
+                    Ai sensi dell'art. 13 del Regolamento UE 2016/679 (GDPR), forniamo le seguenti informazioni relative al trattamento dei dati personali.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Titolare del Trattamento</h3>
+                  <div className="bg-white border-2 border-gray-200 p-4 rounded-lg">
+                    <p className="font-semibold">TrovaFacile S.r.l.</p>
+                    <p>Sede legale: [Indirizzo da specificare]</p>
+                    <p>Email: privacy@trovafacile.it</p>
+                    <p>PEC: trovafacile@pec.it</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Categorie di Dati Trattati</h3>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    <li><strong>Dati anagrafici:</strong> nome, cognome, data di nascita</li>
+                    <li><strong>Dati di contatto:</strong> email, telefono, indirizzo</li>
+                    <li><strong>Dati di navigazione:</strong> indirizzo IP, tipo di browser, pagine visitate</li>
+                    <li><strong>Dati di account:</strong> username, password (criptata), preferenze</li>
+                    <li><strong>Dati business:</strong> Partita IVA, Codice Fiscale, PEC, Codice ATECO (solo per aziende)</li>
+                    <li><strong>Contenuti:</strong> recensioni, annunci, messaggi, foto pubblicate</li>
+                    <li><strong>Dati di pagamento:</strong> gestiti esclusivamente da Stripe (non conservati sui nostri server)</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Finalità del Trattamento</h3>
+                  <p className="mb-2">I dati personali vengono trattati per le seguenti finalità:</p>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    <li>Erogazione dei servizi della piattaforma</li>
+                    <li>Gestione della registrazione e autenticazione</li>
+                    <li>Gestione degli abbonamenti e pagamenti</li>
+                    <li>Verifica dell'identità delle aziende</li>
+                    <li>Moderazione dei contenuti e prevenzione abusi</li>
+                    <li>Comunicazioni di servizio e assistenza clienti</li>
+                    <li>Statistiche aggregate e analisi per migliorare il servizio</li>
+                    <li>Adempimenti di obblighi legali, contabili e fiscali</li>
+                    <li>Marketing (solo previo consenso esplicito)</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Base Giuridica del Trattamento</h3>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    <li><strong>Esecuzione del contratto</strong> (art. 6.1.b GDPR): per fornire i servizi richiesti</li>
+                    <li><strong>Obbligo legale</strong> (art. 6.1.c GDPR): per adempiere agli obblighi di legge</li>
+                    <li><strong>Legittimo interesse</strong> (art. 6.1.f GDPR): per sicurezza, antifrode e miglioramento servizi</li>
+                    <li><strong>Consenso</strong> (art. 6.1.a GDPR): per marketing e profilazione (facoltativo)</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Destinatari dei Dati</h3>
+                  <p className="mb-2">I dati possono essere comunicati a:</p>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    <li>Fornitori di servizi tecnici (hosting, email, storage)</li>
+                    <li>Stripe per la gestione dei pagamenti</li>
+                    <li>Autorità pubbliche per adempimenti di legge</li>
+                    <li>Consulenti e professionisti (commercialisti, legali) con obbligo di riservatezza</li>
+                  </ul>
+                  <p className="mt-2 font-semibold">
+                    I dati NON vengono venduti o ceduti a terze parti per scopi commerciali.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Periodo di Conservazione</h3>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    <li>Dati di account: fino alla cancellazione dell'account</li>
+                    <li>Dati contabili e fiscali: 10 anni (obbligo di legge)</li>
+                    <li>Dati di marketing: fino a revoca del consenso</li>
+                    <li>Log di sicurezza: 12 mesi</li>
+                    <li>Contenuti pubblicati: fino a rimozione da parte dell'utente o moderazione</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Diritti dell'Interessato</h3>
+                  <p className="mb-2">Ai sensi degli artt. 15-22 del GDPR, l'utente ha diritto di:</p>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    <li><strong>Accesso:</strong> ottenere conferma e copia dei dati trattati</li>
+                    <li><strong>Rettifica:</strong> correggere dati inesatti o incompleti</li>
+                    <li><strong>Cancellazione:</strong> richiedere la cancellazione dei dati ("diritto all'oblio")</li>
+                    <li><strong>Limitazione:</strong> limitare il trattamento in determinati casi</li>
+                    <li><strong>Portabilità:</strong> ricevere i dati in formato strutturato e trasferirli ad altro titolare</li>
+                    <li><strong>Opposizione:</strong> opporsi al trattamento per motivi legittimi</li>
+                    <li><strong>Revoca consenso:</strong> revocare il consenso al marketing in qualsiasi momento</li>
+                    <li><strong>Reclamo:</strong> proporre reclamo all'Autorità Garante (www.garanteprivacy.it)</li>
+                  </ul>
+                  <p className="mt-3 font-semibold">
+                    Per esercitare i tuoi diritti, contatta: privacy@trovafacile.it
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Trasferimenti Extra-UE</h3>
+                  <p>
+                    I dati possono essere trasferiti verso paesi extra-UE solo se dotati di adeguate garanzie (es. Standard Contractual Clauses, certificazioni di adeguatezza).
+                    In particolare, alcuni fornitori di servizi cloud potrebbero avere server in USA con garanzie adeguate.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Sicurezza dei Dati</h3>
+                  <p className="mb-2">
+                    Adottiamo misure tecniche e organizzative adeguate per proteggere i dati personali:
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    <li>Crittografia delle password (hash bcrypt)</li>
+                    <li>Connessioni HTTPS/TLS per tutte le comunicazioni</li>
+                    <li>Firewall e sistemi di protezione da accessi non autorizzati</li>
+                    <li>Backup regolari dei dati</li>
+                    <li>Accesso ai dati limitato al personale autorizzato</li>
+                    <li>Procedure di incident response per eventuali violazioni (data breach)</li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            <section id="cookie-policy">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-orange-200">
+                <FileText className="w-8 h-8 text-orange-600" />
+                <h2 className="text-3xl font-bold text-gray-900">Cookie Policy</h2>
+              </div>
+
+              <div className="space-y-6 text-gray-700">
+                <div className="bg-orange-50 border-l-4 border-orange-600 p-6 rounded-r-lg">
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Cosa sono i Cookie</h3>
+                  <p>
+                    I cookie sono piccoli file di testo che vengono memorizzati sul dispositivo dell'utente quando visita un sito web.
+                    Servono a migliorare l'esperienza di navigazione, ricordare le preferenze e fornire funzionalità essenziali.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Tipologie di Cookie Utilizzati</h3>
+
+                  <div className="space-y-4">
+                    <div className="bg-white border-2 border-gray-200 p-4 rounded-lg">
+                      <h4 className="font-bold text-gray-900 mb-2">Cookie Tecnici (Necessari)</h4>
+                      <p className="text-sm mb-2">
+                        Essenziali per il funzionamento del sito. Non richiedono consenso esplicito.
+                      </p>
+                      <ul className="list-disc list-inside text-sm space-y-1 ml-4">
+                        <li>Cookie di sessione per l'autenticazione</li>
+                        <li>Cookie per memorizzare preferenze linguistiche</li>
+                        <li>Cookie di sicurezza e prevenzione frodi</li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-white border-2 border-gray-200 p-4 rounded-lg">
+                      <h4 className="font-bold text-gray-900 mb-2">Cookie Analitici</h4>
+                      <p className="text-sm mb-2">
+                        Utilizzati per raccogliere informazioni sull'utilizzo del sito in forma aggregata e anonima.
+                      </p>
+                      <ul className="list-disc list-inside text-sm space-y-1 ml-4">
+                        <li>Google Analytics (anonimizzato)</li>
+                        <li>Analisi delle performance del sito</li>
+                      </ul>
+                      <p className="text-sm mt-2 font-semibold text-orange-700">
+                        Richiedono consenso esplicito.
+                      </p>
+                    </div>
+
+                    <div className="bg-white border-2 border-gray-200 p-4 rounded-lg">
+                      <h4 className="font-bold text-gray-900 mb-2">Cookie di Marketing</h4>
+                      <p className="text-sm mb-2">
+                        Utilizzati per tracciare le visite e mostrare pubblicità personalizzata.
+                      </p>
+                      <p className="text-sm font-semibold text-orange-700">
+                        Richiedono consenso esplicito. Attualmente NON utilizzati.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Gestione dei Cookie</h3>
+                  <p className="mb-2">
+                    L'utente può gestire o disabilitare i cookie attraverso le impostazioni del proprio browser:
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 ml-4 text-sm">
+                    <li><strong>Chrome:</strong> Impostazioni → Privacy e sicurezza → Cookie</li>
+                    <li><strong>Firefox:</strong> Opzioni → Privacy e sicurezza → Cookie e dati dei siti web</li>
+                    <li><strong>Safari:</strong> Preferenze → Privacy → Gestione cookie</li>
+                    <li><strong>Edge:</strong> Impostazioni → Privacy e servizi → Cookie</li>
+                  </ul>
+                  <p className="mt-3 text-sm font-semibold text-orange-700">
+                    Nota: La disabilitazione dei cookie tecnici può compromettere il funzionamento del sito.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Cookie di Terze Parti</h3>
+                  <p className="mb-2">
+                    Il sito può utilizzare cookie di terze parti per servizi esterni:
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    <li><strong>Stripe:</strong> per la gestione dei pagamenti (cookie tecnici necessari)</li>
+                    <li><strong>Supabase:</strong> per l'autenticazione e il database (cookie tecnici necessari)</li>
+                  </ul>
+                  <p className="mt-2 text-sm">
+                    Questi servizi hanno le proprie cookie policy consultabili sui rispettivi siti web.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <section id="pagamenti-stripe">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-purple-200">
+                <Shield className="w-8 h-8 text-purple-600" />
+                <h2 className="text-3xl font-bold text-gray-900">Pagamenti e Abbonamenti</h2>
+              </div>
+
+              <div className="space-y-6 text-gray-700">
+                <div className="bg-purple-50 border-l-4 border-purple-600 p-6 rounded-r-lg">
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Sistema di Pagamento Sicuro con Stripe</h3>
+                  <p className="mb-3">
+                    TrovaFacile utilizza <strong>Stripe</strong>, uno dei sistemi di pagamento più sicuri e affidabili al mondo,
+                    per gestire tutti gli abbonamenti e le transazioni sulla piattaforma.
+                  </p>
+                  <p className="font-semibold text-purple-700">
+                    I dati delle carte di credito/debito non vengono mai memorizzati sui nostri server ma sono gestiti esclusivamente da Stripe
+                    in conformità agli standard di sicurezza PCI-DSS.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Metodi di Pagamento Accettati</h3>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    <li>Carte di credito (Visa, Mastercard, American Express)</li>
+                    <li>Carte di debito</li>
+                    <li>Carte prepagate</li>
+                    <li>Apple Pay e Google Pay</li>
+                    <li>SEPA Direct Debit (bonifico SEPA)</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Piani di Abbonamento</h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-white border-2 border-blue-200 p-4 rounded-lg">
+                      <h4 className="font-bold text-gray-900 mb-2">Account Cliente</h4>
+                      <ul className="text-sm space-y-1">
+                        <li>1 persona: 2,99€/mese o 29,99€/anno</li>
+                        <li>2 persone: 4,99€/mese o 49,99€/anno</li>
+                        <li>3 persone: 6,99€/mese o 69,99€/anno</li>
+                        <li>4 persone: 8,99€/mese o 89,99€/anno</li>
+                        <li>5 persone: 10,99€/mese o 109,99€/anno</li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-white border-2 border-orange-200 p-4 rounded-lg">
+                      <h4 className="font-bold text-gray-900 mb-2">Account Business</h4>
+                      <ul className="text-sm space-y-1">
+                        <li>1 sede: 9,99€/mese o 99,99€/anno</li>
+                        <li>2-5 sedi: 19,99€/mese o 199,99€/anno</li>
+                        <li>6-10 sedi: 29,99€/mese o 299,99€/anno</li>
+                        <li>Oltre 10 sedi: contattaci per preventivo</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-sm font-semibold text-green-700">
+                    Prova gratuita di 15 giorni per tutti i nuovi utenti - Nessuna carta richiesta
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Rinnovo Automatico</h3>
+                  <p className="mb-2">
+                    Gli abbonamenti si rinnovano automaticamente alla scadenza del periodo (mensile o annuale) utilizzando
+                    il metodo di pagamento salvato su Stripe.
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 ml-4 text-sm">
+                    <li>Riceverai un'email di promemoria 7 giorni prima del rinnovo</li>
+                    <li>Puoi annullare l'abbonamento in qualsiasi momento dalla pagina Abbonamento</li>
+                    <li>In caso di annullamento, manterrai l'accesso fino alla fine del periodo già pagato</li>
+                    <li>Non sono previsti rimborsi per periodi non utilizzati</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Fatturazione</h3>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    <li>Riceverai una fattura elettronica via email per ogni pagamento</li>
+                    <li>Per aziende: la fattura sarà intestata con i dati fiscali forniti (P.IVA, Codice SDI, PEC)</li>
+                    <li>Tutte le fatture sono consultabili nella sezione "Cronologia Pagamenti" del tuo account</li>
+                    <li>Per correzioni o informazioni sulla fatturazione: supporto@trovafacile.it</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Sicurezza delle Transazioni</h3>
+                  <div className="bg-green-50 border border-green-400 p-4 rounded-lg">
+                    <ul className="list-disc list-inside space-y-2 text-sm">
+                      <li>Crittografia SSL/TLS 256-bit per tutte le transazioni</li>
+                      <li>Conformità PCI-DSS Level 1 (massimo livello di sicurezza)</li>
+                      <li>Autenticazione 3D Secure per maggiore protezione</li>
+                      <li>Monitoraggio antifrode in tempo reale</li>
+                      <li>I dati di pagamento non vengono mai memorizzati sui nostri server</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Modifiche ai Prezzi</h3>
+                  <p>
+                    TrovaFacile si riserva il diritto di modificare i prezzi degli abbonamenti. Eventuali modifiche
+                    saranno comunicate con almeno 30 giorni di preavviso via email. Gli abbonamenti in corso manterranno
+                    il prezzo originale fino al termine del periodo corrente.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <section id="diritto-recesso">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-red-200">
+                <AlertCircle className="w-8 h-8 text-red-600" />
+                <h2 className="text-3xl font-bold text-gray-900">Diritto di Recesso</h2>
+              </div>
+
+              <div className="space-y-6 text-gray-700">
+                <div className="bg-red-50 border-l-4 border-red-600 p-6 rounded-r-lg">
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Ai sensi degli artt. 52-59 del Codice del Consumo (D.Lgs. 206/2005)</h3>
+                  <p className="mb-3">
+                    Il consumatore ha il diritto di recedere dal contratto di abbonamento entro <strong>14 giorni</strong>
+                    dalla conclusione del contratto, senza necessità di fornire motivazione e senza penalità.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Come Esercitare il Diritto di Recesso</h3>
+                  <ol className="list-decimal list-inside space-y-2 ml-4">
+                    <li>Inviare comunicazione scritta a: recesso@trovafacile.it</li>
+                    <li>Indicare nell'oggetto: "Esercizio diritto di recesso"</li>
+                    <li>Specificare i dati del contratto (email account, data sottoscrizione)</li>
+                  </ol>
+                  <p className="mt-3 text-sm">
+                    <strong>Termine per il rimborso:</strong> Provvederemo al rimborso entro 14 giorni dalla ricezione della comunicazione di recesso,
+                    utilizzando lo stesso metodo di pagamento impiegato per la transazione iniziale.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Eccezioni al Diritto di Recesso</h3>
+                  <p className="mb-2">
+                    Ai sensi dell'art. 59 comma 1 del Codice del Consumo, il diritto di recesso è escluso nei seguenti casi:
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    <li>Se il consumatore ha espressamente richiesto l'immediata attivazione del servizio e ha iniziato ad utilizzare la piattaforma</li>
+                    <li>Dopo i 14 giorni dalla sottoscrizione del contratto</li>
+                    <li>Per contenuti digitali già fruiti (recensioni pubblicate, annunci attivati, ecc.)</li>
+                  </ul>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-400 p-4 rounded-lg">
+                  <p className="text-sm">
+                    <strong>Nota:</strong> Il periodo di prova gratuita di 15 giorni consente di testare il servizio senza vincoli.
+                    Durante questo periodo è possibile disdire in qualsiasi momento senza costi.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <section id="risoluzione-controversie">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-gray-200">
+                <FileText className="w-8 h-8 text-gray-600" />
+                <h2 className="text-3xl font-bold text-gray-900">Risoluzione delle Controversie</h2>
+              </div>
+
+              <div className="space-y-6 text-gray-700">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Conciliazione Stragiudiziale</h3>
+                  <p className="mb-2">
+                    In caso di controversia, l'utente e TrovaFacile si impegnano a ricercare una soluzione amichevole
+                    attraverso procedure di conciliazione prima di adire l'autorità giudiziaria.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Risoluzione Online delle Controversie (ODR)</h3>
+                  <p className="mb-2">
+                    Ai sensi del Regolamento UE 524/2013, i consumatori possono utilizzare la piattaforma europea per la
+                    risoluzione online delle controversie disponibile all'indirizzo:
+                  </p>
+                  <a
+                    href="https://ec.europa.eu/consumers/odr"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline font-semibold"
+                  >
+                    https://ec.europa.eu/consumers/odr
+                  </a>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Foro Competente</h3>
+                  <p>
+                    Per qualsiasi controversia è competente in via esclusiva il Foro del luogo di residenza o domicilio del consumatore,
+                    ai sensi degli artt. 63 e ss. del Codice del Consumo.
                   </p>
                 </div>
               </div>
