@@ -46,12 +46,12 @@ const faqs: FAQItem[] = [
   {
     category: 'Abbonamenti',
     question: 'Quali sono i piani di abbonamento disponibili?',
-    answer: 'Offriamo piani mensili e annuali per account cliente (da 1 a 5 persone) e business. Puoi iniziare con 15 giorni di prova gratuita. Gli abbonamenti includono accesso completo a tutte le funzionalità della piattaforma.'
+    answer: 'Offriamo piani mensili e annuali per account cliente (da 1 a 4 persone, a partire da 0,49€/mese) e business (da 1 a 10+ sedi, a partire da 2,49€/mese + IVA). Puoi iniziare con 3 mesi di prova gratuita. Gli abbonamenti includono accesso completo a tutte le funzionalità della piattaforma.'
   },
   {
     category: 'Abbonamenti',
     question: 'Come funziona la prova gratuita?',
-    answer: 'Puoi attivare 15 giorni di prova gratuita senza inserire metodo di pagamento. Prima della scadenza riceverai un promemoria. Se non rinnovi, l\'abbonamento scade automaticamente senza addebiti.'
+    answer: 'Puoi attivare 3 mesi di prova gratuita senza inserire metodo di pagamento. Riceverai un promemoria 7 giorni prima della scadenza. Se non rinnovi, l\'abbonamento scade automaticamente senza addebiti.'
   },
   {
     category: 'Abbonamenti',
@@ -496,26 +496,28 @@ export function RulesPage() {
                     <div className="bg-white border-2 border-blue-200 p-4 rounded-lg">
                       <h4 className="font-bold text-gray-900 mb-2">Account Cliente</h4>
                       <ul className="text-sm space-y-1">
-                        <li>1 persona: 2,99€/mese o 29,99€/anno</li>
-                        <li>2 persone: 4,99€/mese o 49,99€/anno</li>
-                        <li>3 persone: 6,99€/mese o 69,99€/anno</li>
-                        <li>4 persone: 8,99€/mese o 89,99€/anno</li>
-                        <li>5 persone: 10,99€/mese o 109,99€/anno</li>
+                        <li>1 persona: 0,49€/mese o 4,90€/anno</li>
+                        <li>2 persone: 0,79€/mese o 7,90€/anno</li>
+                        <li>3 persone: 1,09€/mese o 10,90€/anno</li>
+                        <li>4 persone: 1,49€/mese o 14,90€/anno</li>
                       </ul>
                     </div>
 
                     <div className="bg-white border-2 border-orange-200 p-4 rounded-lg">
                       <h4 className="font-bold text-gray-900 mb-2">Account Business</h4>
                       <ul className="text-sm space-y-1">
-                        <li>1 sede: 9,99€/mese o 99,99€/anno</li>
-                        <li>2-5 sedi: 19,99€/mese o 199,99€/anno</li>
-                        <li>6-10 sedi: 29,99€/mese o 299,99€/anno</li>
-                        <li>Oltre 10 sedi: contattaci per preventivo</li>
+                        <li>1 sede: 2,49€/mese o 24,90€/anno + IVA</li>
+                        <li>2 sedi: 3,99€/mese o 39,90€/anno + IVA</li>
+                        <li>3 sedi: 5,49€/mese o 54,90€/anno + IVA</li>
+                        <li>4 sedi: 7,99€/mese o 79,90€/anno + IVA</li>
+                        <li>5 sedi: 9,99€/mese o 99,90€/anno + IVA</li>
+                        <li>6-10 sedi: 12,99€/mese o 129,90€/anno + IVA</li>
+                        <li>Oltre 10 sedi: 14,99€/mese o 149,90€/anno + IVA</li>
                       </ul>
                     </div>
                   </div>
                   <p className="mt-3 text-sm font-semibold text-green-700">
-                    Prova gratuita di 15 giorni per tutti i nuovi utenti - Nessuna carta richiesta
+                    3 mesi di prova gratuita per tutti i nuovi utenti - Nessuna carta richiesta
                   </p>
                 </div>
 
@@ -609,7 +611,7 @@ export function RulesPage() {
 
                 <div className="bg-yellow-50 border border-yellow-400 p-4 rounded-lg">
                   <p className="text-sm">
-                    <strong>Nota:</strong> Il periodo di prova gratuita di 15 giorni consente di testare il servizio senza vincoli.
+                    <strong>Nota:</strong> Il periodo di prova gratuita di 3 mesi consente di testare il servizio senza vincoli.
                     Durante questo periodo è possibile disdire in qualsiasi momento senza costi.
                   </p>
                 </div>
