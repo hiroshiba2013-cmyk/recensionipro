@@ -1178,17 +1178,111 @@ export function RulesPage() {
                   </div>
                 </div>
 
-                <div className="bg-green-50 border border-green-400 p-6 rounded-lg">
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Premi Mensili</h3>
-                  <p className="text-sm text-gray-700 mb-3">
-                    Ogni mese i primi 10 utenti della classifica ricevono premi speciali:
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-300 rounded-xl p-6">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <Star className="w-7 h-7 text-blue-600" />
+                    Premi Annuali per Utenti Privati
+                  </h3>
+                  <p className="text-gray-700 mb-6">
+                    I migliori 20 utenti privati dell'anno riceveranno fantastici premi in gift card!
                   </p>
-                  <ul className="list-disc list-inside space-y-1 text-sm ml-4">
-                    <li><strong>1° classificato:</strong> Buono acquisto 100€ + Badge Campione del Mese</li>
-                    <li><strong>2° classificato:</strong> Buono acquisto 50€</li>
-                    <li><strong>3° classificato:</strong> Buono acquisto 25€</li>
-                    <li><strong>Top 10:</strong> Badge riconoscimento e vantaggi esclusivi</li>
-                  </ul>
+
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-lg p-5 shadow-md border-2 border-yellow-400">
+                      <div className="text-center">
+                        <div className="text-4xl mb-2">🏆</div>
+                        <p className="font-bold text-gray-900 text-lg">1° Posto</p>
+                        <p className="text-xl text-yellow-800 font-bold mt-2">Gift card da 500€</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg p-5 shadow-md border-2 border-gray-400">
+                      <div className="text-center">
+                        <div className="text-4xl mb-2">🥈</div>
+                        <p className="font-bold text-gray-900 text-lg">2° Posto</p>
+                        <p className="text-xl text-gray-800 font-bold mt-2">Gift card da 200€</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-amber-100 to-amber-200 rounded-lg p-5 shadow-md border-2 border-amber-400">
+                      <div className="text-center">
+                        <div className="text-4xl mb-2">🥉</div>
+                        <p className="font-bold text-gray-900 text-lg">3° Posto</p>
+                        <p className="text-xl text-amber-800 font-bold mt-2">Gift card da 150€</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg p-5 shadow-sm border-2 border-blue-200">
+                      <div className="text-center">
+                        <div className="text-3xl mb-2">🎖️</div>
+                        <p className="font-bold text-gray-900">4° - 5° Posto</p>
+                        <p className="text-lg text-blue-700 font-semibold mt-2">Gift card da 100€</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg p-5 shadow-sm border-2 border-green-200">
+                      <div className="text-center">
+                        <div className="text-3xl mb-2">🎖️</div>
+                        <p className="font-bold text-gray-900">6° - 10° Posto</p>
+                        <p className="text-lg text-green-700 font-semibold mt-2">Gift card da 75€</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg p-5 shadow-sm border-2 border-orange-200">
+                      <div className="text-center">
+                        <div className="text-3xl mb-2">🎖️</div>
+                        <p className="font-bold text-gray-900">11° - 20° Posto</p>
+                        <p className="text-lg text-orange-700 font-semibold mt-2">Gift card da 50€</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white border-2 border-blue-300 rounded-lg p-5">
+                    <div className="flex items-start gap-3">
+                      <div className="text-2xl flex-shrink-0">🎁</div>
+                      <div>
+                        <p className="text-sm text-gray-700 font-medium">
+                          Le gift card potranno essere scelte tra una lista di brand e servizi che verrà pubblicata in seguito.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-300 rounded-xl p-6">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <Building className="w-7 h-7 text-green-600" />
+                    Premi Annuali per Professionisti
+                  </h3>
+                  <p className="text-gray-700 mb-6">
+                    I migliori 20 professionisti dell'anno riceveranno riconoscimenti speciali per la loro eccellenza nel servizio clienti.
+                  </p>
+
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="bg-white rounded-lg p-5 shadow-md border-2 border-yellow-300">
+                      <div className="text-center">
+                        <div className="text-4xl mb-2">🏆</div>
+                        <p className="font-bold text-gray-900 text-lg mb-2">1° Posto</p>
+                        <p className="text-sm text-gray-700">Certificato di Eccellenza + Visibilità Premium per 1 anno</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg p-5 shadow-md border-2 border-gray-300">
+                      <div className="text-center">
+                        <div className="text-4xl mb-2">🥈</div>
+                        <p className="font-bold text-gray-900 text-lg mb-2">2° - 5° Posto</p>
+                        <p className="text-sm text-gray-700">Badge Qualità + Promozione Premium per 6 mesi</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg p-5 shadow-md border-2 border-amber-300">
+                      <div className="text-center">
+                        <div className="text-4xl mb-2">🥉</div>
+                        <p className="font-bold text-gray-900 text-lg mb-2">6° - 20° Posto</p>
+                        <p className="text-sm text-gray-700">Badge Riconoscimento + Visibilità Extra per 3 mesi</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
@@ -1200,7 +1294,7 @@ export function RulesPage() {
                     <li>I punti "Porta un Amico" vengono assegnati solo quando l'amico effettua l'abbonamento</li>
                     <li>Recensioni false o spam comportano la perdita di tutti i punti e la sospensione</li>
                     <li>La classifica viene azzerata ogni anno il 1° gennaio</li>
-                    <li>I premi mensili vengono consegnati entro il 10 del mese successivo</li>
+                    <li>I premi annuali per i top 20 utenti vengono consegnati entro il 31 gennaio dell'anno successivo</li>
                     <li>È vietato l'uso di bot o sistemi automatici per guadagnare punti</li>
                   </ul>
                 </div>
