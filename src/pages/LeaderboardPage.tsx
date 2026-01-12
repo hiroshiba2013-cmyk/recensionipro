@@ -573,27 +573,52 @@ export function LeaderboardPage() {
                 </h3>
               </div>
               <p className="text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed mb-6 text-center">
-                I migliori 20 utenti privati dell'anno riceveranno fantastici premi: gift card ricaricabili e altri riconoscimenti esclusivi.
+                I migliori 20 utenti privati dell'anno riceveranno fantastici premi in gift card.
               </p>
               <p className="text-gray-600 max-w-2xl mx-auto text-center mb-8">
                 Continua a guadagnare punti scrivendo recensioni verificate con foto e dettagli.
                 Maggiore è il tuo contributo alla community, maggiori saranno le tue possibilità di vincere!
               </p>
-              <div className="grid md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-                <div className="bg-white rounded-lg p-6 shadow-md">
-                  <Trophy className="w-12 h-12 mx-auto mb-3 text-yellow-500" />
-                  <p className="font-bold text-gray-900 text-lg">1° Posto</p>
-                  <p className="text-sm text-gray-600 mt-2">Gift card da 500€</p>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto mb-8">
+                <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-lg p-6 shadow-lg border-2 border-yellow-400">
+                  <Trophy className="w-12 h-12 mx-auto mb-3 text-yellow-600" />
+                  <p className="font-bold text-gray-900 text-xl">1° Posto</p>
+                  <p className="text-lg text-yellow-800 font-semibold mt-2">Gift card da 500€</p>
                 </div>
-                <div className="bg-white rounded-lg p-6 shadow-md">
-                  <Medal className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p className="font-bold text-gray-900 text-lg">2° - 5° Posto</p>
-                  <p className="text-sm text-gray-600 mt-2">Gift card da 200€</p>
+                <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg p-6 shadow-lg border-2 border-gray-400">
+                  <Medal className="w-12 h-12 mx-auto mb-3 text-gray-600" />
+                  <p className="font-bold text-gray-900 text-xl">2° Posto</p>
+                  <p className="text-lg text-gray-800 font-semibold mt-2">Gift card da 200€</p>
                 </div>
-                <div className="bg-white rounded-lg p-6 shadow-md">
-                  <Award className="w-12 h-12 mx-auto mb-3 text-amber-700" />
-                  <p className="font-bold text-gray-900 text-lg">6° - 20° Posto</p>
-                  <p className="text-sm text-gray-600 mt-2">Gift card da 50€</p>
+                <div className="bg-gradient-to-br from-amber-100 to-amber-200 rounded-lg p-6 shadow-lg border-2 border-amber-400">
+                  <Medal className="w-12 h-12 mx-auto mb-3 text-amber-700" />
+                  <p className="font-bold text-gray-900 text-xl">3° Posto</p>
+                  <p className="text-lg text-amber-800 font-semibold mt-2">Gift card da 150€</p>
+                </div>
+                <div className="bg-white rounded-lg p-6 shadow-md border-2 border-blue-200">
+                  <Award className="w-12 h-12 mx-auto mb-3 text-blue-600" />
+                  <p className="font-bold text-gray-900 text-lg">4° - 5° Posto</p>
+                  <p className="text-sm text-gray-700 font-semibold mt-2">Gift card da 100€</p>
+                </div>
+                <div className="bg-white rounded-lg p-6 shadow-md border-2 border-green-200">
+                  <Award className="w-12 h-12 mx-auto mb-3 text-green-600" />
+                  <p className="font-bold text-gray-900 text-lg">6° - 10° Posto</p>
+                  <p className="text-sm text-gray-700 font-semibold mt-2">Gift card da 75€</p>
+                </div>
+                <div className="bg-white rounded-lg p-6 shadow-md border-2 border-orange-200">
+                  <Award className="w-12 h-12 mx-auto mb-3 text-orange-600" />
+                  <p className="font-bold text-gray-900 text-lg">11° - 20° Posto</p>
+                  <p className="text-sm text-gray-700 font-semibold mt-2">Gift card da 50€</p>
+                </div>
+              </div>
+              <div className="bg-white border-2 border-blue-200 rounded-lg p-6 max-w-3xl mx-auto">
+                <div className="flex items-start gap-3">
+                  <Gift className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                  <div>
+                    <p className="text-sm text-gray-700 font-medium">
+                      Le gift card potranno essere scelte tra una lista di brand e servizi che verrà pubblicata in seguito.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
