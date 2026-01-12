@@ -2,12 +2,10 @@ import { useState, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import NotificationPanel from './NotificationPanel';
 
 export default function NotificationBell() {
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
-  const [showPanel, setShowPanel] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -52,29 +50,20 @@ export default function NotificationBell() {
   if (!user) return null;
 
   return (
-    <div className="relative">
-      <button
-        onClick={() => setShowPanel(!showPanel)}
-        className="relative flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-        title="Notifiche"
-      >
-        <div className="relative">
-          <Bell className="w-4 h-4" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full min-w-[16px] h-4">
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </span>
-          )}
-        </div>
-        <span className="text-xs">Notifiche</span>
-      </button>
-
-      {showPanel && (
-        <NotificationPanel
-          onClose={() => setShowPanel(false)}
-          onNotificationRead={loadUnreadCount}
-        />
-      )}
-    </div>
+    <button
+      onClick={() => window.location.href = '/notifications'}
+      className="relative flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+      title="Notifiche"
+    >
+      <div className="relative">
+        <Bell className="w-4 h-4" />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full min-w-[16px] h-4">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
+      </div>
+      <span className="text-xs">Notifiche</span>
+    </button>
   );
 }

@@ -12,6 +12,7 @@ import { ProductDetailPage } from '../pages/ProductDetailPage';
 import { ClassifiedAdsPage } from '../pages/ClassifiedAdsPage';
 import { ClassifiedAdDetailPage } from '../pages/ClassifiedAdDetailPage';
 import { MessagesPage } from '../pages/MessagesPage';
+import { NotificationsPage } from '../pages/NotificationsPage';
 import { SolidarityPage } from '../pages/SolidarityPage';
 import { ContactPage } from '../pages/ContactPage';
 import { RulesPage } from '../pages/RulesPage';
@@ -126,6 +127,10 @@ export function Router() {
 
   if (currentPath === '/messages') {
     return <MessagesPage />;
+  }
+
+  if (currentPath === '/notifications') {
+    return <NotificationsPage />;
   }
 
   if (currentPath === '/solidarity') {
