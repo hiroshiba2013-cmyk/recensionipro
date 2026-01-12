@@ -33,6 +33,7 @@ interface Profile {
   subscription_type: string | null;
   subscription_status: string;
   subscription_expires_at: string | null;
+  pin_enabled?: boolean;
 }
 
 interface Review {
@@ -114,6 +115,7 @@ interface FamilyMember {
   last_name: string;
   nickname: string;
   avatar_url: string | null;
+  pin_enabled?: boolean;
   reviews_count: number;
   total_points: number;
   rank: number;
@@ -660,7 +662,7 @@ export function ProfilePage() {
                     profileName={profile.full_name}
                     isOwner={true}
                     userType={profile.user_type}
-                    currentPinEnabled={false}
+                    currentPinEnabled={profile.pin_enabled || false}
                     onSuccess={loadProfileData}
                   />
                 </div>
@@ -722,7 +724,7 @@ export function ProfilePage() {
                     profileName={`${selectedFamilyMember.first_name} ${selectedFamilyMember.last_name}`}
                     isOwner={false}
                     userType="customer"
-                    currentPinEnabled={false}
+                    currentPinEnabled={selectedFamilyMember.pin_enabled || false}
                     onSuccess={loadProfileData}
                   />
                 </div>
