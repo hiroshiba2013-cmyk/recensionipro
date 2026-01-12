@@ -14,6 +14,7 @@ import { BusinessJobPostingForm } from '../components/business/BusinessJobPostin
 import { EditBusinessLocationsForm } from '../components/business/EditBusinessLocationsForm';
 import { SubscriptionManagement } from '../components/subscription/SubscriptionManagement';
 import { DeleteAccountButton } from '../components/profile/DeleteAccountButton';
+import { PinSetup } from '../components/profile/PinSetup';
 
 interface Profile {
   id: string;
@@ -652,6 +653,17 @@ export function ProfilePage() {
                   customerId={profile.id}
                   onUpdate={loadProfileData}
                 />
+
+                <div className="mt-8">
+                  <PinSetup
+                    profileId={profile.id}
+                    profileName={profile.full_name}
+                    isOwner={true}
+                    userType={profile.user_type}
+                    currentPinEnabled={false}
+                    onSuccess={loadProfileData}
+                  />
+                </div>
               </>
             ) : isFamilyMember && selectedFamilyMember && (
               <div className="bg-white rounded-xl shadow-md p-8 mb-8">
@@ -702,6 +714,17 @@ export function ProfilePage() {
                       {selectedFamilyMember.phone}
                     </div>
                   </div>
+                </div>
+
+                <div className="mt-8">
+                  <PinSetup
+                    profileId={selectedFamilyMember.id}
+                    profileName={`${selectedFamilyMember.first_name} ${selectedFamilyMember.last_name}`}
+                    isOwner={false}
+                    userType="customer"
+                    currentPinEnabled={false}
+                    onSuccess={loadProfileData}
+                  />
                 </div>
               </div>
             )}
