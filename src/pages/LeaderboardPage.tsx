@@ -28,6 +28,7 @@ export function LeaderboardPage() {
   const { profile } = useAuth();
   const [topUsers, setTopUsers] = useState<LeaderboardUser[]>([]);
   const [userRank, setUserRank] = useState<LeaderboardUser | null>(null);
+  const [familyRanks, setFamilyRanks] = useState<LeaderboardUser[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'leaderboard' | 'rewards' | 'activity'>('leaderboard');
@@ -145,6 +146,11 @@ export function LeaderboardPage() {
             setUserRank(userInAll);
           }
         }
+
+        const familyInRanks = allParticipants.filter(
+          u => u.is_family_member && u.customer_id === profile.id
+        );
+        setFamilyRanks(familyInRanks);
       }
     } catch (error) {
       console.error('Error loading leaderboard:', error);
@@ -329,6 +335,41 @@ export function LeaderboardPage() {
               </div>
             )}
 
+            {familyRanks.length > 0 && (
+              <div className="max-w-4xl mx-auto mb-8 space-y-4">
+                {familyRanks.map((familyMember) => (
+                  <div key={familyMember.id} className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        {familyMember.avatar_url ? (
+                          <img
+                            src={familyMember.avatar_url}
+                            alt={familyMember.full_name}
+                            className="w-16 h-16 rounded-full border-4 border-white"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 rounded-full bg-white text-green-600 flex items-center justify-center text-2xl font-bold border-4 border-white">
+                            {familyMember.full_name.charAt(0)}
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm opacity-90">Posizione Membro Famiglia</p>
+                          <p className="text-2xl font-bold">{familyMember.full_name}</p>
+                          <div className="flex items-center gap-4 mt-1">
+                            <span className="text-sm">#{familyMember.rank}</span>
+                            {userTypeFilter !== 'business' && (
+                              <span className="text-sm">{familyMember.points} punti</span>
+                            )}
+                            <span className="text-sm">{familyMember.reviews_count} recensioni</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="max-w-4xl mx-auto">
               <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
@@ -410,25 +451,33 @@ export function LeaderboardPage() {
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-center gap-2">
                       <Star className="w-5 h-5 text-green-600" />
-                      <span><strong>25 punti</strong> per recensione completa con prove (scontrini o fatture)</span>
+                      <span><strong>50 punti</strong> per recensione completa (con valutazioni dettagliate)</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Award className="w-5 h-5 text-yellow-600" />
+                      <span><strong>30 punti</strong> quando un amico si abbona usando il tuo nickname</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Star className="w-5 h-5 text-blue-600" />
-                      <span><strong>15 punti</strong> per recensione completa senza prove</span>
+                      <span><strong>25 punti</strong> per recensione base (solo voto finale)</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-yellow-600" />
-                      <span><strong>10 punti</strong> per recensione con solo voto finale e prove</span>
+                      <Award className="w-5 h-5 text-orange-600" />
+                      <span><strong>20 punti</strong> per inserimento di un'attività non presente</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-gray-600" />
-                      <span><strong>5 punti</strong> per recensione con solo voto finale senza prove</span>
+                      <Award className="w-5 h-5 text-purple-600" />
+                      <span><strong>10 punti</strong> per ogni prodotto inserito</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Award className="w-5 h-5 text-gray-600" />
+                      <span><strong>5 punti</strong> per ogni annuncio pubblicato</span>
                     </li>
                   </ul>
 
                   <div className="mt-4 bg-amber-50 border border-amber-300 rounded-lg p-4">
                     <p className="text-sm text-gray-700">
-                      <strong>Nota:</strong> I punti vengono assegnati solo dopo l'approvazione delle recensioni da parte dello staff. Ogni utente compete individualmente nella classifica, inclusi i membri della famiglia.
+                      <strong>Nota:</strong> I punti delle recensioni vengono assegnati dopo l'approvazione dello staff. Ogni utente compete individualmente nella classifica, inclusi i membri della famiglia.
                     </p>
                   </div>
                 </div>
