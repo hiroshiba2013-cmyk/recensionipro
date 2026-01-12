@@ -26,9 +26,10 @@ interface FamilyMember {
 
 interface JobRequestFormProps {
   customerId: string;
+  familyMemberId?: string;
 }
 
-export function JobRequestForm({ customerId }: JobRequestFormProps) {
+export function JobRequestForm({ customerId, familyMemberId }: JobRequestFormProps) {
   const [jobRequests, setJobRequests] = useState<JobRequest[]>([]);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,11 +57,16 @@ export function JobRequestForm({ customerId }: JobRequestFormProps) {
 
   const loadJobRequests = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('job_requests')
         .select('*')
-        .eq('customer_id', customerId)
-        .order('created_at', { ascending: false });
+        .eq('customer_id', customerId);
+
+      if (familyMemberId) {
+        query = query.eq('family_member_id', familyMemberId);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       setJobRequests(data || []);
@@ -108,7 +114,7 @@ export function JobRequestForm({ customerId }: JobRequestFormProps) {
           .from('job_requests')
           .insert({
             customer_id: customerId,
-            family_member_id: showForm === 'main' ? null : showForm,
+            family_member_id: familyMemberId || (showForm === 'main' ? null : showForm),
             ...formData,
           });
 
@@ -434,6 +440,25 @@ export function JobRequestForm({ customerId }: JobRequestFormProps) {
     return (
       <div className="bg-white rounded-xl shadow-md p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+      </div>
+    );
+  }
+
+  if (familyMemberId) {
+    const selectedMember = familyMembers.find(m => m.id === familyMemberId);
+    if (!selectedMember) return null;
+
+    return (
+      <div>
+        <div className="border-t-4 border-blue-500 bg-gradient-to-r from-blue-50 to-white rounded-lg p-4 mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Briefcase className="w-7 h-7 text-blue-600" />
+            Annunci "Cerco Lavoro"
+          </h2>
+          <p className="text-sm text-gray-600 mt-1">Gestisci gli annunci di ricerca lavoro</p>
+        </div>
+
+        {renderJobRequestSection(selectedMember.id, selectedMember.nickname, selectedMember.avatar_url)}
       </div>
     );
   }

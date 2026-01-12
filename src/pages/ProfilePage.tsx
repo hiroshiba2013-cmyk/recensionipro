@@ -119,7 +119,7 @@ interface FamilyMember {
 }
 
 export function ProfilePage() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, activeProfile } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
@@ -127,6 +127,7 @@ export function ProfilePage() {
   const [classifiedAds, setClassifiedAds] = useState<ClassifiedAd[]>([]);
   const [userRank, setUserRank] = useState<UserRank | null>(null);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [selectedFamilyMember, setSelectedFamilyMember] = useState<FamilyMember | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDiscountForm, setShowDiscountForm] = useState(false);
   const [newDiscount, setNewDiscount] = useState({
@@ -146,7 +147,7 @@ export function ProfilePage() {
     if (user) {
       loadProfileData();
     }
-  }, [user]);
+  }, [user, activeProfile]);
 
   const loadProfileData = async () => {
     if (!user) return;
@@ -163,7 +164,11 @@ export function ProfilePage() {
         setProfile(profileData);
 
         if (profileData.user_type === 'customer') {
-          await loadCustomerData();
+          if (activeProfile?.isOwner === false && activeProfile?.id) {
+            await loadFamilyMemberData(activeProfile.id);
+          } else {
+            await loadCustomerData();
+          }
         } else {
           await loadBusinessData();
         }
@@ -206,6 +211,48 @@ export function ProfilePage() {
 
     await loadClassifiedAds();
     await loadLeaderboardData();
+    await loadFamilyMembersData();
+  };
+
+  const loadFamilyMemberData = async (familyMemberId: string) => {
+    const { data: memberData } = await supabase
+      .from('customer_family_members')
+      .select('*')
+      .eq('id', familyMemberId)
+      .maybeSingle();
+
+    if (memberData) {
+      setSelectedFamilyMember(memberData);
+    }
+
+    const { data: reviewsData } = await supabase
+      .from('reviews')
+      .select(`
+        *,
+        business:businesses(name)
+      `)
+      .eq('family_member_id', familyMemberId)
+      .order('created_at', { ascending: false });
+
+    if (reviewsData) {
+      setReviews(reviewsData);
+    }
+
+    const { data: discountsData } = await supabase
+      .from('discounts')
+      .select(`
+        *,
+        business:businesses(name)
+      `)
+      .eq('active', true)
+      .gte('valid_until', new Date().toISOString())
+      .order('created_at', { ascending: false });
+
+    if (discountsData) {
+      setDiscounts(discountsData);
+    }
+
+    await loadClassifiedAds();
     await loadFamilyMembersData();
   };
 
@@ -416,24 +463,56 @@ export function ProfilePage() {
     window.location.href = '/';
   };
 
+  const isOwner = activeProfile?.isOwner ?? true;
+  const isFamilyMember = !isOwner && profile?.user_type === 'customer';
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-xl shadow-md p-8 mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
-              <AvatarUpload
-                userId={profile.id}
-                currentAvatarUrl={profile.avatar_url}
-                onAvatarUpdate={() => loadProfileData()}
-              />
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">{profile.full_name}</h1>
-                <p className="text-gray-600 mt-1">{profile.email}</p>
-                <span className="inline-block mt-2 px-4 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
-                  {profile.user_type === 'customer' ? 'Cliente' : 'Azienda'}
-                </span>
-              </div>
+              {isFamilyMember && selectedFamilyMember ? (
+                <>
+                  {selectedFamilyMember.avatar_url ? (
+                    <img
+                      src={selectedFamilyMember.avatar_url}
+                      alt={selectedFamilyMember.nickname || `${selectedFamilyMember.first_name} ${selectedFamilyMember.last_name}`}
+                      className="w-24 h-24 rounded-full object-cover border-4 border-blue-200"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-blue-600 text-white flex items-center justify-center text-4xl font-bold border-4 border-blue-200">
+                      {selectedFamilyMember.first_name.charAt(0)}
+                    </div>
+                  )}
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900">
+                      {selectedFamilyMember.nickname || `${selectedFamilyMember.first_name} ${selectedFamilyMember.last_name}`}
+                    </h1>
+                    <p className="text-gray-600 mt-1">
+                      {selectedFamilyMember.first_name} {selectedFamilyMember.last_name}
+                    </p>
+                    <span className="inline-block mt-2 px-4 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
+                      Membro della Famiglia
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <AvatarUpload
+                    userId={profile.id}
+                    currentAvatarUrl={profile.avatar_url}
+                    onAvatarUpdate={() => loadProfileData()}
+                  />
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900">{profile.full_name}</h1>
+                    <p className="text-gray-600 mt-1">{profile.email}</p>
+                    <span className="inline-block mt-2 px-4 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
+                      {profile.user_type === 'customer' ? 'Cliente' : 'Azienda'}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
             <button
               onClick={handleSignOut}
@@ -446,14 +525,16 @@ export function ProfilePage() {
           </div>
         </div>
 
-        <SubscriptionManagement
-          userId={profile.id}
-          userType={profile.user_type}
-          currentSubscriptionStatus={profile.subscription_status}
-          onUpdate={loadProfileData}
-        />
+        {isOwner && (
+          <SubscriptionManagement
+            userId={profile.id}
+            userType={profile.user_type}
+            currentSubscriptionStatus={profile.subscription_status}
+            onUpdate={loadProfileData}
+          />
+        )}
 
-        {profile.user_type === 'customer' && userRank && (
+        {profile.user_type === 'customer' && isOwner && userRank && (
           <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl shadow-md p-6 mb-8 border-2 border-yellow-200">
             <div className="flex items-center gap-3 mb-4">
               <Trophy className="w-7 h-7 text-yellow-600" />
@@ -544,44 +625,101 @@ export function ProfilePage() {
 
         {profile.user_type === 'customer' ? (
           <>
-            <div className="border-t-4 border-blue-500 bg-gradient-to-r from-blue-50 to-white rounded-lg p-4 mb-6">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <User className="w-6 h-6 text-blue-600" />
-                Dati Personali Account Principale
-              </h2>
-              <p className="text-sm text-gray-600 mt-1">Informazioni del titolare dell'account</p>
-            </div>
+            {isOwner ? (
+              <>
+                <div className="border-t-4 border-blue-500 bg-gradient-to-r from-blue-50 to-white rounded-lg p-4 mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <User className="w-6 h-6 text-blue-600" />
+                    Dati Personali Account Principale
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">Informazioni del titolare dell'account</p>
+                </div>
 
-            <EditProfileForm
-              profile={profile}
-              onUpdate={loadProfileData}
-            />
+                <EditProfileForm
+                  profile={profile}
+                  onUpdate={loadProfileData}
+                />
 
-            <div className="border-t-4 border-green-500 bg-gradient-to-r from-green-50 to-white rounded-lg p-4 mb-6 mt-8">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <User className="w-6 h-6 text-green-600" />
-                Membri della Famiglia
-              </h2>
-              <p className="text-sm text-gray-600 mt-1">Gestisci i membri collegati al tuo account</p>
-            </div>
+                <div className="border-t-4 border-green-500 bg-gradient-to-r from-green-50 to-white rounded-lg p-4 mb-6 mt-8">
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <User className="w-6 h-6 text-green-600" />
+                    Membri della Famiglia
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">Gestisci i membri collegati al tuo account</p>
+                </div>
 
-            <EditFamilyMembersForm
-              customerId={profile.id}
-              onUpdate={loadProfileData}
-            />
+                <EditFamilyMembersForm
+                  customerId={profile.id}
+                  onUpdate={loadProfileData}
+                />
+              </>
+            ) : isFamilyMember && selectedFamilyMember && (
+              <div className="bg-white rounded-xl shadow-md p-8 mb-8">
+                <div className="border-t-4 border-blue-500 bg-gradient-to-r from-blue-50 to-white rounded-lg p-4 mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <User className="w-6 h-6 text-blue-600" />
+                    Dati Personali
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">Informazioni del membro della famiglia</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Nome</label>
+                    <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
+                      {selectedFamilyMember.first_name}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Cognome</label>
+                    <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
+                      {selectedFamilyMember.last_name}
+                    </div>
+                  </div>
+                  {selectedFamilyMember.nickname && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Nickname</label>
+                      <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        {selectedFamilyMember.nickname}
+                      </div>
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Data di Nascita</label>
+                    <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
+                      {new Date(selectedFamilyMember.date_of_birth).toLocaleDateString('it-IT')}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Codice Fiscale</label>
+                    <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
+                      {selectedFamilyMember.tax_code}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Telefono</label>
+                    <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
+                      {selectedFamilyMember.phone}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <AddUnclaimedBusinessForm
               customerId={profile.id}
               onSuccess={loadProfileData}
             />
 
-            <JobRequestForm customerId={profile.id} />
+            <JobRequestForm customerId={profile.id} familyMemberId={isFamilyMember ? selectedFamilyMember?.id : undefined} />
 
             <div className="bg-white rounded-xl shadow-md p-8 mb-8">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <Star className="w-6 h-6 text-yellow-500" />
-                  <h2 className="text-2xl font-bold text-gray-900">Le Tue Recensioni</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {isFamilyMember ? 'Recensioni di ' + (selectedFamilyMember?.nickname || `${selectedFamilyMember?.first_name}`) : 'Le Tue Recensioni'}
+                  </h2>
                 </div>
                 <a
                   href="/"
@@ -592,30 +730,32 @@ export function ProfilePage() {
                 </a>
               </div>
 
-              <div className="mb-6 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-lg p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <Trophy className="w-6 h-6 text-yellow-600" />
-                  <p className="text-gray-800 font-semibold text-lg">Guadagna Punti Scrivendo Recensioni!</p>
-                </div>
-                <div className="grid md:grid-cols-2 gap-3">
-                  <div className="bg-white rounded-lg p-3 border border-yellow-300">
-                    <div className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-yellow-600" />
-                      <span className="text-gray-700 font-medium">Recensione Base:</span>
-                      <span className="text-yellow-600 font-bold text-lg">25 punti</span>
+              {isOwner && (
+                <div className="mb-6 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Trophy className="w-6 h-6 text-yellow-600" />
+                    <p className="text-gray-800 font-semibold text-lg">Guadagna Punti Scrivendo Recensioni!</p>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <div className="bg-white rounded-lg p-3 border border-yellow-300">
+                      <div className="flex items-center gap-2">
+                        <Star className="w-5 h-5 text-yellow-600" />
+                        <span className="text-gray-700 font-medium">Recensione Base:</span>
+                        <span className="text-yellow-600 font-bold text-lg">25 punti</span>
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-lg p-3 border border-orange-300">
+                      <div className="flex items-center gap-2">
+                        <Star className="w-5 h-5 text-orange-600 fill-orange-600" />
+                        <span className="text-gray-700 font-medium">Recensione Completa:</span>
+                        <span className="text-orange-600 font-bold text-lg">50 punti</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="bg-white rounded-lg p-3 border border-orange-300">
-                    <div className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-orange-600 fill-orange-600" />
-                      <span className="text-gray-700 font-medium">Recensione Completa:</span>
-                      <span className="text-orange-600 font-bold text-lg">50 punti</span>
-                    </div>
-                  </div>
                 </div>
-              </div>
+              )}
 
-              {reviews.length > 0 && (
+              {reviews.length > 0 && isOwner && (
                 <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                   <h3 className="text-sm font-semibold text-gray-700 mb-3">Filtra Recensioni</h3>
                   <div className="grid md:grid-cols-3 gap-4">
@@ -667,7 +807,9 @@ export function ProfilePage() {
               )}
 
               {reviews.length === 0 ? (
-                <p className="text-gray-600 text-center py-8">Non hai ancora scritto recensioni</p>
+                <p className="text-gray-600 text-center py-8">
+                  {isFamilyMember ? 'Nessuna recensione scritta da questo membro' : 'Non hai ancora scritto recensioni'}
+                </p>
               ) : filteredReviews.length === 0 ? (
                 <p className="text-gray-600 text-center py-8">Nessuna recensione trovata con questi filtri</p>
               ) : (
@@ -680,7 +822,7 @@ export function ProfilePage() {
                           <p className="text-sm text-gray-600 mt-1">
                             {review.business?.name}
                           </p>
-                          {review.family_member?.nickname && (
+                          {isOwner && review.family_member?.nickname && (
                             <p className="text-xs text-blue-600 mt-1">
                               Scritta da: {review.family_member.nickname}
                             </p>
@@ -747,11 +889,13 @@ export function ProfilePage() {
               )}
             </div>
 
-            <div className="bg-white rounded-xl shadow-md p-8">
+            <div className="bg-white rounded-xl shadow-md p-8 mb-8">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <Package className="w-6 h-6 text-blue-600" />
-                  <h2 className="text-2xl font-bold text-gray-900">I Tuoi Annunci</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {isFamilyMember ? 'Annunci di ' + (selectedFamilyMember?.nickname || `${selectedFamilyMember?.first_name}`) : 'I Tuoi Annunci'}
+                  </h2>
                 </div>
                 <a
                   href="/classified"
@@ -762,19 +906,23 @@ export function ProfilePage() {
                 </a>
               </div>
 
-              <div className="mb-6 bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200 rounded-lg p-4">
-                <div className="flex items-center gap-3">
-                  <TrendingUp className="w-6 h-6 text-green-600" />
-                  <p className="text-gray-800 font-semibold">
-                    Guadagna <span className="text-green-600 font-bold">5 punti</span> in classifica per ogni annuncio pubblicato!
-                  </p>
+              {isOwner && (
+                <div className="mb-6 bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <TrendingUp className="w-6 h-6 text-green-600" />
+                    <p className="text-gray-800 font-semibold">
+                      Guadagna <span className="text-green-600 font-bold">5 punti</span> in classifica per ogni annuncio pubblicato!
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {classifiedAds.length === 0 ? (
                 <div className="text-center py-8">
                   <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-4">Non hai ancora pubblicato annunci</p>
+                  <p className="text-gray-600 mb-4">
+                    {isFamilyMember ? 'Nessun annuncio pubblicato da questo membro' : 'Non hai ancora pubblicato annunci'}
+                  </p>
                   <a
                     href="/classified"
                     className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
@@ -1144,7 +1292,7 @@ export function ProfilePage() {
           </>
         )}
 
-        <DeleteAccountButton onAccountDeleted={handleAccountDeleted} />
+        {isOwner && <DeleteAccountButton onAccountDeleted={handleAccountDeleted} />}
       </div>
     </div>
   );
