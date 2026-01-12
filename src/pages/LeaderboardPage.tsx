@@ -11,6 +11,8 @@ interface LeaderboardUser {
   points: number;
   reviews_count: number;
   rank: number;
+  is_family_member?: boolean;
+  customer_id?: string;
 }
 
 interface Reward {
@@ -40,7 +42,9 @@ export function LeaderboardPage() {
     try {
       setLoading(true);
 
-      let query = supabase
+      const allParticipants: LeaderboardUser[] = [];
+
+      const { data: activityData, error: activityError } = await supabase
         .from('user_activity')
         .select(`
           user_id,
@@ -48,55 +52,92 @@ export function LeaderboardPage() {
           reviews_count,
           profile:profiles(id, full_name, avatar_url, user_type)
         `)
-        .order('total_points', { ascending: false })
-        .limit(100);
+        .order('total_points', { ascending: false });
 
-      const { data: activityData, error } = await query;
+      if (activityError) throw activityError;
 
-      if (error) throw error;
+      if (activityData) {
+        let filteredProfiles = activityData;
+        if (userTypeFilter !== 'all') {
+          filteredProfiles = activityData.filter((item: any) => item.profile?.user_type === userTypeFilter);
+        }
 
-      let filteredData = activityData || [];
-      if (userTypeFilter !== 'all') {
-        filteredData = filteredData.filter((item: any) => item.profile?.user_type === userTypeFilter);
+        filteredProfiles.forEach((item: any) => {
+          allParticipants.push({
+            id: item.profile.id,
+            full_name: item.profile.full_name,
+            avatar_url: item.profile.avatar_url,
+            points: item.total_points || 0,
+            reviews_count: item.reviews_count || 0,
+            rank: 0,
+            is_family_member: false,
+          });
+        });
       }
-      filteredData = filteredData.slice(0, 20);
 
-      const leaderboard: LeaderboardUser[] = filteredData.map((item: any, index: number) => ({
-        id: item.profile.id,
-        full_name: item.profile.full_name,
-        avatar_url: item.profile.avatar_url,
-        points: item.total_points || 0,
-        reviews_count: item.reviews_count || 0,
-        rank: index + 1,
-      }));
+      if (userTypeFilter === 'customer' || userTypeFilter === 'all') {
+        const { data: familyMembers, error: familyError } = await supabase
+          .from('customer_family_members')
+          .select(`
+            id,
+            first_name,
+            last_name,
+            nickname,
+            avatar_url,
+            customer_id
+          `);
 
-      setTopUsers(leaderboard);
+        if (familyError) throw familyError;
+
+        if (familyMembers) {
+          for (const member of familyMembers) {
+            const { data: reviews, error: reviewsError } = await supabase
+              .from('reviews')
+              .select('id, overall_rating')
+              .eq('family_member_id', member.id)
+              .eq('approved', true);
+
+            if (!reviewsError && reviews) {
+              const reviewsCount = reviews.length;
+              const points = reviewsCount * 25;
+
+              allParticipants.push({
+                id: member.id,
+                full_name: member.nickname || `${member.first_name} ${member.last_name}`,
+                avatar_url: member.avatar_url,
+                points: points,
+                reviews_count: reviewsCount,
+                rank: 0,
+                is_family_member: true,
+                customer_id: member.customer_id,
+              });
+            }
+          }
+        }
+      }
+
+      allParticipants.sort((a, b) => {
+        if (b.points !== a.points) {
+          return b.points - a.points;
+        }
+        return b.reviews_count - a.reviews_count;
+      });
+
+      allParticipants.forEach((participant, index) => {
+        participant.rank = index + 1;
+      });
+
+      const top20 = allParticipants.slice(0, 20);
+      setTopUsers(top20);
 
       if (profile) {
-        const userInTop = leaderboard.find(u => u.id === profile.id);
+        const userInTop = top20.find(u => u.id === profile.id && !u.is_family_member);
         if (userInTop) {
           setUserRank(userInTop);
         } else {
-          const { data: userData } = await supabase
-            .from('user_activity')
-            .select('total_points, reviews_count')
-            .eq('user_id', profile.id)
-            .maybeSingle();
-
-          if (userData) {
-            const totalUsers = await supabase
-              .from('user_activity')
-              .select('user_id', { count: 'exact', head: true })
-              .gt('total_points', userData.total_points || 0);
-
-            setUserRank({
-              id: profile.id,
-              full_name: profile.full_name,
-              avatar_url: profile.avatar_url,
-              points: userData.total_points || 0,
-              reviews_count: userData.reviews_count || 0,
-              rank: (totalUsers.count || 0) + 1,
-            });
+          const userInAll = allParticipants.find(u => u.id === profile.id && !u.is_family_member);
+          if (userInAll) {
+            setUserRank(userInAll);
           }
         }
       }
@@ -314,9 +355,19 @@ export function LeaderboardPage() {
                           )}
 
                           <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900 text-lg">
-                              {user.full_name}
-                            </h3>
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold text-sm">
+                                #{user.rank}
+                              </span>
+                              <h3 className="font-semibold text-gray-900 text-lg">
+                                {user.full_name}
+                              </h3>
+                              {user.is_family_member && (
+                                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
+                                  Membro famiglia
+                                </span>
+                              )}
+                            </div>
                             <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                               {userTypeFilter !== 'business' && (
                                 <span className="flex items-center gap-1">
