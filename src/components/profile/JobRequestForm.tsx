@@ -470,14 +470,10 @@ export function JobRequestForm({ customerId, familyMemberId }: JobRequestFormPro
           <Briefcase className="w-7 h-7 text-blue-600" />
           Annunci "Cerco Lavoro"
         </h2>
-        <p className="text-sm text-gray-600 mt-1">Gestisci gli annunci per te e i tuoi familiari</p>
+        <p className="text-sm text-gray-600 mt-1">Gestisci i tuoi annunci di ricerca lavoro</p>
       </div>
 
       {renderJobRequestSection(null, 'Account Principale')}
-
-      {familyMembers.map((member) =>
-        renderJobRequestSection(member.id, member.nickname, member.avatar_url)
-      )}
     </div>
   );
 }
