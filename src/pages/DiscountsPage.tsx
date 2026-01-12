@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Percent, Calendar, Tag as TagIcon, Store, MapPin, Clock, Search, Filter } from 'lucide-react';
+import { Percent, Calendar, Tag as TagIcon, Store, MapPin, Clock, Search, Filter, Check, CheckCircle2 } from 'lucide-react';
 import { supabase, BusinessCategory } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ITALIAN_REGIONS, PROVINCES_BY_REGION, PROVINCE_TO_CODE } from '../lib/cities';
@@ -30,6 +30,8 @@ interface Business {
 
 interface DiscountWithBusiness extends Discount {
   business: Business;
+  is_redeemed?: boolean;
+  redeemed_at?: string;
 }
 
 export function DiscountsPage() {
@@ -44,11 +46,16 @@ export function DiscountsPage() {
   const [categories, setCategories] = useState<BusinessCategory[]>([]);
   const [provinces, setProvinces] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
+  const [redeemedDiscountIds, setRedeemedDiscountIds] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<'available' | 'redeemed'>('available');
 
   useEffect(() => {
-    loadDiscounts();
-    loadCategories();
-  }, []);
+    if (user) {
+      loadDiscounts();
+      loadCategories();
+      loadRedemptions();
+    }
+  }, [user]);
 
   useEffect(() => {
     if (selectedRegion) {
@@ -108,6 +115,30 @@ export function DiscountsPage() {
     }
   };
 
+  const loadRedemptions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('discount_redemptions')
+        .select('discount_id, redeemed_at')
+        .eq('customer_id', user?.id);
+
+      if (error) throw error;
+
+      if (data) {
+        const redemptionMap = new Map(data.map(r => [r.discount_id, r.redeemed_at]));
+        setRedeemedDiscountIds(new Set(redemptionMap.keys()));
+
+        setDiscounts(prev => prev.map(d => ({
+          ...d,
+          is_redeemed: redemptionMap.has(d.id),
+          redeemed_at: redemptionMap.get(d.id)
+        })));
+      }
+    } catch (error) {
+      console.error('Error loading redemptions:', error);
+    }
+  };
+
   const loadDiscounts = async () => {
     try {
       setLoading(true);
@@ -134,7 +165,13 @@ export function DiscountsPage() {
       if (error) throw error;
 
       const typedData = data as unknown as DiscountWithBusiness[];
-      setDiscounts(typedData);
+
+      const discountsWithRedemption = typedData.map(d => ({
+        ...d,
+        is_redeemed: redeemedDiscountIds.has(d.id)
+      }));
+
+      setDiscounts(discountsWithRedemption);
     } catch (error) {
       console.error('Error loading discounts:', error);
     } finally {
@@ -142,7 +179,33 @@ export function DiscountsPage() {
     }
   };
 
+  const markAsRedeemed = async (discountId: string) => {
+    try {
+      const { error } = await supabase
+        .from('discount_redemptions')
+        .insert({
+          discount_id: discountId,
+          customer_id: user?.id
+        });
+
+      if (error) throw error;
+
+      setDiscounts(prev => prev.map(d =>
+        d.id === discountId
+          ? { ...d, is_redeemed: true, redeemed_at: new Date().toISOString() }
+          : d
+      ));
+
+      setRedeemedDiscountIds(prev => new Set([...prev, discountId]));
+    } catch (error) {
+      console.error('Error marking discount as redeemed:', error);
+      alert('Errore durante il salvataggio');
+    }
+  };
+
   const filteredDiscounts = discounts.filter(discount => {
+    const matchesTab = activeTab === 'available' ? !discount.is_redeemed : discount.is_redeemed;
+
     const matchesSearch =
       discount.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       discount.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -166,8 +229,11 @@ export function DiscountsPage() {
       matchesLocation = false;
     }
 
-    return matchesSearch && matchesCategory && matchesLocation;
+    return matchesTab && matchesSearch && matchesCategory && matchesLocation;
   });
+
+  const availableCount = discounts.filter(d => !d.is_redeemed).length;
+  const redeemedCount = discounts.filter(d => d.is_redeemed).length;
 
   const getCategoryName = (categoryId: string) => {
     const category = categories.find(c => c.id === categoryId);
@@ -224,6 +290,41 @@ export function DiscountsPage() {
             <p className="text-gray-600">
               Scopri le offerte esclusive delle attività locali
             </p>
+
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={() => setActiveTab('available')}
+                className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-colors ${
+                  activeTab === 'available'
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-orange-300'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Percent className="w-5 h-5" />
+                  <span>Disponibili</span>
+                  <span className="bg-white text-orange-600 px-2 py-1 rounded-full text-sm font-bold">
+                    {availableCount}
+                  </span>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('redeemed')}
+                className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-colors ${
+                  activeTab === 'redeemed'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-green-300'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <CheckCircle2 className="w-5 h-5" />
+                  <span>Utilizzati</span>
+                  <span className="bg-white text-green-600 px-2 py-1 rounded-full text-sm font-bold">
+                    {redeemedCount}
+                  </span>
+                </div>
+              </button>
+            </div>
           </div>
 
           <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
@@ -401,12 +502,41 @@ export function DiscountsPage() {
                       )}
                     </div>
 
-                    <a
-                      href={`/business/${discount.business_id}`}
-                      className="block w-full bg-orange-600 text-white text-center py-3 rounded-lg hover:bg-orange-700 transition-colors font-medium"
-                    >
-                      Vai all'attività
-                    </a>
+                    {discount.is_redeemed ? (
+                      <div className="space-y-2">
+                        <div className="bg-green-50 border-2 border-green-300 rounded-lg p-3 flex items-center justify-center gap-2 text-green-700 font-semibold">
+                          <CheckCircle2 className="w-5 h-5" />
+                          <span>Sconto utilizzato</span>
+                        </div>
+                        {discount.redeemed_at && (
+                          <p className="text-sm text-center text-gray-500">
+                            Utilizzato il {new Date(discount.redeemed_at).toLocaleDateString('it-IT')}
+                          </p>
+                        )}
+                        <a
+                          href={`/business/${discount.business_id}`}
+                          className="block w-full bg-gray-600 text-white text-center py-3 rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                        >
+                          Vai all'attività
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => markAsRedeemed(discount.id)}
+                          className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2"
+                        >
+                          <Check className="w-5 h-5" />
+                          Segna come utilizzato
+                        </button>
+                        <a
+                          href={`/business/${discount.business_id}`}
+                          className="block w-full bg-orange-600 text-white text-center py-3 rounded-lg hover:bg-orange-700 transition-colors font-medium"
+                        >
+                          Vai all'attività
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
