@@ -44,35 +44,40 @@ export function LeaderboardPage() {
 
       const allParticipants: LeaderboardUser[] = [];
 
-      const { data: activityData, error: activityError } = await supabase
-        .from('user_activity')
-        .select(`
-          user_id,
-          total_points,
-          reviews_count,
-          profile:profiles(id, full_name, avatar_url, user_type)
-        `)
-        .order('total_points', { ascending: false });
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url, user_type');
 
-      if (activityError) throw activityError;
+      if (profilesError) throw profilesError;
 
-      if (activityData) {
-        let filteredProfiles = activityData;
+      if (profiles) {
+        let filteredProfiles = profiles;
         if (userTypeFilter !== 'all') {
-          filteredProfiles = activityData.filter((item: any) => item.profile?.user_type === userTypeFilter);
+          filteredProfiles = profiles.filter((p: any) => p.user_type === userTypeFilter);
         }
 
-        filteredProfiles.forEach((item: any) => {
-          allParticipants.push({
-            id: item.profile.id,
-            full_name: item.profile.full_name,
-            avatar_url: item.profile.avatar_url,
-            points: item.total_points || 0,
-            reviews_count: item.reviews_count || 0,
-            rank: 0,
-            is_family_member: false,
-          });
-        });
+        for (const profile of filteredProfiles) {
+          const { data: reviews, error: reviewsError } = await supabase
+            .from('reviews')
+            .select('id, points_awarded, review_status')
+            .eq('customer_id', profile.id)
+            .eq('review_status', 'approved');
+
+          if (!reviewsError && reviews) {
+            const reviewsCount = reviews.length;
+            const totalPoints = reviews.reduce((sum, r) => sum + (r.points_awarded || 0), 0);
+
+            allParticipants.push({
+              id: profile.id,
+              full_name: profile.full_name,
+              avatar_url: profile.avatar_url,
+              points: totalPoints,
+              reviews_count: reviewsCount,
+              rank: 0,
+              is_family_member: false,
+            });
+          }
+        }
       }
 
       if (userTypeFilter === 'customer' || userTypeFilter === 'all') {
@@ -93,19 +98,19 @@ export function LeaderboardPage() {
           for (const member of familyMembers) {
             const { data: reviews, error: reviewsError } = await supabase
               .from('reviews')
-              .select('id, overall_rating')
+              .select('id, points_awarded, review_status')
               .eq('family_member_id', member.id)
-              .eq('approved', true);
+              .eq('review_status', 'approved');
 
             if (!reviewsError && reviews) {
               const reviewsCount = reviews.length;
-              const points = reviewsCount * 25;
+              const totalPoints = reviews.reduce((sum, r) => sum + (r.points_awarded || 0), 0);
 
               allParticipants.push({
                 id: member.id,
                 full_name: member.nickname || `${member.first_name} ${member.last_name}`,
                 avatar_url: member.avatar_url,
-                points: points,
+                points: totalPoints,
                 reviews_count: reviewsCount,
                 rank: 0,
                 is_family_member: true,
@@ -398,38 +403,32 @@ export function LeaderboardPage() {
 
               {(userTypeFilter === 'customer' || userTypeFilter === 'all') && (
                 <div className="mt-8 bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">Come Guadagnare Punti - Utenti Privati</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">Come Guadagnare Punti - Utenti Privati e Membri Famiglia</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Tutti gli utenti (profilo principale e membri della famiglia) guadagnano punti allo stesso modo:
+                  </p>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-center gap-2">
                       <Star className="w-5 h-5 text-green-600" />
-                      <span><strong>50 punti</strong> per recensione completa con prove (scontrini o fatture)</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Award className="w-5 h-5 text-yellow-600" />
-                      <span><strong>30 punti</strong> quando un amico si abbona usando il tuo nickname</span>
+                      <span><strong>25 punti</strong> per recensione completa con prove (scontrini o fatture)</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Star className="w-5 h-5 text-blue-600" />
-                      <span><strong>25 punti</strong> per una recensione base</span>
+                      <span><strong>15 punti</strong> per recensione completa senza prove</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Award className="w-5 h-5 text-orange-600" />
-                      <span><strong>20 punti</strong> per inserimento di un'attività non presente</span>
+                      <Star className="w-5 h-5 text-yellow-600" />
+                      <span><strong>10 punti</strong> per recensione con solo voto finale e prove</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Award className="w-5 h-5 text-green-600" />
-                      <span><strong>10 punti</strong> per ogni prodotto completo inserito</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Award className="w-5 h-5 text-gray-600" />
-                      <span><strong>5 punti</strong> per ogni annuncio pubblicato</span>
+                      <Star className="w-5 h-5 text-gray-600" />
+                      <span><strong>5 punti</strong> per recensione con solo voto finale senza prove</span>
                     </li>
                   </ul>
 
                   <div className="mt-4 bg-amber-50 border border-amber-300 rounded-lg p-4">
                     <p className="text-sm text-gray-700">
-                      <strong>Nota:</strong> I punti delle recensioni vengono assegnati solo dopo l'approvazione dello staff.
-                      I punti "Porta un Amico" vengono assegnati quando l'amico effettua l'abbonamento.
+                      <strong>Nota:</strong> I punti vengono assegnati solo dopo l'approvazione delle recensioni da parte dello staff. Ogni utente compete individualmente nella classifica, inclusi i membri della famiglia.
                     </p>
                   </div>
                 </div>
