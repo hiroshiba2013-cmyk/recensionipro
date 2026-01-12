@@ -47,28 +47,28 @@ const iconMap: { [key: string]: any } = {
 };
 
 export function ActivityFeed() {
-  const { profile } = useAuth();
+  const { profile, activeProfile } = useAuth();
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [summary, setSummary] = useState<ActivitySummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'week' | 'month'>('all');
 
   useEffect(() => {
-    if (profile) {
+    if (profile && activeProfile) {
       loadActivities();
       loadSummary();
     }
-  }, [profile, filter]);
+  }, [profile, activeProfile, filter]);
 
   const loadActivities = async () => {
-    if (!profile) return;
+    if (!profile || !activeProfile) return;
 
     try {
       setLoading(true);
       let query = supabase
         .from('activity_log')
         .select('*')
-        .eq('user_id', profile.id)
+        .eq('user_id', activeProfile.id)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -95,11 +95,11 @@ export function ActivityFeed() {
   };
 
   const loadSummary = async () => {
-    if (!profile) return;
+    if (!profile || !activeProfile) return;
 
     try {
       const { data, error } = await supabase.rpc('get_user_activity_summary', {
-        p_user_id: profile.id
+        p_user_id: activeProfile.id
       });
 
       if (error) throw error;
@@ -202,7 +202,12 @@ export function ActivityFeed() {
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">La Tua Attività</h2>
+            <div>
+              <h2 className="text-2xl font-bold text-white">La Tua Attività</h2>
+              {activeProfile && (
+                <p className="text-blue-100 text-sm mt-1">{activeProfile.name}</p>
+              )}
+            </div>
             <div className="inline-flex rounded-lg border border-blue-400 bg-blue-500/20 p-1">
               <button
                 onClick={() => setFilter('all')}
