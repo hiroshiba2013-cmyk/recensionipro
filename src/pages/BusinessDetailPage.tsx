@@ -108,7 +108,8 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
             *,
             customer:profiles(full_name),
             responses:review_responses(*),
-            family_member:customer_family_members(first_name, last_name, nickname)
+            family_member:customer_family_members(first_name, last_name, nickname),
+            business_location:business_locations(id, name, address, city)
           `)
           .eq('business_id', businessId)
           .order('created_at', { ascending: false });

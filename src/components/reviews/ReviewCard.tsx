@@ -1,4 +1,4 @@
-import { Star, Clock, CheckCircle } from 'lucide-react';
+import { Star, Clock, CheckCircle, MapPin } from 'lucide-react';
 import { Review } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import ReportButton from '../moderation/ReportButton';
@@ -72,6 +72,12 @@ export function ReviewCard({ review }: ReviewCardProps) {
             <p className="text-sm font-medium text-gray-900">{review.customer.full_name}</p>
           )}
           <span className="text-xs text-gray-500">{formatDate(review.created_at)}</span>
+          {review.business_location && (
+            <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
+              <MapPin className="w-3 h-3" />
+              {review.business_location.name || `${review.business_location.address}, ${review.business_location.city}`}
+            </p>
+          )}
         </div>
       </div>
 

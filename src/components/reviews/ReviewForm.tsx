@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Star, X, Upload, Image as ImageIcon, Award } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Star, X, Upload, Image as ImageIcon, Award, MapPin } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -8,6 +8,14 @@ interface ReviewFormProps {
   businessName: string;
   onClose: () => void;
   onSuccess: () => void;
+}
+
+interface BusinessLocation {
+  id: string;
+  name: string | null;
+  address: string;
+  city: string;
+  province: string;
 }
 
 export function ReviewForm({ businessId, businessName, onClose, onSuccess }: ReviewFormProps) {
@@ -22,6 +30,8 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
   const [hoveredOverallRating, setHoveredOverallRating] = useState(0);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('');
+  const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [proofImage, setProofImage] = useState<File | null>(null);
   const [proofImagePreview, setProofImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -32,6 +42,22 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
   const estimatedPoints = hasDetailedRatings
     ? (proofImage ? 25 : 15)
     : (proofImage ? 10 : 5);
+
+  useEffect(() => {
+    loadBusinessLocations();
+  }, [businessId]);
+
+  const loadBusinessLocations = async () => {
+    const { data: locationsData } = await supabase
+      .from('business_locations')
+      .select('id, name, address, city, province')
+      .eq('business_id', businessId)
+      .order('created_at', { ascending: true });
+
+    if (locationsData && locationsData.length > 0) {
+      setBusinessLocations(locationsData);
+    }
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -145,6 +171,7 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
         .insert({
           business_id: businessId,
           customer_id: profile.id,
+          business_location_id: selectedLocationId || null,
           rating: avgRating,
           price_rating: priceRating || null,
           service_rating: serviceRating || null,
@@ -221,6 +248,30 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
               </p>
             </div>
           </div>
+
+          {businessLocations.length > 0 && (
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <MapPin className="w-4 h-4 inline mr-1" />
+                Sede (Opzionale)
+              </label>
+              <p className="text-xs text-gray-500 mb-3">
+                Se vuoi recensire una sede specifica, selezionala qui. Altrimenti la recensione sarà generale per l'attività.
+              </p>
+              <select
+                value={selectedLocationId}
+                onChange={(e) => setSelectedLocationId(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Recensione generale (tutte le sedi)</option>
+                {businessLocations.map((location) => (
+                  <option key={location.id} value={location.id}>
+                    {location.name || `${location.address}, ${location.city} (${location.province})`}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">

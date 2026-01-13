@@ -75,6 +75,7 @@ export interface Review {
   business_id: string;
   customer_id: string;
   family_member_id: string | null;
+  business_location_id: string | null;
   rating: number;
   price_rating: number | null;
   service_rating: number | null;
@@ -91,6 +92,12 @@ export interface Review {
   updated_at: string;
   customer?: Profile;
   family_member?: FamilyMember;
+  business_location?: {
+    id: string;
+    name: string | null;
+    address: string;
+    city: string;
+  };
   responses?: ReviewResponse[];
 }
 

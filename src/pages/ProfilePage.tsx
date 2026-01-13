@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Star, Tag, Plus, Calendar, Percent, X, Package, LogOut, Trophy, TrendingUp, Briefcase } from 'lucide-react';
+import { User, Star, Tag, Plus, Calendar, Percent, X, Package, LogOut, Trophy, TrendingUp, Briefcase, MapPin } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ClassifiedAdCard } from '../components/classifieds/ClassifiedAdCard';
@@ -44,6 +44,7 @@ interface Review {
   created_at: string;
   business_id: string;
   family_member_id?: string;
+  business_location_id?: string | null;
   business?: {
     name: string;
   };
@@ -53,6 +54,12 @@ interface Review {
   family_member?: {
     nickname: string;
   };
+  business_location?: {
+    id: string;
+    name: string | null;
+    address: string;
+    city: string;
+  } | null;
 }
 
 interface Discount {
@@ -80,6 +87,14 @@ interface Business {
   billing_address: string;
   office_address: string;
   website_url: string;
+}
+
+interface BusinessLocation {
+  id: string;
+  name: string | null;
+  address: string;
+  city: string;
+  province: string;
 }
 
 interface ClassifiedAd {
@@ -127,6 +142,7 @@ export function ProfilePage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [business, setBusiness] = useState<Business | null>(null);
+  const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [classifiedAds, setClassifiedAds] = useState<ClassifiedAd[]>([]);
   const [userRank, setUserRank] = useState<UserRank | null>(null);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
@@ -144,6 +160,7 @@ export function ProfilePage() {
     nickname: '',
     rating: '',
     businessName: '',
+    locationId: '',
   });
 
   useEffect(() => {
@@ -350,12 +367,23 @@ export function ProfilePage() {
     if (businessData) {
       setBusiness(businessData);
 
+      const { data: locationsData } = await supabase
+        .from('business_locations')
+        .select('id, name, address, city, province')
+        .eq('business_id', businessData.id)
+        .order('created_at', { ascending: true });
+
+      if (locationsData) {
+        setBusinessLocations(locationsData);
+      }
+
       const { data: reviewsData } = await supabase
         .from('reviews')
         .select(`
           *,
           customer:profiles(full_name),
-          family_member:customer_family_members(nickname)
+          family_member:customer_family_members(nickname),
+          business_location:business_locations(id, name, address, city)
         `)
         .eq('business_id', businessData.id)
         .order('created_at', { ascending: false });
@@ -433,7 +461,11 @@ export function ProfilePage() {
       review.business?.name?.toLowerCase().includes(reviewFilters.businessName.toLowerCase()) ||
       review.customer?.full_name?.toLowerCase().includes(reviewFilters.businessName.toLowerCase());
 
-    return nicknameMatch && ratingMatch && businessNameMatch;
+    const locationMatch = !reviewFilters.locationId ||
+      (reviewFilters.locationId === 'general' && !review.business_location_id) ||
+      review.business_location_id === reviewFilters.locationId;
+
+    return nicknameMatch && ratingMatch && businessNameMatch && locationMatch;
   });
 
   if (loading) {
@@ -1056,7 +1088,7 @@ export function ProfilePage() {
               {reviews.length > 0 && (
                 <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                   <h3 className="text-sm font-semibold text-gray-700 mb-3">Filtra Recensioni</h3>
-                  <div className="grid md:grid-cols-3 gap-4">
+                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                       <label className="block text-sm text-gray-600 mb-1">Nickname</label>
                       <input
@@ -1092,10 +1124,26 @@ export function ProfilePage() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Sede</label>
+                      <select
+                        value={reviewFilters.locationId}
+                        onChange={(e) => setReviewFilters({ ...reviewFilters, locationId: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="">Tutte le sedi</option>
+                        <option value="general">Recensioni generali</option>
+                        {businessLocations.map((location) => (
+                          <option key={location.id} value={location.id}>
+                            {location.name || `${location.address}, ${location.city}`}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                  {(reviewFilters.nickname || reviewFilters.rating || reviewFilters.businessName) && (
+                  {(reviewFilters.nickname || reviewFilters.rating || reviewFilters.businessName || reviewFilters.locationId) && (
                     <button
-                      onClick={() => setReviewFilters({ nickname: '', rating: '', businessName: '' })}
+                      onClick={() => setReviewFilters({ nickname: '', rating: '', businessName: '', locationId: '' })}
                       className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-semibold"
                     >
                       Resetta Filtri
@@ -1121,6 +1169,16 @@ export function ProfilePage() {
                           {review.family_member?.nickname && (
                             <p className="text-xs text-blue-600 mt-1">
                               Scritta da: {review.family_member.nickname}
+                            </p>
+                          )}
+                          {review.business_location ? (
+                            <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              Sede: {review.business_location.name || `${review.business_location.address}, ${review.business_location.city}`}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Recensione generale
                             </p>
                           )}
                         </div>
