@@ -56,10 +56,18 @@ export function SubscriptionManagement({
   };
 
   const loadPlans = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from('subscription_plans')
-      .select('*')
-      .not('name', 'like', '%Business%')
+      .select('*');
+
+    // Filtra i piani in base al tipo di utente
+    if (userType === 'business') {
+      query = query.like('name', '%Business%');
+    } else {
+      query = query.not('name', 'like', '%Business%');
+    }
+
+    const { data } = await query
       .order('billing_period')
       .order('max_persons');
 
@@ -269,27 +277,50 @@ export function SubscriptionManagement({
                           <span className="text-sm text-gray-600">/mese</span>
                         </div>
                         <p className="text-sm text-gray-600">
-                          Fino a {plan.max_persons} {plan.max_persons === 1 ? 'persona' : 'persone'}
+                          Fino a {plan.max_persons} {userType === 'business' ? (plan.max_persons === 1 ? 'sede' : 'sedi') : (plan.max_persons === 1 ? 'persona' : 'persone')}
                         </p>
                       </div>
 
                       <div className="mb-4 space-y-2">
-                        <div className="flex items-center gap-2 text-sm text-gray-700">
-                          <Check className="w-4 h-4 text-green-600" />
-                          <span>Recensioni illimitate</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-700">
-                          <Check className="w-4 h-4 text-green-600" />
-                          <span>Accesso agli sconti</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-700">
-                          <Check className="w-4 h-4 text-green-600" />
-                          <span>Supporto prioritario</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-700">
-                          <Check className="w-4 h-4 text-green-600" />
-                          <span>Sistema punti fedeltà</span>
-                        </div>
+                        {userType === 'customer' ? (
+                          <>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span>Recensioni illimitate</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span>Accesso agli sconti</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span>Supporto prioritario</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span>Sistema punti fedeltà</span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span>Gestione {plan.max_persons} {plan.max_persons === 1 ? 'sede' : 'sedi'}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span>Sconti illimitati</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span>Offerte di lavoro</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span>Risposta alle recensioni</span>
+                            </div>
+                          </>
+                        )}
                       </div>
 
                       {currentSubscription?.plan.id === plan.id ? (
@@ -341,27 +372,50 @@ export function SubscriptionManagement({
                           €{(Number(plan.price) / 12).toFixed(2)}/mese
                         </p>
                         <p className="text-sm text-gray-600">
-                          Fino a {plan.max_persons} {plan.max_persons === 1 ? 'persona' : 'persone'}
+                          Fino a {plan.max_persons} {userType === 'business' ? (plan.max_persons === 1 ? 'sede' : 'sedi') : (plan.max_persons === 1 ? 'persona' : 'persone')}
                         </p>
                       </div>
 
                       <div className="mb-4 space-y-2">
-                        <div className="flex items-center gap-2 text-sm text-gray-700">
-                          <Check className="w-4 h-4 text-green-600" />
-                          <span>Recensioni illimitate</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-700">
-                          <Check className="w-4 h-4 text-green-600" />
-                          <span>Accesso agli sconti</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-700">
-                          <Check className="w-4 h-4 text-green-600" />
-                          <span>Supporto prioritario</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-700">
-                          <Check className="w-4 h-4 text-green-600" />
-                          <span>Sistema punti fedeltà</span>
-                        </div>
+                        {userType === 'customer' ? (
+                          <>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span>Recensioni illimitate</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span>Accesso agli sconti</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span>Supporto prioritario</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span>Sistema punti fedeltà</span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span>Gestione {plan.max_persons} {plan.max_persons === 1 ? 'sede' : 'sedi'}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span>Sconti illimitati</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span>Offerte di lavoro</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span>Risposta alle recensioni</span>
+                            </div>
+                          </>
+                        )}
                       </div>
 
                       {currentSubscription?.plan.id === plan.id ? (
