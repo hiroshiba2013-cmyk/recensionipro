@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MapPin, Edit, Save, X, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
-import { CITIES_BY_PROVINCE } from '../../lib/cities';
+import { CITIES_BY_PROVINCE, PROVINCE_TO_CODE } from '../../lib/cities';
 import { BusinessLocationAvatarUpload } from './BusinessLocationAvatarUpload';
 
 const italianCities = Object.entries(CITIES_BY_PROVINCE).flatMap(([province, cities]) =>
@@ -56,8 +56,6 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
     const loadLocations = async () => {
       setLoading(true);
 
-      console.log('Loading locations for businessId:', businessId);
-
       const { data } = await supabase
         .from('business_locations')
         .select('*')
@@ -65,17 +63,14 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
         .order('is_primary', { ascending: false });
 
       if (data) {
-        console.log('Loaded locations:', data);
         setLocations(data);
       }
 
-      const { data: businessData, error: businessError } = await supabase
+      const { data: businessData } = await supabase
         .from('businesses')
         .select('owner_id')
         .eq('id', businessId)
         .maybeSingle();
-
-      console.log('Business data:', businessData, 'Error:', businessError);
 
       if (businessData) {
         const { data: subscriptionData, error: subError } = await supabase
@@ -178,12 +173,13 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
       })));
     } else if (field === 'city') {
       const selectedCity = italianCities.find(c => c.city === value);
+      const provinceCode = selectedCity?.province ? PROVINCE_TO_CODE[selectedCity.province] : location.province;
       setLocations(locations.map(location =>
         location.id === id
           ? {
               ...location,
               city: value,
-              province: selectedCity?.province || location.province,
+              province: provinceCode || location.province,
             }
           : location
       ));
@@ -217,16 +213,12 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
     setSaving(true);
 
     const { data: { user } } = await supabase.auth.getUser();
-    console.log('Current user:', user?.id);
-    console.log('Submitting locations for businessId:', businessId);
 
     const { data: businessCheck } = await supabase
       .from('businesses')
       .select('id, owner_id')
       .eq('id', businessId)
       .maybeSingle();
-
-    console.log('Business check:', businessCheck);
 
     if (!businessCheck || businessCheck.owner_id !== user?.id) {
       alert('Non hai i permessi per modificare questa attività');
@@ -251,6 +243,11 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
           setSaving(false);
           return;
         }
+        if (!/^[A-Z]{2}$/.test(location.province.trim())) {
+          alert('Formato provincia non valido. Seleziona la città dal menu per impostare automaticamente la provincia.');
+          setSaving(false);
+          return;
+        }
         if (!location.postal_code.trim()) {
           alert('Compila il CAP per tutte le sedi');
           setSaving(false);
@@ -258,56 +255,39 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
         }
 
         if (location.id.startsWith('new-')) {
-          const insertData = {
-            business_id: businessId,
-            name: location.name.trim() || 'Sede',
-            address: location.address.trim(),
-            city: location.city.trim(),
-            province: location.province.trim(),
-            postal_code: location.postal_code.trim(),
-            phone: location.phone.trim() || null,
-            email: location.email.trim() || null,
-            business_hours: location.business_hours,
-            is_primary: location.is_primary,
-          };
-
-          console.log('Inserting location:', insertData);
-
-          const { data, error } = await supabase
-            .from('business_locations')
-            .insert(insertData)
-            .select();
-
-          if (error) {
-            console.error('Insert error:', error);
-            throw error;
-          }
-
-          console.log('Insert successful:', data);
-        } else {
-          const updateData = {
-            name: location.name.trim() || 'Sede',
-            address: location.address.trim(),
-            city: location.city.trim(),
-            province: location.province.trim(),
-            postal_code: location.postal_code.trim(),
-            phone: location.phone.trim() || null,
-            email: location.email.trim() || null,
-            business_hours: location.business_hours,
-            is_primary: location.is_primary,
-          };
-
-          console.log('Updating location:', updateData);
-
           const { error } = await supabase
             .from('business_locations')
-            .update(updateData)
+            .insert({
+              business_id: businessId,
+              name: location.name.trim() || 'Sede',
+              address: location.address.trim(),
+              city: location.city.trim(),
+              province: location.province.trim(),
+              postal_code: location.postal_code.trim(),
+              phone: location.phone.trim() || null,
+              email: location.email.trim() || null,
+              business_hours: location.business_hours,
+              is_primary: location.is_primary,
+            });
+
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('business_locations')
+            .update({
+              name: location.name.trim() || 'Sede',
+              address: location.address.trim(),
+              city: location.city.trim(),
+              province: location.province.trim(),
+              postal_code: location.postal_code.trim(),
+              phone: location.phone.trim() || null,
+              email: location.email.trim() || null,
+              business_hours: location.business_hours,
+              is_primary: location.is_primary,
+            })
             .eq('id', location.id);
 
-          if (error) {
-            console.error('Update error:', error);
-            throw error;
-          }
+          if (error) throw error;
         }
       }
 
