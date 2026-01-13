@@ -56,6 +56,8 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
     const loadLocations = async () => {
       setLoading(true);
 
+      console.log('Loading locations for businessId:', businessId);
+
       const { data } = await supabase
         .from('business_locations')
         .select('*')
@@ -63,14 +65,17 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
         .order('is_primary', { ascending: false });
 
       if (data) {
+        console.log('Loaded locations:', data);
         setLocations(data);
       }
 
-      const { data: businessData } = await supabase
+      const { data: businessData, error: businessError } = await supabase
         .from('businesses')
         .select('owner_id')
         .eq('id', businessId)
         .maybeSingle();
+
+      console.log('Business data:', businessData, 'Error:', businessError);
 
       if (businessData) {
         const { data: subscriptionData, error: subError } = await supabase
@@ -211,6 +216,24 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
     e.preventDefault();
     setSaving(true);
 
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log('Current user:', user?.id);
+    console.log('Submitting locations for businessId:', businessId);
+
+    const { data: businessCheck } = await supabase
+      .from('businesses')
+      .select('id, owner_id')
+      .eq('id', businessId)
+      .maybeSingle();
+
+    console.log('Business check:', businessCheck);
+
+    if (!businessCheck || businessCheck.owner_id !== user?.id) {
+      alert('Non hai i permessi per modificare questa attività');
+      setSaving(false);
+      return;
+    }
+
     try {
       for (const location of locations) {
         if (!location.address.trim()) {
@@ -235,39 +258,56 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
         }
 
         if (location.id.startsWith('new-')) {
-          const { error } = await supabase
-            .from('business_locations')
-            .insert({
-              business_id: businessId,
-              name: location.name.trim() || 'Sede',
-              address: location.address.trim(),
-              city: location.city.trim(),
-              province: location.province.trim(),
-              postal_code: location.postal_code.trim(),
-              phone: location.phone.trim(),
-              email: location.email.trim(),
-              business_hours: location.business_hours,
-              is_primary: location.is_primary,
-            });
+          const insertData = {
+            business_id: businessId,
+            name: location.name.trim() || 'Sede',
+            address: location.address.trim(),
+            city: location.city.trim(),
+            province: location.province.trim(),
+            postal_code: location.postal_code.trim(),
+            phone: location.phone.trim() || null,
+            email: location.email.trim() || null,
+            business_hours: location.business_hours,
+            is_primary: location.is_primary,
+          };
 
-          if (error) throw error;
+          console.log('Inserting location:', insertData);
+
+          const { data, error } = await supabase
+            .from('business_locations')
+            .insert(insertData)
+            .select();
+
+          if (error) {
+            console.error('Insert error:', error);
+            throw error;
+          }
+
+          console.log('Insert successful:', data);
         } else {
+          const updateData = {
+            name: location.name.trim() || 'Sede',
+            address: location.address.trim(),
+            city: location.city.trim(),
+            province: location.province.trim(),
+            postal_code: location.postal_code.trim(),
+            phone: location.phone.trim() || null,
+            email: location.email.trim() || null,
+            business_hours: location.business_hours,
+            is_primary: location.is_primary,
+          };
+
+          console.log('Updating location:', updateData);
+
           const { error } = await supabase
             .from('business_locations')
-            .update({
-              name: location.name.trim() || 'Sede',
-              address: location.address.trim(),
-              city: location.city.trim(),
-              province: location.province.trim(),
-              postal_code: location.postal_code.trim(),
-              phone: location.phone.trim(),
-              email: location.email.trim(),
-              business_hours: location.business_hours,
-              is_primary: location.is_primary,
-            })
+            .update(updateData)
             .eq('id', location.id);
 
-          if (error) throw error;
+          if (error) {
+            console.error('Update error:', error);
+            throw error;
+          }
         }
       }
 
