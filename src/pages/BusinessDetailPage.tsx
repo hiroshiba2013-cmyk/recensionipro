@@ -614,7 +614,9 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
 
                   {reviews.length === 0 ? (
                     <p className="text-gray-600 text-center py-8 bg-gray-50 rounded-lg">
-                      Nessuna recensione ancora. Sii il primo a recensire!
+                      {profile?.user_type === 'business'
+                        ? 'Nessuna recensione ancora.'
+                        : 'Nessuna recensione ancora. Sii il primo a recensire!'}
                     </p>
                   ) : (
                     <div className="space-y-4">
