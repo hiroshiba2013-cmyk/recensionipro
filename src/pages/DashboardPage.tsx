@@ -7,6 +7,7 @@ import { EditBusinessLocationsForm } from '../components/business/EditBusinessLo
 import { EditBusinessForm } from '../components/business/EditBusinessForm';
 import { CreateBusinessForm } from '../components/business/CreateBusinessForm';
 import { DiscountForm } from '../components/discount/DiscountForm';
+import { DiscountVerification } from '../components/discount/DiscountVerification';
 import { ReviewResponseForm } from '../components/reviews/ReviewResponseForm';
 import { ImportBusinessesForm } from '../components/business/ImportBusinessesForm';
 import { FavoritesSection } from '../components/favorites/FavoritesSection';
@@ -606,6 +607,12 @@ export function DashboardPage() {
                     </div>
                   )}
                 </div>
+
+                {selectedBusinessId && (
+                  <div className="mt-6">
+                    <DiscountVerification businessId={selectedBusinessId} />
+                  </div>
+                )}
               </>
             ) : (
               <div className="space-y-6">

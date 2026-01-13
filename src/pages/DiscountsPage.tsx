@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Percent, Calendar, Tag as TagIcon, Store, MapPin, Clock, Search, Filter, Check, CheckCircle2 } from 'lucide-react';
+import { Percent, Calendar, Tag as TagIcon, Store, MapPin, Clock, Search, Filter, CheckCircle2, Ticket, X, Copy } from 'lucide-react';
 import { supabase, BusinessCategory } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ITALIAN_REGIONS, PROVINCES_BY_REGION, PROVINCE_TO_CODE } from '../lib/cities';
@@ -28,10 +28,16 @@ interface Business {
   }[];
 }
 
+interface PendingRedemption {
+  redemption_code: string;
+  expires_at: string;
+}
+
 interface DiscountWithBusiness extends Discount {
   business: Business;
   is_redeemed?: boolean;
   redeemed_at?: string;
+  pending_redemption?: PendingRedemption;
 }
 
 export function DiscountsPage() {
@@ -48,6 +54,14 @@ export function DiscountsPage() {
   const [cities, setCities] = useState<string[]>([]);
   const [redeemedDiscountIds, setRedeemedDiscountIds] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<'available' | 'redeemed'>('available');
+  const [generatingCode, setGeneratingCode] = useState<string | null>(null);
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [generatedRedemption, setGeneratedRedemption] = useState<{
+    code: string;
+    expiresAt: string;
+    discountTitle: string;
+    discountPercentage: number;
+  } | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -119,19 +133,33 @@ export function DiscountsPage() {
     try {
       const { data, error } = await supabase
         .from('discount_redemptions')
-        .select('discount_id, redeemed_at')
+        .select('discount_id, redeemed_at, status, redemption_code, expires_at, confirmed_at')
         .eq('customer_id', user?.id);
 
       if (error) throw error;
 
       if (data) {
-        const redemptionMap = new Map(data.map(r => [r.discount_id, r.redeemed_at]));
+        const redemptionMap = new Map();
+        const pendingMap = new Map();
+
+        data.forEach(r => {
+          if (r.status === 'confirmed') {
+            redemptionMap.set(r.discount_id, r.confirmed_at || r.redeemed_at);
+          } else if (r.status === 'pending' && r.expires_at && new Date(r.expires_at) > new Date()) {
+            pendingMap.set(r.discount_id, {
+              redemption_code: r.redemption_code,
+              expires_at: r.expires_at
+            });
+          }
+        });
+
         setRedeemedDiscountIds(new Set(redemptionMap.keys()));
 
         setDiscounts(prev => prev.map(d => ({
           ...d,
           is_redeemed: redemptionMap.has(d.id),
-          redeemed_at: redemptionMap.get(d.id)
+          redeemed_at: redemptionMap.get(d.id),
+          pending_redemption: pendingMap.get(d.id)
         })));
       }
     } catch (error) {
@@ -179,28 +207,57 @@ export function DiscountsPage() {
     }
   };
 
-  const markAsRedeemed = async (discountId: string) => {
+  const generateRedemptionCode = async (discount: DiscountWithBusiness) => {
+    setGeneratingCode(discount.id);
+
     try {
-      const { error } = await supabase
-        .from('discount_redemptions')
-        .insert({
-          discount_id: discountId,
-          customer_id: user?.id
-        });
+      const { data, error } = await supabase.rpc('create_discount_redemption', {
+        p_discount_id: discount.id,
+        p_customer_id: user?.id
+      });
 
       if (error) throw error;
 
-      setDiscounts(prev => prev.map(d =>
-        d.id === discountId
-          ? { ...d, is_redeemed: true, redeemed_at: new Date().toISOString() }
-          : d
-      ));
+      if (!data.success) {
+        alert(data.error || 'Errore durante la generazione del codice');
+        return;
+      }
 
-      setRedeemedDiscountIds(prev => new Set([...prev, discountId]));
+      setGeneratedRedemption({
+        code: data.redemption_code,
+        expiresAt: data.expires_at,
+        discountTitle: discount.title,
+        discountPercentage: discount.discount_percentage
+      });
+      setShowCodeModal(true);
+
+      // Reload redemptions to show the new pending code
+      await loadRedemptions();
     } catch (error) {
-      console.error('Error marking discount as redeemed:', error);
-      alert('Errore durante il salvataggio');
+      console.error('Error generating redemption code:', error);
+      alert('Errore durante la generazione del codice');
+    } finally {
+      setGeneratingCode(null);
     }
+  };
+
+  const copyCodeToClipboard = (code: string) => {
+    navigator.clipboard.writeText(code);
+    alert('Codice copiato negli appunti!');
+  };
+
+  const getTimeRemaining = (expiresAt: string) => {
+    const now = new Date();
+    const expires = new Date(expiresAt);
+    const diffMs = expires.getTime() - now.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 0) return 'Scaduto';
+    if (diffMins < 60) return `Scade tra ${diffMins} minuti`;
+
+    const hours = Math.floor(diffMins / 60);
+    const mins = diffMins % 60;
+    return `Scade tra ${hours}h ${mins}m`;
   };
 
   const filteredDiscounts = discounts.filter(discount => {
@@ -253,10 +310,6 @@ export function DiscountsPage() {
     if (days === 0) return 'Scade oggi';
     if (days === 1) return 'Scade domani';
     return `Scade tra ${days} giorni`;
-  };
-
-  const copyCodeToClipboard = (code: string) => {
-    navigator.clipboard.writeText(code);
   };
 
   if (!user) {
@@ -506,11 +559,11 @@ export function DiscountsPage() {
                       <div className="space-y-2">
                         <div className="bg-green-50 border-2 border-green-300 rounded-lg p-3 flex items-center justify-center gap-2 text-green-700 font-semibold">
                           <CheckCircle2 className="w-5 h-5" />
-                          <span>Sconto utilizzato</span>
+                          <span>Sconto utilizzato e verificato</span>
                         </div>
                         {discount.redeemed_at && (
                           <p className="text-sm text-center text-gray-500">
-                            Utilizzato il {new Date(discount.redeemed_at).toLocaleDateString('it-IT')}
+                            Verificato il {new Date(discount.redeemed_at).toLocaleDateString('it-IT')}
                           </p>
                         )}
                         <a
@@ -520,14 +573,62 @@ export function DiscountsPage() {
                           Vai all'attività
                         </a>
                       </div>
+                    ) : discount.pending_redemption ? (
+                      <div className="space-y-3">
+                        <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
+                          <p className="text-sm text-blue-800 font-medium mb-3 text-center">
+                            Mostra questo codice all'attività
+                          </p>
+                          <div className="bg-white rounded-lg p-4 mb-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs text-gray-500 font-medium">CODICE RISCATTO</span>
+                              <button
+                                onClick={() => copyCodeToClipboard(discount.pending_redemption!.redemption_code)}
+                                className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                              >
+                                <Copy className="w-3 h-3" />
+                                Copia
+                              </button>
+                            </div>
+                            <div className="font-mono text-3xl font-bold text-blue-600 text-center tracking-wider">
+                              {discount.pending_redemption.redemption_code}
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-center gap-2 text-sm text-orange-700">
+                            <Clock className="w-4 h-4" />
+                            <span className="font-medium">
+                              {getTimeRemaining(discount.pending_redemption.expires_at)}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-center text-gray-600 bg-gray-50 rounded p-3">
+                          Il codice scadrà automaticamente se non verificato entro 2 ore. L'attività confermerà l'utilizzo.
+                        </p>
+                        <a
+                          href={`/business/${discount.business_id}`}
+                          className="block w-full bg-orange-600 text-white text-center py-3 rounded-lg hover:bg-orange-700 transition-colors font-medium"
+                        >
+                          Vai all'attività
+                        </a>
+                      </div>
                     ) : (
                       <div className="space-y-2">
                         <button
-                          onClick={() => markAsRedeemed(discount.id)}
-                          className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2"
+                          onClick={() => generateRedemptionCode(discount)}
+                          disabled={generatingCode === discount.id}
+                          className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <Check className="w-5 h-5" />
-                          Segna come utilizzato
+                          {generatingCode === discount.id ? (
+                            <>
+                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                              <span>Generazione...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Ticket className="w-5 h-5" />
+                              <span>Genera codice riscatto</span>
+                            </>
+                          )}
                         </button>
                         <a
                           href={`/business/${discount.business_id}`}
@@ -543,6 +644,75 @@ export function DiscountsPage() {
             </div>
           )}
         </div>
+
+        {showCodeModal && generatedRedemption && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-gray-900">Codice Generato!</h3>
+                <button
+                  onClick={() => setShowCodeModal(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 mb-4 border-2 border-green-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-gray-900">{generatedRedemption.discountTitle}</h4>
+                  <div className="bg-green-600 text-white px-3 py-1 rounded-full text-lg font-bold">
+                    -{generatedRedemption.discountPercentage}%
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg p-4 mb-3">
+                  <p className="text-sm text-gray-600 font-medium mb-2 text-center">
+                    CODICE DI RISCATTO
+                  </p>
+                  <div className="font-mono text-3xl font-bold text-green-600 text-center tracking-wider mb-3">
+                    {generatedRedemption.code}
+                  </div>
+                  <button
+                    onClick={() => copyCodeToClipboard(generatedRedemption.code)}
+                    className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2"
+                  >
+                    <Copy className="w-4 h-4" />
+                    Copia codice
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-center gap-2 text-sm text-orange-700">
+                  <Clock className="w-4 h-4" />
+                  <span className="font-medium">
+                    {getTimeRemaining(generatedRedemption.expiresAt)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-blue-900 font-medium mb-2">Come utilizzare lo sconto:</p>
+                <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                  <li>Recati presso l'attività</li>
+                  <li>Mostra questo codice al personale</li>
+                  <li>L'attività verificherà il codice</li>
+                  <li>Riceverai lo sconto sul tuo acquisto</li>
+                </ol>
+              </div>
+
+              <p className="text-xs text-center text-gray-500 mb-4">
+                Il codice scadrà automaticamente tra 2 ore se non viene utilizzato
+              </p>
+
+              <button
+                onClick={() => setShowCodeModal(false)}
+                className="w-full bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700 transition-colors font-medium"
+              >
+                Ho capito
+              </button>
+            </div>
+          </div>
+        )}
       </div>
   );
 }
