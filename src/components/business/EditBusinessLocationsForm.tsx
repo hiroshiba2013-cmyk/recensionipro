@@ -213,18 +213,39 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
 
     try {
       for (const location of locations) {
+        if (!location.address.trim()) {
+          alert('Compila l\'indirizzo per tutte le sedi');
+          setSaving(false);
+          return;
+        }
+        if (!location.city.trim()) {
+          alert('Seleziona la città per tutte le sedi');
+          setSaving(false);
+          return;
+        }
+        if (!location.province.trim()) {
+          alert('Seleziona la provincia per tutte le sedi');
+          setSaving(false);
+          return;
+        }
+        if (!location.postal_code.trim()) {
+          alert('Compila il CAP per tutte le sedi');
+          setSaving(false);
+          return;
+        }
+
         if (location.id.startsWith('new-')) {
           const { error } = await supabase
             .from('business_locations')
             .insert({
               business_id: businessId,
-              name: location.name,
-              address: location.address,
-              city: location.city,
-              province: location.province,
-              postal_code: location.postal_code,
-              phone: location.phone,
-              email: location.email,
+              name: location.name.trim() || 'Sede',
+              address: location.address.trim(),
+              city: location.city.trim(),
+              province: location.province.trim(),
+              postal_code: location.postal_code.trim(),
+              phone: location.phone.trim(),
+              email: location.email.trim(),
               business_hours: location.business_hours,
               is_primary: location.is_primary,
             });
@@ -234,13 +255,13 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
           const { error } = await supabase
             .from('business_locations')
             .update({
-              name: location.name,
-              address: location.address,
-              city: location.city,
-              province: location.province,
-              postal_code: location.postal_code,
-              phone: location.phone,
-              email: location.email,
+              name: location.name.trim() || 'Sede',
+              address: location.address.trim(),
+              city: location.city.trim(),
+              province: location.province.trim(),
+              postal_code: location.postal_code.trim(),
+              phone: location.phone.trim(),
+              email: location.email.trim(),
               business_hours: location.business_hours,
               is_primary: location.is_primary,
             })
@@ -263,9 +284,10 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
       }
 
       onUpdate();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating locations:', error);
-      alert('Errore durante il salvataggio');
+      const errorMessage = error?.message || 'Errore durante il salvataggio';
+      alert(`Errore durante il salvataggio: ${errorMessage}\n\nAssicurati di aver compilato tutti i campi obbligatori (indirizzo, città, CAP).`);
     } finally {
       setSaving(false);
     }
@@ -418,6 +440,12 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
         </button>
       </div>
 
+      <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-sm text-blue-800">
+          <span className="font-semibold">Nota:</span> I campi contrassegnati con * sono obbligatori.
+        </p>
+      </div>
+
       <form onSubmit={handleSubmit}>
         <div className="space-y-6 mb-6">
           {locations.map((location, index) => (
@@ -478,20 +506,21 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Indirizzo
+                    Indirizzo *
                   </label>
                   <input
                     type="text"
                     value={location.address}
                     onChange={(e) => handleChange(location.id, 'address', e.target.value)}
                     required
+                    placeholder="Via, numero civico"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Città
+                    Città *
                   </label>
                   <SearchableSelect
                     value={location.city}
@@ -506,7 +535,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    CAP
+                    CAP *
                   </label>
                   <input
                     type="text"
@@ -514,19 +543,20 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
                     onChange={(e) => handleChange(location.id, 'postal_code', e.target.value)}
                     required
                     maxLength={5}
+                    placeholder="00000"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Telefono
+                    Telefono (opzionale)
                   </label>
                   <input
                     type="tel"
                     value={location.phone}
                     onChange={(e) => handleChange(location.id, 'phone', e.target.value)}
-                    required
+                    placeholder="Es. +39 123 456789"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
