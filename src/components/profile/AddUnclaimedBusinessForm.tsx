@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, X, Award } from 'lucide-react';
 import { supabase, BusinessCategory } from '../../lib/supabase';
-import { CITIES_BY_PROVINCE, CITY_TO_PROVINCE, PROVINCES_BY_REGION } from '../../lib/cities';
+import { CITIES_BY_PROVINCE, PROVINCE_TO_CODE, PROVINCES_BY_REGION } from '../../lib/cities';
 
 interface AddUnclaimedBusinessFormProps {
   customerId: string;
@@ -108,10 +108,11 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
   const handleCityChange = (cityName: string) => {
     const city = ALL_CITIES.find(c => c.name === cityName);
     if (city) {
+      const provinceCode = PROVINCE_TO_CODE[city.province] || city.province;
       setFormData({
         ...formData,
         city: city.name,
-        province: city.province,
+        province: provinceCode,
         region: city.region,
       });
     }

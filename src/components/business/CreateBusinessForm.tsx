@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Building, X, Save, Search, PlusCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
-import { CITIES_BY_PROVINCE } from '../../lib/cities';
+import { CITIES_BY_PROVINCE, PROVINCE_TO_CODE } from '../../lib/cities';
 import { ClaimBusinessLocationsForm } from './ClaimBusinessLocationsForm';
 import { getPlanDisplayName } from '../../lib/subscription-helper';
 
@@ -74,10 +74,11 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
 
   const handleCityChange = (city: string) => {
     const selectedCity = italianCities.find(c => c.city === city);
+    const provinceCode = selectedCity?.province ? PROVINCE_TO_CODE[selectedCity.province] : '';
     setFormData({
       ...formData,
       city,
-      province: selectedCity?.province || '',
+      province: provinceCode || '',
     });
   };
 

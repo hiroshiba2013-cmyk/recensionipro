@@ -74,7 +74,99 @@ export function SearchResultsPage() {
       // Limite di risultati per evitare sovraccarico
       const QUERY_LIMIT = 2000;
 
-      // Query unclaimed_business_locations (tutte le attività non reclamate)
+      // Query 1: business_locations (attività reclamate da professionisti)
+      let claimedQuery = supabase
+        .from('business_locations')
+        .select(`
+          id,
+          business_id,
+          name,
+          address,
+          city,
+          province,
+          region,
+          postal_code,
+          latitude,
+          longitude,
+          phone,
+          email,
+          website,
+          business_hours,
+          avatar_url,
+          business:businesses(
+            id,
+            name,
+            category_id,
+            verified,
+            created_at,
+            category:business_categories(*)
+          )
+        `)
+        .limit(QUERY_LIMIT);
+
+      // Applica filtri geografici per business_locations
+      if (filters.city) {
+        claimedQuery = claimedQuery.eq('city', filters.city);
+      } else if (filters.province) {
+        const provinceCode = PROVINCE_TO_CODE[filters.province];
+        if (provinceCode) {
+          claimedQuery = claimedQuery.eq('province', provinceCode);
+        }
+      } else if (filters.region) {
+        claimedQuery = claimedQuery.eq('region', filters.region);
+      }
+
+      const claimedResult = await claimedQuery;
+
+      if (claimedResult.data) {
+        // Trasforma business_locations in formato Business
+        const claimedBusinesses = claimedResult.data
+          .filter((loc: any) => loc.business)
+          .map((loc: any) => {
+            const biz = loc.business;
+
+            // Applica filtri aggiuntivi
+            if (filters.category && biz.category_id !== filters.category) return null;
+            if (filters.businessName && !biz.name.toLowerCase().includes(filters.businessName.toLowerCase())) return null;
+
+            return {
+              id: biz.id,
+              name: biz.name,
+              category_id: biz.category_id,
+              category: biz.category,
+              is_claimed: true,
+              verified: biz.verified,
+              created_at: biz.created_at,
+              city: loc.city,
+              address: loc.address,
+              phone: loc.phone,
+              email: loc.email,
+              website: loc.website,
+              locations: [{
+                id: loc.id,
+                business_id: loc.business_id,
+                name: loc.name,
+                address: loc.address,
+                city: loc.city,
+                province: loc.province,
+                region: loc.region,
+                postal_code: loc.postal_code,
+                latitude: loc.latitude,
+                longitude: loc.longitude,
+                phone: loc.phone,
+                email: loc.email,
+                website: loc.website,
+                business_hours: loc.business_hours,
+                avatar_url: loc.avatar_url,
+              }]
+            };
+          })
+          .filter(Boolean);
+
+        allBusinesses.push(...claimedBusinesses);
+      }
+
+      // Query 2: unclaimed_business_locations (attività aggiunte da utenti privati)
       let unclaimedQuery = supabase
         .from('unclaimed_business_locations')
         .select(`
@@ -119,9 +211,7 @@ export function SearchResultsPage() {
 
       const unclaimedResult = await unclaimedQuery;
 
-      if (unclaimedResult.error) {
-        console.error('Query error:', unclaimedResult.error);
-      } else if (unclaimedResult.data) {
+      if (unclaimedResult.data) {
         // Trasforma unclaimed_business_locations in formato Business
         const unclaimedBusinesses = unclaimedResult.data.map((ub: any) => ({
           id: ub.id,
