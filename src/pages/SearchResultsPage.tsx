@@ -1,17 +1,39 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { supabase, Business, BusinessCategory } from '../lib/supabase';
-import { BusinessCard } from '../components/business/BusinessCard';
+import { LocationCard } from '../components/business/LocationCard';
 import { AdvancedSearch, SearchFilters } from '../components/search/AdvancedSearch';
 import { PROVINCE_TO_CODE, PROVINCES_BY_REGION, CITY_TO_PROVINCE } from '../lib/cities';
 
-interface BusinessWithRating extends Business {
+interface BusinessLocation {
+  id: string;
+  business_id: string;
+  name: string | null;
+  address: string;
+  city: string;
+  province: string;
+  region: string;
+  postal_code: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  business_hours: any;
+  avatar_url: string | null;
+  is_claimed: boolean;
+  verification_badge: boolean;
+  business?: {
+    id: string;
+    name: string;
+    category_id: string;
+    verified: boolean;
+    category?: BusinessCategory;
+  };
   avg_rating?: number;
   review_count?: number;
 }
 
 export function SearchResultsPage() {
-  const [businesses, setBusinesses] = useState<BusinessWithRating[]>([]);
+  const [locations, setLocations] = useState<BusinessLocation[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [initialFilters, setInitialFilters] = useState<SearchFilters | null>(null);
@@ -55,7 +77,7 @@ export function SearchResultsPage() {
     const shouldRestore = sessionStorage.getItem('shouldRestoreScroll');
     const targetPosition = sessionStorage.getItem('targetScrollPosition');
 
-    if (shouldRestore === 'true' && targetPosition && !loading && businesses.length > 0) {
+    if (shouldRestore === 'true' && targetPosition && !loading && locations.length > 0) {
       const position = parseInt(targetPosition, 10);
       setTimeout(() => {
         window.scrollTo(0, position);
@@ -63,18 +85,18 @@ export function SearchResultsPage() {
         sessionStorage.removeItem('targetScrollPosition');
       }, 100);
     }
-  }, [loading, businesses]);
+  }, [loading, locations]);
 
   const applyFilters = async (filters: SearchFilters) => {
     setLoading(true);
     setHasSearched(true);
     try {
-      let allBusinesses: any[] = [];
+      let allLocations: BusinessLocation[] = [];
 
       // Limite di risultati per evitare sovraccarico
       const QUERY_LIMIT = 2000;
 
-      // Query 1: business_locations (attività reclamate da professionisti)
+      // Query 1: business_locations (sedi di attività reclamate da professionisti)
       let claimedQuery = supabase
         .from('business_locations')
         .select(`
@@ -124,54 +146,43 @@ export function SearchResultsPage() {
       const claimedResult = await claimedQuery;
 
       if (claimedResult.data) {
-        // Trasforma business_locations in formato Business
-        const claimedBusinesses = claimedResult.data
+        // Filtra e trasforma business_locations
+        const claimedLocations = claimedResult.data
           .filter((loc: any) => loc.business)
-          .map((loc: any) => {
+          .filter((loc: any) => {
             const biz = loc.business;
-
             // Applica filtri aggiuntivi
-            if (filters.category && biz.category_id !== filters.category) return null;
-            if (filters.businessName && !biz.name.toLowerCase().includes(filters.businessName.toLowerCase())) return null;
-
-            return {
-              id: biz.id,
-              name: biz.name,
-              category_id: biz.category_id,
-              category: biz.category,
-              is_claimed: loc.is_claimed || biz.is_claimed || true,
-              verified: biz.verified,
-              verification_badge: loc.verification_badge || biz.verification_badge,
-              created_at: biz.created_at,
-              city: loc.city,
-              address: loc.address,
-              phone: loc.phone,
-              email: loc.email,
-              website: loc.website,
-              locations: [{
-                id: loc.id,
-                business_id: loc.business_id,
-                name: loc.name,
-                address: loc.address,
-                city: loc.city,
-                province: loc.province,
-                region: loc.region,
-                postal_code: loc.postal_code,
-                latitude: loc.latitude,
-                longitude: loc.longitude,
-                phone: loc.phone,
-                email: loc.email,
-                website: loc.website,
-                business_hours: loc.business_hours,
-                avatar_url: loc.avatar_url,
-                is_claimed: loc.is_claimed,
-                verification_badge: loc.verification_badge,
-              }]
-            };
+            if (filters.category && biz.category_id !== filters.category) return false;
+            if (filters.businessName && !biz.name.toLowerCase().includes(filters.businessName.toLowerCase()) &&
+                !(loc.name && loc.name.toLowerCase().includes(filters.businessName.toLowerCase()))) return false;
+            return true;
           })
-          .filter(Boolean);
+          .map((loc: any) => ({
+            id: loc.id,
+            business_id: loc.business_id,
+            name: loc.name,
+            address: loc.address,
+            city: loc.city,
+            province: loc.province,
+            region: loc.region,
+            postal_code: loc.postal_code,
+            phone: loc.phone,
+            email: loc.email,
+            website: loc.website,
+            business_hours: loc.business_hours,
+            avatar_url: loc.avatar_url,
+            is_claimed: loc.is_claimed || false,
+            verification_badge: loc.verification_badge || false,
+            business: loc.business ? {
+              id: loc.business.id,
+              name: loc.business.name,
+              category_id: loc.business.category_id,
+              verified: loc.business.verified,
+              category: loc.business.category
+            } : undefined
+          }));
 
-        allBusinesses.push(...claimedBusinesses);
+        allLocations.push(...claimedLocations);
       }
 
       // Query 2: unclaimed_business_locations (attività aggiunte da utenti privati)
@@ -222,81 +233,86 @@ export function SearchResultsPage() {
       const unclaimedResult = await unclaimedQuery;
 
       if (unclaimedResult.data) {
-        // Trasforma unclaimed_business_locations in formato Business
-        const unclaimedBusinesses = unclaimedResult.data.map((ub: any) => ({
+        // Trasforma unclaimed_business_locations in formato Location
+        const unclaimedLocations: BusinessLocation[] = unclaimedResult.data.map((ub: any) => ({
           id: ub.id,
+          business_id: ub.id,
           name: ub.name,
-          category_id: ub.category_id,
-          category: ub.category,
-          is_claimed: ub.is_claimed || false,
-          verification_badge: ub.verification_badge || null,
-          created_at: new Date().toISOString(),
-          city: ub.city,
           address: ub.street,
+          city: ub.city,
+          province: ub.province,
+          region: ub.region,
+          postal_code: ub.postal_code,
           phone: ub.phone,
           email: ub.email,
           website: ub.website,
-          locations: [{
+          business_hours: ub.business_hours,
+          avatar_url: null,
+          is_claimed: false,
+          verification_badge: false,
+          business: ub.category ? {
             id: ub.id,
-            business_id: ub.id,
-            address: ub.street,
-            city: ub.city,
-            province: ub.province,
-            region: ub.region,
-            postal_code: ub.postal_code,
-            latitude: ub.latitude,
-            longitude: ub.longitude,
-            phone: ub.phone,
-            email: ub.email,
-            website: ub.website,
-            business_hours: ub.business_hours,
-            is_claimed: ub.is_claimed || false,
-            verification_badge: ub.verification_badge || null,
-          }]
+            name: ub.name,
+            category_id: ub.category_id,
+            verified: false,
+            category: ub.category
+          } : undefined
         }));
 
-        allBusinesses.push(...unclaimedBusinesses);
+        allLocations.push(...unclaimedLocations);
       }
 
-      if (allBusinesses.length === 0) {
-        setBusinesses([]);
+      if (allLocations.length === 0) {
+        setLocations([]);
         return;
       }
 
-      const businessIdsList = allBusinesses.map(b => b.id);
-
-      const { data: ratingsData } = await supabase
-        .rpc('get_business_ratings', { business_ids: businessIdsList });
+      // Calcola rating per ogni location
+      const locationIds = allLocations.map(loc => loc.id);
+      const { data: reviewsData } = await supabase
+        .from('reviews')
+        .select('business_location_id, overall_rating')
+        .in('business_location_id', locationIds);
 
       const ratingsMap = new Map<string, { avg_rating: number; review_count: number }>();
 
-      if (ratingsData) {
-        ratingsData.forEach((r: any) => {
-          ratingsMap.set(r.business_id, {
-            avg_rating: r.avg_rating || 0,
-            review_count: r.review_count || 0
+      if (reviewsData) {
+        const groupedReviews = reviewsData.reduce((acc: any, review: any) => {
+          if (!review.business_location_id) return acc;
+          if (!acc[review.business_location_id]) {
+            acc[review.business_location_id] = [];
+          }
+          acc[review.business_location_id].push(review);
+          return acc;
+        }, {});
+
+        Object.entries(groupedReviews).forEach(([locationId, reviews]: [string, any]) => {
+          const avgRating = reviews.reduce((sum: number, r: any) => sum + r.overall_rating, 0) / reviews.length;
+          ratingsMap.set(locationId, {
+            avg_rating: avgRating,
+            review_count: reviews.length
           });
         });
       }
 
-      let businessesWithRatings = allBusinesses.map(business => {
-        const ratings = ratingsMap.get(business.id) || { avg_rating: 0, review_count: 0 };
+      let locationsWithRatings = allLocations.map(location => {
+        const ratings = ratingsMap.get(location.id) || { avg_rating: 0, review_count: 0 };
         return {
-          ...business,
+          ...location,
           avg_rating: ratings.avg_rating,
           review_count: ratings.review_count,
         };
       });
 
       if (filters.minRating > 0) {
-        businessesWithRatings = businessesWithRatings.filter(
-          b => (b.avg_rating || 0) >= filters.minRating
+        locationsWithRatings = locationsWithRatings.filter(
+          loc => (loc.avg_rating || 0) >= filters.minRating
         );
       }
 
       // Ordina con priorità: claimed > rating > alfabetico
-      businessesWithRatings.sort((a, b) => {
-        // Priorità 1: Aziende rivendicate prima
+      locationsWithRatings.sort((a, b) => {
+        // Priorità 1: Sedi rivendicate prima
         const aIsClaimed = a.is_claimed ? 1 : 0;
         const bIsClaimed = b.is_claimed ? 1 : 0;
         if (aIsClaimed !== bIsClaimed) return bIsClaimed - aIsClaimed;
@@ -307,10 +323,12 @@ export function SearchResultsPage() {
         if (aRating !== bRating) return bRating - aRating;
 
         // Priorità 3: Alfabetico
-        return a.name.localeCompare(b.name);
+        const aName = a.name || a.business?.name || '';
+        const bName = b.name || b.business?.name || '';
+        return aName.localeCompare(bName);
       });
 
-      setBusinesses(businessesWithRatings);
+      setLocations(locationsWithRatings);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -387,14 +405,14 @@ export function SearchResultsPage() {
           <div className="mb-6 flex items-center justify-between bg-white rounded-lg shadow-sm p-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Risultati della Ricerca</h2>
-              <p className="text-gray-600 mt-1">Trova le attività che corrispondono ai tuoi criteri</p>
+              <p className="text-gray-600 mt-1">Trova le sedi delle attività che corrispondono ai tuoi criteri</p>
             </div>
             <div className="flex items-center gap-4">
               <div className="bg-blue-50 px-6 py-3 rounded-lg border-2 border-blue-200">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">{businesses.length}</div>
+                  <div className="text-3xl font-bold text-blue-600">{locations.length}</div>
                   <div className="text-sm text-blue-800 font-medium mt-1">
-                    {businesses.length === 1 ? 'Attività Trovata' : 'Attività Trovate'}
+                    {locations.length === 1 ? 'Sede Trovata' : 'Sedi Trovate'}
                   </div>
                 </div>
               </div>
@@ -408,25 +426,25 @@ export function SearchResultsPage() {
           </div>
         ) : !hasSearched ? (
           <div className="text-center py-12 bg-white rounded-lg">
-            <p className="text-gray-600 text-lg">Usa i filtri sopra per cercare attività</p>
+            <p className="text-gray-600 text-lg">Usa i filtri sopra per cercare sedi delle attività</p>
           </div>
-        ) : businesses.length === 0 ? (
+        ) : locations.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg">
-            <p className="text-gray-600 text-lg">Nessuna attività trovata</p>
+            <p className="text-gray-600 text-lg">Nessuna sede trovata</p>
             <p className="text-gray-500 mt-2">Prova a modificare i filtri di ricerca</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {businesses.map((business) => (
-              <BusinessCard
-                key={business.id}
-                business={business}
+            {locations.map((location) => (
+              <LocationCard
+                key={location.id}
+                location={location}
               />
             ))}
           </div>
         )}
 
-        {hasSearched && businesses.length > 0 && (
+        {hasSearched && locations.length > 0 && (
           <div className="mt-8 bg-gradient-to-r from-blue-50 to-green-50 border-l-4 border-blue-600 rounded-lg p-4">
             <p className="text-sm text-gray-700">
               I dati delle attività sono forniti da{' '}

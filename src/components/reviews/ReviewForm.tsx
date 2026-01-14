@@ -5,7 +5,8 @@ import { useAuth } from '../../contexts/AuthContext';
 
 interface ReviewFormProps {
   businessId: string;
-  businessName: string;
+  businessName?: string;
+  businessLocationId?: string;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -18,7 +19,7 @@ interface BusinessLocation {
   province: string;
 }
 
-export function ReviewForm({ businessId, businessName, onClose, onSuccess }: ReviewFormProps) {
+export function ReviewForm({ businessId, businessName, businessLocationId, onClose, onSuccess }: ReviewFormProps) {
   const { profile } = useAuth();
   const [priceRating, setPriceRating] = useState(0);
   const [serviceRating, setServiceRating] = useState(0);
@@ -30,7 +31,7 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
   const [hoveredOverallRating, setHoveredOverallRating] = useState(0);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [selectedLocationId, setSelectedLocationId] = useState<string>('');
+  const [selectedLocationId, setSelectedLocationId] = useState<string>(businessLocationId || '');
   const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [proofImage, setProofImage] = useState<File | null>(null);
   const [proofImagePreview, setProofImagePreview] = useState<string | null>(null);
@@ -46,6 +47,12 @@ export function ReviewForm({ businessId, businessName, onClose, onSuccess }: Rev
   useEffect(() => {
     loadBusinessLocations();
   }, [businessId]);
+
+  useEffect(() => {
+    if (businessLocationId) {
+      setSelectedLocationId(businessLocationId);
+    }
+  }, [businessLocationId]);
 
   const loadBusinessLocations = async () => {
     const { data: locationsData } = await supabase
