@@ -44,10 +44,10 @@ export function ProfileSelector({ ownerProfile, familyMembers = [], businessLoca
       nickname: member.nickname,
       avatarUrl: member.avatar_url,
       isOwner: false,
-    })) : businessLocations.map(location => ({
+    })) : businessLocations.map((location, index) => ({
       id: location.id,
-      name: location.name,
-      nickname: `${location.city}, ${location.province}`,
+      name: location.name || `Sede ${index + 1}`,
+      nickname: location.description || `${location.city}, ${location.province}`,
       avatarUrl: location.avatar_url,
       isOwner: false,
     }))),
