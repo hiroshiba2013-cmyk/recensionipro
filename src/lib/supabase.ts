@@ -47,6 +47,7 @@ export interface Business {
   logo_url: string;
   verified: boolean;
   is_claimed: boolean;
+  verification_badge?: 'claimed' | 'verified' | 'premium' | null;
   ateco_code: string;
   office_city?: string;
   office_province?: string;
@@ -150,5 +151,7 @@ export interface BusinessLocation {
   avatar_url: string | null;
   business_hours: string | null;
   vat_number: string | null;
+  is_claimed?: boolean;
+  verification_badge?: 'claimed' | 'verified' | 'premium' | null;
   created_at: string;
 }

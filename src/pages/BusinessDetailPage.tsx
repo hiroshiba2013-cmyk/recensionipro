@@ -11,6 +11,7 @@ import { DiscountCard } from '../components/discount/DiscountCard';
 import BusinessMap from '../components/map/BusinessMap';
 import ReportButton from '../components/moderation/ReportButton';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
+import { VerificationBadge } from '../components/business/VerificationBadge';
 
 interface BusinessDetailPageProps {
   businessId: string;
@@ -378,16 +379,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                     ) : (
                       <span className="text-white text-sm">Nessuna recensione</span>
                     )}
-                    {business.verified ? (
-                      <span className="flex items-center gap-1 bg-green-500 px-3 py-1 rounded-full text-sm">
-                        <CheckCircle className="w-4 h-4" />
-                        Verificato
-                      </span>
-                    ) : (
-                      <span className="bg-yellow-500 px-3 py-1 rounded-full text-sm">
-                        In Verifica
-                      </span>
-                    )}
+                    <VerificationBadge badge={business.verification_badge} size="md" />
                   </div>
                 </div>
                 <div className="flex items-center gap-3">

@@ -93,12 +93,17 @@ export function SearchResultsPage() {
           website,
           business_hours,
           avatar_url,
+          is_claimed,
+          claimed_at,
+          verification_badge,
           business:businesses(
             id,
             name,
             category_id,
             verified,
             created_at,
+            is_claimed,
+            verification_badge,
             category:business_categories(*)
           )
         `)
@@ -134,8 +139,9 @@ export function SearchResultsPage() {
               name: biz.name,
               category_id: biz.category_id,
               category: biz.category,
-              is_claimed: true,
+              is_claimed: loc.is_claimed || biz.is_claimed || true,
               verified: biz.verified,
+              verification_badge: loc.verification_badge || biz.verification_badge,
               created_at: biz.created_at,
               city: loc.city,
               address: loc.address,
@@ -158,6 +164,8 @@ export function SearchResultsPage() {
                 website: loc.website,
                 business_hours: loc.business_hours,
                 avatar_url: loc.avatar_url,
+                is_claimed: loc.is_claimed,
+                verification_badge: loc.verification_badge,
               }]
             };
           })
@@ -184,6 +192,8 @@ export function SearchResultsPage() {
           email,
           website,
           business_hours,
+          is_claimed,
+          verification_badge,
           category:business_categories(*)
         `)
         .eq('is_claimed', false)
@@ -218,7 +228,8 @@ export function SearchResultsPage() {
           name: ub.name,
           category_id: ub.category_id,
           category: ub.category,
-          is_claimed: false,
+          is_claimed: ub.is_claimed || false,
+          verification_badge: ub.verification_badge || null,
           created_at: new Date().toISOString(),
           city: ub.city,
           address: ub.street,
@@ -239,6 +250,8 @@ export function SearchResultsPage() {
             email: ub.email,
             website: ub.website,
             business_hours: ub.business_hours,
+            is_claimed: ub.is_claimed || false,
+            verification_badge: ub.verification_badge || null,
           }]
         }));
 
@@ -281,7 +294,32 @@ export function SearchResultsPage() {
         );
       }
 
-      businessesWithRatings.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
+      // Ordina con priorità: claimed > badge > rating > alfabetico
+      businessesWithRatings.sort((a, b) => {
+        // Priorità 1: Aziende rivendicate prima
+        const aIsClaimed = a.is_claimed ? 1 : 0;
+        const bIsClaimed = b.is_claimed ? 1 : 0;
+        if (aIsClaimed !== bIsClaimed) return bIsClaimed - aIsClaimed;
+
+        // Priorità 2: Badge (premium > verified > claimed > null)
+        const getBadgeScore = (badge: string | null | undefined) => {
+          if (badge === 'premium') return 3;
+          if (badge === 'verified') return 2;
+          if (badge === 'claimed') return 1;
+          return 0;
+        };
+        const aBadgeScore = getBadgeScore(a.verification_badge);
+        const bBadgeScore = getBadgeScore(b.verification_badge);
+        if (aBadgeScore !== bBadgeScore) return bBadgeScore - aBadgeScore;
+
+        // Priorità 3: Rating
+        const aRating = a.avg_rating || 0;
+        const bRating = b.avg_rating || 0;
+        if (aRating !== bRating) return bRating - aRating;
+
+        // Priorità 4: Alfabetico
+        return a.name.localeCompare(b.name);
+      });
 
       setBusinesses(businessesWithRatings);
     } catch (error) {

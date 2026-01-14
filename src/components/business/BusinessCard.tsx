@@ -3,6 +3,7 @@ import { Star, MapPin, ExternalLink, MessageSquare } from 'lucide-react';
 import { Business } from '../../lib/supabase';
 import { ReviewForm } from '../reviews/ReviewForm';
 import { useAuth } from '../../contexts/AuthContext';
+import { VerificationBadge } from './VerificationBadge';
 
 interface BusinessCardProps {
   business: Business & { avg_rating?: number; review_count?: number };
@@ -46,13 +47,9 @@ export function BusinessCard({ business }: BusinessCardProps) {
       </div>
 
       <div className="p-6">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="text-xl font-semibold text-gray-900">{business.name}</h3>
-          {business.verified && (
-            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-              Verificato
-            </span>
-          )}
+        <div className="flex items-start justify-between mb-2 gap-2">
+          <h3 className="text-xl font-semibold text-gray-900 flex-1">{business.name}</h3>
+          <VerificationBadge badge={business.verification_badge} size="sm" />
         </div>
 
         {business.category && (
