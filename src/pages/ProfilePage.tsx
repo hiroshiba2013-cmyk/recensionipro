@@ -93,6 +93,7 @@ interface Business {
 interface BusinessLocation {
   id: string;
   name: string | null;
+  internal_name: string | null;
   address: string;
   city: string;
   province: string;
@@ -386,7 +387,7 @@ export function ProfilePage() {
 
       const { data: locationsData } = await supabase
         .from('business_locations')
-        .select('id, name, address, city, province')
+        .select('id, name, internal_name, address, city, province')
         .eq('business_id', businessData.id)
         .order('created_at', { ascending: true });
 
@@ -1086,9 +1087,9 @@ export function ProfilePage() {
                       className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base font-medium bg-white"
                     >
                       <option value="">Tutte le Sedi (Sede Principale)</option>
-                      {businessLocations.map((location) => (
+                      {businessLocations.map((location, index) => (
                         <option key={location.id} value={location.id}>
-                          {location.name || `${location.address}, ${location.city}`}
+                          {location.internal_name || `Sede ${index + 1}`} - {location.name || location.city}
                         </option>
                       ))}
                     </select>
