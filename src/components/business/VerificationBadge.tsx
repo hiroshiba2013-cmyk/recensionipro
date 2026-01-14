@@ -1,45 +1,15 @@
-import { CheckCircle2, Award, Shield } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
 interface VerificationBadgeProps {
-  badge: 'claimed' | 'verified' | 'premium' | null | undefined;
+  isClaimed: boolean;
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
 }
 
-export function VerificationBadge({ badge, size = 'md', showText = true }: VerificationBadgeProps) {
-  if (!badge) return null;
+export function VerificationBadge({ isClaimed, size = 'md', showText = true }: VerificationBadgeProps) {
+  if (!isClaimed) return null;
 
-  const configs = {
-    claimed: {
-      icon: CheckCircle2,
-      label: 'Rivendicata',
-      bgColor: 'bg-blue-50',
-      textColor: 'text-blue-700',
-      borderColor: 'border-blue-200',
-      iconColor: 'text-blue-600',
-    },
-    verified: {
-      icon: Shield,
-      label: 'Verificata',
-      bgColor: 'bg-green-50',
-      textColor: 'text-green-700',
-      borderColor: 'border-green-200',
-      iconColor: 'text-green-600',
-    },
-    premium: {
-      icon: Award,
-      label: 'Premium',
-      bgColor: 'bg-gradient-to-r from-amber-50 to-yellow-50',
-      textColor: 'text-amber-700',
-      borderColor: 'border-amber-300',
-      iconColor: 'text-amber-600',
-    },
-  };
-
-  const config = configs[badge];
-  if (!config) return null;
-
-  const Icon = config.icon;
+  const Icon = CheckCircle2;
 
   const sizeClasses = {
     sm: {
@@ -64,20 +34,20 @@ export function VerificationBadge({ badge, size = 'md', showText = true }: Verif
   if (!showText) {
     return (
       <div
-        className={`inline-flex items-center justify-center rounded-full ${config.bgColor} ${config.borderColor} border-2 p-1`}
-        title={config.label}
+        className="inline-flex items-center justify-center rounded-full bg-blue-50 border-blue-200 border-2 p-1"
+        title="Rivendicata"
       >
-        <Icon className={`${currentSize.icon} ${config.iconColor}`} />
+        <Icon className={`${currentSize.icon} text-blue-600`} />
       </div>
     );
   }
 
   return (
     <div
-      className={`inline-flex items-center ${currentSize.gap} ${currentSize.container} rounded-full ${config.bgColor} ${config.textColor} ${config.borderColor} border font-semibold`}
+      className={`inline-flex items-center ${currentSize.gap} ${currentSize.container} rounded-full bg-blue-50 text-blue-700 border-blue-200 border font-semibold`}
     >
-      <Icon className={`${currentSize.icon} ${config.iconColor}`} />
-      <span>{config.label}</span>
+      <Icon className={`${currentSize.icon} text-blue-600`} />
+      <span>Rivendicata</span>
     </div>
   );
 }

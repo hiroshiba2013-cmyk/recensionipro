@@ -379,7 +379,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                     ) : (
                       <span className="text-white text-sm">Nessuna recensione</span>
                     )}
-                    <VerificationBadge badge={business.verification_badge} size="md" />
+                    <VerificationBadge isClaimed={!!business.is_claimed} size="md" />
                   </div>
                 </div>
                 <div className="flex items-center gap-3">

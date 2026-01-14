@@ -294,30 +294,19 @@ export function SearchResultsPage() {
         );
       }
 
-      // Ordina con priorità: claimed > badge > rating > alfabetico
+      // Ordina con priorità: claimed > rating > alfabetico
       businessesWithRatings.sort((a, b) => {
         // Priorità 1: Aziende rivendicate prima
         const aIsClaimed = a.is_claimed ? 1 : 0;
         const bIsClaimed = b.is_claimed ? 1 : 0;
         if (aIsClaimed !== bIsClaimed) return bIsClaimed - aIsClaimed;
 
-        // Priorità 2: Badge (premium > verified > claimed > null)
-        const getBadgeScore = (badge: string | null | undefined) => {
-          if (badge === 'premium') return 3;
-          if (badge === 'verified') return 2;
-          if (badge === 'claimed') return 1;
-          return 0;
-        };
-        const aBadgeScore = getBadgeScore(a.verification_badge);
-        const bBadgeScore = getBadgeScore(b.verification_badge);
-        if (aBadgeScore !== bBadgeScore) return bBadgeScore - aBadgeScore;
-
-        // Priorità 3: Rating
+        // Priorità 2: Rating
         const aRating = a.avg_rating || 0;
         const bRating = b.avg_rating || 0;
         if (aRating !== bRating) return bRating - aRating;
 
-        // Priorità 4: Alfabetico
+        // Priorità 3: Alfabetico
         return a.name.localeCompare(b.name);
       });
 
