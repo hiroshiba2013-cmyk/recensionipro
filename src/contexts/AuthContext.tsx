@@ -41,6 +41,7 @@ export interface BusinessData {
 export interface BusinessLocation {
   id: string;
   name: string;
+  internal_name?: string | null;
   address: string;
   city: string;
   province: string;
@@ -233,7 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { data: locations } = await supabase
         .from('business_locations')
-        .select('id, name, address, city, province, avatar_url, description')
+        .select('id, name, internal_name, address, city, province, avatar_url, description')
         .eq('business_id', business.id);
 
       setBusinessLocations(locations || []);
