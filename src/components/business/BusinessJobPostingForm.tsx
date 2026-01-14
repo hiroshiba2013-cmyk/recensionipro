@@ -18,6 +18,14 @@ interface JobPosting {
   expires_at: string;
   status: string;
   created_at: string;
+  business_location_id?: string | null;
+}
+
+interface BusinessLocation {
+  id: string;
+  name: string | null;
+  address: string;
+  city: string;
 }
 
 interface BusinessJobPostingFormProps {
@@ -26,6 +34,7 @@ interface BusinessJobPostingFormProps {
 
 export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormProps) {
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
+  const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -42,10 +51,12 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
     education_level: '',
     expires_at: '',
     status: 'active',
+    business_location_id: '',
   });
 
   useEffect(() => {
     loadJobPostings();
+    loadBusinessLocations();
   }, [businessId]);
 
   const loadJobPostings = async () => {
@@ -62,6 +73,21 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
       console.error('Error loading job postings:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadBusinessLocations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('business_locations')
+        .select('id, name, address, city')
+        .eq('business_id', businessId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setBusinessLocations(data || []);
+    } catch (error) {
+      console.error('Error loading business locations:', error);
     }
   };
 
@@ -87,6 +113,7 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
         education_level: formData.education_level || null,
         expires_at: formData.expires_at,
         status: formData.status,
+        business_location_id: formData.business_location_id || null,
       };
 
       if (editingId) {
@@ -129,6 +156,7 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
       education_level: posting.education_level || '',
       expires_at: posting.expires_at.split('T')[0],
       status: posting.status,
+      business_location_id: posting.business_location_id || '',
     });
     setEditingId(posting.id);
     setShowForm(true);
@@ -179,6 +207,7 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
       education_level: '',
       expires_at: '',
       status: 'active',
+      business_location_id: '',
     });
     setEditingId(null);
     setShowForm(false);
@@ -350,6 +379,30 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
               placeholder="Non specificato"
             />
           </div>
+
+          {businessLocations.length > 0 && (
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Sede (Opzionale)
+              </label>
+              <select
+                name="business_location_id"
+                value={formData.business_location_id}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Sede principale / Tutte le sedi</option>
+                {businessLocations.map((location) => (
+                  <option key={location.id} value={location.id}>
+                    {location.name || `${location.address}, ${location.city}`}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-600 mt-1">
+                Lascia vuoto se l'annuncio è per la sede principale o per tutte le sedi
+              </p>
+            </div>
+          )}
 
           <div className="grid md:grid-cols-2 gap-4 mb-6">
             <div>

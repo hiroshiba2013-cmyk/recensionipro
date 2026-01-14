@@ -71,6 +71,7 @@ interface Discount {
   valid_from: string;
   valid_until: string;
   active: boolean;
+  business_location_id?: string | null;
   business?: {
     name: string;
   };
@@ -118,6 +119,19 @@ interface ClassifiedAd {
   };
 }
 
+interface JobPosting {
+  id: string;
+  title: string;
+  description: string;
+  position_type: string;
+  location: string;
+  experience_level: string;
+  education_level: string;
+  status: string;
+  created_at: string;
+  business_location_id?: string | null;
+}
+
 interface UserRank {
   rank: number;
   total_points: number;
@@ -143,10 +157,12 @@ export function ProfilePage() {
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [business, setBusiness] = useState<Business | null>(null);
   const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
+  const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [classifiedAds, setClassifiedAds] = useState<ClassifiedAd[]>([]);
   const [userRank, setUserRank] = useState<UserRank | null>(null);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [selectedFamilyMember, setSelectedFamilyMember] = useState<FamilyMember | null>(null);
+  const [selectedBusinessLocation, setSelectedBusinessLocation] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [showDiscountForm, setShowDiscountForm] = useState(false);
   const [newDiscount, setNewDiscount] = useState({
@@ -155,6 +171,7 @@ export function ProfilePage() {
     discount_percentage: 10,
     code: '',
     valid_until: '',
+    business_location_id: '',
   });
   const [reviewFilters, setReviewFilters] = useState({
     nickname: '',
@@ -401,6 +418,16 @@ export function ProfilePage() {
       if (discountsData) {
         setDiscounts(discountsData);
       }
+
+      const { data: jobPostingsData } = await supabase
+        .from('job_postings')
+        .select('id, title, description, position_type, location, experience_level, education_level, status, created_at, business_location_id')
+        .eq('business_id', businessData.id)
+        .order('created_at', { ascending: false });
+
+      if (jobPostingsData) {
+        setJobPostings(jobPostingsData);
+      }
     }
   };
 
@@ -410,10 +437,17 @@ export function ProfilePage() {
     if (!business) return;
 
     try {
-      const { error } = await supabase.from('discounts').insert({
+      const discountData = {
         business_id: business.id,
-        ...newDiscount,
-      });
+        title: newDiscount.title,
+        description: newDiscount.description,
+        discount_percentage: newDiscount.discount_percentage,
+        code: newDiscount.code,
+        valid_until: newDiscount.valid_until,
+        business_location_id: newDiscount.business_location_id || null,
+      };
+
+      const { error } = await supabase.from('discounts').insert(discountData);
 
       if (error) throw error;
 
@@ -424,6 +458,7 @@ export function ProfilePage() {
         discount_percentage: 10,
         code: '',
         valid_until: '',
+        business_location_id: '',
       });
 
       loadBusinessData();
@@ -465,7 +500,20 @@ export function ProfilePage() {
       (reviewFilters.locationId === 'general' && !review.business_location_id) ||
       review.business_location_id === reviewFilters.locationId;
 
-    return nicknameMatch && ratingMatch && businessNameMatch && locationMatch;
+    const businessLocationMatch = !selectedBusinessLocation ||
+      review.business_location_id === selectedBusinessLocation;
+
+    return nicknameMatch && ratingMatch && businessNameMatch && locationMatch && businessLocationMatch;
+  });
+
+  const filteredDiscounts = discounts.filter((discount) => {
+    if (!selectedBusinessLocation) return true;
+    return !discount.business_location_id || discount.business_location_id === selectedBusinessLocation;
+  });
+
+  const filteredJobPostings = jobPostings.filter((job) => {
+    if (!selectedBusinessLocation) return true;
+    return !job.business_location_id || job.business_location_id === selectedBusinessLocation;
   });
 
   if (loading) {
@@ -1022,6 +1070,38 @@ export function ProfilePage() {
 
             {business && (
               <>
+                {businessLocations.length > 0 && (
+                  <div className="bg-gradient-to-r from-blue-50 to-slate-50 rounded-xl shadow-lg p-6 mb-8 border-2 border-blue-300">
+                    <div className="flex items-center gap-3 mb-4">
+                      <MapPin className="w-6 h-6 text-blue-600" />
+                      <h2 className="text-xl font-bold text-gray-900">Seleziona Sede da Gestire</h2>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Seleziona una sede specifica per visualizzare e gestire solo i dati di quella sede
+                      (recensioni, sconti, annunci di lavoro). Lascia "Tutte le Sedi" per vedere tutto.
+                    </p>
+                    <select
+                      value={selectedBusinessLocation}
+                      onChange={(e) => setSelectedBusinessLocation(e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base font-medium bg-white"
+                    >
+                      <option value="">Tutte le Sedi (Sede Principale)</option>
+                      {businessLocations.map((location) => (
+                        <option key={location.id} value={location.id}>
+                          {location.name || `${location.address}, ${location.city}`}
+                        </option>
+                      ))}
+                    </select>
+                    {selectedBusinessLocation && (
+                      <div className="mt-4 p-3 bg-blue-100 border border-blue-300 rounded-lg">
+                        <p className="text-sm text-blue-800 font-medium">
+                          Stai visualizzando solo i dati della sede selezionata
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="border-t-4 border-green-500 bg-gradient-to-r from-green-50 to-white rounded-lg p-4 mb-6 mt-8">
                   <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                     <User className="w-6 h-6 text-green-600" />
@@ -1282,7 +1362,7 @@ export function ProfilePage() {
                     />
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-4 mb-6">
+                  <div className="grid md:grid-cols-2 gap-4 mb-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Percentuale Sconto
@@ -1316,6 +1396,29 @@ export function ProfilePage() {
                     </div>
                   </div>
 
+                  {businessLocations.length > 0 && (
+                    <div className="mb-6">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Sede (Opzionale)
+                      </label>
+                      <select
+                        value={newDiscount.business_location_id}
+                        onChange={(e) => setNewDiscount({ ...newDiscount, business_location_id: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      >
+                        <option value="">Tutte le sedi</option>
+                        {businessLocations.map((location) => (
+                          <option key={location.id} value={location.id}>
+                            {location.name || `${location.address}, ${location.city}`}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Lascia vuoto per applicare lo sconto a tutte le sedi
+                      </p>
+                    </div>
+                  )}
+
                   <div className="flex gap-3">
                     <button
                       type="submit"
@@ -1334,11 +1437,13 @@ export function ProfilePage() {
                 </form>
               )}
 
-              {discounts.length === 0 ? (
-                <p className="text-gray-600 text-center py-8">Nessuno sconto creato</p>
+              {filteredDiscounts.length === 0 ? (
+                <p className="text-gray-600 text-center py-8">
+                  {selectedBusinessLocation ? 'Nessuno sconto per questa sede' : 'Nessuno sconto creato'}
+                </p>
               ) : (
                 <div className="grid md:grid-cols-2 gap-6">
-                  {discounts.map((discount) => (
+                  {filteredDiscounts.map((discount) => (
                     <div key={discount.id} className={`border-2 rounded-lg p-6 ${
                       discount.active ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
                     }`}>
