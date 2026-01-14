@@ -31,9 +31,10 @@ interface BusinessLocation {
 
 interface BusinessJobPostingFormProps {
   businessId: string;
+  selectedLocationId?: string;
 }
 
-export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormProps) {
+export function BusinessJobPostingForm({ businessId, selectedLocationId }: BusinessJobPostingFormProps) {
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,6 +60,12 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
     loadJobPostings();
     loadBusinessLocations();
   }, [businessId]);
+
+  useEffect(() => {
+    if (selectedLocationId && !editingId) {
+      setFormData(prev => ({ ...prev, business_location_id: selectedLocationId }));
+    }
+  }, [selectedLocationId, editingId]);
 
   const loadJobPostings = async () => {
     try {
@@ -208,11 +215,16 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
       education_level: '',
       expires_at: '',
       status: 'active',
-      business_location_id: '',
+      business_location_id: selectedLocationId || '',
     });
     setEditingId(null);
     setShowForm(false);
   };
+
+  const filteredJobPostings = jobPostings.filter((job) => {
+    if (!selectedLocationId) return true;
+    return job.business_location_id === selectedLocationId;
+  });
 
   if (loading) {
     return (
@@ -399,9 +411,15 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-600 mt-1">
-                Lascia vuoto se l'annuncio è per la sede principale o per tutte le sedi
-              </p>
+              {selectedLocationId && formData.business_location_id === selectedLocationId && !editingId ? (
+                <p className="text-xs text-blue-600 mt-1 font-medium">
+                  Sede pre-selezionata in base al filtro attivo. Puoi modificarla se necessario.
+                </p>
+              ) : (
+                <p className="text-xs text-gray-600 mt-1">
+                  Lascia vuoto se l'annuncio è per la sede principale o per tutte le sedi
+                </p>
+              )}
             </div>
           )}
 
@@ -469,11 +487,13 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
         </form>
       )}
 
-      {jobPostings.length === 0 ? (
-        <p className="text-gray-600 text-center py-8">Nessun annuncio pubblicato</p>
+      {filteredJobPostings.length === 0 ? (
+        <p className="text-gray-600 text-center py-8">
+          {selectedLocationId ? 'Nessun annuncio per questa sede' : 'Nessun annuncio pubblicato'}
+        </p>
       ) : (
         <div className="space-y-4">
-          {jobPostings.map((posting) => (
+          {filteredJobPostings.map((posting) => (
             <div
               key={posting.id}
               className={`border-2 rounded-lg p-6 transition-colors ${

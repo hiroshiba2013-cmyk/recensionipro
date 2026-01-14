@@ -509,12 +509,12 @@ export function ProfilePage() {
 
   const filteredDiscounts = discounts.filter((discount) => {
     if (!selectedBusinessLocation) return true;
-    return !discount.business_location_id || discount.business_location_id === selectedBusinessLocation;
+    return discount.business_location_id === selectedBusinessLocation;
   });
 
   const filteredJobPostings = jobPostings.filter((job) => {
     if (!selectedBusinessLocation) return true;
-    return !job.business_location_id || job.business_location_id === selectedBusinessLocation;
+    return job.business_location_id === selectedBusinessLocation;
   });
 
   if (loading) {
@@ -1137,7 +1137,10 @@ export function ProfilePage() {
                   <p className="text-sm text-gray-600 mt-1">Pubblica e gestisci i tuoi annunci di ricerca personale</p>
                 </div>
 
-                <BusinessJobPostingForm businessId={business.id} />
+                <BusinessJobPostingForm
+                  businessId={business.id}
+                  selectedLocationId={selectedBusinessLocation}
+                />
               </>
             )}
 
