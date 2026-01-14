@@ -168,8 +168,8 @@ export function ActiveProfileIndicator() {
       isOwner: false,
     })) : businessLocations.map((location, index) => ({
       id: location.id,
-      name: location.name || `Sede ${index + 1}`,
-      nickname: location.description || `${location.city}, ${location.province}`,
+      name: location.internal_name || `Sede ${index + 1}`,
+      nickname: location.name,
       avatarUrl: location.avatar_url,
       isOwner: false,
     }))),

@@ -24,6 +24,7 @@ interface JobPosting {
 interface BusinessLocation {
   id: string;
   name: string | null;
+  internal_name: string | null;
   address: string;
   city: string;
 }
@@ -80,7 +81,7 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
     try {
       const { data, error } = await supabase
         .from('business_locations')
-        .select('id, name, address, city')
+        .select('id, name, internal_name, address, city')
         .eq('business_id', businessId)
         .order('created_at', { ascending: true });
 
@@ -392,9 +393,9 @@ export function BusinessJobPostingForm({ businessId }: BusinessJobPostingFormPro
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Sede principale / Tutte le sedi</option>
-                {businessLocations.map((location) => (
+                {businessLocations.map((location, index) => (
                   <option key={location.id} value={location.id}>
-                    {location.name || `${location.address}, ${location.city}`}
+                    {location.internal_name || `Sede ${index + 1}`} - {location.name || location.city}
                   </option>
                 ))}
               </select>

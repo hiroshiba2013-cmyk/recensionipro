@@ -14,6 +14,7 @@ interface ReviewFormProps {
 interface BusinessLocation {
   id: string;
   name: string | null;
+  internal_name: string | null;
   address: string;
   city: string;
   province: string;
@@ -57,7 +58,7 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
   const loadBusinessLocations = async () => {
     const { data: locationsData } = await supabase
       .from('business_locations')
-      .select('id, name, address, city, province')
+      .select('id, name, internal_name, address, city, province')
       .eq('business_id', businessId)
       .order('created_at', { ascending: true });
 
