@@ -27,17 +27,17 @@ interface BusinessHours {
 
 interface BusinessLocation {
   id: string;
-  name: string;
-  address: string;
-  city: string;
-  province: string;
-  postal_code: string;
-  phone: string;
-  email: string;
+  name: string | null;
+  address: string | null;
+  city: string | null;
+  province: string | null;
+  postal_code: string | null;
+  phone: string | null;
+  email: string | null;
   avatar_url: string | null;
   business_hours: BusinessHours | null;
   is_primary: boolean;
-  description?: string;
+  description?: string | null;
 }
 
 interface EditBusinessLocationsFormProps {
@@ -175,16 +175,17 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
       })));
     } else if (field === 'city') {
       const selectedCity = italianCities.find(c => c.city === value);
-      const provinceCode = selectedCity?.province ? PROVINCE_TO_CODE[selectedCity.province] : location.province;
-      setLocations(locations.map(location =>
-        location.id === id
-          ? {
-              ...location,
-              city: value,
-              province: provinceCode || location.province,
-            }
-          : location
-      ));
+      setLocations(locations.map(location => {
+        if (location.id === id) {
+          const provinceCode = selectedCity?.province ? PROVINCE_TO_CODE[selectedCity.province] : location.province;
+          return {
+            ...location,
+            city: value as string,
+            province: provinceCode || location.province || '',
+          };
+        }
+        return location;
+      }));
     } else {
       setLocations(locations.map(location =>
         location.id === id ? { ...location, [field]: value } : location
@@ -230,27 +231,35 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
 
     try {
       for (const location of locations) {
-        if (!location.address.trim()) {
+        const address = location.address ?? '';
+        const city = location.city ?? '';
+        const province = location.province ?? '';
+        const postalCode = location.postal_code ?? '';
+        const name = location.name ?? '';
+        const phone = location.phone ?? '';
+        const email = location.email ?? '';
+
+        if (!address.trim()) {
           alert('Compila l\'indirizzo per tutte le sedi');
           setSaving(false);
           return;
         }
-        if (!location.city.trim()) {
+        if (!city.trim()) {
           alert('Seleziona la città per tutte le sedi');
           setSaving(false);
           return;
         }
-        if (!location.province.trim()) {
+        if (!province.trim()) {
           alert('Seleziona la provincia per tutte le sedi');
           setSaving(false);
           return;
         }
-        if (!/^[A-Z]{2}$/.test(location.province.trim())) {
+        if (!/^[A-Z]{2}$/.test(province.trim())) {
           alert('Formato provincia non valido. Seleziona la città dal menu per impostare automaticamente la provincia.');
           setSaving(false);
           return;
         }
-        if (!location.postal_code.trim()) {
+        if (!postalCode.trim()) {
           alert('Compila il CAP per tutte le sedi');
           setSaving(false);
           return;
@@ -261,13 +270,13 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
             .from('business_locations')
             .insert({
               business_id: businessId,
-              name: location.name.trim() || 'Sede',
-              address: location.address.trim(),
-              city: location.city.trim(),
-              province: location.province.trim(),
-              postal_code: location.postal_code.trim(),
-              phone: location.phone.trim() || null,
-              email: location.email.trim() || null,
+              name: name.trim() || 'Sede',
+              address: address.trim(),
+              city: city.trim(),
+              province: province.trim(),
+              postal_code: postalCode.trim(),
+              phone: phone.trim() || null,
+              email: email.trim() || null,
               business_hours: location.business_hours,
               is_primary: location.is_primary,
               description: location.description?.trim() || null,
@@ -278,13 +287,13 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
           const { error } = await supabase
             .from('business_locations')
             .update({
-              name: location.name.trim() || 'Sede',
-              address: location.address.trim(),
-              city: location.city.trim(),
-              province: location.province.trim(),
-              postal_code: location.postal_code.trim(),
-              phone: location.phone.trim() || null,
-              email: location.email.trim() || null,
+              name: name.trim() || 'Sede',
+              address: address.trim(),
+              city: city.trim(),
+              province: province.trim(),
+              postal_code: postalCode.trim(),
+              phone: phone.trim() || null,
+              email: email.trim() || null,
               business_hours: location.business_hours,
               is_primary: location.is_primary,
               description: location.description?.trim() || null,
@@ -523,7 +532,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
                   </label>
                   <input
                     type="text"
-                    value={location.name}
+                    value={location.name || ''}
                     onChange={(e) => handleChange(location.id, 'name', e.target.value)}
                     required
                     placeholder="Es. Sede Centrale, Negozio Centro..."
@@ -551,7 +560,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
                   </label>
                   <input
                     type="text"
-                    value={location.address}
+                    value={location.address || ''}
                     onChange={(e) => handleChange(location.id, 'address', e.target.value)}
                     required
                     placeholder="Via, numero civico"
@@ -564,7 +573,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
                     Città *
                   </label>
                   <SearchableSelect
-                    value={location.city}
+                    value={location.city || ''}
                     onChange={(value) => handleChange(location.id, 'city', value)}
                     options={italianCities.map(city => ({
                       value: city.city,
@@ -580,7 +589,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
                   </label>
                   <input
                     type="text"
-                    value={location.postal_code}
+                    value={location.postal_code || ''}
                     onChange={(e) => handleChange(location.id, 'postal_code', e.target.value)}
                     required
                     maxLength={5}
@@ -595,7 +604,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
                   </label>
                   <input
                     type="tel"
-                    value={location.phone}
+                    value={location.phone || ''}
                     onChange={(e) => handleChange(location.id, 'phone', e.target.value)}
                     placeholder="Es. +39 123 456789"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -608,7 +617,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
                   </label>
                   <input
                     type="email"
-                    value={location.email}
+                    value={location.email || ''}
                     onChange={(e) => handleChange(location.id, 'email', e.target.value)}
                     placeholder="Es. sede@azienda.it"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
