@@ -37,6 +37,7 @@ interface BusinessLocation {
   avatar_url: string | null;
   business_hours: BusinessHours | null;
   is_primary: boolean;
+  description?: string;
 }
 
 interface EditBusinessLocationsFormProps {
@@ -123,6 +124,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
         phone: '',
         email: '',
         avatar_url: null,
+        description: '',
         business_hours: {
           monday: defaultHours,
           tuesday: defaultHours,
@@ -268,6 +270,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
               email: location.email.trim() || null,
               business_hours: location.business_hours,
               is_primary: location.is_primary,
+              description: location.description?.trim() || null,
             });
 
           if (error) throw error;
@@ -284,6 +287,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
               email: location.email.trim() || null,
               business_hours: location.business_hours,
               is_primary: location.is_primary,
+              description: location.description?.trim() || null,
             })
             .eq('id', location.id);
 
@@ -376,7 +380,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
                     />
                   )}
                   <div className="flex-1">
-                    <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-start justify-between mb-2">
                       <h3 className="font-bold text-lg text-gray-900">{location.name}</h3>
                       {location.is_primary && (
                         <span className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
@@ -384,6 +388,9 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
                         </span>
                       )}
                     </div>
+                    {location.description && (
+                      <p className="text-sm text-gray-600 mb-4 italic">{location.description}</p>
+                    )}
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm text-gray-600 mb-1">Indirizzo</p>
@@ -522,6 +529,20 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
                     placeholder="Es. Sede Centrale, Negozio Centro..."
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Descrizione
+                  </label>
+                  <textarea
+                    value={location.description || ''}
+                    onChange={(e) => handleChange(location.id, 'description', e.target.value)}
+                    placeholder="Breve descrizione della sede (es. 'Negozio nel centro storico con ampio parcheggio')"
+                    rows={2}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Questa descrizione aiuta i clienti a trovare e riconoscere la sede</p>
                 </div>
 
                 <div className="md:col-span-2">

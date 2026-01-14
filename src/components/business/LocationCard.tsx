@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Star, MapPin, ExternalLink, MessageSquare, Phone, Mail, Clock } from 'lucide-react';
+import { Star, MapPin, ExternalLink, MessageSquare, Phone, Mail, Clock, Globe } from 'lucide-react';
 import { ReviewForm } from '../reviews/ReviewForm';
 import { useAuth } from '../../contexts/AuthContext';
 import { VerificationBadge } from './VerificationBadge';
@@ -20,6 +20,7 @@ interface BusinessLocation {
   avatar_url: string | null;
   is_claimed: boolean;
   verification_badge: boolean;
+  description?: string | null;
   business?: {
     id: string;
     name: string;
@@ -35,8 +36,36 @@ interface BusinessLocation {
   review_count?: number;
 }
 
+interface OpeningHours {
+  [key: string]: { open: string; close: string } | null;
+}
+
 interface LocationCardProps {
   location: BusinessLocation;
+}
+
+const DAY_NAMES: { [key: string]: string } = {
+  'monday': 'Lunedì',
+  'tuesday': 'Martedì',
+  'wednesday': 'Mercoledì',
+  'thursday': 'Giovedì',
+  'friday': 'Venerdì',
+  'saturday': 'Sabato',
+  'sunday': 'Domenica'
+};
+
+function formatBusinessHours(hours: any): string {
+  if (!hours || typeof hours !== 'object') return 'Orari non disponibili';
+
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'lowercase' });
+  const todayHours = hours[today];
+
+  if (!todayHours) return 'Chiuso oggi';
+  if (todayHours.open && todayHours.close) {
+    return `Oggi: ${todayHours.open} - ${todayHours.close}`;
+  }
+
+  return 'Orari non disponibili';
 }
 
 export function LocationCard({ location }: LocationCardProps) {
@@ -63,6 +92,7 @@ export function LocationCard({ location }: LocationCardProps) {
 
   const displayName = location.name || location.business?.name || 'Attività';
   const businessName = location.business?.name || '';
+  const hoursText = formatBusinessHours(location.business_hours);
 
   return (
     <div
@@ -90,54 +120,79 @@ export function LocationCard({ location }: LocationCardProps) {
           <VerificationBadge isClaimed={!!location.is_claimed} size="sm" />
         </div>
 
-        {location.business?.category && (
-          <span className="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full mb-3">
-            {location.business.category.name}
-          </span>
-        )}
-
-        <div className="space-y-2 mb-4">
-          <div className="flex items-start gap-2 text-sm text-gray-600">
-            <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-            <span>{location.address}, {location.city} ({location.province})</span>
-          </div>
-
-          {location.phone && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Phone className="w-4 h-4 flex-shrink-0" />
-              <span>{location.phone}</span>
-            </div>
+        <div className="flex items-center gap-2 mb-3">
+          {location.business?.category && (
+            <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full font-medium">
+              {location.business.category.name}
+            </span>
           )}
-
-          {location.email && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Mail className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate">{location.email}</span>
+          {location.avg_rating !== undefined && location.review_count !== undefined && location.review_count > 0 && (
+            <div className="flex items-center gap-1 px-3 py-1 bg-yellow-50 rounded-full">
+              <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+              <span className="font-semibold text-sm text-gray-900">{location.avg_rating.toFixed(1)}</span>
+              <span className="text-xs text-gray-600">({location.review_count})</span>
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-          {location.avg_rating !== undefined && location.review_count !== undefined && (
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-              <span className="font-medium text-gray-900">
-                {location.review_count > 0 ? location.avg_rating.toFixed(1) : 'N/D'}
-              </span>
-              <span>({location.review_count || 0})</span>
+        {location.description && (
+          <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+            {location.description}
+          </p>
+        )}
+
+        <div className="space-y-2 mb-4">
+          <div className="flex items-start gap-2 text-sm text-gray-700">
+            <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-600" />
+            <span className="font-medium">{location.address}, {location.city} ({location.province})</span>
+          </div>
+
+          {location.business_hours && (
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <Clock className="w-4 h-4 flex-shrink-0 text-green-600" />
+              <span className="font-medium">{hoursText}</span>
             </div>
           )}
 
           {location.website && (
-            <a
-              href={location.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="ml-auto text-blue-600 hover:text-blue-700"
-            >
-              <ExternalLink className="w-4 h-4" />
-            </a>
+            <div className="flex items-center gap-2 text-sm">
+              <Globe className="w-4 h-4 flex-shrink-0 text-blue-600" />
+              <a
+                href={location.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-blue-600 hover:text-blue-700 hover:underline font-medium truncate"
+              >
+                Visita il sito web
+              </a>
+            </div>
+          )}
+
+          {location.phone && (
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <Phone className="w-4 h-4 flex-shrink-0 text-blue-600" />
+              <a
+                href={`tel:${location.phone}`}
+                onClick={(e) => e.stopPropagation()}
+                className="font-medium hover:text-blue-600"
+              >
+                {location.phone}
+              </a>
+            </div>
+          )}
+
+          {location.email && (
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <Mail className="w-4 h-4 flex-shrink-0 text-blue-600" />
+              <a
+                href={`mailto:${location.email}`}
+                onClick={(e) => e.stopPropagation()}
+                className="font-medium hover:text-blue-600 truncate"
+              >
+                {location.email}
+              </a>
+            </div>
           )}
         </div>
 
