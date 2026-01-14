@@ -489,7 +489,7 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
               location.is_primary ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-gray-50'
             }`}>
               <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-1">
                   {!location.id.startsWith('new-') && (
                     <BusinessLocationAvatarUpload
                       locationId={location.id}
@@ -501,24 +501,35 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
                       }}
                     />
                   )}
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <h3 className="font-bold text-lg text-gray-900">Sede {index + 1}</h3>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <input
+                        type="text"
+                        value={location.name || ''}
+                        onChange={(e) => handleChange(location.id, 'name', e.target.value)}
+                        required
+                        placeholder="Nome della sede (es. Sede Centrale, Negozio Milano...)"
+                        className="flex-1 px-3 py-2 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-bold text-lg text-gray-900"
+                      />
                       {location.is_primary && (
-                        <span className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                        <span className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap">
                           PRINCIPALE
                         </span>
                       )}
                     </div>
-                    {location.id.startsWith('new-') && (
-                      <p className="text-xs text-gray-600 mt-1">Salva per caricare l'immagine della sede</p>
+                    {location.id.startsWith('new-') ? (
+                      <p className="text-xs text-gray-600">Salva per caricare l'immagine della sede</p>
+                    ) : (
+                      <p className="text-xs text-blue-700">
+                        Questo nome verrà visualizzato nella selezione della sede
+                      </p>
                     )}
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => handleRemoveLocation(location.id)}
-                  className="text-red-600 hover:text-red-700 flex items-center gap-1"
+                  className="text-red-600 hover:text-red-700 flex items-center gap-1 ml-2"
                 >
                   <Trash2 className="w-4 h-4" />
                   Rimuovi
@@ -526,24 +537,6 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
               </div>
 
               <div className="grid md:grid-cols-2 gap-4 mb-4">
-                <div className="md:col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <label className="block text-base font-bold text-blue-900 mb-2 flex items-center gap-2">
-                    <Building2 className="w-5 h-5" />
-                    Nome Sede Personalizzato *
-                  </label>
-                  <input
-                    type="text"
-                    value={location.name || ''}
-                    onChange={(e) => handleChange(location.id, 'name', e.target.value)}
-                    required
-                    placeholder="Es. Sede Centrale, Negozio Centro, Filiale Milano..."
-                    className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium text-lg"
-                  />
-                  <p className="text-sm text-blue-700 mt-2 flex items-start gap-1">
-                    <span className="font-semibold">ℹ️</span>
-                    <span>Questo nome verrà visualizzato quando selezioni la sede per accedere al tuo account</span>
-                  </p>
-                </div>
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
