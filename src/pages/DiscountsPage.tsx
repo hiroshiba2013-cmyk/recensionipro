@@ -41,7 +41,7 @@ interface DiscountWithBusiness extends Discount {
 }
 
 export function DiscountsPage() {
-  const { user } = useAuth();
+  const { user, selectedBusinessLocationId } = useAuth();
   const [discounts, setDiscounts] = useState<DiscountWithBusiness[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -69,7 +69,7 @@ export function DiscountsPage() {
       loadCategories();
       loadRedemptions();
     }
-  }, [user]);
+  }, [user, selectedBusinessLocationId]);
 
   useEffect(() => {
     if (selectedRegion) {
@@ -171,7 +171,7 @@ export function DiscountsPage() {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('discounts')
         .select(`
           *,
@@ -187,8 +187,13 @@ export function DiscountsPage() {
           )
         `)
         .eq('active', true)
-        .gte('valid_until', new Date().toISOString())
-        .order('discount_percentage', { ascending: false });
+        .gte('valid_until', new Date().toISOString());
+
+      if (selectedBusinessLocationId) {
+        query = query.eq('business_location_id', selectedBusinessLocationId);
+      }
+
+      const { data, error } = await query.order('discount_percentage', { ascending: false });
 
       if (error) throw error;
 

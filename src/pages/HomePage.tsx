@@ -282,7 +282,7 @@ function LandingPage() {
 }
 
 function AuthenticatedHomePage() {
-  const { user } = useAuth();
+  const { user, selectedBusinessLocationId } = useAuth();
   const navigate = useNavigate();
   const [jobPostings, setJobPostings] = useState<any[]>([]);
   const [classifiedAds, setClassifiedAds] = useState<any[]>([]);
@@ -293,7 +293,7 @@ function AuthenticatedHomePage() {
 
   useEffect(() => {
     loadHomeData();
-  }, [user]);
+  }, [user, selectedBusinessLocationId]);
 
   const loadHomeData = async () => {
     try {
@@ -325,19 +325,27 @@ function AuthenticatedHomePage() {
         .map(([id]) => id);
 
       const [jobsResult, adsResult, productsResult, businessesResult] = await Promise.all([
-        supabase
-          .from('job_postings')
-          .select(`
-            *,
-            business:business_id(
-              name,
-              business_locations(city, province)
-            ),
-            category:category_id(name)
-          `)
-          .eq('status', 'open')
-          .order('created_at', { ascending: false })
-          .limit(3),
+        (() => {
+          let query = supabase
+            .from('job_postings')
+            .select(`
+              *,
+              business:business_id(
+                name,
+                business_locations(city, province)
+              ),
+              category:category_id(name)
+            `)
+            .eq('status', 'open');
+
+          if (selectedBusinessLocationId) {
+            query = query.eq('business_location_id', selectedBusinessLocationId);
+          }
+
+          return query
+            .order('created_at', { ascending: false })
+            .limit(3);
+        })(),
 
         supabase
           .from('classified_ads')
@@ -349,16 +357,24 @@ function AuthenticatedHomePage() {
           .order('created_at', { ascending: false })
           .limit(6),
 
-        supabase
-          .from('products')
-          .select(`
-            *,
-            business:business_id(name),
-            business_location:location_id(city, province)
-          `)
-          .eq('is_available', true)
-          .order('created_at', { ascending: false })
-          .limit(6),
+        (() => {
+          let query = supabase
+            .from('products')
+            .select(`
+              *,
+              business:business_id(name),
+              business_location:location_id(city, province)
+            `)
+            .eq('is_available', true);
+
+          if (selectedBusinessLocationId) {
+            query = query.eq('location_id', selectedBusinessLocationId);
+          }
+
+          return query
+            .order('created_at', { ascending: false })
+            .limit(6);
+        })(),
 
         topBusinessIds.length > 0
           ? supabase

@@ -81,7 +81,7 @@ export function JobsPage() {
     type: 'job_seeker' | 'job_offer';
     otherUserName: string;
   } | null>(null);
-  const { user, profile } = useAuth();
+  const { user, profile, selectedBusinessLocationId } = useAuth();
 
   const [filters, setFilters] = useState<SearchFilters>({
     position_type: '',
@@ -105,7 +105,7 @@ export function JobsPage() {
     } else {
       loadJobSeekers();
     }
-  }, [activeTab, user, filters]);
+  }, [activeTab, user, filters, selectedBusinessLocationId]);
 
   const loadJobs = async () => {
     setLoading(true);
@@ -119,6 +119,10 @@ export function JobsPage() {
         .eq('status', 'active')
         .gt('expires_at', new Date().toISOString())
         .order('published_at', { ascending: false });
+
+      if (selectedBusinessLocationId) {
+        query = query.eq('business_location_id', selectedBusinessLocationId);
+      }
 
       if (filters.position_type) {
         query = query.eq('position_type', filters.position_type);
