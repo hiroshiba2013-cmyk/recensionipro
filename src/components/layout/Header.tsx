@@ -7,10 +7,14 @@ import NotificationBell from '../notifications/NotificationBell';
 import { ActiveProfileIndicator } from '../profile/ActiveProfileIndicator';
 
 export function Header() {
-  const { user, profile } = useAuth();
+  const { user, profile, selectedBusinessLocationId, businessLocations } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+  const selectedLocation = selectedBusinessLocationId
+    ? businessLocations.find(loc => loc.id === selectedBusinessLocationId)
+    : null;
 
   useEffect(() => {
     const selectedPlanId = localStorage.getItem('selectedPlanId');
@@ -101,6 +105,12 @@ export function Header() {
 
                 <nav className="hidden lg:flex items-center gap-2">
                   <ActiveProfileIndicator />
+                  {selectedLocation && (
+                    <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-lg text-xs font-medium border border-blue-300">
+                      <span className="font-semibold">Sede:</span>
+                      <span>{selectedLocation.internal_name || selectedLocation.city}</span>
+                    </div>
+                  )}
                   <a
                     href="/profile"
                     className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
@@ -169,6 +179,12 @@ export function Header() {
               <nav className="flex flex-col gap-5">
                 {user && profile ? (
                   <>
+                    {selectedLocation && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium border border-blue-300">
+                        <span className="font-semibold">Sede selezionata:</span>
+                        <span>{selectedLocation.internal_name || selectedLocation.city}</span>
+                      </div>
+                    )}
                     <a
                       href="/"
                       className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"

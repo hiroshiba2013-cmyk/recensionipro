@@ -152,7 +152,7 @@ interface FamilyMember {
 }
 
 export function ProfilePage() {
-  const { user, signOut, activeProfile } = useAuth();
+  const { user, signOut, activeProfile, selectedBusinessLocationId, setActiveProfile } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
@@ -163,7 +163,6 @@ export function ProfilePage() {
   const [userRank, setUserRank] = useState<UserRank | null>(null);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [selectedFamilyMember, setSelectedFamilyMember] = useState<FamilyMember | null>(null);
-  const [selectedBusinessLocation, setSelectedBusinessLocation] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [showDiscountForm, setShowDiscountForm] = useState(false);
   const [newDiscount, setNewDiscount] = useState({
@@ -501,20 +500,20 @@ export function ProfilePage() {
       (reviewFilters.locationId === 'general' && !review.business_location_id) ||
       review.business_location_id === reviewFilters.locationId;
 
-    const businessLocationMatch = !selectedBusinessLocation ||
-      review.business_location_id === selectedBusinessLocation;
+    const businessLocationMatch = !selectedBusinessLocationId ||
+      review.business_location_id === selectedBusinessLocationId;
 
     return nicknameMatch && ratingMatch && businessNameMatch && locationMatch && businessLocationMatch;
   });
 
   const filteredDiscounts = discounts.filter((discount) => {
-    if (!selectedBusinessLocation) return true;
-    return discount.business_location_id === selectedBusinessLocation;
+    if (!selectedBusinessLocationId) return true;
+    return discount.business_location_id === selectedBusinessLocationId;
   });
 
   const filteredJobPostings = jobPostings.filter((job) => {
-    if (!selectedBusinessLocation) return true;
-    return job.business_location_id === selectedBusinessLocation;
+    if (!selectedBusinessLocationId) return true;
+    return job.business_location_id === selectedBusinessLocationId;
   });
 
   if (loading) {
@@ -1082,8 +1081,14 @@ export function ProfilePage() {
                       (recensioni, sconti, annunci di lavoro). Lascia "Tutte le Sedi" per vedere tutto.
                     </p>
                     <select
-                      value={selectedBusinessLocation}
-                      onChange={(e) => setSelectedBusinessLocation(e.target.value)}
+                      value={selectedBusinessLocationId || ''}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          setActiveProfile(e.target.value, false);
+                        } else {
+                          setActiveProfile(user!.id, true);
+                        }
+                      }}
                       className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base font-medium bg-white"
                     >
                       <option value="">Tutte le Sedi (Sede Principale)</option>
@@ -1093,7 +1098,7 @@ export function ProfilePage() {
                         </option>
                       ))}
                     </select>
-                    {selectedBusinessLocation && (
+                    {selectedBusinessLocationId && (
                       <div className="mt-4 p-3 bg-blue-100 border border-blue-300 rounded-lg">
                         <p className="text-sm text-blue-800 font-medium">
                           Stai visualizzando solo i dati della sede selezionata
@@ -1139,7 +1144,7 @@ export function ProfilePage() {
 
                 <BusinessJobPostingForm
                   businessId={business.id}
-                  selectedLocationId={selectedBusinessLocation}
+                  selectedLocationId={selectedBusinessLocationId || ''}
                 />
               </>
             )}
@@ -1443,7 +1448,7 @@ export function ProfilePage() {
 
               {filteredDiscounts.length === 0 ? (
                 <p className="text-gray-600 text-center py-8">
-                  {selectedBusinessLocation ? 'Nessuno sconto per questa sede' : 'Nessuno sconto creato'}
+                  {selectedBusinessLocationId ? 'Nessuno sconto per questa sede' : 'Nessuno sconto creato'}
                 </p>
               ) : (
                 <div className="grid md:grid-cols-2 gap-6">

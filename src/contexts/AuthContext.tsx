@@ -65,6 +65,7 @@ interface AuthContextType {
   businessLocations: BusinessLocation[];
   activeProfile: ActiveProfile | null;
   needsProfileSelection: boolean;
+  selectedBusinessLocationId: string | null;
   signUpCustomer: (email: string, password: string, data: CustomerData) => Promise<void>;
   signUpBusiness: (email: string, password: string, data: BusinessData) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
@@ -465,6 +466,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setNeedsProfileSelection(false);
   };
 
+  const selectedBusinessLocationId =
+    profile?.user_type === 'business' && activeProfile && !activeProfile.isOwner
+      ? activeProfile.id
+      : null;
+
   const value = {
     user,
     profile,
@@ -473,6 +479,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     businessLocations,
     activeProfile,
     needsProfileSelection,
+    selectedBusinessLocationId,
     signUpCustomer,
     signUpBusiness,
     signIn,
