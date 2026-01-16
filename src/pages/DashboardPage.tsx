@@ -32,8 +32,6 @@ interface Subscription {
 export function DashboardPage() {
   const { profile, selectedBusinessLocationId } = useAuth();
   const [businesses, setBusinesses] = useState<Business[]>([]);
-
-  console.log('DashboardPage - selectedBusinessLocationId:', selectedBusinessLocationId);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
@@ -356,9 +354,11 @@ export function DashboardPage() {
                     {selectedBusinessId && (
                       <>
                         <EditBusinessForm businessId={selectedBusinessId} onUpdate={loadDashboardData} />
-                        {!selectedBusinessLocationId && (
-                          <EditBusinessLocationsForm businessId={selectedBusinessId} onUpdate={loadDashboardData} />
-                        )}
+                        <EditBusinessLocationsForm
+                          businessId={selectedBusinessId}
+                          selectedLocationId={selectedBusinessLocationId}
+                          onUpdate={loadDashboardData}
+                        />
                       </>
                     )}
                   </>

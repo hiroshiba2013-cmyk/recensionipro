@@ -43,10 +43,11 @@ interface BusinessLocation {
 
 interface EditBusinessLocationsFormProps {
   businessId: string;
+  selectedLocationId?: string | null;
   onUpdate: () => void;
 }
 
-export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusinessLocationsFormProps) {
+export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUpdate }: EditBusinessLocationsFormProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [locations, setLocations] = useState<BusinessLocation[]>([]);
@@ -356,12 +357,18 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
   }
 
   if (!isEditing) {
+    const displayLocations = selectedLocationId
+      ? locations.filter(loc => loc.id === selectedLocationId)
+      : locations;
+
     return (
       <div className="bg-white rounded-xl shadow-md p-8 mb-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <MapPin className="w-6 h-6 text-blue-600" />
-            <h2 className="text-2xl font-bold text-gray-900">Punti Vendita</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {selectedLocationId ? 'Punto Vendita Selezionato' : 'Punti Vendita'}
+            </h2>
           </div>
           <button
             onClick={() => setIsEditing(true)}
@@ -372,11 +379,11 @@ export function EditBusinessLocationsForm({ businessId, onUpdate }: EditBusiness
           </button>
         </div>
 
-        {locations.length === 0 ? (
+        {displayLocations.length === 0 ? (
           <p className="text-gray-600 text-center py-8">Nessun punto vendita aggiunto</p>
         ) : (
           <div className="space-y-6">
-            {locations.map((location, index) => (
+            {displayLocations.map((location, index) => (
               <div key={location.id} className={`border rounded-lg p-6 ${
                 location.is_primary ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-gray-50'
               }`}>
