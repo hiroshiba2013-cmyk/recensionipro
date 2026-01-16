@@ -28,7 +28,7 @@ interface JobPosting {
     id: string;
     name: string;
     owner_id: string;
-  };
+  } | null;
 }
 
 interface JobSeeker {
@@ -306,7 +306,10 @@ export function JobsPage() {
 
     try {
       const job = jobs.find(j => j.id === jobId);
-      if (!job) return;
+      if (!job || !job.business) {
+        alert('Informazioni sul datore di lavoro non disponibili');
+        return;
+      }
 
       const { data: existingConv } = await supabase
         .from('job_offer_conversations')
@@ -336,7 +339,7 @@ export function JobsPage() {
       setConversationData({
         conversationId,
         type: 'job_offer',
-        otherUserName: job.company_name || job.business.name,
+        otherUserName: job.company_name || job.business?.name || 'Azienda',
       });
     } catch (error) {
       console.error('Error creating conversation:', error);
@@ -652,7 +655,7 @@ export function JobsPage() {
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h3 className="text-xl font-bold text-gray-900">{job.title}</h3>
-                      <p className="text-gray-600 font-medium">{job.company_name || job.business.name}</p>
+                      <p className="text-gray-600 font-medium">{job.company_name || job.business?.name || 'Azienda'}</p>
                     </div>
                     <span className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
                       {job.position_type}
