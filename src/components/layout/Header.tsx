@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle } from 'lucide-react';
+import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle, Briefcase } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
@@ -57,6 +57,14 @@ export function Header() {
                   >
                     <Home className="w-4 h-4" />
                     <span className="text-sm">Home</span>
+                  </a>
+                  <a
+                    href="/jobs"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
+                    title="Lavoro"
+                  >
+                    <Briefcase className="w-4 h-4" />
+                    <span className="text-sm">Lavoro</span>
                   </a>
                   <a
                     href="/messages"
@@ -117,6 +125,13 @@ export function Header() {
               <>
                 <div className="flex-1"></div>
                 <nav className="hidden lg:flex items-center gap-4">
+                  <a
+                    href="/jobs"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
+                  >
+                    <Briefcase className="w-4 h-4" />
+                    <span className="text-sm">Lavoro</span>
+                  </a>
                   <a
                     href="/contact"
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
@@ -179,6 +194,14 @@ export function Header() {
                       <span>Home</span>
                     </a>
                     <a
+                      href="/jobs"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Briefcase className="w-5 h-5" />
+                      <span>Lavoro</span>
+                    </a>
+                    <a
                       href="/messages"
                       className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                       onClick={() => setShowMobileMenu(false)}
@@ -221,6 +244,14 @@ export function Header() {
                   </>
                 ) : (
                   <>
+                    <a
+                      href="/jobs"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Briefcase className="w-5 h-5" />
+                      <span>Lavoro</span>
+                    </a>
                     <a
                       href="/contact"
                       className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
