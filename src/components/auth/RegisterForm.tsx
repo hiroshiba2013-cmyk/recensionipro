@@ -64,6 +64,32 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
   const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [businessBillingPeriod, setBusinessBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
 
+  useEffect(() => {
+    if (userType === 'business' && businessLocations.length === 0) {
+      const defaultHours = { open: '09:00', close: '18:00', closed: false };
+      setBusinessLocations([{
+        name: 'Sede Principale',
+        address: '',
+        streetNumber: '',
+        city: '',
+        province: '',
+        postalCode: '',
+        phone: '',
+        email: '',
+        vatNumber: '',
+        businessHours: {
+          monday: defaultHours,
+          tuesday: defaultHours,
+          wednesday: defaultHours,
+          thursday: defaultHours,
+          friday: defaultHours,
+          saturday: { ...defaultHours, closed: true },
+          sunday: { ...defaultHours, closed: true },
+        },
+      }]);
+    }
+  }, [userType]);
+
   const validatePassword = (password: string): string => {
     if (password.length < 6) {
       return 'La password deve contenere almeno 6 caratteri';
@@ -114,7 +140,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
         let locationCount = 1;
         if (plan.max_persons === 999) {
           setNumberOfLocations('10+');
-          locationCount = 1;
+          locationCount = 10;
         } else if (plan.max_persons >= 6 && plan.max_persons <= 10) {
           setNumberOfLocations('6-10');
           locationCount = 6;
@@ -1217,10 +1243,14 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
         </form>
       ) : (
         <form onSubmit={handleBusinessSubmit} className="space-y-4 max-h-96 overflow-y-auto pr-2">
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
+          <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-300 mb-4">
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Quante sedi ha la tua azienda?
+              Quante sedi/punti vendita hai?
             </label>
+            <p className="text-xs text-gray-600 mb-3 bg-white p-2 rounded border border-blue-200">
+              <span className="font-semibold">Nota:</span> Questo numero si riferisce ai tuoi punti vendita fisici,
+              non include i dati legali aziendali che hai inserito sopra.
+            </p>
             <SearchableSelect
               value={numberOfLocations}
               onChange={(value) => {
@@ -1229,7 +1259,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 if (value === '6-10') {
                   num = 6;
                 } else if (value === '10+') {
-                  num = 6;
+                  num = 10;
                 } else {
                   num = parseInt(value);
                 }
