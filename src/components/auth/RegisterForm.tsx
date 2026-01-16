@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth, CustomerData, BusinessData } from '../../contexts/AuthContext';
 import { SearchableSelect } from '../common/SearchableSelect';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, MapPin } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface FamilyMember {
@@ -1315,8 +1315,12 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             </div>
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-sm font-bold text-gray-900 mb-3">Dati Azienda</h3>
+          <div className="bg-gray-50 p-4 rounded-lg border-2 border-blue-300">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Dati Legali e Fiscali Azienda</h3>
+            <p className="text-sm text-gray-600 mb-4 italic">
+              Questi dati sono per la fatturazione e non rappresentano un punto vendita.
+              I punti vendita fisici verranno aggiunti successivamente.
+            </p>
 
             <div className="mb-3">
               <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1">
@@ -1548,11 +1552,25 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             </div>
           </div>
 
+          <div className="bg-gradient-to-r from-green-50 to-blue-50 p-5 rounded-lg border-2 border-green-300 mb-4">
+            <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-green-600" />
+              Punti Vendita / Sedi Operative
+            </h3>
+            <p className="text-sm text-gray-700 mb-2">
+              Aggiungi ora i tuoi punti vendita fisici dove i clienti possono trovarti.
+            </p>
+            <p className="text-xs text-gray-600 bg-white p-2 rounded border border-green-200">
+              <span className="font-semibold">Importante:</span> Anche se la tua sede ha gli stessi dati aziendali inseriti sopra,
+              devi inserirli nuovamente qui. I dati legali e i punti vendita sono gestiti separatamente.
+            </p>
+          </div>
+
           {businessLocations.map((location, index) => (
-            <div key={index} className="bg-emerald-50 p-4 rounded-lg border border-emerald-200 mb-4">
+            <div key={index} className="bg-emerald-50 p-4 rounded-lg border-2 border-emerald-300 mb-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-bold text-gray-900">
-                  {index === 0 ? 'Sede Principale' : `Sede ${index + 1}`}
+                  {index === 0 ? 'Punto Vendita Principale' : `Punto Vendita ${index + 1}`}
                 </h3>
                 {index > 0 && (
                   <button
