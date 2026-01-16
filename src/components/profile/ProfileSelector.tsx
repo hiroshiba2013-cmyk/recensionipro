@@ -190,7 +190,7 @@ export function ProfileSelector({ ownerProfile, familyMembers = [], businessLoca
                 )}
                 {profile.isOwner && (
                   <span className="inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
-                    {userType === 'customer' ? 'Account Principale' : 'Sede Principale'}
+                    {userType === 'customer' ? 'Account Principale' : 'Tutte le Sedi'}
                   </span>
                 )}
               </div>

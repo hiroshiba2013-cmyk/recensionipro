@@ -245,7 +245,7 @@ export function ActiveProfileIndicator() {
                 )}
                 {prof.isOwner && (
                   <span className="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
-                    Principale
+                    {isBusiness ? 'Tutte le Sedi' : 'Principale'}
                   </span>
                 )}
               </div>
