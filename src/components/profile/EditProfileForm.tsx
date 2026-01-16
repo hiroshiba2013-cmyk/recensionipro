@@ -209,7 +209,13 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
 
         {profile.user_type === 'business' && (
           <>
-            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Dati Aziendali</h3>
+            <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4 mb-4">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Dati Legali e Fiscali Azienda</h3>
+              <p className="text-sm text-gray-600 italic">
+                Questi dati sono utilizzati per la fatturazione. I punti vendita fisici sono gestiti
+                nella sezione "Punti Vendita" più in basso.
+              </p>
+            </div>
             <div className="grid md:grid-cols-2 gap-6 mb-6">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Ragione Sociale</p>
@@ -324,7 +330,13 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
       <form onSubmit={handleSubmit}>
         {profile.user_type === 'business' && (
           <>
-            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Dati Aziendali</h3>
+            <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4 mb-4">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Dati Legali e Fiscali Azienda</h3>
+              <p className="text-sm text-gray-600 italic">
+                Questi dati sono utilizzati per la fatturazione. I punti vendita fisici sono gestiti
+                nella sezione "Punti Vendita" più in basso.
+              </p>
+            </div>
             <div className="grid md:grid-cols-2 gap-6 mb-6">
               <div className="md:col-span-2">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
