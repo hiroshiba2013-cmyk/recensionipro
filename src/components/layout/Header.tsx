@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle } from 'lucide-react';
+import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle, Heart } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
@@ -118,6 +118,13 @@ export function Header() {
                 <div className="flex-1"></div>
                 <nav className="hidden lg:flex items-center gap-4">
                   <a
+                    href="/solidarity"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
+                  >
+                    <Heart className="w-4 h-4" />
+                    <span className="text-sm">Solidarietà</span>
+                  </a>
+                  <a
                     href="/contact"
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
                   >
@@ -221,6 +228,14 @@ export function Header() {
                   </>
                 ) : (
                   <>
+                    <a
+                      href="/solidarity"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Heart className="w-5 h-5" />
+                      <span>Solidarietà</span>
+                    </a>
                     <a
                       href="/contact"
                       className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
