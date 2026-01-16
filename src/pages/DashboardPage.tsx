@@ -372,17 +372,24 @@ export function DashboardPage() {
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-2">
                       <Star className="w-6 h-6" />
-                      Recensioni Ricevute
+                      {selectedBusinessLocationId ? 'Recensioni Sede Selezionata' : 'Recensioni Ricevute'}
                     </h2>
                   </div>
 
-                  {reviews.length === 0 ? (
-                    <p className="text-gray-600 text-center py-8">
-                      Non hai ancora ricevuto recensioni
-                    </p>
-                  ) : (
-                    <div className="space-y-4">
-                      {reviews.map((review) => (
+                  {(() => {
+                    const displayReviews = selectedBusinessLocationId
+                      ? reviews.filter(r => r.business_location_id === selectedBusinessLocationId)
+                      : reviews;
+
+                    return displayReviews.length === 0 ? (
+                      <p className="text-gray-600 text-center py-8">
+                        {selectedBusinessLocationId
+                          ? 'Questa sede non ha ancora ricevuto recensioni'
+                          : 'Non hai ancora ricevuto recensioni'}
+                      </p>
+                    ) : (
+                      <div className="space-y-4">
+                        {displayReviews.map((review) => (
                         <div key={review.id} className="border border-gray-200 rounded-lg p-4">
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex">
@@ -418,9 +425,10 @@ export function DashboardPage() {
                             </div>
                           )}
                         </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {selectedBusinessId && <BusinessJobPostingForm businessId={selectedBusinessId} />}
@@ -572,7 +580,7 @@ export function DashboardPage() {
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-2">
                       <Tag className="w-6 h-6" />
-                      Sconti Attivi
+                      {selectedBusinessLocationId ? 'Sconti Sede Selezionata' : 'Sconti Attivi'}
                     </h2>
                     <button
                       onClick={() => setShowDiscountForm(true)}
@@ -583,13 +591,20 @@ export function DashboardPage() {
                     </button>
                   </div>
 
-                  {discounts.length === 0 ? (
-                    <p className="text-gray-600 text-center py-8">
-                      Non hai ancora creato sconti
-                    </p>
-                  ) : (
-                    <div className="space-y-4">
-                      {discounts.map((discount) => (
+                  {(() => {
+                    const displayDiscounts = selectedBusinessLocationId
+                      ? discounts.filter(d => d.business_location_id === selectedBusinessLocationId)
+                      : discounts;
+
+                    return displayDiscounts.length === 0 ? (
+                      <p className="text-gray-600 text-center py-8">
+                        {selectedBusinessLocationId
+                          ? 'Questa sede non ha ancora sconti attivi'
+                          : 'Non hai ancora creato sconti'}
+                      </p>
+                    ) : (
+                      <div className="space-y-4">
+                        {displayDiscounts.map((discount) => (
                         <div key={discount.id} className="border border-gray-200 rounded-lg p-4">
                           <div className="flex items-start justify-between">
                             <div>
@@ -607,9 +622,10 @@ export function DashboardPage() {
                             </span>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {selectedBusinessId && (
