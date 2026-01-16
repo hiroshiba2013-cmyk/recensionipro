@@ -475,12 +475,18 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
     );
   }
 
+  const editLocations = selectedLocationId
+    ? locations.filter(loc => loc.id === selectedLocationId)
+    : locations;
+
   return (
     <div className="bg-white rounded-xl shadow-md p-8 mb-8">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <MapPin className="w-6 h-6 text-blue-600" />
-          <h2 className="text-2xl font-bold text-gray-900">Modifica Punti Vendita</h2>
+          <h2 className="text-2xl font-bold text-gray-900">
+            {selectedLocationId ? 'Modifica Punto Vendita Selezionato' : 'Modifica Punti Vendita'}
+          </h2>
         </div>
         <button
           onClick={handleCancel}
@@ -498,7 +504,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
 
       <form onSubmit={handleSubmit}>
         <div className="space-y-6 mb-6">
-          {locations.map((location, index) => (
+          {editLocations.map((location, index) => (
             <div key={location.id} className={`border-2 rounded-lg p-6 ${
               location.is_primary ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-gray-50'
             }`}>
@@ -538,14 +544,16 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     )}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveLocation(location.id)}
-                  className="text-red-600 hover:text-red-700 flex items-center gap-1 ml-2"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Rimuovi
-                </button>
+                {!selectedLocationId && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveLocation(location.id)}
+                    className="text-red-600 hover:text-red-700 flex items-center gap-1 ml-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Rimuovi
+                  </button>
+                )}
               </div>
 
               <div className="grid md:grid-cols-2 gap-4 mb-4">
@@ -652,19 +660,21 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                   />
                 </div>
 
-                <div className="flex items-center">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={location.is_primary}
-                      onChange={(e) => handleChange(location.id, 'is_primary', e.target.checked)}
-                      className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                    />
-                    <span className="text-sm font-semibold text-gray-700">
-                      Sede Principale
-                    </span>
-                  </label>
-                </div>
+                {!selectedLocationId && (
+                  <div className="flex items-center">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={location.is_primary}
+                        onChange={(e) => handleChange(location.id, 'is_primary', e.target.checked)}
+                        className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                      />
+                      <span className="text-sm font-semibold text-gray-700">
+                        Sede Principale
+                      </span>
+                    </label>
+                  </div>
+                )}
               </div>
 
               {location.business_hours && (
@@ -726,28 +736,30 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
           ))}
         </div>
 
-        <div className="mb-6">
-          <button
-            type="button"
-            onClick={handleAddLocation}
-            disabled={locations.length >= maxLocations}
-            className="flex items-center gap-2 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold w-full disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Plus className="w-5 h-5" />
-            Aggiungi Sede
-          </button>
-          <p className="text-sm text-gray-600 mt-2 text-center">
-            {locations.length >= maxLocations ? (
-              <span className="text-red-600 font-semibold">
-                Limite raggiunto: {locations.length}/{maxLocations} {maxLocations === 1 ? 'sede' : 'sedi'}. Aggiorna l'abbonamento per aggiungere più sedi.
-              </span>
-            ) : (
-              <span>
-                Sedi utilizzate: {locations.length}/{maxLocations} - Piano: {subscriptionPlan}
-              </span>
-            )}
-          </p>
-        </div>
+        {!selectedLocationId && (
+          <div className="mb-6">
+            <button
+              type="button"
+              onClick={handleAddLocation}
+              disabled={locations.length >= maxLocations}
+              className="flex items-center gap-2 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold w-full disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus className="w-5 h-5" />
+              Aggiungi Sede
+            </button>
+            <p className="text-sm text-gray-600 mt-2 text-center">
+              {locations.length >= maxLocations ? (
+                <span className="text-red-600 font-semibold">
+                  Limite raggiunto: {locations.length}/{maxLocations} {maxLocations === 1 ? 'sede' : 'sedi'}. Aggiorna l'abbonamento per aggiungere più sedi.
+                </span>
+              ) : (
+                <span>
+                  Sedi utilizzate: {locations.length}/{maxLocations} - Piano: {subscriptionPlan}
+                </span>
+              )}
+            </p>
+          </div>
+        )}
 
         <div className="flex gap-3">
           <button
