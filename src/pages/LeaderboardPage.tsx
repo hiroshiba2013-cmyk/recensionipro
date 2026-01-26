@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Trophy, Medal, Award, Star, Gift } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { ActivityFeed } from '../components/activity/ActivityFeed';
 
 interface LeaderboardUser {
@@ -25,6 +26,7 @@ interface Reward {
 
 export function LeaderboardPage() {
   const { profile, activeProfile } = useAuth();
+  const { t } = useLanguage();
   const [userRank, setUserRank] = useState<LeaderboardUser | null>(null);
   const [topUsers, setTopUsers] = useState<LeaderboardUser[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
@@ -181,7 +183,7 @@ export function LeaderboardPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
-          <p className="text-gray-600">Caricamento classifica...</p>
+          <p className="text-gray-600">{t('leaderboard.loading')}</p>
         </div>
       </div>
     );
@@ -194,11 +196,11 @@ export function LeaderboardPage() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <Trophy className="w-12 h-12 text-yellow-500" />
             <h1 className="text-4xl font-bold text-gray-900">
-              Classifica & Premi
+              {t('leaderboard.title')}
             </h1>
           </div>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Visualizza la tua posizione nella classifica Top 20 e scopri i premi disponibili
+            {t('leaderboard.subtitle')}
           </p>
         </div>
 
@@ -212,7 +214,7 @@ export function LeaderboardPage() {
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              Classifica
+              {t('leaderboard.tab.leaderboard')}
             </button>
             <button
               onClick={() => setActiveTab('activity')}
@@ -222,7 +224,7 @@ export function LeaderboardPage() {
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              La Mia Attività
+              {t('leaderboard.tab.activity')}
             </button>
             <button
               onClick={() => setActiveTab('rewards')}
@@ -232,7 +234,7 @@ export function LeaderboardPage() {
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              Premi
+              {t('leaderboard.tab.rewards')}
             </button>
           </div>
         </div>
@@ -260,14 +262,14 @@ export function LeaderboardPage() {
                         </div>
                       )}
                       <div>
-                        <p className="text-sm opacity-90">La tua posizione</p>
+                        <p className="text-sm opacity-90">{t('leaderboard.yourPosition')}</p>
                         <p className="text-2xl font-bold">{userRank.full_name}</p>
                         <div className="flex items-center gap-4 mt-1">
                           <span className="text-sm">#{userRank.rank}</span>
                           {profile?.user_type !== 'business' && (
-                            <span className="text-sm">{userRank.points} punti</span>
+                            <span className="text-sm">{userRank.points} {t('leaderboard.points')}</span>
                           )}
-                          <span className="text-sm">{userRank.reviews_count} recensioni</span>
+                          <span className="text-sm">{userRank.reviews_count} {t('leaderboard.reviews')}</span>
                         </div>
                       </div>
                     </div>
@@ -281,11 +283,9 @@ export function LeaderboardPage() {
                 <div className="flex items-start gap-4">
                   <Trophy className="w-8 h-8 text-yellow-600 flex-shrink-0 mt-1" />
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">Premi in Palio</h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">{t('leaderboard.prizesTitle')}</h3>
                     <p className="text-gray-700 text-sm leading-relaxed">
-                      I migliori 20 utenti privati dell'anno riceveranno gift card da 50€ a 500€.
-                      La classifica è pubblica per garantire massima trasparenza nella competizione.
-                      Continua a scrivere recensioni verificate per scalare la classifica e vincere premi fantastici!
+                      {t('leaderboard.prizesDescription')}
                     </p>
                   </div>
                 </div>
@@ -294,7 +294,7 @@ export function LeaderboardPage() {
 
             <div className="max-w-4xl mx-auto mb-8">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Top 20 Utenti</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{t('leaderboard.top20')}</h2>
                 <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1">
                   <button
                     onClick={() => setUserTypeFilter('all')}
@@ -304,7 +304,7 @@ export function LeaderboardPage() {
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
-                    Tutti
+                    {t('leaderboard.filter.all')}
                   </button>
                   <button
                     onClick={() => setUserTypeFilter('customer')}
@@ -314,7 +314,7 @@ export function LeaderboardPage() {
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
-                    Privati
+                    {t('leaderboard.filter.private')}
                   </button>
                   <button
                     onClick={() => setUserTypeFilter('business')}
@@ -324,7 +324,7 @@ export function LeaderboardPage() {
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
-                    Professionisti
+                    {t('leaderboard.filter.business')}
                   </button>
                 </div>
               </div>
@@ -369,9 +369,9 @@ export function LeaderboardPage() {
                           <p className="font-bold text-gray-900">{user.full_name}</p>
                           <div className="flex items-center gap-4 text-sm text-gray-600">
                             {userTypeFilter !== 'business' && (
-                              <span>{user.points} punti</span>
+                              <span>{user.points} {t('leaderboard.points')}</span>
                             )}
-                            <span>{user.reviews_count} recensioni</span>
+                            <span>{user.reviews_count} {t('leaderboard.reviews')}</span>
                           </div>
                         </div>
                       </div>
@@ -383,7 +383,7 @@ export function LeaderboardPage() {
               {topUsers.length === 0 && (
                 <div className="text-center py-12 bg-white rounded-xl border-2 border-gray-200">
                   <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-600">Nessun utente in classifica</p>
+                  <p className="text-gray-600">{t('leaderboard.noUsers')}</p>
                 </div>
               )}
             </div>

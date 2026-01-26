@@ -5,6 +5,7 @@ import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
 import NotificationBell from '../notifications/NotificationBell';
 import { ActiveProfileIndicator } from '../profile/ActiveProfileIndicator';
+import { LanguageSelector } from '../common/LanguageSelector';
 
 export function Header() {
   const { user, profile, selectedBusinessLocationId, businessLocations } = useAuth();
@@ -103,6 +104,7 @@ export function Header() {
                       <span>{selectedLocation.internal_name || selectedLocation.city}</span>
                     </div>
                   )}
+                  <LanguageSelector />
                   <a
                     href="/profile"
                     className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
@@ -145,6 +147,7 @@ export function Header() {
                     <FileText className="w-4 h-4" />
                     <span className="text-sm">Regole</span>
                   </a>
+                  <LanguageSelector />
                   <button
                     onClick={() => {
                       setAuthMode('login');
