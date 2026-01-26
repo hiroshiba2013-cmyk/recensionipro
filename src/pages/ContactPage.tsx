@@ -1,15 +1,18 @@
 import { Mail, Phone, MapPin, Clock } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export function ContactPage() {
+  const { t } = useLanguage();
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Contattaci
+            {t('contact.title')}
           </h1>
           <p className="text-xl text-gray-600">
-            Siamo qui per aiutarti. Inviaci un messaggio e ti risponderemo il prima possibile.
+            {t('contact.subtitle')}
           </p>
         </div>
 

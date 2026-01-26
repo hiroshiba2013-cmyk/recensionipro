@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Star, TrendingUp, ShieldCheck, Search, Award, Package, Tag, Briefcase, Heart, Users, Building2, Gift, MapPin, Clock, Euro, ArrowRight, Percent } from 'lucide-react';
 import { AdvancedSearch } from '../components/search/AdvancedSearch';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from '../components/Router';
 import TopBusinessesBanner from '../components/business/TopBusinessesBanner';
@@ -17,34 +18,35 @@ export function HomePage() {
 }
 
 function LandingPage() {
+  const { t } = useLanguage();
+
   return (
     <div className="min-h-screen bg-white">
       <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
           <div className="text-center">
             <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">
-              Benvenuto su<br />
-              <span className="text-yellow-300">Trovafacile</span>
+              {t('home.welcomeTo')}<br />
+              <span className="text-yellow-300">{t('home.platformName')}</span>
             </h1>
             <p className="text-xl md:text-2xl text-blue-100 mb-4 max-w-3xl mx-auto leading-relaxed">
-              La piattaforma italiana che connette cittadini e attività locali.
-              Recensioni verificate, prodotti, annunci, lavoro e solidarietà in un unico posto.
+              {t('home.tagline')} {t('home.subtitle')}
             </p>
             <p className="text-lg text-blue-200 mb-8 max-w-2xl mx-auto">
-              Tre mesi di prova gratuiti per tutti! Poi a partire da €0.49/mese per privati e €2.49/mese + IVA per attività.
+              {t('home.trialInfo')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => window.location.href = '/?register=user'}
                 className="bg-yellow-400 text-gray-900 px-8 py-4 rounded-lg text-lg font-bold hover:bg-yellow-300 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
               >
-                Inizia Gratis
+                {t('home.startFree')}
               </button>
               <button
                 onClick={() => window.location.href = '/subscription'}
                 className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-bold hover:bg-gray-100 transition-all shadow-lg"
               >
-                Vedi i Piani
+                {t('home.viewPlans')}
               </button>
             </div>
           </div>
@@ -54,48 +56,48 @@ function LandingPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Cosa puoi fare con Trovafacile
+            {t('home.whatCanYouDo')}
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Una piattaforma completa per tutte le tue esigenze quotidiane
+            {t('home.completeDescription')}
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
           <FeatureCard
             icon={<Search className="w-12 h-12 text-blue-600" />}
-            title="Cerca Attività"
-            description="Trova facilmente attività commerciali nella tua zona. Cerca per categoria, città o nome e scopri i migliori servizi vicino a te."
+            title={t('home.feature.search.title')}
+            description={t('home.feature.search.description')}
             gradient="from-blue-50 to-blue-100"
           />
           <FeatureCard
             icon={<Star className="w-12 h-12 text-yellow-500" />}
-            title="Recensioni Verificate"
-            description="Leggi e scrivi recensioni autentiche. Solo utenti verificati possono lasciare feedback, garantendo massima trasparenza e affidabilità."
+            title={t('home.feature.reviews.title')}
+            description={t('home.feature.reviews.description')}
             gradient="from-yellow-50 to-yellow-100"
           />
           <FeatureCard
             icon={<Award className="w-12 h-12 text-purple-600" />}
-            title="Vinci Premi"
-            description="Scrivi recensioni e accumula punti! I migliori 20 utenti dell'anno vincono gift card ricaricabili. Più recensioni scrivi, più premi vinci!"
+            title={t('home.feature.prizes.title')}
+            description={t('home.feature.prizes.description')}
             gradient="from-purple-50 to-purple-100"
           />
           <FeatureCard
             icon={<Package className="w-12 h-12 text-green-600" />}
-            title="Prodotti Locali"
-            description="Scopri i prodotti delle attività locali. Confronta prezzi, leggi recensioni e trova esattamente quello che cerchi nel tuo territorio."
+            title={t('home.feature.products.title')}
+            description={t('home.feature.products.description')}
             gradient="from-green-50 to-green-100"
           />
           <FeatureCard
             icon={<Tag className="w-12 h-12 text-orange-600" />}
-            title="Annunci Gratuiti"
-            description="Pubblica e cerca annunci di compravendita, scambio o donazione. Connettiti con altri utenti e scambia oggetti nella tua comunità."
+            title={t('home.feature.classifieds.title')}
+            description={t('home.feature.classifieds.description')}
             gradient="from-orange-50 to-orange-100"
           />
           <FeatureCard
             icon={<Briefcase className="w-12 h-12 text-indigo-600" />}
-            title="Offerte di Lavoro"
-            description="Cerca lavoro o pubblica annunci. Le attività possono trovare candidati qualificati e i lavoratori possono scoprire opportunità locali."
+            title={t('home.feature.jobs.title')}
+            description={t('home.feature.jobs.description')}
             gradient="from-indigo-50 to-indigo-100"
           />
         </div>
@@ -107,12 +109,10 @@ function LandingPage() {
             </div>
             <div className="flex-1 text-center md:text-left">
               <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-                Classifica Utenti con Premi Esclusivi
+                {t('home.leaderboard.title')}
               </h3>
               <p className="text-lg text-gray-700 leading-relaxed">
-                Scrivi recensioni (utenti privati) e ricevi recensioni (professionisti) per scalare la classifica!
-                I migliori 20 utenti dell'anno riceveranno gift card ricaricabili come premio per il loro contributo.
-                Più recensioni scrivi con foto e dettagli, più punti guadagni!
+                {t('home.leaderboard.description')}
               </p>
             </div>
           </div>
@@ -125,15 +125,13 @@ function LandingPage() {
             </div>
             <div className="flex-1 text-center md:text-left">
               <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-                Solidarietà: Il 10% del Fatturato in Beneficenza
+                {t('home.solidarity.title')}
               </h3>
               <p className="text-lg text-gray-700 leading-relaxed mb-3">
-                Trovafacile dona ogni anno il <span className="font-bold text-green-600">10% del proprio fatturato</span> ad
-                associazioni no profit e progetti di beneficenza scelti dai nostri iscritti con un sondaggio.
+                {t('home.solidarity.description1')} <span className="font-bold text-green-600">{t('home.solidarity.percentage')}</span> {t('home.solidarity.description2')}
               </p>
               <p className="text-base text-gray-600">
-                Tutti i documenti che attestano il fatturato e le donazioni sono pubblicati nella sezione
-                Solidarietà per garantire massima trasparenza.
+                {t('home.solidarity.transparency')}
               </p>
             </div>
           </div>
@@ -142,87 +140,87 @@ function LandingPage() {
         <div className="grid md:grid-cols-2 gap-8 mb-16">
           <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-xl p-8 text-white">
             <Users className="w-16 h-16 mb-4" />
-            <h3 className="text-3xl font-bold mb-4">Per i Privati</h3>
+            <h3 className="text-3xl font-bold mb-4">{t('home.forIndividuals')}</h3>
             <div className="mb-4">
-              <p className="text-2xl font-bold text-yellow-300">A partire da €0.49/mese</p>
-              <p className="text-sm text-blue-100">Tre mesi di prova gratuiti</p>
+              <p className="text-2xl font-bold text-yellow-300">{t('home.startingFrom')} €0.49{t('home.perMonth')}</p>
+              <p className="text-sm text-blue-100">{t('home.trialFree')}</p>
             </div>
             <ul className="space-y-3 text-lg">
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
-                <span>Trova attività verificate nella tua zona</span>
+                <span>{t('home.feature.findBusinesses')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
-                <span>Trova prodotti di ogni genere</span>
+                <span>{t('home.feature.findProducts')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
-                <span>Scrivi recensioni e vinci premi</span>
+                <span>{t('home.feature.writeReviews')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
-                <span>Accedi a sconti esclusivi delle attività</span>
+                <span>{t('home.feature.exclusiveDiscounts')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
-                <span>Pubblica annunci gratuiti</span>
+                <span>{t('home.feature.freeAds')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
-                <span>Cerca offerte di lavoro locali</span>
+                <span>{t('home.feature.jobSearch')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
-                <span>Il 10% andrà in beneficenza</span>
+                <span>{t('home.feature.charity')}</span>
               </li>
             </ul>
             <button
               onClick={() => window.location.href = '/?register=user'}
               className="w-full bg-yellow-400 text-gray-900 px-6 py-3 rounded-lg text-lg font-bold hover:bg-yellow-300 transition-all mt-6"
             >
-              Inizia Ora
+              {t('home.startNow')}
             </button>
           </div>
 
           <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl shadow-xl p-8 text-white">
             <Building2 className="w-16 h-16 mb-4" />
-            <h3 className="text-3xl font-bold mb-4">Per le Attività</h3>
+            <h3 className="text-3xl font-bold mb-4">{t('home.forBusiness')}</h3>
             <div className="mb-4">
-              <p className="text-2xl font-bold text-yellow-300">A partire da €2.49/mese</p>
-              <p className="text-sm text-green-100">+ IVA - Tre mesi di prova gratuiti</p>
+              <p className="text-2xl font-bold text-yellow-300">{t('home.startingFrom')} €2.49{t('home.perMonth')}</p>
+              <p className="text-sm text-green-100">{t('home.plusVAT')} - {t('home.trialFree')}</p>
             </div>
             <ul className="space-y-3 text-lg">
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
-                <span>Aumenta la visibilità della tua attività</span>
+                <span>{t('home.feature.increaseVisibility')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
-                <span>Gestisci sedi, orari e informazioni</span>
+                <span>{t('home.feature.multipleLocations')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
-                <span>Pubblica prodotti e offerte speciali</span>
+                <span>{t('home.feature.addProducts')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
-                <span>Crea annunci di lavoro</span>
+                <span>{t('home.feature.publishJobs')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
-                <span>Ricevi e rispondi alle recensioni</span>
+                <span>{t('home.feature.manageReviews')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
-                <span>Il 10% andrà in beneficenza</span>
+                <span>{t('home.feature.charity')}</span>
               </li>
             </ul>
             <button
               onClick={() => window.location.href = '/?register=business'}
               className="w-full bg-yellow-400 text-gray-900 px-6 py-3 rounded-lg text-lg font-bold hover:bg-yellow-300 transition-all mt-6"
             >
-              Inizia Ora
+              {t('home.startNow')}
             </button>
           </div>
         </div>
