@@ -25,132 +25,133 @@ interface Reward {
 }
 
 export function LeaderboardPage() {
-  const { profile } = useAuth();
-  const [topUsers, setTopUsers] = useState<LeaderboardUser[]>([]);
+  const { profile, activeProfile } = useAuth();
   const [userRank, setUserRank] = useState<LeaderboardUser | null>(null);
   const [familyRanks, setFamilyRanks] = useState<LeaderboardUser[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'leaderboard' | 'rewards' | 'activity'>('leaderboard');
-  const [userTypeFilter, setUserTypeFilter] = useState<'all' | 'customer' | 'business'>('all');
 
   useEffect(() => {
     loadLeaderboard();
     loadRewards();
-  }, [profile, userTypeFilter]);
+  }, [profile, activeProfile]);
 
   const loadLeaderboard = async () => {
+    if (!profile) return;
+
     try {
       setLoading(true);
 
-      const allParticipants: LeaderboardUser[] = [];
+      // Se è un membro della famiglia, carica i suoi dati
+      if (activeProfile?.isOwner === false && activeProfile?.id) {
+        const { data: reviews } = await supabase
+          .from('reviews')
+          .select('id, points_awarded, review_status')
+          .eq('family_member_id', activeProfile.id)
+          .eq('review_status', 'approved');
 
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url, user_type');
+        if (reviews) {
+          const reviewsCount = reviews.length;
+          const totalPoints = reviews.reduce((sum, r) => sum + (r.points_awarded || 0), 0);
 
-      if (profilesError) throw profilesError;
+          // Calcola il rank globale
+          const { count } = await supabase
+            .from('user_activity')
+            .select('user_id', { count: 'exact', head: true })
+            .gt('total_points', totalPoints);
 
-      if (profiles) {
-        let filteredProfiles = profiles;
-        if (userTypeFilter !== 'all') {
-          filteredProfiles = profiles.filter((p: any) => p.user_type === userTypeFilter);
-        }
+          const { data: memberData } = await supabase
+            .from('customer_family_members')
+            .select('first_name, last_name, nickname, avatar_url')
+            .eq('id', activeProfile.id)
+            .maybeSingle();
 
-        for (const profile of filteredProfiles) {
-          const { data: reviews, error: reviewsError } = await supabase
-            .from('reviews')
-            .select('id, points_awarded, review_status')
-            .eq('customer_id', profile.id)
-            .eq('review_status', 'approved');
-
-          if (!reviewsError && reviews) {
-            const reviewsCount = reviews.length;
-            const totalPoints = reviews.reduce((sum, r) => sum + (r.points_awarded || 0), 0);
-
-            allParticipants.push({
-              id: profile.id,
-              full_name: profile.full_name,
-              avatar_url: profile.avatar_url,
+          if (memberData) {
+            setUserRank({
+              id: activeProfile.id,
+              full_name: memberData.nickname || `${memberData.first_name} ${memberData.last_name}`,
+              avatar_url: memberData.avatar_url,
               points: totalPoints,
               reviews_count: reviewsCount,
-              rank: 0,
-              is_family_member: false,
+              rank: (count || 0) + 1,
+              is_family_member: true,
             });
           }
         }
-      }
+        setFamilyRanks([]);
+      } else {
+        // Carica i dati del profilo principale
+        const { data: reviews } = await supabase
+          .from('reviews')
+          .select('id, points_awarded, review_status')
+          .eq('customer_id', profile.id)
+          .is('family_member_id', null)
+          .eq('review_status', 'approved');
 
-      if (userTypeFilter === 'customer' || userTypeFilter === 'all') {
-        const { data: familyMembers, error: familyError } = await supabase
-          .from('customer_family_members')
-          .select(`
-            id,
-            first_name,
-            last_name,
-            nickname,
-            avatar_url,
-            customer_id
-          `);
+        if (reviews) {
+          const reviewsCount = reviews.length;
+          const totalPoints = reviews.reduce((sum, r) => sum + (r.points_awarded || 0), 0);
 
-        if (familyError) throw familyError;
+          // Calcola il rank globale
+          const { count } = await supabase
+            .from('user_activity')
+            .select('user_id', { count: 'exact', head: true })
+            .gt('total_points', totalPoints);
 
-        if (familyMembers) {
-          for (const member of familyMembers) {
-            const { data: reviews, error: reviewsError } = await supabase
-              .from('reviews')
-              .select('id, points_awarded, review_status')
-              .eq('family_member_id', member.id)
-              .eq('review_status', 'approved');
+          setUserRank({
+            id: profile.id,
+            full_name: profile.full_name,
+            avatar_url: profile.avatar_url,
+            points: totalPoints,
+            reviews_count: reviewsCount,
+            rank: (count || 0) + 1,
+            is_family_member: false,
+          });
+        }
 
-            if (!reviewsError && reviews) {
-              const reviewsCount = reviews.length;
-              const totalPoints = reviews.reduce((sum, r) => sum + (r.points_awarded || 0), 0);
+        // Carica i dati dei membri della famiglia solo per il proprietario
+        if (profile.user_type === 'customer') {
+          const { data: familyMembers } = await supabase
+            .from('customer_family_members')
+            .select('id, first_name, last_name, nickname, avatar_url')
+            .eq('customer_id', profile.id);
 
-              allParticipants.push({
-                id: member.id,
-                full_name: member.nickname || `${member.first_name} ${member.last_name}`,
-                avatar_url: member.avatar_url,
-                points: totalPoints,
-                reviews_count: reviewsCount,
-                rank: 0,
-                is_family_member: true,
-                customer_id: member.customer_id,
-              });
+          if (familyMembers) {
+            const familyRanksData: LeaderboardUser[] = [];
+
+            for (const member of familyMembers) {
+              const { data: memberReviews } = await supabase
+                .from('reviews')
+                .select('id, points_awarded, review_status')
+                .eq('family_member_id', member.id)
+                .eq('review_status', 'approved');
+
+              if (memberReviews) {
+                const reviewsCount = memberReviews.length;
+                const totalPoints = memberReviews.reduce((sum, r) => sum + (r.points_awarded || 0), 0);
+
+                const { count } = await supabase
+                  .from('user_activity')
+                  .select('user_id', { count: 'exact', head: true })
+                  .gt('total_points', totalPoints);
+
+                familyRanksData.push({
+                  id: member.id,
+                  full_name: member.nickname || `${member.first_name} ${member.last_name}`,
+                  avatar_url: member.avatar_url,
+                  points: totalPoints,
+                  reviews_count: reviewsCount,
+                  rank: (count || 0) + 1,
+                  is_family_member: true,
+                  customer_id: profile.id,
+                });
+              }
             }
+
+            setFamilyRanks(familyRanksData);
           }
         }
-      }
-
-      allParticipants.sort((a, b) => {
-        if (b.points !== a.points) {
-          return b.points - a.points;
-        }
-        return b.reviews_count - a.reviews_count;
-      });
-
-      allParticipants.forEach((participant, index) => {
-        participant.rank = index + 1;
-      });
-
-      const top20 = allParticipants.slice(0, 20);
-      setTopUsers(top20);
-
-      if (profile) {
-        const userInTop = top20.find(u => u.id === profile.id && !u.is_family_member);
-        if (userInTop) {
-          setUserRank(userInTop);
-        } else {
-          const userInAll = allParticipants.find(u => u.id === profile.id && !u.is_family_member);
-          if (userInAll) {
-            setUserRank(userInAll);
-          }
-        }
-
-        const familyInRanks = allParticipants.filter(
-          u => u.is_family_member && u.customer_id === profile.id
-        );
-        setFamilyRanks(familyInRanks);
       }
     } catch (error) {
       console.error('Error loading leaderboard:', error);
@@ -218,11 +219,11 @@ export function LeaderboardPage() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <Trophy className="w-12 h-12 text-yellow-500" />
             <h1 className="text-4xl font-bold text-gray-900">
-              Classifica Utenti
+              La Tua Classifica
             </h1>
           </div>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Scopri gli utenti più attivi della community e i premi disponibili
+            Visualizza la tua posizione e scopri i premi disponibili
           </p>
         </div>
 
@@ -259,41 +260,6 @@ export function LeaderboardPage() {
               Premi
             </button>
           </div>
-
-          {activeTab === 'leaderboard' && (
-            <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1">
-              <button
-                onClick={() => setUserTypeFilter('all')}
-                className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
-                  userTypeFilter === 'all'
-                    ? 'bg-green-600 text-white'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Tutti
-              </button>
-              <button
-                onClick={() => setUserTypeFilter('customer')}
-                className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
-                  userTypeFilter === 'customer'
-                    ? 'bg-green-600 text-white'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Utenti Privati
-              </button>
-              <button
-                onClick={() => setUserTypeFilter('business')}
-                className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
-                  userTypeFilter === 'business'
-                    ? 'bg-green-600 text-white'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Professionisti
-              </button>
-            </div>
-          )}
         </div>
 
         {activeTab === 'activity' ? (
@@ -371,78 +337,7 @@ export function LeaderboardPage() {
             )}
 
             <div className="max-w-4xl mx-auto">
-              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
-                  <h2 className="text-2xl font-bold text-white">Top 20 Utenti</h2>
-                </div>
-
-                <div className="divide-y divide-gray-200">
-                  {topUsers.map((user) => (
-                    <div
-                      key={user.id}
-                      className={`p-6 ${getRankBgColor(user.rank)} border-l-4 transition-all hover:shadow-md`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className="flex-shrink-0 w-12 flex items-center justify-center">
-                            {getRankIcon(user.rank)}
-                          </div>
-
-                          {user.avatar_url ? (
-                            <img
-                              src={user.avatar_url}
-                              alt={user.full_name}
-                              className="w-12 h-12 rounded-full"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-bold">
-                              {user.full_name.charAt(0)}
-                            </div>
-                          )}
-
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold text-sm">
-                                #{user.rank}
-                              </span>
-                              <h3 className="font-semibold text-gray-900 text-lg">
-                                {user.full_name}
-                              </h3>
-                              {user.is_family_member && (
-                                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
-                                  Membro famiglia
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
-                              {userTypeFilter !== 'business' && (
-                                <span className="flex items-center gap-1">
-                                  <Star className="w-4 h-4 text-yellow-500" />
-                                  {user.points} punti
-                                </span>
-                              )}
-                              <span className="flex items-center gap-1">
-                                <TrendingUp className="w-4 h-4 text-blue-500" />
-                                {user.reviews_count} recensioni
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {topUsers.length === 0 && (
-                  <div className="p-12 text-center text-gray-500">
-                    <Trophy className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg">Nessun utente in classifica al momento</p>
-                    <p className="text-sm mt-2">Sii il primo a lasciare recensioni e guadagnare punti!</p>
-                  </div>
-                )}
-              </div>
-
-              {(userTypeFilter === 'customer' || userTypeFilter === 'all') && (
+              {profile?.user_type === 'customer' && (
                 <div className="mt-8 bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
                   <h3 className="text-lg font-bold text-gray-900 mb-3">Come Guadagnare Punti - Utenti Privati e Membri Famiglia</h3>
                   <p className="text-sm text-gray-600 mb-4">
@@ -483,8 +378,8 @@ export function LeaderboardPage() {
                 </div>
               )}
 
-              {(userTypeFilter === 'business' || userTypeFilter === 'all') && (
-                <div className="mt-8 bg-green-50 border-2 border-green-200 rounded-xl p-6">
+              {profile?.user_type === 'business' && (
+                <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6">
                   <h3 className="text-lg font-bold text-gray-900 mb-3">Come Guadagnare Punti - Professionisti</h3>
                   <p className="text-sm text-gray-600 mb-4">
                     I professionisti guadagnano punti in base alle recensioni ricevute dai clienti e alle attività pubblicate.
