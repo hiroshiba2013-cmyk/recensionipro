@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle, Heart } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
 import NotificationBell from '../notifications/NotificationBell';
@@ -9,6 +10,7 @@ import { LanguageSelector } from '../common/LanguageSelector';
 
 export function Header() {
   const { user, profile, selectedBusinessLocationId, businessLocations } = useAuth();
+  const { t } = useLanguage();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -54,43 +56,43 @@ export function Header() {
                   <a
                     href="/"
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
-                    title="Home"
+                    title={t('header.home')}
                   >
                     <Home className="w-4 h-4" />
-                    <span className="text-sm">Home</span>
+                    <span className="text-sm">{t('header.home')}</span>
                   </a>
                   <a
                     href="/messages"
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
-                    title="Messaggi"
+                    title={t('header.messages')}
                   >
                     <MessageCircle className="w-4 h-4" />
-                    <span className="text-sm">Messaggi</span>
+                    <span className="text-sm">{t('header.messages')}</span>
                   </a>
                   <NotificationBell />
                   <a
                     href="/contact"
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
-                    title="Contatti"
+                    title={t('header.contacts')}
                   >
                     <Phone className="w-4 h-4" />
-                    <span className="text-sm">Contatti</span>
+                    <span className="text-sm">{t('header.contacts')}</span>
                   </a>
                   <a
                     href="/subscription"
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
-                    title="Abbonamenti"
+                    title={t('header.subscription')}
                   >
                     <CreditCard className="w-4 h-4" />
-                    <span className="text-sm">Piani</span>
+                    <span className="text-sm">{t('header.plans')}</span>
                   </a>
                   <a
                     href="/rules"
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
-                    title="Regolamento"
+                    title={t('header.rules')}
                   >
                     <FileText className="w-4 h-4" />
-                    <span className="text-sm">Regole</span>
+                    <span className="text-sm">{t('header.rules')}</span>
                   </a>
                 </nav>
 
@@ -100,7 +102,7 @@ export function Header() {
                   <ActiveProfileIndicator />
                   {selectedLocation && (
                     <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-lg text-xs font-medium border border-blue-300">
-                      <span className="font-semibold">Sede:</span>
+                      <span className="font-semibold">{t('header.location')}:</span>
                       <span>{selectedLocation.internal_name || selectedLocation.city}</span>
                     </div>
                   )}
@@ -108,10 +110,10 @@ export function Header() {
                   <a
                     href="/profile"
                     className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                    title="Mio Profilo"
+                    title={t('header.myProfile')}
                   >
                     <User className="w-4 h-4" />
-                    <span className="text-xs">Profilo</span>
+                    <span className="text-xs">{t('header.profile')}</span>
                   </a>
                 </nav>
               </>
@@ -124,28 +126,28 @@ export function Header() {
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
                   >
                     <Heart className="w-4 h-4" />
-                    <span className="text-sm">Solidarietà</span>
+                    <span className="text-sm">{t('header.solidarity')}</span>
                   </a>
                   <a
                     href="/contact"
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
                   >
                     <Phone className="w-4 h-4" />
-                    <span className="text-sm">Contatti</span>
+                    <span className="text-sm">{t('header.contacts')}</span>
                   </a>
                   <a
                     href="/subscription"
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
                   >
                     <CreditCard className="w-4 h-4" />
-                    <span className="text-sm">Piani</span>
+                    <span className="text-sm">{t('header.plans')}</span>
                   </a>
                   <a
                     href="/rules"
                     className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
                   >
                     <FileText className="w-4 h-4" />
-                    <span className="text-sm">Regole</span>
+                    <span className="text-sm">{t('header.rules')}</span>
                   </a>
                   <LanguageSelector />
                   <button
@@ -155,7 +157,7 @@ export function Header() {
                     }}
                     className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium ml-2"
                   >
-                    Accedi
+                    {t('header.login')}
                   </button>
                 </nav>
               </>
@@ -176,7 +178,7 @@ export function Header() {
                   <>
                     {selectedLocation && (
                       <div className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium border border-blue-300">
-                        <span className="font-semibold">Sede selezionata:</span>
+                        <span className="font-semibold">{t('header.selectedLocation')}:</span>
                         <span>{selectedLocation.internal_name || selectedLocation.city}</span>
                       </div>
                     )}
@@ -186,7 +188,7 @@ export function Header() {
                       onClick={() => setShowMobileMenu(false)}
                     >
                       <Home className="w-5 h-5" />
-                      <span>Home</span>
+                      <span>{t('header.home')}</span>
                     </a>
                     <a
                       href="/messages"
@@ -194,7 +196,7 @@ export function Header() {
                       onClick={() => setShowMobileMenu(false)}
                     >
                       <MessageCircle className="w-5 h-5" />
-                      <span>Messaggi</span>
+                      <span>{t('header.messages')}</span>
                     </a>
                     <a
                       href="/contact"
@@ -202,7 +204,7 @@ export function Header() {
                       onClick={() => setShowMobileMenu(false)}
                     >
                       <Phone className="w-5 h-5" />
-                      <span>Contatti</span>
+                      <span>{t('header.contacts')}</span>
                     </a>
                     <a
                       href="/subscription"
@@ -210,7 +212,7 @@ export function Header() {
                       onClick={() => setShowMobileMenu(false)}
                     >
                       <CreditCard className="w-5 h-5" />
-                      <span>Abbonamenti</span>
+                      <span>{t('header.subscription')}</span>
                     </a>
                     <a
                       href="/rules"
@@ -218,7 +220,7 @@ export function Header() {
                       onClick={() => setShowMobileMenu(false)}
                     >
                       <FileText className="w-5 h-5" />
-                      <span>Regolamento</span>
+                      <span>{t('header.rules')}</span>
                     </a>
                     <a
                       href="/profile"
@@ -237,7 +239,7 @@ export function Header() {
                       onClick={() => setShowMobileMenu(false)}
                     >
                       <Heart className="w-5 h-5" />
-                      <span>Solidarietà</span>
+                      <span>{t('header.solidarity')}</span>
                     </a>
                     <a
                       href="/contact"
@@ -245,7 +247,7 @@ export function Header() {
                       onClick={() => setShowMobileMenu(false)}
                     >
                       <Phone className="w-5 h-5" />
-                      <span>Contatti</span>
+                      <span>{t('header.contacts')}</span>
                     </a>
                     <a
                       href="/subscription"
@@ -253,7 +255,7 @@ export function Header() {
                       onClick={() => setShowMobileMenu(false)}
                     >
                       <CreditCard className="w-5 h-5" />
-                      <span>Abbonamenti</span>
+                      <span>{t('header.subscription')}</span>
                     </a>
                     <a
                       href="/rules"
@@ -261,7 +263,7 @@ export function Header() {
                       onClick={() => setShowMobileMenu(false)}
                     >
                       <FileText className="w-5 h-5" />
-                      <span>Regolamento</span>
+                      <span>{t('header.rules')}</span>
                     </a>
                     <button
                       onClick={() => {
@@ -271,7 +273,7 @@ export function Header() {
                       }}
                       className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors text-left font-medium"
                     >
-                      Accedi
+                      {t('header.login')}
                     </button>
                   </>
                 )}
