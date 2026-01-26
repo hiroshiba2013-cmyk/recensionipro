@@ -26,20 +26,25 @@ interface Reward {
 export function LeaderboardPage() {
   const { profile, activeProfile } = useAuth();
   const [userRank, setUserRank] = useState<LeaderboardUser | null>(null);
+  const [topUsers, setTopUsers] = useState<LeaderboardUser[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'leaderboard' | 'rewards' | 'activity'>('leaderboard');
+  const [userTypeFilter, setUserTypeFilter] = useState<'all' | 'customer' | 'business'>('all');
 
   useEffect(() => {
     loadLeaderboard();
     loadRewards();
-  }, [profile, activeProfile]);
+  }, [profile, activeProfile, userTypeFilter]);
 
   const loadLeaderboard = async () => {
     if (!profile) return;
 
     try {
       setLoading(true);
+
+      // Carica i top 20 utenti basati sul filtro
+      await loadTopUsers();
 
       // Se è un membro della famiglia, carica solo i suoi dati
       if (activeProfile?.isOwner === false && activeProfile?.id) {
@@ -114,6 +119,48 @@ export function LeaderboardPage() {
     }
   };
 
+  const loadTopUsers = async () => {
+    try {
+      let query = supabase
+        .from('user_activity')
+        .select(`
+          user_id,
+          total_points,
+          total_reviews,
+          profiles!inner(
+            full_name,
+            avatar_url,
+            user_type
+          )
+        `)
+        .order('total_points', { ascending: false })
+        .limit(20);
+
+      // Applica il filtro per tipo utente
+      if (userTypeFilter !== 'all') {
+        query = query.eq('profiles.user_type', userTypeFilter);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      const leaderboard: LeaderboardUser[] = data.map((item: any, index: number) => ({
+        id: item.user_id,
+        full_name: item.profiles.full_name,
+        avatar_url: item.profiles.avatar_url,
+        points: item.total_points,
+        reviews_count: item.total_reviews,
+        rank: index + 1,
+        is_family_member: false,
+      }));
+
+      setTopUsers(leaderboard);
+    } catch (error) {
+      console.error('Error loading top users:', error);
+    }
+  };
+
   const loadRewards = async () => {
     try {
       const { data, error } = await supabase
@@ -147,11 +194,11 @@ export function LeaderboardPage() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <Trophy className="w-12 h-12 text-yellow-500" />
             <h1 className="text-4xl font-bold text-gray-900">
-              La Tua Classifica
+              Classifica & Premi
             </h1>
           </div>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Visualizza la tua posizione e scopri i premi disponibili
+            Visualizza la tua posizione nella classifica Top 20 e scopri i premi disponibili
           </p>
         </div>
 
@@ -228,6 +275,118 @@ export function LeaderboardPage() {
                 </div>
               </div>
             )}
+
+            <div className="max-w-4xl mx-auto mb-6">
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-6">
+                <div className="flex items-start gap-4">
+                  <Trophy className="w-8 h-8 text-yellow-600 flex-shrink-0 mt-1" />
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">Premi in Palio</h3>
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      I migliori 20 utenti privati dell'anno riceveranno gift card da 50€ a 500€.
+                      La classifica è pubblica per garantire massima trasparenza nella competizione.
+                      Continua a scrivere recensioni verificate per scalare la classifica e vincere premi fantastici!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="max-w-4xl mx-auto mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Top 20 Utenti</h2>
+                <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1">
+                  <button
+                    onClick={() => setUserTypeFilter('all')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      userTypeFilter === 'all'
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Tutti
+                  </button>
+                  <button
+                    onClick={() => setUserTypeFilter('customer')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      userTypeFilter === 'customer'
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Privati
+                  </button>
+                  <button
+                    onClick={() => setUserTypeFilter('business')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      userTypeFilter === 'business'
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Professionisti
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {topUsers.map((user) => {
+                  const getRankBg = (rank: number) => {
+                    if (rank === 1) return 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-400';
+                    if (rank === 2) return 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300';
+                    if (rank === 3) return 'bg-gradient-to-br from-amber-50 to-amber-100 border-amber-400';
+                    return 'bg-white border-gray-200';
+                  };
+
+                  const getRankIcon = (rank: number) => {
+                    if (rank === 1) return <Trophy className="w-8 h-8 text-yellow-500" />;
+                    if (rank === 2) return <Medal className="w-8 h-8 text-gray-400" />;
+                    if (rank === 3) return <Medal className="w-8 h-8 text-amber-700" />;
+                    return <span className="text-2xl font-bold text-gray-600">#{rank}</span>;
+                  };
+
+                  return (
+                    <div
+                      key={user.id}
+                      className={`${getRankBg(user.rank)} border-2 rounded-xl p-4 transition-all hover:shadow-md`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="flex-shrink-0">
+                          {getRankIcon(user.rank)}
+                        </div>
+                        {user.avatar_url ? (
+                          <img
+                            src={user.avatar_url}
+                            alt={user.full_name}
+                            className="w-12 h-12 rounded-full"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-lg font-bold text-gray-600">
+                            {user.full_name.charAt(0)}
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <p className="font-bold text-gray-900">{user.full_name}</p>
+                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                            {userTypeFilter !== 'business' && (
+                              <span>{user.points} punti</span>
+                            )}
+                            <span>{user.reviews_count} recensioni</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {topUsers.length === 0 && (
+                <div className="text-center py-12 bg-white rounded-xl border-2 border-gray-200">
+                  <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-600">Nessun utente in classifica</p>
+                </div>
+              )}
+            </div>
 
             <div className="max-w-4xl mx-auto">
               {profile?.user_type === 'customer' && (
