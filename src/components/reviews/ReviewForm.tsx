@@ -21,7 +21,7 @@ interface BusinessLocation {
 }
 
 export function ReviewForm({ businessId, businessName, businessLocationId, onClose, onSuccess }: ReviewFormProps) {
-  const { profile } = useAuth();
+  const { profile, activeProfile } = useAuth();
   const [priceRating, setPriceRating] = useState(0);
   const [serviceRating, setServiceRating] = useState(0);
   const [qualityRating, setQualityRating] = useState(0);
@@ -179,6 +179,7 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
         .insert({
           business_id: businessId,
           customer_id: profile.id,
+          family_member_id: activeProfile?.isOwner === false ? activeProfile.id : null,
           business_location_id: selectedLocationId || null,
           rating: avgRating,
           price_rating: priceRating || null,

@@ -289,8 +289,44 @@ export function ProfilePage() {
       setDiscounts(discountsData);
     }
 
-    await loadClassifiedAds();
-    await loadFamilyMembersData();
+    const { data: adsData } = await supabase
+      .from('classified_ads')
+      .select(`
+        *,
+        profiles!classified_ads_user_id_fkey(full_name, avatar_url),
+        classified_categories!classified_ads_category_id_fkey(name, icon)
+      `)
+      .eq('user_id', user?.id)
+      .eq('family_member_id', familyMemberId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false });
+
+    if (adsData) {
+      setClassifiedAds(adsData);
+    }
+
+    const { data: memberReviewsData } = await supabase
+      .from('reviews')
+      .select('id, proof_image_url')
+      .eq('family_member_id', familyMemberId);
+
+    const reviews_count = memberReviewsData?.length || 0;
+    const total_points = (memberReviewsData || []).reduce((sum, review) => {
+      return sum + (review.proof_image_url ? 50 : 25);
+    }, 0);
+
+    const { count: betterUsersCount } = await supabase
+      .from('user_activity')
+      .select('user_id', { count: 'exact', head: true })
+      .gt('total_points', total_points);
+
+    const rank = (betterUsersCount || 0) + 1;
+
+    setUserRank({
+      rank,
+      total_points,
+      reviews_count,
+    });
   };
 
   const loadLeaderboardData = async () => {
@@ -366,6 +402,7 @@ export function ProfilePage() {
         classified_categories!classified_ads_category_id_fkey(name, icon)
       `)
       .eq('user_id', user?.id)
+      .is('family_member_id', null)
       .eq('status', 'active')
       .order('created_at', { ascending: false });
 
@@ -641,58 +678,6 @@ export function ProfilePage() {
               </div>
             </div>
 
-            {familyMembers.length > 0 && (
-              <>
-                <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                  <User className="w-5 h-5 text-blue-600" />
-                  Attività dei Membri della Famiglia
-                </h3>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {familyMembers.map((member) => (
-                    <div
-                      key={member.id}
-                      className="bg-white rounded-lg p-5 border-2 border-gray-200 hover:border-blue-300 transition-colors shadow-sm"
-                    >
-                      <div className="flex items-center gap-3 mb-4">
-                        {member.avatar_url ? (
-                          <img
-                            src={member.avatar_url}
-                            alt={member.nickname || `${member.first_name} ${member.last_name}`}
-                            className="w-14 h-14 rounded-full border-2 border-blue-200"
-                          />
-                        ) : (
-                          <div className="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-bold border-2 border-blue-200">
-                            {member.first_name.charAt(0)}
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <h4 className="font-bold text-gray-900">
-                            {member.nickname || `${member.first_name} ${member.last_name}`}
-                          </h4>
-                          <p className="text-xs text-gray-600">
-                            {member.first_name} {member.last_name}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between bg-yellow-50 rounded-lg px-3 py-2">
-                          <span className="text-sm text-gray-700 font-medium">Posizione</span>
-                          <span className="text-lg font-bold text-yellow-600">#{member.rank}</span>
-                        </div>
-                        <div className="flex items-center justify-between bg-blue-50 rounded-lg px-3 py-2">
-                          <span className="text-sm text-gray-700 font-medium">Punti</span>
-                          <span className="text-lg font-bold text-blue-600">{member.total_points}</span>
-                        </div>
-                        <div className="flex items-center justify-between bg-green-50 rounded-lg px-3 py-2">
-                          <span className="text-sm text-gray-700 font-medium">Recensioni</span>
-                          <span className="text-lg font-bold text-green-600">{member.reviews_count}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
 
             <div className="mt-4 text-center">
               <a
@@ -752,61 +737,70 @@ export function ProfilePage() {
                 <div className="border-t-4 border-blue-500 bg-gradient-to-r from-blue-50 to-white rounded-lg p-4 mb-6">
                   <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                     <User className="w-6 h-6 text-blue-600" />
-                    Dati Personali
+                    Protezione Profilo
                   </h2>
-                  <p className="text-sm text-gray-600 mt-1">Informazioni del membro della famiglia</p>
+                  <p className="text-sm text-gray-600 mt-1">Gestisci la sicurezza del tuo profilo</p>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Nome</label>
-                    <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
-                      {selectedFamilyMember.first_name}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Cognome</label>
-                    <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
-                      {selectedFamilyMember.last_name}
-                    </div>
-                  </div>
-                  {selectedFamilyMember.nickname && (
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
+                  <div className="flex items-center gap-3 mb-3">
+                    <User className="w-8 h-8 text-blue-600" />
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Nickname</label>
-                      <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
-                        {selectedFamilyMember.nickname}
-                      </div>
-                    </div>
-                  )}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Data di Nascita</label>
-                    <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
-                      {new Date(selectedFamilyMember.date_of_birth).toLocaleDateString('it-IT')}
+                      <h3 className="font-bold text-lg text-gray-900">
+                        {selectedFamilyMember.nickname || `${selectedFamilyMember.first_name} ${selectedFamilyMember.last_name}`}
+                      </h3>
+                      <p className="text-sm text-gray-600">Membro della Famiglia</p>
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Codice Fiscale</label>
-                    <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
-                      {selectedFamilyMember.tax_code}
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    I tuoi dati personali sono gestiti dal profilo principale.
+                    Solo tu puoi vedere le tue attività (recensioni, annunci, sconti).
+                  </p>
+                </div>
+
+                <PinSetup
+                  profileId={selectedFamilyMember.id}
+                  profileName={`${selectedFamilyMember.first_name} ${selectedFamilyMember.last_name}`}
+                  isOwner={false}
+                  userType="customer"
+                  currentPinEnabled={selectedFamilyMember.pin_enabled || false}
+                  onSuccess={loadProfileData}
+                />
+              </div>
+            )}
+
+            {isFamilyMember && userRank && (
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl shadow-md p-6 mb-8 border-2 border-yellow-200">
+                <div className="flex items-center gap-3 mb-4">
+                  <Trophy className="w-7 h-7 text-yellow-600" />
+                  <h2 className="text-2xl font-bold text-gray-900">La Tua Posizione in Classifica</h2>
+                </div>
+
+                <div className="bg-white rounded-lg p-6 mb-4">
+                  <div className="grid md:grid-cols-3 gap-6">
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-yellow-600 mb-2">#{userRank.rank}</div>
+                      <p className="text-gray-600 font-medium">Posizione</p>
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Telefono</label>
-                    <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
-                      {selectedFamilyMember.phone}
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-blue-600 mb-2">{userRank.total_points}</div>
+                      <p className="text-gray-600 font-medium">Punti Totali</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-green-600 mb-2">{userRank.reviews_count}</div>
+                      <p className="text-gray-600 font-medium">Recensioni</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-8">
-                  <PinSetup
-                    profileId={selectedFamilyMember.id}
-                    profileName={`${selectedFamilyMember.first_name} ${selectedFamilyMember.last_name}`}
-                    isOwner={false}
-                    userType="customer"
-                    currentPinEnabled={selectedFamilyMember.pin_enabled || false}
-                    onSuccess={loadProfileData}
-                  />
+                <div className="text-center">
+                  <a
+                    href="/leaderboard"
+                    className="inline-flex items-center gap-2 bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors font-semibold shadow-md"
+                  >
+                    <Trophy className="w-5 h-5" />
+                    Vedi Classifica Completa
+                  </a>
                 </div>
               </div>
             )}
@@ -860,20 +854,10 @@ export function ProfilePage() {
                 </div>
               )}
 
-              {reviews.length > 0 && isOwner && (
+              {reviews.length > 0 && (
                 <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                   <h3 className="text-sm font-semibold text-gray-700 mb-3">Filtra Recensioni</h3>
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-1">Nickname</label>
-                      <input
-                        type="text"
-                        value={reviewFilters.nickname}
-                        onChange={(e) => setReviewFilters({ ...reviewFilters, nickname: e.target.value })}
-                        placeholder="Cerca per nickname"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
+                  <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm text-gray-600 mb-1">Valutazione</label>
                       <select
@@ -900,9 +884,9 @@ export function ProfilePage() {
                       />
                     </div>
                   </div>
-                  {(reviewFilters.nickname || reviewFilters.rating || reviewFilters.businessName) && (
+                  {(reviewFilters.rating || reviewFilters.businessName) && (
                     <button
-                      onClick={() => setReviewFilters({ nickname: '', rating: '', businessName: '' })}
+                      onClick={() => setReviewFilters({ nickname: '', rating: '', businessName: '', locationId: '' })}
                       className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-semibold"
                     >
                       Resetta Filtri
@@ -927,11 +911,6 @@ export function ProfilePage() {
                           <p className="text-sm text-gray-600 mt-1">
                             {review.business?.name}
                           </p>
-                          {isOwner && review.family_member?.nickname && (
-                            <p className="text-xs text-blue-600 mt-1">
-                              Scritta da: {review.family_member.nickname}
-                            </p>
-                          )}
                         </div>
                         <div className="flex items-center gap-1">
                           {Array.from({ length: 5 }).map((_, i) => (

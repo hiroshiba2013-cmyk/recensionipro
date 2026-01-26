@@ -16,7 +16,7 @@ interface ClassifiedAdFormProps {
 }
 
 export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdFormProps) {
-  const { user } = useAuth();
+  const { user, activeProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -178,6 +178,7 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
 
       const adData = {
         user_id: user.id,
+        family_member_id: activeProfile?.isOwner === false ? activeProfile.id : null,
         ad_type: formData.ad_type,
         category_id: formData.category_id,
         title: formData.title,
