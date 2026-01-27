@@ -39,6 +39,7 @@ interface BusinessLocation {
   business_hours: BusinessHours | null;
   is_primary: boolean;
   description?: string | null;
+  services?: string[] | null;
 }
 
 interface EditBusinessLocationsFormProps {
@@ -128,6 +129,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
         email: '',
         avatar_url: null,
         description: '',
+        services: [],
         business_hours: {
           monday: defaultHours,
           tuesday: defaultHours,
@@ -284,6 +286,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
               business_hours: location.business_hours,
               is_primary: location.is_primary,
               description: location.description?.trim() || null,
+              services: location.services || [],
             });
 
           if (error) throw error;
@@ -302,6 +305,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
               business_hours: location.business_hours,
               is_primary: location.is_primary,
               description: location.description?.trim() || null,
+              services: location.services || [],
             })
             .eq('id', location.id);
 
@@ -419,6 +423,18 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     </div>
                     {location.description && (
                       <p className="text-sm text-gray-600 mb-4 italic">{location.description}</p>
+                    )}
+                    {location.services && location.services.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-600 mb-2 font-semibold">Servizi disponibili:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {location.services.map((service, idx) => (
+                            <span key={idx} className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-1 rounded-full">
+                              {service}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
                     )}
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
@@ -598,6 +614,28 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   />
                   <p className="text-xs text-gray-500 mt-1">Questa descrizione aiuta i clienti a trovare e riconoscere la sede</p>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Servizi Disponibili
+                  </label>
+                  <textarea
+                    value={(location.services || []).join('\n')}
+                    onChange={(e) => {
+                      const servicesArray = e.target.value
+                        .split('\n')
+                        .map(s => s.trim())
+                        .filter(s => s.length > 0);
+                      setLocations(locations.map(loc =>
+                        loc.id === location.id ? { ...loc, services: servicesArray } : loc
+                      ));
+                    }}
+                    placeholder="Inserisci un servizio per riga, es:&#10;WiFi gratuito&#10;Parcheggio disponibile&#10;Consegna a domicilio&#10;Pagamenti contactless"
+                    rows={4}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Inserisci un servizio per riga. Questi verranno mostrati ai clienti come badge.</p>
                 </div>
 
                 <div className="md:col-span-2">

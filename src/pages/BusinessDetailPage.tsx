@@ -429,14 +429,19 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                   const displayEmail = business.email || primaryLocation?.email;
                   const displayWebsite = business.website || business.website_url;
                   const displayBusinessHours = primaryLocation?.business_hours;
+                  const displayDescription = primaryLocation?.description;
+                  const displayServices = primaryLocation?.services;
 
-                  const hasContactInfo = displayAddress || displayPhone || displayEmail || displayWebsite || displayBusinessHours;
+                  const hasContactInfo = displayAddress || displayPhone || displayEmail || displayWebsite || displayBusinessHours || displayDescription || displayServices;
 
                   if (!hasContactInfo) return null;
 
                   return (
                     <div>
                       <h2 className="text-2xl font-bold text-gray-900 mb-4">Informazioni di Contatto</h2>
+                      {displayDescription && (
+                        <p className="text-sm text-gray-600 mb-4 italic border-l-4 border-blue-500 pl-3">{displayDescription}</p>
+                      )}
                       <div className="space-y-3">
                         {displayAddress && (
                           <div className="flex items-start gap-3">
@@ -480,6 +485,18 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                             </a>
                           </div>
                         )}
+                        {displayServices && displayServices.length > 0 && (
+                          <div className="border-t pt-3 mt-3">
+                            <p className="text-sm text-gray-700 mb-2 font-semibold">Servizi disponibili:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {displayServices.map((service: string, idx: number) => (
+                                <span key={idx} className="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">
+                                  {service}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                         {displayBusinessHours && (
                           <div className="flex items-start gap-3">
                             <Clock className="w-5 h-5 text-gray-400 mt-1" />
@@ -515,6 +532,9 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                       {locations.slice(1).map((location) => (
                         <div key={location.id} className="border border-gray-200 rounded-lg p-4">
                           <h3 className="font-semibold text-lg mb-2">{location.name || 'Sede'}</h3>
+                          {location.description && (
+                            <p className="text-sm text-gray-600 mb-3 italic">{location.description}</p>
+                          )}
                           <div className="space-y-2 text-sm">
                             <p className="text-gray-700">
                               {location.address}{location.street_number ? ', ' + location.street_number : ''}, {location.postal_code} {location.city} ({location.province})
@@ -533,6 +553,18 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                                 <a href={`mailto:${location.email}`} className="text-blue-600 hover:underline">
                                   {location.email}
                                 </a>
+                              </div>
+                            )}
+                            {location.services && location.services.length > 0 && (
+                              <div className="mt-3">
+                                <p className="text-xs text-gray-500 mb-1 font-semibold">Servizi disponibili:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {location.services.map((service: string, idx: number) => (
+                                    <span key={idx} className="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded-full">
+                                      {service}
+                                    </span>
+                                  ))}
+                                </div>
                               </div>
                             )}
                             {location.business_hours && (
