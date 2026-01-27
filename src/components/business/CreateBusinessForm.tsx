@@ -180,17 +180,14 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
 
         if (locationsError) throw locationsError;
 
+        // Elimina le sedi rivendicate da unclaimed_business_locations per evitare duplicati
         const locationIds = claimedLocations.map(l => l.id);
-        const { error: claimError } = await supabase
+        const { error: deleteError } = await supabase
           .from('unclaimed_business_locations')
-          .update({
-            is_claimed: true,
-            claimed_by: ownerId,
-            claimed_at: new Date().toISOString(),
-          })
+          .delete()
           .in('id', locationIds);
 
-        if (claimError) throw claimError;
+        if (deleteError) throw deleteError;
 
         const planName = getPlanDisplayName(claimedLocations.length, billingPeriod);
         const { data: plan, error: planError } = await supabase
@@ -221,6 +218,27 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
           if (subscriptionError) throw subscriptionError;
         }
       } else {
+        // Verifica ed elimina eventuali duplicati in unclaimed_business_locations
+        // (stesso nome e indirizzo) per evitare doppioni
+        const { data: duplicates } = await supabase
+          .from('unclaimed_business_locations')
+          .select('id')
+          .ilike('name', formData.name)
+          .ilike('street', formData.address)
+          .eq('city', formData.city);
+
+        if (duplicates && duplicates.length > 0) {
+          const duplicateIds = duplicates.map(d => d.id);
+          const { error: deleteDuplicatesError } = await supabase
+            .from('unclaimed_business_locations')
+            .delete()
+            .in('id', duplicateIds);
+
+          if (deleteDuplicatesError) {
+            console.log('Error deleting duplicates:', deleteDuplicatesError);
+          }
+        }
+
         // Crea una nuova business_location per l'attività creata da zero
         const servicesArray = formData.location_services
           ? formData.location_services.split('\n').map(s => s.trim()).filter(s => s.length > 0)

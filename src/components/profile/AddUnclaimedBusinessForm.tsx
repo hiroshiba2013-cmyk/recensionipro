@@ -55,6 +55,36 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
     setLoading(true);
 
     try {
+      // Verifica se esiste già un'attività con lo stesso nome e indirizzo
+      const { data: existingBusiness } = await supabase
+        .from('unclaimed_business_locations')
+        .select('id, name')
+        .ilike('name', formData.name)
+        .ilike('street', formData.street)
+        .eq('city', formData.city)
+        .maybeSingle();
+
+      if (existingBusiness) {
+        alert(`L'attività "${existingBusiness.name}" è già presente nel database!`);
+        setLoading(false);
+        return;
+      }
+
+      // Verifica anche se esiste in business_locations (già rivendicata)
+      const { data: claimedBusiness } = await supabase
+        .from('business_locations')
+        .select('id, name')
+        .ilike('name', formData.name)
+        .ilike('address', formData.street)
+        .eq('city', formData.city)
+        .maybeSingle();
+
+      if (claimedBusiness) {
+        alert(`L'attività "${claimedBusiness.name}" è già stata rivendicata ed è presente nel sistema!`);
+        setLoading(false);
+        return;
+      }
+
       const { data: business, error: businessError } = await supabase
         .from('unclaimed_business_locations')
         .insert({
