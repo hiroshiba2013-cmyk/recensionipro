@@ -65,6 +65,8 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
     pec_email: '',
     ateco_code: '',
     description: '',
+    location_description: '',
+    location_services: '',
     billing_street: '',
     billing_street_number: '',
     billing_postal_code: '',
@@ -103,6 +105,8 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
         pec_email: '',
         ateco_code: '',
         description: '',
+        location_description: '',
+        location_services: '',
         billing_street: '',
         billing_street_number: '',
         billing_postal_code: '',
@@ -153,7 +157,7 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
       if (businessError) throw businessError;
 
       if (claimedLocations.length > 0) {
-        const locationInserts = claimedLocations.map(location => ({
+        const locationInserts = claimedLocations.map((location, index) => ({
           business_id: business.id,
           name: location.name,
           address: location.street,
@@ -166,6 +170,8 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
           website: location.website,
           country: 'Italia',
           is_primary: claimedLocations[0].id === location.id,
+          description: index === 0 && formData.location_description ? formData.location_description : null,
+          services: index === 0 && formData.location_services ? formData.location_services.split('\n').map(s => s.trim()).filter(s => s.length > 0) : [],
         }));
 
         const { error: locationsError } = await supabase
@@ -204,6 +210,60 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
             .insert({
               customer_id: ownerId,
               plan_id: plan.id,
+              status: 'trial',
+              start_date: new Date().toISOString(),
+              trial_end_date: trialEndDate.toISOString(),
+              end_date: trialEndDate.toISOString(),
+              payment_method_added: false,
+              reminder_sent: false,
+            });
+
+          if (subscriptionError) throw subscriptionError;
+        }
+      } else {
+        // Crea una nuova business_location per l'attività creata da zero
+        const servicesArray = formData.location_services
+          ? formData.location_services.split('\n').map(s => s.trim()).filter(s => s.length > 0)
+          : [];
+
+        const { error: locationError } = await supabase
+          .from('business_locations')
+          .insert({
+            business_id: business.id,
+            name: formData.name,
+            address: formData.address,
+            city: formData.city,
+            province: formData.province,
+            postal_code: formData.postal_code,
+            phone: formData.phone,
+            email: formData.email,
+            website: formData.website || null,
+            country: 'Italia',
+            is_primary: true,
+            description: formData.location_description || null,
+            services: servicesArray,
+          });
+
+        if (locationError) throw locationError;
+
+        // Crea una sottoscrizione di default per 1 sede
+        const { data: defaultPlan, error: planError } = await supabase
+          .from('subscription_plans')
+          .select('*')
+          .eq('name', 'Base')
+          .maybeSingle();
+
+        if (planError) throw planError;
+
+        if (defaultPlan) {
+          const trialEndDate = new Date();
+          trialEndDate.setMonth(trialEndDate.getMonth() + 3);
+
+          const { error: subscriptionError } = await supabase
+            .from('subscriptions')
+            .insert({
+              customer_id: ownerId,
+              plan_id: defaultPlan.id,
               status: 'trial',
               start_date: new Date().toISOString(),
               trial_end_date: trialEndDate.toISOString(),
@@ -608,15 +668,43 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Descrizione (opzionale)
+                Descrizione Attività (opzionale)
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={4}
+                rows={3}
                 placeholder="Descrivi brevemente la tua attività..."
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Descrizione Sede (opzionale)
+              </label>
+              <textarea
+                value={formData.location_description}
+                onChange={(e) => setFormData({ ...formData, location_description: e.target.value })}
+                rows={2}
+                placeholder="Breve descrizione della sede (es. 'Negozio nel centro storico con ampio parcheggio')"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              />
+              <p className="text-xs text-gray-500 mt-1">Questa descrizione aiuta i clienti a trovare e riconoscere la sede</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Servizi Disponibili (opzionale)
+              </label>
+              <textarea
+                value={formData.location_services}
+                onChange={(e) => setFormData({ ...formData, location_services: e.target.value })}
+                rows={4}
+                placeholder="Inserisci un servizio per riga, es:&#10;WiFi gratuito&#10;Parcheggio disponibile&#10;Consegna a domicilio&#10;Pagamenti contactless"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              />
+              <p className="text-xs text-gray-500 mt-1">Inserisci un servizio per riga. Questi verranno mostrati ai clienti come badge.</p>
             </div>
           </div>
         </div>
