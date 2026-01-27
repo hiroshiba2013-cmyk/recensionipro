@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Star, Tag, Building, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon } from 'lucide-react';
+import { Plus, Star, Tag, Building, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Business, Review, Discount, FamilyMember } from '../lib/supabase';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
@@ -29,11 +29,29 @@ interface Subscription {
   trial_end_date?: string;
 }
 
+interface Product {
+  id: string;
+  business_id: string;
+  location_id: string | null;
+  name: string;
+  created_at: string;
+}
+
+interface JobPosting {
+  id: string;
+  business_id: string;
+  location_id: string | null;
+  title: string;
+  created_at: string;
+}
+
 export function DashboardPage() {
   const { profile, selectedBusinessLocationId } = useAuth();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateBusinessForm, setShowCreateBusinessForm] = useState(false);
@@ -49,7 +67,7 @@ export function DashboardPage() {
       loadDashboardData();
       loadSubscriptionData();
     }
-  }, [profile]);
+  }, [profile, selectedBusinessLocationId]);
 
   const loadDashboardData = async () => {
     if (!profile) return;
@@ -72,28 +90,77 @@ export function DashboardPage() {
           if (businessesData.length > 0) {
             const businessIds = businessesData.map(b => b.id);
 
-            const { data: reviewsData } = await supabase
+            // Filtra recensioni per sede se una sede è selezionata
+            let reviewsQuery = supabase
               .from('reviews')
               .select(`
                 *,
                 customer:profiles(full_name),
-                responses:review_responses(*)
+                responses:review_responses(*),
+                business_location:business_locations(internal_name, address)
               `)
               .in('business_id', businessIds)
               .order('created_at', { ascending: false });
+
+            if (selectedBusinessLocationId) {
+              reviewsQuery = reviewsQuery.eq('business_location_id', selectedBusinessLocationId);
+            }
+
+            const { data: reviewsData } = await reviewsQuery;
 
             if (reviewsData) {
               setReviews(reviewsData);
             }
 
-            const { data: discountsData } = await supabase
+            // Filtra sconti per sede se una sede è selezionata
+            let discountsQuery = supabase
               .from('discounts')
               .select('*')
               .in('business_id', businessIds)
               .order('created_at', { ascending: false });
 
+            if (selectedBusinessLocationId) {
+              discountsQuery = discountsQuery.eq('location_id', selectedBusinessLocationId);
+            }
+
+            const { data: discountsData } = await discountsQuery;
+
             if (discountsData) {
               setDiscounts(discountsData);
+            }
+
+            // Filtra prodotti per sede se una sede è selezionata
+            let productsQuery = supabase
+              .from('products')
+              .select('*')
+              .in('business_id', businessIds)
+              .order('created_at', { ascending: false });
+
+            if (selectedBusinessLocationId) {
+              productsQuery = productsQuery.eq('location_id', selectedBusinessLocationId);
+            }
+
+            const { data: productsData } = await productsQuery;
+
+            if (productsData) {
+              setProducts(productsData);
+            }
+
+            // Filtra offerte di lavoro per sede se una sede è selezionata
+            let jobPostingsQuery = supabase
+              .from('job_postings')
+              .select('*')
+              .in('business_id', businessIds)
+              .order('created_at', { ascending: false });
+
+            if (selectedBusinessLocationId) {
+              jobPostingsQuery = jobPostingsQuery.eq('location_id', selectedBusinessLocationId);
+            }
+
+            const { data: jobPostingsData } = await jobPostingsQuery;
+
+            if (jobPostingsData) {
+              setJobPostings(jobPostingsData);
             }
           }
         }
@@ -283,6 +350,45 @@ export function DashboardPage() {
           <div className="space-y-8">
             {profile.user_type === 'business' ? (
               <>
+                {selectedBusinessLocationId && (
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-sm p-6 mb-6 border-2 border-blue-300">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-blue-600" />
+                      Statistiche Sede Selezionata
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-white rounded-lg p-4 shadow-sm">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Star className="w-5 h-5 text-yellow-500" />
+                          <span className="text-sm font-medium text-gray-600">Recensioni</span>
+                        </div>
+                        <p className="text-2xl font-bold text-gray-900">{reviews.length}</p>
+                      </div>
+                      <div className="bg-white rounded-lg p-4 shadow-sm">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Tag className="w-5 h-5 text-green-600" />
+                          <span className="text-sm font-medium text-gray-600">Sconti</span>
+                        </div>
+                        <p className="text-2xl font-bold text-gray-900">{discounts.length}</p>
+                      </div>
+                      <div className="bg-white rounded-lg p-4 shadow-sm">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Package className="w-5 h-5 text-purple-600" />
+                          <span className="text-sm font-medium text-gray-600">Prodotti</span>
+                        </div>
+                        <p className="text-2xl font-bold text-gray-900">{products.length}</p>
+                      </div>
+                      <div className="bg-white rounded-lg p-4 shadow-sm">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Briefcase className="w-5 h-5 text-orange-600" />
+                          <span className="text-sm font-medium text-gray-600">Offerte Lavoro</span>
+                        </div>
+                        <p className="text-2xl font-bold text-gray-900">{jobPostings.length}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {showCreateBusinessForm ? (
                   <CreateBusinessForm
                     ownerId={profile.id}
@@ -376,20 +482,15 @@ export function DashboardPage() {
                     </h2>
                   </div>
 
-                  {(() => {
-                    const displayReviews = selectedBusinessLocationId
-                      ? reviews.filter(r => r.business_location_id === selectedBusinessLocationId)
-                      : reviews;
-
-                    return displayReviews.length === 0 ? (
-                      <p className="text-gray-600 text-center py-8">
-                        {selectedBusinessLocationId
-                          ? 'Questa sede non ha ancora ricevuto recensioni'
-                          : 'Non hai ancora ricevuto recensioni'}
-                      </p>
-                    ) : (
-                      <div className="space-y-4">
-                        {displayReviews.map((review) => (
+                  {reviews.length === 0 ? (
+                    <p className="text-gray-600 text-center py-8">
+                      {selectedBusinessLocationId
+                        ? 'Questa sede non ha ancora ricevuto recensioni'
+                        : 'Non hai ancora ricevuto recensioni'}
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {reviews.map((review) => (
                         <div key={review.id} className="border border-gray-200 rounded-lg p-4">
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex">
@@ -425,10 +526,9 @@ export function DashboardPage() {
                             </div>
                           )}
                         </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {selectedBusinessId && <BusinessJobPostingForm businessId={selectedBusinessId} />}
@@ -591,20 +691,15 @@ export function DashboardPage() {
                     </button>
                   </div>
 
-                  {(() => {
-                    const displayDiscounts = selectedBusinessLocationId
-                      ? discounts.filter(d => d.business_location_id === selectedBusinessLocationId)
-                      : discounts;
-
-                    return displayDiscounts.length === 0 ? (
-                      <p className="text-gray-600 text-center py-8">
-                        {selectedBusinessLocationId
-                          ? 'Questa sede non ha ancora sconti attivi'
-                          : 'Non hai ancora creato sconti'}
-                      </p>
-                    ) : (
-                      <div className="space-y-4">
-                        {displayDiscounts.map((discount) => (
+                  {discounts.length === 0 ? (
+                    <p className="text-gray-600 text-center py-8">
+                      {selectedBusinessLocationId
+                        ? 'Questa sede non ha ancora sconti attivi'
+                        : 'Non hai ancora creato sconti'}
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {discounts.map((discount) => (
                         <div key={discount.id} className="border border-gray-200 rounded-lg p-4">
                           <div className="flex items-start justify-between">
                             <div>
@@ -622,10 +717,9 @@ export function DashboardPage() {
                             </span>
                           </div>
                         </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {selectedBusinessId && (
