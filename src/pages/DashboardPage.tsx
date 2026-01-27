@@ -72,7 +72,16 @@ export function DashboardPage() {
   const loadDashboardData = async () => {
     if (!profile) return;
 
+    console.log('🔄 Caricamento dati dashboard per sede:', selectedBusinessLocationId || 'TUTTE');
+
     setLoading(true);
+
+    // Reset dei dati quando cambia la sede
+    setReviews([]);
+    setDiscounts([]);
+    setProducts([]);
+    setJobPostings([]);
+
     try {
       if (profile.user_type === 'business') {
         const { data: businessesData } = await supabase
@@ -108,6 +117,8 @@ export function DashboardPage() {
 
             const { data: reviewsData } = await reviewsQuery;
 
+            console.log('📊 Recensioni caricate:', reviewsData?.length || 0, 'per sede:', selectedBusinessLocationId || 'TUTTE');
+
             if (reviewsData) {
               setReviews(reviewsData);
             }
@@ -124,6 +135,8 @@ export function DashboardPage() {
             }
 
             const { data: discountsData } = await discountsQuery;
+
+            console.log('🏷️ Sconti caricati:', discountsData?.length || 0, 'per sede:', selectedBusinessLocationId || 'TUTTE');
 
             if (discountsData) {
               setDiscounts(discountsData);
@@ -142,6 +155,8 @@ export function DashboardPage() {
 
             const { data: productsData } = await productsQuery;
 
+            console.log('📦 Prodotti caricati:', productsData?.length || 0, 'per sede:', selectedBusinessLocationId || 'TUTTE');
+
             if (productsData) {
               setProducts(productsData);
             }
@@ -158,6 +173,8 @@ export function DashboardPage() {
             }
 
             const { data: jobPostingsData } = await jobPostingsQuery;
+
+            console.log('💼 Offerte lavoro caricate:', jobPostingsData?.length || 0, 'per sede:', selectedBusinessLocationId || 'TUTTE');
 
             if (jobPostingsData) {
               setJobPostings(jobPostingsData);
@@ -959,6 +976,7 @@ export function DashboardPage() {
         {showDiscountForm && selectedBusinessId && (
           <DiscountForm
             businessId={selectedBusinessId}
+            locationId={selectedBusinessLocationId}
             onClose={() => setShowDiscountForm(false)}
             onSuccess={() => {
               setShowDiscountForm(false);

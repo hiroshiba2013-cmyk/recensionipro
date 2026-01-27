@@ -4,11 +4,12 @@ import { supabase } from '../../lib/supabase';
 
 interface DiscountFormProps {
   businessId: string;
+  locationId?: string | null;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export function DiscountForm({ businessId, onClose, onSuccess }: DiscountFormProps) {
+export function DiscountForm({ businessId, locationId, onClose, onSuccess }: DiscountFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -21,6 +22,8 @@ export function DiscountForm({ businessId, onClose, onSuccess }: DiscountFormPro
     active: true
   });
 
+  console.log('📝 DiscountForm - location_id:', locationId);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -31,6 +34,7 @@ export function DiscountForm({ businessId, onClose, onSuccess }: DiscountFormPro
         .from('discounts')
         .insert({
           business_id: businessId,
+          location_id: locationId || null,
           title: formData.title,
           description: formData.description,
           discount_percentage: parseInt(formData.discount_percentage),
