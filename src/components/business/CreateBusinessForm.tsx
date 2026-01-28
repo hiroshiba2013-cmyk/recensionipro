@@ -616,90 +616,33 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
           </div>
         </div>
 
+        {/* Sezione Descrizione e Servizi - Sempre Visibile */}
         <div className="border-t pt-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Sede Operativa</h3>
-          <div className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Città Sede *
-                </label>
-                <SearchableSelect
-                  value={formData.city}
-                  onChange={handleCityChange}
-                  options={italianCities.map(city => ({
-                    value: city.city,
-                    label: `${city.city} (${city.province})`,
-                  }))}
-                  placeholder="Seleziona città"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  CAP Sede *
-                </label>
-                <input
-                  type="text"
-                  value={formData.postal_code}
-                  onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
-                  required
-                  maxLength={5}
-                  placeholder="Es. 00100"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-
+          <h3 className="text-lg font-bold text-gray-900 mb-4">
+            Descrizione e Servizi {claimedLocations.length > 0 && '(Sede Primaria)'}
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">
+            {claimedLocations.length > 0
+              ? 'Questi dati verranno applicati alla sede primaria (la prima selezionata).'
+              : 'Descrivi la tua attività e i servizi che offri ai clienti.'}
+          </p>
+          <div className="space-y-4 bg-blue-50 p-6 rounded-lg border border-blue-200">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Indirizzo Sede *
-              </label>
-              <input
-                type="text"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                required
-                placeholder="Via, numero civico"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Categoria *
-              </label>
-              <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Seleziona categoria</option>
-                {businessCategories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Descrizione Attività (opzionale)
+                Descrizione Attività
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
-                placeholder="Descrivi brevemente la tua attività..."
+                placeholder="Descrivi brevemente la tua attività... (es. 'Ristorante di cucina tradizionale italiana con oltre 20 anni di esperienza')"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Descrizione Sede (opzionale)
+                Descrizione Sede
               </label>
               <textarea
                 value={formData.location_description}
@@ -713,7 +656,7 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Servizi Disponibili (opzionale)
+                Servizi Disponibili
               </label>
               <textarea
                 value={formData.location_services}
@@ -726,6 +669,78 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
             </div>
           </div>
         </div>
+
+        {claimedLocations.length === 0 && (
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Sede Operativa</h3>
+            <div className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Città Sede *
+                  </label>
+                  <SearchableSelect
+                    value={formData.city}
+                    onChange={handleCityChange}
+                    options={italianCities.map(city => ({
+                      value: city.city,
+                      label: `${city.city} (${city.province})`,
+                    }))}
+                    placeholder="Seleziona città"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    CAP Sede *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.postal_code}
+                    onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
+                    required
+                    maxLength={5}
+                    placeholder="Es. 00100"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Indirizzo Sede *
+                </label>
+                <input
+                  type="text"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  required
+                  placeholder="Via, numero civico"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Categoria *
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Seleziona categoria</option>
+                  {businessCategories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-3 pt-4 border-t">
           <button
