@@ -45,11 +45,34 @@ interface CreateBusinessFormProps {
   onCancel: () => void;
 }
 
+interface ExistingBusinessInfo {
+  business_id: string;
+  business_name: string;
+  claimed_locations: Array<{
+    id: string;
+    name: string;
+    street: string;
+    city: string;
+    province: string;
+    postal_code: string;
+  }>;
+  unclaimed_locations: Array<{
+    id: string;
+    name: string;
+    street: string;
+    city: string;
+    province: string;
+    postal_code: string;
+  }>;
+}
+
 export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusinessFormProps) {
-  const [step, setStep] = useState<'choice' | 'claim' | 'form'>('choice');
+  const [step, setStep] = useState<'choice' | 'claim' | 'form' | 'existing'>('choice');
   const [claimedLocations, setClaimedLocations] = useState<UnclaimedLocation[]>([]);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [saving, setSaving] = useState(false);
+  const [checkingVat, setCheckingVat] = useState(false);
+  const [existingBusiness, setExistingBusiness] = useState<ExistingBusinessInfo | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     category: '',
@@ -82,6 +105,75 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
       city,
       province: provinceCode || '',
     });
+  };
+
+  const checkVatNumber = async (vat: string) => {
+    if (vat.length !== 11) return;
+
+    setCheckingVat(true);
+    try {
+      const { data: existingBiz, error } = await supabase
+        .from('businesses')
+        .select('id, name, owner_id')
+        .eq('vat_number', vat)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (existingBiz) {
+        if (existingBiz.owner_id === ownerId) {
+          alert('Hai già registrato un\'attività con questa Partita IVA!');
+          setCheckingVat(false);
+          return;
+        }
+
+        const { data: claimedLocs } = await supabase
+          .from('business_locations')
+          .select('id, internal_name, street, city, province, postal_code')
+          .eq('business_id', existingBiz.id);
+
+        const { data: unclaimedLocs } = await supabase
+          .from('unclaimed_business_locations')
+          .select('id, name, street, city, province, postal_code, vat_number')
+          .or(`vat_number.eq.${vat},name.ilike.%${existingBiz.name}%`);
+
+        setExistingBusiness({
+          business_id: existingBiz.id,
+          business_name: existingBiz.name,
+          claimed_locations: claimedLocs?.map(loc => ({
+            id: loc.id,
+            name: loc.internal_name || loc.street,
+            street: loc.street,
+            city: loc.city,
+            province: loc.province,
+            postal_code: loc.postal_code || '',
+          })) || [],
+          unclaimed_locations: unclaimedLocs?.map(loc => ({
+            id: loc.id,
+            name: loc.name,
+            street: loc.street,
+            city: loc.city,
+            province: loc.province,
+            postal_code: loc.postal_code || '',
+          })) || [],
+        });
+
+        setStep('existing');
+      }
+    } catch (error) {
+      console.error('Errore controllo P.IVA:', error);
+    } finally {
+      setCheckingVat(false);
+    }
+  };
+
+  const handleVatChange = (vat: string) => {
+    const cleanVat = vat.replace(/\D/g, '').slice(0, 11);
+    setFormData({ ...formData, vat_number: cleanVat });
+
+    if (cleanVat.length === 11 && step === 'form') {
+      checkVatNumber(cleanVat);
+    }
   };
 
   const handleLocationsSelected = (locations: UnclaimedLocation[], selectedBillingPeriod: 'monthly' | 'yearly') => {
@@ -312,6 +404,140 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
     );
   }
 
+  if (step === 'existing' && existingBusiness) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Building className="w-6 h-6 text-orange-600" />
+            <h2 className="text-2xl font-bold text-gray-900">Attività Già Presente</h2>
+          </div>
+          <button
+            onClick={() => {
+              setStep('form');
+              setExistingBusiness(null);
+            }}
+            className="text-gray-600 hover:text-gray-800"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="bg-orange-50 border-l-4 border-orange-500 p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <svg className="w-6 h-6 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-orange-900 mb-1">
+                Questa Partita IVA è già registrata!
+              </h3>
+              <p className="text-orange-800 mb-3">
+                L'attività "<strong>{existingBusiness.business_name}</strong>" è già presente nel sistema.
+              </p>
+              <div className="bg-white rounded-lg p-3 border border-orange-200">
+                <p className="text-sm text-gray-700 mb-2 font-semibold">Cosa puoi fare:</p>
+                <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
+                  <li>Se sei il proprietario e hai già un account, accedi con le tue credenziali</li>
+                  <li>Se la P.IVA è corretta ma non hai ancora registrato questa azienda, contatta il supporto</li>
+                  <li>Se hai una nuova sede da aggiungere, verifica se è già nell'elenco qui sotto</li>
+                  <li>Se la P.IVA è errata, correggila usando il pulsante sotto</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {existingBusiness.claimed_locations.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-3">
+              Sedi Già Registrate ({existingBusiness.claimed_locations.length})
+            </h3>
+            <div className="space-y-2">
+              {existingBusiness.claimed_locations.map((loc) => (
+                <div key={loc.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-900">{loc.name}</p>
+                      <p className="text-sm text-gray-600">
+                        {loc.street}, {loc.postal_code} {loc.city} ({loc.province})
+                      </p>
+                      <p className="text-xs text-green-600 mt-1">Sede già rivendicata</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {existingBusiness.unclaimed_locations.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-3">
+              Altre Sedi Disponibili ({existingBusiness.unclaimed_locations.length})
+            </h3>
+            <p className="text-sm text-gray-600 mb-3">
+              Queste sedi non sono ancora state rivendicate. Se sei il proprietario, contattaci per aggiungerle al tuo account.
+            </p>
+            <div className="space-y-2">
+              {existingBusiness.unclaimed_locations.map((loc) => (
+                <div key={loc.id} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-900">{loc.name}</p>
+                      <p className="text-sm text-gray-600">
+                        {loc.street}, {loc.postal_code} {loc.city} ({loc.province})
+                      </p>
+                      <p className="text-xs text-blue-600 mt-1">Disponibile per rivendicazione</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-3 pt-4 border-t">
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setStep('form');
+                setExistingBusiness(null);
+                setFormData({ ...formData, vat_number: '' });
+              }}
+              className="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+            >
+              Correggi P.IVA
+            </button>
+            <button
+              onClick={onCancel}
+              className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+            >
+              Torna Indietro
+            </button>
+          </div>
+          <button
+            onClick={() => window.location.href = '/contact'}
+            className="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            Contatta il Supporto
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (step === 'choice') {
     return (
       <div className="bg-white rounded-xl shadow-md p-8">
@@ -434,15 +660,25 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Partita IVA *
                 </label>
-                <input
-                  type="text"
-                  value={formData.vat_number}
-                  onChange={(e) => setFormData({ ...formData, vat_number: e.target.value })}
-                  required
-                  maxLength={11}
-                  placeholder="Es. 12345678901"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={formData.vat_number}
+                    onChange={(e) => handleVatChange(e.target.value)}
+                    required
+                    maxLength={11}
+                    placeholder="Es. 12345678901"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  {checkingVat && (
+                    <div className="absolute right-3 top-3">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Controlleremo automaticamente se l'attività è già presente nel sistema
+                </p>
               </div>
 
               <div>
