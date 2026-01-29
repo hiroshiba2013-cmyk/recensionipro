@@ -57,7 +57,10 @@ export function Router() {
   }, []);
 
   useEffect(() => {
-    if (!loading && needsProfileSelection && currentPath !== '/select-profile') {
+    const protectedPaths = ['/dashboard', '/profile', '/messages'];
+    const isProtectedPath = protectedPaths.some(path => currentPath.startsWith(path));
+
+    if (!loading && needsProfileSelection && isProtectedPath) {
       window.history.pushState({}, '', '/select-profile');
       setCurrentPath('/select-profile');
     }
