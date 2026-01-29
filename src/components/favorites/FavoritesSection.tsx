@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Heart, Building2, ShoppingBag, Briefcase, User, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from '../Router';
 
 interface FavoriteItem {
   id: string;
@@ -19,6 +20,7 @@ interface FamilyMember {
 
 export function FavoritesSection() {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'businesses' | 'ads' | 'jobs'>('businesses');
   const [favoriteBusinesses, setFavoriteBusinesses] = useState<FavoriteItem[]>([]);
   const [favoriteAds, setFavoriteAds] = useState<FavoriteItem[]>([]);
@@ -189,12 +191,15 @@ export function FavoritesSection() {
             {business.phone && (
               <p className="text-sm text-gray-500">{business.phone}</p>
             )}
-            <a
-              href={`/business/${business.business_id}`}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/business/${business.business_id}`);
+              }}
               className="inline-block mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
               Visualizza dettagli →
-            </a>
+            </button>
           </div>
           <button
             onClick={() => removeFavorite(fav.id, 'businesses')}
@@ -230,12 +235,15 @@ export function FavoritesSection() {
               <p className="text-lg font-bold text-blue-600 mb-1">€{ad.price}</p>
             )}
             <p className="text-sm text-gray-600">{ad.city}</p>
-            <a
-              href={`/classified-ads/${ad.id}`}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/classified-ads/${ad.id}`);
+              }}
               className="inline-block mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
               Visualizza annuncio →
-            </a>
+            </button>
           </div>
           <button
             onClick={() => removeFavorite(fav.id, 'ads')}
@@ -266,12 +274,15 @@ export function FavoritesSection() {
                 <span>€{job.gross_annual_salary.toLocaleString()}/anno</span>
               )}
             </div>
-            <a
-              href="/jobs"
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate('/jobs');
+              }}
               className="inline-block mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
               Visualizza offerta →
-            </a>
+            </button>
           </div>
           <button
             onClick={() => removeFavorite(fav.id, 'jobs')}

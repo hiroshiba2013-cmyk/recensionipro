@@ -84,9 +84,16 @@ export function LocationCard({ location }: LocationCardProps) {
     if (e.target !== e.currentTarget && (e.target as HTMLElement).closest('button, a')) {
       return;
     }
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Se l'attività è reclamata, naviga verso la pagina business
+    // Altrimenti naviga verso la pagina della location non reclamata
+    const targetId = location.business_id || location.id;
+
     sessionStorage.setItem('searchReturnUrl', window.location.pathname + window.location.search);
     sessionStorage.setItem('searchScrollPosition', window.scrollY.toString());
-    window.history.pushState({}, '', `/location/${location.id}`);
+    window.history.pushState({}, '', `/business/${targetId}`);
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
