@@ -6,29 +6,25 @@ import { useNavigate } from '../components/Router';
 
 interface BusinessResult {
   id: string;
-  business_id: string;
   name: string | null;
-  address: string;
+  street: string | null;
   city: string;
   province: string;
   phone: string | null;
   email: string | null;
-  vat_number: string | null;
   is_claimed: boolean;
-  avatar_url: string | null;
-  business?: {
-    name: string;
-    category_id: string;
-  };
+  category_id: string | null;
+  region: string | null;
+  website: string | null;
 }
 
 export function ClaimBusinessPage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     businessName: '',
-    vatNumber: '',
     address: '',
-    city: ''
+    city: '',
+    province: ''
   });
   const [results, setResults] = useState<BusinessResult[]>([]);
   const [searched, setSearched] = useState(false);
@@ -36,7 +32,7 @@ export function ClaimBusinessPage() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.businessName && !formData.vatNumber && !formData.address) {
+    if (!formData.businessName && !formData.address && !formData.city) {
       alert('Inserisci almeno un campo per effettuare la ricerca');
       return;
     }
@@ -46,54 +42,55 @@ export function ClaimBusinessPage() {
 
     try {
       let query = supabase
-        .from('business_locations')
+        .from('unclaimed_business_locations')
         .select(`
           id,
-          business_id,
           name,
-          address,
+          street,
           city,
           province,
+          region,
           phone,
           email,
-          vat_number,
+          website,
           is_claimed,
-          avatar_url,
-          businesses(
-            name,
-            category_id
-          )
+          category_id
         `)
-        .limit(20);
+        .order('city', { ascending: true })
+        .limit(100);
 
-      // Ricerca per P.IVA (prioritaria)
-      if (formData.vatNumber) {
-        query = query.ilike('vat_number', `%${formData.vatNumber.replace(/\s/g, '')}%`);
-      } else {
-        // Ricerca per nome
-        if (formData.businessName) {
-          query = query.or(`name.ilike.%${formData.businessName}%,businesses.name.ilike.%${formData.businessName}%`);
-        }
+      // Filtro per nome attività
+      if (formData.businessName && formData.businessName.trim()) {
+        query = query.ilike('name', `%${formData.businessName.trim()}%`);
+      }
 
-        // Filtro per città
-        if (formData.city) {
-          query = query.ilike('city', `%${formData.city}%`);
-        }
+      // Filtro per città
+      if (formData.city && formData.city.trim()) {
+        query = query.ilike('city', `%${formData.city.trim()}%`);
+      }
 
-        // Filtro per indirizzo
-        if (formData.address) {
-          query = query.ilike('address', `%${formData.address}%`);
-        }
+      // Filtro per provincia
+      if (formData.province && formData.province.trim()) {
+        query = query.ilike('province', `%${formData.province.trim()}%`);
+      }
+
+      // Filtro per indirizzo
+      if (formData.address && formData.address.trim()) {
+        query = query.ilike('street', `%${formData.address.trim()}%`);
       }
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('Query error:', error);
+        throw error;
+      }
 
+      console.log('Search results:', data?.length || 0, 'found');
       setResults(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error searching businesses:', error);
-      alert('Errore durante la ricerca');
+      alert(`Errore durante la ricerca: ${error.message || 'Errore sconosciuto'}`);
     } finally {
       setLoading(false);
     }
@@ -117,37 +114,12 @@ export function ClaimBusinessPage() {
             Verifica la Tua Attività
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Controlla se la tua attività è già presente nel nostro database e rivendicala per gestirla
+            Cerca la tua attività per nome, città o indirizzo. Se è già nel nostro database, puoi rivendicarla gratuitamente per gestirla
           </p>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
           <form onSubmit={handleSearch} className="space-y-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Partita IVA
-              </label>
-              <input
-                type="text"
-                value={formData.vatNumber}
-                onChange={(e) => setFormData({ ...formData, vatNumber: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                placeholder="es. 12345678901"
-              />
-              <p className="mt-2 text-sm text-gray-500">
-                La ricerca per P.IVA è il metodo più preciso
-              </p>
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">oppure</span>
-              </div>
-            </div>
-
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Nome Attività
@@ -164,19 +136,6 @@ export function ClaimBusinessPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Indirizzo
-                </label>
-                <input
-                  type="text"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                  placeholder="es. Via Roma 1"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Città
                 </label>
                 <input
@@ -187,6 +146,32 @@ export function ClaimBusinessPage() {
                   placeholder="es. Milano"
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Provincia
+                </label>
+                <input
+                  type="text"
+                  value={formData.province}
+                  onChange={(e) => setFormData({ ...formData, province: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  placeholder="es. MI"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Indirizzo
+              </label>
+              <input
+                type="text"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                placeholder="es. Via Roma"
+              />
             </div>
 
             <button
@@ -250,30 +235,17 @@ export function ClaimBusinessPage() {
                       <div className="p-6">
                         <div className="flex items-start gap-6">
                           <div className="flex-shrink-0">
-                            {business.avatar_url ? (
-                              <img
-                                src={business.avatar_url}
-                                alt={business.name || business.business?.name}
-                                className="w-24 h-24 rounded-lg object-cover"
-                              />
-                            ) : (
-                              <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg flex items-center justify-center">
-                                <Building2 className="w-12 h-12 text-blue-600" />
-                              </div>
-                            )}
+                            <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg flex items-center justify-center">
+                              <Building2 className="w-12 h-12 text-blue-600" />
+                            </div>
                           </div>
 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-4 mb-3">
                               <div>
                                 <h4 className="text-xl font-bold text-gray-900">
-                                  {business.name || business.business?.name || 'Attività'}
+                                  {business.name || 'Attività'}
                                 </h4>
-                                {business.name && business.business?.name && (
-                                  <p className="text-sm text-gray-600 mt-1">
-                                    {business.business.name}
-                                  </p>
-                                )}
                               </div>
 
                               {business.is_claimed ? (
@@ -293,15 +265,10 @@ export function ClaimBusinessPage() {
                               <div className="flex items-start gap-2 text-gray-700">
                                 <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-600" />
                                 <span className="text-sm">
-                                  {business.address}, {business.city} ({business.province})
+                                  {business.street && `${business.street}, `}{business.city} ({business.province})
+                                  {business.region && ` - ${business.region}`}
                                 </span>
                               </div>
-
-                              {business.vat_number && (
-                                <div className="text-sm text-gray-600">
-                                  <span className="font-semibold">P.IVA:</span> {business.vat_number}
-                                </div>
-                              )}
 
                               {business.phone && (
                                 <div className="text-sm text-gray-600">
@@ -314,11 +281,17 @@ export function ClaimBusinessPage() {
                                   <span className="font-semibold">Email:</span> {business.email}
                                 </div>
                               )}
+
+                              {business.website && (
+                                <div className="text-sm text-gray-600">
+                                  <span className="font-semibold">Web:</span> {business.website}
+                                </div>
+                              )}
                             </div>
 
                             {!business.is_claimed ? (
                               <button
-                                onClick={() => handleClaim(business.business_id)}
+                                onClick={() => handleClaim(business.id)}
                                 className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
                               >
                                 <Building2 className="w-5 h-5" />

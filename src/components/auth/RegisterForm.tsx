@@ -554,11 +554,11 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
 
         if (profile) {
           await supabase
-            .from('businesses')
+            .from('unclaimed_business_locations')
             .update({
-              owner_id: profile.id,
+              claimed_by: profile.id,
               is_claimed: true,
-              verified: false,
+              claimed_at: new Date().toISOString(),
             })
             .eq('id', claimBusinessId)
             .eq('is_claimed', false);
