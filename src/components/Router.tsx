@@ -29,6 +29,7 @@ export function useParams() {
 export function useNavigate() {
   return (path: string) => {
     window.history.pushState({}, '', path);
+    window.dispatchEvent(new PopStateEvent('popstate'));
   };
 }
 
@@ -57,10 +58,14 @@ export function Router() {
   }, []);
 
   useEffect(() => {
+    if (loading) return;
+    if (!needsProfileSelection) return;
+    if (currentPath === '/select-profile') return;
+
     const protectedPaths = ['/dashboard', '/profile', '/messages'];
     const isProtectedPath = protectedPaths.some(path => currentPath.startsWith(path));
 
-    if (!loading && needsProfileSelection && isProtectedPath) {
+    if (isProtectedPath) {
       window.history.pushState({}, '', '/select-profile');
       setCurrentPath('/select-profile');
     }

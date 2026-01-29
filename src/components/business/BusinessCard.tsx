@@ -4,6 +4,7 @@ import { Business } from '../../lib/supabase';
 import { ReviewForm } from '../reviews/ReviewForm';
 import { useAuth } from '../../contexts/AuthContext';
 import { VerificationBadge } from './VerificationBadge';
+import { useNavigate } from '../Router';
 
 interface BusinessCardProps {
   business: Business & { avg_rating?: number; review_count?: number };
@@ -11,6 +12,7 @@ interface BusinessCardProps {
 
 export function BusinessCard({ business }: BusinessCardProps) {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const [showReviewForm, setShowReviewForm] = useState(false);
 
   const canWriteReview = profile && profile.user_type === 'customer' && profile.subscription_status === 'active';
@@ -25,10 +27,11 @@ export function BusinessCard({ business }: BusinessCardProps) {
     if (e.target !== e.currentTarget && (e.target as HTMLElement).closest('button, a')) {
       return;
     }
+    e.preventDefault();
+    e.stopPropagation();
     sessionStorage.setItem('searchReturnUrl', window.location.pathname + window.location.search);
     sessionStorage.setItem('searchScrollPosition', window.scrollY.toString());
-    window.history.pushState({}, '', `/business/${business.id}`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigate(`/business/${business.id}`);
   };
 
   return (
