@@ -19,6 +19,7 @@ export function HomePage() {
 
 function LandingPage() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-white">
@@ -48,6 +49,60 @@ function LandingPage() {
               >
                 {t('home.viewPlans')}
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-green-50 to-blue-50 border-y border-green-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 border-2 border-green-200">
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="flex-shrink-0">
+                <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Building2 className="w-10 h-10 text-white" />
+                </div>
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+                  Sei un'Attività Commerciale?
+                </h2>
+                <p className="text-lg text-gray-600 mb-6">
+                  Verifica se la tua attività è già presente nel nostro database e rivendicala gratuitamente per gestirla
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                  <button
+                    onClick={() => navigate('/claim-business')}
+                    className="inline-flex items-center justify-center gap-2 bg-green-600 text-white px-8 py-4 rounded-lg text-lg font-bold hover:bg-green-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+                  >
+                    <Search className="w-5 h-5" />
+                    Verifica la Tua Attività
+                  </button>
+                  <button
+                    onClick={() => navigate('/subscription')}
+                    className="inline-flex items-center justify-center gap-2 bg-white text-green-600 px-8 py-4 rounded-lg text-lg font-bold hover:bg-gray-50 transition-all shadow border-2 border-green-600"
+                  >
+                    <ShieldCheck className="w-5 h-5" />
+                    Vedi i Vantaggi
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="mt-8 pt-8 border-t border-gray-200">
+              <div className="grid sm:grid-cols-3 gap-4 text-center">
+                <div className="flex items-center justify-center gap-2 text-gray-700">
+                  <ShieldCheck className="w-5 h-5 text-green-600" />
+                  <span className="font-semibold">Badge Verificato</span>
+                </div>
+                <div className="flex items-center justify-center gap-2 text-gray-700">
+                  <Star className="w-5 h-5 text-green-600" />
+                  <span className="font-semibold">Gestisci Recensioni</span>
+                </div>
+                <div className="flex items-center justify-center gap-2 text-gray-700">
+                  <TrendingUp className="w-5 h-5 text-green-600" />
+                  <span className="font-semibold">Crea Promozioni</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

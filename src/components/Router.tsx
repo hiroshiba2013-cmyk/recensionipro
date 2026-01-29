@@ -18,6 +18,7 @@ import { ContactPage } from '../pages/ContactPage';
 import { RulesPage } from '../pages/RulesPage';
 import { DiscountsPage } from '../pages/DiscountsPage';
 import { ProfileSelectionPage } from '../pages/ProfileSelectionPage';
+import { ClaimBusinessPage } from '../pages/ClaimBusinessPage';
 import { useAuth } from '../contexts/AuthContext';
 
 const RouterContext = createContext<{ params: Record<string, string> }>({ params: {} });
@@ -151,6 +152,10 @@ export function Router() {
 
   if (currentPath === '/rules' || currentPath === '/regolamento') {
     return <RulesPage />;
+  }
+
+  if (currentPath === '/claim-business' || currentPath === '/rivendica-attivita') {
+    return <ClaimBusinessPage />;
   }
 
   if (currentPath.startsWith('/business/')) {
