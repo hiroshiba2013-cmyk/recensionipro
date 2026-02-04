@@ -279,7 +279,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
   const canReview = profile?.user_type === 'customer' && profile?.subscription_status === 'active';
   const isOwner = profile && business.owner_id === profile.id;
   const canClaim = profile?.user_type === 'business' && !business.is_claimed && !business.owner_id;
-  const canShowClaimButton = !business.is_claimed && !business.owner_id;
+  const canShowClaimButton = !business.is_claimed && !business.owner_id && profile?.user_type !== 'customer';
   const needsBusinessAccount = canShowClaimButton && profile?.user_type !== 'business';
 
   return (
