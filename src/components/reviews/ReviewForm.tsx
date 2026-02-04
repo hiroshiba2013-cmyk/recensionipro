@@ -196,10 +196,10 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
       // Se la recensione è approvata automaticamente (senza prova), assegna i punti
       if (reviewStatus === 'approved' && pointsAwarded > 0) {
         await supabase.rpc('award_points', {
-          user_id: profile.id,
-          points: pointsAwarded,
-          activity_type: 'review',
-          reference_id: businessId,
+          p_user_id: profile.id,
+          p_points: pointsAwarded,
+          p_activity_type: 'review',
+          p_description: `Recensione per ${businessName || 'attività'}`,
         });
       }
 

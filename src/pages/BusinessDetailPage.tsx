@@ -91,7 +91,8 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
         const { data: reviewsData } = await supabase
           .from('reviews')
           .select('overall_rating')
-          .eq('business_id', businessId);
+          .eq('business_id', businessId)
+          .eq('review_status', 'approved');
 
         const avg_rating = reviewsData && reviewsData.length > 0
           ? reviewsData.reduce((sum, r) => sum + r.overall_rating, 0) / reviewsData.length
@@ -107,12 +108,13 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           .from('reviews')
           .select(`
             *,
-            customer:profiles(full_name),
+            customer:profiles!customer_id(full_name),
             responses:review_responses(*),
             family_member:customer_family_members(first_name, last_name, nickname),
             business_location:business_locations(id, name, address, city)
           `)
           .eq('business_id', businessId)
+          .eq('review_status', 'approved')
           .order('created_at', { ascending: false });
 
         if (fullReviewsData) {
@@ -123,7 +125,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           .from('discounts')
           .select('*')
           .eq('business_id', businessId)
-          .eq('status', 'active');
+          .eq('active', true);
 
         if (discountsData) {
           setDiscounts(discountsData);
@@ -276,7 +278,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
     );
   }
 
-  const canReview = profile?.user_type === 'customer' && (profile?.subscription_status === 'active' || profile?.subscription_status === 'trial');
+  const canReview = profile?.user_type === 'customer' && (profile?.subscription_status === 'active' || profile?.subscription_status === 'trial') && business.is_claimed !== false;
   const isOwner = profile && business.owner_id === profile.id;
   const canClaim = profile?.user_type === 'business' && !business.is_claimed && !business.owner_id;
   const canShowClaimButton = !business.is_claimed && !business.owner_id && profile?.user_type !== 'customer';
@@ -636,6 +638,19 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                       </button>
                     )}
                   </div>
+
+                  {!business.is_claimed && profile?.user_type === 'customer' && (
+                    <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm text-yellow-800">
+                            Questa attività non è ancora stata reclamata dal proprietario. Solo le attività reclamate e verificate possono ricevere recensioni.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {reviews.length === 0 ? (
                     <p className="text-gray-600 text-center py-8 bg-gray-50 rounded-lg">

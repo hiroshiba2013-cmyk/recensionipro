@@ -436,7 +436,7 @@ export function ProfilePage() {
         .from('reviews')
         .select(`
           *,
-          customer:profiles(full_name),
+          customer:profiles!customer_id(full_name),
           family_member:customer_family_members(nickname),
           business_location:business_locations(id, name, address, city)
         `)

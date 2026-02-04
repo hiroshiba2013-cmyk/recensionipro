@@ -108,11 +108,12 @@ export function DashboardPage() {
               .from('reviews')
               .select(`
                 *,
-                customer:profiles(full_name),
+                customer:profiles!customer_id(full_name),
                 responses:review_responses(*),
                 business_location:business_locations(internal_name, address)
               `)
               .in('business_id', businessIds)
+              .eq('review_status', 'approved')
               .order('created_at', { ascending: false });
 
             if (selectedBusinessLocationId) {
