@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Search, Building2, MapPin, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { Header } from '../components/layout/Header';
 import { useNavigate } from '../components/Router';
 
 interface BusinessResult {
@@ -103,8 +102,6 @@ export function ClaimBusinessPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
