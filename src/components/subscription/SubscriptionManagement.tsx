@@ -16,6 +16,7 @@ interface Subscription {
   status: string;
   start_date: string;
   end_date: string;
+  trial_end_date?: string;
 }
 
 interface SubscriptionManagementProps {
@@ -45,9 +46,9 @@ export function SubscriptionManagement({
   const loadSubscription = async () => {
     const { data, error } = await supabase
       .from('subscriptions')
-      .select('id, status, start_date, end_date, plan:subscription_plans(id, name, price, billing_period, max_persons)')
+      .select('id, status, start_date, end_date, trial_end_date, plan:subscription_plans(id, name, price, billing_period, max_persons)')
       .eq('customer_id', userId)
-      .eq('status', 'active')
+      .in('status', ['active', 'trial'])
       .maybeSingle();
 
     if (!error && data) {
@@ -98,6 +99,7 @@ export function SubscriptionManagement({
             plan_id: planId,
             end_date: endDate.toISOString(),
             status: 'active',
+            payment_method_added: true,
           })
           .eq('id', currentSubscription.id);
 
@@ -110,6 +112,7 @@ export function SubscriptionManagement({
             plan_id: planId,
             status: 'active',
             end_date: endDate.toISOString(),
+            payment_method_added: true,
           });
 
         if (insertError) throw insertError;
@@ -154,11 +157,20 @@ export function SubscriptionManagement({
             showPlans
               ? 'bg-gray-500 text-white hover:bg-gray-600'
               : currentSubscription
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              ? currentSubscription.status === 'trial'
+                ? 'bg-purple-600 text-white hover:bg-purple-700'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
               : 'bg-green-600 text-white hover:bg-green-700'
           }`}
         >
-          {showPlans ? 'Nascondi Piani' : currentSubscription ? 'Cambia Piano' : 'Attiva Abbonamento'}
+          {showPlans
+            ? 'Nascondi Piani'
+            : currentSubscription
+              ? currentSubscription.status === 'trial'
+                ? 'Passa a Piano Pagato'
+                : 'Cambia Piano'
+              : 'Attiva Abbonamento'
+          }
         </button>
       </div>
 
@@ -171,31 +183,61 @@ export function SubscriptionManagement({
       )}
 
       {currentSubscription && (
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 mb-6">
+        <div className={`bg-gradient-to-br rounded-lg p-6 mb-6 ${
+          currentSubscription.status === 'trial'
+            ? 'from-purple-50 to-purple-100'
+            : 'from-blue-50 to-blue-100'
+        }`}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Piano Attuale</p>
+              <p className="text-sm text-gray-600 mb-1">
+                {currentSubscription.status === 'trial' ? 'Periodo di Prova Gratuito' : 'Piano Attuale'}
+              </p>
               <p className="text-2xl font-bold text-gray-900">{currentSubscription.plan.name}</p>
             </div>
             <div className="text-right">
-              <p className="text-3xl font-bold text-blue-600">
-                €{Number(currentSubscription.plan.price).toFixed(2)}
-              </p>
-              <p className="text-sm text-gray-600">
-                {currentSubscription.plan.billing_period === 'monthly' ? 'al mese' : 'all\'anno'}
-              </p>
+              {currentSubscription.status === 'trial' ? (
+                <>
+                  <p className="text-3xl font-bold text-purple-600">GRATIS</p>
+                  <p className="text-sm text-gray-600">3 mesi di prova</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-3xl font-bold text-blue-600">
+                    €{Number(currentSubscription.plan.price).toFixed(2)}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {currentSubscription.plan.billing_period === 'monthly' ? 'al mese' : 'all\'anno'}
+                  </p>
+                </>
+              )}
             </div>
           </div>
 
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className={`border rounded-lg p-4 ${
+            currentSubscription.status === 'trial'
+              ? 'bg-purple-50 border-purple-200'
+              : 'bg-green-50 border-green-200'
+          }`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-semibold text-green-800">Abbonamento Attivo</p>
-                <p className="text-sm text-green-700">
-                  Scade il {new Date(currentSubscription.end_date).toLocaleDateString('it-IT')}
+                <p className={`font-semibold ${
+                  currentSubscription.status === 'trial' ? 'text-purple-800' : 'text-green-800'
+                }`}>
+                  {currentSubscription.status === 'trial' ? 'Periodo di Prova Attivo' : 'Abbonamento Attivo'}
+                </p>
+                <p className={`text-sm ${
+                  currentSubscription.status === 'trial' ? 'text-purple-700' : 'text-green-700'
+                }`}>
+                  {currentSubscription.status === 'trial'
+                    ? `La prova termina il ${new Date(currentSubscription.trial_end_date || currentSubscription.end_date).toLocaleDateString('it-IT')}`
+                    : `Scade il ${new Date(currentSubscription.end_date).toLocaleDateString('it-IT')}`
+                  }
                 </p>
               </div>
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <div className={`w-3 h-3 rounded-full ${
+                currentSubscription.status === 'trial' ? 'bg-purple-500' : 'bg-green-500'
+              }`}></div>
             </div>
           </div>
 
@@ -235,6 +277,38 @@ export function SubscriptionManagement({
               )}
             </ul>
           </div>
+        </div>
+      )}
+
+      {currentSubscription && currentSubscription.status === 'trial' && (
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6 rounded-r-lg">
+          <h3 className="font-semibold text-blue-900 mb-2">Informazioni sul Periodo di Prova</h3>
+          <ul className="space-y-2 text-sm text-blue-800">
+            <li className="flex items-start gap-2">
+              <Check className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <span>
+                <strong>Durata:</strong> Il periodo di prova dura 90 giorni (3 mesi) a partire dalla data di iscrizione
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Check className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <span>
+                <strong>Accesso completo:</strong> Durante la prova hai accesso a tutte le funzionalità incluse nel piano
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Check className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <span>
+                <strong>Nessun addebito:</strong> Non verrà addebitato alcun costo durante il periodo di prova
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Check className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <span>
+                <strong>Dopo la prova:</strong> Al termine del periodo di prova, potrai scegliere un piano a pagamento per continuare a utilizzare il servizio
+              </span>
+            </li>
+          </ul>
         </div>
       )}
 
