@@ -315,7 +315,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         billing_province: data.billingProvince.toUpperCase(),
         billing_address: billingAddress,
         user_type: 'customer',
-        subscription_status: 'expired',
+        subscription_status: 'trial',
       };
 
       if (data.nickname) {
@@ -331,6 +331,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .insert(profileData);
 
       if (profileError) throw profileError;
+
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + 90);
+
+      const { error: subscriptionError } = await supabase
+        .from('subscriptions')
+        .insert({
+          customer_id: authData.user.id,
+          plan_id: 'a3fbba4c-29e4-4bb7-8316-7387547cfb68',
+          status: 'trial',
+          start_date: new Date().toISOString(),
+          end_date: trialEndDate.toISOString(),
+          trial_end_date: trialEndDate.toISOString(),
+          payment_method_added: false,
+          reminder_sent: false,
+        });
+
+      if (subscriptionError) throw subscriptionError;
     }
   };
 
@@ -350,7 +368,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email,
           full_name: data.companyName,
           user_type: 'business',
-          subscription_status: 'expired',
+          subscription_status: 'trial',
         });
 
       if (profileError) throw profileError;
@@ -388,6 +406,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
       if (businessError) throw businessError;
+
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + 90);
+
+      const { error: subscriptionError } = await supabase
+        .from('subscriptions')
+        .insert({
+          customer_id: authData.user.id,
+          plan_id: 'c55c8f6f-9b9f-4163-861f-cbb7862458fc',
+          status: 'trial',
+          start_date: new Date().toISOString(),
+          end_date: trialEndDate.toISOString(),
+          trial_end_date: trialEndDate.toISOString(),
+          payment_method_added: false,
+          reminder_sent: false,
+        });
+
+      if (subscriptionError) throw subscriptionError;
     }
   };
 
