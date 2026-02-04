@@ -276,7 +276,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
     );
   }
 
-  const canReview = profile?.user_type === 'customer' && profile?.subscription_status === 'active';
+  const canReview = profile?.user_type === 'customer' && (profile?.subscription_status === 'active' || profile?.subscription_status === 'trial');
   const isOwner = profile && business.owner_id === profile.id;
   const canClaim = profile?.user_type === 'business' && !business.is_claimed && !business.owner_id;
   const canShowClaimButton = !business.is_claimed && !business.owner_id && profile?.user_type !== 'customer';
