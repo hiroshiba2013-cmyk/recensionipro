@@ -106,7 +106,7 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
       return;
     }
 
-    if (profile.subscription_status !== 'active') {
+    if (profile.subscription_status !== 'active' && profile.subscription_status !== 'trial') {
       setError('È necessario un abbonamento attivo per lasciare recensioni');
       return;
     }
