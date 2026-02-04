@@ -453,6 +453,13 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             });
 
           if (subscriptionError) throw subscriptionError;
+
+          const { error: profileUpdateError } = await supabase
+            .from('profiles')
+            .update({ subscription_status: 'active' })
+            .eq('id', user.id);
+
+          if (profileUpdateError) throw profileUpdateError;
         }
       }
 
@@ -565,6 +572,13 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             });
 
           if (subscriptionError) throw subscriptionError;
+
+          const { error: profileUpdateError } = await supabase
+            .from('profiles')
+            .update({ subscription_status: 'active' })
+            .eq('id', user.id);
+
+          if (profileUpdateError) throw profileUpdateError;
         }
       }
 
