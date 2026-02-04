@@ -434,7 +434,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
           const startDate = new Date();
           const endDate = new Date();
 
-          if (businessBillingPeriod === 'monthly') {
+          if (billingPeriod === 'monthly') {
             endDate.setMonth(endDate.getMonth() + 1);
           } else {
             endDate.setFullYear(endDate.getFullYear() + 1);
