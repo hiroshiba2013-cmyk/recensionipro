@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Search, Building2, MapPin, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { useNavigate } from '../components/Router';
 
 interface BusinessResult {
   id: string;
@@ -18,7 +17,6 @@ interface BusinessResult {
 }
 
 export function ClaimBusinessPage() {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     businessName: '',
     address: '',
@@ -97,6 +95,11 @@ export function ClaimBusinessPage() {
 
   const handleClaim = (businessId: string) => {
     sessionStorage.setItem('claimBusinessId', businessId);
+    window.location.href = '/?register=business';
+  };
+
+  const handleRegisterNew = () => {
+    sessionStorage.removeItem('claimBusinessId');
     window.location.href = '/?register=business';
   };
 
@@ -205,7 +208,7 @@ export function ClaimBusinessPage() {
                   Non abbiamo trovato la tua attività nel database. Registrati per aggiungerla!
                 </p>
                 <button
-                  onClick={() => navigate('/dashboard')}
+                  onClick={handleRegisterNew}
                   className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
                 >
                   Registrati e Aggiungi Attività
@@ -219,7 +222,7 @@ export function ClaimBusinessPage() {
                     {results.length} {results.length === 1 ? 'Attività Trovata' : 'Attività Trovate'}
                   </h3>
                   <p className="text-gray-600 mt-2">
-                    Clicca su "Rivendica" per gestire la tua attività
+                    Clicca sulla scheda della tua attività per rivendicarla e registrarti
                   </p>
                 </div>
 
@@ -227,7 +230,12 @@ export function ClaimBusinessPage() {
                   {results.map((business) => (
                     <div
                       key={business.id}
-                      className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200"
+                      onClick={() => !business.is_claimed && handleClaim(business.id)}
+                      className={`bg-white rounded-xl shadow-sm overflow-hidden border-2 transition-all ${
+                        !business.is_claimed
+                          ? 'border-blue-200 hover:border-blue-400 hover:shadow-lg cursor-pointer'
+                          : 'border-gray-200 opacity-75'
+                      }`}
                     >
                       <div className="p-6">
                         <div className="flex items-start gap-6">
@@ -287,13 +295,10 @@ export function ClaimBusinessPage() {
                             </div>
 
                             {!business.is_claimed ? (
-                              <button
-                                onClick={() => handleClaim(business.id)}
-                                className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-                              >
-                                <Building2 className="w-5 h-5" />
-                                Rivendica questa Attività
-                              </button>
+                              <div className="inline-flex items-center gap-2 text-blue-600 font-semibold">
+                                <ArrowRight className="w-5 h-5" />
+                                <span>Clicca per rivendicare e registrarti</span>
+                              </div>
                             ) : (
                               <p className="text-gray-600 italic">
                                 Questa attività è già stata rivendicata. Se pensi si tratti di un errore, contattaci.
