@@ -431,18 +431,24 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
           .single();
 
         if (plan) {
-          const trialEndDate = new Date();
-          trialEndDate.setMonth(trialEndDate.getMonth() + 3);
+          const startDate = new Date();
+          const endDate = new Date();
+
+          if (businessBillingPeriod === 'monthly') {
+            endDate.setMonth(endDate.getMonth() + 1);
+          } else {
+            endDate.setFullYear(endDate.getFullYear() + 1);
+          }
 
           const { error: subscriptionError } = await supabase
             .from('subscriptions')
             .insert({
               customer_id: user.id,
               plan_id: plan.id,
-              status: 'trial',
-              trial_end_date: trialEndDate.toISOString(),
-              end_date: trialEndDate.toISOString(),
-              payment_method_added: false,
+              status: 'active',
+              start_date: startDate.toISOString(),
+              end_date: endDate.toISOString(),
+              payment_method_added: true,
               reminder_sent: false,
             });
 
@@ -537,18 +543,24 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
           .single();
 
         if (plan) {
-          const trialEndDate = new Date();
-          trialEndDate.setMonth(trialEndDate.getMonth() + 3);
+          const startDate = new Date();
+          const endDate = new Date();
+
+          if (businessBillingPeriod === 'monthly') {
+            endDate.setMonth(endDate.getMonth() + 1);
+          } else {
+            endDate.setFullYear(endDate.getFullYear() + 1);
+          }
 
           const { error: subscriptionError } = await supabase
             .from('subscriptions')
             .insert({
               customer_id: user.id,
               plan_id: plan.id,
-              status: 'trial',
-              trial_end_date: trialEndDate.toISOString(),
-              end_date: trialEndDate.toISOString(),
-              payment_method_added: false,
+              status: 'active',
+              start_date: startDate.toISOString(),
+              end_date: endDate.toISOString(),
+              payment_method_added: true,
               reminder_sent: false,
             });
 
