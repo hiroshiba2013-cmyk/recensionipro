@@ -114,7 +114,7 @@ export function ClaimBusinessPage() {
             Verifica la Tua Attività
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Cerca la tua attività per nome, città o indirizzo. Se è già nel nostro database, puoi rivendicarla gratuitamente per gestirla
+            Cerca la tua attività per nome, città o indirizzo. Se è già nel nostro database, puoi rivendicarla per gestirla
           </p>
         </div>
 
