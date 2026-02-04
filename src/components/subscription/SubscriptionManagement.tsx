@@ -167,7 +167,7 @@ export function SubscriptionManagement({
             ? 'Nascondi Piani'
             : currentSubscription
               ? currentSubscription.status === 'trial'
-                ? 'Passa a Piano Pagato'
+                ? 'Visualizza Piani'
                 : 'Cambia Piano'
               : 'Attiva Abbonamento'
           }
