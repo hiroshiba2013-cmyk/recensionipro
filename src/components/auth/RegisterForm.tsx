@@ -31,6 +31,8 @@ interface BusinessHours {
 
 interface BusinessLocation {
   name: string;
+  description: string;
+  services: string[];
   address: string;
   streetNumber: string;
   city: string;
@@ -68,7 +70,9 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     if (userType === 'business' && businessLocations.length === 0) {
       const defaultHours = { open: '09:00', close: '18:00', closed: false };
       setBusinessLocations([{
-        name: 'Sede Principale',
+        name: 'Sede 1',
+        description: '',
+        services: [],
         address: '',
         streetNumber: '',
         city: '',
@@ -282,7 +286,9 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     }
     const defaultHours: DayHours = { open: '09:00', close: '18:00', closed: false };
     setBusinessLocations([...businessLocations, {
-      name: 'Sede',
+      name: `Sede ${businessLocations.length + 1}`,
+      description: '',
+      services: [],
       address: '',
       streetNumber: '',
       city: '',
@@ -492,6 +498,8 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
           const locationsToInsert = businessLocations.map((location, index) => ({
             business_id: businesses.id,
             name: location.name,
+            description: location.description || null,
+            services: location.services || [],
             address: location.address,
             street_number: location.streetNumber,
             city: location.city,
@@ -1604,7 +1612,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             <div key={index} className="bg-emerald-50 p-4 rounded-lg border-2 border-emerald-300 mb-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-bold text-gray-900">
-                  {index === 0 ? 'Punto Vendita Principale' : `Punto Vendita ${index + 1}`}
+                  Sede {index + 1}
                 </h3>
                 {index > 0 && (
                   <button
@@ -1626,9 +1634,41 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                   value={location.name}
                   onChange={(e) => updateBusinessLocation(index, 'name', e.target.value)}
                   required
-                  placeholder={index === 0 ? 'Sede Principale' : `Sede ${index + 1}`}
+                  placeholder={`Sede ${index + 1}`}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />
+              </div>
+
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Descrizione Sede
+                </label>
+                <textarea
+                  value={location.description}
+                  onChange={(e) => updateBusinessLocation(index, 'description', e.target.value)}
+                  placeholder="Descrivi questa sede: cosa offre, caratteristiche particolari, ecc."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Servizi Offerti
+                </label>
+                <textarea
+                  value={location.services.join(', ')}
+                  onChange={(e) => {
+                    const services = e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                    const updated = [...businessLocations];
+                    updated[index] = { ...updated[index], services };
+                    setBusinessLocations(updated);
+                  }}
+                  placeholder="Inserisci i servizi separati da virgola (es. Taglio, Piega, Colore)"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+                <p className="text-xs text-gray-500 mt-1">Inserisci i servizi separati da virgola</p>
               </div>
 
               <div className="grid grid-cols-3 gap-3 mb-3">
