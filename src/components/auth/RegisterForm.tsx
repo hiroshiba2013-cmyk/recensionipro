@@ -252,6 +252,10 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
   };
 
   const addFamilyMember = () => {
+    const maxMembers = parseInt(numberOfPeople) - 1;
+    if (familyMembers.length >= maxMembers) {
+      return;
+    }
     setFamilyMembers([...familyMembers, {
       firstName: '',
       lastName: '',
@@ -946,14 +950,14 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             </div>
           ))}
 
-          {parseInt(numberOfPeople) === 4 && (
+          {parseInt(numberOfPeople) > 1 && familyMembers.length < (parseInt(numberOfPeople) - 1) && (
             <button
               type="button"
               onClick={addFamilyMember}
               className="w-full flex items-center justify-center gap-2 py-2 px-4 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors text-sm font-medium"
             >
               <Plus className="w-4 h-4" />
-              Aggiungi altra persona
+              Aggiungi altra persona ({familyMembers.length + 1}/{parseInt(numberOfPeople) - 1})
             </button>
           )}
 
