@@ -11,6 +11,9 @@ import { DiscountVerification } from '../components/discount/DiscountVerificatio
 import { ReviewResponseForm } from '../components/reviews/ReviewResponseForm';
 import { ImportBusinessesForm } from '../components/business/ImportBusinessesForm';
 import { FavoritesSection } from '../components/favorites/FavoritesSection';
+import TrialStatusBanner from '../components/subscription/TrialStatusBanner';
+import TrialExpirationModal from '../components/subscription/TrialExpirationModal';
+import { useNavigate } from '../components/Router';
 
 interface SubscriptionPlan {
   id: string;
@@ -47,6 +50,7 @@ interface JobPosting {
 
 export function DashboardPage() {
   const { profile, selectedBusinessLocationId } = useAuth();
+  const navigate = useNavigate();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
@@ -326,7 +330,7 @@ export function DashboardPage() {
     );
   }
 
-  if (profile.subscription_status !== 'active') {
+  if (profile.subscription_status !== 'active' && profile.subscription_status !== 'trial') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center bg-white p-8 rounded-lg shadow-lg max-w-md">
@@ -349,6 +353,8 @@ export function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
+      <TrialExpirationModal />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -358,6 +364,12 @@ export function DashboardPage() {
             Benvenuto, {profile.full_name}
           </p>
         </div>
+
+        {profile.user_type === 'business' && (
+          <TrialStatusBanner
+            onUpgradeClick={() => navigate('/subscription')}
+          />
+        )}
 
         {loading ? (
           <div className="text-center py-12">
