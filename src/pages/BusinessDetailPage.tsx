@@ -668,10 +668,16 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
 
                 <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
                   <h3 className="font-semibold text-gray-900 mb-3">
-                    {canShowClaimButton ? 'Sei il proprietario?' : 'Informazioni'}
+                    {canShowClaimButton ? 'Stato Attività' : 'Informazioni'}
                   </h3>
                   {canShowClaimButton ? (
                     <>
+                      <div className="mb-4 flex items-start gap-2">
+                        <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm font-medium text-amber-900">
+                          Attività non ancora rivendicata
+                        </p>
+                      </div>
                       <p className="text-sm text-gray-700 mb-4">
                         {needsBusinessAccount
                           ? 'Se sei il proprietario di questa attività, crea un account business per rivenindicarla e gestirla.'
@@ -689,11 +695,14 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                       </button>
                     </>
                   ) : (
-                    <p className="text-sm text-gray-700">
-                      {isOwner
-                        ? 'Questa è la tua attività. Puoi gestirla dalla dashboard.'
-                        : 'Attività verificata e gestita dal proprietario.'}
-                    </p>
+                    <div className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm font-medium text-green-900">
+                        {isOwner
+                          ? 'Questa è la tua attività. Puoi gestirla dalla dashboard.'
+                          : 'Attività verificata e gestita dal proprietario'}
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
