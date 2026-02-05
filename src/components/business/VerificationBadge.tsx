@@ -13,8 +13,8 @@ export function VerificationBadge({ isClaimed, size = 'md', showText = true }: V
 
   const sizeClasses = {
     sm: {
-      container: 'px-2 py-1 text-xs',
-      icon: 'w-3 h-3',
+      container: 'px-2.5 py-1 text-xs',
+      icon: 'w-3.5 h-3.5',
       gap: 'gap-1',
     },
     md: {
@@ -34,19 +34,19 @@ export function VerificationBadge({ isClaimed, size = 'md', showText = true }: V
   if (!showText) {
     return (
       <div
-        className="inline-flex items-center justify-center rounded-full bg-blue-50 border-blue-200 border-2 p-1"
+        className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-green-50 to-emerald-50 border-green-300 border-2 p-1 shadow-sm"
         title="Rivendicata"
       >
-        <Icon className={`${currentSize.icon} text-blue-600`} />
+        <Icon className={`${currentSize.icon} text-green-600`} />
       </div>
     );
   }
 
   return (
     <div
-      className={`inline-flex items-center ${currentSize.gap} ${currentSize.container} rounded-full bg-blue-50 text-blue-700 border-blue-200 border font-semibold`}
+      className={`inline-flex items-center ${currentSize.gap} ${currentSize.container} rounded-full bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-2 border-green-300 font-bold shadow-sm`}
     >
-      <Icon className={`${currentSize.icon} text-blue-600`} />
+      <Icon className={`${currentSize.icon} text-green-600 fill-green-100`} />
       <span>Rivendicata</span>
     </div>
   );
