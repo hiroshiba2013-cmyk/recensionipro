@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 
 interface LocationResult {
   id: string;
-  business_id: string;
+  business_id: string | null;
   name: string | null;
   street: string | null;
   city: string;
@@ -15,10 +15,11 @@ interface LocationResult {
   category_id: string | null;
   region: string | null;
   website: string | null;
+  source: 'unclaimed' | 'claimed';
 }
 
 interface GroupedBusiness {
-  business_id: string;
+  business_key: string;
   business_name: string;
   locations: LocationResult[];
   total_locations: number;
@@ -53,7 +54,6 @@ export function ClaimBusinessPage() {
         .from('unclaimed_business_locations')
         .select(`
           id,
-          business_id,
           name,
           street,
           city,
@@ -116,13 +116,16 @@ export function ClaimBusinessPage() {
       const allLocations: LocationResult[] = [
         ...(unclaimedResult.data || []).map(loc => ({
           ...loc,
-          street: loc.street
+          street: loc.street,
+          business_id: null,
+          source: 'unclaimed' as const
         })),
         ...(claimedResult.data || []).map(loc => ({
           ...loc,
           street: loc.address,
           name: loc.name || (loc.business as any)?.name,
-          category_id: null
+          category_id: null,
+          source: 'claimed' as const
         }))
       ];
 
@@ -130,11 +133,12 @@ export function ClaimBusinessPage() {
 
       allLocations.forEach(location => {
         const businessName = location.name || 'Attività senza nome';
-        const key = `${location.business_id}_${businessName}`;
+        const normalizedName = businessName.toLowerCase().trim();
+        const key = location.business_id ? `business_${location.business_id}` : `name_${normalizedName}`;
 
         if (!businessMap.has(key)) {
           businessMap.set(key, {
-            business_id: location.business_id,
+            business_key: key,
             business_name: businessName,
             locations: [],
             total_locations: 0,
@@ -183,13 +187,14 @@ export function ClaimBusinessPage() {
 
     sessionStorage.setItem('claimLocationIds', JSON.stringify(Array.from(selectedLocations)));
     sessionStorage.setItem('claimBusinessName', business.business_name);
-    sessionStorage.setItem('claimBusinessId', business.business_id);
+    sessionStorage.setItem('claimBusinessKey', business.business_key);
     window.location.href = '/?register=business';
   };
 
   const handleRegisterNew = () => {
     sessionStorage.removeItem('claimLocationIds');
     sessionStorage.removeItem('claimBusinessId');
+    sessionStorage.removeItem('claimBusinessKey');
     sessionStorage.removeItem('claimBusinessName');
     window.location.href = '/?register=business';
   };
@@ -323,7 +328,7 @@ export function ClaimBusinessPage() {
 
                     return (
                       <div
-                        key={`${business.business_id}_${business.business_name}`}
+                        key={business.business_key}
                         className="bg-white rounded-xl shadow-sm overflow-hidden border-2 border-blue-200"
                       >
                         <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 border-b-2 border-blue-200">
