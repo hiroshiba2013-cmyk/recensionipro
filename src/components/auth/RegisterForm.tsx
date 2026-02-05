@@ -65,6 +65,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
   const [numberOfLocations, setNumberOfLocations] = useState('1');
   const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [businessBillingPeriod, setBusinessBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
+  const [hasClaimedLocations, setHasClaimedLocations] = useState(false);
 
   useEffect(() => {
     if (userType === 'business' && businessLocations.length === 0) {
@@ -118,8 +119,79 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
       localStorage.removeItem('selectedPlanId');
     } else if (registerType === 'business') {
       setUserType('business');
+      loadClaimedLocationsData();
     }
   }, []);
+
+  const loadClaimedLocationsData = async () => {
+    try {
+      const claimLocationIdsJson = sessionStorage.getItem('claimLocationIds');
+      if (!claimLocationIdsJson) return;
+
+      const locationIds = JSON.parse(claimLocationIdsJson);
+      if (!Array.isArray(locationIds) || locationIds.length === 0) return;
+
+      const { data: locations, error } = await supabase
+        .from('unclaimed_business_locations')
+        .select('*')
+        .in('id', locationIds);
+
+      if (error || !locations || locations.length === 0) {
+        console.error('Error loading claimed locations:', error);
+        return;
+      }
+
+      setNumberOfLocations(locations.length.toString());
+      setHasClaimedLocations(true);
+
+      const defaultHours: DayHours = { open: '09:00', close: '18:00', closed: false };
+      const newLocations: BusinessLocation[] = locations.map((loc, index) => ({
+        name: loc.name || `Sede ${index + 1}`,
+        description: loc.description || '',
+        services: [],
+        address: loc.street || '',
+        streetNumber: '',
+        city: loc.city || '',
+        province: loc.province || '',
+        postalCode: loc.postal_code || '',
+        phone: loc.phone || '',
+        email: loc.email || '',
+        vatNumber: '',
+        businessHours: typeof loc.business_hours === 'string' ? JSON.parse(loc.business_hours) : (loc.business_hours || {
+          monday: defaultHours,
+          tuesday: defaultHours,
+          wednesday: defaultHours,
+          thursday: defaultHours,
+          friday: defaultHours,
+          saturday: { ...defaultHours, closed: true },
+          sunday: { ...defaultHours, closed: true },
+        }),
+      }));
+
+      setBusinessLocations(newLocations);
+
+      const claimBusinessName = sessionStorage.getItem('claimBusinessName');
+      if (claimBusinessName && locations.length > 0) {
+        setBusinessForm(prev => ({
+          ...prev,
+          companyName: claimBusinessName,
+        }));
+      }
+
+      const { data: plans, error: plansError } = await supabase
+        .from('business_subscription_plans')
+        .select('*')
+        .eq('max_locations', locations.length)
+        .eq('billing_period', 'monthly')
+        .maybeSingle();
+
+      if (!plansError && plans) {
+        setPreselectedPlanId(plans.id);
+      }
+    } catch (error) {
+      console.error('Error loading claimed locations data:', error);
+    }
+  };
 
   const loadPlanDetails = async (planId: string) => {
     try {
@@ -1311,13 +1383,33 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Quante sedi/punti vendita hai?
             </label>
-            <p className="text-xs text-gray-600 mb-3 bg-white p-2 rounded border border-blue-200">
-              <span className="font-semibold">Nota:</span> Questo numero si riferisce ai tuoi punti vendita fisici,
-              non include i dati legali aziendali che hai inserito sopra.
-            </p>
+            {hasClaimedLocations ? (
+              <div className="bg-green-50 border-2 border-green-300 rounded-lg p-3 mb-3">
+                <div className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-semibold text-green-800 mb-1">
+                      Sedi selezionate automaticamente
+                    </p>
+                    <p className="text-xs text-gray-700">
+                      Hai selezionato {businessLocations.length} {businessLocations.length === 1 ? 'sede' : 'sedi'} da rivendicare.
+                      I dati sono stati precompilati automaticamente. Puoi modificarli nei campi sottostanti.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-600 mb-3 bg-white p-2 rounded border border-blue-200">
+                <span className="font-semibold">Nota:</span> Questo numero si riferisce ai tuoi punti vendita fisici,
+                non include i dati legali aziendali che hai inserito sopra.
+              </p>
+            )}
             <SearchableSelect
               value={numberOfLocations}
               onChange={(value) => {
+                if (hasClaimedLocations) return;
                 setNumberOfLocations(value);
                 let num = 1;
                 if (value === '6-10') {
@@ -1346,6 +1438,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 { value: '10+', label: 'Oltre 10 sedi' },
               ]}
               placeholder="Seleziona numero sedi"
+              disabled={hasClaimedLocations}
             />
 
             <div className="mt-4">
