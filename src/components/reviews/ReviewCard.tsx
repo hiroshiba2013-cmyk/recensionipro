@@ -86,19 +86,19 @@ export function ReviewCard({ review }: ReviewCardProps) {
       {review.price_rating && review.service_rating && review.quality_rating && (
         <div className="grid grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
           <div>
+            <p className="text-xs font-medium text-gray-600 mb-1">Qualità</p>
+            {renderStars(review.quality_rating)}
+            <p className="text-xs text-gray-500 mt-1">{getRatingLabel(review.quality_rating)}</p>
+          </div>
+          <div>
             <p className="text-xs font-medium text-gray-600 mb-1">Prezzo</p>
             {renderStars(review.price_rating)}
             <p className="text-xs text-gray-500 mt-1">{getRatingLabel(review.price_rating)}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-600 mb-1">Servizio</p>
+            <p className="text-xs font-medium text-gray-600 mb-1">Esperienza / Servizio</p>
             {renderStars(review.service_rating)}
             <p className="text-xs text-gray-500 mt-1">{getRatingLabel(review.service_rating)}</p>
-          </div>
-          <div>
-            <p className="text-xs font-medium text-gray-600 mb-1">Qualità</p>
-            {renderStars(review.quality_rating)}
-            <p className="text-xs text-gray-500 mt-1">{getRatingLabel(review.quality_rating)}</p>
           </div>
         </div>
       )}

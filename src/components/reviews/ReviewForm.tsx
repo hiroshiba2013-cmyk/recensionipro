@@ -387,77 +387,7 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
           <div className="mb-6 space-y-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Prezzo
-              </label>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setPriceRating(star)}
-                    onMouseEnter={() => setHoveredPriceRating(star)}
-                    onMouseLeave={() => setHoveredPriceRating(0)}
-                    className="focus:outline-none transition-transform hover:scale-110"
-                  >
-                    <Star
-                      className={`w-10 h-10 transition-colors ${
-                        star <= (hoveredPriceRating || priceRating)
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  </button>
-                ))}
-              </div>
-              {priceRating > 0 && (
-                <p className="text-sm text-gray-600 mt-2">
-                  {priceRating === 1 && 'Pessimo'}
-                  {priceRating === 2 && 'Discreto'}
-                  {priceRating === 3 && 'Buono'}
-                  {priceRating === 4 && 'Eccellente'}
-                  {priceRating === 5 && 'Ottimo'}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Servizio
-              </label>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setServiceRating(star)}
-                    onMouseEnter={() => setHoveredServiceRating(star)}
-                    onMouseLeave={() => setHoveredServiceRating(0)}
-                    className="focus:outline-none transition-transform hover:scale-110"
-                  >
-                    <Star
-                      className={`w-10 h-10 transition-colors ${
-                        star <= (hoveredServiceRating || serviceRating)
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  </button>
-                ))}
-              </div>
-              {serviceRating > 0 && (
-                <p className="text-sm text-gray-600 mt-2">
-                  {serviceRating === 1 && 'Pessimo'}
-                  {serviceRating === 2 && 'Discreto'}
-                  {serviceRating === 3 && 'Buono'}
-                  {serviceRating === 4 && 'Eccellente'}
-                  {serviceRating === 5 && 'Ottimo'}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Qualità
+                1. Qualità
               </label>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -492,7 +422,77 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Voto Finale *
+                2. Prezzo
+              </label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setPriceRating(star)}
+                    onMouseEnter={() => setHoveredPriceRating(star)}
+                    onMouseLeave={() => setHoveredPriceRating(0)}
+                    className="focus:outline-none transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className={`w-10 h-10 transition-colors ${
+                        star <= (hoveredPriceRating || priceRating)
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              {priceRating > 0 && (
+                <p className="text-sm text-gray-600 mt-2">
+                  {priceRating === 1 && 'Pessimo'}
+                  {priceRating === 2 && 'Discreto'}
+                  {priceRating === 3 && 'Buono'}
+                  {priceRating === 4 && 'Eccellente'}
+                  {priceRating === 5 && 'Ottimo'}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                3. Esperienza / Servizio
+              </label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setServiceRating(star)}
+                    onMouseEnter={() => setHoveredServiceRating(star)}
+                    onMouseLeave={() => setHoveredServiceRating(0)}
+                    className="focus:outline-none transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className={`w-10 h-10 transition-colors ${
+                        star <= (hoveredServiceRating || serviceRating)
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              {serviceRating > 0 && (
+                <p className="text-sm text-gray-600 mt-2">
+                  {serviceRating === 1 && 'Pessimo'}
+                  {serviceRating === 2 && 'Discreto'}
+                  {serviceRating === 3 && 'Buono'}
+                  {serviceRating === 4 && 'Eccellente'}
+                  {serviceRating === 5 && 'Ottimo'}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                4. Voto Generale *
               </label>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
