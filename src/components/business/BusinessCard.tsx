@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Star, MapPin, ExternalLink, MessageSquare } from 'lucide-react';
+import { Star, MapPin, ExternalLink, MessageSquare, Building2 } from 'lucide-react';
 import { Business } from '../../lib/supabase';
 import { ReviewForm } from '../reviews/ReviewForm';
 import { useAuth } from '../../contexts/AuthContext';
@@ -7,7 +7,17 @@ import { VerificationBadge } from './VerificationBadge';
 import { useNavigate } from '../Router';
 
 interface BusinessCardProps {
-  business: Business & { avg_rating?: number; review_count?: number };
+  business: Business & {
+    avg_rating?: number;
+    review_count?: number;
+    location_count?: number;
+    cities?: string[];
+    main_location?: {
+      avatar_url?: string | null;
+      address?: string;
+      city?: string;
+    };
+  };
 }
 
 export function BusinessCard({ business }: BusinessCardProps) {
@@ -34,14 +44,16 @@ export function BusinessCard({ business }: BusinessCardProps) {
     navigate(`/business/${business.id}`);
   };
 
+  const avatarUrl = business.main_location?.avatar_url || business.logo_url;
+
   return (
     <div
       onClick={handleCardClick}
       className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden border border-gray-100"
     >
       <div className="h-48 bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center">
-        {business.logo_url ? (
-          <img src={business.logo_url} alt={business.name} className="w-full h-full object-cover" />
+        {avatarUrl ? (
+          <img src={avatarUrl} alt={business.name} className="w-full h-full object-cover" />
         ) : (
           <div className="text-6xl font-bold text-blue-200">
             {business.name.charAt(0).toUpperCase()}
@@ -65,19 +77,33 @@ export function BusinessCard({ business }: BusinessCardProps) {
           {business.description || 'Nessuna descrizione disponibile'}
         </p>
 
-        <div className="flex items-center gap-4 text-sm text-gray-500">
-          {business.city && (
-            <div className="flex items-center gap-1">
-              <MapPin className="w-4 h-4" />
-              <span>{business.city}</span>
+        <div className="space-y-2 mb-4">
+          {business.location_count && business.location_count > 1 && (
+            <div className="flex items-center gap-2 text-sm">
+              <Building2 className="w-4 h-4 text-blue-600" />
+              <span className="font-semibold text-blue-600">
+                {business.location_count} {business.location_count === 1 ? 'sede' : 'sedi'}
+              </span>
             </div>
           )}
 
-          {business.avg_rating !== undefined && (
-            <div className="flex items-center gap-1">
+          {business.cities && business.cities.length > 0 && (
+            <div className="flex items-start gap-2 text-sm text-gray-700">
+              <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-600" />
+              <span className="font-medium">
+                {business.cities.slice(0, 3).join(', ')}
+                {business.cities.length > 3 && ` +${business.cities.length - 3}`}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-4 text-sm text-gray-500">
+          {business.avg_rating !== undefined && business.review_count !== undefined && business.review_count > 0 && (
+            <div className="flex items-center gap-1 px-3 py-1 bg-yellow-50 rounded-full">
               <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
               <span className="font-medium text-gray-900">{business.avg_rating.toFixed(1)}</span>
-              <span>({business.review_count || 0})</span>
+              <span className="text-xs">({business.review_count})</span>
             </div>
           )}
 

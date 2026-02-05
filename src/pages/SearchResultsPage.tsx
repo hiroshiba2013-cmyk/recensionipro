@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { supabase, Business, BusinessCategory } from '../lib/supabase';
-import { LocationCard } from '../components/business/LocationCard';
+import { BusinessCard } from '../components/business/BusinessCard';
 import { AdvancedSearch, SearchFilters } from '../components/search/AdvancedSearch';
 import { PROVINCE_TO_CODE, PROVINCES_BY_REGION, CITY_TO_PROVINCE } from '../lib/cities';
 
@@ -33,8 +33,23 @@ interface BusinessLocation {
   review_count?: number;
 }
 
+interface GroupedBusiness {
+  id: string;
+  name: string;
+  category_id: string;
+  category?: BusinessCategory;
+  verified: boolean;
+  is_claimed: boolean;
+  locations: BusinessLocation[];
+  location_count: number;
+  cities: string[];
+  avg_rating: number;
+  review_count: number;
+  main_location: BusinessLocation;
+}
+
 export function SearchResultsPage() {
-  const [locations, setLocations] = useState<BusinessLocation[]>([]);
+  const [businesses, setBusinesses] = useState<GroupedBusiness[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [initialFilters, setInitialFilters] = useState<SearchFilters | null>(null);
@@ -78,7 +93,7 @@ export function SearchResultsPage() {
     const shouldRestore = sessionStorage.getItem('shouldRestoreScroll');
     const targetPosition = sessionStorage.getItem('targetScrollPosition');
 
-    if (shouldRestore === 'true' && targetPosition && !loading && locations.length > 0) {
+    if (shouldRestore === 'true' && targetPosition && !loading && businesses.length > 0) {
       const position = parseInt(targetPosition, 10);
       setTimeout(() => {
         window.scrollTo(0, position);
@@ -86,7 +101,7 @@ export function SearchResultsPage() {
         sessionStorage.removeItem('targetScrollPosition');
       }, 100);
     }
-  }, [loading, locations]);
+  }, [loading, businesses]);
 
   const applyFilters = async (filters: SearchFilters) => {
     setLoading(true);
@@ -266,7 +281,7 @@ export function SearchResultsPage() {
       }
 
       if (allLocations.length === 0) {
-        setLocations([]);
+        setBusinesses([]);
         return;
       }
 
@@ -298,7 +313,7 @@ export function SearchResultsPage() {
         });
       }
 
-      let locationsWithRatings = allLocations.map(location => {
+      const locationsWithRatings = allLocations.map(location => {
         const ratings = ratingsMap.get(location.id) || { avg_rating: 0, review_count: 0 };
         return {
           ...location,
@@ -307,31 +322,79 @@ export function SearchResultsPage() {
         };
       });
 
+      // Raggruppa locations per business_id
+      const businessesMap = new Map<string, GroupedBusiness>();
+
+      locationsWithRatings.forEach(location => {
+        const businessId = location.business_id;
+        const businessData = location.business;
+
+        if (!businessData) return;
+
+        if (!businessesMap.has(businessId)) {
+          businessesMap.set(businessId, {
+            id: businessId,
+            name: businessData.name,
+            category_id: businessData.category_id,
+            category: businessData.category,
+            verified: businessData.verified,
+            is_claimed: location.is_claimed,
+            locations: [],
+            location_count: 0,
+            cities: [],
+            avg_rating: 0,
+            review_count: 0,
+            main_location: location,
+          });
+        }
+
+        const business = businessesMap.get(businessId)!;
+        business.locations.push(location);
+        business.location_count = business.locations.length;
+
+        // Aggiungi città se non già presente
+        if (!business.cities.includes(location.city)) {
+          business.cities.push(location.city);
+        }
+
+        // Aggiorna rating e review count aggregati
+        const totalRating = business.locations.reduce((sum, loc) => sum + (loc.avg_rating || 0), 0);
+        const totalReviews = business.locations.reduce((sum, loc) => sum + (loc.review_count || 0), 0);
+        business.avg_rating = business.locations.length > 0 ? totalRating / business.locations.length : 0;
+        business.review_count = totalReviews;
+
+        // Aggiorna main_location con quella con più recensioni o rating più alto
+        if ((location.review_count || 0) > (business.main_location.review_count || 0) ||
+            ((location.review_count || 0) === (business.main_location.review_count || 0) &&
+             (location.avg_rating || 0) > (business.main_location.avg_rating || 0))) {
+          business.main_location = location;
+        }
+      });
+
+      let groupedBusinesses = Array.from(businessesMap.values());
+
+      // Applica filtro rating se richiesto
       if (filters.minRating > 0) {
-        locationsWithRatings = locationsWithRatings.filter(
-          loc => (loc.avg_rating || 0) >= filters.minRating
+        groupedBusinesses = groupedBusinesses.filter(
+          biz => biz.avg_rating >= filters.minRating
         );
       }
 
       // Ordina con priorità: claimed > rating > alfabetico
-      locationsWithRatings.sort((a, b) => {
-        // Priorità 1: Sedi rivendicate prima
+      groupedBusinesses.sort((a, b) => {
+        // Priorità 1: Attività reclamate prima
         const aIsClaimed = a.is_claimed ? 1 : 0;
         const bIsClaimed = b.is_claimed ? 1 : 0;
         if (aIsClaimed !== bIsClaimed) return bIsClaimed - aIsClaimed;
 
         // Priorità 2: Rating
-        const aRating = a.avg_rating || 0;
-        const bRating = b.avg_rating || 0;
-        if (aRating !== bRating) return bRating - aRating;
+        if (a.avg_rating !== b.avg_rating) return b.avg_rating - a.avg_rating;
 
         // Priorità 3: Alfabetico
-        const aName = a.name || a.business?.name || '';
-        const bName = b.name || b.business?.name || '';
-        return aName.localeCompare(bName);
+        return a.name.localeCompare(b.name);
       });
 
-      setLocations(locationsWithRatings);
+      setBusinesses(groupedBusinesses);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -408,14 +471,14 @@ export function SearchResultsPage() {
           <div className="mb-6 flex items-center justify-between bg-white rounded-lg shadow-sm p-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Risultati della Ricerca</h2>
-              <p className="text-gray-600 mt-1">Trova le sedi delle attività che corrispondono ai tuoi criteri</p>
+              <p className="text-gray-600 mt-1">Trova le attività che corrispondono ai tuoi criteri</p>
             </div>
             <div className="flex items-center gap-4">
               <div className="bg-blue-50 px-6 py-3 rounded-lg border-2 border-blue-200">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">{locations.length}</div>
+                  <div className="text-3xl font-bold text-blue-600">{businesses.length}</div>
                   <div className="text-sm text-blue-800 font-medium mt-1">
-                    {locations.length === 1 ? 'Sede Trovata' : 'Sedi Trovate'}
+                    {businesses.length === 1 ? 'Attività Trovata' : 'Attività Trovate'}
                   </div>
                 </div>
               </div>
@@ -429,25 +492,40 @@ export function SearchResultsPage() {
           </div>
         ) : !hasSearched ? (
           <div className="text-center py-12 bg-white rounded-lg">
-            <p className="text-gray-600 text-lg">Usa i filtri sopra per cercare sedi delle attività</p>
+            <p className="text-gray-600 text-lg">Usa i filtri sopra per cercare attività</p>
           </div>
-        ) : locations.length === 0 ? (
+        ) : businesses.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg">
-            <p className="text-gray-600 text-lg">Nessuna sede trovata</p>
+            <p className="text-gray-600 text-lg">Nessuna attività trovata</p>
             <p className="text-gray-500 mt-2">Prova a modificare i filtri di ricerca</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {locations.map((location) => (
-              <LocationCard
-                key={location.id}
-                location={location}
+            {businesses.map((business) => (
+              <BusinessCard
+                key={business.id}
+                business={{
+                  id: business.id,
+                  name: business.name,
+                  category_id: business.category_id,
+                  owner_id: null,
+                  verified: business.verified,
+                  is_claimed: business.is_claimed,
+                  created_at: '',
+                  verification_badge: business.verified,
+                  category: business.category,
+                  avg_rating: business.avg_rating,
+                  review_count: business.review_count,
+                  location_count: business.location_count,
+                  cities: business.cities,
+                  main_location: business.main_location,
+                }}
               />
             ))}
           </div>
         )}
 
-        {hasSearched && locations.length > 0 && (
+        {hasSearched && businesses.length > 0 && (
           <div className="mt-8 bg-gradient-to-r from-blue-50 to-green-50 border-l-4 border-blue-600 rounded-lg p-4">
             <p className="text-sm text-gray-700">
               I dati delle attività sono forniti da{' '}
