@@ -1383,7 +1383,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Quante sedi/punti vendita hai?
             </label>
-            {hasClaimedLocations ? (
+            {hasClaimedLocations && (
               <div className="bg-green-50 border-2 border-green-300 rounded-lg p-3 mb-3">
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1391,25 +1391,23 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                   </svg>
                   <div>
                     <p className="text-sm font-semibold text-green-800 mb-1">
-                      Sedi selezionate automaticamente
+                      Sedi rivendicate precompilate
                     </p>
                     <p className="text-xs text-gray-700">
-                      Hai selezionato {businessLocations.length} {businessLocations.length === 1 ? 'sede' : 'sedi'} da rivendicare.
-                      I dati sono stati precompilati automaticamente. Puoi modificarli nei campi sottostanti.
+                      I dati delle sedi rivendicate sono stati precompilati automaticamente.
+                      Puoi aggiungere altre sedi cambiando il numero qui sotto. I dati delle sedi rivendicate rimarranno salvati.
                     </p>
                   </div>
                 </div>
               </div>
-            ) : (
-              <p className="text-xs text-gray-600 mb-3 bg-white p-2 rounded border border-blue-200">
-                <span className="font-semibold">Nota:</span> Questo numero si riferisce ai tuoi punti vendita fisici,
-                non include i dati legali aziendali che hai inserito sopra.
-              </p>
             )}
+            <p className="text-xs text-gray-600 mb-3 bg-white p-2 rounded border border-blue-200">
+              <span className="font-semibold">Nota:</span> Questo numero si riferisce ai tuoi punti vendita fisici,
+              non include i dati legali aziendali che hai inserito sopra.
+            </p>
             <SearchableSelect
               value={numberOfLocations}
               onChange={(value) => {
-                if (hasClaimedLocations) return;
                 setNumberOfLocations(value);
                 let num = 1;
                 if (value === '6-10') {
@@ -1438,7 +1436,6 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 { value: '10+', label: 'Oltre 10 sedi' },
               ]}
               placeholder="Seleziona numero sedi"
-              disabled={hasClaimedLocations}
             />
 
             <div className="mt-4">
