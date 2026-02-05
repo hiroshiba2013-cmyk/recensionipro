@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { supabase, Business, BusinessCategory } from '../lib/supabase';
 import { LocationCard } from '../components/business/LocationCard';
 import { AdvancedSearch, SearchFilters } from '../components/search/AdvancedSearch';
@@ -406,22 +406,32 @@ export function SearchResultsPage() {
         </div>
 
         {hasSearched && (
-          <div className="mb-6 flex items-center justify-between bg-white rounded-lg shadow-sm p-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Risultati della Ricerca</h2>
-              <p className="text-gray-600 mt-1">Trova le sedi delle attività che corrispondono ai tuoi criteri</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="bg-blue-50 px-6 py-3 rounded-lg border-2 border-blue-200">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">{locations.length}</div>
-                  <div className="text-sm text-blue-800 font-medium mt-1">
-                    {locations.length === 1 ? 'Sede Trovata' : 'Sedi Trovate'}
+          <>
+            <div className="mb-4 flex items-center justify-between bg-white rounded-lg shadow-sm p-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Risultati della Ricerca</h2>
+                <p className="text-gray-600 mt-1">Trova le sedi delle attività che corrispondono ai tuoi criteri</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="bg-blue-50 px-6 py-3 rounded-lg border-2 border-blue-200">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-blue-600">{locations.length}</div>
+                    <div className="text-sm text-blue-800 font-medium mt-1">
+                      {locations.length === 1 ? 'Sede Trovata' : 'Sedi Trovate'}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+            {locations.some(loc => loc.is_claimed) && (
+              <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-lg p-4">
+                <p className="text-sm text-green-900 font-medium flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  Le attività rivendicate dai proprietari sono mostrate in cima ai risultati
+                </p>
+              </div>
+            )}
+          </>
         )}
 
         {loading ? (
