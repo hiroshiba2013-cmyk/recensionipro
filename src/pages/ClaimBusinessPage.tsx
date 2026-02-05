@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Search, Building2, MapPin, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
+import { Search, Building2, MapPin, CheckCircle, XCircle, ArrowRight, Plus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-interface BusinessResult {
+interface LocationResult {
   id: string;
+  business_id: string;
   name: string | null;
   street: string | null;
   city: string;
@@ -16,6 +17,14 @@ interface BusinessResult {
   website: string | null;
 }
 
+interface GroupedBusiness {
+  business_id: string;
+  business_name: string;
+  locations: LocationResult[];
+  total_locations: number;
+  unclaimed_count: number;
+}
+
 export function ClaimBusinessPage() {
   const [formData, setFormData] = useState({
     businessName: '',
@@ -23,7 +32,8 @@ export function ClaimBusinessPage() {
     city: '',
     province: ''
   });
-  const [results, setResults] = useState<BusinessResult[]>([]);
+  const [groupedResults, setGroupedResults] = useState<GroupedBusiness[]>([]);
+  const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set());
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -36,12 +46,14 @@ export function ClaimBusinessPage() {
 
     setLoading(true);
     setSearched(true);
+    setSelectedLocations(new Set());
 
     try {
-      let query = supabase
+      let unclaimedQuery = supabase
         .from('unclaimed_business_locations')
         .select(`
           id,
+          business_id,
           name,
           street,
           city,
@@ -53,38 +65,96 @@ export function ClaimBusinessPage() {
           is_claimed,
           category_id
         `)
-        .order('city', { ascending: true })
-        .limit(100);
+        .limit(200);
 
-      // Filtro per nome attività
+      let claimedQuery = supabase
+        .from('business_locations')
+        .select(`
+          id,
+          business_id,
+          name,
+          address,
+          city,
+          province,
+          region,
+          phone,
+          email,
+          website,
+          is_claimed,
+          business:businesses(name)
+        `)
+        .limit(200);
+
       if (formData.businessName && formData.businessName.trim()) {
-        query = query.ilike('name', `%${formData.businessName.trim()}%`);
+        unclaimedQuery = unclaimedQuery.ilike('name', `%${formData.businessName.trim()}%`);
+        claimedQuery = claimedQuery.ilike('name', `%${formData.businessName.trim()}%`);
       }
 
-      // Filtro per città
       if (formData.city && formData.city.trim()) {
-        query = query.ilike('city', `%${formData.city.trim()}%`);
+        unclaimedQuery = unclaimedQuery.ilike('city', `%${formData.city.trim()}%`);
+        claimedQuery = claimedQuery.ilike('city', `%${formData.city.trim()}%`);
       }
 
-      // Filtro per provincia
       if (formData.province && formData.province.trim()) {
-        query = query.ilike('province', `%${formData.province.trim()}%`);
+        unclaimedQuery = unclaimedQuery.ilike('province', `%${formData.province.trim()}%`);
+        claimedQuery = claimedQuery.ilike('province', `%${formData.province.trim()}%`);
       }
 
-      // Filtro per indirizzo
       if (formData.address && formData.address.trim()) {
-        query = query.ilike('street', `%${formData.address.trim()}%`);
+        unclaimedQuery = unclaimedQuery.ilike('street', `%${formData.address.trim()}%`);
+        claimedQuery = claimedQuery.ilike('address', `%${formData.address.trim()}%`);
       }
 
-      const { data, error } = await query;
+      const [unclaimedResult, claimedResult] = await Promise.all([
+        unclaimedQuery,
+        claimedQuery
+      ]);
 
-      if (error) {
-        console.error('Query error:', error);
-        throw error;
-      }
+      if (unclaimedResult.error) throw unclaimedResult.error;
+      if (claimedResult.error) throw claimedResult.error;
 
-      console.log('Search results:', data?.length || 0, 'found');
-      setResults(data || []);
+      const allLocations: LocationResult[] = [
+        ...(unclaimedResult.data || []).map(loc => ({
+          ...loc,
+          street: loc.street
+        })),
+        ...(claimedResult.data || []).map(loc => ({
+          ...loc,
+          street: loc.address,
+          name: loc.name || (loc.business as any)?.name,
+          category_id: null
+        }))
+      ];
+
+      const businessMap = new Map<string, GroupedBusiness>();
+
+      allLocations.forEach(location => {
+        const businessName = location.name || 'Attività senza nome';
+        const key = `${location.business_id}_${businessName}`;
+
+        if (!businessMap.has(key)) {
+          businessMap.set(key, {
+            business_id: location.business_id,
+            business_name: businessName,
+            locations: [],
+            total_locations: 0,
+            unclaimed_count: 0
+          });
+        }
+
+        const group = businessMap.get(key)!;
+        group.locations.push(location);
+        group.total_locations++;
+        if (!location.is_claimed) {
+          group.unclaimed_count++;
+        }
+      });
+
+      const grouped = Array.from(businessMap.values())
+        .sort((a, b) => b.unclaimed_count - a.unclaimed_count || a.business_name.localeCompare(b.business_name));
+
+      console.log('Search results:', grouped.length, 'businesses found with', allLocations.length, 'total locations');
+      setGroupedResults(grouped);
     } catch (error: any) {
       console.error('Error searching businesses:', error);
       alert(`Errore durante la ricerca: ${error.message || 'Errore sconosciuto'}`);
@@ -93,13 +163,34 @@ export function ClaimBusinessPage() {
     }
   };
 
-  const handleClaim = (businessId: string) => {
-    sessionStorage.setItem('claimBusinessId', businessId);
+  const toggleLocationSelection = (locationId: string, isClaimed: boolean) => {
+    if (isClaimed) return;
+
+    const newSelection = new Set(selectedLocations);
+    if (newSelection.has(locationId)) {
+      newSelection.delete(locationId);
+    } else {
+      newSelection.add(locationId);
+    }
+    setSelectedLocations(newSelection);
+  };
+
+  const handleProceedWithSelection = (business: GroupedBusiness) => {
+    if (selectedLocations.size === 0) {
+      alert('Seleziona almeno una sede da rivendicare');
+      return;
+    }
+
+    sessionStorage.setItem('claimLocationIds', JSON.stringify(Array.from(selectedLocations)));
+    sessionStorage.setItem('claimBusinessName', business.business_name);
+    sessionStorage.setItem('claimBusinessId', business.business_id);
     window.location.href = '/?register=business';
   };
 
   const handleRegisterNew = () => {
+    sessionStorage.removeItem('claimLocationIds');
     sessionStorage.removeItem('claimBusinessId');
+    sessionStorage.removeItem('claimBusinessName');
     window.location.href = '/?register=business';
   };
 
@@ -196,7 +287,7 @@ export function ClaimBusinessPage() {
 
         {searched && !loading && (
           <div className="space-y-6">
-            {results.length === 0 ? (
+            {groupedResults.length === 0 ? (
               <div className="bg-white rounded-xl shadow-sm p-8 text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-4">
                   <XCircle className="w-8 h-8 text-orange-600" />
@@ -219,96 +310,159 @@ export function ClaimBusinessPage() {
               <>
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold text-gray-900">
-                    {results.length} {results.length === 1 ? 'Attività Trovata' : 'Attività Trovate'}
+                    {groupedResults.length} {groupedResults.length === 1 ? 'Attività Trovata' : 'Attività Trovate'}
                   </h3>
                   <p className="text-gray-600 mt-2">
-                    Clicca sulla scheda della tua attività per rivendicarla e registrarti
+                    Seleziona le sedi che vuoi rivendicare per la tua attività
                   </p>
                 </div>
 
-                <div className="grid gap-6">
-                  {results.map((business) => (
-                    <div
-                      key={business.id}
-                      onClick={() => !business.is_claimed && handleClaim(business.id)}
-                      className={`bg-white rounded-xl shadow-sm overflow-hidden border-2 transition-all ${
-                        !business.is_claimed
-                          ? 'border-blue-200 hover:border-blue-400 hover:shadow-lg cursor-pointer'
-                          : 'border-gray-200 opacity-75'
-                      }`}
-                    >
-                      <div className="p-6">
-                        <div className="flex items-start gap-6">
-                          <div className="flex-shrink-0">
-                            <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg flex items-center justify-center">
-                              <Building2 className="w-12 h-12 text-blue-600" />
-                            </div>
-                          </div>
+                <div className="grid gap-8">
+                  {groupedResults.map((business) => {
+                    const selectedCount = business.locations.filter(loc => selectedLocations.has(loc.id)).length;
 
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-4 mb-3">
+                    return (
+                      <div
+                        key={`${business.business_id}_${business.business_name}`}
+                        className="bg-white rounded-xl shadow-sm overflow-hidden border-2 border-blue-200"
+                      >
+                        <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 border-b-2 border-blue-200">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-400 rounded-lg flex items-center justify-center">
+                                <Building2 className="w-8 h-8 text-white" />
+                              </div>
                               <div>
-                                <h4 className="text-xl font-bold text-gray-900">
-                                  {business.name || 'Attività'}
+                                <h4 className="text-2xl font-bold text-gray-900">
+                                  {business.business_name}
                                 </h4>
+                                <p className="text-gray-600 mt-1">
+                                  {business.total_locations} {business.total_locations === 1 ? 'sede' : 'sedi'} totali • {' '}
+                                  {business.unclaimed_count} disponibili da rivendicare
+                                </p>
                               </div>
-
-                              {business.is_claimed ? (
-                                <span className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold">
-                                  <CheckCircle className="w-5 h-5" />
-                                  Già Rivendicata
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg font-semibold">
-                                  <CheckCircle className="w-5 h-5" />
-                                  Disponibile
-                                </span>
-                              )}
                             </div>
-
-                            <div className="space-y-2 mb-4">
-                              <div className="flex items-start gap-2 text-gray-700">
-                                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-600" />
-                                <span className="text-sm">
-                                  {business.street && `${business.street}, `}{business.city} ({business.province})
-                                  {business.region && ` - ${business.region}`}
-                                </span>
+                            {selectedCount > 0 && (
+                              <div className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">
+                                {selectedCount} {selectedCount === 1 ? 'selezionata' : 'selezionate'}
                               </div>
-
-                              {business.phone && (
-                                <div className="text-sm text-gray-600">
-                                  <span className="font-semibold">Tel:</span> {business.phone}
-                                </div>
-                              )}
-
-                              {business.email && (
-                                <div className="text-sm text-gray-600">
-                                  <span className="font-semibold">Email:</span> {business.email}
-                                </div>
-                              )}
-
-                              {business.website && (
-                                <div className="text-sm text-gray-600">
-                                  <span className="font-semibold">Web:</span> {business.website}
-                                </div>
-                              )}
-                            </div>
-
-                            {!business.is_claimed ? (
-                              <div className="inline-flex items-center gap-2 text-blue-600 font-semibold">
-                                <ArrowRight className="w-5 h-5" />
-                                <span>Clicca per rivendicare e registrarti</span>
-                              </div>
-                            ) : (
-                              <p className="text-gray-600 italic">
-                                Questa attività è già stata rivendicata. Se pensi si tratti di un errore, contattaci.
-                              </p>
                             )}
                           </div>
                         </div>
+
+                        <div className="p-6 space-y-4">
+                          {business.locations.map((location) => (
+                            <div
+                              key={location.id}
+                              onClick={() => toggleLocationSelection(location.id, location.is_claimed)}
+                              className={`p-4 rounded-lg border-2 transition-all ${
+                                location.is_claimed
+                                  ? 'border-gray-200 bg-gray-50 opacity-60'
+                                  : selectedLocations.has(location.id)
+                                  ? 'border-blue-500 bg-blue-50 cursor-pointer'
+                                  : 'border-gray-300 hover:border-blue-300 cursor-pointer hover:bg-gray-50'
+                              }`}
+                            >
+                              <div className="flex items-start gap-4">
+                                <div className="flex-shrink-0 pt-1">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedLocations.has(location.id)}
+                                    disabled={location.is_claimed}
+                                    onChange={() => {}}
+                                    className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  />
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-4 mb-2">
+                                    <div className="flex items-center gap-2">
+                                      <MapPin className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                                      <span className="font-semibold text-gray-900">
+                                        {location.city} ({location.province})
+                                      </span>
+                                    </div>
+                                    {location.is_claimed ? (
+                                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold">
+                                        <CheckCircle className="w-4 h-4" />
+                                        Già Rivendicata
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-semibold">
+                                        Disponibile
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <div className="space-y-1 text-sm text-gray-600">
+                                    {location.street && (
+                                      <div>{location.street}</div>
+                                    )}
+                                    {location.region && (
+                                      <div className="text-gray-500">Regione: {location.region}</div>
+                                    )}
+                                    {location.phone && (
+                                      <div><span className="font-semibold">Tel:</span> {location.phone}</div>
+                                    )}
+                                    {location.email && (
+                                      <div><span className="font-semibold">Email:</span> {location.email}</div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {business.unclaimed_count > 0 && (
+                          <div className="p-6 bg-gray-50 border-t-2 border-gray-200">
+                            <button
+                              onClick={() => handleProceedWithSelection(business)}
+                              disabled={selectedCount === 0}
+                              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {selectedCount > 0 ? (
+                                <>
+                                  Rivendica {selectedCount} {selectedCount === 1 ? 'sede' : 'sedi'} e Registrati
+                                  <ArrowRight className="w-5 h-5" />
+                                </>
+                              ) : (
+                                <>
+                                  Seleziona almeno una sede per continuare
+                                </>
+                              )}
+                            </button>
+                            <p className="text-center text-sm text-gray-600 mt-3">
+                              Dopo la registrazione potrai aggiungere altre sedi
+                            </p>
+                          </div>
+                        )}
                       </div>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-8 bg-blue-50 rounded-xl p-6 border-2 border-blue-200">
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0">
+                      <Plus className="w-6 h-6 text-blue-600" />
                     </div>
-                  ))}
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-gray-900 mb-2">
+                        Non vedi tutte le tue sedi?
+                      </h3>
+                      <p className="text-gray-700 mb-4">
+                        Seleziona le sedi esistenti e dopo la registrazione potrai aggiungere le sedi mancanti tramite il pannello di gestione.
+                      </p>
+                      <button
+                        onClick={handleRegisterNew}
+                        className="inline-flex items-center gap-2 bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-semibold border-2 border-blue-200"
+                      >
+                        <Plus className="w-5 h-5" />
+                        Oppure Registra Nuova Attività
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </>
             )}

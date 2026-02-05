@@ -583,7 +583,9 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
       }
 
       const claimBusinessId = sessionStorage.getItem('claimBusinessId');
-      if (claimBusinessId && user) {
+      const claimLocationIdsJson = sessionStorage.getItem('claimLocationIds');
+
+      if (user) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('id')
@@ -591,17 +593,41 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
           .maybeSingle();
 
         if (profile) {
-          await supabase
-            .from('unclaimed_business_locations')
-            .update({
-              claimed_by: profile.id,
-              is_claimed: true,
-              claimed_at: new Date().toISOString(),
-            })
-            .eq('id', claimBusinessId)
-            .eq('is_claimed', false);
+          if (claimLocationIdsJson) {
+            try {
+              const locationIds = JSON.parse(claimLocationIdsJson);
+              if (Array.isArray(locationIds) && locationIds.length > 0) {
+                await supabase
+                  .from('unclaimed_business_locations')
+                  .update({
+                    claimed_by: profile.id,
+                    is_claimed: true,
+                    claimed_at: new Date().toISOString(),
+                  })
+                  .in('id', locationIds)
+                  .eq('is_claimed', false);
 
-          sessionStorage.removeItem('claimBusinessId');
+                console.log(`Claimed ${locationIds.length} locations for user ${profile.id}`);
+              }
+              sessionStorage.removeItem('claimLocationIds');
+              sessionStorage.removeItem('claimBusinessName');
+              sessionStorage.removeItem('claimBusinessId');
+            } catch (e) {
+              console.error('Error parsing claimLocationIds:', e);
+            }
+          } else if (claimBusinessId) {
+            await supabase
+              .from('unclaimed_business_locations')
+              .update({
+                claimed_by: profile.id,
+                is_claimed: true,
+                claimed_at: new Date().toISOString(),
+              })
+              .eq('id', claimBusinessId)
+              .eq('is_claimed', false);
+
+            sessionStorage.removeItem('claimBusinessId');
+          }
         }
       }
 
