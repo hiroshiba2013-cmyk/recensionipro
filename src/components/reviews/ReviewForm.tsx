@@ -56,6 +56,7 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
   }, [businessLocationId]);
 
   const loadBusinessLocations = async () => {
+    // Cerca prima in business_locations
     const { data: locationsData } = await supabase
       .from('business_locations')
       .select('id, name, internal_name, address, city, province')
@@ -64,6 +65,25 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
 
     if (locationsData && locationsData.length > 0) {
       setBusinessLocations(locationsData);
+    } else {
+      // Se non trovate, controlla se è un'attività non reclamata
+      const { data: unclaimedLocation } = await supabase
+        .from('unclaimed_business_locations')
+        .select('id, name, street, city, province')
+        .eq('id', businessId)
+        .maybeSingle();
+
+      if (unclaimedLocation) {
+        setBusinessLocations([{
+          id: unclaimedLocation.id,
+          name: unclaimedLocation.name,
+          internal_name: null,
+          address: unclaimedLocation.street,
+          city: unclaimedLocation.city,
+          province: unclaimedLocation.province,
+        }]);
+        setSelectedLocationId(unclaimedLocation.id);
+      }
     }
   };
 
@@ -125,10 +145,83 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
     setError('');
 
     try {
+      // Verifica se il business esiste in businesses
+      const { data: businessData } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('id', businessId)
+        .maybeSingle();
+
+      let actualBusinessId = businessId;
+      let actualLocationId = selectedLocationId;
+
+      // Se non esiste in businesses, controlla se è unclaimed e spostalo
+      if (!businessData) {
+        const { data: unclaimedData } = await supabase
+          .from('unclaimed_business_locations')
+          .select('*')
+          .eq('id', businessId)
+          .maybeSingle();
+
+        if (unclaimedData) {
+          // Sposta l'attività non reclamata in businesses
+          const { data: newBusiness, error: businessError } = await supabase
+            .from('businesses')
+            .insert({
+              name: unclaimedData.name,
+              category_id: unclaimedData.category_id,
+              owner_id: null,
+              is_claimed: false,
+              verified: false,
+            })
+            .select()
+            .single();
+
+          if (businessError || !newBusiness) {
+            throw businessError || new Error('Errore creazione business');
+          }
+
+          // Crea la business_location
+          const { data: newLocation, error: locationError } = await supabase
+            .from('business_locations')
+            .insert({
+              business_id: newBusiness.id,
+              name: unclaimedData.name,
+              address: unclaimedData.street,
+              city: unclaimedData.city,
+              province: unclaimedData.province,
+              region: unclaimedData.region,
+              postal_code: unclaimedData.postal_code,
+              latitude: unclaimedData.latitude,
+              longitude: unclaimedData.longitude,
+              phone: unclaimedData.phone,
+              email: unclaimedData.email,
+              website: unclaimedData.website,
+              business_hours: unclaimedData.business_hours,
+              description: unclaimedData.description,
+            })
+            .select()
+            .single();
+
+          if (locationError || !newLocation) {
+            throw locationError || new Error('Errore creazione location');
+          }
+
+          // Elimina da unclaimed_business_locations
+          await supabase
+            .from('unclaimed_business_locations')
+            .delete()
+            .eq('id', businessId);
+
+          actualBusinessId = newBusiness.id;
+          actualLocationId = newLocation.id;
+        }
+      }
+
       const { data: existingReview } = await supabase
         .from('reviews')
         .select('id')
-        .eq('business_id', businessId)
+        .eq('business_id', actualBusinessId)
         .eq('customer_id', profile.id)
         .maybeSingle();
 
@@ -177,10 +270,10 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
       const { error: insertError } = await supabase
         .from('reviews')
         .insert({
-          business_id: businessId,
+          business_id: actualBusinessId,
           customer_id: profile.id,
           family_member_id: activeProfile?.isOwner === false ? activeProfile.id : null,
-          business_location_id: selectedLocationId || null,
+          business_location_id: actualLocationId || null,
           rating: avgRating,
           price_rating: priceRating || null,
           service_rating: serviceRating || null,

@@ -15,7 +15,7 @@ export function BusinessCard({ business }: BusinessCardProps) {
   const navigate = useNavigate();
   const [showReviewForm, setShowReviewForm] = useState(false);
 
-  const canWriteReview = profile && profile.user_type === 'customer' && (profile.subscription_status === 'active' || profile.subscription_status === 'trial') && business.is_claimed !== false;
+  const canWriteReview = profile && profile.user_type === 'customer' && (profile.subscription_status === 'active' || profile.subscription_status === 'trial');
 
   const handleReviewClick = (e: React.MouseEvent) => {
     e.stopPropagation();

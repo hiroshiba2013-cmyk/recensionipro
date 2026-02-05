@@ -278,7 +278,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
     );
   }
 
-  const canReview = profile?.user_type === 'customer' && (profile?.subscription_status === 'active' || profile?.subscription_status === 'trial') && business.is_claimed !== false;
+  const canReview = profile?.user_type === 'customer' && (profile?.subscription_status === 'active' || profile?.subscription_status === 'trial');
   const isOwner = profile && business.owner_id === profile.id;
   const canClaim = profile?.user_type === 'business' && !business.is_claimed && !business.owner_id;
   const canShowClaimButton = !business.is_claimed && !business.owner_id && profile?.user_type !== 'customer';
@@ -638,19 +638,6 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                       </button>
                     )}
                   </div>
-
-                  {!business.is_claimed && profile?.user_type === 'customer' && (
-                    <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <div className="flex items-start gap-2">
-                        <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-sm text-yellow-800">
-                            Questa attività non è ancora stata reclamata dal proprietario. Solo le attività reclamate e verificate possono ricevere recensioni.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {reviews.length === 0 ? (
                     <p className="text-gray-600 text-center py-8 bg-gray-50 rounded-lg">
