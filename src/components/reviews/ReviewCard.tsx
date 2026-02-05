@@ -105,12 +105,6 @@ export function ReviewCard({ review }: ReviewCardProps) {
 
       <p className="text-gray-700 leading-relaxed">{review.content}</p>
 
-      {!isOwnReview && (
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <ReportButton entityType="review" entityId={review.id} />
-        </div>
-      )}
-
       {review.responses && review.responses.length > 0 && (
         <div className="mt-4 pl-4 border-l-2 border-blue-200">
           <p className="text-sm font-medium text-blue-700 mb-1">Risposta dell'attività</p>
@@ -118,6 +112,12 @@ export function ReviewCard({ review }: ReviewCardProps) {
           <p className="text-xs text-gray-500 mt-1">
             {formatDate(review.responses[0].created_at)}
           </p>
+        </div>
+      )}
+
+      {!isOwnReview && (
+        <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
+          <ReportButton entityType="review" entityId={review.id} />
         </div>
       )}
     </div>
