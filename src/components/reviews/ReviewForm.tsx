@@ -182,85 +182,43 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
     setError('');
 
     try {
-      // Verifica se il business esiste in businesses
+      // Verifica se il business esiste in businesses o è unclaimed
       const { data: businessData } = await supabase
         .from('businesses')
         .select('id')
         .eq('id', businessId)
         .maybeSingle();
 
+      const isUnclaimed = !businessData;
       let actualBusinessId = businessId;
+      let actualUnclaimedBusinessId = null;
       let actualLocationId = selectedLocationId;
 
-      // Se non esiste in businesses, controlla se è unclaimed e spostalo
-      if (!businessData) {
-        const { data: unclaimedData } = await supabase
-          .from('unclaimed_business_locations')
-          .select('*')
-          .eq('id', businessId)
-          .maybeSingle();
-
-        if (unclaimedData) {
-          // Sposta l'attività non reclamata in businesses
-          const { data: newBusiness, error: businessError } = await supabase
-            .from('businesses')
-            .insert({
-              name: unclaimedData.name,
-              category_id: unclaimedData.category_id,
-              owner_id: null,
-              is_claimed: false,
-              verified: false,
-            })
-            .select()
-            .single();
-
-          if (businessError || !newBusiness) {
-            throw businessError || new Error('Errore creazione business');
-          }
-
-          // Crea la business_location
-          const { data: newLocation, error: locationError } = await supabase
-            .from('business_locations')
-            .insert({
-              business_id: newBusiness.id,
-              name: unclaimedData.name,
-              address: unclaimedData.street,
-              city: unclaimedData.city,
-              province: normalizeProvince(unclaimedData.province),
-              region: unclaimedData.region,
-              postal_code: unclaimedData.postal_code,
-              latitude: unclaimedData.latitude,
-              longitude: unclaimedData.longitude,
-              phone: unclaimedData.phone,
-              email: unclaimedData.email,
-              website: unclaimedData.website,
-              business_hours: unclaimedData.business_hours,
-              description: unclaimedData.description,
-            })
-            .select()
-            .single();
-
-          if (locationError || !newLocation) {
-            throw locationError || new Error('Errore creazione location');
-          }
-
-          // Elimina da unclaimed_business_locations
-          await supabase
-            .from('unclaimed_business_locations')
-            .delete()
-            .eq('id', businessId);
-
-          actualBusinessId = newBusiness.id;
-          actualLocationId = newLocation.id;
-        }
+      if (isUnclaimed) {
+        // È un'attività non reclamata - usa l'ID direttamente
+        actualUnclaimedBusinessId = businessId;
+        actualBusinessId = null;
       }
 
-      const { data: existingReview } = await supabase
-        .from('reviews')
-        .select('id')
-        .eq('business_id', actualBusinessId)
-        .eq('customer_id', profile.id)
-        .maybeSingle();
+      // Verifica se l'utente ha già recensito questa attività
+      let existingReview;
+      if (isUnclaimed) {
+        const { data } = await supabase
+          .from('reviews')
+          .select('id')
+          .eq('unclaimed_business_id', actualUnclaimedBusinessId)
+          .eq('customer_id', profile.id)
+          .maybeSingle();
+        existingReview = data;
+      } else {
+        const { data } = await supabase
+          .from('reviews')
+          .select('id')
+          .eq('business_id', actualBusinessId)
+          .eq('customer_id', profile.id)
+          .maybeSingle();
+        existingReview = data;
+      }
 
       if (existingReview) {
         setError('Hai già recensito questa attività');
@@ -304,24 +262,34 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
       const reviewStatus = proofImage ? 'pending' : 'approved';
       const pointsAwarded = proofImage ? 0 : 25;
 
+      const reviewData: any = {
+        customer_id: profile.id,
+        family_member_id: activeProfile?.isOwner === false ? activeProfile.id : null,
+        business_location_id: actualLocationId || null,
+        rating: avgRating,
+        price_rating: priceRating || null,
+        service_rating: serviceRating || null,
+        quality_rating: qualityRating || null,
+        overall_rating: overallRating,
+        title: title.trim(),
+        content: content.trim(),
+        proof_image_url: proofImageUrl,
+        review_status: reviewStatus,
+        points_awarded: pointsAwarded,
+      };
+
+      // Imposta business_id o unclaimed_business_id a seconda del tipo
+      if (isUnclaimed) {
+        reviewData.unclaimed_business_id = actualUnclaimedBusinessId;
+        reviewData.business_id = null;
+      } else {
+        reviewData.business_id = actualBusinessId;
+        reviewData.unclaimed_business_id = null;
+      }
+
       const { error: insertError } = await supabase
         .from('reviews')
-        .insert({
-          business_id: actualBusinessId,
-          customer_id: profile.id,
-          family_member_id: activeProfile?.isOwner === false ? activeProfile.id : null,
-          business_location_id: actualLocationId || null,
-          rating: avgRating,
-          price_rating: priceRating || null,
-          service_rating: serviceRating || null,
-          quality_rating: qualityRating || null,
-          overall_rating: overallRating,
-          title: title.trim(),
-          content: content.trim(),
-          proof_image_url: proofImageUrl,
-          review_status: reviewStatus,
-          points_awarded: pointsAwarded,
-        });
+        .insert(reviewData);
 
       // Se la recensione è approvata automaticamente (senza prova), assegna i punti
       if (reviewStatus === 'approved' && pointsAwarded > 0) {

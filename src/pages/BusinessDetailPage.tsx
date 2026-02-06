@@ -88,11 +88,22 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
       }
 
       if (businessData) {
-        const { data: reviewsData } = await supabase
+        // Determina se è un'attività reclamata o non reclamata
+        const isUnclaimed = !businessData.is_claimed && !businessData.owner_id;
+
+        // Query per le recensioni - usa business_id o unclaimed_business_id
+        let reviewsQuery = supabase
           .from('reviews')
           .select('overall_rating')
-          .eq('business_id', businessId)
           .eq('review_status', 'approved');
+
+        if (isUnclaimed) {
+          reviewsQuery = reviewsQuery.eq('unclaimed_business_id', businessId);
+        } else {
+          reviewsQuery = reviewsQuery.eq('business_id', businessId);
+        }
+
+        const { data: reviewsData } = await reviewsQuery;
 
         const avg_rating = reviewsData && reviewsData.length > 0
           ? reviewsData.reduce((sum, r) => sum + r.overall_rating, 0) / reviewsData.length
@@ -104,7 +115,8 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           review_count: reviewsData?.length || 0,
         });
 
-        const { data: fullReviewsData } = await supabase
+        // Query per le recensioni complete
+        let fullReviewsQuery = supabase
           .from('reviews')
           .select(`
             *,
@@ -113,9 +125,16 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
             family_member:customer_family_members(first_name, last_name, nickname),
             business_location:business_locations(id, name, address, city)
           `)
-          .eq('business_id', businessId)
           .eq('review_status', 'approved')
           .order('created_at', { ascending: false });
+
+        if (isUnclaimed) {
+          fullReviewsQuery = fullReviewsQuery.eq('unclaimed_business_id', businessId);
+        } else {
+          fullReviewsQuery = fullReviewsQuery.eq('business_id', businessId);
+        }
+
+        const { data: fullReviewsData } = await fullReviewsQuery;
 
         if (fullReviewsData) {
           setReviews(fullReviewsData);
