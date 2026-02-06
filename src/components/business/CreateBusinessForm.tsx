@@ -272,8 +272,19 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
 
         if (locationsError) throw locationsError;
 
-        // Elimina le sedi rivendicate da unclaimed_business_locations per evitare duplicati
+        // Sposta le recensioni dalle sedi non reclamate al nuovo business
         const locationIds = claimedLocations.map(l => l.id);
+        const { error: reviewsError } = await supabase
+          .from('reviews')
+          .update({
+            business_id: business.id,
+            unclaimed_business_id: null
+          })
+          .in('unclaimed_business_id', locationIds);
+
+        if (reviewsError) throw reviewsError;
+
+        // Elimina le sedi rivendicate da unclaimed_business_locations per evitare duplicati
         const { error: deleteError } = await supabase
           .from('unclaimed_business_locations')
           .delete()

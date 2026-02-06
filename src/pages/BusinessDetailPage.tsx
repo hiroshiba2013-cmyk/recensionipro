@@ -247,6 +247,17 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
 
       if (locationError) throw locationError;
 
+      // Sposta le recensioni da unclaimed_business_id a business_id
+      const { error: reviewsError } = await supabase
+        .from('reviews')
+        .update({
+          business_id: newBusiness.id,
+          unclaimed_business_id: null
+        })
+        .eq('unclaimed_business_id', businessId);
+
+      if (reviewsError) throw reviewsError;
+
       // Elimina da unclaimed_business_locations
       const { error: deleteError } = await supabase
         .from('unclaimed_business_locations')
