@@ -80,7 +80,7 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
   const [error, setError] = useState('');
 
   const hasDetailedRatings = priceRating > 0 && serviceRating > 0 && qualityRating > 0;
-  const estimatedPoints = 25;
+  const estimatedPoints = proofImage ? 50 : 25;
 
   useEffect(() => {
     loadBusinessLocations();
@@ -337,7 +337,7 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
 
       // Mostra messaggio appropriato
       if (proofImage) {
-        alert('✅ Recensione inviata con successo!\n\nLa tua recensione è in attesa di approvazione. Riceverai i punti dopo che lo staff avrà verificato la prova di acquisto.');
+        alert('✅ Recensione inviata con successo!\n\nLa tua recensione è in attesa di approvazione. Riceverai 50 punti dopo che lo staff avrà verificato la prova di acquisto.');
       }
 
       onSuccess();
@@ -377,11 +377,12 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
               <div className="flex items-center gap-2 mb-2">
                 <Award className="w-5 h-5 text-blue-600" />
-                <p className="font-semibold text-blue-900">Punti: 25 punti</p>
+                <p className="font-semibold text-blue-900">Punti Stimati: {estimatedPoints} punti</p>
               </div>
               <p className="text-sm text-blue-700">
-                Ogni recensione ti fa guadagnare 25 punti.
-                {proofImage && " Le recensioni con prova di acquisto saranno verificate prima della pubblicazione."}
+                {proofImage
+                  ? "Recensione con prova d'acquisto: 50 punti dopo l'approvazione"
+                  : "Recensione base: 25 punti (pubblicata immediatamente)"}
               </p>
             </div>
           </div>
@@ -579,10 +580,10 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
 
           <div className="mb-6">
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Prova di Acquisto (Opzionale)
+              Prova di Acquisto (Opzionale - 50 punti)
             </label>
             <p className="text-xs text-gray-500 mb-3">
-              Carica uno scontrino o fattura per ottenere più punti. L'immagine sarà visibile solo allo staff e verrà cancellata dopo l'approvazione.
+              Carica uno scontrino o fattura per ottenere 50 punti invece di 25. L'immagine sarà visibile solo allo staff e verrà cancellata dopo l'approvazione.
             </p>
 
             {!proofImagePreview ? (
