@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Star, Tag, Plus, Calendar, Percent, X, Package, LogOut, Trophy, TrendingUp, Briefcase, MapPin } from 'lucide-react';
+import { User, Star, Tag, Plus, Calendar, Percent, X, Package, LogOut, Trophy, TrendingUp, Briefcase, MapPin, Edit2, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -179,6 +179,12 @@ export function ProfilePage() {
     rating: '',
     businessName: '',
     locationId: '',
+  });
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    content: '',
+    rating: 5,
   });
 
   useEffect(() => {
@@ -520,6 +526,59 @@ export function ProfilePage() {
       loadBusinessData();
     } catch (error) {
       console.error('Error deleting discount:', error);
+    }
+  };
+
+  const handleEditReview = (review: Review) => {
+    setEditingReview(review);
+    setEditForm({
+      title: review.title,
+      content: review.content,
+      rating: review.rating,
+    });
+  };
+
+  const handleUpdateReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingReview) return;
+
+    try {
+      const { error } = await supabase
+        .from('reviews')
+        .update({
+          title: editForm.title,
+          content: editForm.content,
+          rating: editForm.rating,
+        })
+        .eq('id', editingReview.id);
+
+      if (error) throw error;
+
+      setEditingReview(null);
+      alert('Recensione aggiornata con successo!');
+      loadProfileData();
+    } catch (error) {
+      console.error('Error updating review:', error);
+      alert('Errore durante l\'aggiornamento della recensione');
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!confirm('Sei sicuro di voler eliminare questa recensione? Questa azione non può essere annullata.')) return;
+
+    try {
+      const { error } = await supabase
+        .from('reviews')
+        .delete()
+        .eq('id', reviewId);
+
+      if (error) throw error;
+
+      alert('Recensione eliminata con successo!');
+      loadProfileData();
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      alert('Errore durante l\'eliminazione della recensione');
     }
   };
 
@@ -896,6 +955,97 @@ export function ProfilePage() {
                 </div>
               )}
 
+              {editingReview && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                  <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-2xl font-bold text-gray-900">Modifica Recensione</h3>
+                        <button
+                          onClick={() => setEditingReview(null)}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          <X className="w-6 h-6" />
+                        </button>
+                      </div>
+
+                      <form onSubmit={handleUpdateReview} className="space-y-6">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Titolo
+                          </label>
+                          <input
+                            type="text"
+                            value={editForm.title}
+                            onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                            required
+                            maxLength={100}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Valutazione
+                          </label>
+                          <div className="flex gap-2">
+                            {[1, 2, 3, 4, 5].map((rating) => (
+                              <button
+                                key={rating}
+                                type="button"
+                                onClick={() => setEditForm({ ...editForm, rating })}
+                                className="focus:outline-none"
+                              >
+                                <Star
+                                  className={`w-8 h-8 ${
+                                    rating <= editForm.rating
+                                      ? 'fill-yellow-400 text-yellow-400'
+                                      : 'text-gray-300'
+                                  }`}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Recensione
+                          </label>
+                          <textarea
+                            value={editForm.content}
+                            onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
+                            required
+                            rows={6}
+                            maxLength={1000}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent resize-none"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            {editForm.content.length}/1000 caratteri
+                          </p>
+                        </div>
+
+                        <div className="flex gap-3">
+                          <button
+                            type="submit"
+                            className="flex-1 bg-yellow-600 text-white py-3 rounded-lg hover:bg-yellow-700 transition-colors font-semibold"
+                          >
+                            Salva Modifiche
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingReview(null)}
+                            className="px-6 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+                          >
+                            Annulla
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {reviews.length === 0 ? (
                 <p className="text-gray-600 text-center py-8">
                   {isFamilyMember ? 'Nessuna recensione scritta da questo membro' : 'Non hai ancora scritto recensioni'}
@@ -907,21 +1057,39 @@ export function ProfilePage() {
                   {filteredReviews.map((review) => (
                     <div key={review.id} className="border border-gray-200 rounded-lg p-6 hover:border-blue-300 transition-colors">
                       <div className="flex items-start justify-between mb-3">
-                        <div>
+                        <div className="flex-1">
                           <h3 className="font-semibold text-lg text-gray-900">{review.title}</h3>
                           <p className="text-sm text-gray-600 mt-1">
                             {review.business?.name}
                           </p>
                         </div>
-                        <div className="flex items-center gap-1">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-5 h-5 ${
-                                i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-                              }`}
-                            />
-                          ))}
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-5 h-5 ${
+                                  i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEditReview(review)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Modifica recensione"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteReview(review.id)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Elimina recensione"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                       <p className="text-gray-700 leading-relaxed">{review.content}</p>
