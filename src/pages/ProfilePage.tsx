@@ -46,6 +46,9 @@ interface Review {
   business_id: string;
   family_member_id?: string;
   business_location_id?: string | null;
+  review_status: 'pending' | 'approved' | 'rejected';
+  proof_image_url?: string | null;
+  points_awarded?: number;
   business?: {
     name: string;
   };
@@ -1055,13 +1058,42 @@ export function ProfilePage() {
               ) : (
                 <div className="space-y-4">
                   {filteredReviews.map((review) => (
-                    <div key={review.id} className="border border-gray-200 rounded-lg p-6 hover:border-blue-300 transition-colors">
+                    <div key={review.id} className={`border rounded-lg p-6 transition-colors ${
+                      review.review_status === 'pending'
+                        ? 'border-yellow-300 bg-yellow-50'
+                        : review.review_status === 'rejected'
+                        ? 'border-red-300 bg-red-50'
+                        : 'border-gray-200 hover:border-blue-300'
+                    }`}>
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
-                          <h3 className="font-semibold text-lg text-gray-900">{review.title}</h3>
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold text-lg text-gray-900">{review.title}</h3>
+                            {review.review_status === 'pending' && (
+                              <span className="px-3 py-1 bg-yellow-200 text-yellow-800 text-xs font-semibold rounded-full">
+                                In attesa di approvazione
+                              </span>
+                            )}
+                            {review.review_status === 'rejected' && (
+                              <span className="px-3 py-1 bg-red-200 text-red-800 text-xs font-semibold rounded-full">
+                                Rifiutata
+                              </span>
+                            )}
+                          </div>
                           <p className="text-sm text-gray-600 mt-1">
                             {review.business?.name}
                           </p>
+                          {review.review_status === 'pending' && (
+                            <p className="text-xs text-yellow-700 mt-2 font-medium">
+                              La tua recensione sarà visibile dopo la verifica dello staff.
+                              {review.proof_image_url ? ' Riceverai 50 punti' : ' Riceverai 25 punti'} dopo l'approvazione.
+                            </p>
+                          )}
+                          {review.review_status === 'approved' && review.points_awarded && (
+                            <p className="text-xs text-green-700 mt-2 font-medium">
+                              Recensione approvata - Hai guadagnato {review.points_awarded} punti!
+                            </p>
+                          )}
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-1">
@@ -1074,22 +1106,24 @@ export function ProfilePage() {
                               />
                             ))}
                           </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleEditReview(review)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="Modifica recensione"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteReview(review.id)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Elimina recensione"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
+                          {review.review_status !== 'rejected' && (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleEditReview(review)}
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="Modifica recensione"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteReview(review.id)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Elimina recensione"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <p className="text-gray-700 leading-relaxed">{review.content}</p>
