@@ -20,6 +20,45 @@ interface BusinessLocation {
   province: string;
 }
 
+const provinceMap: { [key: string]: string } = {
+  'agrigento': 'AG', 'alessandria': 'AL', 'ancona': 'AN', 'aosta': 'AO', 'arezzo': 'AR',
+  'ascoli piceno': 'AP', 'asti': 'AT', 'avellino': 'AV', 'bari': 'BA', 'barletta-andria-trani': 'BT',
+  'belluno': 'BL', 'benevento': 'BN', 'bergamo': 'BG', 'biella': 'BI', 'bologna': 'BO',
+  'bolzano': 'BZ', 'brescia': 'BS', 'brindisi': 'BR', 'cagliari': 'CA', 'caltanissetta': 'CL',
+  'campobasso': 'CB', 'caserta': 'CE', 'catania': 'CT', 'catanzaro': 'CZ', 'chieti': 'CH',
+  'como': 'CO', 'cosenza': 'CS', 'cremona': 'CR', 'crotone': 'KR', 'cuneo': 'CN',
+  'enna': 'EN', 'fermo': 'FM', 'ferrara': 'FE', 'firenze': 'FI', 'foggia': 'FG',
+  'forlì-cesena': 'FC', 'frosinone': 'FR', 'genova': 'GE', 'gorizia': 'GO', 'grosseto': 'GR',
+  'imperia': 'IM', 'isernia': 'IS', 'la spezia': 'SP', 'l\'aquila': 'AQ', 'latina': 'LT',
+  'lecce': 'LE', 'lecco': 'LC', 'livorno': 'LI', 'lodi': 'LO', 'lucca': 'LU',
+  'macerata': 'MC', 'mantova': 'MN', 'massa-carrara': 'MS', 'matera': 'MT', 'messina': 'ME',
+  'milano': 'MI', 'modena': 'MO', 'monza e brianza': 'MB', 'napoli': 'NA', 'novara': 'NO',
+  'nuoro': 'NU', 'oristano': 'OR', 'padova': 'PD', 'palermo': 'PA', 'parma': 'PR',
+  'pavia': 'PV', 'perugia': 'PG', 'pesaro e urbino': 'PU', 'pescara': 'PE', 'piacenza': 'PC',
+  'pisa': 'PI', 'pistoia': 'PT', 'pordenone': 'PN', 'potenza': 'PZ', 'prato': 'PO',
+  'ragusa': 'RG', 'ravenna': 'RA', 'reggio calabria': 'RC', 'reggio emilia': 'RE', 'rieti': 'RI',
+  'rimini': 'RN', 'roma': 'RM', 'rovigo': 'RO', 'salerno': 'SA', 'sassari': 'SS',
+  'savona': 'SV', 'siena': 'SI', 'siracusa': 'SR', 'sondrio': 'SO', 'taranto': 'TA',
+  'teramo': 'TE', 'terni': 'TR', 'torino': 'TO', 'trapani': 'TP', 'trento': 'TN',
+  'treviso': 'TV', 'trieste': 'TS', 'udine': 'UD', 'varese': 'VA', 'venezia': 'VE',
+  'verbano-cusio-ossola': 'VB', 'vercelli': 'VC', 'verona': 'VR', 'vibo valentia': 'VV',
+  'vicenza': 'VI', 'viterbo': 'VT', 'sud sardegna': 'SU',
+};
+
+function normalizeProvince(province: string): string {
+  if (!province || province.trim() === '') {
+    return 'RM';
+  }
+
+  const normalized = province.toLowerCase().trim();
+
+  if (normalized.length === 2 && /^[a-z]{2}$/i.test(province)) {
+    return province.toUpperCase();
+  }
+
+  return provinceMap[normalized] || 'RM';
+}
+
 export function ReviewForm({ businessId, businessName, businessLocationId, onClose, onSuccess }: ReviewFormProps) {
   const { profile, activeProfile } = useAuth();
   const [priceRating, setPriceRating] = useState(0);
@@ -189,7 +228,7 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
               name: unclaimedData.name,
               address: unclaimedData.street,
               city: unclaimedData.city,
-              province: unclaimedData.province,
+              province: normalizeProvince(unclaimedData.province),
               region: unclaimedData.region,
               postal_code: unclaimedData.postal_code,
               latitude: unclaimedData.latitude,
