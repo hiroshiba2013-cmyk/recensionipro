@@ -80,9 +80,7 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
   const [error, setError] = useState('');
 
   const hasDetailedRatings = priceRating > 0 && serviceRating > 0 && qualityRating > 0;
-  const estimatedPoints = hasDetailedRatings
-    ? (proofImage ? 25 : 15)
-    : (proofImage ? 10 : 5);
+  const estimatedPoints = 25;
 
   useEffect(() => {
     loadBusinessLocations();
@@ -304,7 +302,7 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
         : overallRating;
 
       const reviewStatus = proofImage ? 'pending' : 'approved';
-      const pointsAwarded = proofImage ? 0 : estimatedPoints;
+      const pointsAwarded = proofImage ? 0 : 25;
 
       const { error: insertError } = await supabase
         .from('reviews')
@@ -379,13 +377,11 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
               <div className="flex items-center gap-2 mb-2">
                 <Award className="w-5 h-5 text-blue-600" />
-                <p className="font-semibold text-blue-900">Punti Stimati: {estimatedPoints} punti</p>
+                <p className="font-semibold text-blue-900">Punti: 25 punti</p>
               </div>
               <p className="text-sm text-blue-700">
-                {hasDetailedRatings && proofImage && "Recensione completa con prova: 25 punti"}
-                {hasDetailedRatings && !proofImage && "Recensione completa: 15 punti"}
-                {!hasDetailedRatings && proofImage && "Recensione con prova: 10 punti"}
-                {!hasDetailedRatings && !proofImage && "Recensione base: 5 punti"}
+                Ogni recensione ti fa guadagnare 25 punti.
+                {proofImage && " Le recensioni con prova di acquisto saranno verificate prima della pubblicazione."}
               </p>
             </div>
           </div>
@@ -419,7 +415,7 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
               Valutazioni Dettagliate (Opzionale)
             </h3>
             <p className="text-xs text-gray-500 mb-4">
-              Completa tutte e tre le valutazioni per ottenere più punti
+              Completa tutte e tre le valutazioni per fornire una recensione più dettagliata
             </p>
           </div>
 
