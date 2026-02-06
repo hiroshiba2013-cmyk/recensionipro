@@ -259,13 +259,15 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
         ? Math.round((priceRating + serviceRating + qualityRating + overallRating) / 4)
         : overallRating;
 
-      const reviewStatus = proofImage ? 'pending' : 'approved';
-      const pointsAwarded = proofImage ? 0 : 25;
+      // Tutte le recensioni iniziano come pending e devono essere approvate dallo staff
+      const reviewStatus = 'pending';
+      const pointsAwarded = 0; // I punti vengono assegnati dopo l'approvazione
 
       const reviewData: any = {
         customer_id: profile.id,
         family_member_id: activeProfile?.isOwner === false ? activeProfile.id : null,
-        business_location_id: actualLocationId || null,
+        // business_location_id deve essere NULL per attività non reclamate
+        business_location_id: isUnclaimed ? null : (actualLocationId || null),
         rating: avgRating,
         price_rating: priceRating || null,
         service_rating: serviceRating || null,
@@ -291,22 +293,11 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
         .from('reviews')
         .insert(reviewData);
 
-      // Se la recensione è approvata automaticamente (senza prova), assegna i punti
-      if (reviewStatus === 'approved' && pointsAwarded > 0) {
-        await supabase.rpc('award_points', {
-          p_user_id: profile.id,
-          p_points: pointsAwarded,
-          p_activity_type: 'review',
-          p_description: `Recensione per ${businessName || 'attività'}`,
-        });
-      }
-
       if (insertError) throw insertError;
 
       // Mostra messaggio appropriato
-      if (proofImage) {
-        alert('✅ Recensione inviata con successo!\n\nLa tua recensione è in attesa di approvazione. Riceverai 50 punti dopo che lo staff avrà verificato la prova di acquisto.');
-      }
+      const pointsMessage = proofImage ? '50 punti' : '25 punti';
+      alert(`✅ Recensione inviata con successo!\n\nLa tua recensione è in attesa di approvazione. Riceverai ${pointsMessage} dopo che lo staff l'avrà verificata.`);
 
       onSuccess();
       onClose();
