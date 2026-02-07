@@ -36,7 +36,8 @@
     "notify:businesses": "node notify-businesses.js",
     "notify:all": "node notify-businesses.js all",
     "check:emails": "node check-businesses-with-email.js",
-    "stats": "node check-import-stats.js"
+    "stats": "node check-import-stats.js",
+    "create:admin": "node create-admin.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
