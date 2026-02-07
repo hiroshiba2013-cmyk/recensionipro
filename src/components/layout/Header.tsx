@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle, Heart, Building2 } from 'lucide-react';
+import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle, Heart, Building2, Shield } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { LoginForm } from '../auth/LoginForm';
@@ -94,6 +94,16 @@ export function Header() {
                     <FileText className="w-4 h-4" />
                     <span className="text-sm">{t('header.rules')}</span>
                   </a>
+                  {profile?.is_admin && (
+                    <a
+                      href="/admin"
+                      className="flex items-center gap-1 text-purple-700 hover:text-purple-900 transition-colors font-medium px-2"
+                      title="Admin"
+                    >
+                      <Shield className="w-4 h-4" />
+                      <span className="text-sm">Admin</span>
+                    </a>
+                  )}
                 </nav>
 
                 <div className="flex-1"></div>

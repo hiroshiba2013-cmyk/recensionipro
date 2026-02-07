@@ -19,6 +19,7 @@ import { RulesPage } from '../pages/RulesPage';
 import { DiscountsPage } from '../pages/DiscountsPage';
 import { ProfileSelectionPage } from '../pages/ProfileSelectionPage';
 import { ClaimBusinessPage } from '../pages/ClaimBusinessPage';
+import { AdminDashboardPage } from '../pages/AdminDashboardPage';
 import { useAuth } from '../contexts/AuthContext';
 
 const RouterContext = createContext<{ params: Record<string, string> }>({ params: {} });
@@ -156,6 +157,10 @@ export function Router() {
 
   if (currentPath === '/claim-business' || currentPath === '/rivendica-attivita') {
     return <ClaimBusinessPage />;
+  }
+
+  if (currentPath === '/admin') {
+    return <AdminDashboardPage />;
   }
 
   if (currentPath.startsWith('/business/')) {

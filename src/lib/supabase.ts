@@ -22,6 +22,7 @@ export interface Profile {
   subscription_status: SubscriptionStatus;
   subscription_expires_at: string | null;
   created_at: string;
+  is_admin?: boolean;
 }
 
 export interface BusinessCategory {
