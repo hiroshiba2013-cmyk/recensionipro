@@ -25,6 +25,7 @@ export default function BusinessAutocomplete({
   placeholder = 'Cerca attività...',
 }: BusinessAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<Business[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -48,6 +49,7 @@ export default function BusinessAutocomplete({
 
     if (value.length < 2) {
       setSuggestions([]);
+      setTotalCount(0);
       setShowSuggestions(false);
       return;
     }
@@ -67,16 +69,21 @@ export default function BusinessAutocomplete({
     try {
       setLoading(true);
 
-      const { data: claimedData } = await supabase
-        .from('businesses')
+      const { data: claimedLocations } = await supabase
+        .from('business_locations')
         .select(`
           id,
+          business_id,
           name,
-          category:business_categories(name),
-          business_locations(city)
+          city,
+          business:businesses(
+            id,
+            name,
+            category:business_categories(name)
+          )
         `)
-        .ilike('name', `%${query}%`)
-        .limit(5);
+        .or(`name.ilike.%${query}%,business.name.ilike.%${query}%`)
+        .limit(10);
 
       const { data: unclaimedData } = await supabase
         .from('unclaimed_business_locations')
@@ -87,14 +94,16 @@ export default function BusinessAutocomplete({
           category:business_categories(name)
         `)
         .ilike('name', `%${query}%`)
-        .limit(5);
+        .limit(10);
 
-      const claimed = (claimedData || []).map(b => ({
-        id: b.id,
-        name: b.name,
-        city: b.business_locations?.[0]?.city,
-        category: b.category,
-      }));
+      const claimed = (claimedLocations || [])
+        .filter(loc => loc.business)
+        .map(loc => ({
+          id: loc.id,
+          name: loc.name || loc.business?.name || 'Nome non disponibile',
+          city: loc.city,
+          category: loc.business?.category,
+        }));
 
       const unclaimed = (unclaimedData || []).map(b => ({
         id: b.id,
@@ -104,8 +113,21 @@ export default function BusinessAutocomplete({
       }));
 
       const combined = [...claimed, ...unclaimed];
-      setSuggestions(combined);
-      setShowSuggestions(combined.length > 0);
+      setTotalCount(combined.length);
+
+      const uniqueByName = combined.reduce((acc: Business[], current) => {
+        const existingIndex = acc.findIndex(
+          item => item.name.toLowerCase() === current.name.toLowerCase() &&
+                 item.city === current.city
+        );
+        if (existingIndex === -1) {
+          acc.push(current);
+        }
+        return acc;
+      }, []);
+
+      setSuggestions(uniqueByName.slice(0, 10));
+      setShowSuggestions(uniqueByName.length > 0);
     } catch (error) {
       console.error('Error searching businesses:', error);
     } finally {
@@ -144,6 +166,14 @@ export default function BusinessAutocomplete({
 
       {showSuggestions && suggestions.length > 0 && (
         <div className="absolute z-50 w-full mt-2 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto">
+          {totalCount > 0 && (
+            <div className="px-4 py-2 bg-blue-50 border-b border-blue-200">
+              <p className="text-sm font-semibold text-blue-900">
+                {totalCount} {totalCount === 1 ? 'sede trovata' : 'sedi trovate'}
+                {suggestions.length < totalCount && ` (mostrate ${suggestions.length})`}
+              </p>
+            </div>
+          )}
           {suggestions.map((business) => (
             <button
               key={business.id}
