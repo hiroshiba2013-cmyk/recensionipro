@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, Users, FileText, ShoppingBag, Activity, CheckCircle, XCircle, Clock, Eye } from 'lucide-react';
+import { Shield, Users, FileText, ShoppingBag, Activity, CheckCircle, XCircle, Clock, Eye, Trash2, LogOut, Building2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -9,6 +9,8 @@ interface DashboardStats {
   pendingReviews: number;
   totalAds: number;
   activeSubscriptions: number;
+  totalBusinesses: number;
+  totalProducts: number;
 }
 
 interface PendingReview {
@@ -69,7 +71,7 @@ interface ClassifiedAd {
 }
 
 export function AdminDashboardPage() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
@@ -77,6 +79,8 @@ export function AdminDashboardPage() {
     pendingReviews: 0,
     totalAds: 0,
     activeSubscriptions: 0,
+    totalBusinesses: 0,
+    totalProducts: 0,
   });
   const [pendingReviews, setPendingReviews] = useState<PendingReview[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -86,10 +90,15 @@ export function AdminDashboardPage() {
   const [selectedReview, setSelectedReview] = useState<PendingReview | null>(null);
 
   useEffect(() => {
+    if (!user) {
+      window.location.href = '/admin-login';
+      return;
+    }
+
     if (profile?.is_admin) {
       loadData();
     }
-  }, [profile, activeTab]);
+  }, [profile, activeTab, user]);
 
   const loadData = async () => {
     setLoading(true);
@@ -113,12 +122,14 @@ export function AdminDashboardPage() {
   };
 
   const loadStats = async () => {
-    const [usersCount, reviewsCount, pendingCount, adsCount, subsCount] = await Promise.all([
+    const [usersCount, reviewsCount, pendingCount, adsCount, subsCount, businessCount, productsCount] = await Promise.all([
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
       supabase.from('reviews').select('id', { count: 'exact', head: true }),
       supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('review_status', 'pending'),
       supabase.from('classified_ads').select('id', { count: 'exact', head: true }),
       supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+      supabase.from('business_locations').select('id', { count: 'exact', head: true }),
+      supabase.from('products').select('id', { count: 'exact', head: true }),
     ]);
 
     setStats({
@@ -127,6 +138,8 @@ export function AdminDashboardPage() {
       pendingReviews: pendingCount.count || 0,
       totalAds: adsCount.count || 0,
       activeSubscriptions: subsCount.count || 0,
+      totalBusinesses: businessCount.count || 0,
+      totalProducts: productsCount.count || 0,
     });
   };
 
@@ -245,6 +258,12 @@ export function AdminDashboardPage() {
   };
 
   const toggleAdmin = async (userId: string, currentStatus: boolean) => {
+    const confirmMessage = currentStatus
+      ? 'Sei sicuro di voler rimuovere i privilegi di amministratore a questo utente?'
+      : 'Sei sicuro di voler concedere i privilegi di amministratore a questo utente?';
+
+    if (!confirm(confirmMessage)) return;
+
     try {
       const { error } = await supabase
         .from('profiles')
@@ -257,6 +276,26 @@ export function AdminDashboardPage() {
       await loadUsers();
     } catch (error: any) {
       console.error('Error updating admin status:', error);
+      alert(`Errore: ${error.message}`);
+    }
+  };
+
+  const deleteUser = async (userId: string) => {
+    if (!confirm('Sei sicuro di voler eliminare questo utente? Questa azione è irreversibile.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase.rpc('delete_user_account', {
+        user_id_to_delete: userId,
+      });
+
+      if (error) throw error;
+
+      alert('Utente eliminato con successo');
+      await loadUsers();
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
       alert(`Errore: ${error.message}`);
     }
   };
@@ -295,13 +334,26 @@ export function AdminDashboardPage() {
     }
   };
 
+  const handleLogout = async () => {
+    if (confirm('Sei sicuro di voler uscire?')) {
+      await supabase.auth.signOut();
+      window.location.href = '/admin-login';
+    }
+  };
+
   if (!profile?.is_admin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Shield className="w-24 h-24 text-red-500 mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Accesso Negato</h1>
-          <p className="text-gray-600">Non hai i permessi per accedere a questa pagina.</p>
+          <p className="text-gray-600 mb-4">Non hai i permessi per accedere a questa pagina.</p>
+          <button
+            onClick={() => window.location.href = '/admin-login'}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Vai al Login Admin
+          </button>
         </div>
       </div>
     );
@@ -312,9 +364,18 @@ export function AdminDashboardPage() {
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-            <div className="flex items-center gap-3 mb-6">
-              <Shield className="w-8 h-8 text-blue-600" />
-              <h1 className="text-3xl font-bold text-gray-900">Pannello di Amministrazione</h1>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Shield className="w-8 h-8 text-blue-600" />
+                <h1 className="text-3xl font-bold text-gray-900">Pannello di Amministrazione</h1>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Esci
+              </button>
             </div>
 
             <div className="flex gap-2 overflow-x-auto">
@@ -386,7 +447,7 @@ export function AdminDashboardPage() {
         ) : (
           <>
             {activeTab === 'dashboard' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-white rounded-lg shadow p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -434,6 +495,26 @@ export function AdminDashboardPage() {
                       <p className="text-3xl font-bold text-gray-900">{stats.activeSubscriptions}</p>
                     </div>
                     <Activity className="w-12 h-12 text-teal-600" />
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">Attività Registrate</p>
+                      <p className="text-3xl font-bold text-gray-900">{stats.totalBusinesses}</p>
+                    </div>
+                    <Building2 className="w-12 h-12 text-indigo-600" />
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">Prodotti Totali</p>
+                      <p className="text-3xl font-bold text-gray-900">{stats.totalProducts}</p>
+                    </div>
+                    <ShoppingBag className="w-12 h-12 text-pink-600" />
                   </div>
                 </div>
               </div>
@@ -566,6 +647,9 @@ export function AdminDashboardPage() {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                           Admin
                         </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Azioni
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -615,6 +699,17 @@ export function AdminDashboardPage() {
                             >
                               {user.is_admin ? 'Admin' : 'Utente'}
                             </button>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {user.id !== profile?.id && (
+                              <button
+                                onClick={() => deleteUser(user.id)}
+                                className="text-red-600 hover:text-red-800 transition-colors"
+                                title="Elimina utente"
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ))}

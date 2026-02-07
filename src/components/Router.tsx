@@ -20,6 +20,8 @@ import { DiscountsPage } from '../pages/DiscountsPage';
 import { ProfileSelectionPage } from '../pages/ProfileSelectionPage';
 import { ClaimBusinessPage } from '../pages/ClaimBusinessPage';
 import { AdminDashboardPage } from '../pages/AdminDashboardPage';
+import { AdminRegisterPage } from '../pages/AdminRegisterPage';
+import { AdminLoginPage } from '../pages/AdminLoginPage';
 import { useAuth } from '../contexts/AuthContext';
 
 const RouterContext = createContext<{ params: Record<string, string> }>({ params: {} });
@@ -161,6 +163,14 @@ export function Router() {
 
   if (currentPath === '/admin') {
     return <AdminDashboardPage />;
+  }
+
+  if (currentPath === '/admin-secure-register-2024') {
+    return <AdminRegisterPage />;
+  }
+
+  if (currentPath === '/admin-login') {
+    return <AdminLoginPage />;
   }
 
   if (currentPath.startsWith('/business/')) {
