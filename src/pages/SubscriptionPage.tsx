@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
-import { Check, Heart, Star, Shield, TrendingUp, Users, Gift } from 'lucide-react';
+import { Check, Heart, Star, Shield, TrendingUp, Users, Gift, Trophy } from 'lucide-react';
 
 interface SubscriptionPlan {
   id: string;
@@ -355,7 +355,7 @@ export function SubscriptionPage() {
                   Accedi per sottoscrivere un abbonamento
                 </h3>
                 <p className="text-gray-600">
-                  Registrati o accedi per attivare il tuo abbonamento e iniziare a usufruire degli sconti esclusivi.
+                  Registrati o accedi per attivare il tuo abbonamento e iniziare a usufruire di tutte le funzionalità.
                 </p>
               </div>
             </div>
@@ -425,10 +425,6 @@ export function SubscriptionPage() {
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-700">
                             <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                            <span>Sconti esclusivi</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-700">
-                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
                             <span>Salva preferiti</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -440,8 +436,8 @@ export function SubscriptionPage() {
                             <span>Ricerca offerte di lavoro</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-700">
-                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                            <span>Ricerca prodotti di ogni genere</span>
+                            <Trophy className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+                            <span>Classifica a premi</span>
                           </div>
                         </div>
                         <button
@@ -686,10 +682,6 @@ export function SubscriptionPage() {
                     </li>
                     <li className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      Accesso a tutti gli sconti disponibili
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                       Salva le tue attività preferite
                     </li>
                     <li className="flex items-center gap-2">
@@ -702,7 +694,7 @@ export function SubscriptionPage() {
                     </li>
                     <li className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      Ricerca prodotti di ogni genere
+                      Classifica a premi
                     </li>
                   </ul>
                 </div>
@@ -803,10 +795,6 @@ export function SubscriptionPage() {
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
                               <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                              <span>Sconti esclusivi</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
                               <span>Salva preferiti</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -818,8 +806,8 @@ export function SubscriptionPage() {
                               <span>Ricerca offerte di lavoro</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                              <span>Ricerca prodotti di ogni genere</span>
+                              <Trophy className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+                              <span>Classifica a premi</span>
                             </div>
                           </>
                         )}
@@ -926,10 +914,6 @@ export function SubscriptionPage() {
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
                               <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                              <span>Sconti esclusivi</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
                               <span>Salva preferiti</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -941,8 +925,8 @@ export function SubscriptionPage() {
                               <span>Ricerca offerte di lavoro</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                              <span>Ricerca prodotti di ogni genere</span>
+                              <Trophy className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+                              <span>Classifica a premi</span>
                             </div>
                           </>
                         )}
