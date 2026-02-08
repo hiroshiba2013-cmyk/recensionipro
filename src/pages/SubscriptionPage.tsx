@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
-import { Check, Heart, Star, Shield, TrendingUp, Users, Gift, Trophy, MessageSquare, Bookmark, Megaphone, Briefcase } from 'lucide-react';
+import { Check, Heart, Star, Shield, TrendingUp, Users, Gift, Trophy, MessageSquare, Bookmark, Megaphone, Briefcase, ShoppingBag } from 'lucide-react';
 
 interface SubscriptionPlan {
   id: string;
@@ -432,6 +432,10 @@ export function SubscriptionPage() {
                             <span>Pubblicare annunci</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <ShoppingBag className="w-4 h-4 text-teal-600 flex-shrink-0" />
+                            <span>Cerca, vendi, regala oggetti</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
                             <Briefcase className="w-4 h-4 text-gray-700 flex-shrink-0" />
                             <span>Ricerca offerte di lavoro</span>
                           </div>
@@ -693,6 +697,10 @@ export function SubscriptionPage() {
                       Pubblicare annunci
                     </li>
                     <li className="flex items-center gap-2">
+                      <ShoppingBag className="w-4 h-4 text-teal-600 flex-shrink-0" />
+                      Cerca, vendi, regala oggetti
+                    </li>
+                    <li className="flex items-center gap-2">
                       <Briefcase className="w-4 h-4 text-gray-700 flex-shrink-0" />
                       Ricerca offerte di lavoro
                     </li>
@@ -808,6 +816,10 @@ export function SubscriptionPage() {
                             <div className="flex items-center gap-2 text-sm text-gray-700">
                               <Megaphone className="w-4 h-4 text-orange-600 flex-shrink-0" />
                               <span>Pubblicare annunci</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <ShoppingBag className="w-4 h-4 text-teal-600 flex-shrink-0" />
+                              <span>Cerca, vendi, regala oggetti</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
                               <Briefcase className="w-4 h-4 text-gray-700 flex-shrink-0" />
@@ -931,6 +943,10 @@ export function SubscriptionPage() {
                             <div className="flex items-center gap-2 text-sm text-gray-700">
                               <Megaphone className="w-4 h-4 text-orange-600 flex-shrink-0" />
                               <span>Pubblicare annunci</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <ShoppingBag className="w-4 h-4 text-teal-600 flex-shrink-0" />
+                              <span>Cerca, vendi, regala oggetti</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
                               <Briefcase className="w-4 h-4 text-gray-700 flex-shrink-0" />
