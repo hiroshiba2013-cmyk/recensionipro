@@ -213,10 +213,20 @@ export function SolidarityPage() {
             </div>
           )}
 
-          <div className="mt-6 text-center text-sm text-gray-600 bg-blue-50 rounded-lg p-4">
-            <p className="font-medium">
-              Questi contatori si aggiornano automaticamente ad ogni nuovo abbonamento ricevuto dalla piattaforma
-            </p>
+          <div className="mt-6 space-y-3">
+            <div className="text-center text-sm text-gray-600 bg-blue-50 rounded-lg p-4">
+              <p className="font-medium">
+                Questi contatori si aggiornano automaticamente ad ogni nuovo abbonamento ricevuto dalla piattaforma
+              </p>
+            </div>
+            <div className="text-center text-sm text-gray-700 bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
+              <p className="font-semibold text-yellow-900 mb-1">
+                Nota Importante
+              </p>
+              <p>
+                I contatori <span className="font-semibold">Fatturato Totale</span> e <span className="font-semibold">Solidarietà</span> saranno a zero per i primi tre mesi perché la prova è gratuita per tutti gli utenti
+              </p>
+            </div>
           </div>
         </div>
 
