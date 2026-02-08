@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Plus, Star, Tag, Building, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase } from 'lucide-react';
+import { Plus, Star, Building, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase, Business, Review, Discount, FamilyMember } from '../lib/supabase';
+import { supabase, Business, Review, FamilyMember } from '../lib/supabase';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
 import { EditBusinessLocationsForm } from '../components/business/EditBusinessLocationsForm';
 import { EditBusinessForm } from '../components/business/EditBusinessForm';
 import { CreateBusinessForm } from '../components/business/CreateBusinessForm';
-import { DiscountForm } from '../components/discount/DiscountForm';
-import { DiscountVerification } from '../components/discount/DiscountVerification';
 import { ReviewResponseForm } from '../components/reviews/ReviewResponseForm';
 import { ImportBusinessesForm } from '../components/business/ImportBusinessesForm';
 import { FavoritesSection } from '../components/favorites/FavoritesSection';
@@ -53,13 +51,11 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateBusinessForm, setShowCreateBusinessForm] = useState(false);
-  const [showDiscountForm, setShowDiscountForm] = useState(false);
   const [showResponseForm, setShowResponseForm] = useState<string | null>(null);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
@@ -82,7 +78,6 @@ export function DashboardPage() {
 
     // Reset dei dati quando cambia la sede
     setReviews([]);
-    setDiscounts([]);
     setProducts([]);
     setJobPostings([]);
 
@@ -126,25 +121,6 @@ export function DashboardPage() {
 
             if (reviewsData) {
               setReviews(reviewsData);
-            }
-
-            // Filtra sconti per sede se una sede è selezionata
-            let discountsQuery = supabase
-              .from('discounts')
-              .select('*')
-              .in('business_id', businessIds)
-              .order('created_at', { ascending: false });
-
-            if (selectedBusinessLocationId) {
-              discountsQuery = discountsQuery.eq('location_id', selectedBusinessLocationId);
-            }
-
-            const { data: discountsData } = await discountsQuery;
-
-            console.log('🏷️ Sconti caricati:', discountsData?.length || 0, 'per sede:', selectedBusinessLocationId || 'TUTTE');
-
-            if (discountsData) {
-              setDiscounts(discountsData);
             }
 
             // Filtra prodotti per sede se una sede è selezionata
@@ -386,20 +362,13 @@ export function DashboardPage() {
                       <TrendingUp className="w-5 h-5 text-blue-600" />
                       Statistiche Sede Selezionata
                     </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       <div className="bg-white rounded-lg p-4 shadow-sm">
                         <div className="flex items-center gap-2 mb-2">
                           <Star className="w-5 h-5 text-yellow-500" />
                           <span className="text-sm font-medium text-gray-600">Recensioni</span>
                         </div>
                         <p className="text-2xl font-bold text-gray-900">{reviews.length}</p>
-                      </div>
-                      <div className="bg-white rounded-lg p-4 shadow-sm">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Tag className="w-5 h-5 text-green-600" />
-                          <span className="text-sm font-medium text-gray-600">Sconti</span>
-                        </div>
-                        <p className="text-2xl font-bold text-gray-900">{discounts.length}</p>
                       </div>
                       <div className="bg-white rounded-lg p-4 shadow-sm">
                         <div className="flex items-center gap-2 mb-2">
@@ -664,10 +633,6 @@ export function DashboardPage() {
                               </div>
                               <div className="flex items-center gap-2 text-sm text-gray-700">
                                 <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                <span>Sconti illimitati</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm text-gray-700">
-                                <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
                                 <span>Risposte recensioni</span>
                               </div>
                               <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -703,58 +668,6 @@ export function DashboardPage() {
                         );
                       })}
                     </div>
-                  </div>
-                )}
-
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-2">
-                      <Tag className="w-6 h-6" />
-                      {selectedBusinessLocationId ? 'Sconti Sede Selezionata' : 'Sconti Attivi'}
-                    </h2>
-                    <button
-                      onClick={() => setShowDiscountForm(true)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                    >
-                      <Plus className="w-5 h-5" />
-                      Crea Sconto
-                    </button>
-                  </div>
-
-                  {discounts.length === 0 ? (
-                    <p className="text-gray-600 text-center py-8">
-                      {selectedBusinessLocationId
-                        ? 'Questa sede non ha ancora sconti attivi'
-                        : 'Non hai ancora creato sconti'}
-                    </p>
-                  ) : (
-                    <div className="space-y-4">
-                      {discounts.map((discount) => (
-                        <div key={discount.id} className="border border-gray-200 rounded-lg p-4">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <h4 className="font-semibold">{discount.title}</h4>
-                              <p className="text-gray-600 text-sm mt-1">{discount.description}</p>
-                              <div className="flex items-center gap-4 mt-2">
-                                <span className="text-green-600 font-bold">-{discount.discount_percentage}%</span>
-                                <span className="text-sm text-gray-500">Codice: {discount.code}</span>
-                              </div>
-                            </div>
-                            <span className={`px-3 py-1 text-sm rounded-full ${
-                              discount.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                            }`}>
-                              {discount.active ? 'Attivo' : 'Non attivo'}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {selectedBusinessId && (
-                  <div className="mt-6">
-                    <DiscountVerification businessId={selectedBusinessId} />
                   </div>
                 )}
               </>
@@ -940,10 +853,6 @@ export function DashboardPage() {
                               </div>
                               <div className="flex items-center gap-2 text-sm text-gray-700">
                                 <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                <span>Sconti esclusivi</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm text-gray-700">
-                                <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
                                 <span>Salva preferiti</span>
                               </div>
                               <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -984,18 +893,6 @@ export function DashboardPage() {
               </div>
             )}
           </div>
-        )}
-
-        {showDiscountForm && selectedBusinessId && (
-          <DiscountForm
-            businessId={selectedBusinessId}
-            locationId={selectedBusinessLocationId}
-            onClose={() => setShowDiscountForm(false)}
-            onSuccess={() => {
-              setShowDiscountForm(false);
-              loadDashboardData();
-            }}
-          />
         )}
 
         {showResponseForm && (

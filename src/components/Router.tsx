@@ -16,7 +16,6 @@ import { NotificationsPage } from '../pages/NotificationsPage';
 import { SolidarityPage } from '../pages/SolidarityPage';
 import { ContactPage } from '../pages/ContactPage';
 import { RulesPage } from '../pages/RulesPage';
-import { DiscountsPage } from '../pages/DiscountsPage';
 import { ProfileSelectionPage } from '../pages/ProfileSelectionPage';
 import { ClaimBusinessPage } from '../pages/ClaimBusinessPage';
 import { AdminDashboardPage } from '../pages/AdminDashboardPage';
@@ -120,10 +119,6 @@ export function Router() {
         </RouterContext.Provider>
       );
     }
-  }
-
-  if (currentPath === '/discounts') {
-    return <DiscountsPage />;
   }
 
   if (currentPath === '/classified' || currentPath === '/classified-ads') {

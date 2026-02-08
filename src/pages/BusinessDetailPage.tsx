@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import {
-  MapPin, Phone, Mail, Globe, Star, Tag, Briefcase,
+  MapPin, Phone, Mail, Globe, Star, Briefcase,
   Building2, Clock, AlertCircle, CheckCircle, ArrowLeft
 } from 'lucide-react';
-import { supabase, Business, Review, Discount, JobPosting, BusinessLocation } from '../lib/supabase';
+import { supabase, Business, Review, JobPosting, BusinessLocation } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ReviewForm } from '../components/reviews/ReviewForm';
 import { ReviewCard } from '../components/reviews/ReviewCard';
-import { DiscountCard } from '../components/discount/DiscountCard';
 import BusinessMap from '../components/map/BusinessMap';
 import ReportButton from '../components/moderation/ReportButton';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
@@ -26,7 +25,6 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
   const { user, profile } = useAuth();
   const [business, setBusiness] = useState<BusinessWithRating | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [locations, setLocations] = useState<BusinessLocation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -138,16 +136,6 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
 
         if (fullReviewsData) {
           setReviews(fullReviewsData);
-        }
-
-        const { data: discountsData } = await supabase
-          .from('discounts')
-          .select('*')
-          .eq('business_id', businessId)
-          .eq('active', true);
-
-        if (discountsData) {
-          setDiscounts(discountsData);
         }
 
         const { data: jobsData } = await supabase
@@ -607,20 +595,6 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                             )}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {discounts.length > 0 && (
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <Tag className="w-6 h-6" />
-                      Offerte Esclusive
-                    </h2>
-                    <div className="grid gap-4">
-                      {discounts.map((discount) => (
-                        <DiscountCard key={discount.id} discount={discount} />
                       ))}
                     </div>
                   </div>

@@ -215,10 +215,6 @@ function LandingPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-300 font-bold text-xl">✓</span>
-                <span>{t('home.feature.exclusiveDiscounts')}</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-yellow-300 font-bold text-xl">✓</span>
                 <span>{t('home.feature.freeAds')}</span>
               </li>
               <li className="flex items-start gap-2">
@@ -521,22 +517,13 @@ function AuthenticatedHomePage() {
               <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-blue-600">Prodotti</span>
             </a>
             {userType !== 'business' && (
-              <>
-                <a
-                  href="/discounts"
-                  className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-orange-50 transition-all group"
-                >
-                  <Percent className="w-7 h-7 md:w-8 md:h-8 text-orange-600 group-hover:scale-110 transition-transform" />
-                  <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-orange-600">Sconti</span>
-                </a>
-                <a
-                  href="/classified-ads"
-                  className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-green-50 transition-all group"
-                >
-                  <Tag className="w-7 h-7 md:w-8 md:h-8 text-green-600 group-hover:scale-110 transition-transform" />
-                  <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-green-600">Annunci</span>
-                </a>
-              </>
+              <a
+                href="/classified-ads"
+                className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-green-50 transition-all group"
+              >
+                <Tag className="w-7 h-7 md:w-8 md:h-8 text-green-600 group-hover:scale-110 transition-transform" />
+                <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-green-600">Annunci</span>
+              </a>
             )}
             <a
               href="/jobs"
@@ -611,33 +598,18 @@ function AuthenticatedHomePage() {
           </div>
 
           {userType !== 'business' && (
-            <>
-              <div
-                onClick={() => navigate('/discounts')}
-                className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <Percent className="w-8 h-8" />
-                  <h3 className="text-2xl font-bold">Sconti</h3>
-                </div>
-                <p className="text-orange-100 text-sm leading-relaxed">
-                  Approfitta delle offerte esclusive delle attività nella tua zona. Risparmia su prodotti e servizi con sconti riservati agli utenti.
-                </p>
+            <div
+              onClick={() => navigate('/classified-ads')}
+              className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all cursor-pointer"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <Tag className="w-8 h-8" />
+                <h3 className="text-2xl font-bold">Annunci</h3>
               </div>
-
-              <div
-                onClick={() => navigate('/classified-ads')}
-                className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <Tag className="w-8 h-8" />
-                  <h3 className="text-2xl font-bold">Annunci</h3>
-                </div>
-                <p className="text-green-100 text-sm leading-relaxed">
-                  Compra, vendi o scambia oggetti usati nella tua zona. Pubblica annunci gratuiti e trova occasioni vicino a casa tua.
-                </p>
-              </div>
-            </>
+              <p className="text-green-100 text-sm leading-relaxed">
+                Compra, vendi o scambia oggetti usati nella tua zona. Pubblica annunci gratuiti e trova occasioni vicino a casa tua.
+              </p>
+            </div>
           )}
 
           <div
