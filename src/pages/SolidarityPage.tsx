@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Heart, FileText, Download, Calendar, Euro } from 'lucide-react';
+import { Heart, FileText, Download, Calendar, Euro, Users, TrendingUp, Clock, Building } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface SolidarityDocument {
@@ -17,16 +17,35 @@ interface SolidarityDocument {
   };
 }
 
+interface SubscriptionStats {
+  totalActive: number;
+  customerMonthly: number;
+  customerYearly: number;
+  businessMonthly: number;
+  businessYearly: number;
+  trialUsers: number;
+}
+
 export function SolidarityPage() {
   const [documents, setDocuments] = useState<SolidarityDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
   const [totalRevenue, setTotalRevenue] = useState<number>(0);
   const [loadingRevenue, setLoadingRevenue] = useState(true);
+  const [subscriptionStats, setSubscriptionStats] = useState<SubscriptionStats>({
+    totalActive: 0,
+    customerMonthly: 0,
+    customerYearly: 0,
+    businessMonthly: 0,
+    businessYearly: 0,
+    trialUsers: 0,
+  });
+  const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
     loadDocuments();
     loadRevenue();
+    loadSubscriptionStats();
   }, []);
 
   const loadRevenue = async () => {
@@ -42,6 +61,32 @@ export function SolidarityPage() {
       console.error('Error loading revenue:', error);
     } finally {
       setLoadingRevenue(false);
+    }
+  };
+
+  const loadSubscriptionStats = async () => {
+    try {
+      setLoadingStats(true);
+
+      // Usa la funzione RPC per ottenere le statistiche aggregate
+      const { data, error } = await supabase.rpc('get_subscription_stats');
+
+      if (error) throw error;
+
+      if (data) {
+        setSubscriptionStats({
+          totalActive: data.totalActive || 0,
+          customerMonthly: data.customerMonthly || 0,
+          customerYearly: data.customerYearly || 0,
+          businessMonthly: data.businessMonthly || 0,
+          businessYearly: data.businessYearly || 0,
+          trialUsers: data.trialUsers || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading subscription stats:', error);
+    } finally {
+      setLoadingStats(false);
     }
   };
 
@@ -171,6 +216,164 @@ export function SolidarityPage() {
           <div className="mt-6 text-center text-sm text-gray-600 bg-blue-50 rounded-lg p-4">
             <p className="font-medium">
               Questi contatori si aggiornano automaticamente ad ogni nuovo abbonamento ricevuto dalla piattaforma
+            </p>
+          </div>
+        </div>
+
+        {/* Subscription Statistics */}
+        <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+            Statistiche Abbonamenti
+          </h2>
+
+          {loadingStats ? (
+            <div className="text-center py-8">
+              <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
+              <p className="text-gray-600 mt-4">Caricamento statistiche...</p>
+            </div>
+          ) : (
+            <>
+              {/* Total Active Subscriptions */}
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-8 text-center border-2 border-purple-200 shadow-md mb-6">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="bg-purple-500 p-4 rounded-full">
+                    <Users className="w-10 h-10 text-white" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Utenti Abbonati Totali</h3>
+                <div className="text-5xl md:text-6xl font-bold text-purple-600 mb-2">
+                  {subscriptionStats.totalActive.toLocaleString('it-IT')}
+                </div>
+                <p className="text-sm text-gray-600">Abbonamenti attivi sulla piattaforma</p>
+                {subscriptionStats.trialUsers > 0 && (
+                  <div className="mt-4 bg-purple-200 rounded-lg p-3">
+                    <p className="text-sm font-semibold text-purple-900">
+                      + {subscriptionStats.trialUsers} utenti in prova gratuita
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Subscription Type Breakdown */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                {/* Customer Subscriptions */}
+                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border-2 border-blue-200 shadow-md">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="bg-blue-500 p-3 rounded-full">
+                      <Users className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-4 text-center">Abbonamenti Clienti</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between bg-white rounded-lg p-4 shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-5 h-5 text-blue-600" />
+                        <span className="font-medium text-gray-700">Mensili</span>
+                      </div>
+                      <span className="text-2xl font-bold text-blue-600">
+                        {subscriptionStats.customerMonthly}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between bg-white rounded-lg p-4 shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-5 h-5 text-cyan-600" />
+                        <span className="font-medium text-gray-700">Annuali</span>
+                      </div>
+                      <span className="text-2xl font-bold text-cyan-600">
+                        {subscriptionStats.customerYearly}
+                      </span>
+                    </div>
+                    <div className="bg-blue-100 rounded-lg p-3 mt-4">
+                      <p className="text-center font-bold text-blue-900 text-lg">
+                        Totale: {subscriptionStats.customerMonthly + subscriptionStats.customerYearly}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Business Subscriptions */}
+                <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-6 border-2 border-orange-200 shadow-md">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="bg-orange-500 p-3 rounded-full">
+                      <Building className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-4 text-center">Abbonamenti Aziende</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between bg-white rounded-lg p-4 shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-5 h-5 text-orange-600" />
+                        <span className="font-medium text-gray-700">Mensili</span>
+                      </div>
+                      <span className="text-2xl font-bold text-orange-600">
+                        {subscriptionStats.businessMonthly}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between bg-white rounded-lg p-4 shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-5 h-5 text-amber-600" />
+                        <span className="font-medium text-gray-700">Annuali</span>
+                      </div>
+                      <span className="text-2xl font-bold text-amber-600">
+                        {subscriptionStats.businessYearly}
+                      </span>
+                    </div>
+                    <div className="bg-orange-100 rounded-lg p-3 mt-4">
+                      <p className="text-center font-bold text-orange-900 text-lg">
+                        Totale: {subscriptionStats.businessMonthly + subscriptionStats.businessYearly}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Percentage Breakdown */}
+              <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border-2 border-indigo-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 text-center flex items-center justify-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-indigo-600" />
+                  Distribuzione Abbonamenti
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-white rounded-lg p-4 text-center shadow-sm">
+                    <div className="text-2xl font-bold text-blue-600 mb-1">
+                      {subscriptionStats.totalActive > 0
+                        ? ((subscriptionStats.customerMonthly / subscriptionStats.totalActive) * 100).toFixed(1)
+                        : 0}%
+                    </div>
+                    <div className="text-xs text-gray-600">Clienti Mensili</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 text-center shadow-sm">
+                    <div className="text-2xl font-bold text-cyan-600 mb-1">
+                      {subscriptionStats.totalActive > 0
+                        ? ((subscriptionStats.customerYearly / subscriptionStats.totalActive) * 100).toFixed(1)
+                        : 0}%
+                    </div>
+                    <div className="text-xs text-gray-600">Clienti Annuali</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 text-center shadow-sm">
+                    <div className="text-2xl font-bold text-orange-600 mb-1">
+                      {subscriptionStats.totalActive > 0
+                        ? ((subscriptionStats.businessMonthly / subscriptionStats.totalActive) * 100).toFixed(1)
+                        : 0}%
+                    </div>
+                    <div className="text-xs text-gray-600">Aziende Mensili</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 text-center shadow-sm">
+                    <div className="text-2xl font-bold text-amber-600 mb-1">
+                      {subscriptionStats.totalActive > 0
+                        ? ((subscriptionStats.businessYearly / subscriptionStats.totalActive) * 100).toFixed(1)
+                        : 0}%
+                    </div>
+                    <div className="text-xs text-gray-600">Aziende Annuali</div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          <div className="mt-6 text-center text-sm text-gray-600 bg-indigo-50 rounded-lg p-4">
+            <p className="font-medium">
+              Questi dati vengono aggiornati in tempo reale e rappresentano tutti gli abbonamenti attivi sulla piattaforma
             </p>
           </div>
         </div>
