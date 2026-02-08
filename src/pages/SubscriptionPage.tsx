@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
-import { Check, Heart, Star, Shield, TrendingUp, Users, Gift, Trophy } from 'lucide-react';
+import { Check, Heart, Star, Shield, TrendingUp, Users, Gift, Trophy, MessageSquare, Bookmark, Megaphone, Briefcase } from 'lucide-react';
 
 interface SubscriptionPlan {
   id: string;
@@ -420,24 +420,28 @@ export function SubscriptionPage() {
                         </div>
                         <div className="mb-6 space-y-2">
                           <div className="flex items-center gap-2 text-sm text-gray-700">
-                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <MessageSquare className="w-4 h-4 text-blue-600 flex-shrink-0" />
                             <span>Recensioni illimitate</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-700">
-                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <Bookmark className="w-4 h-4 text-purple-600 flex-shrink-0" />
                             <span>Salva preferiti</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-700">
-                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <Megaphone className="w-4 h-4 text-orange-600 flex-shrink-0" />
                             <span>Pubblicare annunci</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-700">
-                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <Briefcase className="w-4 h-4 text-gray-700 flex-shrink-0" />
                             <span>Ricerca offerte di lavoro</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-700">
                             <Trophy className="w-4 h-4 text-yellow-500 flex-shrink-0" />
                             <span>Classifica a premi</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <Heart className="w-4 h-4 text-green-600 flex-shrink-0" fill="currentColor" />
+                            <span>10% Beneficenza annuale</span>
                           </div>
                         </div>
                         <button
@@ -677,24 +681,28 @@ export function SubscriptionPage() {
                   <h3 className="font-semibold text-gray-900 mb-3">Incluso nel tuo piano:</h3>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      <MessageSquare className="w-4 h-4 text-blue-600 flex-shrink-0" />
                       Recensioni illimitate per tutti i membri della famiglia
                     </li>
                     <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      <Bookmark className="w-4 h-4 text-purple-600 flex-shrink-0" />
                       Salva le tue attività preferite
                     </li>
                     <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      <Megaphone className="w-4 h-4 text-orange-600 flex-shrink-0" />
                       Pubblicare annunci
                     </li>
                     <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      <Briefcase className="w-4 h-4 text-gray-700 flex-shrink-0" />
                       Ricerca offerte di lavoro
                     </li>
                     <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      <Trophy className="w-4 h-4 text-yellow-500 flex-shrink-0" />
                       Classifica a premi
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Heart className="w-4 h-4 text-green-600 flex-shrink-0" fill="currentColor" />
+                      10% Beneficenza annuale
                     </li>
                   </ul>
                 </div>
@@ -790,24 +798,28 @@ export function SubscriptionPage() {
                         ) : (
                           <>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <MessageSquare className="w-4 h-4 text-blue-600 flex-shrink-0" />
                               <span>Recensioni illimitate</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <Bookmark className="w-4 h-4 text-purple-600 flex-shrink-0" />
                               <span>Salva preferiti</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <Megaphone className="w-4 h-4 text-orange-600 flex-shrink-0" />
                               <span>Pubblicare annunci</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <Briefcase className="w-4 h-4 text-gray-700 flex-shrink-0" />
                               <span>Ricerca offerte di lavoro</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
                               <Trophy className="w-4 h-4 text-yellow-500 flex-shrink-0" />
                               <span>Classifica a premi</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Heart className="w-4 h-4 text-green-600 flex-shrink-0" fill="currentColor" />
+                              <span>10% Beneficenza annuale</span>
                             </div>
                           </>
                         )}
@@ -909,24 +921,28 @@ export function SubscriptionPage() {
                         ) : (
                           <>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <MessageSquare className="w-4 h-4 text-blue-600 flex-shrink-0" />
                               <span>Recensioni illimitate</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <Bookmark className="w-4 h-4 text-purple-600 flex-shrink-0" />
                               <span>Salva preferiti</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <Megaphone className="w-4 h-4 text-orange-600 flex-shrink-0" />
                               <span>Pubblicare annunci</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <Briefcase className="w-4 h-4 text-gray-700 flex-shrink-0" />
                               <span>Ricerca offerte di lavoro</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
                               <Trophy className="w-4 h-4 text-yellow-500 flex-shrink-0" />
                               <span>Classifica a premi</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Heart className="w-4 h-4 text-green-600 flex-shrink-0" fill="currentColor" />
+                              <span>10% Beneficenza annuale</span>
                             </div>
                           </>
                         )}
