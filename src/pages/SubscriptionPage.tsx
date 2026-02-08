@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
-import { Check, Heart, Star, Shield, TrendingUp, Users, Gift, Trophy, MessageSquare, Bookmark, Megaphone, Briefcase, ShoppingBag } from 'lucide-react';
+import { Check, Heart, Star, Shield, TrendingUp, Users, Gift, Trophy, MessageSquare, Bookmark, Megaphone, Briefcase, ShoppingBag, Eye, Tag } from 'lucide-react';
 
 interface SubscriptionPlan {
   id: string;
@@ -527,15 +527,19 @@ export function SubscriptionPage() {
                             <span>Profilo verificato</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-700">
-                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <Tag className="w-4 h-4 text-orange-600 flex-shrink-0" />
                             <span>Sconti illimitati</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-700">
-                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <MessageSquare className="w-4 h-4 text-blue-500 flex-shrink-0" />
                             <span>Risposte recensioni</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-700">
-                            <TrendingUp className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                            <Eye className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                            <span>Vedere recensioni altre aziende</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <TrendingUp className="w-4 h-4 text-teal-600 flex-shrink-0" />
                             <span>Statistiche avanzate</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -543,8 +547,12 @@ export function SubscriptionPage() {
                             <span className="font-semibold">Priorità visibilità</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-700">
-                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <Briefcase className="w-4 h-4 text-gray-700 flex-shrink-0" />
                             <span>Inserire annunci di lavoro</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <Heart className="w-4 h-4 text-green-600 flex-shrink-0" fill="currentColor" />
+                            <span>10% Beneficenza annuale</span>
                           </div>
                         </div>
                         <button
@@ -783,15 +791,19 @@ export function SubscriptionPage() {
                               <span>Profilo verificato</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <Tag className="w-4 h-4 text-orange-600 flex-shrink-0" />
                               <span>Sconti illimitati</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <MessageSquare className="w-4 h-4 text-blue-500 flex-shrink-0" />
                               <span>Risposte recensioni</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <TrendingUp className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                              <Eye className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                              <span>Vedere recensioni altre aziende</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <TrendingUp className="w-4 h-4 text-teal-600 flex-shrink-0" />
                               <span>Statistiche avanzate</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -799,8 +811,12 @@ export function SubscriptionPage() {
                               <span>Priorità visibilità</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <Briefcase className="w-4 h-4 text-gray-700 flex-shrink-0" />
                               <span>Inserire annunci di lavoro</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Heart className="w-4 h-4 text-green-600 flex-shrink-0" fill="currentColor" />
+                              <span>10% Beneficenza annuale</span>
                             </div>
                           </>
                         ) : (
@@ -910,15 +926,19 @@ export function SubscriptionPage() {
                               <span>Profilo verificato</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <Tag className="w-4 h-4 text-orange-600 flex-shrink-0" />
                               <span>Sconti illimitati</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <MessageSquare className="w-4 h-4 text-blue-500 flex-shrink-0" />
                               <span>Risposte recensioni</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <TrendingUp className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                              <Eye className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                              <span>Vedere recensioni altre aziende</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <TrendingUp className="w-4 h-4 text-teal-600 flex-shrink-0" />
                               <span>Statistiche avanzate</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -926,8 +946,12 @@ export function SubscriptionPage() {
                               <span>Priorità visibilità</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <Briefcase className="w-4 h-4 text-gray-700 flex-shrink-0" />
                               <span>Inserire annunci di lavoro</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Heart className="w-4 h-4 text-green-600 flex-shrink-0" fill="currentColor" />
+                              <span>10% Beneficenza annuale</span>
                             </div>
                           </>
                         ) : (
@@ -1083,28 +1107,36 @@ export function SubscriptionPage() {
                 <h3 className="font-semibold text-gray-900 mb-3">Incluso nel tuo piano:</h3>
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-green-600" />
-                    Profilo aziendale completo
+                    <Shield className="w-5 h-5 text-blue-600" />
+                    Profilo verificato
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-green-600" />
-                    Visualizza e rispondi alle recensioni
+                    <Tag className="w-5 h-5 text-orange-600" />
+                    Sconti illimitati
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-green-600" />
-                    Crea sconti illimitati
+                    <MessageSquare className="w-5 h-5 text-blue-500" />
+                    Risposte recensioni
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-green-600" />
-                    Statistiche sulle recensioni
+                    <Eye className="w-5 h-5 text-purple-600" />
+                    Vedere recensioni altre aziende
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-green-600" />
-                    Badge di verifica
+                    <TrendingUp className="w-5 h-5 text-teal-600" />
+                    Statistiche avanzate
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-green-600" />
-                    Supporto dedicato
+                    <Star className="w-5 h-5 text-yellow-500" fill="currentColor" />
+                    Priorità visibilità
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Briefcase className="w-5 h-5 text-gray-700" />
+                    Inserire annunci di lavoro
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Heart className="w-5 h-5 text-green-600" fill="currentColor" />
+                    10% Beneficenza annuale
                   </li>
                 </ul>
               </div>
@@ -1182,15 +1214,19 @@ export function SubscriptionPage() {
                         <span>Profilo verificato</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-700">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <Tag className="w-4 h-4 text-orange-600 flex-shrink-0" />
                         <span>Sconti illimitati</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-700">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <MessageSquare className="w-4 h-4 text-blue-500 flex-shrink-0" />
                         <span>Risposte recensioni</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-700">
-                        <TrendingUp className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                        <Eye className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                        <span>Vedere recensioni altre aziende</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <TrendingUp className="w-4 h-4 text-teal-600 flex-shrink-0" />
                         <span>Statistiche avanzate</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -1198,8 +1234,12 @@ export function SubscriptionPage() {
                         <span>Priorità visibilità</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-700">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <Briefcase className="w-4 h-4 text-gray-700 flex-shrink-0" />
                         <span>Inserire annunci di lavoro</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <Heart className="w-4 h-4 text-green-600 flex-shrink-0" fill="currentColor" />
+                        <span>10% Beneficenza annuale</span>
                       </div>
                     </div>
                     <button
@@ -1281,15 +1321,19 @@ export function SubscriptionPage() {
                         <span>Profilo verificato</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-700">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <Tag className="w-4 h-4 text-orange-600 flex-shrink-0" />
                         <span>Sconti illimitati</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-700">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <MessageSquare className="w-4 h-4 text-blue-500 flex-shrink-0" />
                         <span>Risposte recensioni</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-700">
-                        <TrendingUp className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                        <Eye className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                        <span>Vedere recensioni altre aziende</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <TrendingUp className="w-4 h-4 text-teal-600 flex-shrink-0" />
                         <span>Statistiche avanzate</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -1297,8 +1341,12 @@ export function SubscriptionPage() {
                         <span>Priorità visibilità</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-700">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <Briefcase className="w-4 h-4 text-gray-700 flex-shrink-0" />
                         <span>Inserire annunci di lavoro</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <Heart className="w-4 h-4 text-green-600 flex-shrink-0" fill="currentColor" />
+                        <span>10% Beneficenza annuale</span>
                       </div>
                     </div>
                     {isCurrent ? (
