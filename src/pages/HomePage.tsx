@@ -308,7 +308,7 @@ function LandingPage() {
             Unisciti alla community di Trovafacile e scopri tutto quello che il tuo territorio ha da offrire
           </p>
           <p className="text-lg text-green-600 font-semibold mb-8">
-            Due mesi di prova gratuiti - Nessuna carta di credito richiesta
+            Un mese di prova gratuito - Nessuna carta di credito richiesta
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button

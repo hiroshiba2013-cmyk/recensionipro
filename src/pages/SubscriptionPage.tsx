@@ -308,7 +308,7 @@ export function SubscriptionPage() {
               Scegli il piano perfetto per te o per la tua attività
             </p>
             <p className="text-lg text-gray-700 max-w-3xl mx-auto">
-              I primi 2 mesi di abbonamento sono gratuiti e dopo scegli se abbonarti o cancellare il profilo
+              Il primo mese di abbonamento è gratuito e dopo scegli se abbonarti o cancellare il profilo
             </p>
           </div>
 
@@ -639,7 +639,7 @@ export function SubscriptionPage() {
                       {currentSubscription.status === 'trial' ? 'GRATIS' : `${currentSubscription.plan.price.toFixed(2)}€`}
                     </div>
                     <div className="text-sm text-gray-600">
-                      {currentSubscription.status === 'trial' ? 'per 2 mesi' : currentSubscription.plan.billing_period === 'monthly' ? 'al mese' : 'all\'anno'}
+                      {currentSubscription.status === 'trial' ? 'per 1 mese' : currentSubscription.plan.billing_period === 'monthly' ? 'al mese' : 'all\'anno'}
                     </div>
                   </div>
                 </div>
@@ -1053,7 +1053,7 @@ export function SubscriptionPage() {
                     {currentSubscription.status === 'trial' ? 'GRATIS' : `${Number(currentSubscription.plan.price).toFixed(2)}€`}
                   </div>
                   <div className="text-sm text-gray-600">
-                    {currentSubscription.status === 'trial' ? 'per 2 mesi' : `${currentSubscription.plan.billing_period === 'monthly' ? 'al mese' : 'all\'anno'} + IVA`}
+                    {currentSubscription.status === 'trial' ? 'per 1 mese' : `${currentSubscription.plan.billing_period === 'monthly' ? 'al mese' : 'all\'anno'} + IVA`}
                   </div>
                 </div>
               </div>

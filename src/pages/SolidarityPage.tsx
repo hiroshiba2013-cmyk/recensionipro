@@ -224,7 +224,7 @@ export function SolidarityPage() {
                 Nota Importante
               </p>
               <p>
-                I contatori <span className="font-semibold">Fatturato Totale</span> e <span className="font-semibold">Solidarietà</span> saranno a zero per i primi due mesi perché la prova è gratuita per tutti gli utenti
+                I contatori <span className="font-semibold">Fatturato Totale</span> e <span className="font-semibold">Solidarietà</span> saranno a zero per il primo mese perché la prova è gratuita per tutti gli utenti
               </p>
             </div>
           </div>

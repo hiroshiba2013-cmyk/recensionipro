@@ -199,7 +199,7 @@ export function SubscriptionManagement({
               {currentSubscription.status === 'trial' ? (
                 <>
                   <p className="text-3xl font-bold text-purple-600">GRATIS</p>
-                  <p className="text-sm text-gray-600">2 mesi di prova</p>
+                  <p className="text-sm text-gray-600">1 mese di prova</p>
                 </>
               ) : (
                 <>
@@ -287,7 +287,7 @@ export function SubscriptionManagement({
             <li className="flex items-start gap-2">
               <Check className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <span>
-                <strong>Durata:</strong> Il periodo di prova dura 60 giorni (2 mesi) a partire dalla data di iscrizione
+                <strong>Durata:</strong> Il periodo di prova dura 30 giorni (1 mese) a partire dalla data di iscrizione
               </span>
             </li>
             <li className="flex items-start gap-2">
