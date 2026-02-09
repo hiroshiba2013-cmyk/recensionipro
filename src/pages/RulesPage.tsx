@@ -252,7 +252,7 @@ export function RulesPage() {
                     <p className="text-lg">
                       <strong>Passo 2:</strong> Scegli il tipo di account:
                     </p>
-                    <div className="grid md:grid-cols-2 gap-4 ml-4">
+                    <div className="ml-4 max-w-md">
                       <div className="bg-white p-6 rounded-lg border-2 border-blue-300 shadow-sm">
                         <div className="flex items-center gap-2 mb-3">
                           <Users className="w-6 h-6 text-blue-600" />
@@ -281,41 +281,6 @@ export function RulesPage() {
                           </li>
                           <li className="mt-3 pt-3 border-t border-gray-200">
                             <span className="font-bold text-blue-600">Da 0,49€/mese</span> dopo 3 mesi di prova gratuita
-                          </li>
-                        </ul>
-                      </div>
-                      <div className="bg-white p-6 rounded-lg border-2 border-purple-300 shadow-sm">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Building className="w-6 h-6 text-purple-600" />
-                          <h4 className="font-bold text-xl">Account Business</h4>
-                        </div>
-                        <ul className="space-y-2 text-sm">
-                          <li className="flex items-start gap-2">
-                            <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <span>Rivendica e gestisci la tua azienda</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <span>Gestisci più sedi e punti vendita</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <span>Rispondi alle recensioni</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <span>Pubblica annunci di lavoro illimitati</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <span>Crea sconti e offerte esclusive</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <span>Il 10% del tuo abbonamento andrà in beneficienza</span>
-                          </li>
-                          <li className="mt-3 pt-3 border-t border-gray-200">
-                            <span className="font-bold text-purple-600">Da 2,49€/mese + IVA</span> dopo 3 mesi di prova
                           </li>
                         </ul>
                       </div>
@@ -718,6 +683,42 @@ export function RulesPage() {
               </div>
 
               <div className="space-y-10">
+                <div className="bg-white p-6 rounded-lg border-2 border-purple-300 shadow-sm max-w-lg">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Building className="w-6 h-6 text-purple-600" />
+                    <h4 className="font-bold text-xl">Account Business</h4>
+                  </div>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <span>Rivendica e gestisci la tua azienda</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <span>Gestisci più sedi e punti vendita</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <span>Rispondi alle recensioni</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <span>Pubblica annunci di lavoro illimitati</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <span>Crea sconti e offerte esclusive</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <span>Il 10% del tuo abbonamento andrà in beneficienza</span>
+                    </li>
+                    <li className="mt-3 pt-3 border-t border-gray-200">
+                      <span className="font-bold text-purple-600">Da 2,49€/mese + IVA</span> dopo 3 mesi di prova
+                    </li>
+                  </ul>
+                </div>
+
                 <div className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-200 p-8 rounded-xl">
                   <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <MapPin className="w-7 h-7 text-purple-600" />
