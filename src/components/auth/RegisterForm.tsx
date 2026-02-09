@@ -44,6 +44,42 @@ interface BusinessLocation {
   businessHours: BusinessHours;
 }
 
+function getRegionFromProvince(provinceCode: string): string {
+  const provinceToRegion: { [key: string]: string } = {
+    'MI': 'Lombardia', 'BG': 'Lombardia', 'BS': 'Lombardia', 'CO': 'Lombardia', 'CR': 'Lombardia',
+    'LC': 'Lombardia', 'LO': 'Lombardia', 'MN': 'Lombardia', 'MB': 'Lombardia', 'PV': 'Lombardia',
+    'SO': 'Lombardia', 'VA': 'Lombardia',
+    'TO': 'Piemonte', 'AL': 'Piemonte', 'AT': 'Piemonte', 'BI': 'Piemonte', 'CN': 'Piemonte',
+    'NO': 'Piemonte', 'VB': 'Piemonte', 'VC': 'Piemonte',
+    'RM': 'Lazio', 'FR': 'Lazio', 'LT': 'Lazio', 'RI': 'Lazio', 'VT': 'Lazio',
+    'VE': 'Veneto', 'VR': 'Veneto', 'PD': 'Veneto', 'VI': 'Veneto', 'TV': 'Veneto',
+    'BL': 'Veneto', 'RO': 'Veneto',
+    'BO': 'Emilia-Romagna', 'MO': 'Emilia-Romagna', 'PR': 'Emilia-Romagna', 'RE': 'Emilia-Romagna',
+    'FE': 'Emilia-Romagna', 'RA': 'Emilia-Romagna', 'FC': 'Emilia-Romagna', 'RN': 'Emilia-Romagna',
+    'PC': 'Emilia-Romagna',
+    'FI': 'Toscana', 'AR': 'Toscana', 'GR': 'Toscana', 'LI': 'Toscana', 'LU': 'Toscana',
+    'MS': 'Toscana', 'PI': 'Toscana', 'PT': 'Toscana', 'PO': 'Toscana', 'SI': 'Toscana',
+    'NA': 'Campania', 'SA': 'Campania', 'AV': 'Campania', 'BN': 'Campania', 'CE': 'Campania',
+    'PA': 'Sicilia', 'CT': 'Sicilia', 'ME': 'Sicilia', 'SR': 'Sicilia', 'TP': 'Sicilia',
+    'AG': 'Sicilia', 'CL': 'Sicilia', 'EN': 'Sicilia', 'RG': 'Sicilia',
+    'BA': 'Puglia', 'BR': 'Puglia', 'FG': 'Puglia', 'LE': 'Puglia', 'TA': 'Puglia', 'BT': 'Puglia',
+    'GE': 'Liguria', 'SP': 'Liguria', 'SV': 'Liguria', 'IM': 'Liguria',
+    'TS': 'Friuli-Venezia Giulia', 'UD': 'Friuli-Venezia Giulia', 'PN': 'Friuli-Venezia Giulia',
+    'GO': 'Friuli-Venezia Giulia',
+    'TN': 'Trentino-Alto Adige', 'BZ': 'Trentino-Alto Adige',
+    'AN': 'Marche', 'AP': 'Marche', 'FM': 'Marche', 'MC': 'Marche', 'PU': 'Marche',
+    'AQ': 'Abruzzo', 'TE': 'Abruzzo', 'PE': 'Abruzzo', 'CH': 'Abruzzo',
+    'PG': 'Umbria', 'TR': 'Umbria',
+    'CZ': 'Calabria', 'CS': 'Calabria', 'RC': 'Calabria', 'KR': 'Calabria', 'VV': 'Calabria',
+    'CA': 'Sardegna', 'SS': 'Sardegna', 'NU': 'Sardegna', 'OR': 'Sardegna', 'SU': 'Sardegna',
+    'CB': 'Molise', 'IS': 'Molise',
+    'PZ': 'Basilicata', 'MT': 'Basilicata',
+    'AO': 'Valle d\'Aosta'
+  };
+
+  return provinceToRegion[provinceCode.toUpperCase()] || 'Lazio';
+}
+
 export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
   const [userType, setUserType] = useState<'customer' | 'business'>('customer');
   const [error, setError] = useState('');
@@ -589,6 +625,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             street_number: location.streetNumber,
             city: location.city,
             province: location.province.toUpperCase(),
+            region: getRegionFromProvince(location.province),
             postal_code: location.postalCode,
             phone: location.phone,
             email: location.email,
