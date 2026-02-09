@@ -65,13 +65,9 @@ export function Router() {
     if (!needsProfileSelection) return;
     if (currentPath === '/select-profile') return;
 
-    const protectedPaths = ['/dashboard', '/profile', '/messages'];
-    const isProtectedPath = protectedPaths.some(path => currentPath.startsWith(path));
-
-    if (isProtectedPath) {
-      window.history.pushState({}, '', '/select-profile');
-      setCurrentPath('/select-profile');
-    }
+    // Redirect to profile selection immediately after login if needed
+    window.history.pushState({}, '', '/select-profile');
+    setCurrentPath('/select-profile');
   }, [needsProfileSelection, loading, currentPath]);
 
   if (currentPath === '/select-profile') {
