@@ -496,70 +496,93 @@ export function RulesPage() {
                   </div>
                 </div>
 
-                <div className="bg-pink-50 border-l-4 border-pink-500 p-6 rounded-r-xl">
+                <div className="bg-gradient-to-br from-green-50 via-blue-50 to-pink-50 border-l-4 border-green-500 p-8 rounded-r-xl shadow-lg">
                   <div className="flex items-start gap-4">
-                    <Heart className="w-8 h-8 text-pink-600 flex-shrink-0 mt-1" />
+                    <Heart className="w-10 h-10 text-green-600 flex-shrink-0 mt-1" />
                     <div className="flex-1">
-                      <h3 className="text-2xl font-bold text-gray-900 mb-4">Sezione Solidarietà</h3>
-                      <div className="space-y-3 text-gray-700">
-                        <p className="text-lg">
-                          Uno spazio sicuro dove persone in difficoltà possono chiedere aiuto e altri possono offrire supporto concreto.
-                        </p>
-                        <div className="bg-white p-4 rounded-lg">
-                          <h4 className="font-bold mb-3 text-pink-700">Richiedere Aiuto</h4>
-                          <ol className="list-decimal list-inside space-y-2 ml-2">
-                            <li>Vai nella sezione "Solidarietà"</li>
-                            <li>Clicca su "Richiedi Aiuto"</li>
-                            <li>Seleziona il tipo di aiuto necessario:
-                              <ul className="list-disc list-inside ml-6 mt-1 text-sm">
-                                <li>🍎 Aiuto Alimentare</li>
-                                <li>👕 Vestiario e Calzature</li>
-                                <li>💊 Medicine e Cure Mediche</li>
-                                <li>⚡ Bollette e Utenze</li>
-                                <li>🏠 Affitto e Casa</li>
-                                <li>📚 Materiale Scolastico</li>
-                                <li>💼 Supporto al Lavoro</li>
-                                <li>🛠️ Altro</li>
-                              </ul>
-                            </li>
-                            <li>Descrivi la tua situazione in modo chiaro e onesto</li>
-                            <li>Carica documenti che attestano la difficoltà:
-                              <ul className="list-disc list-inside ml-6 mt-1 text-sm">
-                                <li>Certificato ISEE</li>
-                                <li>Certificati medici</li>
-                                <li>Documenti di disoccupazione</li>
-                                <li>Bollette non pagate</li>
-                              </ul>
-                            </li>
-                            <li>Scegli se rimanere anonimo o mostrare il tuo nome</li>
-                            <li>Invia la richiesta - verrà verificata dallo staff entro 24-48 ore</li>
-                          </ol>
+                      <h3 className="text-3xl font-bold text-gray-900 mb-6">Solidarietà Trovafacile</h3>
+                      <div className="space-y-4 text-gray-700">
+                        <div className="bg-white p-6 rounded-xl shadow-md border-2 border-green-200">
+                          <h4 className="font-bold text-xl text-green-700 mb-3">Il Nostro Impegno</h4>
+                          <p className="leading-relaxed mb-3">
+                            In <span className="font-bold text-blue-600">Trovafacile</span> crediamo fermamente nel valore della solidarietà
+                            e nel dare un contributo concreto alla nostra comunità.
+                          </p>
+                          <p className="leading-relaxed mb-3">
+                            Per questo motivo, ci impegniamo a donare{' '}
+                            <span className="font-bold text-green-600 text-xl">il 10% del nostro fatturato annuale</span>{' '}
+                            a organizzazioni no profit, enti di beneficenza e progetti sociali che fanno la differenza.
+                          </p>
                         </div>
-                        <div className="bg-white p-4 rounded-lg">
-                          <h4 className="font-bold mb-3 text-pink-700">Offrire Aiuto</h4>
-                          <ul className="space-y-2 ml-2">
-                            <li>• Esplora le richieste nella tua zona</li>
-                            <li>• Filtra per tipo di aiuto che puoi offrire</li>
-                            <li>• Leggi attentamente la richiesta e i documenti</li>
-                            <li>• Contatta la persona tramite messaggistica interna</li>
-                            <li>• Organizza la consegna dell'aiuto in modo sicuro</li>
-                            <li>• Mantieni sempre rispetto e discrezione</li>
+
+                        <div className="bg-gradient-to-r from-blue-100 to-green-100 p-6 rounded-xl shadow-md border-2 border-blue-300">
+                          <h4 className="font-bold text-xl text-blue-700 mb-3">Scelta Democratica dei Beneficiari</h4>
+                          <p className="leading-relaxed mb-3">
+                            La scelta degli enti destinatari delle donazioni viene effettuata democraticamente dagli utenti della piattaforma attraverso un sondaggio annuale.
+                          </p>
+                          <div className="bg-white p-4 rounded-lg">
+                            <p className="font-semibold mb-2">Come funziona:</p>
+                            <ul className="space-y-2 text-sm">
+                              <li>• Ogni anno proponiamo una lista di enti verificati e certificati</li>
+                              <li>• Ogni utente abbonato può votare fino a <span className="font-bold text-green-600">3 enti</span> di sua scelta</li>
+                              <li>• Gli enti più votati riceveranno una quota del 10% del fatturato annuale</li>
+                              <li>• La distribuzione avviene in base alle percentuali di voto ricevute</li>
+                              <li>• Tutti i risultati vengono pubblicati in trasparenza</li>
+                            </ul>
+                          </div>
+                        </div>
+
+                        <div className="bg-gradient-to-r from-green-100 to-blue-100 p-6 rounded-xl shadow-md border-2 border-green-300">
+                          <h4 className="font-bold text-xl text-green-700 mb-3">Trasparenza Totale</h4>
+                          <p className="leading-relaxed">
+                            Nella sezione "Solidarietà" pubblichiamo regolarmente:
+                          </p>
+                          <ul className="mt-3 space-y-2">
+                            <li className="flex items-start gap-2">
+                              <span className="text-green-600 font-bold">•</span>
+                              <span>Documenti ufficiali del fatturato aziendale</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="text-green-600 font-bold">•</span>
+                              <span>Ricevute delle donazioni effettuate</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="text-green-600 font-bold">•</span>
+                              <span>Contatori in tempo reale del fatturato e del fondo solidarietà</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="text-green-600 font-bold">•</span>
+                              <span>Statistiche complete sugli abbonamenti attivi</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="text-green-600 font-bold">•</span>
+                              <span>Informazioni sui destinatari e l'impatto delle donazioni</span>
+                            </li>
                           </ul>
                         </div>
-                        <div className="bg-pink-100 p-4 rounded-lg">
-                          <h4 className="font-bold mb-2">Perché è sicuro:</h4>
-                          <ul className="space-y-1 text-sm">
-                            <li>✓ Tutte le richieste sono verificate dallo staff</li>
-                            <li>✓ Documenti validati per autenticità</li>
-                            <li>✓ Sistema di messaggistica protetto</li>
-                            <li>✓ Possibilità di rimanere anonimi</li>
-                            <li>✓ Zero commissioni - tutto è gratuito</li>
-                            <li>✓ Segnalazione immediata di abusi</li>
-                          </ul>
+
+                        <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-6 rounded-xl shadow-md border-2 border-yellow-300">
+                          <h4 className="font-bold text-xl text-orange-700 mb-3">Nota Importante</h4>
+                          <p className="leading-relaxed">
+                            I contatori <span className="font-semibold">Fatturato Totale</span> e{' '}
+                            <span className="font-semibold">Solidarietà (10%)</span> saranno a zero per i primi tre mesi
+                            perché la prova è gratuita per tutti gli utenti. I contatori inizieranno ad aggiornarsi
+                            automaticamente con l'arrivo dei primi abbonamenti a pagamento.
+                          </p>
                         </div>
-                        <div className="bg-gradient-to-r from-pink-100 to-red-100 p-4 rounded-lg border-2 border-pink-300">
-                          <p className="text-center font-semibold text-pink-900">
-                            La solidarietà è completamente gratuita. Non sono previste commissioni o costi nascosti. Aiutare è un gesto d'amore che non ha prezzo.
+
+                        <div className="bg-white p-6 rounded-xl shadow-md border-2 border-blue-300">
+                          <h4 className="font-bold text-xl text-blue-700 mb-3">Prossimamente</h4>
+                          <p className="leading-relaxed">
+                            Pubblicheremo anche informazioni su attività no profit, eventi di beneficenza
+                            e iniziative solidali a cui partecipiamo o che sosteniamo, per creare una rete
+                            di solidarietà sempre più ampia e concreta.
+                          </p>
+                        </div>
+
+                        <div className="bg-gradient-to-r from-green-200 to-blue-200 p-5 rounded-xl border-3 border-green-400 shadow-lg">
+                          <p className="text-center font-bold text-green-900 text-lg">
+                            Visita la sezione "Solidarietà" per vedere tutti i dati in tempo reale e i documenti ufficiali
                           </p>
                         </div>
                       </div>
