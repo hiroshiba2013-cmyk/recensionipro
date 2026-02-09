@@ -40,23 +40,40 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
     setLoading(true);
     try {
       let businessData: any = null;
+      let businessType: 'imported' | 'user_added' | 'registered' | null = null;
 
-      // Prima cerca in businesses (attività reclamate)
-      const { data: claimedData } = await supabase
-        .from('businesses')
+      // Cerca in registered_businesses
+      const { data: registeredData } = await supabase
+        .from('registered_businesses')
         .select(`
           *,
-          category:business_categories(*)
+          category:business_categories(*),
+          locations:registered_business_locations(*)
         `)
         .eq('id', businessId)
         .maybeSingle();
 
-      if (claimedData) {
-        businessData = claimedData;
-      } else {
-        // Se non trovata, cerca in unclaimed_business_locations
-        const { data: unclaimedData } = await supabase
-          .from('unclaimed_business_locations')
+      if (registeredData) {
+        businessData = {
+          ...registeredData,
+          is_claimed: true,
+          owner_id: registeredData.owner_id,
+          verified: registeredData.verification_badge === 'verified',
+        };
+        businessType = 'registered';
+        if (registeredData.locations) {
+          setLocations(registeredData.locations.map((loc: any) => ({
+            ...loc,
+            address: `${loc.street}${loc.street_number ? ', ' + loc.street_number : ''}`,
+            name: loc.internal_name,
+          })));
+        }
+      }
+
+      // Se non trovata, cerca in imported_businesses
+      if (!businessData) {
+        const { data: importedData } = await supabase
+          .from('imported_businesses')
           .select(`
             *,
             category:business_categories(*)
@@ -64,41 +81,74 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           .eq('id', businessId)
           .maybeSingle();
 
-        if (unclaimedData) {
-          // Trasforma in formato business
+        if (importedData) {
           businessData = {
-            id: unclaimedData.id,
-            name: unclaimedData.name,
-            category_id: unclaimedData.category_id,
-            category: unclaimedData.category,
+            id: importedData.id,
+            name: importedData.name,
+            category_id: importedData.category_id,
+            category: importedData.category,
+            description: importedData.description,
             is_claimed: false,
             owner_id: null,
             verified: false,
-            created_at: unclaimedData.created_at,
-            address: unclaimedData.street,
-            city: unclaimedData.city,
-            phone: unclaimedData.phone,
-            email: unclaimedData.email,
-            website: unclaimedData.website,
-            website_url: unclaimedData.website,
+            created_at: importedData.created_at,
+            address: `${importedData.street}${importedData.street_number ? ', ' + importedData.street_number : ''}`,
+            city: importedData.city,
+            phone: importedData.phone,
+            email: importedData.email,
+            website: importedData.website,
+            website_url: importedData.website,
           };
+          businessType = 'imported';
         }
       }
 
-      if (businessData) {
-        // Determina se è un'attività reclamata o non reclamata
-        const isUnclaimed = !businessData.is_claimed && !businessData.owner_id;
+      // Se non trovata, cerca in user_added_businesses
+      if (!businessData) {
+        const { data: userAddedData } = await supabase
+          .from('user_added_businesses')
+          .select(`
+            *,
+            category:business_categories(*)
+          `)
+          .eq('id', businessId)
+          .maybeSingle();
 
-        // Query per le recensioni - usa business_id o unclaimed_business_id
+        if (userAddedData) {
+          businessData = {
+            id: userAddedData.id,
+            name: userAddedData.name,
+            category_id: userAddedData.category_id,
+            category: userAddedData.category,
+            description: userAddedData.description,
+            is_claimed: false,
+            owner_id: null,
+            verified: false,
+            created_at: userAddedData.created_at,
+            address: `${userAddedData.street}${userAddedData.street_number ? ', ' + userAddedData.street_number : ''}`,
+            city: userAddedData.city,
+            phone: userAddedData.phone,
+            email: userAddedData.email,
+            website: userAddedData.website,
+            website_url: userAddedData.website,
+          };
+          businessType = 'user_added';
+        }
+      }
+
+      if (businessData && businessType) {
+        // Query per le recensioni
         let reviewsQuery = supabase
           .from('reviews')
           .select('overall_rating')
           .eq('review_status', 'approved');
 
-        if (isUnclaimed) {
-          reviewsQuery = reviewsQuery.eq('unclaimed_business_id', businessId);
-        } else {
-          reviewsQuery = reviewsQuery.eq('business_id', businessId);
+        if (businessType === 'imported') {
+          reviewsQuery = reviewsQuery.eq('imported_business_id', businessId);
+        } else if (businessType === 'user_added') {
+          reviewsQuery = reviewsQuery.eq('user_added_business_id', businessId);
+        } else if (businessType === 'registered') {
+          reviewsQuery = reviewsQuery.eq('registered_business_id', businessId);
         }
 
         const { data: reviewsData } = await reviewsQuery;
@@ -111,6 +161,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           ...businessData,
           avg_rating,
           review_count: reviewsData?.length || 0,
+          business_type: businessType,
         });
 
         // Query per le recensioni complete
@@ -120,16 +171,17 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
             *,
             customer:profiles!customer_id(full_name),
             responses:review_responses(*),
-            family_member:customer_family_members(first_name, last_name, nickname),
-            business_location:business_locations(id, name, address, city)
+            family_member:customer_family_members(first_name, last_name, nickname)
           `)
           .eq('review_status', 'approved')
           .order('created_at', { ascending: false });
 
-        if (isUnclaimed) {
-          fullReviewsQuery = fullReviewsQuery.eq('unclaimed_business_id', businessId);
-        } else {
-          fullReviewsQuery = fullReviewsQuery.eq('business_id', businessId);
+        if (businessType === 'imported') {
+          fullReviewsQuery = fullReviewsQuery.eq('imported_business_id', businessId);
+        } else if (businessType === 'user_added') {
+          fullReviewsQuery = fullReviewsQuery.eq('user_added_business_id', businessId);
+        } else if (businessType === 'registered') {
+          fullReviewsQuery = fullReviewsQuery.eq('registered_business_id', businessId);
         }
 
         const { data: fullReviewsData } = await fullReviewsQuery;
@@ -138,23 +190,17 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           setReviews(fullReviewsData);
         }
 
-        const { data: jobsData } = await supabase
-          .from('job_postings')
-          .select('*')
-          .eq('business_id', businessId)
-          .eq('status', 'active');
+        // Job postings solo per registered businesses
+        if (businessType === 'registered') {
+          const { data: jobsData } = await supabase
+            .from('job_postings')
+            .select('*')
+            .eq('business_id', businessId)
+            .eq('status', 'active');
 
-        if (jobsData) {
-          setJobPostings(jobsData);
-        }
-
-        const { data: locationsData } = await supabase
-          .from('business_locations')
-          .select('*')
-          .eq('business_id', businessId);
-
-        if (locationsData) {
-          setLocations(locationsData);
+          if (jobsData) {
+            setJobPostings(jobsData);
+          }
         }
       }
     } catch (error) {
@@ -187,72 +233,145 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
 
     setClaimingBusiness(true);
     try {
-      // Recupera i dati dall'unclaimed_business_locations
-      const { data: unclaimedData, error: fetchError } = await supabase
-        .from('unclaimed_business_locations')
-        .select('*')
-        .eq('id', businessId)
-        .maybeSingle();
+      const businessType = (business as any).business_type;
 
-      if (fetchError || !unclaimedData) {
-        throw new Error('Attività non trovata');
+      if (businessType === 'imported') {
+        // Recupera i dati dall'imported_businesses
+        const { data: importedData, error: fetchError } = await supabase
+          .from('imported_businesses')
+          .select('*')
+          .eq('id', businessId)
+          .maybeSingle();
+
+        if (fetchError || !importedData) {
+          throw new Error('Attività non trovata');
+        }
+
+        // Crea la nuova business registrata
+        const { data: newBusiness, error: insertError } = await supabase
+          .from('registered_businesses')
+          .insert({
+            owner_id: profile.id,
+            name: importedData.name,
+            category_id: importedData.category_id,
+            description: importedData.description,
+            source_type: 'claimed_imported',
+            source_id: businessId,
+            verification_badge: 'claimed',
+          })
+          .select()
+          .single();
+
+        if (insertError || !newBusiness) {
+          throw insertError || new Error('Errore creazione business');
+        }
+
+        // Crea la location registrata
+        const { error: locationError } = await supabase
+          .from('registered_business_locations')
+          .insert({
+            business_id: newBusiness.id,
+            street: importedData.street,
+            street_number: importedData.street_number,
+            city: importedData.city,
+            province: importedData.province,
+            region: importedData.region,
+            postal_code: importedData.postal_code,
+            latitude: importedData.latitude,
+            longitude: importedData.longitude,
+            phone: importedData.phone,
+            email: importedData.email,
+            website: importedData.website,
+            business_hours: importedData.business_hours,
+            is_primary: true,
+          });
+
+        if (locationError) throw locationError;
+
+        // Sposta le recensioni
+        await supabase
+          .from('reviews')
+          .update({
+            business_type: 'registered',
+            registered_business_id: newBusiness.id,
+            imported_business_id: null,
+          })
+          .eq('imported_business_id', businessId);
+
+        // Elimina da imported_businesses
+        await supabase
+          .from('imported_businesses')
+          .delete()
+          .eq('id', businessId);
+
+      } else if (businessType === 'user_added') {
+        // Recupera i dati dall'user_added_businesses
+        const { data: userAddedData, error: fetchError } = await supabase
+          .from('user_added_businesses')
+          .select('*')
+          .eq('id', businessId)
+          .maybeSingle();
+
+        if (fetchError || !userAddedData) {
+          throw new Error('Attività non trovata');
+        }
+
+        // Crea la nuova business registrata
+        const { data: newBusiness, error: insertError } = await supabase
+          .from('registered_businesses')
+          .insert({
+            owner_id: profile.id,
+            name: userAddedData.name,
+            category_id: userAddedData.category_id,
+            description: userAddedData.description,
+            source_type: 'claimed_user_added',
+            source_id: businessId,
+            verification_badge: 'claimed',
+          })
+          .select()
+          .single();
+
+        if (insertError || !newBusiness) {
+          throw insertError || new Error('Errore creazione business');
+        }
+
+        // Crea la location registrata
+        const { error: locationError } = await supabase
+          .from('registered_business_locations')
+          .insert({
+            business_id: newBusiness.id,
+            street: userAddedData.street,
+            street_number: userAddedData.street_number,
+            city: userAddedData.city,
+            province: userAddedData.province,
+            region: userAddedData.region,
+            postal_code: userAddedData.postal_code,
+            latitude: userAddedData.latitude,
+            longitude: userAddedData.longitude,
+            phone: userAddedData.phone,
+            email: userAddedData.email,
+            website: userAddedData.website,
+            is_primary: true,
+          });
+
+        if (locationError) throw locationError;
+
+        // Sposta le recensioni
+        await supabase
+          .from('reviews')
+          .update({
+            business_type: 'registered',
+            registered_business_id: newBusiness.id,
+            user_added_business_id: null,
+          })
+          .eq('user_added_business_id', businessId);
+
+        // Elimina da user_added_businesses
+        await supabase
+          .from('user_added_businesses')
+          .delete()
+          .eq('id', businessId);
       }
-
-      // Crea la nuova business
-      const { data: newBusiness, error: insertError } = await supabase
-        .from('businesses')
-        .insert({
-          name: unclaimedData.name,
-          category_id: unclaimedData.category_id,
-          owner_id: profile.id,
-          is_claimed: true,
-          verified: false,
-        })
-        .select()
-        .single();
-
-      if (insertError || !newBusiness) {
-        throw insertError || new Error('Errore creazione business');
-      }
-
-      // Crea la business_location
-      const { error: locationError } = await supabase
-        .from('business_locations')
-        .insert({
-          business_id: newBusiness.id,
-          address: unclaimedData.street,
-          city: unclaimedData.city,
-          province: unclaimedData.province,
-          region: unclaimedData.region,
-          postal_code: unclaimedData.postal_code,
-          latitude: unclaimedData.latitude,
-          longitude: unclaimedData.longitude,
-          phone: unclaimedData.phone,
-          email: unclaimedData.email,
-          website: unclaimedData.website,
-          business_hours: unclaimedData.business_hours,
-        });
-
-      if (locationError) throw locationError;
-
-      // Sposta le recensioni da unclaimed_business_id a business_id
-      const { error: reviewsError } = await supabase
-        .from('reviews')
-        .update({
-          business_id: newBusiness.id,
-          unclaimed_business_id: null
-        })
-        .eq('unclaimed_business_id', businessId);
-
-      if (reviewsError) throw reviewsError;
-
-      // Elimina da unclaimed_business_locations
-      const { error: deleteError } = await supabase
-        .from('unclaimed_business_locations')
-        .delete()
-        .eq('id', businessId);
-
-      if (deleteError) throw deleteError;
 
       alert(
         'Rivendicazione completata!\n\n' +

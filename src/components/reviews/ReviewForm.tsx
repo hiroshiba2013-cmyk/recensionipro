@@ -93,33 +93,59 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
   }, [businessLocationId]);
 
   const loadBusinessLocations = async () => {
-    // Cerca prima in business_locations
+    // Cerca in registered_business_locations
     const { data: locationsData } = await supabase
-      .from('business_locations')
-      .select('id, name, internal_name, address, city, province')
+      .from('registered_business_locations')
+      .select('id, internal_name, street, street_number, city, province')
       .eq('business_id', businessId)
       .order('created_at', { ascending: true });
 
     if (locationsData && locationsData.length > 0) {
-      setBusinessLocations(locationsData);
+      setBusinessLocations(locationsData.map(loc => ({
+        id: loc.id,
+        name: loc.internal_name,
+        internal_name: loc.internal_name,
+        address: `${loc.street}${loc.street_number ? ', ' + loc.street_number : ''}`,
+        city: loc.city,
+        province: loc.province,
+      })));
     } else {
-      // Se non trovate, controlla se è un'attività non reclamata
-      const { data: unclaimedLocation } = await supabase
-        .from('unclaimed_business_locations')
-        .select('id, name, street, city, province')
+      // Controlla se è un imported_business
+      const { data: importedBusiness } = await supabase
+        .from('imported_businesses')
+        .select('id, name, street, street_number, city, province')
         .eq('id', businessId)
         .maybeSingle();
 
-      if (unclaimedLocation) {
+      if (importedBusiness) {
         setBusinessLocations([{
-          id: unclaimedLocation.id,
-          name: unclaimedLocation.name,
+          id: importedBusiness.id,
+          name: importedBusiness.name,
           internal_name: null,
-          address: unclaimedLocation.street,
-          city: unclaimedLocation.city,
-          province: unclaimedLocation.province,
+          address: `${importedBusiness.street}${importedBusiness.street_number ? ', ' + importedBusiness.street_number : ''}`,
+          city: importedBusiness.city,
+          province: importedBusiness.province,
         }]);
-        setSelectedLocationId(unclaimedLocation.id);
+        setSelectedLocationId(importedBusiness.id);
+      } else {
+        // Controlla se è un user_added_business
+        const { data: userAddedBusiness } = await supabase
+          .from('user_added_businesses')
+          .select('id, name, street, street_number, city, province')
+          .eq('id', businessId)
+          .maybeSingle();
+
+        if (userAddedBusiness) {
+          setBusinessLocations([{
+            id: userAddedBusiness.id,
+            name: userAddedBusiness.name,
+            internal_name: null,
+            address: `${userAddedBusiness.street}${userAddedBusiness.street_number ? ', ' + userAddedBusiness.street_number : ''}`,
+            city: userAddedBusiness.city,
+            province: userAddedBusiness.province,
+          }]);
+          setSelectedLocationId(userAddedBusiness.id);
+        }
       }
     }
   };
@@ -182,43 +208,65 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
     setError('');
 
     try {
-      // Verifica se il business esiste in businesses o è unclaimed
-      const { data: businessData } = await supabase
-        .from('businesses')
+      // Determina il tipo di business
+      let businessType: 'imported' | 'user_added' | 'registered' | null = null;
+
+      // Cerca in registered_businesses
+      const { data: registeredData } = await supabase
+        .from('registered_businesses')
         .select('id')
         .eq('id', businessId)
         .maybeSingle();
 
-      const isUnclaimed = !businessData;
-      let actualBusinessId = businessId;
-      let actualUnclaimedBusinessId = null;
-      let actualLocationId = selectedLocationId;
+      if (registeredData) {
+        businessType = 'registered';
+      } else {
+        // Cerca in imported_businesses
+        const { data: importedData } = await supabase
+          .from('imported_businesses')
+          .select('id')
+          .eq('id', businessId)
+          .maybeSingle();
 
-      if (isUnclaimed) {
-        // È un'attività non reclamata - usa l'ID direttamente
-        actualUnclaimedBusinessId = businessId;
-        actualBusinessId = null;
+        if (importedData) {
+          businessType = 'imported';
+        } else {
+          // Cerca in user_added_businesses
+          const { data: userAddedData } = await supabase
+            .from('user_added_businesses')
+            .select('id')
+            .eq('id', businessId)
+            .maybeSingle();
+
+          if (userAddedData) {
+            businessType = 'user_added';
+          }
+        }
+      }
+
+      if (!businessType) {
+        setError('Attività non trovata');
+        setLoading(false);
+        return;
       }
 
       // Verifica se l'utente ha già recensito questa attività
       let existingReview;
-      if (isUnclaimed) {
-        const { data } = await supabase
-          .from('reviews')
-          .select('id')
-          .eq('unclaimed_business_id', actualUnclaimedBusinessId)
-          .eq('customer_id', profile.id)
-          .maybeSingle();
-        existingReview = data;
-      } else {
-        const { data } = await supabase
-          .from('reviews')
-          .select('id')
-          .eq('business_id', actualBusinessId)
-          .eq('customer_id', profile.id)
-          .maybeSingle();
-        existingReview = data;
+      let reviewQuery = supabase
+        .from('reviews')
+        .select('id')
+        .eq('customer_id', profile.id);
+
+      if (businessType === 'registered') {
+        reviewQuery = reviewQuery.eq('registered_business_id', businessId);
+      } else if (businessType === 'imported') {
+        reviewQuery = reviewQuery.eq('imported_business_id', businessId);
+      } else if (businessType === 'user_added') {
+        reviewQuery = reviewQuery.eq('user_added_business_id', businessId);
       }
+
+      const { data } = await reviewQuery.maybeSingle();
+      existingReview = data;
 
       if (existingReview) {
         setError('Hai già recensito questa attività');
@@ -266,8 +314,7 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
       const reviewData: any = {
         customer_id: profile.id,
         family_member_id: activeProfile?.isOwner === false ? activeProfile.id : null,
-        // business_location_id deve essere NULL per attività non reclamate
-        business_location_id: isUnclaimed ? null : (actualLocationId || null),
+        business_type: businessType,
         rating: avgRating,
         price_rating: priceRating || null,
         service_rating: serviceRating || null,
@@ -278,15 +325,18 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
         proof_image_url: proofImageUrl,
         review_status: reviewStatus,
         points_awarded: pointsAwarded,
+        registered_business_id: null,
+        imported_business_id: null,
+        user_added_business_id: null,
       };
 
-      // Imposta business_id o unclaimed_business_id a seconda del tipo
-      if (isUnclaimed) {
-        reviewData.unclaimed_business_id = actualUnclaimedBusinessId;
-        reviewData.business_id = null;
-      } else {
-        reviewData.business_id = actualBusinessId;
-        reviewData.unclaimed_business_id = null;
+      // Imposta il business_id corretto a seconda del tipo
+      if (businessType === 'registered') {
+        reviewData.registered_business_id = businessId;
+      } else if (businessType === 'imported') {
+        reviewData.imported_business_id = businessId;
+      } else if (businessType === 'user_added') {
+        reviewData.user_added_business_id = businessId;
       }
 
       const { error: insertError } = await supabase
