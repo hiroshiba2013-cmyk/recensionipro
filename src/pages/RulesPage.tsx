@@ -317,6 +317,15 @@ export function RulesPage() {
                         <p>
                           Le recensioni sono il cuore di TrovaFacile. Aiutano altri utenti a trovare i migliori servizi e premiano le aziende di qualità.
                         </p>
+                        <div className="bg-red-50 border-2 border-red-400 p-4 rounded-lg">
+                          <h4 className="font-bold mb-2 text-red-800 flex items-center gap-2">
+                            <AlertCircle className="w-5 h-5" />
+                            Regola Fondamentale
+                          </h4>
+                          <p className="text-red-700 font-semibold">
+                            Puoi recensire la stessa azienda <strong>una sola volta all'anno</strong>. Questo garantisce recensioni fresche e autentiche.
+                          </p>
+                        </div>
                         <div className="bg-white p-4 rounded-lg">
                           <h4 className="font-bold mb-2">Come scrivere una recensione:</h4>
                           <ol className="list-decimal list-inside space-y-2 ml-2">
@@ -355,7 +364,7 @@ export function RulesPage() {
                           <ul className="space-y-1 text-sm text-red-700">
                             <li>Non lasciare recensioni false o inventate</li>
                             <li>Non usare linguaggio offensivo o diffamatorio</li>
-                            <li>Non recensire la stessa azienda più volte</li>
+                            <li>Non recensire la stessa azienda più di una volta all'anno</li>
                             <li>Non chiedere/offrire compensi per recensioni positive</li>
                           </ul>
                         </div>
