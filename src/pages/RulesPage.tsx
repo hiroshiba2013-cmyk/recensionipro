@@ -414,6 +414,7 @@ export function RulesPage() {
                             <li>✅ Massimo 20 annunci attivi contemporaneamente</li>
                             <li>✅ Ogni annuncio dura 30 giorni (rinnovabili gratis)</li>
                             <li>✅ Guadagni 5 punti per ogni annuncio pubblicato</li>
+                            <li>⚠️ La ripubblicazione dopo la scadenza dei 30 giorni non comporta ulteriori punti</li>
                             <li>✅ Usa la messaggistica interna per le trattative</li>
                             <li>✅ Incontra sempre in luoghi pubblici per la consegna</li>
                           </ul>
