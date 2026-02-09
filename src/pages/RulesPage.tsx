@@ -256,7 +256,7 @@ export function RulesPage() {
                       <div className="bg-white p-6 rounded-lg border-2 border-blue-300 shadow-sm">
                         <div className="flex items-center gap-2 mb-3">
                           <Users className="w-6 h-6 text-blue-600" />
-                          <h4 className="font-bold text-xl">Account Cliente</h4>
+                          <h4 className="font-bold text-xl">Account Privato</h4>
                         </div>
                         <ul className="space-y-2 text-sm">
                           <li className="flex items-start gap-2">
@@ -277,7 +277,7 @@ export function RulesPage() {
                           </li>
                           <li className="flex items-start gap-2">
                             <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <span>Accedi alla sezione Solidarietà</span>
+                            <span>Il 10% del tuo abbonamento andrà in beneficienza</span>
                           </li>
                           <li className="mt-3 pt-3 border-t border-gray-200">
                             <span className="font-bold text-blue-600">Da 0,49€/mese</span> dopo 3 mesi di prova gratuita
@@ -309,6 +309,10 @@ export function RulesPage() {
                           <li className="flex items-start gap-2">
                             <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                             <span>Crea sconti e offerte esclusive</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                            <span>Il 10% del tuo abbonamento andrà in beneficienza</span>
                           </li>
                           <li className="mt-3 pt-3 border-t border-gray-200">
                             <span className="font-bold text-purple-600">Da 2,49€/mese + IVA</span> dopo 3 mesi di prova
