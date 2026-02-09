@@ -739,10 +739,6 @@ export function RulesPage() {
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                      <span>Crea sconti e offerte esclusive</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                       <span>Il 10% del tuo abbonamento andrà in beneficienza</span>
                     </li>
                     <li className="mt-3 pt-3 border-t border-gray-200">
@@ -814,7 +810,6 @@ export function RulesPage() {
                             <li>✓ Caricare foto e logo personalizzati</li>
                             <li>✓ Aggiungere descrizione e servizi offerti</li>
                             <li>✓ Visualizzare recensioni specifiche per ogni sede</li>
-                            <li>✓ Creare sconti e offerte localizzate</li>
                             <li>✓ Gestire annunci di lavoro per sede</li>
                           </ul>
                         </div>
@@ -978,41 +973,6 @@ export function RulesPage() {
                             <li>✓ Visualizza profili completi dei candidati</li>
                             <li>✓ Puoi anche cercare profili attivamente</li>
                             <li>✓ Analytics sulle visualizzazioni dell'annuncio</li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-orange-50 border-l-4 border-orange-500 p-6 rounded-r-xl">
-                  <div className="flex items-start gap-4">
-                    <Gift className="w-8 h-8 text-orange-600 flex-shrink-0 mt-1" />
-                    <div className="flex-1">
-                      <h3 className="text-2xl font-bold text-gray-900 mb-4">Sconti e Offerte</h3>
-                      <div className="space-y-3 text-gray-700">
-                        <p>
-                          Crea sconti esclusivi per gli utenti della piattaforma e attira nuovi clienti.
-                        </p>
-                        <div className="bg-white p-4 rounded-lg">
-                          <h4 className="font-bold mb-2">Come funziona:</h4>
-                          <ol className="list-decimal list-inside space-y-2 ml-2 text-sm">
-                            <li>Crea uno sconto nella Dashboard</li>
-                            <li>Specifica: percentuale, descrizione, validità, condizioni</li>
-                            <li>Lo sconto appare sulla tua pagina aziendale</li>
-                            <li>Gli utenti lo vedono e possono riscattarlo</li>
-                            <li>L'utente presenta il codice QR in sede</li>
-                            <li>Tu scansioni il QR per verificare e applicare lo sconto</li>
-                          </ol>
-                        </div>
-                        <div className="bg-orange-100 p-4 rounded-lg">
-                          <h4 className="font-bold mb-2">Vantaggi:</h4>
-                          <ul className="space-y-1 text-sm">
-                            <li>✓ Attira nuovi clienti dalla piattaforma</li>
-                            <li>✓ Traccia quanti sconti vengono riscattati</li>
-                            <li>✓ Sistema antifrode con QR verificato</li>
-                            <li>✓ Maggiore visibilità per la tua attività</li>
-                            <li>✓ Fidelizza i clienti esistenti</li>
                           </ul>
                         </div>
                       </div>
