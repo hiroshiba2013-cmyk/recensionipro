@@ -247,7 +247,7 @@ export function RulesPage() {
                   </h3>
                   <div className="space-y-4 text-gray-700">
                     <p className="text-lg">
-                      <strong>Passo 1:</strong> Clicca su "Registrati" in alto a destra
+                      <strong>Passo 1:</strong> Clicca su "Accedi" o "Inizia Gratis"
                     </p>
                     <p className="text-lg">
                       <strong>Passo 2:</strong> Scegli il tipo di account:
