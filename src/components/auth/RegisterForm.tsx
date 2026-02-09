@@ -736,10 +736,10 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
               <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <h4 className="text-lg font-bold text-gray-900">3 Mesi di Prova Gratuita!</h4>
+              <h4 className="text-lg font-bold text-gray-900">2 Mesi di Prova Gratuita!</h4>
             </div>
             <p className="text-sm text-gray-700 mb-2">
-              Il tuo account include <span className="font-bold">3 mesi di prova gratuita</span> senza alcun impegno.
+              Il tuo account include <span className="font-bold">2 mesi di prova gratuita</span> senza alcun impegno.
             </p>
             <p className="text-xs text-gray-600">
               Nessuna carta di credito richiesta ora. Riceverai un promemoria 7 giorni prima della scadenza.
@@ -867,10 +867,10 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className="text-sm font-bold text-green-800">3 Mesi di Prova Gratuita!</span>
+                <span className="text-sm font-bold text-green-800">2 Mesi di Prova Gratuita!</span>
               </div>
               <p className="text-xs text-gray-700">
-                Inizia subito senza pagare nulla. Il primo addebito avverrà solo dopo 90 giorni.
+                Inizia subito senza pagare nulla. Il primo addebito avverrà solo dopo 60 giorni.
                 Riceverai un promemoria 7 giorni prima della scadenza.
               </p>
             </div>
@@ -1490,10 +1490,10 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className="text-sm font-bold text-green-800">3 Mesi di Prova Gratuita!</span>
+                <span className="text-sm font-bold text-green-800">2 Mesi di Prova Gratuita!</span>
               </div>
               <p className="text-xs text-gray-700">
-                Inizia subito senza pagare nulla. Il primo addebito avverrà solo dopo 90 giorni.
+                Inizia subito senza pagare nulla. Il primo addebito avverrà solo dopo 60 giorni.
                 Riceverai un promemoria 7 giorni prima della scadenza.
               </p>
             </div>

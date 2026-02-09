@@ -11,7 +11,7 @@ Piattaforma italiana che connette attività locali con clienti, offrendo recensi
 - 👨‍👩‍👧‍👦 Gestione profilo famiglia con membri multipli
 - 💼 Pubblica annunci di ricerca lavoro e annunci solidali
 - 🛍️ Marketplace con annunci classificati (vendi, compra, regala)
-- **3 mesi di prova gratuita** per tutti i nuovi utenti
+- **2 mesi di prova gratuita** per tutti i nuovi utenti
 
 ### Per le Attività Business
 - 🏢 Profilo aziendale completo con sedi multiple
@@ -20,12 +20,12 @@ Piattaforma italiana che connette attività locali con clienti, offrendo recensi
 - 💼 Pubblicazione offerte di lavoro con filtri avanzati
 - 📊 Statistiche dettagliate su visualizzazioni e performance
 - 📧 **Sistema di notifica automatica** per attività non rivendicate
-- **3 mesi di prova gratuita** al momento della registrazione
+- **2 mesi di prova gratuita** al momento della registrazione
 
 ### Sistema di Abbonamenti
 - **Utenti Privati**: da 0,99€/mese per 1 persona
 - **Business**: da 2,49€/mese + IVA per 1 sede
-- **Trial di 90 giorni gratuiti** per tutti
+- **Trial di 60 giorni gratuiti** per tutti
 - Promemoria automatico 7 giorni prima della scadenza
 
 ## Database
@@ -154,7 +154,7 @@ Tutte le tabelle utilizzano **Row Level Security (RLS)**:
 ## Sistema Trial
 
 Entrambi i tipi di utenti (privati e business) ottengono:
-- **90 giorni di prova gratuita** alla registrazione
+- **60 giorni di prova gratuita** alla registrazione
 - Nessuna carta di credito richiesta inizialmente
 - Email di promemoria 7 giorni prima della scadenza
 - Possibilità di aggiungere il pagamento in qualsiasi momento

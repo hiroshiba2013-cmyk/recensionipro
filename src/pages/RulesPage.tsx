@@ -11,7 +11,7 @@ const faqs: FAQItem[] = [
   {
     category: 'Iscrizione e Account',
     question: 'Come mi iscrivo alla piattaforma?',
-    answer: 'Clicca su "Registrati", scegli tra account Cliente o Business, inserisci email e password. Gli account Cliente hanno 3 mesi di prova gratuita, poi partono da 0,49€/mese. Gli account Business partono da 2,49€/mese + IVA dopo la prova.'
+    answer: 'Clicca su "Registrati", scegli tra account Cliente o Business, inserisci email e password. Gli account Cliente hanno 2 mesi di prova gratuita, poi partono da 0,49€/mese. Gli account Business partono da 2,49€/mese + IVA dopo la prova.'
   },
   {
     category: 'Iscrizione e Account',
@@ -151,12 +151,12 @@ const faqs: FAQItem[] = [
   {
     category: 'Abbonamenti',
     question: 'Quali sono i piani di abbonamento?',
-    answer: 'Per Clienti: da 0,49€/mese (1 persona) a 1,49€/mese (4 persone). Per Business: da 2,49€/mese + IVA (1 sede) a tariffe personalizzate per 10+ sedi. Piani annuali con sconto fino al 30%. Tutti includono 3 mesi di prova gratuita.'
+    answer: 'Per Clienti: da 0,49€/mese (1 persona) a 1,49€/mese (4 persone). Per Business: da 2,49€/mese + IVA (1 sede) a tariffe personalizzate per 10+ sedi. Piani annuali con sconto fino al 30%. Tutti includono 2 mesi di prova gratuita.'
   },
   {
     category: 'Abbonamenti',
     question: 'Come funziona la prova gratuita?',
-    answer: 'Attiva 3 mesi di prova gratuita senza carta di credito. Riceverai un promemoria 7 giorni prima della scadenza. Se non rinnovi, l\'abbonamento scade automaticamente senza addebiti.'
+    answer: 'Attiva 2 mesi di prova gratuita senza carta di credito. Riceverai un promemoria 7 giorni prima della scadenza. Se non rinnovi, l\'abbonamento scade automaticamente senza addebiti.'
   },
   {
     category: 'Abbonamenti',
@@ -280,7 +280,7 @@ export function RulesPage() {
                             <span>Il 10% del tuo abbonamento andrà in beneficienza</span>
                           </li>
                           <li className="mt-3 pt-3 border-t border-gray-200">
-                            <span className="font-bold text-blue-600">Da 0,49€/mese</span> dopo 3 mesi di prova gratuita
+                            <span className="font-bold text-blue-600">Da 0,49€/mese</span> dopo 2 mesi di prova gratuita
                           </li>
                         </ul>
                       </div>
@@ -289,7 +289,7 @@ export function RulesPage() {
                       <strong>Passo 3:</strong> Inserisci email, password e completa la registrazione
                     </p>
                     <p className="text-lg">
-                      <strong>Passo 4:</strong> Attiva la prova gratuita di 3 mesi (nessuna carta richiesta)
+                      <strong>Passo 4:</strong> Attiva la prova gratuita di 2 mesi (nessuna carta richiesta)
                     </p>
                     <div className="bg-blue-100 border-l-4 border-blue-600 p-4 rounded mt-4">
                       <p className="text-sm font-semibold text-blue-900">
@@ -565,7 +565,7 @@ export function RulesPage() {
                           <h4 className="font-bold text-xl text-orange-700 mb-3">Nota Importante</h4>
                           <p className="leading-relaxed">
                             I contatori <span className="font-semibold">Fatturato Totale</span> e{' '}
-                            <span className="font-semibold">Solidarietà (10%)</span> saranno a zero per i primi tre mesi
+                            <span className="font-semibold">Solidarietà (10%)</span> saranno a zero per i primi due mesi
                             perché la prova è gratuita per tutti gli utenti. I contatori inizieranno ad aggiornarsi
                             automaticamente con l'arrivo dei primi abbonamenti a pagamento.
                           </p>
@@ -742,7 +742,7 @@ export function RulesPage() {
                       <span>Il 10% del tuo abbonamento andrà in beneficienza</span>
                     </li>
                     <li className="mt-3 pt-3 border-t border-gray-200">
-                      <span className="font-bold text-purple-600">Da 2,49€/mese + IVA</span> dopo 3 mesi di prova
+                      <span className="font-bold text-purple-600">Da 2,49€/mese + IVA</span> dopo 2 mesi di prova
                     </li>
                   </ul>
                 </div>

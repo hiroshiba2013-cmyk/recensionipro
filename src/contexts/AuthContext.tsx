@@ -333,7 +333,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (profileError) throw profileError;
 
       const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 90);
+      trialEndDate.setDate(trialEndDate.getDate() + 60);
 
       const { error: subscriptionError } = await supabase
         .from('subscriptions')
@@ -408,7 +408,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (businessError) throw businessError;
 
       const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 90);
+      trialEndDate.setDate(trialEndDate.getDate() + 60);
 
       const { error: subscriptionError } = await supabase
         .from('subscriptions')

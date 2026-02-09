@@ -2,7 +2,7 @@
 
 ## Descrizione
 
-Sistema automatico per inviare email a tutte le attività presenti nel database che non sono ancora state rivendicate, informandole che il loro profilo è disponibile su TrovaFacile e che possono rivendicarlo gratuitamente per 3 mesi.
+Sistema automatico per inviare email a tutte le attività presenti nel database che non sono ancora state rivendicate, informandole che il loro profilo è disponibile su TrovaFacile e che possono rivendicarlo gratuitamente per 2 mesi.
 
 ## Statistiche Database
 
@@ -57,7 +57,7 @@ Ogni email include:
 
 1. **Intestazione accattivante** con logo e messaggio di benvenuto
 2. **Informazioni attività**: nome, città, provincia, regione
-3. **Box evidenziato**: offerta di 3 mesi gratuiti
+3. **Box evidenziato**: offerta di 2 mesi gratuiti
 4. **Lista benefici**:
    - Gestione profilo completo
    - Risposta alle recensioni
@@ -114,7 +114,7 @@ Quando un'attività clicca sul link nell'email:
 3. L'utente completa la registrazione business
 4. Il sistema verifica che sia il proprietario (tramite dati business)
 5. L'attività viene associata all'account
-6. Parte automaticamente il trial di 90 giorni gratuiti
+6. Parte automaticamente il trial di 60 giorni gratuiti
 
 ## Privacy e GDPR
 

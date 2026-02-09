@@ -121,7 +121,7 @@ export default function TrialExpirationModal() {
         <div className="p-6">
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {t.trial_expired_message || 'La tua prova gratuita di 3 mesi è terminata'}
+              {t.trial_expired_message || 'La tua prova gratuita di 2 mesi è terminata'}
             </h3>
             <p className="text-gray-600">
               {t.trial_expired_description || 'Per continuare a utilizzare tutte le funzionalità premium della piattaforma, seleziona uno dei nostri piani di abbonamento.'}

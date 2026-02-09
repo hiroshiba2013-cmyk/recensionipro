@@ -9,7 +9,7 @@ Il sistema invia email automatiche a tutte le attività presenti nel database ch
 - Hanno un indirizzo email valido
 - Informano i proprietari che la loro attività è su TrovaFacile
 - Includono un link diretto per rivendicare l'attività
-- Offrono 3 mesi di prova gratuita
+- Offrono 2 mesi di prova gratuita
 
 ## Edge Function Deployed
 
@@ -24,7 +24,7 @@ Il sistema invia email automatiche a tutte le attività presenti nel database ch
    - Nome dell'attività e posizione
    - Informazioni sui benefici di TrovaFacile
    - Link diretto per rivendicare l'attività
-   - Dettagli sulla prova gratuita di 3 mesi
+   - Dettagli sulla prova gratuita di 2 mesi
 4. (Attualmente) logga le email che verrebbero inviate
 
 ## Parametri della Richiesta
@@ -91,7 +91,7 @@ Ogni email include:
 
 1. **Header accattivante** - Con logo e messaggio di benvenuto
 2. **Informazioni attività** - Nome, città, provincia, regione
-3. **Promo trial** - Box evidenziato con i 3 mesi gratuiti
+3. **Promo trial** - Box evidenziato con i 2 mesi gratuiti
 4. **Benefici** - Lista dei vantaggi di rivendicare l'attività:
    - Gestione profilo completo
    - Risposta alle recensioni

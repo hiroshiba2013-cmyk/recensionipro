@@ -124,7 +124,7 @@ const translations = {
     'home.platformName': 'Trovafacile',
     'home.tagline': 'La piattaforma italiana che connette cittadini e attività locali.',
     'home.subtitle': 'Recensioni verificate, prodotti, annunci, lavoro e solidarietà in un unico posto.',
-    'home.trialInfo': 'Tre mesi di prova gratuiti per tutti! Poi a partire da €0.49/mese per privati e €2.49/mese + IVA per attività.',
+    'home.trialInfo': 'Due mesi di prova gratuiti per tutti! Poi a partire da €0.49/mese per privati e €2.49/mese + IVA per attività.',
     'home.startFree': 'Inizia Gratis',
     'home.viewPlans': 'Vedi i Piani',
     'home.whatCanYouDo': 'Cosa puoi fare con Trovafacile',
@@ -152,7 +152,7 @@ const translations = {
     'home.forBusiness': 'Per le Attività',
     'home.startingFrom': 'A partire da',
     'home.perMonth': '/mese',
-    'home.trialFree': 'Tre mesi di prova gratuiti',
+    'home.trialFree': 'Due mesi di prova gratuiti',
     'home.plusVAT': '+ IVA',
     'home.feature.findBusinesses': 'Trova attività verificate nella tua zona',
     'home.feature.findProducts': 'Trova prodotti di ogni genere',
@@ -183,7 +183,7 @@ const translations = {
 
     // SubscriptionPage
     'subscription.title': 'Scegli il Tuo Piano',
-    'subscription.subtitle': 'Inizia con 3 mesi di prova gratuiti',
+    'subscription.subtitle': 'Inizia con 2 mesi di prova gratuiti',
     'subscription.forCustomers': 'Per Privati',
     'subscription.forBusiness': 'Per Attività',
     'subscription.month': '/mese',
@@ -191,7 +191,7 @@ const translations = {
     'subscription.current': 'Piano Attuale',
     'subscription.choosePlan': 'Scegli Piano',
     'subscription.features': 'Caratteristiche',
-    'subscription.trialNote': 'Tutti i piani includono 3 mesi di prova gratuiti',
+    'subscription.trialNote': 'Tutti i piani includono 2 mesi di prova gratuiti',
 
     // RulesPage
     'rules.title': 'Regolamento della Piattaforma',
@@ -339,7 +339,7 @@ const translations = {
     'home.platformName': 'Trovafacile',
     'home.tagline': 'The Italian platform that connects citizens and local businesses.',
     'home.subtitle': 'Verified reviews, products, classifieds, jobs and solidarity in one place.',
-    'home.trialInfo': 'Three months free trial for everyone! Then starting from €0.49/month for individuals and €2.49/month + VAT for businesses.',
+    'home.trialInfo': 'Two months free trial for everyone! Then starting from €0.49/month for individuals and €2.49/month + VAT for businesses.',
     'home.startFree': 'Start Free',
     'home.viewPlans': 'View Plans',
     'home.whatCanYouDo': 'What you can do with Trovafacile',
@@ -367,7 +367,7 @@ const translations = {
     'home.forBusiness': 'For Businesses',
     'home.startingFrom': 'Starting from',
     'home.perMonth': '/month',
-    'home.trialFree': 'Three months free trial',
+    'home.trialFree': 'Two months free trial',
     'home.plusVAT': '+ VAT',
     'home.feature.findBusinesses': 'Find verified businesses in your area',
     'home.feature.findProducts': 'Find products of all kinds',
@@ -398,7 +398,7 @@ const translations = {
 
     // SubscriptionPage
     'subscription.title': 'Choose Your Plan',
-    'subscription.subtitle': 'Start with 3 months free trial',
+    'subscription.subtitle': 'Start with 2 months free trial',
     'subscription.forCustomers': 'For Individuals',
     'subscription.forBusiness': 'For Businesses',
     'subscription.month': '/month',
@@ -406,7 +406,7 @@ const translations = {
     'subscription.current': 'Current Plan',
     'subscription.choosePlan': 'Choose Plan',
     'subscription.features': 'Features',
-    'subscription.trialNote': 'All plans include 3 months free trial',
+    'subscription.trialNote': 'All plans include 2 months free trial',
 
     // RulesPage
     'rules.title': 'Platform Rules',

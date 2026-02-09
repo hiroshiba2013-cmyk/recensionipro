@@ -44,8 +44,8 @@ BEGIN
       ELSE 'Free trial ended'
     END,
     CASE
-      WHEN language = 'it' THEN 'La tua prova gratuita di 3 mesi è terminata. Sottoscrivi un piano per continuare ad accedere alle funzionalità premium.'
-      ELSE 'Your 3-month free trial has ended. Subscribe to a plan to continue accessing premium features.'
+      WHEN language = 'it' THEN 'La tua prova gratuita di 2 mesi è terminata. Sottoscrivi un piano per continuare ad accedere alle funzionalità premium.'
+      ELSE 'Your 2-month free trial has ended. Subscribe to a plan to continue accessing premium features.'
     END,
     jsonb_build_object('trial_expired', true)
   FROM profiles
