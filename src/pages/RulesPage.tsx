@@ -465,7 +465,6 @@ export function RulesPage() {
                                 <li>Anni di esperienza</li>
                                 <li>Competenze specifiche</li>
                                 <li>Zona di interesse</li>
-                                <li>CV in PDF (opzionale ma consigliato)</li>
                               </ul>
                             </li>
                             <li>Pubblica il profilo - è visibile alle aziende</li>
