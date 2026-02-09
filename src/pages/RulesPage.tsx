@@ -325,10 +325,10 @@ export function RulesPage() {
                             <li>Clicca su "Scrivi una Recensione"</li>
                             <li>Valuta 4 aspetti con stelle da 1 a 5:
                               <ul className="list-disc list-inside ml-6 mt-1 text-sm">
-                                <li><strong>Qualità del Servizio:</strong> professionalità e competenza</li>
-                                <li><strong>Rapporto Qualità/Prezzo:</strong> il servizio vale quanto costa?</li>
-                                <li><strong>Puntualità:</strong> rispetto dei tempi</li>
-                                <li><strong>Disponibilità:</strong> cortesia e reattività</li>
+                                <li><strong>Qualità:</strong> qualità del prodotto o servizio</li>
+                                <li><strong>Prezzo:</strong> rapporto con il prezzo pagato</li>
+                                <li><strong>Esperienza/Servizio:</strong> esperienza complessiva e servizio ricevuto</li>
+                                <li><strong>Voto Generale:</strong> valutazione complessiva</li>
                               </ul>
                             </li>
                             <li>Scrivi un commento dettagliato sulla tua esperienza</li>
