@@ -819,27 +819,73 @@ export function RulesPage() {
                           </ul>
                         </div>
                         <div className="bg-blue-100 p-4 rounded-lg">
-                          <h4 className="font-bold mb-2">Costi per più sedi:</h4>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between items-center p-2 bg-white rounded">
-                              <span>1 sede</span>
-                              <span className="font-bold">2,49€/mese + IVA</span>
+                          <h4 className="font-bold mb-3">Costi per più sedi:</h4>
+
+                          <div className="mb-4">
+                            <p className="font-semibold text-blue-800 mb-2">Abbonamento Mensile:</p>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between items-center p-2 bg-white rounded">
+                                <span>1 sede</span>
+                                <span className="font-bold">€2,49/mese + IVA</span>
+                              </div>
+                              <div className="flex justify-between items-center p-2 bg-white rounded">
+                                <span>2 sedi</span>
+                                <span className="font-bold">€3,99/mese + IVA</span>
+                              </div>
+                              <div className="flex justify-between items-center p-2 bg-white rounded">
+                                <span>3 sedi</span>
+                                <span className="font-bold">€5,49/mese + IVA</span>
+                              </div>
+                              <div className="flex justify-between items-center p-2 bg-white rounded">
+                                <span>4 sedi</span>
+                                <span className="font-bold">€7,99/mese + IVA</span>
+                              </div>
+                              <div className="flex justify-between items-center p-2 bg-white rounded">
+                                <span>5 sedi</span>
+                                <span className="font-bold">€9,99/mese + IVA</span>
+                              </div>
+                              <div className="flex justify-between items-center p-2 bg-white rounded">
+                                <span>6-10 sedi</span>
+                                <span className="font-bold">€12,99/mese + IVA</span>
+                              </div>
+                              <div className="flex justify-between items-center p-2 bg-white rounded">
+                                <span>Oltre 10 sedi</span>
+                                <span className="font-bold">€14,99/mese + IVA</span>
+                              </div>
                             </div>
-                            <div className="flex justify-between items-center p-2 bg-white rounded">
-                              <span>2-3 sedi</span>
-                              <span className="font-bold">4,49€/mese + IVA</span>
-                            </div>
-                            <div className="flex justify-between items-center p-2 bg-white rounded">
-                              <span>4-5 sedi</span>
-                              <span className="font-bold">6,49€/mese + IVA</span>
-                            </div>
-                            <div className="flex justify-between items-center p-2 bg-white rounded">
-                              <span>6-10 sedi</span>
-                              <span className="font-bold">9,49€/mese + IVA</span>
-                            </div>
-                            <div className="flex justify-between items-center p-2 bg-white rounded">
-                              <span>10+ sedi</span>
-                              <span className="font-bold">Contattaci</span>
+                          </div>
+
+                          <div>
+                            <p className="font-semibold text-blue-800 mb-2">Abbonamento Annuale:</p>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between items-center p-2 bg-white rounded">
+                                <span>1 sede</span>
+                                <span className="font-bold">€24,90/anno + IVA</span>
+                              </div>
+                              <div className="flex justify-between items-center p-2 bg-white rounded">
+                                <span>2 sedi</span>
+                                <span className="font-bold">€39,90/anno + IVA</span>
+                              </div>
+                              <div className="flex justify-between items-center p-2 bg-white rounded">
+                                <span>3 sedi</span>
+                                <span className="font-bold">€54,90/anno + IVA</span>
+                              </div>
+                              <div className="flex justify-between items-center p-2 bg-white rounded">
+                                <span>4 sedi</span>
+                                <span className="font-bold">€79,90/anno + IVA</span>
+                              </div>
+                              <div className="flex justify-between items-center p-2 bg-white rounded">
+                                <span>5 sedi</span>
+                                <span className="font-bold">€99,90/anno + IVA</span>
+                              </div>
+                              <div className="flex justify-between items-center p-2 bg-white rounded">
+                                <span>6-10 sedi</span>
+                                <span className="font-bold">€129,90/anno + IVA</span>
+                              </div>
+                              <div className="flex justify-between items-center p-2 bg-white rounded">
+                                <span>Oltre 10 sedi</span>
+                                <span className="font-bold">€149,90/anno + IVA</span>
+                              </div>
                             </div>
                           </div>
                         </div>
