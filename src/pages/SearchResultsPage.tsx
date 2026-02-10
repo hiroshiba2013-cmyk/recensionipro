@@ -90,6 +90,8 @@ export function SearchResultsPage() {
   }, [loading, locations]);
 
   const applyFilters = async (filters: SearchFilters) => {
+    console.log('=== INIZIO RICERCA ===');
+    console.log('Filtri:', filters);
     setLoading(true);
     setHasSearched(true);
     try {
@@ -97,6 +99,7 @@ export function SearchResultsPage() {
       const QUERY_LIMIT = 2000;
 
       // Query 1: registered_business_locations (attività registrate e verificate)
+      console.log('Query 1: registered_business_locations...');
       let registeredQuery = supabase
         .from('registered_business_locations')
         .select(`
@@ -141,6 +144,8 @@ export function SearchResultsPage() {
       }
 
       const registeredResult = await registeredQuery;
+      console.log('  Risultati Q1:', registeredResult.data?.length || 0);
+      if (registeredResult.error) console.error('  Errore Q1:', registeredResult.error);
 
       if (registeredResult.data) {
         const registeredLocations = registeredResult.data
@@ -182,10 +187,12 @@ export function SearchResultsPage() {
             }
           }));
 
+        console.log('  Aggiunte Q1:', registeredLocations.length);
         allLocations.push(...registeredLocations);
       }
 
       // Query 2: imported_businesses (da OSM)
+      console.log('Query 2: imported_businesses...');
       let importedQuery = supabase
         .from('imported_businesses')
         .select(`
@@ -229,6 +236,8 @@ export function SearchResultsPage() {
       }
 
       const importedResult = await importedQuery;
+      console.log('  Risultati Q2:', importedResult.data?.length || 0);
+      if (importedResult.error) console.error('  Errore Q2:', importedResult.error);
 
       if (importedResult.data) {
         const importedLocations: BusinessLocation[] = importedResult.data.map((ib: any) => ({
@@ -258,10 +267,12 @@ export function SearchResultsPage() {
           } : undefined
         }));
 
+        console.log('  Aggiunte Q2:', importedLocations.length);
         allLocations.push(...importedLocations);
       }
 
       // Query 3: user_added_businesses (aggiunte da utenti)
+      console.log('Query 3: user_added_businesses...');
       let userAddedQuery = supabase
         .from('user_added_businesses')
         .select(`
@@ -304,6 +315,8 @@ export function SearchResultsPage() {
       }
 
       const userAddedResult = await userAddedQuery;
+      console.log('  Risultati Q3:', userAddedResult.data?.length || 0);
+      if (userAddedResult.error) console.error('  Errore Q3:', userAddedResult.error);
 
       if (userAddedResult.data) {
         const userAddedLocations: BusinessLocation[] = userAddedResult.data.map((ub: any) => ({
@@ -333,50 +346,28 @@ export function SearchResultsPage() {
           } : undefined
         }));
 
+        console.log('  Aggiunte Q3:', userAddedLocations.length);
         allLocations.push(...userAddedLocations);
       }
 
+      console.log('TOTALE:', allLocations.length, 'locations');
+
       if (allLocations.length === 0) {
+        console.log('Nessun risultato trovato!');
         setLocations([]);
         return;
       }
 
-      // Calcola rating per ogni location
-      const ratingPromises = allLocations.map(async (loc) => {
-        let reviewsQuery = supabase
-          .from('reviews')
-          .select('overall_rating')
-          .eq('review_status', 'approved');
+      // Per ora non calcoliamo i rating (troppo pesante)
+      // I rating verranno calcolati in modo ottimizzato in futuro
+      console.log('Preparazione risultati finali...');
+      const locationsWithRatings = allLocations.map(loc => ({
+        ...loc,
+        avg_rating: 0,
+        review_count: 0,
+      }));
 
-        if (loc.business_type === 'imported') {
-          reviewsQuery = reviewsQuery.eq('imported_business_id', loc.id);
-        } else if (loc.business_type === 'user_added') {
-          reviewsQuery = reviewsQuery.eq('user_added_business_id', loc.id);
-        } else if (loc.business_type === 'registered') {
-          reviewsQuery = reviewsQuery.eq('registered_business_id', loc.business_id);
-        }
-
-        const { data: reviewsData } = await reviewsQuery;
-
-        const avg_rating = reviewsData && reviewsData.length > 0
-          ? reviewsData.reduce((sum, r) => sum + r.overall_rating, 0) / reviewsData.length
-          : 0;
-
-        return {
-          ...loc,
-          avg_rating,
-          review_count: reviewsData?.length || 0,
-        };
-      });
-
-      let locationsWithRatings = await Promise.all(ratingPromises);
-
-      // Applica filtro rating
-      if (filters.minRating > 0) {
-        locationsWithRatings = locationsWithRatings.filter(
-          loc => (loc.avg_rating || 0) >= filters.minRating
-        );
-      }
+      console.log('Ordinamento...');
 
       // Ordina: claimed > rating > alfabetico
       locationsWithRatings.sort((a, b) => {
@@ -393,6 +384,8 @@ export function SearchResultsPage() {
         return aName.localeCompare(bName);
       });
 
+      console.log('=== FINE RICERCA ===');
+      console.log('Mostro', locationsWithRatings.length, 'risultati');
       setLocations(locationsWithRatings);
     } catch (error) {
       console.error('Error loading data:', error);
