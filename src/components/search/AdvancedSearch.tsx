@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, X, CheckCircle, Tag } from 'lucide-react';
+import { Search, Filter, X, CheckCircle } from 'lucide-react';
 import { supabase, BusinessCategory } from '../../lib/supabase';
 import { ITALIAN_REGIONS, PROVINCES_BY_REGION, ITALIAN_PROVINCES, CITIES_BY_PROVINCE } from '../../lib/cities';
 import { SearchableSelect } from '../common/SearchableSelect';
@@ -13,7 +13,6 @@ export interface SearchFilters {
   businessName: string;
   minRating: number;
   verifiedOnly?: boolean;
-  hasDiscounts?: boolean;
 }
 
 interface AdvancedSearchProps {
@@ -37,7 +36,6 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
     businessName: '',
     minRating: 0,
     verifiedOnly: false,
-    hasDiscounts: false,
   });
 
   useEffect(() => {
@@ -107,7 +105,6 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
     if (filters.businessName) params.set('name', filters.businessName);
     if (filters.minRating > 0) params.set('rating', String(filters.minRating));
     if (filters.verifiedOnly) params.set('verified', 'true');
-    if (filters.hasDiscounts) params.set('discounts', 'true');
 
     const queryString = params.toString();
     const url = queryString ? `/search?${queryString}` : '/search';
@@ -129,7 +126,6 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
       businessName: '',
       minRating: 0,
       verifiedOnly: false,
-      hasDiscounts: false,
     });
     onSearch({
       category: '',
@@ -139,7 +135,6 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
       businessName: '',
       minRating: 0,
       verifiedOnly: false,
-      hasDiscounts: false,
     });
   };
 
@@ -290,20 +285,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
                 />
                 <CheckCircle className="w-4 h-4 text-gray-500 group-hover:text-green-600 transition-colors" />
                 <span className="text-sm text-gray-700 group-hover:text-gray-900 font-medium">
-                  Solo verificate
-                </span>
-              </label>
-
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={filters.hasDiscounts || false}
-                  onChange={(e) => setFilters({ ...filters, hasDiscounts: e.target.checked })}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <Tag className="w-4 h-4 text-gray-500 group-hover:text-orange-600 transition-colors" />
-                <span className="text-sm text-gray-700 group-hover:text-gray-900 font-medium">
-                  Con sconti attivi
+                  Solo rivendicate
                 </span>
               </label>
             </div>

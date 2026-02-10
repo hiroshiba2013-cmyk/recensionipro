@@ -69,7 +69,6 @@ export function SearchResultsPage() {
       businessName: params.get('name') || '',
       minRating: Number(params.get('rating')) || 0,
       verifiedOnly: params.get('verified') === 'true',
-      hasDiscounts: params.get('discounts') === 'true',
     };
 
     setInitialFilters(filters);
