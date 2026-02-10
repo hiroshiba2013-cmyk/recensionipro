@@ -64,6 +64,10 @@ interface Review {
     address: string;
     city: string;
   } | null;
+  location_info?: {
+    name?: string;
+    city: string;
+  } | null;
 }
 
 interface Discount {
@@ -232,14 +236,77 @@ export function ProfilePage() {
       .from('reviews')
       .select(`
         *,
-        business:businesses(name),
         family_member:customer_family_members(nickname)
       `)
       .eq('customer_id', user?.id)
       .order('created_at', { ascending: false });
 
     if (reviewsData) {
-      setReviews(reviewsData);
+      const reviewsWithBusinessNames = await Promise.all(
+        reviewsData.map(async (review) => {
+          let businessName = 'Attività';
+          let locationInfo = null;
+
+          if (review.business_id) {
+            const { data: business } = await supabase
+              .from('businesses')
+              .select('name, city')
+              .eq('id', review.business_id)
+              .maybeSingle();
+            if (business) {
+              businessName = business.name;
+              if (business.city) {
+                locationInfo = { city: business.city };
+              }
+            }
+          } else if (review.imported_business_id) {
+            const { data: business } = await supabase
+              .from('imported_businesses')
+              .select('name, city')
+              .eq('id', review.imported_business_id)
+              .maybeSingle();
+            if (business) {
+              businessName = business.name;
+              if (business.city) {
+                locationInfo = { city: business.city };
+              }
+            }
+          } else if (review.user_added_business_id) {
+            const { data: business } = await supabase
+              .from('user_added_businesses')
+              .select('name, city')
+              .eq('id', review.user_added_business_id)
+              .maybeSingle();
+            if (business) {
+              businessName = business.name;
+              if (business.city) {
+                locationInfo = { city: business.city };
+              }
+            }
+          }
+
+          if (review.business_location_id) {
+            const { data: location } = await supabase
+              .from('business_locations')
+              .select('internal_name, name, city')
+              .eq('id', review.business_location_id)
+              .maybeSingle();
+            if (location) {
+              locationInfo = {
+                name: location.internal_name || location.name,
+                city: location.city
+              };
+            }
+          }
+
+          return {
+            ...review,
+            business: { name: businessName },
+            location_info: locationInfo
+          };
+        })
+      );
+      setReviews(reviewsWithBusinessNames);
     }
 
     const { data: discountsData } = await supabase
@@ -250,7 +317,7 @@ export function ProfilePage() {
       `)
       .eq('active', true)
       .gte('valid_until', new Date().toISOString())
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false});
 
     if (discountsData) {
       setDiscounts(discountsData);
@@ -274,15 +341,76 @@ export function ProfilePage() {
 
     const { data: reviewsData } = await supabase
       .from('reviews')
-      .select(`
-        *,
-        business:businesses(name)
-      `)
+      .select('*')
       .eq('family_member_id', familyMemberId)
       .order('created_at', { ascending: false });
 
     if (reviewsData) {
-      setReviews(reviewsData);
+      const reviewsWithBusinessNames = await Promise.all(
+        reviewsData.map(async (review) => {
+          let businessName = 'Attività';
+          let locationInfo = null;
+
+          if (review.business_id) {
+            const { data: business } = await supabase
+              .from('businesses')
+              .select('name, city')
+              .eq('id', review.business_id)
+              .maybeSingle();
+            if (business) {
+              businessName = business.name;
+              if (business.city) {
+                locationInfo = { city: business.city };
+              }
+            }
+          } else if (review.imported_business_id) {
+            const { data: business } = await supabase
+              .from('imported_businesses')
+              .select('name, city')
+              .eq('id', review.imported_business_id)
+              .maybeSingle();
+            if (business) {
+              businessName = business.name;
+              if (business.city) {
+                locationInfo = { city: business.city };
+              }
+            }
+          } else if (review.user_added_business_id) {
+            const { data: business } = await supabase
+              .from('user_added_businesses')
+              .select('name, city')
+              .eq('id', review.user_added_business_id)
+              .maybeSingle();
+            if (business) {
+              businessName = business.name;
+              if (business.city) {
+                locationInfo = { city: business.city };
+              }
+            }
+          }
+
+          if (review.business_location_id) {
+            const { data: location } = await supabase
+              .from('business_locations')
+              .select('internal_name, name, city')
+              .eq('id', review.business_location_id)
+              .maybeSingle();
+            if (location) {
+              locationInfo = {
+                name: location.internal_name || location.name,
+                city: location.city
+              };
+            }
+          }
+
+          return {
+            ...review,
+            business: { name: businessName },
+            location_info: locationInfo
+          };
+        })
+      );
+      setReviews(reviewsWithBusinessNames);
     }
 
     const { data: discountsData } = await supabase
@@ -1082,6 +1210,11 @@ export function ProfilePage() {
                           </div>
                           <p className="text-sm text-gray-600 mt-1">
                             {review.business?.name}
+                            {review.location_info && (
+                              <span className="text-gray-500">
+                                {review.location_info.name && ` - ${review.location_info.name}`} ({review.location_info.city})
+                              </span>
+                            )}
                           </p>
                           {review.review_status === 'pending' && (
                             <p className="text-xs text-yellow-700 mt-2 font-medium">
