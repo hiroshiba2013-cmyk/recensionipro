@@ -258,7 +258,7 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
         .eq('customer_id', profile.id);
 
       if (businessType === 'registered') {
-        reviewQuery = reviewQuery.eq('registered_business_id', businessId);
+        reviewQuery = reviewQuery.eq('business_id', businessId);
       } else if (businessType === 'imported') {
         reviewQuery = reviewQuery.eq('imported_business_id', businessId);
       } else if (businessType === 'user_added') {
@@ -325,14 +325,15 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
         proof_image_url: proofImageUrl,
         review_status: reviewStatus,
         points_awarded: pointsAwarded,
-        registered_business_id: null,
+        business_location_id: selectedLocationId || null,
+        business_id: null,
         imported_business_id: null,
         user_added_business_id: null,
       };
 
       // Imposta il business_id corretto a seconda del tipo
       if (businessType === 'registered') {
-        reviewData.registered_business_id = businessId;
+        reviewData.business_id = businessId;
       } else if (businessType === 'imported') {
         reviewData.imported_business_id = businessId;
       } else if (businessType === 'user_added') {

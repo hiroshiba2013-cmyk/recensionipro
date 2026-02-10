@@ -81,7 +81,7 @@ export async function getBusinessReviews(businessId: string, businessType: 'impo
   } else if (businessType === 'user_added') {
     query = query.eq('user_added_business_id', businessId);
   } else if (businessType === 'registered') {
-    query = query.eq('registered_business_id', businessId);
+    query = query.eq('business_id', businessId);
   }
 
   const { data, error } = await query;
@@ -145,7 +145,7 @@ export async function claimImportedBusiness(businessId: string, userId: string) 
     .from('reviews')
     .update({
       business_type: 'registered',
-      registered_business_id: newBusiness.id,
+      business_id: newBusiness.id,
       imported_business_id: null
     })
     .eq('imported_business_id', businessId);
@@ -209,7 +209,7 @@ export async function claimUserAddedBusiness(businessId: string, userId: string)
     .from('reviews')
     .update({
       business_type: 'registered',
-      registered_business_id: newBusiness.id,
+      business_id: newBusiness.id,
       user_added_business_id: null
     })
     .eq('user_added_business_id', businessId);
