@@ -128,7 +128,7 @@ export function LeaderboardPage() {
         .select(`
           user_id,
           total_points,
-          total_reviews,
+          reviews_count,
           profiles!inner(
             full_name,
             avatar_url,
@@ -152,7 +152,7 @@ export function LeaderboardPage() {
         full_name: item.profiles.full_name,
         avatar_url: item.profiles.avatar_url,
         points: item.total_points,
-        reviews_count: item.total_reviews,
+        reviews_count: item.reviews_count,
         rank: index + 1,
         is_family_member: false,
       }));
