@@ -1178,46 +1178,6 @@ export function ProfilePage() {
             </div>
 
             <div className="bg-white rounded-xl shadow-md p-8 mb-8">
-              <div className="flex items-center gap-3 mb-6">
-                <Tag className="w-6 h-6 text-green-600" />
-                <h2 className="text-2xl font-bold text-gray-900">Sconti Disponibili</h2>
-              </div>
-
-              {discounts.length === 0 ? (
-                <p className="text-gray-600 text-center py-8">Nessuno sconto disponibile al momento</p>
-              ) : (
-                <div className="grid md:grid-cols-2 gap-6">
-                  {discounts.map((discount) => (
-                    <div key={discount.id} className="border-2 border-green-200 rounded-lg p-6 bg-green-50">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-bold text-lg text-gray-900">{discount.title}</h3>
-                        <span className="bg-green-600 text-white px-4 py-2 rounded-full font-bold text-lg">
-                          -{discount.discount_percentage}%
-                        </span>
-                      </div>
-                      <p className="text-gray-700 mb-4">{discount.description}</p>
-                      <div className="bg-white rounded-lg p-3 border border-green-300">
-                        <p className="text-xs text-gray-600 mb-1">Codice Sconto</p>
-                        <p className="font-mono font-bold text-lg text-green-700">{discount.code}</p>
-                      </div>
-                      <div className="mt-4 flex items-center gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          <span>Valido fino al {new Date(discount.valid_until).toLocaleDateString('it-IT')}</span>
-                        </div>
-                      </div>
-                      {discount.business?.name && (
-                        <p className="mt-3 text-sm font-semibold text-gray-800">
-                          {discount.business.name}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="bg-white rounded-xl shadow-md p-8 mb-8">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <Package className="w-6 h-6 text-blue-600" />
