@@ -57,7 +57,7 @@ const DAY_NAMES: { [key: string]: string } = {
 function formatBusinessHours(hours: any): string {
   if (!hours || typeof hours !== 'object') return 'Orari non disponibili';
 
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'lowercase' });
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
   const todayHours = hours[today];
 
   if (!todayHours) return 'Chiuso oggi';
