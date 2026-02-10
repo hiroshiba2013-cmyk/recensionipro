@@ -120,29 +120,30 @@ export function SearchResultsPage() {
 
       console.log('Risultati trovati:', businessesData?.length || 0);
 
-      let allLocations: BusinessLocation[] = (businessesData || []).map((business: any) => ({
-        id: business.id,
-        business_id: business.id,
-        name: business.name,
-        address: '',
-        city: business.city || '',
-        province: business.province || '',
-        region: business.region || '',
-        postal_code: null,
-        phone: business.phone || null,
-        email: business.email || null,
-        website: business.website || null,
-        business_hours: null,
+      let allLocations: BusinessLocation[] = (businessesData || []).map((location: any) => ({
+        id: location.id,
+        business_id: location.business_id || location.id,
+        name: location.name,
+        address: location.address || '',
+        city: location.city || '',
+        province: location.province || '',
+        region: location.region || '',
+        postal_code: location.postal_code || null,
+        phone: location.phone || null,
+        email: location.email || null,
+        website: location.website || null,
+        business_hours: location.business_hours || null,
         avatar_url: null,
-        is_claimed: business.business_type === 'registered' || business.business_type === 'claimed_old',
-        verification_badge: business.is_verified || false,
-        description: business.description || null,
-        business_type: business.business_type,
+        is_claimed: location.is_claimed || false,
+        verification_badge: location.is_verified || false,
+        description: location.description || null,
+        business_type: location.location_type === 'unclaimed' ? 'imported' :
+                      location.location_type === 'claimed' ? 'registered' : 'user_added',
         business: {
-          id: business.id,
-          name: business.name,
-          category_id: business.category_id,
-          verified: business.is_verified || false
+          id: location.business_id || location.id,
+          name: location.name,
+          category_id: location.category_id,
+          verified: location.is_verified || false
         },
         avg_rating: 0,
         review_count: 0

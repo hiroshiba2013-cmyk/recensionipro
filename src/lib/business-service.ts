@@ -5,16 +5,22 @@ export interface UnifiedBusinessResult {
   name: string;
   category_id: string | null;
   description: string;
+  address: string | null;
   city: string;
   province: string | null;
   region: string | null;
+  postal_code: string | null;
   phone: string | null;
   email: string | null;
   website: string | null;
+  business_hours: string | null;
   latitude: number | null;
   longitude: number | null;
-  business_type: 'imported' | 'user_added' | 'registered';
-  has_multiple_locations: boolean;
+  location_type: 'unclaimed' | 'claimed' | 'user_added';
+  is_claimed: boolean;
+  is_verified: boolean;
+  business_id: string | null;
+  owner_id: string | null;
   created_at: string;
 }
 
