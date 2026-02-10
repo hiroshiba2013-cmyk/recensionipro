@@ -102,34 +102,7 @@ export function SearchResultsPage() {
       console.log('Query 1: registered_business_locations...');
       let registeredQuery = supabase
         .from('registered_business_locations')
-        .select(`
-          id,
-          business_id,
-          internal_name,
-          street,
-          street_number,
-          city,
-          province,
-          region,
-          postal_code,
-          latitude,
-          longitude,
-          phone,
-          email,
-          website,
-          business_hours,
-          description,
-          services,
-          is_primary,
-          business:registered_businesses(
-            id,
-            name,
-            category_id,
-            description,
-            verification_badge,
-            category:business_categories(*)
-          )
-        `)
+        .select('*')
         .limit(QUERY_LIMIT);
 
       if (filters.city) {
@@ -148,44 +121,27 @@ export function SearchResultsPage() {
       if (registeredResult.error) console.error('  Errore Q1:', registeredResult.error);
 
       if (registeredResult.data) {
-        const registeredLocations = registeredResult.data
-          .filter((loc: any) => loc.business)
-          .filter((loc: any) => {
-            const biz = loc.business;
-            if (filters.category && biz.category_id !== filters.category) return false;
-            if (filters.businessName) {
-              const nameMatch = biz.name.toLowerCase().includes(filters.businessName.toLowerCase());
-              const internalMatch = loc.internal_name && loc.internal_name.toLowerCase().includes(filters.businessName.toLowerCase());
-              if (!nameMatch && !internalMatch) return false;
-            }
-            return true;
-          })
-          .map((loc: any) => ({
-            id: loc.id,
-            business_id: loc.business_id,
-            name: loc.internal_name || loc.business.name,
-            address: `${loc.street}${loc.street_number ? ', ' + loc.street_number : ''}`,
-            city: loc.city,
-            province: loc.province,
-            region: loc.region,
-            postal_code: loc.postal_code,
-            phone: loc.phone,
-            email: loc.email,
-            website: loc.website,
-            business_hours: loc.business_hours,
-            avatar_url: null,
-            is_claimed: true,
-            verification_badge: loc.business.verification_badge === 'verified',
-            description: loc.description,
-            business_type: 'registered' as const,
-            business: {
-              id: loc.business.id,
-              name: loc.business.name,
-              category_id: loc.business.category_id,
-              verified: loc.business.verification_badge === 'verified',
-              category: loc.business.category
-            }
-          }));
+        console.log('  Processando risultati Q1...');
+        const registeredLocations = registeredResult.data.map((loc: any) => ({
+          id: loc.id,
+          business_id: loc.business_id,
+          name: loc.internal_name || 'Sede',
+          address: `${loc.street}${loc.street_number ? ', ' + loc.street_number : ''}`,
+          city: loc.city,
+          province: loc.province,
+          region: loc.region,
+          postal_code: loc.postal_code,
+          phone: loc.phone,
+          email: loc.email,
+          website: loc.website,
+          business_hours: loc.business_hours,
+          avatar_url: null,
+          is_claimed: true,
+          verification_badge: true,
+          description: loc.description,
+          business_type: 'registered' as const,
+          business: undefined
+        }));
 
         console.log('  Aggiunte Q1:', registeredLocations.length);
         allLocations.push(...registeredLocations);
@@ -195,25 +151,7 @@ export function SearchResultsPage() {
       console.log('Query 2: imported_businesses...');
       let importedQuery = supabase
         .from('imported_businesses')
-        .select(`
-          id,
-          name,
-          category_id,
-          description,
-          street,
-          street_number,
-          city,
-          province,
-          region,
-          postal_code,
-          latitude,
-          longitude,
-          phone,
-          email,
-          website,
-          business_hours,
-          category:business_categories(*)
-        `)
+        .select('*')
         .limit(QUERY_LIMIT);
 
       if (filters.category) {
@@ -240,31 +178,26 @@ export function SearchResultsPage() {
       if (importedResult.error) console.error('  Errore Q2:', importedResult.error);
 
       if (importedResult.data) {
+        console.log('  Processando risultati Q2...');
         const importedLocations: BusinessLocation[] = importedResult.data.map((ib: any) => ({
           id: ib.id,
           business_id: ib.id,
           name: ib.name,
-          address: `${ib.street}${ib.street_number ? ', ' + ib.street_number : ''}`,
-          city: ib.city,
-          province: ib.province,
-          region: ib.region,
-          postal_code: ib.postal_code,
-          phone: ib.phone,
-          email: ib.email,
-          website: ib.website,
-          business_hours: ib.business_hours,
+          address: `${ib.street || ''}${ib.street_number ? ', ' + ib.street_number : ''}`,
+          city: ib.city || '',
+          province: ib.province || '',
+          region: ib.region || '',
+          postal_code: ib.postal_code || null,
+          phone: ib.phone || null,
+          email: ib.email || null,
+          website: ib.website || null,
+          business_hours: ib.business_hours || null,
           avatar_url: null,
           is_claimed: false,
           verification_badge: false,
-          description: ib.description,
+          description: ib.description || null,
           business_type: 'imported' as const,
-          business: ib.category ? {
-            id: ib.id,
-            name: ib.name,
-            category_id: ib.category_id,
-            verified: false,
-            category: ib.category
-          } : undefined
+          business: undefined
         }));
 
         console.log('  Aggiunte Q2:', importedLocations.length);
@@ -275,24 +208,7 @@ export function SearchResultsPage() {
       console.log('Query 3: user_added_businesses...');
       let userAddedQuery = supabase
         .from('user_added_businesses')
-        .select(`
-          id,
-          name,
-          category_id,
-          description,
-          street,
-          street_number,
-          city,
-          province,
-          region,
-          postal_code,
-          latitude,
-          longitude,
-          phone,
-          email,
-          website,
-          category:business_categories(*)
-        `)
+        .select('*')
         .limit(QUERY_LIMIT);
 
       if (filters.category) {
@@ -319,31 +235,26 @@ export function SearchResultsPage() {
       if (userAddedResult.error) console.error('  Errore Q3:', userAddedResult.error);
 
       if (userAddedResult.data) {
+        console.log('  Processando risultati Q3...');
         const userAddedLocations: BusinessLocation[] = userAddedResult.data.map((ub: any) => ({
           id: ub.id,
           business_id: ub.id,
           name: ub.name,
-          address: `${ub.street}${ub.street_number ? ', ' + ub.street_number : ''}`,
-          city: ub.city,
-          province: ub.province,
-          region: ub.region,
-          postal_code: ub.postal_code,
-          phone: ub.phone,
-          email: ub.email,
-          website: ub.website,
+          address: `${ub.street || ''}${ub.street_number ? ', ' + ub.street_number : ''}`,
+          city: ub.city || '',
+          province: ub.province || '',
+          region: ub.region || '',
+          postal_code: ub.postal_code || null,
+          phone: ub.phone || null,
+          email: ub.email || null,
+          website: ub.website || null,
           business_hours: null,
           avatar_url: null,
           is_claimed: false,
           verification_badge: false,
-          description: ub.description,
+          description: ub.description || null,
           business_type: 'user_added' as const,
-          business: ub.category ? {
-            id: ub.id,
-            name: ub.name,
-            category_id: ub.category_id,
-            verified: false,
-            category: ub.category
-          } : undefined
+          business: undefined
         }));
 
         console.log('  Aggiunte Q3:', userAddedLocations.length);
