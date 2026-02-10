@@ -106,6 +106,8 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
     if (filters.city) params.set('city', filters.city);
     if (filters.businessName) params.set('name', filters.businessName);
     if (filters.minRating > 0) params.set('rating', String(filters.minRating));
+    if (filters.verifiedOnly) params.set('verified', 'true');
+    if (filters.hasDiscounts) params.set('discounts', 'true');
 
     const queryString = params.toString();
     const url = queryString ? `/search?${queryString}` : '/search';
@@ -126,6 +128,8 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
       city: '',
       businessName: '',
       minRating: 0,
+      verifiedOnly: false,
+      hasDiscounts: false,
     });
     onSearch({
       category: '',
@@ -134,6 +138,8 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
       city: '',
       businessName: '',
       minRating: 0,
+      verifiedOnly: false,
+      hasDiscounts: false,
     });
   };
 

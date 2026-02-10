@@ -136,6 +136,30 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
         }
       }
 
+      // Se non trovata, cerca nella vecchia tabella businesses (per attività rivendicate prima della migrazione)
+      if (!businessData) {
+        const { data: oldBusinessData } = await supabase
+          .from('businesses')
+          .select(`
+            *,
+            category:business_categories(*),
+            locations:business_locations(*)
+          `)
+          .eq('id', businessId)
+          .maybeSingle();
+
+        if (oldBusinessData) {
+          businessData = {
+            ...oldBusinessData,
+            verified: oldBusinessData.is_claimed,
+          };
+          businessType = 'registered';
+          if (oldBusinessData.locations) {
+            setLocations(oldBusinessData.locations);
+          }
+        }
+      }
+
       if (businessData && businessType) {
         // Query per le recensioni
         let reviewsQuery = supabase
@@ -148,7 +172,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
         } else if (businessType === 'user_added') {
           reviewsQuery = reviewsQuery.eq('user_added_business_id', businessId);
         } else if (businessType === 'registered') {
-          reviewsQuery = reviewsQuery.eq('registered_business_id', businessId);
+          reviewsQuery = reviewsQuery.or(`registered_business_id.eq.${businessId},business_id.eq.${businessId}`);
         }
 
         const { data: reviewsData } = await reviewsQuery;
@@ -181,7 +205,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
         } else if (businessType === 'user_added') {
           fullReviewsQuery = fullReviewsQuery.eq('user_added_business_id', businessId);
         } else if (businessType === 'registered') {
-          fullReviewsQuery = fullReviewsQuery.eq('registered_business_id', businessId);
+          fullReviewsQuery = fullReviewsQuery.or(`registered_business_id.eq.${businessId},business_id.eq.${businessId}`);
         }
 
         const { data: fullReviewsData } = await fullReviewsQuery;
