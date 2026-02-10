@@ -338,7 +338,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           .from('reviews')
           .update({
             business_type: 'registered',
-            registered_business_id: newBusiness.id,
+            business_id: newBusiness.id,
             imported_business_id: null,
           })
           .eq('imported_business_id', businessId);
@@ -406,7 +406,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           .from('reviews')
           .update({
             business_type: 'registered',
-            registered_business_id: newBusiness.id,
+            business_id: newBusiness.id,
             user_added_business_id: null,
           })
           .eq('user_added_business_id', businessId);
