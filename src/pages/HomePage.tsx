@@ -422,28 +422,18 @@ function AuthenticatedHomePage() {
             .limit(6);
         })(),
 
-        topBusinessIds.length > 0
-          ? supabase
-              .from('businesses')
-              .select(`
-                id,
-                name,
-                business_locations(city, province, address, avatar_url),
-                business_categories(name)
-              `)
-              .in('id', topBusinessIds)
-          : supabase
-              .from('unclaimed_business_locations')
-              .select(`
-                id,
-                name,
-                city,
-                province,
-                address,
-                avatar_url,
-                category:business_categories(name)
-              `)
-              .limit(8)
+        supabase
+          .from('imported_businesses')
+          .select(`
+            id,
+            name,
+            city,
+            province,
+            region,
+            category_id
+          `)
+          .order('created_at', { ascending: false })
+          .limit(8)
       ]);
 
       if (jobsResult.data) setJobPostings(jobsResult.data);
@@ -468,22 +458,18 @@ function AuthenticatedHomePage() {
       if (productsResult.data) setProducts(productsResult.data);
 
       if (businessesResult.data && businessesResult.data.length > 0) {
-        const normalizedBusinesses = businessesResult.data.map((business: any) => {
-          if (business.city) {
-            return {
-              id: business.id,
-              name: business.name,
-              business_categories: business.category,
-              business_locations: [{
-                city: business.city,
-                province: business.province,
-                address: business.address,
-                avatar_url: business.avatar_url
-              }]
-            };
-          }
-          return business;
-        });
+        const normalizedBusinesses = businessesResult.data.map((business: any) => ({
+          id: business.id,
+          name: business.name,
+          business_categories: { id: business.category_id },
+          business_locations: [{
+            city: business.city,
+            province: business.province,
+            region: business.region,
+            address: '',
+            avatar_url: null
+          }]
+        }));
 
         const businessIds = normalizedBusinesses.map((b: any) => b.id);
         const ratingsResult = await supabase.rpc('get_business_ratings', {

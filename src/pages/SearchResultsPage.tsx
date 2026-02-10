@@ -95,98 +95,55 @@ export function SearchResultsPage() {
     setLoading(true);
     setHasSearched(true);
     try {
-      let allLocations: BusinessLocation[] = [];
       const QUERY_LIMIT = 2000;
 
-      console.log('Query: business_locations con businesses...');
-      let query = supabase
-        .from('business_locations')
-        .select(`
-          id,
-          business_id,
-          internal_name,
-          address,
-          city,
-          province,
-          region,
-          postal_code,
-          phone,
-          email,
-          website,
-          business_hours,
-          description,
-          avatar_url,
-          is_claimed,
-          verification_badge,
-          services,
-          businesses!inner (
-            id,
-            name,
-            category_id,
-            verified,
-            owner_id
-          )
-        `)
-        .limit(QUERY_LIMIT);
+      const provinceCode = filters.province ? PROVINCE_TO_CODE[filters.province] : null;
 
-      if (filters.category) {
-        query = query.eq('businesses.category_id', filters.category);
-      }
-
-      if (filters.businessName) {
-        query = query.ilike('businesses.name', `%${filters.businessName}%`);
-      }
-
-      if (filters.city) {
-        query = query.eq('city', filters.city.toLowerCase());
-      } else if (filters.province) {
-        const provinceCode = PROVINCE_TO_CODE[filters.province];
-        if (provinceCode) {
-          query = query.eq('province', provinceCode);
-        }
-      } else if (filters.region) {
-        query = query.eq('region', filters.region);
-      }
-
-      const result = await query;
-      console.log('  Risultati:', result.data?.length || 0);
-      if (result.error) console.error('  Errore:', result.error);
-
-      if (result.data) {
-        console.log('  Processando risultati...');
-        const locations = result.data.map((loc: any) => {
-          const business = Array.isArray(loc.businesses) ? loc.businesses[0] : loc.businesses;
-
-          return {
-            id: loc.id,
-            business_id: loc.business_id,
-            name: loc.internal_name || business?.name || 'Sede',
-            address: loc.address || '',
-            city: loc.city || '',
-            province: loc.province || '',
-            region: loc.region || '',
-            postal_code: loc.postal_code || null,
-            phone: loc.phone || null,
-            email: loc.email || null,
-            website: loc.website || null,
-            business_hours: loc.business_hours || null,
-            avatar_url: loc.avatar_url || null,
-            is_claimed: loc.is_claimed || false,
-            verification_badge: !!loc.verification_badge,
-            description: loc.description || null,
-            business_type: (loc.is_claimed ? 'registered' : (business?.verified ? 'imported' : 'user_added')) as const,
-            business: business ? {
-              id: business.id,
-              name: business.name,
-              category_id: business.category_id,
-              verified: business.verified
-            } : undefined
-          };
+      console.log('Usando search_all_businesses RPC function...');
+      const { data: businessesData, error: businessesError } = await supabase
+        .rpc('search_all_businesses', {
+          search_query: filters.businessName || '',
+          search_city: filters.city || null,
+          search_province: provinceCode || null,
+          search_region: filters.region || null,
+          search_category_id: filters.category || null,
+          limit_count: QUERY_LIMIT
         });
 
-        console.log('  Aggiunte:', locations.length);
-        allLocations.push(...locations);
+      if (businessesError) {
+        console.error('Errore ricerca businesses:', businessesError);
+        throw businessesError;
       }
+
+      console.log('Risultati trovati:', businessesData?.length || 0);
+
+      let allLocations: BusinessLocation[] = (businessesData || []).map((business: any) => ({
+        id: business.id,
+        business_id: business.id,
+        name: business.name,
+        address: '',
+        city: business.city || '',
+        province: business.province || '',
+        region: business.region || '',
+        postal_code: null,
+        phone: business.phone || null,
+        email: business.email || null,
+        website: business.website || null,
+        business_hours: null,
+        avatar_url: null,
+        is_claimed: business.business_type === 'registered',
+        verification_badge: business.business_type === 'registered',
+        description: business.description || null,
+        business_type: business.business_type,
+        business: {
+          id: business.id,
+          name: business.name,
+          category_id: business.category_id,
+          verified: business.business_type === 'registered'
+        },
+        avg_rating: 0,
+        review_count: 0
+      }));
 
       console.log('TOTALE:', allLocations.length, 'locations');
 
