@@ -77,7 +77,6 @@ export function ClassifiedAdsPage() {
         .from('classified_ads')
         .select(`
           *,
-          profiles!user_id(full_name, avatar_url),
           classified_categories!category_id(name, icon)
         `)
         .eq('status', 'active')
@@ -110,7 +109,30 @@ export function ClassifiedAdsPage() {
       const { data, error } = await query;
 
       if (error) throw error;
-      setAds(data || []);
+
+      if (data && data.length > 0) {
+        const userIds = [...new Set(data.map((ad: any) => ad.user_id))];
+
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', userIds);
+
+        if (profilesError) {
+          console.error('Error loading profiles:', profilesError);
+        }
+
+        const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+
+        const adsWithProfiles = data.map((ad: any) => ({
+          ...ad,
+          profiles: profilesMap.get(ad.user_id) || { full_name: 'Utente', avatar_url: null }
+        }));
+
+        setAds(adsWithProfiles);
+      } else {
+        setAds([]);
+      }
     } catch (error) {
       console.error('Error loading ads:', error);
     } finally {

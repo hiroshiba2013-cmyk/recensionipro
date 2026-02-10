@@ -67,14 +67,27 @@ export function ClassifiedAdDetailPage() {
         .from('classified_ads')
         .select(`
           *,
-          profiles!user_id(full_name, avatar_url),
           classified_categories!category_id(name, icon)
         `)
         .eq('id', adId)
         .single();
 
       if (error) throw error;
-      setAd(data);
+
+      if (data) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('id', data.user_id)
+          .single();
+
+        const adWithProfile = {
+          ...data,
+          profiles: profileData || { full_name: 'Utente', avatar_url: null }
+        };
+
+        setAd(adWithProfile);
+      }
     } catch (error) {
       console.error('Error loading ad:', error);
     } finally {

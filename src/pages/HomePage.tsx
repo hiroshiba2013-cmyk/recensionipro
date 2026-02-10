@@ -398,10 +398,7 @@ function AuthenticatedHomePage() {
 
         supabase
           .from('classified_ads')
-          .select(`
-            *,
-            profiles!user_id(full_name)
-          `)
+          .select('*')
           .eq('status', 'active')
           .order('created_at', { ascending: false })
           .limit(6),
@@ -450,7 +447,24 @@ function AuthenticatedHomePage() {
       ]);
 
       if (jobsResult.data) setJobPostings(jobsResult.data);
-      if (adsResult.data) setClassifiedAds(adsResult.data);
+
+      if (adsResult.data && adsResult.data.length > 0) {
+        const userIds = [...new Set(adsResult.data.map((ad: any) => ad.user_id))];
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', userIds);
+
+        const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+        const adsWithProfiles = adsResult.data.map((ad: any) => ({
+          ...ad,
+          profiles: profilesMap.get(ad.user_id) || { full_name: 'Utente', avatar_url: null }
+        }));
+        setClassifiedAds(adsWithProfiles);
+      } else {
+        setClassifiedAds([]);
+      }
+
       if (productsResult.data) setProducts(productsResult.data);
 
       if (businessesResult.data && businessesResult.data.length > 0) {
