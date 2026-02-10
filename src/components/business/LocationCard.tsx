@@ -91,9 +91,14 @@ export function LocationCard({ location }: LocationCardProps) {
     // Altrimenti naviga verso la pagina della location non reclamata
     const targetId = location.business_id || location.id;
 
+    // Se c'è un business_id (attività reclamata), passa anche il location_id per mostrare la sede specifica
+    const url = location.business_id
+      ? `/business/${targetId}?locationId=${location.id}`
+      : `/business/${targetId}`;
+
     sessionStorage.setItem('searchReturnUrl', window.location.pathname + window.location.search);
     sessionStorage.setItem('searchScrollPosition', window.scrollY.toString());
-    window.history.pushState({}, '', `/business/${targetId}`);
+    window.history.pushState({}, '', url);
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
 

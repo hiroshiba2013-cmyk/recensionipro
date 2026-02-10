@@ -30,13 +30,20 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
   const [loading, setLoading] = useState(true);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [claimingBusiness, setClaimingBusiness] = useState(false);
+  const [filterLocationId, setFilterLocationId] = useState<string | null>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    loadBusinessData();
+
+    // Leggi il parametro locationId dall'URL
+    const params = new URLSearchParams(window.location.search);
+    const locationId = params.get('locationId');
+    setFilterLocationId(locationId);
+
+    loadBusinessData(locationId);
   }, [businessId]);
 
-  const loadBusinessData = async () => {
+  const loadBusinessData = async (locationId: string | null = null) => {
     setLoading(true);
     try {
       let businessData: any = null;
@@ -62,11 +69,18 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
         };
         businessType = 'registered';
         if (registeredData.locations) {
-          setLocations(registeredData.locations.map((loc: any) => ({
+          let allLocations = registeredData.locations.map((loc: any) => ({
             ...loc,
             address: `${loc.street}${loc.street_number ? ', ' + loc.street_number : ''}`,
             name: loc.internal_name,
-          })));
+          }));
+
+          // Filtra per location specifica se locationId è presente
+          if (locationId) {
+            allLocations = allLocations.filter((loc: any) => loc.id === locationId);
+          }
+
+          setLocations(allLocations);
         }
       }
 
@@ -155,7 +169,14 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           };
           businessType = 'registered';
           if (oldBusinessData.locations) {
-            setLocations(oldBusinessData.locations);
+            let allLocations = oldBusinessData.locations;
+
+            // Filtra per location specifica se locationId è presente
+            if (locationId) {
+              allLocations = allLocations.filter((loc: any) => loc.id === locationId);
+            }
+
+            setLocations(allLocations);
           }
         }
       }
@@ -584,6 +605,33 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           <div className="p-8">
             <div className="grid md:grid-cols-3 gap-8">
               <div className="md:col-span-2 space-y-8">
+                {filterLocationId && (
+                  <div className="bg-blue-50 border-l-4 border-blue-600 rounded-r-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <MapPin className="w-5 h-5 text-blue-600" />
+                        <div>
+                          <p className="text-sm font-semibold text-blue-900">
+                            Stai visualizzando una sede specifica
+                          </p>
+                          <p className="text-xs text-blue-700">
+                            {locations.length > 0 && locations[0].city ? `Sede di ${locations[0].city}` : 'Sede selezionata dalla ricerca'}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          window.history.pushState({}, '', `/business/${businessId}`);
+                          window.location.reload();
+                        }}
+                        className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                      >
+                        Vedi tutte le sedi
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {business.description && (
                   <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border-l-4 border-blue-600">
                     <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
