@@ -77,8 +77,8 @@ export function ClassifiedAdsPage() {
         .from('classified_ads')
         .select(`
           *,
-          profiles:user_id(full_name, avatar_url),
-          classified_categories:category_id(name, icon)
+          profiles!user_id(full_name, avatar_url),
+          classified_categories!category_id(name, icon)
         `)
         .eq('status', 'active')
         .order('created_at', { ascending: false });

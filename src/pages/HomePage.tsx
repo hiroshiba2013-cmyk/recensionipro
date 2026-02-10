@@ -400,7 +400,7 @@ function AuthenticatedHomePage() {
           .from('classified_ads')
           .select(`
             *,
-            profiles:user_id(full_name)
+            profiles!user_id(full_name)
           `)
           .eq('status', 'active')
           .order('created_at', { ascending: false })

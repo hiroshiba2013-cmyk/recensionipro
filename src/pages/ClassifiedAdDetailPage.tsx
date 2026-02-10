@@ -67,8 +67,8 @@ export function ClassifiedAdDetailPage() {
         .from('classified_ads')
         .select(`
           *,
-          profiles:user_id(full_name, avatar_url),
-          classified_categories:category_id(name, icon)
+          profiles!user_id(full_name, avatar_url),
+          classified_categories!category_id(name, icon)
         `)
         .eq('id', adId)
         .single();
