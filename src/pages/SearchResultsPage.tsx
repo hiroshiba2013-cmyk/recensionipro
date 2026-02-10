@@ -297,10 +297,14 @@ export function SearchResultsPage() {
 
       console.log('=== FINE RICERCA ===');
       console.log('Mostro', locationsWithRatings.length, 'risultati');
+      console.log('Primi 3 risultati:', locationsWithRatings.slice(0, 3));
       setLocations(locationsWithRatings);
+      console.log('State aggiornato con', locationsWithRatings.length, 'locations');
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('ERRORE durante la ricerca:', error);
+      setLocations([]);
     } finally {
+      console.log('Impostazione loading = false');
       setLoading(false);
     }
   };
@@ -370,7 +374,7 @@ export function SearchResultsPage() {
           </p>
         </div>
 
-        {hasSearched && (
+        {hasSearched && !loading && (
           <>
             <div className="mb-4 flex items-center justify-between bg-white rounded-lg shadow-sm p-6">
               <div>
@@ -400,8 +404,10 @@ export function SearchResultsPage() {
         )}
 
         {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="text-center py-12 bg-white rounded-lg shadow-sm">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+            <p className="text-gray-700 text-lg font-medium">Ricerca in corso...</p>
+            <p className="text-gray-500 text-sm mt-2">Stiamo cercando le migliori attività per te</p>
           </div>
         ) : !hasSearched ? (
           <div className="text-center py-12 bg-white rounded-lg">
@@ -413,14 +419,17 @@ export function SearchResultsPage() {
             <p className="text-gray-500 mt-2">Prova a modificare i filtri di ricerca</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {locations.map((location) => (
-              <LocationCard
-                key={location.id}
-                location={location}
-              />
-            ))}
-          </div>
+          <>
+            {console.log('Renderizzando', locations.length, 'location cards')}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {locations.map((location) => (
+                <LocationCard
+                  key={location.id}
+                  location={location}
+                />
+              ))}
+            </div>
+          </>
         )}
 
         {hasSearched && locations.length > 0 && (
