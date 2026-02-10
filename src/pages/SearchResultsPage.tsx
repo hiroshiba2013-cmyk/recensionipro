@@ -107,6 +107,7 @@ export function SearchResultsPage() {
           search_province: provinceCode || null,
           search_region: filters.region || null,
           search_category_id: filters.category || null,
+          verified_only: filters.verifiedOnly || false,
           limit_count: QUERY_LIMIT
         });
 
@@ -131,15 +132,15 @@ export function SearchResultsPage() {
         website: business.website || null,
         business_hours: null,
         avatar_url: null,
-        is_claimed: business.business_type === 'registered',
-        verification_badge: business.business_type === 'registered',
+        is_claimed: business.business_type === 'registered' || business.business_type === 'claimed_old',
+        verification_badge: business.is_verified || false,
         description: business.description || null,
         business_type: business.business_type,
         business: {
           id: business.id,
           name: business.name,
           category_id: business.category_id,
-          verified: business.business_type === 'registered'
+          verified: business.is_verified || false
         },
         avg_rating: 0,
         review_count: 0
