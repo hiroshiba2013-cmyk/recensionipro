@@ -3,10 +3,24 @@ import { Star, X, Upload, Image as ImageIcon, Award, MapPin } from 'lucide-react
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
+interface ReviewToEdit {
+  id: string;
+  rating: number;
+  price_rating?: number | null;
+  service_rating?: number | null;
+  quality_rating?: number | null;
+  overall_rating?: number;
+  title: string;
+  content: string;
+  business_location_id?: string | null;
+  proof_image_url?: string | null;
+}
+
 interface ReviewFormProps {
   businessId: string;
   businessName?: string;
   businessLocationId?: string;
+  reviewToEdit?: ReviewToEdit;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -59,22 +73,24 @@ function normalizeProvince(province: string): string {
   return provinceMap[normalized] || 'RM';
 }
 
-export function ReviewForm({ businessId, businessName, businessLocationId, onClose, onSuccess }: ReviewFormProps) {
+export function ReviewForm({ businessId, businessName, businessLocationId, reviewToEdit, onClose, onSuccess }: ReviewFormProps) {
   const { profile, activeProfile } = useAuth();
-  const [priceRating, setPriceRating] = useState(0);
-  const [serviceRating, setServiceRating] = useState(0);
-  const [qualityRating, setQualityRating] = useState(0);
-  const [overallRating, setOverallRating] = useState(0);
+  const isEditMode = !!reviewToEdit;
+
+  const [priceRating, setPriceRating] = useState(reviewToEdit?.price_rating || 0);
+  const [serviceRating, setServiceRating] = useState(reviewToEdit?.service_rating || 0);
+  const [qualityRating, setQualityRating] = useState(reviewToEdit?.quality_rating || 0);
+  const [overallRating, setOverallRating] = useState(reviewToEdit?.overall_rating || reviewToEdit?.rating || 0);
   const [hoveredPriceRating, setHoveredPriceRating] = useState(0);
   const [hoveredServiceRating, setHoveredServiceRating] = useState(0);
   const [hoveredQualityRating, setHoveredQualityRating] = useState(0);
   const [hoveredOverallRating, setHoveredOverallRating] = useState(0);
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [selectedLocationId, setSelectedLocationId] = useState<string>(businessLocationId || '');
+  const [title, setTitle] = useState(reviewToEdit?.title || '');
+  const [content, setContent] = useState(reviewToEdit?.content || '');
+  const [selectedLocationId, setSelectedLocationId] = useState<string>(reviewToEdit?.business_location_id || businessLocationId || '');
   const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [proofImage, setProofImage] = useState<File | null>(null);
-  const [proofImagePreview, setProofImagePreview] = useState<string | null>(null);
+  const [proofImagePreview, setProofImagePreview] = useState<string | null>(reviewToEdit?.proof_image_url || null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -215,7 +231,65 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
     setError('');
 
     try {
-      // Determina il tipo di business
+      // Se è in modalità edit, aggiorna la recensione esistente
+      if (isEditMode && reviewToEdit) {
+        let proofImageUrl = reviewToEdit.proof_image_url;
+
+        // Upload dell'immagine di prova se presente e nuova
+        if (proofImage) {
+          setUploadingImage(true);
+          const fileExt = proofImage.name.split('.').pop();
+          const fileName = `${profile.id}-${Date.now()}.${fileExt}`;
+          const filePath = `review-proofs/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('review-proofs')
+            .upload(filePath, proofImage);
+
+          if (uploadError) {
+            console.error('Error uploading proof:', uploadError);
+            setError('Errore durante il caricamento dell\'immagine');
+            setLoading(false);
+            setUploadingImage(false);
+            return;
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('review-proofs')
+            .getPublicUrl(filePath);
+
+          proofImageUrl = publicUrl;
+          setUploadingImage(false);
+        }
+
+        const avgRating = hasDetailedRatings
+          ? Math.round((priceRating + serviceRating + qualityRating + overallRating) / 4)
+          : overallRating;
+
+        const { error: updateError } = await supabase
+          .from('reviews')
+          .update({
+            rating: avgRating,
+            price_rating: priceRating || null,
+            service_rating: serviceRating || null,
+            quality_rating: qualityRating || null,
+            overall_rating: overallRating,
+            title: title.trim(),
+            content: content.trim(),
+            proof_image_url: proofImageUrl,
+            business_location_id: selectedLocationId || null,
+          })
+          .eq('id', reviewToEdit.id);
+
+        if (updateError) throw updateError;
+
+        alert('Recensione aggiornata con successo!');
+        onSuccess();
+        onClose();
+        return;
+      }
+
+      // Modalità creazione: determina il tipo di business
       let businessType: 'imported' | 'user_added' | 'registered' | null = null;
 
       // Cerca in businesses (attività rivendicate)
@@ -372,7 +446,7 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
       <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Scrivi una recensione</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{isEditMode ? 'Modifica recensione' : 'Scrivi una recensione'}</h2>
             <p className="text-gray-600 mt-1">{businessName}</p>
           </div>
           <button
@@ -390,19 +464,21 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
             </div>
           )}
 
-          <div className="mb-6">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Award className="w-5 h-5 text-blue-600" />
-                <p className="font-semibold text-blue-900">Punti Stimati: {estimatedPoints} punti</p>
+          {!isEditMode && (
+            <div className="mb-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Award className="w-5 h-5 text-blue-600" />
+                  <p className="font-semibold text-blue-900">Punti Stimati: {estimatedPoints} punti</p>
+                </div>
+                <p className="text-sm text-blue-700">
+                  {proofImage
+                    ? "Recensione con prova d'acquisto: 50 punti dopo l'approvazione"
+                    : "Recensione base: 25 punti (pubblicata immediatamente)"}
+                </p>
               </div>
-              <p className="text-sm text-blue-700">
-                {proofImage
-                  ? "Recensione con prova d'acquisto: 50 punti dopo l'approvazione"
-                  : "Recensione base: 25 punti (pubblicata immediatamente)"}
-              </p>
             </div>
-          </div>
+          )}
 
           {businessLocations.length > 0 && (
             <div className="mb-6">
@@ -663,7 +739,14 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
               disabled={loading || uploadingImage || overallRating === 0}
               className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {uploadingImage ? 'Caricamento immagine...' : loading ? 'Invio in corso...' : proofImage ? 'Invia per approvazione' : 'Pubblica recensione'}
+              {uploadingImage
+                ? 'Caricamento immagine...'
+                : loading
+                  ? (isEditMode ? 'Salvataggio...' : 'Invio in corso...')
+                  : isEditMode
+                    ? 'Salva Modifiche'
+                    : (proofImage ? 'Invia per approvazione' : 'Pubblica recensione')
+              }
             </button>
             <button
               type="button"

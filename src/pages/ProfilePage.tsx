@@ -16,6 +16,7 @@ import { EditBusinessLocationsForm } from '../components/business/EditBusinessLo
 import { SubscriptionManagement } from '../components/subscription/SubscriptionManagement';
 import { DeleteAccountButton } from '../components/profile/DeleteAccountButton';
 import { PinSetup } from '../components/profile/PinSetup';
+import { ReviewForm } from '../components/reviews/ReviewForm';
 
 interface Profile {
   id: string;
@@ -40,10 +41,16 @@ interface Profile {
 interface Review {
   id: string;
   rating: number;
+  price_rating?: number | null;
+  service_rating?: number | null;
+  quality_rating?: number | null;
+  overall_rating?: number;
   title: string;
   content: string;
   created_at: string;
-  business_id: string;
+  business_id?: string | null;
+  imported_business_id?: string | null;
+  user_added_business_id?: string | null;
   family_member_id?: string;
   business_location_id?: string | null;
   review_status: 'pending' | 'approved' | 'rejected';
@@ -188,11 +195,6 @@ export function ProfilePage() {
     locationId: '',
   });
   const [editingReview, setEditingReview] = useState<Review | null>(null);
-  const [editForm, setEditForm] = useState({
-    title: '',
-    content: '',
-    rating: 5,
-  });
 
   useEffect(() => {
     if (user) {
@@ -662,36 +664,11 @@ export function ProfilePage() {
 
   const handleEditReview = (review: Review) => {
     setEditingReview(review);
-    setEditForm({
-      title: review.title,
-      content: review.content,
-      rating: review.rating,
-    });
   };
 
-  const handleUpdateReview = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingReview) return;
-
-    try {
-      const { error } = await supabase
-        .from('reviews')
-        .update({
-          title: editForm.title,
-          content: editForm.content,
-          rating: editForm.rating,
-        })
-        .eq('id', editingReview.id);
-
-      if (error) throw error;
-
-      setEditingReview(null);
-      alert('Recensione aggiornata con successo!');
-      loadProfileData();
-    } catch (error) {
-      console.error('Error updating review:', error);
-      alert('Errore durante l\'aggiornamento della recensione');
-    }
+  const handleReviewUpdateSuccess = () => {
+    setEditingReview(null);
+    loadProfileData();
   };
 
   const handleDeleteReview = async (reviewId: string) => {
@@ -1087,94 +1064,25 @@ export function ProfilePage() {
               )}
 
               {editingReview && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                  <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-2xl font-bold text-gray-900">Modifica Recensione</h3>
-                        <button
-                          onClick={() => setEditingReview(null)}
-                          className="text-gray-500 hover:text-gray-700"
-                        >
-                          <X className="w-6 h-6" />
-                        </button>
-                      </div>
-
-                      <form onSubmit={handleUpdateReview} className="space-y-6">
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Titolo
-                          </label>
-                          <input
-                            type="text"
-                            value={editForm.title}
-                            onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                            required
-                            maxLength={100}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Valutazione
-                          </label>
-                          <div className="flex gap-2">
-                            {[1, 2, 3, 4, 5].map((rating) => (
-                              <button
-                                key={rating}
-                                type="button"
-                                onClick={() => setEditForm({ ...editForm, rating })}
-                                className="focus:outline-none"
-                              >
-                                <Star
-                                  className={`w-8 h-8 ${
-                                    rating <= editForm.rating
-                                      ? 'fill-yellow-400 text-yellow-400'
-                                      : 'text-gray-300'
-                                  }`}
-                                />
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Recensione
-                          </label>
-                          <textarea
-                            value={editForm.content}
-                            onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
-                            required
-                            rows={6}
-                            maxLength={1000}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent resize-none"
-                          />
-                          <p className="text-xs text-gray-500 mt-1">
-                            {editForm.content.length}/1000 caratteri
-                          </p>
-                        </div>
-
-                        <div className="flex gap-3">
-                          <button
-                            type="submit"
-                            className="flex-1 bg-yellow-600 text-white py-3 rounded-lg hover:bg-yellow-700 transition-colors font-semibold"
-                          >
-                            Salva Modifiche
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEditingReview(null)}
-                            className="px-6 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
-                          >
-                            Annulla
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
+                <ReviewForm
+                  businessId={editingReview.business_id || editingReview.imported_business_id || editingReview.user_added_business_id || ''}
+                  businessName={editingReview.business?.name}
+                  businessLocationId={editingReview.business_location_id || undefined}
+                  reviewToEdit={{
+                    id: editingReview.id,
+                    rating: editingReview.rating,
+                    price_rating: editingReview.price_rating,
+                    service_rating: editingReview.service_rating,
+                    quality_rating: editingReview.quality_rating,
+                    overall_rating: editingReview.overall_rating,
+                    title: editingReview.title,
+                    content: editingReview.content,
+                    business_location_id: editingReview.business_location_id,
+                    proof_image_url: editingReview.proof_image_url,
+                  }}
+                  onClose={() => setEditingReview(null)}
+                  onSuccess={handleReviewUpdateSuccess}
+                />
               )}
 
               {reviews.length === 0 ? (
