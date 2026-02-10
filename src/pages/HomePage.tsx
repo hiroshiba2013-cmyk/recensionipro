@@ -335,7 +335,6 @@ function AuthenticatedHomePage() {
   const navigate = useNavigate();
   const [jobPostings, setJobPostings] = useState<any[]>([]);
   const [classifiedAds, setClassifiedAds] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
   const [topBusinesses, setTopBusinesses] = useState<any[]>([]);
   const [userType, setUserType] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -373,7 +372,7 @@ function AuthenticatedHomePage() {
         .slice(0, 8)
         .map(([id]) => id);
 
-      const [jobsResult, adsResult, productsResult, businessesResult] = await Promise.all([
+      const [jobsResult, adsResult, businessesResult] = await Promise.all([
         (() => {
           let query = supabase
             .from('job_postings')
@@ -402,25 +401,6 @@ function AuthenticatedHomePage() {
           .eq('status', 'active')
           .order('created_at', { ascending: false })
           .limit(6),
-
-        (() => {
-          let query = supabase
-            .from('products')
-            .select(`
-              *,
-              business:business_id(name),
-              business_location:location_id(city, province)
-            `)
-            .eq('is_available', true);
-
-          if (selectedBusinessLocationId) {
-            query = query.eq('location_id', selectedBusinessLocationId);
-          }
-
-          return query
-            .order('created_at', { ascending: false })
-            .limit(6);
-        })(),
 
         supabase
           .from('imported_businesses')
@@ -454,8 +434,6 @@ function AuthenticatedHomePage() {
       } else {
         setClassifiedAds([]);
       }
-
-      if (productsResult.data) setProducts(productsResult.data);
 
       if (businessesResult.data && businessesResult.data.length > 0) {
         const normalizedBusinesses = businessesResult.data.map((business: any) => ({
@@ -509,13 +487,6 @@ function AuthenticatedHomePage() {
       <div className="bg-white shadow-sm border-b border-gray-200 sticky top-16 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center gap-2 md:gap-8 py-3">
-            <a
-              href="/products"
-              className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-blue-50 transition-all group"
-            >
-              <Package className="w-7 h-7 md:w-8 md:h-8 text-blue-600 group-hover:scale-110 transition-transform" />
-              <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-blue-600">Prodotti</span>
-            </a>
             {userType !== 'business' && (
               <a
                 href="/classified-ads"
@@ -581,19 +552,6 @@ function AuthenticatedHomePage() {
             </div>
             <p className="text-blue-100 text-sm leading-relaxed">
               Leggi e scrivi recensioni verificate sulle attività locali. Condividi la tua esperienza e guadagna punti per ogni recensione approvata.
-            </p>
-          </div>
-
-          <div
-            onClick={() => navigate('/products')}
-            className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all cursor-pointer"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <Package className="w-8 h-8" />
-              <h3 className="text-2xl font-bold">Prodotti</h3>
-            </div>
-            <p className="text-purple-100 text-sm leading-relaxed">
-              Scopri i prodotti delle attività locali. Sfoglia cataloghi, confronta prezzi e trova quello che cerchi vicino a te.
             </p>
           </div>
 
@@ -705,30 +663,6 @@ function AuthenticatedHomePage() {
                 <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
                   {classifiedAds.map((ad) => (
                     <ClassifiedAdCard key={ad.id} ad={ad} onClick={() => navigate(`/classified-ads/${ad.id}`)} />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {products.length > 0 && (
-              <section className="mb-12">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-purple-100 p-3 rounded-lg">
-                      <Package className="w-6 h-6 text-purple-600" />
-                    </div>
-                    <h2 className="text-3xl font-bold text-gray-900">Nuovi Prodotti</h2>
-                  </div>
-                  <button
-                    onClick={() => navigate('/products')}
-                    className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold"
-                  >
-                    Vedi tutti <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
-                  {products.map((product) => (
-                    <ProductCard key={product.id} product={product} onClick={() => navigate(`/products/${product.id}`)} />
                   ))}
                 </div>
               </section>
@@ -854,32 +788,6 @@ function ClassifiedAdCard({ ad, onClick }: { ad: any; onClick: () => void }) {
             {ad.ad_type === 'gift' ? 'Regalo' : ad.ad_type === 'exchange' ? 'Scambio' : 'Vendita'}
           </p>
         )}
-      </div>
-    </div>
-  );
-}
-
-function ProductCard({ product, onClick }: { product: any; onClick: () => void }) {
-  return (
-    <div
-      onClick={onClick}
-      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden border border-gray-200"
-    >
-      {product.images?.[0] ? (
-        <img
-          src={product.images[0]}
-          alt={product.name}
-          className="w-full h-32 object-cover"
-        />
-      ) : (
-        <div className="w-full h-32 bg-gray-200 flex items-center justify-center">
-          <Package className="w-8 h-8 text-gray-400" />
-        </div>
-      )}
-      <div className="p-3">
-        <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 mb-2">{product.name}</h3>
-        <p className="text-green-600 font-bold">€{product.price.toFixed(2)}</p>
-        <p className="text-xs text-gray-500 mt-1 line-clamp-1">{product.business?.name}</p>
       </div>
     </div>
   );

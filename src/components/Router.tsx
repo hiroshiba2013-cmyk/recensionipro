@@ -7,8 +7,6 @@ import { ProfilePage } from '../pages/ProfilePage';
 import { LeaderboardPage } from '../pages/LeaderboardPage';
 import { BusinessDetailPage } from '../pages/BusinessDetailPage';
 import { SearchResultsPage } from '../pages/SearchResultsPage';
-import { ProductsPage } from '../pages/ProductsPage';
-import { ProductDetailPage } from '../pages/ProductDetailPage';
 import { ClassifiedAdsPage } from '../pages/ClassifiedAdsPage';
 import { ClassifiedAdDetailPage } from '../pages/ClassifiedAdDetailPage';
 import { MessagesPage } from '../pages/MessagesPage';
@@ -96,25 +94,6 @@ export function Router() {
 
   if (currentPath === '/leaderboard') {
     return <LeaderboardPage />;
-  }
-
-  if (currentPath === '/products') {
-    return (
-      <RouterContext.Provider value={{ params: {} }}>
-        <ProductsPage />
-      </RouterContext.Provider>
-    );
-  }
-
-  if (currentPath.startsWith('/products/')) {
-    const slug = currentPath.split('/')[2];
-    if (slug) {
-      return (
-        <RouterContext.Provider value={{ params: { slug } }}>
-          <ProductDetailPage />
-        </RouterContext.Provider>
-      );
-    }
   }
 
   if (currentPath === '/classified' || currentPath === '/classified-ads') {
