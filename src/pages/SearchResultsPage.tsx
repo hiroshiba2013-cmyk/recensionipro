@@ -98,167 +98,94 @@ export function SearchResultsPage() {
       let allLocations: BusinessLocation[] = [];
       const QUERY_LIMIT = 2000;
 
-      // Query 1: registered_business_locations (attività registrate e verificate)
-      console.log('Query 1: registered_business_locations...');
-      let registeredQuery = supabase
-        .from('registered_business_locations')
-        .select('*')
-        .limit(QUERY_LIMIT);
-
-      if (filters.city) {
-        registeredQuery = registeredQuery.eq('city', filters.city);
-      } else if (filters.province) {
-        const provinceCode = PROVINCE_TO_CODE[filters.province];
-        if (provinceCode) {
-          registeredQuery = registeredQuery.eq('province', provinceCode);
-        }
-      } else if (filters.region) {
-        registeredQuery = registeredQuery.eq('region', filters.region);
-      }
-
-      const registeredResult = await registeredQuery;
-      console.log('  Risultati Q1:', registeredResult.data?.length || 0);
-      if (registeredResult.error) console.error('  Errore Q1:', registeredResult.error);
-
-      if (registeredResult.data) {
-        console.log('  Processando risultati Q1...');
-        const registeredLocations = registeredResult.data.map((loc: any) => ({
-          id: loc.id,
-          business_id: loc.business_id,
-          name: loc.internal_name || 'Sede',
-          address: `${loc.street}${loc.street_number ? ', ' + loc.street_number : ''}`,
-          city: loc.city,
-          province: loc.province,
-          region: loc.region,
-          postal_code: loc.postal_code,
-          phone: loc.phone,
-          email: loc.email,
-          website: loc.website,
-          business_hours: loc.business_hours,
-          avatar_url: null,
-          is_claimed: true,
-          verification_badge: true,
-          description: loc.description,
-          business_type: 'registered' as const,
-          business: undefined
-        }));
-
-        console.log('  Aggiunte Q1:', registeredLocations.length);
-        allLocations.push(...registeredLocations);
-      }
-
-      // Query 2: imported_businesses (da OSM)
-      console.log('Query 2: imported_businesses...');
-      let importedQuery = supabase
-        .from('imported_businesses')
-        .select('*')
+      console.log('Query: business_locations con businesses...');
+      let query = supabase
+        .from('business_locations')
+        .select(`
+          id,
+          business_id,
+          internal_name,
+          address,
+          city,
+          province,
+          region,
+          postal_code,
+          phone,
+          email,
+          website,
+          business_hours,
+          description,
+          avatar_url,
+          is_claimed,
+          verification_badge,
+          services,
+          businesses!inner (
+            id,
+            name,
+            category_id,
+            verified,
+            owner_id
+          )
+        `)
         .limit(QUERY_LIMIT);
 
       if (filters.category) {
-        importedQuery = importedQuery.eq('category_id', filters.category);
+        query = query.eq('businesses.category_id', filters.category);
       }
 
       if (filters.businessName) {
-        importedQuery = importedQuery.ilike('name', `%${filters.businessName}%`);
+        query = query.ilike('businesses.name', `%${filters.businessName}%`);
       }
 
       if (filters.city) {
-        importedQuery = importedQuery.eq('city', filters.city);
+        query = query.eq('city', filters.city.toLowerCase());
       } else if (filters.province) {
         const provinceCode = PROVINCE_TO_CODE[filters.province];
         if (provinceCode) {
-          importedQuery = importedQuery.eq('province', provinceCode);
+          query = query.eq('province', provinceCode);
         }
       } else if (filters.region) {
-        importedQuery = importedQuery.eq('region', filters.region);
+        query = query.eq('region', filters.region);
       }
 
-      const importedResult = await importedQuery;
-      console.log('  Risultati Q2:', importedResult.data?.length || 0);
-      if (importedResult.error) console.error('  Errore Q2:', importedResult.error);
+      const result = await query;
+      console.log('  Risultati:', result.data?.length || 0);
+      if (result.error) console.error('  Errore:', result.error);
 
-      if (importedResult.data) {
-        console.log('  Processando risultati Q2...');
-        const importedLocations: BusinessLocation[] = importedResult.data.map((ib: any) => ({
-          id: ib.id,
-          business_id: ib.id,
-          name: ib.name,
-          address: `${ib.street || ''}${ib.street_number ? ', ' + ib.street_number : ''}`,
-          city: ib.city || '',
-          province: ib.province || '',
-          region: ib.region || '',
-          postal_code: ib.postal_code || null,
-          phone: ib.phone || null,
-          email: ib.email || null,
-          website: ib.website || null,
-          business_hours: ib.business_hours || null,
-          avatar_url: null,
-          is_claimed: false,
-          verification_badge: false,
-          description: ib.description || null,
-          business_type: 'imported' as const,
-          business: undefined
-        }));
+      if (result.data) {
+        console.log('  Processando risultati...');
+        const locations = result.data.map((loc: any) => {
+          const business = Array.isArray(loc.businesses) ? loc.businesses[0] : loc.businesses;
 
-        console.log('  Aggiunte Q2:', importedLocations.length);
-        allLocations.push(...importedLocations);
-      }
+          return {
+            id: loc.id,
+            business_id: loc.business_id,
+            name: loc.internal_name || business?.name || 'Sede',
+            address: loc.address || '',
+            city: loc.city || '',
+            province: loc.province || '',
+            region: loc.region || '',
+            postal_code: loc.postal_code || null,
+            phone: loc.phone || null,
+            email: loc.email || null,
+            website: loc.website || null,
+            business_hours: loc.business_hours || null,
+            avatar_url: loc.avatar_url || null,
+            is_claimed: loc.is_claimed || false,
+            verification_badge: !!loc.verification_badge,
+            description: loc.description || null,
+            business_type: (loc.is_claimed ? 'registered' : (business?.verified ? 'imported' : 'user_added')) as const,
+            business: business ? {
+              id: business.id,
+              name: business.name,
+              category_id: business.category_id,
+              verified: business.verified
+            } : undefined
+          };
+        });
 
-      // Query 3: user_added_businesses (aggiunte da utenti)
-      console.log('Query 3: user_added_businesses...');
-      let userAddedQuery = supabase
-        .from('user_added_businesses')
-        .select('*')
-        .limit(QUERY_LIMIT);
-
-      if (filters.category) {
-        userAddedQuery = userAddedQuery.eq('category_id', filters.category);
-      }
-
-      if (filters.businessName) {
-        userAddedQuery = userAddedQuery.ilike('name', `%${filters.businessName}%`);
-      }
-
-      if (filters.city) {
-        userAddedQuery = userAddedQuery.eq('city', filters.city);
-      } else if (filters.province) {
-        const provinceCode = PROVINCE_TO_CODE[filters.province];
-        if (provinceCode) {
-          userAddedQuery = userAddedQuery.eq('province', provinceCode);
-        }
-      } else if (filters.region) {
-        userAddedQuery = userAddedQuery.eq('region', filters.region);
-      }
-
-      const userAddedResult = await userAddedQuery;
-      console.log('  Risultati Q3:', userAddedResult.data?.length || 0);
-      if (userAddedResult.error) console.error('  Errore Q3:', userAddedResult.error);
-
-      if (userAddedResult.data) {
-        console.log('  Processando risultati Q3...');
-        const userAddedLocations: BusinessLocation[] = userAddedResult.data.map((ub: any) => ({
-          id: ub.id,
-          business_id: ub.id,
-          name: ub.name,
-          address: `${ub.street || ''}${ub.street_number ? ', ' + ub.street_number : ''}`,
-          city: ub.city || '',
-          province: ub.province || '',
-          region: ub.region || '',
-          postal_code: ub.postal_code || null,
-          phone: ub.phone || null,
-          email: ub.email || null,
-          website: ub.website || null,
-          business_hours: null,
-          avatar_url: null,
-          is_claimed: false,
-          verification_badge: false,
-          description: ub.description || null,
-          business_type: 'user_added' as const,
-          business: undefined
-        }));
-
-        console.log('  Aggiunte Q3:', userAddedLocations.length);
-        allLocations.push(...userAddedLocations);
+        console.log('  Aggiunte:', locations.length);
+        allLocations.push(...locations);
       }
 
       console.log('TOTALE:', allLocations.length, 'locations');
