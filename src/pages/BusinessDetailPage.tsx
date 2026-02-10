@@ -688,7 +688,8 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                               <p className="text-gray-700">{displayBusinessHours}</p>
                             ) : (
                               <div className="grid gap-2">
-                                {Object.entries(displayBusinessHours as Record<string, any>).map(([day, hours]: [string, any]) => {
+                                {(() => {
+                                  const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
                                   const dayNames: Record<string, string> = {
                                     monday: 'Lunedì',
                                     tuesday: 'Martedì',
@@ -698,33 +699,40 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                                     saturday: 'Sabato',
                                     sunday: 'Domenica'
                                   };
-                                  const today = new Date().toLocaleDateString('it-IT', { weekday: 'long' }).toLowerCase();
-                                  const isToday = dayNames[day]?.toLowerCase() === today;
-                                  const isClosed = hours.closed === true || hours.closed === 'true';
+                                  const entries = Object.entries(displayBusinessHours as Record<string, any>);
+                                  const sortedEntries = entries.sort(([dayA], [dayB]) => {
+                                    return dayOrder.indexOf(dayA) - dayOrder.indexOf(dayB);
+                                  });
 
-                                  return (
-                                    <div
-                                      key={day}
-                                      className={`flex justify-between items-center px-4 py-3 rounded-lg ${
-                                        isToday ? 'bg-blue-50 border-2 border-blue-500' : 'bg-gray-50'
-                                      }`}
-                                    >
-                                      <span className={`font-medium ${isToday ? 'text-blue-900' : 'text-gray-900'}`}>
-                                        {dayNames[day] || day}
-                                        {isToday && <span className="ml-2 text-xs bg-blue-600 text-white px-2 py-1 rounded-full">Oggi</span>}
-                                      </span>
-                                      <span className={`text-sm font-medium ${
-                                        isClosed
-                                          ? 'text-red-600'
-                                          : isToday
-                                            ? 'text-green-700'
-                                            : 'text-gray-700'
-                                      }`}>
-                                        {isClosed ? 'Chiuso' : `${hours.open || ''} - ${hours.close || ''}`}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
+                                  return sortedEntries.map(([day, hours]: [string, any]) => {
+                                    const today = new Date().toLocaleDateString('it-IT', { weekday: 'long' }).toLowerCase();
+                                    const isToday = dayNames[day]?.toLowerCase() === today;
+                                    const isClosed = hours.closed === true || hours.closed === 'true';
+
+                                    return (
+                                      <div
+                                        key={day}
+                                        className={`flex justify-between items-center px-4 py-3 rounded-lg ${
+                                          isToday ? 'bg-blue-50 border-2 border-blue-500' : 'bg-gray-50'
+                                        }`}
+                                      >
+                                        <span className={`font-medium ${isToday ? 'text-blue-900' : 'text-gray-900'}`}>
+                                          {dayNames[day] || day}
+                                          {isToday && <span className="ml-2 text-xs bg-blue-600 text-white px-2 py-1 rounded-full">Oggi</span>}
+                                        </span>
+                                        <span className={`text-sm font-medium ${
+                                          isClosed
+                                            ? 'text-red-600'
+                                            : isToday
+                                              ? 'text-green-700'
+                                              : 'text-gray-700'
+                                        }`}>
+                                          {isClosed ? 'Chiuso' : `${hours.open || ''} - ${hours.close || ''}`}
+                                        </span>
+                                      </div>
+                                    );
+                                  });
+                                })()}
                               </div>
                             )}
                           </div>
@@ -801,7 +809,8 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                                   <p className="text-gray-700">{location.business_hours}</p>
                                 ) : (
                                   <div className="grid gap-2">
-                                    {Object.entries(location.business_hours as Record<string, any>).map(([day, hours]: [string, any]) => {
+                                    {(() => {
+                                      const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
                                       const dayNames: Record<string, string> = {
                                         monday: 'Lunedì',
                                         tuesday: 'Martedì',
@@ -811,33 +820,40 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                                         saturday: 'Sabato',
                                         sunday: 'Domenica'
                                       };
-                                      const today = new Date().toLocaleDateString('it-IT', { weekday: 'long' }).toLowerCase();
-                                      const isToday = dayNames[day]?.toLowerCase() === today;
-                                      const isClosed = hours.closed === true || hours.closed === 'true';
+                                      const entries = Object.entries(location.business_hours as Record<string, any>);
+                                      const sortedEntries = entries.sort(([dayA], [dayB]) => {
+                                        return dayOrder.indexOf(dayA) - dayOrder.indexOf(dayB);
+                                      });
 
-                                      return (
-                                        <div
-                                          key={day}
-                                          className={`flex justify-between items-center px-3 py-2 rounded-lg ${
-                                            isToday ? 'bg-blue-50 border-2 border-blue-500' : 'bg-gray-50'
-                                          }`}
-                                        >
-                                          <span className={`text-sm font-medium ${isToday ? 'text-blue-900' : 'text-gray-900'}`}>
-                                            {dayNames[day] || day}
-                                            {isToday && <span className="ml-2 text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">Oggi</span>}
-                                          </span>
-                                          <span className={`text-sm font-medium ${
-                                            isClosed
-                                              ? 'text-red-600'
-                                              : isToday
-                                                ? 'text-green-700'
-                                                : 'text-gray-700'
-                                          }`}>
-                                            {isClosed ? 'Chiuso' : `${hours.open || ''} - ${hours.close || ''}`}
-                                          </span>
-                                        </div>
-                                      );
-                                    })}
+                                      return sortedEntries.map(([day, hours]: [string, any]) => {
+                                        const today = new Date().toLocaleDateString('it-IT', { weekday: 'long' }).toLowerCase();
+                                        const isToday = dayNames[day]?.toLowerCase() === today;
+                                        const isClosed = hours.closed === true || hours.closed === 'true';
+
+                                        return (
+                                          <div
+                                            key={day}
+                                            className={`flex justify-between items-center px-3 py-2 rounded-lg ${
+                                              isToday ? 'bg-blue-50 border-2 border-blue-500' : 'bg-gray-50'
+                                            }`}
+                                          >
+                                            <span className={`text-sm font-medium ${isToday ? 'text-blue-900' : 'text-gray-900'}`}>
+                                              {dayNames[day] || day}
+                                              {isToday && <span className="ml-2 text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">Oggi</span>}
+                                            </span>
+                                            <span className={`text-sm font-medium ${
+                                              isClosed
+                                                ? 'text-red-600'
+                                                : isToday
+                                                  ? 'text-green-700'
+                                                  : 'text-gray-700'
+                                            }`}>
+                                              {isClosed ? 'Chiuso' : `${hours.open || ''} - ${hours.close || ''}`}
+                                            </span>
+                                          </div>
+                                        );
+                                      });
+                                    })()}
                                   </div>
                                 )}
                               </div>
