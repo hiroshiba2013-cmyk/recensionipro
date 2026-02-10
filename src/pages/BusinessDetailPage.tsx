@@ -49,30 +49,29 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
       let businessData: any = null;
       let businessType: 'imported' | 'user_added' | 'registered' | null = null;
 
-      // Cerca in registered_businesses
-      const { data: registeredData } = await supabase
-        .from('registered_businesses')
+      // Cerca in businesses (attività rivendicate)
+      const { data: claimedData } = await supabase
+        .from('businesses')
         .select(`
           *,
           category:business_categories(*),
-          locations:registered_business_locations(*)
+          locations:business_locations(*)
         `)
         .eq('id', businessId)
         .maybeSingle();
 
-      if (registeredData) {
+      if (claimedData) {
         businessData = {
-          ...registeredData,
+          ...claimedData,
           is_claimed: true,
-          owner_id: registeredData.owner_id,
-          verified: registeredData.verification_badge === 'verified',
+          owner_id: claimedData.owner_id,
+          verified: claimedData.verification_badge === 'verified',
         };
         businessType = 'registered';
-        if (registeredData.locations) {
-          let allLocations = registeredData.locations.map((loc: any) => ({
+        if (claimedData.locations) {
+          let allLocations = claimedData.locations.map((loc: any) => ({
             ...loc,
-            address: `${loc.street}${loc.street_number ? ', ' + loc.street_number : ''}`,
-            name: loc.internal_name,
+            name: loc.internal_name || loc.name,
           }));
 
           // Filtra per location specifica se locationId è presente

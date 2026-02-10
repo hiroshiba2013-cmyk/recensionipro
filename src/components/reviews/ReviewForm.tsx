@@ -93,22 +93,31 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
   }, [businessLocationId]);
 
   const loadBusinessLocations = async () => {
-    // Cerca in registered_business_locations
-    const { data: locationsData } = await supabase
-      .from('registered_business_locations')
-      .select('id, internal_name, street, street_number, city, province')
-      .eq('business_id', businessId)
-      .order('created_at', { ascending: true });
+    // Prima controlla se è un business rivendicato (businesses + business_locations)
+    const { data: businessData } = await supabase
+      .from('businesses')
+      .select('id, is_claimed')
+      .eq('id', businessId)
+      .maybeSingle();
 
-    if (locationsData && locationsData.length > 0) {
-      setBusinessLocations(locationsData.map(loc => ({
-        id: loc.id,
-        name: loc.internal_name,
-        internal_name: loc.internal_name,
-        address: `${loc.street}${loc.street_number ? ', ' + loc.street_number : ''}`,
-        city: loc.city,
-        province: loc.province,
-      })));
+    if (businessData && businessData.is_claimed) {
+      // È un business rivendicato, cerca le sue location
+      const { data: locationsData } = await supabase
+        .from('business_locations')
+        .select('id, internal_name, name, address, street_number, city, province')
+        .eq('business_id', businessId)
+        .order('created_at', { ascending: true });
+
+      if (locationsData && locationsData.length > 0) {
+        setBusinessLocations(locationsData.map(loc => ({
+          id: loc.id,
+          name: loc.internal_name || loc.name,
+          internal_name: loc.internal_name,
+          address: loc.address,
+          city: loc.city,
+          province: loc.province,
+        })));
+      }
     } else {
       // Controlla se è un imported_business
       const { data: importedBusiness } = await supabase
@@ -126,7 +135,6 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
           city: importedBusiness.city,
           province: importedBusiness.province,
         }]);
-        // Non impostiamo selectedLocationId perché imported_businesses non sono in business_locations
       } else {
         // Controlla se è un user_added_business
         const { data: userAddedBusiness } = await supabase
@@ -144,7 +152,6 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
             city: userAddedBusiness.city,
             province: userAddedBusiness.province,
           }]);
-          // Non impostiamo selectedLocationId perché user_added_businesses non sono in business_locations
         }
       }
     }
@@ -211,14 +218,14 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
       // Determina il tipo di business
       let businessType: 'imported' | 'user_added' | 'registered' | null = null;
 
-      // Cerca in registered_businesses
-      const { data: registeredData } = await supabase
-        .from('registered_businesses')
+      // Cerca in businesses (attività rivendicate)
+      const { data: claimedData } = await supabase
+        .from('businesses')
         .select('id')
         .eq('id', businessId)
         .maybeSingle();
 
-      if (registeredData) {
+      if (claimedData) {
         businessType = 'registered';
       } else {
         // Cerca in imported_businesses
