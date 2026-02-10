@@ -179,6 +179,10 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    console.log('=== START REVIEW SUBMIT ===');
+    console.log('Profile:', profile);
+    console.log('BusinessId:', businessId);
+
     if (!profile) {
       setError('Devi essere autenticato per lasciare una recensione');
       return;
@@ -211,44 +215,58 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
       // Determina il tipo di business
       let businessType: 'imported' | 'user_added' | 'registered' | null = null;
 
+      console.log('Searching for business...');
+
       // Cerca in registered_businesses
-      const { data: registeredData } = await supabase
+      const { data: registeredData, error: regError } = await supabase
         .from('registered_businesses')
         .select('id')
         .eq('id', businessId)
         .maybeSingle();
 
+      console.log('Registered check:', { data: registeredData, error: regError });
+
       if (registeredData) {
         businessType = 'registered';
+        console.log('Found as registered business');
       } else {
         // Cerca in imported_businesses
-        const { data: importedData } = await supabase
+        const { data: importedData, error: impError } = await supabase
           .from('imported_businesses')
           .select('id')
           .eq('id', businessId)
           .maybeSingle();
 
+        console.log('Imported check:', { data: importedData, error: impError });
+
         if (importedData) {
           businessType = 'imported';
+          console.log('Found as imported business');
         } else {
           // Cerca in user_added_businesses
-          const { data: userAddedData } = await supabase
+          const { data: userAddedData, error: userError } = await supabase
             .from('user_added_businesses')
             .select('id')
             .eq('id', businessId)
             .maybeSingle();
 
+          console.log('User added check:', { data: userAddedData, error: userError });
+
           if (userAddedData) {
             businessType = 'user_added';
+            console.log('Found as user_added business');
           }
         }
       }
 
       if (!businessType) {
+        console.error('Business not found in any table');
         setError('Attività non trovata');
         setLoading(false);
         return;
       }
+
+      console.log('Business type determined:', businessType);
 
       // Verifica se l'utente ha già recensito questa attività
       let existingReview;
@@ -265,15 +283,18 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
         reviewQuery = reviewQuery.eq('user_added_business_id', businessId);
       }
 
-      const { data } = await reviewQuery.maybeSingle();
+      const { data, error: reviewCheckError } = await reviewQuery.maybeSingle();
+      console.log('Existing review check:', { data, error: reviewCheckError });
       existingReview = data;
 
       if (existingReview) {
+        console.log('User already reviewed this business');
         setError('Hai già recensito questa attività');
         setLoading(false);
         return;
       }
 
+      console.log('No existing review, proceeding...');
       let proofImageUrl = null;
 
       // Upload dell'immagine di prova se presente
@@ -340,21 +361,42 @@ export function ReviewForm({ businessId, businessName, businessLocationId, onClo
         reviewData.user_added_business_id = businessId;
       }
 
-      const { error: insertError } = await supabase
-        .from('reviews')
-        .insert(reviewData);
+      console.log('Review data to insert:', reviewData);
 
-      if (insertError) throw insertError;
+      const { data: insertedReview, error: insertError } = await supabase
+        .from('reviews')
+        .insert(reviewData)
+        .select();
+
+      console.log('Insert result:', { data: insertedReview, error: insertError });
+
+      if (insertError) {
+        console.error('Insert error details:', insertError);
+        throw insertError;
+      }
 
       // Mostra messaggio appropriato
       const pointsMessage = proofImage ? '50 punti' : '25 punti';
       alert(`✅ Recensione inviata con successo!\n\nLa tua recensione è in attesa di approvazione. Riceverai ${pointsMessage} dopo che lo staff l'avrà verificata.`);
 
+      console.log('Review submitted successfully!');
       onSuccess();
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error submitting review:', err);
-      setError('Errore durante l\'invio della recensione');
+      console.error('Error details:', JSON.stringify(err, null, 2));
+
+      let errorMessage = 'Errore durante l\'invio della recensione';
+
+      if (err.message) {
+        errorMessage += ': ' + err.message;
+      }
+
+      if (err.code) {
+        errorMessage += ' (Codice: ' + err.code + ')';
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
