@@ -24,12 +24,17 @@ export default function BusinessAutocomplete({
   onSelect,
   placeholder = 'Cerca attività...',
 }: BusinessAutocompleteProps) {
+  const [localValue, setLocalValue] = useState(value);
   const [suggestions, setSuggestions] = useState<Business[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const debounceTimer = useRef<NodeJS.Timeout>();
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -47,7 +52,7 @@ export default function BusinessAutocomplete({
       clearTimeout(debounceTimer.current);
     }
 
-    if (value.length < 2) {
+    if (localValue.length < 2) {
       setSuggestions([]);
       setTotalCount(0);
       setShowSuggestions(false);
@@ -55,7 +60,7 @@ export default function BusinessAutocomplete({
     }
 
     debounceTimer.current = setTimeout(() => {
-      searchBusinesses(value);
+      searchBusinesses(localValue);
     }, 300);
 
     return () => {
@@ -63,7 +68,7 @@ export default function BusinessAutocomplete({
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [value]);
+  }, [localValue]);
 
   async function searchBusinesses(query: string) {
     try {
@@ -135,7 +140,13 @@ export default function BusinessAutocomplete({
     }
   }
 
+  function handleInputChange(newValue: string) {
+    setLocalValue(newValue);
+    onChange(newValue);
+  }
+
   function handleSelect(business: Business) {
+    setLocalValue(business.name);
     onChange(business.name);
     setShowSuggestions(false);
     if (onSelect) {
@@ -148,8 +159,8 @@ export default function BusinessAutocomplete({
       <div className="relative">
         <input
           type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={localValue}
+          onChange={(e) => handleInputChange(e.target.value)}
           onFocus={() => {
             if (suggestions.length > 0) {
               setShowSuggestions(true);
