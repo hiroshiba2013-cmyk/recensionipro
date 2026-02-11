@@ -3,7 +3,8 @@ import { User, Star, Tag, Plus, Calendar, Percent, X, Package, LogOut, Trophy, T
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { ClassifiedAdCard } from '../components/classifieds/ClassifiedAdCard';
+import { ProfileClassifiedAdCard } from '../components/classifieds/ProfileClassifiedAdCard';
+import { ClassifiedAdForm } from '../components/classifieds/ClassifiedAdForm';
 import { AvatarUpload } from '../components/profile/AvatarUpload';
 import { EditProfileForm } from '../components/profile/EditProfileForm';
 import { JobRequestForm } from '../components/profile/JobRequestForm';
@@ -116,6 +117,7 @@ interface BusinessLocation {
 
 interface ClassifiedAd {
   id: string;
+  ad_type: 'sell' | 'buy' | 'gift';
   title: string;
   description: string;
   price: number | null;
@@ -125,6 +127,8 @@ interface ClassifiedAd {
   images: string[] | null;
   views_count: number;
   created_at: string;
+  expires_at: string;
+  status: string;
   profiles: {
     full_name: string;
     avatar_url: string | null;
@@ -195,6 +199,8 @@ export function ProfilePage() {
     locationId: '',
   });
   const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const [showEditAdForm, setShowEditAdForm] = useState(false);
+  const [editingAdId, setEditingAdId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -438,7 +444,6 @@ export function ProfilePage() {
       `)
       .eq('user_id', user?.id)
       .eq('family_member_id', familyMemberId)
-      .eq('status', 'active')
       .order('created_at', { ascending: false });
 
     if (adsData) {
@@ -543,7 +548,6 @@ export function ProfilePage() {
       `)
       .eq('user_id', user?.id)
       .is('family_member_id', null)
-      .eq('status', 'active')
       .order('created_at', { ascending: false });
 
     if (adsData) {
@@ -688,6 +692,34 @@ export function ProfilePage() {
       console.error('Error deleting review:', error);
       alert('Errore durante l\'eliminazione della recensione');
     }
+  };
+
+  const handleEditAd = (ad: ClassifiedAd) => {
+    setEditingAdId(ad.id);
+    setShowEditAdForm(true);
+  };
+
+  const handleDeleteAd = async (adId: string) => {
+    try {
+      const { error } = await supabase
+        .from('classified_ads')
+        .delete()
+        .eq('id', adId);
+
+      if (error) throw error;
+
+      alert('Annuncio eliminato con successo!');
+      loadClassifiedAds();
+    } catch (error) {
+      console.error('Error deleting ad:', error);
+      alert('Errore durante l\'eliminazione dell\'annuncio');
+    }
+  };
+
+  const handleAdFormSuccess = () => {
+    setShowEditAdForm(false);
+    setEditingAdId(null);
+    loadClassifiedAds();
   };
 
   const filteredReviews = reviews.filter((review) => {
@@ -1219,11 +1251,33 @@ export function ProfilePage() {
                   </a>
                 </div>
               ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {classifiedAds.map((ad) => (
-                    <ClassifiedAdCard key={ad.id} ad={ad} />
-                  ))}
-                </div>
+                <>
+                  {showEditAdForm && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+                      <div className="bg-white rounded-xl p-8 max-w-4xl w-full my-8">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-6">Modifica Annuncio</h2>
+                        <ClassifiedAdForm
+                          adId={editingAdId || undefined}
+                          onSuccess={handleAdFormSuccess}
+                          onCancel={() => {
+                            setShowEditAdForm(false);
+                            setEditingAdId(null);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {classifiedAds.map((ad) => (
+                      <ProfileClassifiedAdCard
+                        key={ad.id}
+                        ad={ad}
+                        onEdit={handleEditAd}
+                        onDelete={handleDeleteAd}
+                      />
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           </>
