@@ -145,7 +145,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-4">
         <BusinessAutocomplete
           value={filters.businessName}
-          onChange={(value) => setFilters({ ...filters, businessName: value })}
+          onChange={(value) => setFilters(prev => ({ ...prev, businessName: value }))}
           onSelect={(businessId) => {
             window.location.href = `/business/${businessId}`;
           }}
@@ -161,7 +161,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
                 </label>
                 <SearchableSelect
                   value={filters.category}
-                  onChange={(value) => setFilters({ ...filters, category: value })}
+                  onChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
                   options={[
                     { value: '', label: 'Tutte le categorie' },
                     ...categories.map((cat) => ({
@@ -181,13 +181,15 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
                 <SearchableSelect
                   value={filters.region}
                   onChange={(value) => {
-                    const newProvinces = value ? PROVINCES_BY_REGION[value] || [] : ITALIAN_PROVINCES;
-                    const shouldResetProvince = filters.province && value && !newProvinces.includes(filters.province);
-                    setFilters({
-                      ...filters,
-                      region: value,
-                      province: shouldResetProvince ? '' : filters.province,
-                      city: shouldResetProvince ? '' : filters.city
+                    setFilters(prev => {
+                      const newProvinces = value ? PROVINCES_BY_REGION[value] || [] : ITALIAN_PROVINCES;
+                      const shouldResetProvince = prev.province && value && !newProvinces.includes(prev.province);
+                      return {
+                        ...prev,
+                        region: value,
+                        province: shouldResetProvince ? '' : prev.province,
+                        city: shouldResetProvince ? '' : prev.city
+                      };
                     });
                   }}
                   options={[
@@ -208,7 +210,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
                 </label>
                 <SearchableSelect
                   value={filters.province}
-                  onChange={(value) => setFilters({ ...filters, province: value, city: value ? filters.city : '' })}
+                  onChange={(value) => setFilters(prev => ({ ...prev, province: value, city: value ? prev.city : '' }))}
                   options={[
                     { value: '', label: 'Tutte le province' },
                     ...availableProvinces.map((province) => ({
@@ -227,7 +229,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
                 </label>
                 <SearchableSelect
                   value={filters.city}
-                  onChange={(value) => setFilters({ ...filters, city: value })}
+                  onChange={(value) => setFilters(prev => ({ ...prev, city: value }))}
                   disabled={!filters.province}
                   options={[
                     { value: '', label: filters.province ? 'Tutte le città' : 'Seleziona prima provincia' },
@@ -247,7 +249,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
                 </label>
                 <SearchableSelect
                   value={String(filters.minRating)}
-                  onChange={(value) => setFilters({ ...filters, minRating: Number(value) })}
+                  onChange={(value) => setFilters(prev => ({ ...prev, minRating: Number(value) }))}
                   options={[
                     { value: '0', label: 'Tutte le valutazioni' },
                     { value: '1', label: '1 stella e più' },
@@ -280,7 +282,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
                 <input
                   type="checkbox"
                   checked={filters.verifiedOnly || false}
-                  onChange={(e) => setFilters({ ...filters, verifiedOnly: e.target.checked })}
+                  onChange={(e) => setFilters(prev => ({ ...prev, verifiedOnly: e.target.checked }))}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
                 <CheckCircle className="w-4 h-4 text-gray-500 group-hover:text-green-600 transition-colors" />
