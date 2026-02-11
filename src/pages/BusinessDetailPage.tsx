@@ -83,6 +83,39 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
         }
       }
 
+      // Se non trovata, cerca in unclaimed_business_locations
+      if (!businessData) {
+        const { data: unclaimedData } = await supabase
+          .from('unclaimed_business_locations')
+          .select(`
+            *,
+            category:business_categories(*)
+          `)
+          .eq('id', businessId)
+          .maybeSingle();
+
+        if (unclaimedData) {
+          businessData = {
+            id: unclaimedData.id,
+            name: unclaimedData.name,
+            category_id: unclaimedData.category_id,
+            category: unclaimedData.category,
+            description: unclaimedData.description,
+            is_claimed: unclaimedData.is_claimed || false,
+            owner_id: unclaimedData.claimed_by || null,
+            verified: false,
+            created_at: unclaimedData.created_at,
+            address: `${unclaimedData.street}${unclaimedData.street_number ? ', ' + unclaimedData.street_number : ''}`,
+            city: unclaimedData.city,
+            phone: unclaimedData.phone,
+            email: unclaimedData.email,
+            website: unclaimedData.website,
+            website_url: unclaimedData.website,
+          };
+          businessType = 'imported';
+        }
+      }
+
       // Se non trovata, cerca in imported_businesses
       if (!businessData) {
         const { data: importedData } = await supabase
@@ -188,7 +221,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           .eq('review_status', 'approved');
 
         if (businessType === 'imported') {
-          reviewsQuery = reviewsQuery.eq('imported_business_id', businessId);
+          reviewsQuery = reviewsQuery.or(`imported_business_id.eq.${businessId},unclaimed_business_location_id.eq.${businessId}`);
         } else if (businessType === 'user_added') {
           reviewsQuery = reviewsQuery.eq('user_added_business_id', businessId);
         } else if (businessType === 'registered') {
@@ -221,7 +254,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           .order('created_at', { ascending: false });
 
         if (businessType === 'imported') {
-          fullReviewsQuery = fullReviewsQuery.eq('imported_business_id', businessId);
+          fullReviewsQuery = fullReviewsQuery.or(`imported_business_id.eq.${businessId},unclaimed_business_location_id.eq.${businessId}`);
         } else if (businessType === 'user_added') {
           fullReviewsQuery = fullReviewsQuery.eq('user_added_business_id', businessId);
         } else if (businessType === 'registered') {
