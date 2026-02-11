@@ -439,8 +439,8 @@ export function ProfilePage() {
       .from('classified_ads')
       .select(`
         *,
-        profiles!classified_ads_user_id_fkey(full_name, avatar_url),
-        classified_categories!classified_ads_category_id_fkey(name, icon)
+        profiles(full_name, avatar_url),
+        classified_categories(name, icon)
       `)
       .eq('user_id', user?.id)
       .eq('family_member_id', familyMemberId)
@@ -451,7 +451,6 @@ export function ProfilePage() {
     }
 
     if (adsData) {
-      console.log('Loaded family member ads:', adsData);
       setClassifiedAds(adsData);
     }
 
@@ -548,8 +547,8 @@ export function ProfilePage() {
       .from('classified_ads')
       .select(`
         *,
-        profiles!classified_ads_user_id_fkey(full_name, avatar_url),
-        classified_categories!classified_ads_category_id_fkey(name, icon)
+        profiles(full_name, avatar_url),
+        classified_categories(name, icon)
       `)
       .eq('user_id', user?.id)
       .is('family_member_id', null)
@@ -560,7 +559,6 @@ export function ProfilePage() {
     }
 
     if (adsData) {
-      console.log('Loaded classified ads:', adsData);
       setClassifiedAds(adsData);
     }
   };
@@ -1247,11 +1245,6 @@ export function ProfilePage() {
                 </div>
               )}
 
-              {(() => {
-                console.log('Current classifiedAds state:', classifiedAds);
-                console.log('Number of classifiedAds:', classifiedAds.length);
-                return null;
-              })()}
               {classifiedAds.length === 0 ? (
                 <div className="text-center py-8">
                   <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />

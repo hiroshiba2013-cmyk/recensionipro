@@ -208,7 +208,7 @@ export function AdminDashboardPage() {
         price,
         status,
         created_at,
-        user:profiles!classified_ads_user_id_fkey(full_name, email)
+        user:profiles(full_name, email)
       `)
       .order('created_at', { ascending: false })
       .limit(100);
