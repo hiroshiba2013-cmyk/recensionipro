@@ -435,7 +435,7 @@ export function ProfilePage() {
       setDiscounts(discountsData);
     }
 
-    const { data: adsData } = await supabase
+    const { data: adsData, error: adsError } = await supabase
       .from('classified_ads')
       .select(`
         *,
@@ -446,7 +446,12 @@ export function ProfilePage() {
       .eq('family_member_id', familyMemberId)
       .order('created_at', { ascending: false });
 
+    if (adsError) {
+      console.error('Error loading family member ads:', adsError);
+    }
+
     if (adsData) {
+      console.log('Loaded family member ads:', adsData);
       setClassifiedAds(adsData);
     }
 
@@ -539,7 +544,7 @@ export function ProfilePage() {
   };
 
   const loadClassifiedAds = async () => {
-    const { data: adsData } = await supabase
+    const { data: adsData, error } = await supabase
       .from('classified_ads')
       .select(`
         *,
@@ -550,7 +555,12 @@ export function ProfilePage() {
       .is('family_member_id', null)
       .order('created_at', { ascending: false });
 
+    if (error) {
+      console.error('Error loading classified ads:', error);
+    }
+
     if (adsData) {
+      console.log('Loaded classified ads:', adsData);
       setClassifiedAds(adsData);
     }
   };
@@ -1237,6 +1247,11 @@ export function ProfilePage() {
                 </div>
               )}
 
+              {(() => {
+                console.log('Current classifiedAds state:', classifiedAds);
+                console.log('Number of classifiedAds:', classifiedAds.length);
+                return null;
+              })()}
               {classifiedAds.length === 0 ? (
                 <div className="text-center py-8">
                   <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />

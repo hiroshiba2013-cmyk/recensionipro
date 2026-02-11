@@ -201,14 +201,21 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
           .eq('id', adId);
 
         if (error) throw error;
+        console.log('Ad updated successfully:', adId);
       } else {
-        const { error } = await supabase
+        const { data: insertedData, error } = await supabase
           .from('classified_ads')
-          .insert([adData]);
+          .insert([adData])
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error inserting ad:', error);
+          throw error;
+        }
+        console.log('Ad created successfully:', insertedData);
       }
 
+      alert('Annuncio salvato con successo!');
       onSuccess();
     } catch (error) {
       console.error('Error saving ad:', error);
