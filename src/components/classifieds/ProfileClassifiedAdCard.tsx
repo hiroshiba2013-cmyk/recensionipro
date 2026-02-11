@@ -85,7 +85,7 @@ export function ProfileClassifiedAdCard({ ad, onEdit, onDelete }: ProfileClassif
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
       {/* Image */}
-      <div className="relative aspect-video bg-gray-200">
+      <div className="relative h-40 bg-gray-200">
         {firstImage ? (
           <img
             src={firstImage}
@@ -94,12 +94,12 @@ export function ProfileClassifiedAdCard({ ad, onEdit, onDelete }: ProfileClassif
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-400">
-            <span className="text-4xl">{ad.classified_categories.icon}</span>
+            <span className="text-3xl">{ad.classified_categories.icon}</span>
           </div>
         )}
 
         {/* Ad Type Badge */}
-        <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-sm font-bold shadow-sm ${
+        <div className={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-bold shadow-sm ${
           ad.ad_type === 'sell'
             ? 'bg-blue-600 text-white'
             : ad.ad_type === 'buy'
@@ -110,57 +110,57 @@ export function ProfileClassifiedAdCard({ ad, onEdit, onDelete }: ProfileClassif
         </div>
 
         {/* Category Badge */}
-        <div className="absolute bottom-3 left-3 bg-white px-3 py-1 rounded-full text-xs font-medium text-gray-900 shadow-sm">
+        <div className="absolute bottom-2 left-2 bg-white px-2 py-1 rounded-full text-xs font-medium text-gray-900 shadow-sm">
           {ad.classified_categories.name}
         </div>
 
         {/* Price Badge */}
         {ad.price && (
-          <div className="absolute top-3 right-3 bg-white text-gray-900 px-3 py-1 rounded-full text-sm font-bold shadow-sm">
+          <div className="absolute top-2 right-2 bg-white text-gray-900 px-2 py-1 rounded-full text-xs font-bold shadow-sm">
             €{ad.price.toLocaleString('it-IT')}
           </div>
         )}
       </div>
 
       {/* Content */}
-      <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          {truncateText(ad.title, 50)}
+      <div className="p-3">
+        <h3 className="text-base font-semibold text-gray-900 mb-1">
+          {truncateText(ad.title, 40)}
         </h3>
 
-        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-          {truncateText(ad.description, 100)}
+        <p className="text-gray-600 text-xs mb-2 line-clamp-2">
+          {truncateText(ad.description, 80)}
         </p>
 
         {/* Location */}
-        <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
-          <MapPin className="w-4 h-4" />
+        <div className="flex items-center gap-1 text-gray-500 text-xs mb-2">
+          <MapPin className="w-3 h-3" />
           <span>
             {ad.city}, {ad.province}
           </span>
         </div>
 
         {/* Stats */}
-        <div className="pt-3 border-t border-gray-100 mb-3">
-          <div className="flex items-center gap-3 text-gray-500 text-sm mb-2">
+        <div className="pt-2 border-t border-gray-100 mb-2">
+          <div className="flex items-center gap-2 text-gray-500 text-xs mb-1">
             <div className="flex items-center gap-1">
-              <Eye className="w-4 h-4" />
-              <span>{ad.views_count} visualizzazioni</span>
+              <Eye className="w-3 h-3" />
+              <span>{ad.views_count}</span>
             </div>
             <div className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
+              <Calendar className="w-3 h-3" />
               <span>{formatDate(ad.created_at)}</span>
             </div>
           </div>
-          <div className={`text-sm font-semibold flex items-center gap-1 ${
+          <div className={`text-xs font-semibold flex items-center gap-1 ${
             daysRemaining <= 3
               ? 'text-red-600'
               : daysRemaining <= 7
               ? 'text-orange-600'
               : 'text-green-600'
           }`}>
-            <Clock className="w-4 h-4" />
-            <span>Scade il {expirationDate.toLocaleDateString('it-IT')} ({daysRemaining} {daysRemaining === 1 ? 'giorno' : 'giorni'} rimanenti)</span>
+            <Clock className="w-3 h-3" />
+            <span>Scade tra {daysRemaining} {daysRemaining === 1 ? 'giorno' : 'giorni'}</span>
           </div>
         </div>
 
@@ -168,32 +168,32 @@ export function ProfileClassifiedAdCard({ ad, onEdit, onDelete }: ProfileClassif
         <div className="flex gap-2">
           <a
             href={`/classified/${ad.id}`}
-            className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-center text-sm font-semibold"
+            className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-center text-xs font-semibold"
           >
             Visualizza
           </a>
           <button
             onClick={() => onEdit(ad)}
-            className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm font-semibold"
+            className="flex items-center justify-center gap-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors text-xs font-semibold"
           >
-            <Edit2 className="w-4 h-4" />
+            <Edit2 className="w-3 h-3" />
             Modifica
           </button>
           <button
             onClick={handleDelete}
-            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-semibold ${
+            className={`flex items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors text-xs font-semibold ${
               showDeleteConfirm
                 ? 'bg-red-600 text-white hover:bg-red-700'
                 : 'bg-gray-100 text-red-600 hover:bg-red-50'
             }`}
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-3 h-3" />
             {showDeleteConfirm ? 'Conferma' : 'Elimina'}
           </button>
           {showDeleteConfirm && (
             <button
               onClick={() => setShowDeleteConfirm(false)}
-              className="px-3 py-2 text-gray-600 hover:text-gray-800 text-sm"
+              className="px-2 py-2 text-gray-600 hover:text-gray-800 text-xs"
             >
               Annulla
             </button>
