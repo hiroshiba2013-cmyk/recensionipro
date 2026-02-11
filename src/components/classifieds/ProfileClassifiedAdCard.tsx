@@ -50,6 +50,15 @@ export function ProfileClassifiedAdCard({ ad, onEdit, onDelete }: ProfileClassif
     return diffDays;
   };
 
+  const getExpirationDate = () => {
+    if (!ad.expires_at) {
+      const createdAt = new Date(ad.created_at);
+      const expiresAt = new Date(createdAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+      return expiresAt;
+    }
+    return new Date(ad.expires_at);
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('it-IT');
@@ -62,6 +71,7 @@ export function ProfileClassifiedAdCard({ ad, onEdit, onDelete }: ProfileClassif
 
   const firstImage = ad.images && ad.images.length > 0 ? ad.images[0] : null;
   const daysRemaining = getDaysRemaining();
+  const expirationDate = getExpirationDate();
 
   const handleDelete = async () => {
     if (showDeleteConfirm) {
@@ -110,18 +120,6 @@ export function ProfileClassifiedAdCard({ ad, onEdit, onDelete }: ProfileClassif
             €{ad.price.toLocaleString('it-IT')}
           </div>
         )}
-
-        {/* Days Remaining Badge */}
-        <div className={`absolute bottom-3 right-3 px-3 py-1 rounded-full text-xs font-bold shadow-md flex items-center gap-1 ${
-          daysRemaining <= 3
-            ? 'bg-red-600 text-white'
-            : daysRemaining <= 7
-            ? 'bg-orange-500 text-white'
-            : 'bg-green-600 text-white'
-        }`}>
-          <Clock className="w-3 h-3" />
-          <span>{daysRemaining} {daysRemaining === 1 ? 'giorno' : 'giorni'}</span>
-        </div>
       </div>
 
       {/* Content */}
@@ -143,8 +141,8 @@ export function ProfileClassifiedAdCard({ ad, onEdit, onDelete }: ProfileClassif
         </div>
 
         {/* Stats */}
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100 mb-3">
-          <div className="flex items-center gap-3 text-gray-500 text-sm">
+        <div className="pt-3 border-t border-gray-100 mb-3">
+          <div className="flex items-center gap-3 text-gray-500 text-sm mb-2">
             <div className="flex items-center gap-1">
               <Eye className="w-4 h-4" />
               <span>{ad.views_count} visualizzazioni</span>
@@ -153,6 +151,16 @@ export function ProfileClassifiedAdCard({ ad, onEdit, onDelete }: ProfileClassif
               <Calendar className="w-4 h-4" />
               <span>{formatDate(ad.created_at)}</span>
             </div>
+          </div>
+          <div className={`text-sm font-semibold flex items-center gap-1 ${
+            daysRemaining <= 3
+              ? 'text-red-600'
+              : daysRemaining <= 7
+              ? 'text-orange-600'
+              : 'text-green-600'
+          }`}>
+            <Clock className="w-4 h-4" />
+            <span>Scade il {expirationDate.toLocaleDateString('it-IT')} ({daysRemaining} {daysRemaining === 1 ? 'giorno' : 'giorni'} rimanenti)</span>
           </div>
         </div>
 
