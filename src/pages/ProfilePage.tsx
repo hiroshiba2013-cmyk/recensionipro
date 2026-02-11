@@ -127,7 +127,7 @@ interface ClassifiedAd {
   images: string[] | null;
   views_count: number;
   created_at: string;
-  expires_at: string;
+  expires_at: string | null;
   status: string;
   profiles: {
     full_name: string;

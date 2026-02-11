@@ -13,7 +13,7 @@ interface ClassifiedAd {
   images: string[] | null;
   views_count: number;
   created_at: string;
-  expires_at: string;
+  expires_at: string | null;
   status: string;
   profiles: {
     full_name: string;
@@ -35,6 +35,14 @@ export function ProfileClassifiedAdCard({ ad, onEdit, onDelete }: ProfileClassif
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const getDaysRemaining = () => {
+    if (!ad.expires_at) {
+      const createdAt = new Date(ad.created_at);
+      const expiresAt = new Date(createdAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const now = new Date();
+      const diffTime = expiresAt.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays;
+    }
     const expiresAt = new Date(ad.expires_at);
     const now = new Date();
     const diffTime = expiresAt.getTime() - now.getTime();
