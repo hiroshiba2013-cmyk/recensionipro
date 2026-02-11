@@ -1,4 +1,4 @@
-import { MapPin, DollarSign, Calendar, MessageCircle } from 'lucide-react';
+import { MapPin, DollarSign, Calendar, MessageCircle, Phone, Mail, Tag } from 'lucide-react';
 
 interface JobSeekerCardProps {
   jobSeeker: {
@@ -14,12 +14,17 @@ interface JobSeekerCardProps {
     available_from: string | null;
     experience_years: number;
     education_level: string | null;
+    phone: string | null;
+    email: string | null;
     created_at: string;
     user: {
       profiles: {
         full_name: string;
       };
     };
+    business_categories: {
+      name: string;
+    } | null;
   };
   onContact?: (jobSeekerId: string) => void;
   showContactButton?: boolean;
@@ -29,9 +34,15 @@ export function JobSeekerCard({ jobSeeker, onContact, showContactButton = true }
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
       <div className="flex justify-between items-start mb-4">
-        <div>
+        <div className="flex-1">
           <h3 className="text-xl font-bold text-gray-900">{jobSeeker.title}</h3>
           <p className="text-gray-600 font-medium">{jobSeeker.user.profiles.full_name}</p>
+          {jobSeeker.business_categories && (
+            <div className="flex items-center gap-1 mt-1">
+              <Tag className="w-3 h-3 text-gray-500" />
+              <span className="text-xs text-gray-500">{jobSeeker.business_categories.name}</span>
+            </div>
+          )}
         </div>
         <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
           {jobSeeker.contract_type}
@@ -71,6 +82,24 @@ export function JobSeekerCard({ jobSeeker, onContact, showContactButton = true }
             <span className="text-sm text-gray-600">
               Dal {new Date(jobSeeker.available_from).toLocaleDateString('it-IT')}
             </span>
+          </div>
+        )}
+
+        {jobSeeker.phone && (
+          <div className="flex items-center gap-2">
+            <Phone className="w-4 h-4 text-gray-500" />
+            <a href={`tel:${jobSeeker.phone}`} className="text-sm text-blue-600 hover:underline">
+              {jobSeeker.phone}
+            </a>
+          </div>
+        )}
+
+        {jobSeeker.email && (
+          <div className="flex items-center gap-2">
+            <Mail className="w-4 h-4 text-gray-500" />
+            <a href={`mailto:${jobSeeker.email}`} className="text-sm text-blue-600 hover:underline">
+              {jobSeeker.email}
+            </a>
           </div>
         )}
       </div>

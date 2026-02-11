@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { X } from 'lucide-react';
@@ -8,9 +8,15 @@ interface JobSeekerFormProps {
   onCancel: () => void;
 }
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -22,7 +28,27 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
     available_from: '',
     experience_years: '',
     education_level: '',
+    phone: '',
+    email: '',
+    category_id: '',
   });
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const { data } = await supabase
+        .from('business_categories')
+        .select('id, name')
+        .order('name');
+
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +68,9 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
         available_from: formData.available_from || null,
         experience_years: formData.experience_years ? parseInt(formData.experience_years) : 0,
         education_level: formData.education_level || null,
+        phone: formData.phone || null,
+        email: formData.email || null,
+        category_id: formData.category_id || null,
         status: 'active',
       });
 
@@ -78,6 +107,24 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="Es. Sviluppatore Frontend, Contabile, Cameriere..."
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Categoria Lavorativa
+          </label>
+          <select
+            value={formData.category_id}
+            onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">Seleziona una categoria...</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>
@@ -124,6 +171,34 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Es. Milano, Roma..."
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Telefono (facoltativo)
+            </label>
+            <input
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Es. +39 123 456 7890"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email (facoltativo)
+            </label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Es. nome@email.com"
             />
           </div>
         </div>

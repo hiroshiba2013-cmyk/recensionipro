@@ -45,12 +45,17 @@ interface JobSeeker {
   available_from: string | null;
   experience_years: number;
   education_level: string | null;
+  phone: string | null;
+  email: string | null;
   created_at: string;
   user: {
     profiles: {
       full_name: string;
     };
   };
+  business_categories: {
+    name: string;
+  } | null;
 }
 
 interface SearchFilters {
@@ -174,7 +179,8 @@ export function JobsPage() {
           *,
           user:auth.users!inner(
             profiles!inner(full_name)
-          )
+          ),
+          business_categories(name)
         `)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
