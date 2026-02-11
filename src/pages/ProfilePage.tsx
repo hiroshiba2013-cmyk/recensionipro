@@ -448,10 +448,15 @@ export function ProfilePage() {
 
     if (adsError) {
       console.error('Error loading family member ads:', adsError);
+      return;
     }
 
     if (adsData) {
-      setClassifiedAds(adsData);
+      const formattedAds = adsData.map(ad => ({
+        ...ad,
+        price: ad.price ? parseFloat(ad.price) : null
+      }));
+      setClassifiedAds(formattedAds);
     }
 
     const { data: memberReviewsData } = await supabase
@@ -543,6 +548,8 @@ export function ProfilePage() {
   };
 
   const loadClassifiedAds = async () => {
+    console.log('[DEBUG] Loading ads for user:', user?.id);
+
     const { data: adsData, error } = await supabase
       .from('classified_ads')
       .select(`
@@ -554,12 +561,20 @@ export function ProfilePage() {
       .is('family_member_id', null)
       .order('created_at', { ascending: false });
 
+    console.log('[DEBUG] Ads query result:', { adsData, error });
+
     if (error) {
       console.error('Error loading classified ads:', error);
+      return;
     }
 
     if (adsData) {
-      setClassifiedAds(adsData);
+      const formattedAds = adsData.map(ad => ({
+        ...ad,
+        price: ad.price ? parseFloat(ad.price) : null
+      }));
+      console.log('[DEBUG] Formatted ads:', formattedAds);
+      setClassifiedAds(formattedAds);
     }
   };
 
