@@ -717,6 +717,11 @@ export function ProfilePage() {
 
     const familyMemberId = activeProfile?.isOwner === false ? activeProfile?.id : null;
 
+    console.log('🔍 LOADING FAVORITE BUSINESSES');
+    console.log('👤 User ID:', user.id);
+    console.log('👨‍👩‍👧 Family Member ID:', familyMemberId);
+    console.log('👤 Active Profile:', activeProfile);
+
     let favoritesQuery = supabase
       .from('favorite_businesses')
       .select(`
@@ -745,12 +750,17 @@ export function ProfilePage() {
 
     const { data: favoritesData, error } = await favoritesQuery;
 
+    console.log('📊 Favorites Data:', favoritesData);
+    console.log('❌ Error:', error);
+
     if (error) {
       console.error('Error loading favorite businesses:', error);
       return;
     }
 
     if (favoritesData) {
+      console.log('✅ Found', favoritesData.length, 'favorite businesses');
+
       const businesses = favoritesData
         .filter(fav => fav.business_locations)
         .map(fav => {
@@ -760,6 +770,8 @@ export function ProfilePage() {
             business: location.businesses
           };
         });
+
+      console.log('🏢 Businesses after mapping:', businesses);
 
       // Ottieni i rating per ogni business
       const businessesWithRatings = await Promise.all(
@@ -775,8 +787,10 @@ export function ProfilePage() {
         })
       );
 
+      console.log('⭐ Businesses with ratings:', businessesWithRatings);
       setFavoriteBusinesses(businessesWithRatings);
     } else {
+      console.log('⚠️ No favorites data returned');
       setFavoriteBusinesses([]);
     }
   };

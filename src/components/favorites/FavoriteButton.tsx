@@ -78,8 +78,18 @@ export function FavoriteButton({
 
     setLoading(true);
 
+    console.log('⭐ TOGGLE FAVORITE');
+    console.log('Type:', type);
+    console.log('Item ID:', itemId);
+    console.log('Family Member ID:', familyMemberId);
+    console.log('Is Unclaimed Business:', isUnclaimedBusiness);
+    console.log('Table:', tableName);
+    console.log('Column:', columnName);
+    console.log('Current isFavorite:', isFavorite);
+
     try {
       if (isFavorite) {
+        console.log('🗑️ REMOVING FROM FAVORITES');
         let query = supabase
           .from(tableName)
           .delete()
@@ -92,20 +102,25 @@ export function FavoriteButton({
           query = query.is('family_member_id', null);
         }
 
-        await query;
+        const result = await query;
+        console.log('Delete result:', result);
         setIsFavorite(false);
         onToggle?.(false);
       } else {
+        console.log('➕ ADDING TO FAVORITES');
         const insertData: any = {
           user_id: user.id,
           [columnName]: itemId,
           family_member_id: familyMemberId
         };
 
-        await supabase
+        console.log('Insert data:', insertData);
+
+        const result = await supabase
           .from(tableName)
           .insert(insertData);
 
+        console.log('Insert result:', result);
         setIsFavorite(true);
         onToggle?.(true);
       }
