@@ -5,6 +5,7 @@ import { CITIES_BY_PROVINCE, PROVINCE_TO_CODE, PROVINCES_BY_REGION } from '../..
 
 interface AddUnclaimedBusinessFormProps {
   customerId: string;
+  activeFamilyMemberId?: string | null;
   onSuccess: () => void;
 }
 
@@ -32,7 +33,7 @@ const ALL_CITIES = Object.entries(CITIES_BY_PROVINCE).flatMap(([province, cities
   }))
 ).sort((a, b) => a.name.localeCompare(b.name));
 
-export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimedBusinessFormProps) {
+export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onSuccess }: AddUnclaimedBusinessFormProps) {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<BusinessCategory[]>([]);
@@ -54,7 +55,7 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
   useEffect(() => {
     loadCategories();
     loadUserAddedBusinesses();
-  }, [customerId]);
+  }, [customerId, activeFamilyMemberId]);
 
   const loadCategories = async () => {
     const { data } = await supabase
@@ -72,6 +73,51 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
       setLoadingBusinesses(true);
       const allBusinesses: UserAddedBusiness[] = [];
 
+      // Carica da unclaimed_business_locations in base al profilo attivo
+      const unclaimedQuery = supabase
+        .from('unclaimed_business_locations')
+        .select(`
+          id,
+          name,
+          street,
+          city,
+          province,
+          phone,
+          email,
+          website,
+          created_at,
+          business_categories(name)
+        `)
+        .eq('added_by', customerId);
+
+      // Se c'è un family member attivo, filtra per quello, altrimenti prendi solo quelli senza family member
+      if (activeFamilyMemberId) {
+        unclaimedQuery.eq('added_by_family_member_id', activeFamilyMemberId);
+      } else {
+        unclaimedQuery.is('added_by_family_member_id', null);
+      }
+
+      const { data: unclaimedData } = await unclaimedQuery.order('created_at', { ascending: false });
+
+      if (unclaimedData) {
+        unclaimedData.forEach((business: any) => {
+          allBusinesses.push({
+            id: business.id,
+            name: business.name,
+            category: business.business_categories?.name || null,
+            street: business.street,
+            city: business.city,
+            province: business.province,
+            phone: business.phone,
+            email: business.email,
+            website: business.website,
+            created_at: business.created_at,
+            source: 'unclaimed',
+          });
+        });
+      }
+
+      // Carica anche da user_added_businesses (vecchia tabella)
       const { data: userAddedData } = await supabase
         .from('user_added_businesses')
         .select(`
@@ -165,6 +211,8 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
           email: formData.email || null,
           phone: formData.phone || null,
           country: 'Italia',
+          added_by: customerId,
+          added_by_family_member_id: activeFamilyMemberId || null,
         })
         .select()
         .single();

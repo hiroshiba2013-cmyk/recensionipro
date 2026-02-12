@@ -1157,6 +1157,7 @@ export function ProfilePage() {
 
             <AddUnclaimedBusinessForm
               customerId={profile.id}
+              activeFamilyMemberId={isFamilyMember ? selectedFamilyMember?.id : undefined}
               onSuccess={loadProfileData}
             />
 
