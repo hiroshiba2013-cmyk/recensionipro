@@ -78,26 +78,41 @@ export function FavoritesSection() {
             let itemData = null;
 
             if (fav.business_id) {
-              const { data } = await supabase
-                .from('business_locations')
+              // Per attività rivendicate, recupera da businesses e locations
+              const { data: businessData } = await supabase
+                .from('businesses')
                 .select(`
                   id,
-                  business_id,
-                  address,
-                  city,
-                  phone,
-                  businesses(name)
+                  name,
+                  locations:business_locations(
+                    id,
+                    address,
+                    city,
+                    phone
+                  )
                 `)
-                .eq('business_id', fav.business_id)
+                .eq('id', fav.business_id)
                 .maybeSingle();
-              itemData = data;
+
+              if (businessData && businessData.locations && businessData.locations.length > 0) {
+                const location = businessData.locations[0];
+                itemData = {
+                  id: location.id,
+                  business_id: businessData.id,
+                  address: location.address,
+                  city: location.city,
+                  phone: location.phone,
+                  businesses: { name: businessData.name }
+                };
+              }
             } else if (fav.unclaimed_business_location_id) {
+              // Per attività non rivendicate
               const { data } = await supabase
                 .from('unclaimed_business_locations')
                 .select(`
                   id,
                   name,
-                  address,
+                  street,
                   city,
                   phone
                 `)
@@ -108,7 +123,7 @@ export function FavoritesSection() {
                 itemData = {
                   id: data.id,
                   business_id: data.id,
-                  address: data.address,
+                  address: data.street,
                   city: data.city,
                   phone: data.phone,
                   businesses: { name: data.name }
