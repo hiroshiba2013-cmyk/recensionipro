@@ -242,14 +242,31 @@ export function ProfilePage() {
   };
 
   const loadCustomerData = async () => {
-    const { data: reviewsData } = await supabase
+    // Prima otteniamo tutti i family member IDs dell'utente
+    const { data: familyMembers } = await supabase
+      .from('customer_family_members')
+      .select('id')
+      .eq('customer_id', user?.id);
+
+    const familyMemberIds = familyMembers?.map(fm => fm.id) || [];
+
+    // Query per ottenere tutte le recensioni (del titolare E dei family members)
+    let reviewsQuery = supabase
       .from('reviews')
       .select(`
         *,
         family_member:customer_family_members(nickname)
       `)
-      .eq('customer_id', user?.id)
       .order('created_at', { ascending: false });
+
+    // Includi recensioni del titolare O dei family members
+    if (familyMemberIds.length > 0) {
+      reviewsQuery = reviewsQuery.or(`customer_id.eq.${user?.id},family_member_id.in.(${familyMemberIds.join(',')})`);
+    } else {
+      reviewsQuery = reviewsQuery.eq('customer_id', user?.id);
+    }
+
+    const { data: reviewsData } = await reviewsQuery;
 
     if (reviewsData) {
       const reviewsWithBusinessNames = await Promise.all(
