@@ -242,29 +242,16 @@ export function ProfilePage() {
   };
 
   const loadCustomerData = async () => {
-    // Prima otteniamo tutti i family member IDs dell'utente
-    const { data: familyMembers } = await supabase
-      .from('customer_family_members')
-      .select('id')
-      .eq('customer_id', user?.id);
-
-    const familyMemberIds = familyMembers?.map(fm => fm.id) || [];
-
-    // Query per ottenere tutte le recensioni (del titolare E dei family members)
-    let reviewsQuery = supabase
+    // Query per ottenere SOLO le recensioni del titolare principale (non dei family members)
+    const reviewsQuery = supabase
       .from('reviews')
       .select(`
         *,
         family_member:customer_family_members(nickname)
       `)
+      .eq('customer_id', user?.id)
+      .is('family_member_id', null)
       .order('created_at', { ascending: false });
-
-    // Includi recensioni del titolare O dei family members
-    if (familyMemberIds.length > 0) {
-      reviewsQuery = reviewsQuery.or(`customer_id.eq.${user?.id},family_member_id.in.(${familyMemberIds.join(',')})`);
-    } else {
-      reviewsQuery = reviewsQuery.eq('customer_id', user?.id);
-    }
 
     const { data: reviewsData } = await reviewsQuery;
 
@@ -633,7 +620,7 @@ export function ProfilePage() {
 
     const familyMemberId = activeProfile?.isOwner === false ? activeProfile?.id : null;
 
-    const { data: favoritesData, error } = await supabase
+    let favoritesQuery = supabase
       .from('favorite_classified_ads')
       .select(`
         ad_id,
@@ -642,8 +629,15 @@ export function ProfilePage() {
           classified_categories(name, icon)
         )
       `)
-      .eq('user_id', user.id)
-      .eq('family_member_id', familyMemberId || null);
+      .eq('user_id', user.id);
+
+    if (familyMemberId) {
+      favoritesQuery = favoritesQuery.eq('family_member_id', familyMemberId);
+    } else {
+      favoritesQuery = favoritesQuery.is('family_member_id', null);
+    }
+
+    const { data: favoritesData, error } = await favoritesQuery;
 
     if (error) {
       console.error('Error loading favorite ads:', error);
