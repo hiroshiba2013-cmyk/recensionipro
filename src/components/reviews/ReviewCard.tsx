@@ -68,9 +68,11 @@ export function ReviewCard({ review }: ReviewCardProps) {
               </span>
             )}
           </div>
-          {review.customer && (
+          {review.family_member ? (
+            <p className="text-sm font-medium text-gray-900">{review.family_member.nickname}</p>
+          ) : review.customer ? (
             <p className="text-sm font-medium text-gray-900">{review.customer.full_name}</p>
-          )}
+          ) : null}
           <span className="text-xs text-gray-500">{formatDate(review.created_at)}</span>
           {review.business_location && (
             <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
