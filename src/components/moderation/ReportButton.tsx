@@ -11,6 +11,23 @@ interface ReportButtonProps {
 export default function ReportButton({ entityType, entityId, compact = false }: ReportButtonProps) {
   const [showModal, setShowModal] = useState(false);
 
+  const getButtonText = () => {
+    switch (entityType) {
+      case 'review':
+        return 'Segnala recensione';
+      case 'classified_ad':
+        return 'Segnala annuncio';
+      case 'business':
+        return 'Segnala attività';
+      case 'job_posting':
+        return 'Segnala offerta';
+      case 'product':
+        return 'Segnala prodotto';
+      default:
+        return 'Segnala';
+    }
+  };
+
   return (
     <>
       <button
@@ -23,7 +40,7 @@ export default function ReportButton({ entityType, entityId, compact = false }: 
         title="Segnala contenuto inappropriato"
       >
         <Flag className={compact ? 'w-3 h-3' : 'w-4 h-4'} />
-        {!compact && <span>Segnala recensione</span>}
+        {!compact && <span>{getButtonText()}</span>}
       </button>
 
       {showModal && (
