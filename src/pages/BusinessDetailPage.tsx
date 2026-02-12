@@ -22,7 +22,7 @@ interface BusinessWithRating extends Business {
 }
 
 export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
-  const { user, profile } = useAuth();
+  const { user, profile, activeProfile } = useAuth();
   const [business, setBusiness] = useState<BusinessWithRating | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
@@ -609,7 +609,11 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                   {user && !isOwner && (
                     <>
                       <div className="bg-white/20 backdrop-blur-md rounded-lg hover:bg-white/30 transition-colors">
-                        <FavoriteButton type="business" itemId={businessId} />
+                        <FavoriteButton
+                          type="business"
+                          itemId={businessId}
+                          familyMemberId={activeProfile && !activeProfile.isOwner ? activeProfile.id : null}
+                        />
                       </div>
                       <div className="bg-white/20 backdrop-blur-md rounded-lg px-3 py-2 hover:bg-white/30 transition-colors">
                         <ReportButton entityType="business" entityId={businessId} compact />

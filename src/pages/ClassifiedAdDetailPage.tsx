@@ -45,7 +45,7 @@ interface ClassifiedAd {
 }
 
 export function ClassifiedAdDetailPage() {
-  const { user } = useAuth();
+  const { user, activeProfile } = useAuth();
   const [ad, setAd] = useState<ClassifiedAd | null>(null);
   const [loading, setLoading] = useState(true);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -351,7 +351,11 @@ export function ClassifiedAdDetailPage() {
                     </>
                   ) : user ? (
                     <>
-                      <FavoriteButton type="ad" itemId={ad.id} />
+                      <FavoriteButton
+                        type="ad"
+                        itemId={ad.id}
+                        familyMemberId={activeProfile && !activeProfile.isOwner ? activeProfile.id : null}
+                      />
                       <ReportButton entityType="classified_ad" entityId={ad.id} />
                     </>
                   ) : null}

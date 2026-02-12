@@ -1,6 +1,7 @@
 import { MapPin, Eye, Calendar } from 'lucide-react';
 import { FavoriteButton } from '../favorites/FavoriteButton';
 import ReportButton from '../moderation/ReportButton';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ClassifiedAd {
   id: string;
@@ -29,6 +30,8 @@ interface ClassifiedAdCardProps {
 }
 
 export function ClassifiedAdCard({ ad }: ClassifiedAdCardProps) {
+  const { activeProfile } = useAuth();
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -148,6 +151,7 @@ export function ClassifiedAdCard({ ad }: ClassifiedAdCardProps) {
         <FavoriteButton
           type="ad"
           itemId={ad.id}
+          familyMemberId={activeProfile && !activeProfile.isOwner ? activeProfile.id : null}
           showLabel={false}
           className="flex-1 justify-center text-xs"
         />
