@@ -360,12 +360,22 @@ export function ReviewForm({ businessId, businessName, businessLocationId, revie
         return;
       }
 
-      // Verifica se l'utente ha già recensito questa attività
+      // Verifica se questo specifico profilo ha già recensito questa attività
+      // Il titolare e i family members sono considerati separati
       let existingReview;
       let reviewQuery = supabase
         .from('reviews')
         .select('id')
         .eq('customer_id', profile.id);
+
+      // Controlla in base al profilo attivo
+      if (activeProfile?.isOwner === false) {
+        // Se sto recensendo come family member, controlla solo per questo family member
+        reviewQuery = reviewQuery.eq('family_member_id', activeProfile.id);
+      } else {
+        // Se sto recensendo come titolare, controlla solo per il titolare (family_member_id IS NULL)
+        reviewQuery = reviewQuery.is('family_member_id', null);
+      }
 
       if (businessType === 'registered') {
         reviewQuery = reviewQuery.eq('business_id', businessId);
@@ -381,7 +391,10 @@ export function ReviewForm({ businessId, businessName, businessLocationId, revie
       existingReview = data;
 
       if (existingReview) {
-        setError('Hai già recensito questa attività');
+        const profileName = activeProfile?.isOwner === false
+          ? activeProfile.nickname || activeProfile.name
+          : 'tu (titolare)';
+        setError(`${profileName} ha già recensito questa attività. Seleziona un altro profilo per lasciare una nuova recensione.`);
         setLoading(false);
         return;
       }
