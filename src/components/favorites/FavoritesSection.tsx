@@ -56,25 +56,74 @@ export function FavoritesSection() {
     setLoading(true);
     try {
       if (activeTab === 'businesses') {
-        const { data } = await supabase
+        const { data: favoritesData } = await supabase
           .from('favorite_businesses')
           .select(`
             id,
             created_at,
             family_member_id,
-            item:business_locations(
-              id,
-              business_id,
-              address,
-              city,
-              phone,
-              businesses(name)
-            )
+            business_id,
+            unclaimed_business_location_id
           `)
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
-        setFavoriteBusinesses(data || []);
+        if (!favoritesData) {
+          setFavoriteBusinesses([]);
+          return;
+        }
+
+        const enrichedFavorites = await Promise.all(
+          favoritesData.map(async (fav) => {
+            let itemData = null;
+
+            if (fav.business_id) {
+              const { data } = await supabase
+                .from('business_locations')
+                .select(`
+                  id,
+                  business_id,
+                  address,
+                  city,
+                  phone,
+                  businesses(name)
+                `)
+                .eq('business_id', fav.business_id)
+                .maybeSingle();
+              itemData = data;
+            } else if (fav.unclaimed_business_location_id) {
+              const { data } = await supabase
+                .from('unclaimed_business_locations')
+                .select(`
+                  id,
+                  name,
+                  address,
+                  city,
+                  phone
+                `)
+                .eq('id', fav.unclaimed_business_location_id)
+                .maybeSingle();
+
+              if (data) {
+                itemData = {
+                  id: data.id,
+                  business_id: data.id,
+                  address: data.address,
+                  city: data.city,
+                  phone: data.phone,
+                  businesses: { name: data.name }
+                };
+              }
+            }
+
+            return {
+              ...fav,
+              item: itemData
+            };
+          })
+        );
+
+        setFavoriteBusinesses(enrichedFavorites.filter(f => f.item !== null));
       } else if (activeTab === 'ads') {
         const { data } = await supabase
           .from('favorite_classified_ads')

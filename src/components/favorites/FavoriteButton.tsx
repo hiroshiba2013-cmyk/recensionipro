@@ -10,6 +10,7 @@ interface FavoriteButtonProps {
   showLabel?: boolean;
   className?: string;
   onToggle?: (isFavorite: boolean) => void;
+  isUnclaimedBusiness?: boolean;
 }
 
 export function FavoriteButton({
@@ -18,7 +19,8 @@ export function FavoriteButton({
   familyMemberId = null,
   showLabel = false,
   className = '',
-  onToggle
+  onToggle,
+  isUnclaimedBusiness = false
 }: FavoriteButtonProps) {
   const { user } = useAuth();
   const [isFavorite, setIsFavorite] = useState(false);
@@ -31,7 +33,7 @@ export function FavoriteButton({
     : 'favorite_job_postings';
 
   const columnName = type === 'business'
-    ? 'business_id'
+    ? (isUnclaimedBusiness ? 'unclaimed_business_location_id' : 'business_id')
     : type === 'ad'
     ? 'ad_id'
     : 'job_id';
@@ -40,7 +42,7 @@ export function FavoriteButton({
     if (user) {
       checkFavoriteStatus();
     }
-  }, [user, itemId, familyMemberId]);
+  }, [user, itemId, familyMemberId, isUnclaimedBusiness]);
 
   const checkFavoriteStatus = async () => {
     if (!user) return;
