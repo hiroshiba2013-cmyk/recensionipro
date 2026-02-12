@@ -24,17 +24,12 @@ export default function BusinessAutocomplete({
   onSelect,
   placeholder = 'Cerca attività...',
 }: BusinessAutocompleteProps) {
-  const [localValue, setLocalValue] = useState(value);
   const [suggestions, setSuggestions] = useState<Business[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const debounceTimer = useRef<NodeJS.Timeout>();
-
-  useEffect(() => {
-    setLocalValue(value);
-  }, [value]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -52,7 +47,7 @@ export default function BusinessAutocomplete({
       clearTimeout(debounceTimer.current);
     }
 
-    if (localValue.length < 2) {
+    if (value.length < 2) {
       setSuggestions([]);
       setTotalCount(0);
       setShowSuggestions(false);
@@ -60,7 +55,7 @@ export default function BusinessAutocomplete({
     }
 
     debounceTimer.current = setTimeout(() => {
-      searchBusinesses(localValue);
+      searchBusinesses(value);
     }, 300);
 
     return () => {
@@ -68,7 +63,7 @@ export default function BusinessAutocomplete({
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [localValue]);
+  }, [value]);
 
   async function searchBusinesses(query: string) {
     try {
@@ -140,13 +135,7 @@ export default function BusinessAutocomplete({
     }
   }
 
-  function handleInputChange(newValue: string) {
-    setLocalValue(newValue);
-    onChange(newValue);
-  }
-
   function handleSelect(business: Business) {
-    setLocalValue(business.name);
     onChange(business.name);
     setShowSuggestions(false);
     if (onSelect) {
@@ -159,15 +148,17 @@ export default function BusinessAutocomplete({
       <div className="relative">
         <input
           type="text"
-          value={localValue}
-          onChange={(e) => handleInputChange(e.target.value)}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
           onFocus={() => {
             if (suggestions.length > 0) {
               setShowSuggestions(true);
             }
           }}
           placeholder={placeholder}
-          className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
+          autoComplete="off"
+          spellCheck="false"
         />
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
         {loading && (
