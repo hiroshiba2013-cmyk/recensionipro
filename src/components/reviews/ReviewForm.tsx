@@ -498,6 +498,35 @@ export function ReviewForm({ businessId, businessName, businessLocationId, revie
             </div>
           )}
 
+          {!isEditMode && activeProfile && (
+            <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg">
+              <div className="flex items-center gap-3">
+                {activeProfile.avatarUrl ? (
+                  <img
+                    src={activeProfile.avatarUrl}
+                    alt={activeProfile.name}
+                    className="w-12 h-12 rounded-full object-cover border-2 border-purple-300"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-purple-300 flex items-center justify-center">
+                    <span className="text-white text-lg font-bold">
+                      {activeProfile.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                <div className="flex-1">
+                  <p className="text-sm text-purple-700 font-medium">Stai recensendo come:</p>
+                  <p className="text-lg font-bold text-purple-900">
+                    {activeProfile.nickname || activeProfile.name}
+                  </p>
+                  {activeProfile.nickname && !activeProfile.isOwner && (
+                    <p className="text-xs text-purple-600">{activeProfile.name}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {!isEditMode && (
             <div className="mb-6">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
