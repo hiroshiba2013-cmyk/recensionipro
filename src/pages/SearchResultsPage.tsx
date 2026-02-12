@@ -144,6 +144,7 @@ export function SearchResultsPage() {
           category_id: location.category_id,
           verified: location.is_verified || false
         },
+        added_by: location.added_by || null,
         avg_rating: 0,
         review_count: 0
       }));

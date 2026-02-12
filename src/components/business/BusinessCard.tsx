@@ -17,6 +17,7 @@ interface BusinessCardProps {
       address?: string;
       city?: string;
     };
+    added_by?: string | null;
   };
 }
 
@@ -64,7 +65,11 @@ export function BusinessCard({ business }: BusinessCardProps) {
       <div className="p-6">
         <div className="flex items-start justify-between mb-2 gap-2">
           <h3 className="text-xl font-semibold text-gray-900 flex-1">{business.name}</h3>
-          <VerificationBadge isClaimed={!!business.is_claimed} size="sm" />
+          <VerificationBadge
+            isClaimed={!!business.is_claimed}
+            isUserAdded={!!business.added_by && !business.is_claimed}
+            size="sm"
+          />
         </div>
 
         {business.category && (

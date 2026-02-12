@@ -32,6 +32,7 @@ interface BusinessLocation {
       icon: string;
     };
   };
+  added_by?: string | null;
   avg_rating?: number;
   review_count?: number;
 }
@@ -145,7 +146,11 @@ export function LocationCard({ location }: LocationCardProps) {
               <p className="text-sm text-gray-600 mt-1">{businessName}</p>
             )}
           </div>
-          <VerificationBadge isClaimed={!!location.is_claimed} size="sm" />
+          <VerificationBadge
+            isClaimed={!!location.is_claimed}
+            isUserAdded={!!location.added_by && !location.is_claimed}
+            size="sm"
+          />
         </div>
 
         <div className="flex items-center gap-2 mb-3">
