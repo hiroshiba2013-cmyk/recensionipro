@@ -1,11 +1,25 @@
 import { useState, useEffect } from 'react';
-import { Plus, X, Award } from 'lucide-react';
+import { Plus, X, Award, MapPin, Phone, Mail, Globe, User } from 'lucide-react';
 import { supabase, BusinessCategory } from '../../lib/supabase';
 import { CITIES_BY_PROVINCE, PROVINCE_TO_CODE, PROVINCES_BY_REGION } from '../../lib/cities';
 
 interface AddUnclaimedBusinessFormProps {
   customerId: string;
   onSuccess: () => void;
+}
+
+interface UserAddedBusiness {
+  id: string;
+  name: string;
+  category: string | null;
+  street: string | null;
+  city: string;
+  province: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  created_at: string;
+  source: 'unclaimed' | 'user_added';
 }
 
 const ALL_CITIES = Object.entries(CITIES_BY_PROVINCE).flatMap(([province, cities]) =>
@@ -22,6 +36,8 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<BusinessCategory[]>([]);
+  const [userAddedBusinesses, setUserAddedBusinesses] = useState<UserAddedBusiness[]>([]);
+  const [loadingBusinesses, setLoadingBusinesses] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     category_id: '',
@@ -37,7 +53,8 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
 
   useEffect(() => {
     loadCategories();
-  }, []);
+    loadUserAddedBusinesses();
+  }, [customerId]);
 
   const loadCategories = async () => {
     const { data } = await supabase
@@ -47,6 +64,55 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
 
     if (data) {
       setCategories(data);
+    }
+  };
+
+  const loadUserAddedBusinesses = async () => {
+    try {
+      setLoadingBusinesses(true);
+      const allBusinesses: UserAddedBusiness[] = [];
+
+      const { data: userAddedData } = await supabase
+        .from('user_added_businesses')
+        .select(`
+          id,
+          name,
+          street,
+          city,
+          province,
+          phone,
+          email,
+          website,
+          created_at,
+          business_categories(name)
+        `)
+        .eq('added_by', customerId)
+        .order('created_at', { ascending: false });
+
+      if (userAddedData) {
+        userAddedData.forEach((business: any) => {
+          allBusinesses.push({
+            id: business.id,
+            name: business.name,
+            category: business.business_categories?.name || null,
+            street: business.street,
+            city: business.city,
+            province: business.province,
+            phone: business.phone,
+            email: business.email,
+            website: business.website,
+            created_at: business.created_at,
+            source: 'user_added',
+          });
+        });
+      }
+
+      allBusinesses.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setUserAddedBusinesses(allBusinesses);
+    } catch (error) {
+      console.error('Error loading user added businesses:', error);
+    } finally {
+      setLoadingBusinesses(false);
     }
   };
 
@@ -126,6 +192,7 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
       });
       setShowForm(false);
       alert('Attività aggiunta con successo! Hai guadagnato 20 punti!');
+      loadUserAddedBusinesses();
       onSuccess();
     } catch (error) {
       console.error('Error adding business:', error);
@@ -334,7 +401,7 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
       )}
 
       {!showForm && (
-        <div className="bg-gradient-to-r from-blue-50 to-white border border-blue-200 rounded-lg p-6">
+        <div className="bg-gradient-to-r from-blue-50 to-white border border-blue-200 rounded-lg p-6 mb-6">
           <h3 className="font-semibold text-gray-900 mb-3">Come funziona?</h3>
           <ul className="space-y-2 text-gray-700">
             <li className="flex items-start gap-2">
@@ -354,6 +421,115 @@ export function AddUnclaimedBusinessForm({ customerId, onSuccess }: AddUnclaimed
               <span>Il proprietario dell'attività potrà rivendicarla in futuro</span>
             </li>
           </ul>
+        </div>
+      )}
+
+      {!showForm && (
+        <div className="mt-6">
+          <div className="flex items-center gap-2 mb-4">
+            <User className="w-5 h-5 text-green-600" />
+            <h3 className="text-lg font-semibold text-gray-900">
+              Le Tue Attività Aggiunte
+            </h3>
+            {userAddedBusinesses.length > 0 && (
+              <span className="bg-green-100 text-green-800 text-sm font-semibold px-3 py-1 rounded-full">
+                {userAddedBusinesses.length}
+              </span>
+            )}
+          </div>
+
+          {loadingBusinesses ? (
+            <div className="text-center py-8 text-gray-500">
+              Caricamento attività...
+            </div>
+          ) : userAddedBusinesses.length === 0 ? (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+              <User className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-600">
+                Non hai ancora aggiunto nessuna attività dalla ricerca.
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Quando cerchi un'attività per recensirla e l'aggiungi al database, apparirà qui!
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {userAddedBusinesses.map((business) => (
+                <div
+                  key={business.id}
+                  className="bg-white border-2 border-green-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-semibold text-gray-900 text-lg">
+                          {business.name}
+                        </h4>
+                        <span className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                          <User className="w-3 h-3" />
+                          Attività aggiunta da utente
+                        </span>
+                      </div>
+                      {business.category && (
+                        <p className="text-sm text-gray-600 mb-2">
+                          {business.category}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    {business.street && (
+                      <div className="flex items-start gap-2 text-sm text-gray-600">
+                        <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <span>
+                          {business.street}
+                          {business.city && `, ${business.city}`}
+                          {business.province && ` (${business.province})`}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap gap-4 text-sm">
+                      {business.phone && (
+                        <div className="flex items-center gap-1.5 text-gray-600">
+                          <Phone className="w-4 h-4 text-gray-400" />
+                          <span>{business.phone}</span>
+                        </div>
+                      )}
+                      {business.email && (
+                        <div className="flex items-center gap-1.5 text-gray-600">
+                          <Mail className="w-4 h-4 text-gray-400" />
+                          <span>{business.email}</span>
+                        </div>
+                      )}
+                      {business.website && (
+                        <a
+                          href={business.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800"
+                        >
+                          <Globe className="w-4 h-4" />
+                          <span>Visita sito</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <p className="text-xs text-gray-500">
+                      Aggiunta il {new Date(business.created_at).toLocaleDateString('it-IT', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
