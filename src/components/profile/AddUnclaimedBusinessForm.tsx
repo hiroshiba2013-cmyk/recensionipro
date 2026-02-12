@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, X, Award, MapPin, Phone, Mail, Globe, User } from 'lucide-react';
+import { Plus, X, Award, MapPin, Phone, Mail, Globe, User, Edit2, Trash2 } from 'lucide-react';
 import { supabase, BusinessCategory } from '../../lib/supabase';
 import { CITIES_BY_PROVINCE, PROVINCE_TO_CODE, PROVINCES_BY_REGION } from '../../lib/cities';
 
@@ -39,6 +39,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
   const [categories, setCategories] = useState<BusinessCategory[]>([]);
   const [userAddedBusinesses, setUserAddedBusinesses] = useState<UserAddedBusiness[]>([]);
   const [loadingBusinesses, setLoadingBusinesses] = useState(true);
+  const [editingBusinessId, setEditingBusinessId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     category_id: '',
@@ -263,6 +264,113 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
     }
   };
 
+  const handleEdit = (business: UserAddedBusiness) => {
+    const category = categories.find(c => c.name === business.category);
+    setFormData({
+      name: business.name,
+      category_id: category?.id || '',
+      street: business.street || '',
+      city: business.city,
+      province: business.province || '',
+      region: '',
+      postal_code: '',
+      website: business.website || '',
+      email: business.email || '',
+      phone: business.phone || '',
+    });
+    setEditingBusinessId(business.id);
+    setShowForm(true);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingBusinessId) return;
+
+    setLoading(true);
+
+    try {
+      const { error: updateError } = await supabase
+        .from('unclaimed_business_locations')
+        .update({
+          name: formData.name,
+          category_id: formData.category_id || null,
+          street: formData.street,
+          city: formData.city,
+          province: formData.province,
+          region: formData.region,
+          postal_code: formData.postal_code,
+          website: formData.website,
+          email: formData.email || null,
+          phone: formData.phone || null,
+        })
+        .eq('id', editingBusinessId);
+
+      if (updateError) throw updateError;
+
+      setFormData({
+        name: '',
+        category_id: '',
+        street: '',
+        city: '',
+        province: '',
+        region: '',
+        postal_code: '',
+        website: '',
+        email: '',
+        phone: '',
+      });
+      setShowForm(false);
+      setEditingBusinessId(null);
+      alert('Attività aggiornata con successo!');
+      loadUserAddedBusinesses();
+      onSuccess();
+    } catch (error) {
+      console.error('Error updating business:', error);
+      alert('Errore durante l\'aggiornamento dell\'attività');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (businessId: string, businessName: string) => {
+    if (!confirm(`Sei sicuro di voler eliminare "${businessName}"?`)) {
+      return;
+    }
+
+    try {
+      const { error: deleteError } = await supabase
+        .from('unclaimed_business_locations')
+        .delete()
+        .eq('id', businessId);
+
+      if (deleteError) throw deleteError;
+
+      alert('Attività eliminata con successo!');
+      loadUserAddedBusinesses();
+      onSuccess();
+    } catch (error) {
+      console.error('Error deleting business:', error);
+      alert('Errore durante l\'eliminazione dell\'attività');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setFormData({
+      name: '',
+      category_id: '',
+      street: '',
+      city: '',
+      province: '',
+      region: '',
+      postal_code: '',
+      website: '',
+      email: '',
+      phone: '',
+    });
+    setShowForm(false);
+    setEditingBusinessId(null);
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-md p-8 mb-8">
       <div className="flex items-center justify-between mb-6">
@@ -287,15 +395,24 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-gradient-to-br from-blue-50 to-white rounded-lg p-6 border-2 border-blue-200">
+        <form onSubmit={editingBusinessId ? handleUpdate : handleSubmit} className="bg-gradient-to-br from-blue-50 to-white rounded-lg p-6 border-2 border-blue-200">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2 text-blue-600">
-              <Award className="w-5 h-5" />
-              <span className="font-semibold">Guadagna 20 punti!</span>
+              {editingBusinessId ? (
+                <>
+                  <Edit2 className="w-5 h-5" />
+                  <span className="font-semibold">Modifica Attività</span>
+                </>
+              ) : (
+                <>
+                  <Award className="w-5 h-5" />
+                  <span className="font-semibold">Guadagna 20 punti!</span>
+                </>
+              )}
             </div>
             <button
               type="button"
-              onClick={() => setShowForm(false)}
+              onClick={handleCancelEdit}
               className="text-gray-500 hover:text-gray-700"
             >
               <X className="w-5 h-5" />
@@ -423,11 +540,13 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
             </div>
           </div>
 
-          <div className="bg-blue-100 border border-blue-200 rounded-lg p-4 mb-4">
-            <p className="text-sm text-blue-800">
-              <strong>Nota:</strong> L'attività verrà aggiunta al database e potrà essere rivendicata dal proprietario in futuro. Riceverai 20 punti per questo contributo!
-            </p>
-          </div>
+          {!editingBusinessId && (
+            <div className="bg-blue-100 border border-blue-200 rounded-lg p-4 mb-4">
+              <p className="text-sm text-blue-800">
+                <strong>Nota:</strong> L'attività verrà aggiunta al database e potrà essere rivendicata dal proprietario in futuro. Riceverai 20 punti per questo contributo!
+              </p>
+            </div>
+          )}
 
           <div className="flex gap-3">
             <button
@@ -435,11 +554,14 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
               disabled={loading}
               className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {loading ? 'Invio in corso...' : 'Aggiungi Attività e Guadagna 20 Punti'}
+              {loading
+                ? (editingBusinessId ? 'Aggiornamento...' : 'Invio in corso...')
+                : (editingBusinessId ? 'Aggiorna Attività' : 'Aggiungi Attività e Guadagna 20 Punti')
+              }
             </button>
             <button
               type="button"
-              onClick={() => setShowForm(false)}
+              onClick={handleCancelEdit}
               className="px-6 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
             >
               Annulla
@@ -524,6 +646,24 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
                         </p>
                       )}
                     </div>
+                    {business.source === 'unclaimed' && (
+                      <div className="flex gap-2 ml-4">
+                        <button
+                          onClick={() => handleEdit(business)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Modifica attività"
+                        >
+                          <Edit2 className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(business.id, business.name)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Elimina attività"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
