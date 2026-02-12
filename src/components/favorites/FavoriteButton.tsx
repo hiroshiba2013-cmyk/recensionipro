@@ -9,6 +9,7 @@ interface FavoriteButtonProps {
   familyMemberId?: string | null;
   showLabel?: boolean;
   className?: string;
+  onToggle?: (isFavorite: boolean) => void;
 }
 
 export function FavoriteButton({
@@ -16,7 +17,8 @@ export function FavoriteButton({
   itemId,
   familyMemberId = null,
   showLabel = false,
-  className = ''
+  className = '',
+  onToggle
 }: FavoriteButtonProps) {
   const { user } = useAuth();
   const [isFavorite, setIsFavorite] = useState(false);
@@ -90,6 +92,7 @@ export function FavoriteButton({
 
         await query;
         setIsFavorite(false);
+        onToggle?.(false);
       } else {
         const insertData: any = {
           user_id: user.id,
@@ -102,6 +105,7 @@ export function FavoriteButton({
           .insert(insertData);
 
         setIsFavorite(true);
+        onToggle?.(true);
       }
     } catch (error: any) {
       console.error('Error toggling favorite:', error);

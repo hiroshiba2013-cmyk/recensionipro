@@ -29,9 +29,10 @@ interface ClassifiedAd {
 interface FavoriteClassifiedAdCardProps {
   ad: ClassifiedAd;
   familyMemberId?: string | null;
+  onRemove?: () => void;
 }
 
-export function FavoriteClassifiedAdCard({ ad, familyMemberId = null }: FavoriteClassifiedAdCardProps) {
+export function FavoriteClassifiedAdCard({ ad, familyMemberId = null, onRemove }: FavoriteClassifiedAdCardProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('it-IT');
@@ -121,6 +122,11 @@ export function FavoriteClassifiedAdCard({ ad, familyMemberId = null }: Favorite
             itemId={ad.id}
             familyMemberId={familyMemberId}
             className="text-xs"
+            onToggle={(isFavorite) => {
+              if (!isFavorite && onRemove) {
+                onRemove();
+              }
+            }}
           />
           <ReportButton
             entityType="classified_ad"

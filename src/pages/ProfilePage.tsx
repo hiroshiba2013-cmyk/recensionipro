@@ -114,6 +114,15 @@ interface BusinessLocation {
   address: string;
   city: string;
   province: string;
+  description?: string;
+  avatar_url?: string;
+  phone?: string;
+  email?: string;
+  business?: {
+    name: string;
+  };
+  rating?: number;
+  reviews_count?: number;
 }
 
 interface ClassifiedAd {
@@ -181,6 +190,7 @@ export function ProfilePage() {
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [classifiedAds, setClassifiedAds] = useState<ClassifiedAd[]>([]);
   const [favoriteAds, setFavoriteAds] = useState<ClassifiedAd[]>([]);
+  const [favoriteBusinesses, setFavoriteBusinesses] = useState<BusinessLocation[]>([]);
   const [userRank, setUserRank] = useState<UserRank | null>(null);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [selectedFamilyMember, setSelectedFamilyMember] = useState<FamilyMember | null>(null);
@@ -339,6 +349,7 @@ export function ProfilePage() {
 
     await loadClassifiedAds();
     await loadFavoriteAds();
+    await loadFavoriteBusinesses();
     await loadLeaderboardData();
     await loadFamilyMembersData();
   };
@@ -491,8 +502,9 @@ export function ProfilePage() {
 
     const { data: memberReviewsData } = await supabase
       .from('reviews')
-      .select('id, proof_image_url')
-      .eq('family_member_id', familyMemberId);
+      .select('id, proof_image_url, review_status')
+      .eq('family_member_id', familyMemberId)
+      .eq('review_status', 'approved');
 
     const reviews_count = memberReviewsData?.length || 0;
     const total_points = (memberReviewsData || []).reduce((sum, review) => {
@@ -513,6 +525,7 @@ export function ProfilePage() {
     });
 
     await loadFavoriteAds();
+    await loadFavoriteBusinesses();
   };
 
   const loadLeaderboardData = async () => {
@@ -696,6 +709,75 @@ export function ProfilePage() {
       } else {
         setFavoriteAds([]);
       }
+    }
+  };
+
+  const loadFavoriteBusinesses = async () => {
+    if (!user) return;
+
+    const familyMemberId = activeProfile?.isOwner === false ? activeProfile?.id : null;
+
+    let favoritesQuery = supabase
+      .from('favorite_businesses')
+      .select(`
+        business_id,
+        business_locations(
+          id,
+          name,
+          internal_name,
+          address,
+          city,
+          province,
+          description,
+          avatar_url,
+          phone,
+          email,
+          businesses(name)
+        )
+      `)
+      .eq('user_id', user.id);
+
+    if (familyMemberId) {
+      favoritesQuery = favoritesQuery.eq('family_member_id', familyMemberId);
+    } else {
+      favoritesQuery = favoritesQuery.is('family_member_id', null);
+    }
+
+    const { data: favoritesData, error } = await favoritesQuery;
+
+    if (error) {
+      console.error('Error loading favorite businesses:', error);
+      return;
+    }
+
+    if (favoritesData) {
+      const businesses = favoritesData
+        .filter(fav => fav.business_locations)
+        .map(fav => {
+          const location = fav.business_locations as any;
+          return {
+            ...location,
+            business: location.businesses
+          };
+        });
+
+      // Ottieni i rating per ogni business
+      const businessesWithRatings = await Promise.all(
+        businesses.map(async (location) => {
+          const { data: ratingsData } = await supabase
+            .rpc('get_business_ratings', { location_id: location.id });
+
+          return {
+            ...location,
+            rating: ratingsData?.[0]?.avg_rating || 0,
+            reviews_count: ratingsData?.[0]?.review_count || 0
+          };
+        })
+      );
+
+      setFavoriteBusinesses(businessesWithRatings);
+    } else {
+      setFavoriteBusinesses([]);
     }
   };
 
@@ -1456,7 +1538,117 @@ export function ProfilePage() {
                       key={ad.id}
                       ad={ad}
                       familyMemberId={activeProfile?.isOwner === false ? activeProfile?.id : null}
+                      onRemove={loadFavoriteAds}
                     />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white rounded-xl shadow-md p-8 mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <Star className="w-6 h-6 text-blue-600 fill-blue-600" />
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {isFamilyMember ? 'Attività Preferite di ' + (selectedFamilyMember?.nickname || `${selectedFamilyMember?.first_name}`) : 'Attività Preferite'}
+                  </h2>
+                </div>
+              </div>
+
+              {favoriteBusinesses.length === 0 ? (
+                <div className="text-center py-8">
+                  <Star className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 mb-4">
+                    {isFamilyMember ? 'Nessuna attività salvata da questo membro' : 'Non hai ancora salvato attività'}
+                  </p>
+                  <a
+                    href="/"
+                    className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Cerca attività
+                  </a>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {favoriteBusinesses.map((business) => (
+                    <div key={business.id} className="bg-white border-2 border-gray-200 rounded-xl hover:shadow-lg transition-all duration-300">
+                      <div className="p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            {business.avatar_url ? (
+                              <img
+                                src={business.avatar_url}
+                                alt={business.internal_name || business.name || 'Attività'}
+                                className="w-16 h-16 rounded-lg object-cover mb-3"
+                              />
+                            ) : (
+                              <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-3">
+                                <Briefcase className="w-8 h-8 text-white" />
+                              </div>
+                            )}
+                            <h3 className="text-lg font-bold text-gray-900 mb-1">
+                              {business.internal_name || business.name || business.business?.name || 'Attività'}
+                            </h3>
+                            {business.business?.name && business.internal_name && (
+                              <p className="text-sm text-gray-600 mb-2">{business.business.name}</p>
+                            )}
+                            <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                              <MapPin className="w-4 h-4" />
+                              <span>{business.city}, {business.province}</span>
+                            </div>
+                            {business.rating > 0 && (
+                              <div className="flex items-center gap-2 mb-3">
+                                <div className="flex items-center gap-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`w-4 h-4 ${
+                                        i < Math.round(business.rating)
+                                          ? 'text-yellow-400 fill-yellow-400'
+                                          : 'text-gray-300'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                                <span className="text-sm text-gray-600">
+                                  {business.rating.toFixed(1)} ({business.reviews_count} recensioni)
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {business.description && (
+                          <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                            {business.description}
+                          </p>
+                        )}
+
+                        <div className="flex gap-2">
+                          <a
+                            href={`/business/${business.id}`}
+                            className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-center text-sm font-semibold"
+                          >
+                            Visualizza
+                          </a>
+                          <button
+                            onClick={async () => {
+                              const familyMemberId = activeProfile?.isOwner === false ? activeProfile?.id : null;
+                              await supabase
+                                .from('favorite_businesses')
+                                .delete()
+                                .eq('user_id', user?.id)
+                                .eq('business_id', business.id)
+                                .eq('family_member_id', familyMemberId || null);
+                              await loadFavoriteBusinesses();
+                            }}
+                            className="px-4 py-2 border-2 border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}

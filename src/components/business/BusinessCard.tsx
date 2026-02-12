@@ -5,6 +5,7 @@ import { ReviewForm } from '../reviews/ReviewForm';
 import { useAuth } from '../../contexts/AuthContext';
 import { VerificationBadge } from './VerificationBadge';
 import { useNavigate } from '../Router';
+import { FavoriteButton } from '../favorites/FavoriteButton';
 
 interface BusinessCardProps {
   business: Business & {
@@ -22,11 +23,13 @@ interface BusinessCardProps {
 }
 
 export function BusinessCard({ business }: BusinessCardProps) {
-  const { profile } = useAuth();
+  const { profile, activeProfile } = useAuth();
   const navigate = useNavigate();
   const [showReviewForm, setShowReviewForm] = useState(false);
 
   const canWriteReview = profile && profile.user_type === 'customer' && (profile.subscription_status === 'active' || profile.subscription_status === 'trial');
+  const isCustomer = profile && profile.user_type === 'customer';
+  const familyMemberId = activeProfile?.isOwner === false ? activeProfile?.id : null;
 
   const handleReviewClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -125,15 +128,26 @@ export function BusinessCard({ business }: BusinessCardProps) {
           )}
         </div>
 
-        {canWriteReview && (
+        {isCustomer && (
           <div className="mt-4 pt-4 border-t border-gray-100">
-            <button
-              onClick={handleReviewClick}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm"
-            >
-              <MessageSquare className="w-4 h-4" />
-              Scrivi una recensione
-            </button>
+            <div className="flex gap-2">
+              <FavoriteButton
+                type="business"
+                itemId={business.id}
+                familyMemberId={familyMemberId}
+                className="flex-1"
+                showLabel={true}
+              />
+              {canWriteReview && (
+                <button
+                  onClick={handleReviewClick}
+                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Recensione
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
