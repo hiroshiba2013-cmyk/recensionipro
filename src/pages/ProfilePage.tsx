@@ -442,7 +442,6 @@ export function ProfilePage() {
       .from('classified_ads')
       .select(`
         *,
-        profiles(full_name, avatar_url),
         classified_categories(name, icon)
       `)
       .eq('user_id', user?.id)
@@ -455,9 +454,31 @@ export function ProfilePage() {
     }
 
     if (adsData) {
+      let profileInfo;
+      if (familyMemberId) {
+        const { data: fmData } = await supabase
+          .from('customer_family_members')
+          .select('nickname, avatar_url')
+          .eq('id', familyMemberId)
+          .single();
+
+        profileInfo = fmData
+          ? { full_name: fmData.nickname, avatar_url: fmData.avatar_url }
+          : { full_name: 'Utente', avatar_url: null };
+      } else {
+        const { data: profData } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('id', user?.id)
+          .single();
+
+        profileInfo = profData || { full_name: 'Utente', avatar_url: null };
+      }
+
       const formattedAds = adsData.map(ad => ({
         ...ad,
-        price: ad.price ? parseFloat(ad.price) : null
+        price: ad.price ? parseFloat(ad.price) : null,
+        profiles: profileInfo
       }));
       setClassifiedAds(formattedAds);
     }
@@ -557,7 +578,6 @@ export function ProfilePage() {
       .from('classified_ads')
       .select(`
         *,
-        profiles(full_name, avatar_url),
         classified_categories(name, icon)
       `)
       .eq('user_id', user?.id)
@@ -570,9 +590,18 @@ export function ProfilePage() {
     }
 
     if (adsData) {
+      const { data: profData } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('id', user?.id)
+        .single();
+
+      const profileInfo = profData || { full_name: 'Utente', avatar_url: null };
+
       const formattedAds = adsData.map(ad => ({
         ...ad,
-        price: ad.price ? parseFloat(ad.price) : null
+        price: ad.price ? parseFloat(ad.price) : null,
+        profiles: profileInfo
       }));
       setClassifiedAds(formattedAds);
     }
@@ -589,7 +618,6 @@ export function ProfilePage() {
         ad_id,
         classified_ads(
           *,
-          profiles(full_name, avatar_url),
           classified_categories(name, icon)
         )
       `)
@@ -602,13 +630,54 @@ export function ProfilePage() {
     }
 
     if (favoritesData) {
-      const formattedAds = favoritesData
+      const ads = favoritesData
         .filter(fav => fav.classified_ads)
-        .map(fav => ({
-          ...(fav.classified_ads as any),
-          price: (fav.classified_ads as any).price ? parseFloat((fav.classified_ads as any).price) : null
-        }));
-      setFavoriteAds(formattedAds);
+        .map(fav => fav.classified_ads as any);
+
+      if (ads.length > 0) {
+        const userIds = [...new Set(ads.map((ad: any) => ad.user_id))];
+        const familyMemberIds = [...new Set(ads.map((ad: any) => ad.family_member_id).filter(Boolean))];
+
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', userIds);
+
+        let familyMembersData: any[] = [];
+        if (familyMemberIds.length > 0) {
+          const { data: fmData } = await supabase
+            .from('customer_family_members')
+            .select('id, nickname, avatar_url')
+            .in('id', familyMemberIds);
+
+          familyMembersData = fmData || [];
+        }
+
+        const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+        const familyMembersMap = new Map(familyMembersData.map(fm => [fm.id, fm]));
+
+        const formattedAds = ads.map((ad: any) => {
+          let profileInfo;
+          if (ad.family_member_id) {
+            const familyMember = familyMembersMap.get(ad.family_member_id);
+            profileInfo = familyMember
+              ? { full_name: familyMember.nickname, avatar_url: familyMember.avatar_url }
+              : { full_name: 'Utente', avatar_url: null };
+          } else {
+            profileInfo = profilesMap.get(ad.user_id) || { full_name: 'Utente', avatar_url: null };
+          }
+
+          return {
+            ...ad,
+            price: ad.price ? parseFloat(ad.price) : null,
+            profiles: profileInfo
+          };
+        });
+
+        setFavoriteAds(formattedAds);
+      } else {
+        setFavoriteAds([]);
+      }
     }
   };
 

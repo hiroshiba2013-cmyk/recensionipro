@@ -75,15 +75,31 @@ export function ClassifiedAdDetailPage() {
       if (error) throw error;
 
       if (data) {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('full_name, avatar_url')
-          .eq('id', data.user_id)
-          .single();
+        let profileInfo;
+
+        if (data.family_member_id) {
+          const { data: familyMemberData } = await supabase
+            .from('customer_family_members')
+            .select('nickname, avatar_url')
+            .eq('id', data.family_member_id)
+            .single();
+
+          profileInfo = familyMemberData
+            ? { full_name: familyMemberData.nickname, avatar_url: familyMemberData.avatar_url }
+            : { full_name: 'Utente', avatar_url: null };
+        } else {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', data.user_id)
+            .single();
+
+          profileInfo = profileData || { full_name: 'Utente', avatar_url: null };
+        }
 
         const adWithProfile = {
           ...data,
-          profiles: profileData || { full_name: 'Utente', avatar_url: null }
+          profiles: profileInfo
         };
 
         setAd(adWithProfile);

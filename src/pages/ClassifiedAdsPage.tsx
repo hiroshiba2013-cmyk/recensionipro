@@ -24,8 +24,10 @@ interface ClassifiedAd {
   images: string[] | null;
   category_id: string;
   user_id: string;
+  family_member_id: string | null;
   views_count: number;
   created_at: string;
+  ad_type: 'sell' | 'buy' | 'gift';
   profiles: {
     full_name: string;
     avatar_url: string | null;
@@ -112,6 +114,7 @@ export function ClassifiedAdsPage() {
 
       if (data && data.length > 0) {
         const userIds = [...new Set(data.map((ad: any) => ad.user_id))];
+        const familyMemberIds = [...new Set(data.map((ad: any) => ad.family_member_id).filter(Boolean))];
 
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
@@ -122,12 +125,39 @@ export function ClassifiedAdsPage() {
           console.error('Error loading profiles:', profilesError);
         }
 
-        const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+        let familyMembersData: any[] = [];
+        if (familyMemberIds.length > 0) {
+          const { data: fmData, error: fmError } = await supabase
+            .from('customer_family_members')
+            .select('id, nickname, avatar_url')
+            .in('id', familyMemberIds);
 
-        const adsWithProfiles = data.map((ad: any) => ({
-          ...ad,
-          profiles: profilesMap.get(ad.user_id) || { full_name: 'Utente', avatar_url: null }
-        }));
+          if (fmError) {
+            console.error('Error loading family members:', fmError);
+          } else {
+            familyMembersData = fmData || [];
+          }
+        }
+
+        const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+        const familyMembersMap = new Map(familyMembersData.map(fm => [fm.id, fm]));
+
+        const adsWithProfiles = data.map((ad: any) => {
+          if (ad.family_member_id) {
+            const familyMember = familyMembersMap.get(ad.family_member_id);
+            return {
+              ...ad,
+              profiles: familyMember
+                ? { full_name: familyMember.nickname, avatar_url: familyMember.avatar_url }
+                : { full_name: 'Utente', avatar_url: null }
+            };
+          } else {
+            return {
+              ...ad,
+              profiles: profilesMap.get(ad.user_id) || { full_name: 'Utente', avatar_url: null }
+            };
+          }
+        });
 
         setAds(adsWithProfiles);
       } else {
