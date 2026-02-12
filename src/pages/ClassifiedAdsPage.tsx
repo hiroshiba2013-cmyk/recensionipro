@@ -118,7 +118,7 @@ export function ClassifiedAdsPage() {
 
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, full_name, avatar_url')
+          .select('id, full_name, nickname, avatar_url')
           .in('id', userIds);
 
         if (profilesError) {
@@ -152,9 +152,12 @@ export function ClassifiedAdsPage() {
                 : { full_name: 'Utente', avatar_url: null }
             };
           } else {
+            const profile = profilesMap.get(ad.user_id);
             return {
               ...ad,
-              profiles: profilesMap.get(ad.user_id) || { full_name: 'Utente', avatar_url: null }
+              profiles: profile
+                ? { full_name: profile.nickname || profile.full_name, avatar_url: profile.avatar_url }
+                : { full_name: 'Utente', avatar_url: null }
             };
           }
         });

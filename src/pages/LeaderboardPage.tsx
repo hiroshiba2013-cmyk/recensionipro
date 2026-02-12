@@ -131,6 +131,7 @@ export function LeaderboardPage() {
           reviews_count,
           profiles!inner(
             full_name,
+            nickname,
             avatar_url,
             user_type
           )
@@ -149,7 +150,7 @@ export function LeaderboardPage() {
 
       const leaderboard: LeaderboardUser[] = data.map((item: any, index: number) => ({
         id: item.user_id,
-        full_name: item.profiles.full_name,
+        full_name: item.profiles.nickname || item.profiles.full_name,
         avatar_url: item.profiles.avatar_url,
         points: item.total_points,
         reviews_count: item.reviews_count,

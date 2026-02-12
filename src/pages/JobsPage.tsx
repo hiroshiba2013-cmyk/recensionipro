@@ -178,7 +178,7 @@ export function JobsPage() {
         .select(`
           *,
           user:auth.users!inner(
-            profiles!inner(full_name)
+            profiles!inner(full_name, nickname)
           ),
           business_categories(name)
         `)

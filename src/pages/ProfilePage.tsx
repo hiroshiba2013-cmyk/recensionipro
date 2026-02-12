@@ -468,11 +468,13 @@ export function ProfilePage() {
       } else {
         const { data: profData } = await supabase
           .from('profiles')
-          .select('full_name, avatar_url')
+          .select('full_name, nickname, avatar_url')
           .eq('id', user?.id)
           .single();
 
-        profileInfo = profData || { full_name: 'Utente', avatar_url: null };
+        profileInfo = profData
+          ? { full_name: profData.nickname || profData.full_name, avatar_url: profData.avatar_url }
+          : { full_name: 'Utente', avatar_url: null };
       }
 
       const formattedAds = adsData.map(ad => ({
@@ -592,11 +594,13 @@ export function ProfilePage() {
     if (adsData) {
       const { data: profData } = await supabase
         .from('profiles')
-        .select('full_name, avatar_url')
+        .select('full_name, nickname, avatar_url')
         .eq('id', user?.id)
         .single();
 
-      const profileInfo = profData || { full_name: 'Utente', avatar_url: null };
+      const profileInfo = profData
+        ? { full_name: profData.nickname || profData.full_name, avatar_url: profData.avatar_url }
+        : { full_name: 'Utente', avatar_url: null };
 
       const formattedAds = adsData.map(ad => ({
         ...ad,
@@ -640,7 +644,7 @@ export function ProfilePage() {
 
         const { data: profilesData } = await supabase
           .from('profiles')
-          .select('id, full_name, avatar_url')
+          .select('id, full_name, nickname, avatar_url')
           .in('id', userIds);
 
         let familyMembersData: any[] = [];
@@ -664,7 +668,10 @@ export function ProfilePage() {
               ? { full_name: familyMember.nickname, avatar_url: familyMember.avatar_url }
               : { full_name: 'Utente', avatar_url: null };
           } else {
-            profileInfo = profilesMap.get(ad.user_id) || { full_name: 'Utente', avatar_url: null };
+            const profile = profilesMap.get(ad.user_id);
+            profileInfo = profile
+              ? { full_name: profile.nickname || profile.full_name, avatar_url: profile.avatar_url }
+              : { full_name: 'Utente', avatar_url: null };
           }
 
           return {

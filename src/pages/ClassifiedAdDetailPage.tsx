@@ -90,11 +90,13 @@ export function ClassifiedAdDetailPage() {
         } else {
           const { data: profileData } = await supabase
             .from('profiles')
-            .select('full_name, avatar_url')
+            .select('full_name, nickname, avatar_url')
             .eq('id', data.user_id)
             .single();
 
-          profileInfo = profileData || { full_name: 'Utente', avatar_url: null };
+          profileInfo = profileData
+            ? { full_name: profileData.nickname || profileData.full_name, avatar_url: profileData.avatar_url }
+            : { full_name: 'Utente', avatar_url: null };
         }
 
         const adWithProfile = {

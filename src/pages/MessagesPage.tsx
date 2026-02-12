@@ -120,7 +120,7 @@ export function MessagesPage() {
 
           const { data: profileData } = await supabase
             .from('profiles')
-            .select('full_name, avatar_url')
+            .select('full_name, nickname, avatar_url')
             .eq('id', otherUserId)
             .single();
 
@@ -131,9 +131,11 @@ export function MessagesPage() {
             .eq('is_read', false)
             .neq('sender_id', user.id);
 
+          const displayName = profileData?.nickname || profileData?.full_name || 'Utente';
+
           return {
             ...conv,
-            profiles: profileData,
+            profiles: profileData ? { ...profileData, full_name: displayName } : null,
             unread_count: count || 0,
           };
         })

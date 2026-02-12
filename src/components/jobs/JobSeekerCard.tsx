@@ -36,7 +36,7 @@ export function JobSeekerCard({ jobSeeker, onContact, showContactButton = true }
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
           <h3 className="text-xl font-bold text-gray-900">{jobSeeker.title}</h3>
-          <p className="text-gray-600 font-medium">{jobSeeker.user.profiles.full_name}</p>
+          <p className="text-gray-600 font-medium">{jobSeeker.user.profiles.nickname || jobSeeker.user.profiles.full_name}</p>
           {jobSeeker.business_categories && (
             <div className="flex items-center gap-1 mt-1">
               <Tag className="w-3 h-3 text-gray-500" />

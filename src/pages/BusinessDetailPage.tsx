@@ -246,7 +246,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           .from('reviews')
           .select(`
             *,
-            customer:profiles!customer_id(full_name),
+            customer:profiles!customer_id(full_name, nickname),
             responses:review_responses(*),
             family_member:customer_family_members(first_name, last_name, nickname)
           `)

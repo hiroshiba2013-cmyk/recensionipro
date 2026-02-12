@@ -71,7 +71,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
           {review.family_member ? (
             <p className="text-sm font-medium text-gray-900">{review.family_member.nickname}</p>
           ) : review.customer ? (
-            <p className="text-sm font-medium text-gray-900">{review.customer.full_name}</p>
+            <p className="text-sm font-medium text-gray-900">{review.customer.nickname || review.customer.full_name}</p>
           ) : null}
           <span className="text-xs text-gray-500">{formatDate(review.created_at)}</span>
           {review.business_location && (
