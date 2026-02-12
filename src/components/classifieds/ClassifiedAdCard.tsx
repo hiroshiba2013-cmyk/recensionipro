@@ -1,4 +1,6 @@
 import { MapPin, Eye, Calendar } from 'lucide-react';
+import { FavoriteButton } from '../favorites/FavoriteButton';
+import ReportButton from '../moderation/ReportButton';
 
 interface ClassifiedAd {
   id: string;
@@ -48,99 +50,113 @@ export function ClassifiedAdCard({ ad }: ClassifiedAdCardProps) {
   const firstImage = ad.images && ad.images.length > 0 ? ad.images[0] : null;
 
   return (
-    <a
-      href={`/classified/${ad.id}`}
-      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden group"
-    >
-      {/* Image */}
-      <div className="relative aspect-video bg-gray-200">
-        {firstImage ? (
-          <img
-            src={firstImage}
-            alt={ad.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
-            <span className="text-4xl">{ad.classified_categories.icon}</span>
+    <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
+      <a href={`/classified/${ad.id}`}>
+        {/* Image */}
+        <div className="relative aspect-video bg-gray-200">
+          {firstImage ? (
+            <img
+              src={firstImage}
+              alt={ad.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
+              <span className="text-4xl">{ad.classified_categories.icon}</span>
+            </div>
+          )}
+
+          {/* Ad Type Badge */}
+          <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-sm font-bold shadow-sm ${
+            ad.ad_type === 'sell'
+              ? 'bg-blue-600 text-white'
+              : ad.ad_type === 'buy'
+              ? 'bg-green-600 text-white'
+              : 'bg-orange-600 text-white'
+          }`}>
+            {ad.ad_type === 'sell' ? '💰 Vendo' : ad.ad_type === 'buy' ? '🔍 Cerco' : '🎁 Regalo'}
           </div>
-        )}
 
-        {/* Ad Type Badge */}
-        <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-sm font-bold shadow-sm ${
-          ad.ad_type === 'sell'
-            ? 'bg-blue-600 text-white'
-            : ad.ad_type === 'buy'
-            ? 'bg-green-600 text-white'
-            : 'bg-orange-600 text-white'
-        }`}>
-          {ad.ad_type === 'sell' ? '💰 Vendo' : ad.ad_type === 'buy' ? '🔍 Cerco' : '🎁 Regalo'}
-        </div>
-
-        {/* Category Badge */}
-        <div className="absolute bottom-3 left-3 bg-white px-3 py-1 rounded-full text-xs font-medium text-gray-900 shadow-sm">
-          {ad.classified_categories.name}
-        </div>
-
-        {/* Price Badge */}
-        {ad.price && (
-          <div className="absolute top-3 right-3 bg-white text-gray-900 px-3 py-1 rounded-full text-sm font-bold shadow-sm">
-            €{ad.price.toLocaleString('it-IT')}
+          {/* Category Badge */}
+          <div className="absolute bottom-3 left-3 bg-white px-3 py-1 rounded-full text-xs font-medium text-gray-900 shadow-sm">
+            {ad.classified_categories.name}
           </div>
-        )}
-      </div>
 
-      {/* Content */}
-      <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-          {truncateText(ad.title, 50)}
-        </h3>
-
-        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-          {truncateText(ad.description, 100)}
-        </p>
-
-        {/* Location */}
-        <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
-          <MapPin className="w-4 h-4" />
-          <span>
-            {ad.city}, {ad.province}
-          </span>
+          {/* Price Badge */}
+          {ad.price && (
+            <div className="absolute top-3 right-3 bg-white text-gray-900 px-3 py-1 rounded-full text-sm font-bold shadow-sm">
+              €{ad.price.toLocaleString('it-IT')}
+            </div>
+          )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-          <div className="flex items-center gap-2">
-            {ad.profiles.avatar_url ? (
-              <img
-                src={ad.profiles.avatar_url}
-                alt={ad.profiles.full_name}
-                className="w-8 h-8 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                <span className="text-sm font-medium text-gray-600">
-                  {ad.profiles.full_name.charAt(0)}
-                </span>
-              </div>
-            )}
-            <span className="text-sm text-gray-700 font-medium">
-              {ad.profiles.full_name}
+        {/* Content */}
+        <div className="p-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+            {truncateText(ad.title, 50)}
+          </h3>
+
+          <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+            {truncateText(ad.description, 100)}
+          </p>
+
+          {/* Location */}
+          <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
+            <MapPin className="w-4 h-4" />
+            <span>
+              {ad.city}, {ad.province}
             </span>
           </div>
 
-          <div className="flex items-center gap-3 text-gray-500 text-sm">
-            <div className="flex items-center gap-1">
-              <Eye className="w-4 h-4" />
-              <span>{ad.views_count}</span>
+          {/* Footer */}
+          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+            <div className="flex items-center gap-2">
+              {ad.profiles.avatar_url ? (
+                <img
+                  src={ad.profiles.avatar_url}
+                  alt={ad.profiles.full_name}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                  <span className="text-sm font-medium text-gray-600">
+                    {ad.profiles.full_name.charAt(0)}
+                  </span>
+                </div>
+              )}
+              <span className="text-sm text-gray-700 font-medium">
+                {ad.profiles.full_name}
+              </span>
             </div>
-            <div className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
-              <span>{formatDate(ad.created_at)}</span>
+
+            <div className="flex items-center gap-3 text-gray-500 text-sm">
+              <div className="flex items-center gap-1">
+                <Eye className="w-4 h-4" />
+                <span>{ad.views_count}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Calendar className="w-4 h-4" />
+                <span>{formatDate(ad.created_at)}</span>
+              </div>
             </div>
           </div>
         </div>
+      </a>
+
+      {/* Action Buttons */}
+      <div className="px-4 pb-4 flex gap-2">
+        <FavoriteButton
+          type="ad"
+          itemId={ad.id}
+          showLabel={false}
+          className="flex-1 justify-center text-xs"
+        />
+        <ReportButton
+          entityType="classified_ad"
+          entityId={ad.id}
+          compact={false}
+        />
       </div>
-    </a>
+    </div>
   );
 }

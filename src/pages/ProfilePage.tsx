@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { ProfileClassifiedAdCard } from '../components/classifieds/ProfileClassifiedAdCard';
+import { FavoriteClassifiedAdCard } from '../components/classifieds/FavoriteClassifiedAdCard';
 import { ClassifiedAdForm } from '../components/classifieds/ClassifiedAdForm';
 import { AvatarUpload } from '../components/profile/AvatarUpload';
 import { EditProfileForm } from '../components/profile/EditProfileForm';
@@ -179,6 +180,7 @@ export function ProfilePage() {
   const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [classifiedAds, setClassifiedAds] = useState<ClassifiedAd[]>([]);
+  const [favoriteAds, setFavoriteAds] = useState<ClassifiedAd[]>([]);
   const [userRank, setUserRank] = useState<UserRank | null>(null);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [selectedFamilyMember, setSelectedFamilyMember] = useState<FamilyMember | null>(null);
@@ -332,6 +334,7 @@ export function ProfilePage() {
     }
 
     await loadClassifiedAds();
+    await loadFavoriteAds();
     await loadLeaderboardData();
     await loadFamilyMembersData();
   };
@@ -481,6 +484,8 @@ export function ProfilePage() {
       total_points,
       reviews_count,
     });
+
+    await loadFavoriteAds();
   };
 
   const loadLeaderboardData = async () => {
@@ -570,6 +575,40 @@ export function ProfilePage() {
         price: ad.price ? parseFloat(ad.price) : null
       }));
       setClassifiedAds(formattedAds);
+    }
+  };
+
+  const loadFavoriteAds = async () => {
+    if (!user) return;
+
+    const familyMemberId = activeProfile?.isOwner === false ? activeProfile?.id : null;
+
+    const { data: favoritesData, error } = await supabase
+      .from('favorite_classified_ads')
+      .select(`
+        ad_id,
+        classified_ads(
+          *,
+          profiles(full_name, avatar_url),
+          classified_categories(name, icon)
+        )
+      `)
+      .eq('user_id', user.id)
+      .eq('family_member_id', familyMemberId || null);
+
+    if (error) {
+      console.error('Error loading favorite ads:', error);
+      return;
+    }
+
+    if (favoritesData) {
+      const formattedAds = favoritesData
+        .filter(fav => fav.classified_ads)
+        .map(fav => ({
+          ...(fav.classified_ads as any),
+          price: (fav.classified_ads as any).price ? parseFloat((fav.classified_ads as any).price) : null
+        }));
+      setFavoriteAds(formattedAds);
     }
   };
 
@@ -1296,6 +1335,42 @@ export function ProfilePage() {
                     ))}
                   </div>
                 </>
+              )}
+            </div>
+
+            <div className="bg-white rounded-xl shadow-md p-8 mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <Star className="w-6 h-6 text-yellow-600" />
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {isFamilyMember ? 'Annunci Preferiti di ' + (selectedFamilyMember?.nickname || `${selectedFamilyMember?.first_name}`) : 'Annunci Preferiti'}
+                  </h2>
+                </div>
+              </div>
+
+              {favoriteAds.length === 0 ? (
+                <div className="text-center py-8">
+                  <Star className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 mb-4">
+                    {isFamilyMember ? 'Nessun annuncio salvato da questo membro' : 'Non hai ancora salvato annunci'}
+                  </p>
+                  <a
+                    href="/classified"
+                    className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Esplora gli annunci
+                  </a>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {favoriteAds.map((ad) => (
+                    <FavoriteClassifiedAdCard
+                      key={ad.id}
+                      ad={ad}
+                      familyMemberId={activeProfile?.isOwner === false ? activeProfile?.id : null}
+                    />
+                  ))}
+                </div>
               )}
             </div>
           </>
