@@ -73,6 +73,8 @@ export function FavoritesSection() {
           return;
         }
 
+        console.log('Favorites data from DB:', favoritesData);
+
         const enrichedFavorites = await Promise.all(
           favoritesData.map(async (fav) => {
             let itemData = null;
@@ -126,7 +128,8 @@ export function FavoritesSection() {
                   address: data.street,
                   city: data.city,
                   phone: data.phone,
-                  businesses: { name: data.name }
+                  businesses: { name: data.name },
+                  is_unclaimed: true
                 };
               }
             }
@@ -138,7 +141,9 @@ export function FavoritesSection() {
           })
         );
 
-        setFavoriteBusinesses(enrichedFavorites.filter(f => f.item !== null));
+        const filteredFavorites = enrichedFavorites.filter(f => f.item !== null);
+        console.log('Enriched favorites:', filteredFavorites);
+        setFavoriteBusinesses(filteredFavorites);
       } else if (activeTab === 'ads') {
         const { data } = await supabase
           .from('favorite_classified_ads')
@@ -224,6 +229,10 @@ export function FavoritesSection() {
     return acc;
   }, {} as Record<string, FavoriteItem[]>);
 
+  console.log('Grouped businesses:', groupedBusinesses);
+  console.log('Active tab:', activeTab);
+  console.log('Loading:', loading);
+
   const groupedAds = favoriteAds.reduce((acc, fav) => {
     const owner = fav.family_member_id || 'main';
     if (!acc[owner]) acc[owner] = [];
@@ -242,6 +251,15 @@ export function FavoritesSection() {
     if (!fav.item) return null;
     const business = fav.item;
 
+    const handleViewDetails = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (business.is_unclaimed) {
+        navigate(`/business/unclaimed/${business.id}`);
+      } else {
+        navigate(`/business/${business.business_id}`);
+      }
+    };
+
     return (
       <div key={fav.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
         <div className="flex items-start justify-between">
@@ -256,10 +274,7 @@ export function FavoritesSection() {
               <p className="text-sm text-gray-500">{business.phone}</p>
             )}
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/business/${business.business_id}`);
-              }}
+              onClick={handleViewDetails}
               className="inline-block mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
               Visualizza dettagli →
@@ -406,13 +421,19 @@ export function FavoritesSection() {
       {loading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p className="text-sm text-gray-500 mt-2">Caricamento preferiti...</p>
         </div>
       ) : (
         <div className="space-y-8">
           {activeTab === 'businesses' && (
             <>
-              {Object.keys(groupedBusinesses).length === 0 ? (
+              {favoriteBusinesses.length === 0 ? (
                 <p className="text-gray-600 text-center py-8">Nessuna attività nei preferiti</p>
+              ) : Object.keys(groupedBusinesses).length === 0 ? (
+                <p className="text-gray-600 text-center py-8">
+                  Hai {favoriteBusinesses.length} preferiti ma c'è un problema nel caricamento.
+                  Controlla la console per i dettagli.
+                </p>
               ) : (
                 <>
                   {groupedBusinesses['main'] && (

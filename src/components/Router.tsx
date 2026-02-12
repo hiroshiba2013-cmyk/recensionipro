@@ -143,9 +143,16 @@ export function Router() {
     return <AdminLoginPage />;
   }
 
+  if (currentPath.startsWith('/business/unclaimed/')) {
+    const unclaimedBusinessId = currentPath.split('/')[3];
+    if (unclaimedBusinessId) {
+      return <BusinessDetailPage businessId={unclaimedBusinessId} />;
+    }
+  }
+
   if (currentPath.startsWith('/business/')) {
     const businessId = currentPath.split('/')[2];
-    if (businessId) {
+    if (businessId && businessId !== 'unclaimed') {
       return <BusinessDetailPage businessId={businessId} />;
     }
   }
