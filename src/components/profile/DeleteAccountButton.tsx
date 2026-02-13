@@ -71,18 +71,20 @@ export function DeleteAccountButton({ onAccountDeleted }: DeleteAccountButtonPro
           Eliminando il tuo account, verranno rimossi permanentemente:
         </p>
         <ul className="list-disc list-inside space-y-2 text-red-800 ml-4">
-          <li>Tutte le tue recensioni</li>
-          <li>Tutti i tuoi annunci gratuiti</li>
-          <li>I membri della tua famiglia collegati all'account</li>
-          <li>Le tue richieste di lavoro</li>
-          <li>I tuoi messaggi e conversazioni</li>
-          <li>Il tuo punteggio e posizione in classifica</li>
-          <li>I tuoi referral</li>
-          <li>Se hai un'azienda: annunci di lavoro, sconti, sedi e recensioni ricevute</li>
-          <li>I tuoi abbonamenti attivi</li>
+          <li><strong>Tutte le tue recensioni</strong> e quelle create dai membri della tua famiglia</li>
+          <li><strong>Tutti i tuoi annunci gratuiti</strong> e quelli creati dai membri della tua famiglia</li>
+          <li><strong>I membri della tua famiglia</strong> collegati all'account e tutti i loro contenuti</li>
+          <li><strong>Le tue richieste di lavoro</strong> e quelle dei membri della tua famiglia</li>
+          <li><strong>I tuoi messaggi e conversazioni</strong> (compresi messaggi privati e chat)</li>
+          <li><strong>Tutti i preferiti</strong> (attività, annunci, offerte di lavoro salvati)</li>
+          <li><strong>Il tuo punteggio e posizione in classifica</strong></li>
+          <li><strong>Activity log e cronologia attività</strong></li>
+          <li>Se hai un'azienda: <strong>annunci di lavoro, prodotti, sconti, sedi aziendali e risposte alle recensioni</strong></li>
+          <li><strong>I tuoi abbonamenti attivi</strong> (trial o pagati)</li>
         </ul>
-        <p className="text-red-900 font-bold mt-4">
+        <p className="text-red-900 font-bold mt-4 text-base">
           Non sarà possibile recuperare questi dati una volta eliminato l'account.
+          Ogni contenuto, attività e informazione verrà eliminata in modo permanente dal database.
         </p>
       </div>
 
