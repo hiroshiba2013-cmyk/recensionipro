@@ -1665,7 +1665,7 @@ export function ProfilePage() {
                             {business.avatar_url ? (
                               <img
                                 src={business.avatar_url}
-                                alt={business.internal_name || business.name || 'Attività'}
+                                alt={business.business?.name || business.name || 'Attività'}
                                 className="w-16 h-16 rounded-lg object-cover mb-3"
                               />
                             ) : (
@@ -1674,10 +1674,10 @@ export function ProfilePage() {
                               </div>
                             )}
                             <h3 className="text-lg font-bold text-gray-900 mb-1">
-                              {business.internal_name || business.name || business.business?.name || 'Attività'}
+                              {business.business?.name || business.name || 'Attività'}
                             </h3>
-                            {business.business?.name && business.internal_name && (
-                              <p className="text-sm text-gray-600 mb-2">{business.business.name}</p>
+                            {business.business?.name && (business.internal_name || business.name) && business.business.name !== (business.internal_name || business.name) && (
+                              <p className="text-sm text-gray-600 mb-2">Sede: {business.internal_name || business.name}</p>
                             )}
                             <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                               <MapPin className="w-4 h-4" />
