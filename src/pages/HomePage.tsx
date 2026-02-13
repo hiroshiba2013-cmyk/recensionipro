@@ -484,43 +484,6 @@ function AuthenticatedHomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-16 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center gap-2 md:gap-8 py-3">
-            {userType !== 'business' && (
-              <a
-                href="/classified-ads"
-                className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-green-50 transition-all group"
-              >
-                <Tag className="w-7 h-7 md:w-8 md:h-8 text-green-600 group-hover:scale-110 transition-transform" />
-                <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-green-600">Annunci</span>
-              </a>
-            )}
-            <a
-              href="/jobs"
-              className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-purple-50 transition-all group"
-            >
-              <Briefcase className="w-7 h-7 md:w-8 md:h-8 text-purple-600 group-hover:scale-110 transition-transform" />
-              <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-purple-600">Lavoro</span>
-            </a>
-            <a
-              href="/solidarity"
-              className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-pink-50 transition-all group"
-            >
-              <Heart className="w-7 h-7 md:w-8 md:h-8 text-pink-600 group-hover:scale-110 transition-transform" />
-              <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-pink-600">Solidarietà</span>
-            </a>
-            <a
-              href="/leaderboard"
-              className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-yellow-50 transition-all group"
-            >
-              <Award className="w-7 h-7 md:w-8 md:h-8 text-yellow-600 group-hover:scale-110 transition-transform" />
-              <span className="text-xs md:text-sm font-semibold text-gray-700 group-hover:text-yellow-600">Classifica</span>
-            </a>
-          </div>
-        </div>
-      </div>
-
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
