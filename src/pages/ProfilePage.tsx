@@ -725,7 +725,7 @@ export function ProfilePage() {
       // Query base per i preferiti
       let baseQuery = supabase
         .from('favorite_businesses')
-        .select('business_id, unclaimed_business_location_id')
+        .select('business_id, business_location_id, unclaimed_business_location_id')
         .eq('user_id', user.id);
 
       if (familyMemberId) {
