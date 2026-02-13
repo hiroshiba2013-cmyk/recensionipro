@@ -837,19 +837,22 @@ export function ProfilePage() {
 
       console.log('🏢 All locations loaded:', allLocations.length);
 
-      // Ottieni i rating per ogni location
-      const locationsWithRatings = await Promise.all(
-        allLocations.map(async (location) => {
-          const { data: ratingsData } = await supabase
-            .rpc('get_business_ratings', { location_id: location.id });
+      // Ottieni i rating per tutte le locations in una sola chiamata
+      const locationIds = allLocations.map(loc => loc.id);
+      const { data: ratingsData } = await supabase
+        .rpc('get_location_ratings', { location_ids: locationIds });
 
-          return {
-            ...location,
-            rating: ratingsData?.[0]?.avg_rating || 0,
-            reviews_count: ratingsData?.[0]?.review_count || 0
-          };
-        })
-      );
+      console.log('📊 Ratings data:', ratingsData);
+
+      // Mappa i rating alle locations
+      const locationsWithRatings = allLocations.map(location => {
+        const rating = ratingsData?.find(r => r.id === location.id);
+        return {
+          ...location,
+          rating: rating?.avg_rating || 0,
+          reviews_count: rating?.review_count || 0
+        };
+      });
 
       console.log('⭐ Locations with ratings:', locationsWithRatings);
       setFavoriteBusinesses(locationsWithRatings);
