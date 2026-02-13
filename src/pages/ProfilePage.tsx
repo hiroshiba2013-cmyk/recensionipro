@@ -855,6 +855,7 @@ export function ProfilePage() {
       });
 
       console.log('⭐ Locations with ratings:', locationsWithRatings);
+      console.log('🔍 First business details:', locationsWithRatings[0]);
       setFavoriteBusinesses(locationsWithRatings);
     } catch (error) {
       console.error('Error in loadFavoriteBusinesses:', error);
@@ -1707,7 +1708,9 @@ export function ProfilePage() {
 
                         <div className="flex gap-2">
                           <a
-                            href={`/business/${business.id}`}
+                            href={business.business_id
+                              ? `/business/${business.business_id}?locationId=${business.id}`
+                              : `/business/${business.id}`}
                             className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-center text-sm font-semibold"
                           >
                             Visualizza
@@ -1715,12 +1718,28 @@ export function ProfilePage() {
                           <button
                             onClick={async () => {
                               const familyMemberId = activeProfile?.isOwner === false ? activeProfile?.id : null;
-                              await supabase
+
+                              // Costruisci la query in base al tipo di attività
+                              let deleteQuery = supabase
                                 .from('favorite_businesses')
                                 .delete()
-                                .eq('user_id', user?.id)
-                                .eq('business_id', business.id)
-                                .eq('family_member_id', familyMemberId || null);
+                                .eq('user_id', user?.id);
+
+                              if (business.business_id) {
+                                // Business claimed - usa business_location_id
+                                deleteQuery = deleteQuery.eq('business_location_id', business.id);
+                              } else {
+                                // Unclaimed business
+                                deleteQuery = deleteQuery.eq('unclaimed_business_location_id', business.id);
+                              }
+
+                              if (familyMemberId) {
+                                deleteQuery = deleteQuery.eq('family_member_id', familyMemberId);
+                              } else {
+                                deleteQuery = deleteQuery.is('family_member_id', null);
+                              }
+
+                              await deleteQuery;
                               await loadFavoriteBusinesses();
                             }}
                             className="px-4 py-2 border-2 border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
