@@ -720,62 +720,96 @@ export function ProfilePage() {
     console.log('🔍 LOADING FAVORITE BUSINESSES');
     console.log('👤 User ID:', user.id);
     console.log('👨‍👩‍👧 Family Member ID:', familyMemberId);
-    console.log('👤 Active Profile:', activeProfile);
 
-    let favoritesQuery = supabase
-      .from('favorite_businesses')
-      .select(`
-        business_id,
-        business_locations(
-          id,
-          name,
-          internal_name,
-          address,
-          city,
-          province,
-          description,
-          avatar_url,
-          phone,
-          email,
-          businesses(name)
-        )
-      `)
-      .eq('user_id', user.id);
+    try {
+      // Query base per i preferiti
+      let baseQuery = supabase
+        .from('favorite_businesses')
+        .select('business_id, unclaimed_business_location_id')
+        .eq('user_id', user.id);
 
-    if (familyMemberId) {
-      favoritesQuery = favoritesQuery.eq('family_member_id', familyMemberId);
-    } else {
-      favoritesQuery = favoritesQuery.is('family_member_id', null);
-    }
+      if (familyMemberId) {
+        baseQuery = baseQuery.eq('family_member_id', familyMemberId);
+      } else {
+        baseQuery = baseQuery.is('family_member_id', null);
+      }
 
-    const { data: favoritesData, error } = await favoritesQuery;
+      const { data: favoritesData, error: favError } = await baseQuery;
 
-    console.log('📊 Favorites Data:', favoritesData);
-    console.log('❌ Error:', error);
+      if (favError) {
+        console.error('Error loading favorites:', favError);
+        return;
+      }
 
-    if (error) {
-      console.error('Error loading favorite businesses:', error);
-      return;
-    }
+      console.log('📊 Favorites found:', favoritesData?.length);
 
-    if (favoritesData) {
-      console.log('✅ Found', favoritesData.length, 'favorite businesses');
+      const allLocations = [];
 
-      const businesses = favoritesData
-        .filter(fav => fav.business_locations)
-        .map(fav => {
-          const location = fav.business_locations as any;
-          return {
-            ...location,
-            business: location.businesses
-          };
-        });
+      // Carica business locations per i business registrati
+      const claimedBusinessIds = favoritesData
+        ?.filter(f => f.business_id)
+        .map(f => f.business_id) || [];
 
-      console.log('🏢 Businesses after mapping:', businesses);
+      if (claimedBusinessIds.length > 0) {
+        const { data: claimedLocations } = await supabase
+          .from('business_locations')
+          .select(`
+            id,
+            name,
+            internal_name,
+            address,
+            city,
+            province,
+            description,
+            avatar_url,
+            phone,
+            email,
+            business_id,
+            businesses(name)
+          `)
+          .in('business_id', claimedBusinessIds);
 
-      // Ottieni i rating per ogni business
-      const businessesWithRatings = await Promise.all(
-        businesses.map(async (location) => {
+        if (claimedLocations) {
+          allLocations.push(...claimedLocations);
+        }
+      }
+
+      // Carica unclaimed business locations
+      const unclaimedIds = favoritesData
+        ?.filter(f => f.unclaimed_business_location_id)
+        .map(f => f.unclaimed_business_location_id) || [];
+
+      if (unclaimedIds.length > 0) {
+        const { data: unclaimedLocations } = await supabase
+          .from('unclaimed_business_locations')
+          .select(`
+            id,
+            name,
+            address,
+            city,
+            province,
+            description,
+            avatar_url,
+            phone,
+            email
+          `)
+          .in('id', unclaimedIds);
+
+        if (unclaimedLocations) {
+          allLocations.push(...unclaimedLocations.map(loc => ({
+            ...loc,
+            internal_name: null,
+            business_id: null,
+            businesses: null
+          })));
+        }
+      }
+
+      console.log('🏢 All locations loaded:', allLocations.length);
+
+      // Ottieni i rating per ogni location
+      const locationsWithRatings = await Promise.all(
+        allLocations.map(async (location) => {
           const { data: ratingsData } = await supabase
             .rpc('get_business_ratings', { location_id: location.id });
 
@@ -787,10 +821,10 @@ export function ProfilePage() {
         })
       );
 
-      console.log('⭐ Businesses with ratings:', businessesWithRatings);
-      setFavoriteBusinesses(businessesWithRatings);
-    } else {
-      console.log('⚠️ No favorites data returned');
+      console.log('⭐ Locations with ratings:', locationsWithRatings);
+      setFavoriteBusinesses(locationsWithRatings);
+    } catch (error) {
+      console.error('Error in loadFavoriteBusinesses:', error);
       setFavoriteBusinesses([]);
     }
   };
