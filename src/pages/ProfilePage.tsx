@@ -765,7 +765,7 @@ export function ProfilePage() {
             phone,
             email,
             business_id,
-            businesses(name)
+            business:businesses(name)
           `)
           .in('business_id', claimedBusinessIds);
 
@@ -794,7 +794,7 @@ export function ProfilePage() {
             phone,
             email,
             business_id,
-            businesses(name)
+            business:businesses(name)
           `)
           .in('id', claimedLocationIds);
 
