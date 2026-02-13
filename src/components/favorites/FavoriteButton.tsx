@@ -11,6 +11,7 @@ interface FavoriteButtonProps {
   className?: string;
   onToggle?: (isFavorite: boolean) => void;
   isUnclaimedBusiness?: boolean;
+  isClaimedBusinessLocation?: boolean;
 }
 
 export function FavoriteButton({
@@ -20,7 +21,8 @@ export function FavoriteButton({
   showLabel = false,
   className = '',
   onToggle,
-  isUnclaimedBusiness = false
+  isUnclaimedBusiness = false,
+  isClaimedBusinessLocation = false
 }: FavoriteButtonProps) {
   const { user } = useAuth();
   const [isFavorite, setIsFavorite] = useState(false);
@@ -33,7 +35,11 @@ export function FavoriteButton({
     : 'favorite_job_postings';
 
   const columnName = type === 'business'
-    ? (isUnclaimedBusiness ? 'unclaimed_business_location_id' : 'business_id')
+    ? (isUnclaimedBusiness
+        ? 'unclaimed_business_location_id'
+        : isClaimedBusinessLocation
+        ? 'business_location_id'
+        : 'business_id')
     : type === 'ad'
     ? 'ad_id'
     : 'job_id';
@@ -42,7 +48,7 @@ export function FavoriteButton({
     if (user) {
       checkFavoriteStatus();
     }
-  }, [user, itemId, familyMemberId, isUnclaimedBusiness]);
+  }, [user, itemId, familyMemberId, isUnclaimedBusiness, isClaimedBusinessLocation]);
 
   const checkFavoriteStatus = async () => {
     if (!user) return;
@@ -83,6 +89,7 @@ export function FavoriteButton({
     console.log('Item ID:', itemId);
     console.log('Family Member ID:', familyMemberId);
     console.log('Is Unclaimed Business:', isUnclaimedBusiness);
+    console.log('Is Claimed Business Location:', isClaimedBusinessLocation);
     console.log('Table:', tableName);
     console.log('Column:', columnName);
     console.log('Current isFavorite:', isFavorite);

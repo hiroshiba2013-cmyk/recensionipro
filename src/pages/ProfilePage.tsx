@@ -745,9 +745,9 @@ export function ProfilePage() {
 
       const allLocations = [];
 
-      // Carica business locations per i business registrati
+      // Carica business locations per i business registrati (vecchio metodo con business_id)
       const claimedBusinessIds = favoritesData
-        ?.filter(f => f.business_id)
+        ?.filter(f => f.business_id && !f.business_location_id)
         .map(f => f.business_id) || [];
 
       if (claimedBusinessIds.length > 0) {
@@ -771,6 +771,35 @@ export function ProfilePage() {
 
         if (claimedLocations) {
           allLocations.push(...claimedLocations);
+        }
+      }
+
+      // Carica business locations specifiche (nuovo metodo con business_location_id)
+      const claimedLocationIds = favoritesData
+        ?.filter(f => f.business_location_id)
+        .map(f => f.business_location_id) || [];
+
+      if (claimedLocationIds.length > 0) {
+        const { data: specificLocations } = await supabase
+          .from('business_locations')
+          .select(`
+            id,
+            name,
+            internal_name,
+            address,
+            city,
+            province,
+            description,
+            avatar_url,
+            phone,
+            email,
+            business_id,
+            businesses(name)
+          `)
+          .in('id', claimedLocationIds);
+
+        if (specificLocations) {
+          allLocations.push(...specificLocations);
         }
       }
 

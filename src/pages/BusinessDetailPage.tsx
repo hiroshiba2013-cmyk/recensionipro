@@ -611,9 +611,14 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                       <div className="bg-white/20 backdrop-blur-md rounded-lg hover:bg-white/30 transition-colors">
                         <FavoriteButton
                           type="business"
-                          itemId={businessId}
+                          itemId={
+                            business.business_type === 'imported'
+                              ? businessId
+                              : (filterLocationId || locations[0]?.id || businessId)
+                          }
                           familyMemberId={activeProfile && !activeProfile.isOwner ? activeProfile.id : null}
                           isUnclaimedBusiness={business.business_type === 'imported'}
+                          isClaimedBusinessLocation={business.business_type === 'registered'}
                         />
                       </div>
                       <div className="bg-white/20 backdrop-blur-md rounded-lg px-3 py-2 hover:bg-white/30 transition-colors">
