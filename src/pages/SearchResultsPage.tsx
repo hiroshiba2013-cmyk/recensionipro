@@ -202,20 +202,20 @@ export function SearchResultsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-12">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-green-50">
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 text-white py-16 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <button
             onClick={handleBackToHome}
-            className="flex items-center gap-2 text-white hover:text-blue-100 transition-colors mb-6"
+            className="flex items-center gap-2 text-white bg-white bg-opacity-20 hover:bg-opacity-30 transition-all px-4 py-2 rounded-lg mb-6 font-medium"
           >
             <ArrowLeft className="w-5 h-5" />
             <span>Torna alla home</span>
           </button>
 
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-4">Cerca Attività</h1>
-            <p className="text-xl text-blue-50">
+            <h1 className="text-5xl font-bold mb-4 drop-shadow-lg">Cerca Attività</h1>
+            <p className="text-xl text-blue-100">
               Trova le migliori attività della tua zona
             </p>
           </div>
@@ -264,16 +264,16 @@ export function SearchResultsPage() {
 
         {hasSearched && !loading && (
           <>
-            <div className="mb-4 flex items-center justify-between bg-white rounded-lg shadow-sm p-6">
+            <div className="mb-6 flex items-center justify-between bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl shadow-lg p-8 border-4 border-blue-200">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Risultati della Ricerca</h2>
-                <p className="text-gray-600 mt-1">Trova le sedi delle attività che corrispondono ai tuoi criteri</p>
+                <h2 className="text-3xl font-bold text-gray-900">Risultati della Ricerca</h2>
+                <p className="text-gray-600 mt-2 text-lg">Trova le sedi delle attività che corrispondono ai tuoi criteri</p>
               </div>
               <div className="flex items-center gap-4">
-                <div className="bg-blue-50 px-6 py-3 rounded-lg border-2 border-blue-200">
+                <div className="bg-gradient-to-br from-blue-100 to-blue-200 px-8 py-5 rounded-xl border-4 border-blue-300 shadow-md">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-600">{locations.length}</div>
-                    <div className="text-sm text-blue-800 font-medium mt-1">
+                    <div className="text-5xl font-bold text-blue-700">{locations.length}</div>
+                    <div className="text-sm text-blue-900 font-bold mt-2">
                       {locations.length === 1 ? 'Sede Trovata' : 'Sedi Trovate'}
                     </div>
                   </div>

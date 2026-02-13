@@ -1100,9 +1100,9 @@ export function ProfilePage() {
   const isFamilyMember = !isOwner && profile?.user_type === 'customer';
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-purple-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-xl shadow-md p-8 mb-8">
+        <div className="bg-gradient-to-r from-white to-blue-50 rounded-2xl shadow-lg p-8 mb-8 border-2 border-blue-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
               {isFamilyMember && selectedFamilyMember ? (
@@ -1168,36 +1168,40 @@ export function ProfilePage() {
         )}
 
         {profile.user_type === 'customer' && isOwner && userRank && (
-          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl shadow-md p-6 mb-8 border-2 border-yellow-200">
-            <div className="flex items-center gap-3 mb-4">
-              <Trophy className="w-7 h-7 text-yellow-600" />
-              <h2 className="text-2xl font-bold text-gray-900">La Tua Posizione in Classifica</h2>
+          <div className="bg-gradient-to-r from-yellow-100 via-yellow-50 to-orange-100 rounded-2xl shadow-lg p-8 mb-8 border-4 border-yellow-300">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="bg-gradient-to-br from-yellow-400 to-orange-400 p-4 rounded-xl shadow-lg">
+                <Trophy className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900">La Tua Posizione in Classifica</h2>
+                <p className="text-gray-700 mt-1">Continua così per scalare la classifica!</p>
+              </div>
             </div>
 
-            <div className="bg-white rounded-lg p-6 mb-4">
-              <div className="grid md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-yellow-600 mb-2">#{userRank.rank}</div>
-                  <p className="text-gray-600 font-medium">Posizione</p>
+            <div className="bg-white rounded-xl p-8 mb-6 shadow-md border-2 border-yellow-200">
+              <div className="grid md:grid-cols-3 gap-8">
+                <div className="text-center bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-6 border-2 border-yellow-300">
+                  <div className="text-5xl font-bold text-yellow-600 mb-3">#{userRank.rank}</div>
+                  <p className="text-gray-700 font-bold text-lg">Posizione</p>
                 </div>
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-blue-600 mb-2">{userRank.total_points}</div>
-                  <p className="text-gray-600 font-medium">Punti Totali</p>
+                <div className="text-center bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-300">
+                  <div className="text-5xl font-bold text-blue-600 mb-3">{userRank.total_points}</div>
+                  <p className="text-gray-700 font-bold text-lg">Punti Totali</p>
                 </div>
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-green-600 mb-2">{userRank.reviews_count}</div>
-                  <p className="text-gray-600 font-medium">Recensioni</p>
+                <div className="text-center bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border-2 border-green-300">
+                  <div className="text-5xl font-bold text-green-600 mb-3">{userRank.reviews_count}</div>
+                  <p className="text-gray-700 font-bold text-lg">Recensioni</p>
                 </div>
               </div>
             </div>
 
-
             <div className="mt-4 text-center">
               <a
                 href="/leaderboard"
-                className="inline-flex items-center gap-2 bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors font-semibold shadow-md"
+                className="inline-flex items-center gap-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-8 py-4 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all font-bold shadow-lg text-lg transform hover:scale-105"
               >
-                <Trophy className="w-5 h-5" />
+                <Trophy className="w-6 h-6" />
                 Vedi Classifica Completa
               </a>
             </div>
@@ -1208,12 +1212,16 @@ export function ProfilePage() {
           <>
             {isOwner ? (
               <>
-                <div className="border-t-4 border-blue-500 bg-gradient-to-r from-blue-50 to-white rounded-lg p-4 mb-6">
-                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <User className="w-6 h-6 text-blue-600" />
-                    Dati Personali Account Principale
-                  </h2>
-                  <p className="text-sm text-gray-600 mt-1">Informazioni del titolare dell'account</p>
+                <div className="bg-gradient-to-r from-blue-100 via-blue-50 to-white rounded-2xl p-6 mb-6 border-4 border-blue-300 shadow-md">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-xl shadow-lg">
+                      <User className="w-7 h-7 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">Dati Personali Account Principale</h2>
+                      <p className="text-sm text-gray-600 mt-1">Informazioni del titolare dell'account</p>
+                    </div>
+                  </div>
                 </div>
 
                 <EditProfileForm
@@ -1221,12 +1229,16 @@ export function ProfilePage() {
                   onUpdate={loadProfileData}
                 />
 
-                <div className="border-t-4 border-green-500 bg-gradient-to-r from-green-50 to-white rounded-lg p-4 mb-6 mt-8">
-                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <User className="w-6 h-6 text-green-600" />
-                    Membri della Famiglia
-                  </h2>
-                  <p className="text-sm text-gray-600 mt-1">Gestisci i membri collegati al tuo account</p>
+                <div className="bg-gradient-to-r from-green-100 via-green-50 to-white rounded-2xl p-6 mb-6 mt-8 border-4 border-green-300 shadow-md">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-br from-green-500 to-green-600 p-3 rounded-xl shadow-lg">
+                      <User className="w-7 h-7 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">Membri della Famiglia</h2>
+                      <p className="text-sm text-gray-600 mt-1">Gestisci i membri collegati al tuo account</p>
+                    </div>
+                  </div>
                 </div>
 
                 <EditFamilyMembersForm
@@ -1326,17 +1338,22 @@ export function ProfilePage() {
 
             <JobRequestForm customerId={profile.id} familyMemberId={isFamilyMember ? selectedFamilyMember?.id : undefined} />
 
-            <div className="bg-white rounded-xl shadow-md p-8 mb-8">
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl shadow-lg p-8 mb-8 border-4 border-yellow-200">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <Star className="w-6 h-6 text-yellow-500" />
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {isFamilyMember ? 'Recensioni di ' + (selectedFamilyMember?.nickname || `${selectedFamilyMember?.first_name}`) : 'Le Tue Recensioni'}
-                  </h2>
+                  <div className="bg-gradient-to-br from-yellow-500 to-orange-500 p-3 rounded-xl shadow-lg">
+                    <Star className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-bold text-gray-900">
+                      {isFamilyMember ? 'Recensioni di ' + (selectedFamilyMember?.nickname || `${selectedFamilyMember?.first_name}`) : 'Le Tue Recensioni'}
+                    </h2>
+                    <p className="text-sm text-gray-600 mt-1">Condividi le tue esperienze</p>
+                  </div>
                 </div>
                 <a
                   href="/"
-                  className="flex items-center gap-2 bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors font-semibold shadow-md"
+                  className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-8 py-4 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all font-bold shadow-lg transform hover:scale-105"
                 >
                   <Star className="w-5 h-5" />
                   Scrivi Recensioni
@@ -1523,17 +1540,22 @@ export function ProfilePage() {
               )}
             </div>
 
-            <div className="bg-white rounded-xl shadow-md p-8 mb-8">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl shadow-lg p-8 mb-8 border-4 border-green-200">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <Package className="w-6 h-6 text-blue-600" />
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {isFamilyMember ? 'Annunci di ' + (selectedFamilyMember?.nickname || `${selectedFamilyMember?.first_name}`) : 'I Tuoi Annunci'}
-                  </h2>
+                  <div className="bg-gradient-to-br from-green-500 to-emerald-500 p-3 rounded-xl shadow-lg">
+                    <Package className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-bold text-gray-900">
+                      {isFamilyMember ? 'Annunci di ' + (selectedFamilyMember?.nickname || `${selectedFamilyMember?.first_name}`) : 'I Tuoi Annunci'}
+                    </h2>
+                    <p className="text-sm text-gray-600 mt-1">Compra, vendi e scambia</p>
+                  </div>
                 </div>
                 <a
                   href="/classified"
-                  className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-md"
+                  className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-8 py-4 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all font-bold shadow-lg transform hover:scale-105"
                 >
                   <Plus className="w-5 h-5" />
                   Crea Annuncio

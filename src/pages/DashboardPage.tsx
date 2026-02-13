@@ -329,16 +329,16 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-purple-50 py-8">
       <TrialExpirationModal />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <div className="mb-8 bg-gradient-to-r from-blue-100 to-purple-100 rounded-2xl p-8 shadow-lg border-4 border-blue-200">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
             Dashboard {profile.user_type === 'business' ? 'Attività' : 'Cliente'}
           </h1>
-          <p className="text-gray-600">
-            Benvenuto, {profile.full_name}
+          <p className="text-gray-700 text-lg font-medium">
+            Benvenuto, {profile.full_name}!
           </p>
         </div>
 
@@ -357,32 +357,37 @@ export function DashboardPage() {
             {profile.user_type === 'business' ? (
               <>
                 {selectedBusinessLocationId && (
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-sm p-6 mb-6 border-2 border-blue-300">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-blue-600" />
-                      Statistiche Sede Selezionata
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      <div className="bg-white rounded-lg p-4 shadow-sm">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Star className="w-5 h-5 text-yellow-500" />
-                          <span className="text-sm font-medium text-gray-600">Recensioni</span>
-                        </div>
-                        <p className="text-2xl font-bold text-gray-900">{reviews.length}</p>
+                  <div className="bg-gradient-to-br from-blue-100 via-purple-50 to-blue-100 rounded-2xl shadow-lg p-8 mb-8 border-4 border-blue-300">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="bg-gradient-to-br from-blue-500 to-purple-500 p-3 rounded-xl shadow-lg">
+                        <TrendingUp className="w-7 h-7 text-white" />
                       </div>
-                      <div className="bg-white rounded-lg p-4 shadow-sm">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Package className="w-5 h-5 text-purple-600" />
-                          <span className="text-sm font-medium text-gray-600">Prodotti</span>
-                        </div>
-                        <p className="text-2xl font-bold text-gray-900">{products.length}</p>
+                      <div>
+                        <h3 className="text-2xl font-bold text-gray-900">Statistiche Sede Selezionata</h3>
+                        <p className="text-sm text-gray-600">Panoramica delle tue attività</p>
                       </div>
-                      <div className="bg-white rounded-lg p-4 shadow-sm">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Briefcase className="w-5 h-5 text-orange-600" />
-                          <span className="text-sm font-medium text-gray-600">Offerte Lavoro</span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                      <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-6 shadow-md border-2 border-yellow-300">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Star className="w-6 h-6 text-yellow-600" />
+                          <span className="text-sm font-bold text-gray-700">Recensioni</span>
                         </div>
-                        <p className="text-2xl font-bold text-gray-900">{jobPostings.length}</p>
+                        <p className="text-4xl font-bold text-yellow-600">{reviews.length}</p>
+                      </div>
+                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 shadow-md border-2 border-purple-300">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Package className="w-6 h-6 text-purple-600" />
+                          <span className="text-sm font-bold text-gray-700">Prodotti</span>
+                        </div>
+                        <p className="text-4xl font-bold text-purple-600">{products.length}</p>
+                      </div>
+                      <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 shadow-md border-2 border-orange-300">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Briefcase className="w-6 h-6 text-orange-600" />
+                          <span className="text-sm font-bold text-gray-700">Offerte Lavoro</span>
+                        </div>
+                        <p className="text-4xl font-bold text-orange-600">{jobPostings.length}</p>
                       </div>
                     </div>
                   </div>
@@ -399,15 +404,20 @@ export function DashboardPage() {
                   />
                 ) : (
                   <>
-                    <div className="bg-white rounded-lg shadow-sm p-6">
+                    <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl shadow-lg p-8 border-4 border-blue-200">
                       <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-2">
-                          <Building className="w-6 h-6" />
-                          Le Mie Attività
-                        </h2>
+                        <div className="flex items-center gap-3">
+                          <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-3 rounded-xl shadow-lg">
+                            <Building className="w-7 h-7 text-white" />
+                          </div>
+                          <div>
+                            <h2 className="text-3xl font-bold text-gray-900">Le Mie Attività</h2>
+                            <p className="text-sm text-gray-600">Gestisci le tue sedi</p>
+                          </div>
+                        </div>
                         <button
                           onClick={() => setShowCreateBusinessForm(true)}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                          className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all flex items-center gap-2 font-bold shadow-lg transform hover:scale-105"
                         >
                           <Plus className="w-5 h-5" />
                           Aggiungi Attività

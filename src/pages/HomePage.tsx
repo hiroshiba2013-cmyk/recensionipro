@@ -483,11 +483,11 @@ function AuthenticatedHomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-purple-50">
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 text-white py-20 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-5xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tight">
+            <h1 className="text-5xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tight drop-shadow-lg">
               Trova quello che cerchi
             </h1>
             <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
@@ -584,17 +584,20 @@ function AuthenticatedHomePage() {
             )}
 
             {jobPostings.length > 0 && (
-              <section className="mb-12">
+              <section className="mb-12 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl p-8 shadow-md border-2 border-purple-200">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="bg-green-100 p-3 rounded-lg">
-                      <Briefcase className="w-6 h-6 text-green-600" />
+                    <div className="bg-gradient-to-br from-purple-500 to-indigo-500 p-4 rounded-xl shadow-lg">
+                      <Briefcase className="w-7 h-7 text-white" />
                     </div>
-                    <h2 className="text-3xl font-bold text-gray-900">Ultime Offerte di Lavoro</h2>
+                    <div>
+                      <h2 className="text-3xl font-bold text-gray-900">Ultime Offerte di Lavoro</h2>
+                      <p className="text-sm text-gray-600">Trova il lavoro perfetto per te</p>
+                    </div>
                   </div>
                   <button
                     onClick={() => navigate('/jobs')}
-                    className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold"
+                    className="flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 font-semibold shadow-md transition-all hover:scale-105"
                   >
                     Vedi tutte <ArrowRight className="w-4 h-4" />
                   </button>
@@ -608,17 +611,20 @@ function AuthenticatedHomePage() {
             )}
 
             {userType !== 'business' && classifiedAds.length > 0 && (
-              <section className="mb-12">
+              <section className="mb-12 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-8 shadow-md border-2 border-green-200">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="bg-orange-100 p-3 rounded-lg">
-                      <Tag className="w-6 h-6 text-orange-600" />
+                    <div className="bg-gradient-to-br from-green-500 to-emerald-500 p-4 rounded-xl shadow-lg">
+                      <Tag className="w-7 h-7 text-white" />
                     </div>
-                    <h2 className="text-3xl font-bold text-gray-900">Ultimi Annunci</h2>
+                    <div>
+                      <h2 className="text-3xl font-bold text-gray-900">Ultimi Annunci</h2>
+                      <p className="text-sm text-gray-600">Compra, vendi e scambia nella tua zona</p>
+                    </div>
                   </div>
                   <button
                     onClick={() => navigate('/classified-ads')}
-                    className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold"
+                    className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold shadow-md transition-all hover:scale-105"
                   >
                     Vedi tutti <ArrowRight className="w-4 h-4" />
                   </button>
@@ -705,18 +711,21 @@ function JobCard({ job, onClick }: { job: any; onClick: () => void }) {
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all p-6 cursor-pointer border border-gray-200"
+      className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-6 cursor-pointer border-2 border-purple-100 hover:border-purple-300 transform hover:scale-105"
     >
       <div className="flex items-start justify-between mb-3">
         <h3 className="font-bold text-lg text-gray-900 line-clamp-2">{job.title}</h3>
+        <div className="bg-purple-100 p-2 rounded-lg">
+          <Briefcase className="w-5 h-5 text-purple-600" />
+        </div>
       </div>
-      <p className="text-sm text-gray-600 mb-3">{job.business?.name}</p>
-      <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-        <MapPin className="w-4 h-4" />
+      <p className="text-sm text-gray-600 mb-3 font-medium">{job.business?.name}</p>
+      <div className="flex items-center gap-2 text-sm text-gray-500 mb-2 bg-gray-50 p-2 rounded-lg">
+        <MapPin className="w-4 h-4 text-blue-500" />
         <span>{job.business?.business_locations?.[0]?.city}</span>
       </div>
       {job.salary_range && (
-        <div className="flex items-center gap-2 text-sm text-green-600 font-semibold">
+        <div className="flex items-center gap-2 text-sm text-green-600 font-semibold bg-green-50 p-2 rounded-lg mt-2">
           <Euro className="w-4 h-4" />
           <span>{job.salary_range}</span>
         </div>
@@ -729,7 +738,7 @@ function ClassifiedAdCard({ ad, onClick }: { ad: any; onClick: () => void }) {
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden border border-gray-200"
+      className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all cursor-pointer overflow-hidden border-2 border-green-100 hover:border-green-300 transform hover:scale-105"
     >
       {ad.images?.[0] ? (
         <img
@@ -738,18 +747,22 @@ function ClassifiedAdCard({ ad, onClick }: { ad: any; onClick: () => void }) {
           className="w-full h-32 object-cover"
         />
       ) : (
-        <div className="w-full h-32 bg-gray-200 flex items-center justify-center">
-          <Tag className="w-8 h-8 text-gray-400" />
+        <div className="w-full h-32 bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center">
+          <Tag className="w-8 h-8 text-green-500" />
         </div>
       )}
       <div className="p-3">
         <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 mb-2">{ad.title}</h3>
         {ad.price > 0 ? (
-          <p className="text-green-600 font-bold">€{ad.price.toFixed(2)}</p>
+          <div className="bg-green-50 px-3 py-1.5 rounded-lg">
+            <p className="text-green-700 font-bold text-center">€{ad.price.toFixed(2)}</p>
+          </div>
         ) : (
-          <p className="text-gray-500 text-sm">
-            {ad.ad_type === 'gift' ? 'Regalo' : ad.ad_type === 'exchange' ? 'Scambio' : 'Vendita'}
-          </p>
+          <div className="bg-blue-50 px-3 py-1.5 rounded-lg">
+            <p className="text-blue-700 text-sm font-medium text-center">
+              {ad.ad_type === 'gift' ? '🎁 Regalo' : ad.ad_type === 'exchange' ? '🔄 Scambio' : 'Vendita'}
+            </p>
+          </div>
         )}
       </div>
     </div>
