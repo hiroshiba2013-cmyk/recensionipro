@@ -357,22 +357,7 @@ function AuthenticatedHomePage() {
         setUserType(profileResult.data.user_type);
       }
 
-      const reviewStatsResult = await supabase
-        .from('reviews')
-        .select('business_id')
-        .order('created_at', { ascending: false });
-
-      const businessCounts = reviewStatsResult.data?.reduce((acc: any, review: any) => {
-        acc[review.business_id] = (acc[review.business_id] || 0) + 1;
-        return acc;
-      }, {});
-
-      const topBusinessIds = Object.entries(businessCounts || {})
-        .sort(([, a]: any, [, b]: any) => b - a)
-        .slice(0, 8)
-        .map(([id]) => id);
-
-      const [jobsResult, adsResult, businessesResult] = await Promise.all([
+      const [jobsResult, adsResult, topBusinessesResult] = await Promise.all([
         (() => {
           let query = supabase
             .from('job_postings')
@@ -402,18 +387,7 @@ function AuthenticatedHomePage() {
           .order('created_at', { ascending: false })
           .limit(6),
 
-        supabase
-          .from('imported_businesses')
-          .select(`
-            id,
-            name,
-            city,
-            province,
-            region,
-            category_id
-          `)
-          .order('created_at', { ascending: false })
-          .limit(8)
+        supabase.rpc('get_top_businesses_by_positive_reviews', { limit_count: 8 })
       ]);
 
       if (jobsResult.data) setJobPostings(jobsResult.data);
@@ -435,44 +409,52 @@ function AuthenticatedHomePage() {
         setClassifiedAds([]);
       }
 
-      if (businessesResult.data && businessesResult.data.length > 0) {
-        const normalizedBusinesses = businessesResult.data.map((business: any) => ({
-          id: business.id,
-          name: business.name,
-          business_categories: { id: business.category_id },
+      if (topBusinessesResult.data && topBusinessesResult.data.length > 0) {
+        const normalizedBusinesses = topBusinessesResult.data.map((business: any) => ({
+          id: business.business_id,
+          name: business.business_name,
+          business_categories: business.category_name ? {
+            id: business.category_id,
+            name: business.category_name
+          } : null,
           business_locations: [{
             city: business.city,
             province: business.province,
             region: business.region,
-            address: '',
-            avatar_url: null
-          }]
+            address: business.address || '',
+            avatar_url: business.avatar_url
+          }],
+          avg_rating: parseFloat(business.avg_rating) || 0,
+          review_count: parseInt(business.total_review_count) || 0,
+          positive_review_count: parseInt(business.positive_review_count) || 0
         }));
 
-        const businessIds = normalizedBusinesses.map((b: any) => b.id);
-        const ratingsResult = await supabase.rpc('get_business_ratings', {
-          business_ids: businessIds
-        });
+        setTopBusinesses(normalizedBusinesses);
+      } else {
+        const fallbackBusinesses = await supabase
+          .from('unclaimed_business_locations')
+          .select('id, name, category_id, city, province, region, street')
+          .order('created_at', { ascending: false })
+          .limit(8);
 
-        if (ratingsResult.data) {
-          const businessesWithRatings = normalizedBusinesses.map((business: any) => {
-            const rating = ratingsResult.data.find((r: any) => r.business_id === business.id);
-            return {
-              ...business,
-              avg_rating: rating?.avg_rating || 0,
-              review_count: rating?.review_count || 0
-            };
-          });
-
-          businessesWithRatings.sort((a: any, b: any) => b.review_count - a.review_count);
-          setTopBusinesses(businessesWithRatings);
-        } else {
-          const businessesWithRatings = normalizedBusinesses.map((business: any) => ({
-            ...business,
+        if (fallbackBusinesses.data && fallbackBusinesses.data.length > 0) {
+          const normalizedBusinesses = fallbackBusinesses.data.map((business: any) => ({
+            id: business.id,
+            name: business.name,
+            business_categories: business.category_id ? { id: business.category_id } : null,
+            business_locations: [{
+              city: business.city,
+              province: business.province,
+              region: business.region,
+              address: business.street || '',
+              avatar_url: null
+            }],
             avg_rating: 0,
-            review_count: 0
+            review_count: 0,
+            positive_review_count: 0
           }));
-          setTopBusinesses(businessesWithRatings);
+
+          setTopBusinesses(normalizedBusinesses);
         }
       }
     } catch (error) {

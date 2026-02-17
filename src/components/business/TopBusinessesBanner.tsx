@@ -1,4 +1,4 @@
-import { Star, MapPin, TrendingUp } from 'lucide-react';
+import { Star, MapPin, TrendingUp, ThumbsUp } from 'lucide-react';
 import { useNavigate } from '../Router';
 
 interface Business {
@@ -13,6 +13,7 @@ interface Business {
   }>;
   avg_rating: number;
   review_count: number;
+  positive_review_count?: number;
 }
 
 interface TopBusinessesBannerProps {
@@ -30,11 +31,11 @@ export default function TopBusinessesBanner({ businesses }: TopBusinessesBannerP
     <section className="mb-12">
       <div className="flex items-center gap-3 mb-6">
         <div className="bg-yellow-100 p-3 rounded-lg">
-          <TrendingUp className="w-6 h-6 text-yellow-600" />
+          <ThumbsUp className="w-6 h-6 text-yellow-600" />
         </div>
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Attività in Evidenza</h2>
-          <p className="text-gray-600">Scopri le attività locali e lascia la tua recensione</p>
+          <p className="text-gray-600">Le attività con più recensioni positive della tua zona</p>
         </div>
       </div>
 
@@ -89,18 +90,28 @@ export default function TopBusinessesBanner({ businesses }: TopBusinessesBannerP
                 </div>
               )}
 
-              <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+              <div className="pt-3 border-t border-gray-200">
                 {business.review_count > 0 ? (
                   <>
-                    <div className="flex items-center gap-1">
-                      <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                      <span className="font-bold text-gray-900">
-                        {business.avg_rating.toFixed(1)}
-                      </span>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                        <span className="font-bold text-gray-900">
+                          {business.avg_rating.toFixed(1)}
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-600 font-medium">
+                        {business.review_count} {business.review_count === 1 ? 'recensione' : 'recensioni'}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-600 font-medium">
-                      {business.review_count} {business.review_count === 1 ? 'recensione' : 'recensioni'}
-                    </div>
+                    {business.positive_review_count !== undefined && business.positive_review_count > 0 && (
+                      <div className="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-lg">
+                        <ThumbsUp className="w-4 h-4 text-green-600" />
+                        <span className="text-sm font-semibold text-green-700">
+                          {business.positive_review_count} {business.positive_review_count === 1 ? 'recensione positiva' : 'recensioni positive'}
+                        </span>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div className="text-sm text-gray-500 italic w-full text-center">
