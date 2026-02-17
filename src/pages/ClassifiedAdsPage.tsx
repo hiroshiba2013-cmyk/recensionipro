@@ -14,6 +14,7 @@ interface Category {
 
 interface ClassifiedAd {
   id: string;
+  user_id: string;
   title: string;
   description: string;
   price: number | null;
@@ -23,7 +24,6 @@ interface ClassifiedAd {
   region: string;
   images: string[] | null;
   category_id: string;
-  user_id: string;
   family_member_id: string | null;
   views_count: number;
   created_at: string;

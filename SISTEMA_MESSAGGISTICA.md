@@ -15,8 +15,10 @@ Il sistema di messaggistica permette agli utenti (privati e professionisti) di c
 ### Come Funziona
 
 **Per i Compratori (Utenti Privati):**
-- Nella pagina degli annunci classific ati (`/classified-ads`), ogni card mostra un pulsante **"Contatta"**
-- Cliccando su "Contatta", viene creata automaticamente una conversazione con il venditore
+- Nella pagina degli annunci classificati (`/classified-ads`), ogni card mostra un pulsante **"Contatta"**
+- Anche nella pagina di dettaglio annuncio (`/classified/{id}`), è presente il pulsante **"Invia Messaggio"**
+- Nella sezione preferiti del profilo, gli annunci salvati hanno il pulsante **"Contatta"**
+- Cliccando su "Contatta" o "Invia Messaggio", viene creata automaticamente una conversazione con il venditore
 - La conversazione viene reindirizzata alla pagina `/messages` con la conversazione attiva
 
 **Per i Venditori:**

@@ -1,9 +1,12 @@
-import { MapPin, Eye, Calendar } from 'lucide-react';
+import { MapPin, Eye, Calendar, MessageCircle } from 'lucide-react';
 import { FavoriteButton } from '../favorites/FavoriteButton';
 import ReportButton from '../moderation/ReportButton';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 
 interface ClassifiedAd {
   id: string;
+  user_id: string;
   ad_type: 'sell' | 'buy' | 'gift';
   title: string;
   description: string;
@@ -33,6 +36,59 @@ interface FavoriteClassifiedAdCardProps {
 }
 
 export function FavoriteClassifiedAdCard({ ad, familyMemberId = null, onRemove }: FavoriteClassifiedAdCardProps) {
+  const { user } = useAuth();
+
+  const startConversation = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      window.location.href = '/';
+      return;
+    }
+
+    if (user.id === ad.user_id) {
+      alert('Non puoi contattarti da solo');
+      return;
+    }
+
+    try {
+      const { data: existingConv, error: convError } = await supabase
+        .from('ad_conversations')
+        .select('id')
+        .eq('ad_id', ad.id)
+        .eq('buyer_id', user.id)
+        .eq('seller_id', ad.user_id)
+        .maybeSingle();
+
+      if (convError) throw convError;
+
+      if (existingConv) {
+        window.location.href = `/messages?conversation=${existingConv.id}`;
+        return;
+      }
+
+      const { data: newConv, error: createError } = await supabase
+        .from('ad_conversations')
+        .insert([
+          {
+            ad_id: ad.id,
+            buyer_id: user.id,
+            seller_id: ad.user_id,
+          },
+        ])
+        .select()
+        .single();
+
+      if (createError) throw createError;
+
+      window.location.href = `/messages?conversation=${newConv.id}`;
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+      alert('Errore nell\'avvio della conversazione');
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('it-IT');
@@ -110,29 +166,42 @@ export function FavoriteClassifiedAdCard({ ad, familyMemberId = null, onRemove }
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <a
-            href={`/classified/${ad.id}`}
-            className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-center text-xs font-semibold"
-          >
-            Visualizza
-          </a>
-          <FavoriteButton
-            type="ad"
-            itemId={ad.id}
-            familyMemberId={familyMemberId}
-            className="text-xs"
-            onToggle={(isFavorite) => {
-              if (!isFavorite && onRemove) {
-                onRemove();
-              }
-            }}
-          />
-          <ReportButton
-            entityType="classified_ad"
-            entityId={ad.id}
-            compact={false}
-          />
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <a
+              href={`/classified/${ad.id}`}
+              className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-center text-xs font-semibold"
+            >
+              Visualizza
+            </a>
+            {user && user.id !== ad.user_id && (
+              <button
+                onClick={startConversation}
+                className="flex items-center justify-center gap-1 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors text-xs font-semibold"
+              >
+                <MessageCircle className="w-3 h-3" />
+                Contatta
+              </button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <FavoriteButton
+              type="ad"
+              itemId={ad.id}
+              familyMemberId={familyMemberId}
+              className="flex-1 text-xs"
+              onToggle={(isFavorite) => {
+                if (!isFavorite && onRemove) {
+                  onRemove();
+                }
+              }}
+            />
+            <ReportButton
+              entityType="classified_ad"
+              entityId={ad.id}
+              compact={false}
+            />
+          </div>
         </div>
       </div>
     </div>
