@@ -3,17 +3,34 @@ import { Briefcase, Plus, X, Edit, Trash2, User, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
 
-interface JobRequest {
+interface JobSeeker {
   id: string;
+  user_id: string;
   title: string;
   description: string;
-  category: string;
+  skills: string[];
+  contract_type: string;
+  desired_salary_min: number | null;
+  desired_salary_max: number | null;
+  salary_currency: string;
   location: string;
-  employment_type: string;
+  available_from: string | null;
   experience_years: number;
-  active: boolean;
+  education_level: string | null;
+  phone: string | null;
+  email: string | null;
+  status: string;
   created_at: string;
+  category_id: string | null;
   family_member_id: string | null;
+  business_categories?: {
+    name: string;
+  } | null;
+}
+
+interface Category {
+  id: string;
+  name: string;
 }
 
 interface FamilyMember {
@@ -30,19 +47,27 @@ interface JobRequestFormProps {
 }
 
 export function JobRequestForm({ customerId, familyMemberId }: JobRequestFormProps) {
-  const [jobRequests, setJobRequests] = useState<JobRequest[]>([]);
+  const [jobSeekers, setJobSeekers] = useState<JobSeeker[]>([]);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: '',
+    skills: '',
+    contract_type: 'Full-time',
+    desired_salary_min: '',
+    desired_salary_max: '',
     location: '',
-    employment_type: 'full-time',
-    experience_years: 0,
-    active: true,
+    available_from: '',
+    experience_years: '',
+    education_level: '',
+    phone: '',
+    email: '',
+    category_id: '',
+    status: 'active',
   });
 
   useEffect(() => {
@@ -51,16 +76,19 @@ export function JobRequestForm({ customerId, familyMemberId }: JobRequestFormPro
 
   const loadData = async () => {
     setLoading(true);
-    await Promise.all([loadJobRequests(), loadFamilyMembers()]);
+    await Promise.all([loadJobSeekers(), loadFamilyMembers(), loadCategories()]);
     setLoading(false);
   };
 
-  const loadJobRequests = async () => {
+  const loadJobSeekers = async () => {
     try {
       let query = supabase
-        .from('job_requests')
-        .select('*')
-        .eq('customer_id', customerId);
+        .from('job_seekers')
+        .select(`
+          *,
+          business_categories(name)
+        `)
+        .eq('user_id', customerId);
 
       if (familyMemberId) {
         query = query.eq('family_member_id', familyMemberId);
@@ -69,9 +97,22 @@ export function JobRequestForm({ customerId, familyMemberId }: JobRequestFormPro
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
-      setJobRequests(data || []);
+      setJobSeekers(data || []);
     } catch (error) {
-      console.error('Error loading job requests:', error);
+      console.error('Error loading job seekers:', error);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const { data } = await supabase
+        .from('business_categories')
+        .select('id, name')
+        .order('name');
+
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error loading categories:', error);
     }
   };
 
@@ -90,57 +131,74 @@ export function JobRequestForm({ customerId, familyMemberId }: JobRequestFormPro
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'number' ? parseInt(value) : value,
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
+      const dataToSave = {
+        title: formData.title,
+        description: formData.description,
+        skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean),
+        contract_type: formData.contract_type,
+        desired_salary_min: formData.desired_salary_min ? parseFloat(formData.desired_salary_min) : null,
+        desired_salary_max: formData.desired_salary_max ? parseFloat(formData.desired_salary_max) : null,
+        location: formData.location,
+        available_from: formData.available_from || null,
+        experience_years: formData.experience_years ? parseInt(formData.experience_years) : 0,
+        education_level: formData.education_level || null,
+        phone: formData.phone || null,
+        email: formData.email || null,
+        category_id: formData.category_id || null,
+        status: formData.status,
+      };
+
       if (editingId) {
         const { error } = await supabase
-          .from('job_requests')
-          .update(formData)
+          .from('job_seekers')
+          .update(dataToSave)
           .eq('id', editingId);
 
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from('job_requests')
+          .from('job_seekers')
           .insert({
-            customer_id: customerId,
+            user_id: customerId,
             family_member_id: familyMemberId || (showForm === 'main' ? null : showForm),
-            ...formData,
+            ...dataToSave,
           });
 
         if (error) throw error;
       }
 
       resetForm();
-      loadJobRequests();
-    } catch (error) {
-      console.error('Error saving job request:', error);
-      alert('Errore durante il salvataggio');
+      loadJobSeekers();
+      alert('Annuncio salvato con successo!');
+    } catch (error: any) {
+      console.error('Error saving job seeker:', error);
+      alert(`Errore durante il salvataggio: ${error.message || 'Errore sconosciuto'}`);
     }
   };
 
-  const handleEdit = (jobRequest: JobRequest) => {
+  const handleEdit = (jobSeeker: JobSeeker) => {
     setFormData({
-      title: jobRequest.title,
-      description: jobRequest.description,
-      category: jobRequest.category,
-      location: jobRequest.location,
-      employment_type: jobRequest.employment_type,
-      experience_years: jobRequest.experience_years,
-      active: jobRequest.active,
+      title: jobSeeker.title,
+      description: jobSeeker.description,
+      skills: jobSeeker.skills.join(', '),
+      contract_type: jobSeeker.contract_type,
+      desired_salary_min: jobSeeker.desired_salary_min?.toString() || '',
+      desired_salary_max: jobSeeker.desired_salary_max?.toString() || '',
+      location: jobSeeker.location,
+      available_from: jobSeeker.available_from || '',
+      experience_years: jobSeeker.experience_years.toString(),
+      education_level: jobSeeker.education_level || '',
+      phone: jobSeeker.phone || '',
+      email: jobSeeker.email || '',
+      category_id: jobSeeker.category_id || '',
+      status: jobSeeker.status,
     });
-    setEditingId(jobRequest.id);
-    setShowForm(true);
+    setEditingId(jobSeeker.id);
+    setShowForm(jobSeeker.family_member_id || 'main');
   };
 
   const handleDelete = async (id: string) => {
@@ -148,28 +206,29 @@ export function JobRequestForm({ customerId, familyMemberId }: JobRequestFormPro
 
     try {
       const { error } = await supabase
-        .from('job_requests')
+        .from('job_seekers')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
-      loadJobRequests();
+      loadJobSeekers();
     } catch (error) {
-      console.error('Error deleting job request:', error);
+      console.error('Error deleting job seeker:', error);
     }
   };
 
-  const toggleActive = async (id: string, currentActive: boolean) => {
+  const toggleActive = async (id: string, currentStatus: string) => {
     try {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
       const { error } = await supabase
-        .from('job_requests')
-        .update({ active: !currentActive })
+        .from('job_seekers')
+        .update({ status: newStatus })
         .eq('id', id);
 
       if (error) throw error;
-      loadJobRequests();
+      loadJobSeekers();
     } catch (error) {
-      console.error('Error toggling job request:', error);
+      console.error('Error toggling job seeker:', error);
     }
   };
 
@@ -177,19 +236,26 @@ export function JobRequestForm({ customerId, familyMemberId }: JobRequestFormPro
     setFormData({
       title: '',
       description: '',
-      category: '',
+      skills: '',
+      contract_type: 'Full-time',
+      desired_salary_min: '',
+      desired_salary_max: '',
       location: '',
-      employment_type: 'full-time',
-      experience_years: 0,
-      active: true,
+      available_from: '',
+      experience_years: '',
+      education_level: '',
+      phone: '',
+      email: '',
+      category_id: '',
+      status: 'active',
     });
     setEditingId(null);
     setShowForm(null);
   };
 
-  const renderJobRequestSection = (memberId: string | null, memberName: string, avatar?: string | null) => {
-    const memberRequests = jobRequests.filter(
-      req => (memberId === null && req.family_member_id === null) || req.family_member_id === memberId
+  const renderJobSeekerSection = (memberId: string | null, memberName: string, avatar?: string | null) => {
+    const memberJobs = jobSeekers.filter(
+      job => (memberId === null && job.family_member_id === null) || job.family_member_id === memberId
     );
     const isFormOpen = showForm === (memberId || 'main');
 
@@ -211,7 +277,7 @@ export function JobRequestForm({ customerId, familyMemberId }: JobRequestFormPro
             <div>
               <h3 className="text-xl font-bold text-gray-900">{memberName}</h3>
               <p className="text-sm text-gray-600">
-                {memberRequests.length} {memberRequests.length === 1 ? 'annuncio' : 'annunci'}
+                {memberJobs.length} {memberJobs.length === 1 ? 'annuncio' : 'annunci'}
               </p>
             </div>
           </div>
@@ -241,107 +307,205 @@ export function JobRequestForm({ customerId, familyMemberId }: JobRequestFormPro
             </button>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4 mb-4">
+          <div className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Titolo Posizione
+                Titolo / Posizione Cercata *
               </label>
               <input
                 type="text"
-                name="title"
                 value={formData.title}
-                onChange={handleChange}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
-                placeholder="Es. Sviluppatore Web, Designer, ecc."
+                placeholder="Es. Sviluppatore Frontend, Contabile, Cameriere..."
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Categoria
-              </label>
-              <input
-                type="text"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                required
-                placeholder="Es. Tecnologia, Marketing, ecc."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Descrizione
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              required
-              rows={4}
-              placeholder="Descrivi le tue competenze, esperienza e cosa stai cercando..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-4 mb-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Localita
-              </label>
-              <input
-                type="text"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                required
-                placeholder="Es. Milano, Remoto"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Tipo Contratto
+                Categoria Lavorativa
               </label>
               <SearchableSelect
-                name="employment_type"
-                value={formData.employment_type}
-                onChange={(value) => setFormData(prev => ({ ...prev, employment_type: value }))}
-                required
+                value={formData.category_id}
+                onChange={(value) => setFormData({ ...formData, category_id: value })}
                 options={[
-                  { value: 'full-time', label: 'Full-time' },
-                  { value: 'part-time', label: 'Part-time' },
-                  { value: 'contract', label: 'Contratto' },
-                  { value: 'freelance', label: 'Freelance' },
-                  { value: 'internship', label: 'Stage' },
+                  { value: '', label: 'Seleziona una categoria...' },
+                  ...categories.map((cat) => ({
+                    value: cat.id,
+                    label: cat.name,
+                  }))
                 ]}
-                placeholder="Seleziona tipo contratto"
+                placeholder="Seleziona una categoria..."
               />
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Anni di Esperienza
+                Descrizione e Esperienza *
               </label>
-              <input
-                type="number"
-                name="experience_years"
-                value={formData.experience_years}
-                onChange={handleChange}
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 required
-                min="0"
-                max="50"
+                rows={6}
+                placeholder="Descrivi la tua esperienza, qualifiche e cosa stai cercando..."
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Tipo Contratto Cercato *
+                </label>
+                <select
+                  value={formData.contract_type}
+                  onChange={(e) => setFormData({ ...formData, contract_type: e.target.value })}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="Full-time">Full-time</option>
+                  <option value="Part-time">Part-time</option>
+                  <option value="Contract">Contratto</option>
+                  <option value="Freelance">Freelance</option>
+                  <option value="Internship">Tirocinio</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Città *
+                </label>
+                <input
+                  type="text"
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  required
+                  placeholder="Es. Milano, Roma..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Telefono (facoltativo)
+                </label>
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="Es. +39 123 456 7890"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email (facoltativo)
+                </label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="Es. nome@email.com"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Competenze (separate da virgola)
+              </label>
+              <input
+                type="text"
+                value={formData.skills}
+                onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
+                placeholder="Es. JavaScript, Excel, Inglese..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Stipendio Desiderato Min (€/anno)
+                </label>
+                <input
+                  type="number"
+                  value={formData.desired_salary_min}
+                  onChange={(e) => setFormData({ ...formData, desired_salary_min: e.target.value })}
+                  placeholder="Es. 25000"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Stipendio Desiderato Max (€/anno)
+                </label>
+                <input
+                  type="number"
+                  value={formData.desired_salary_max}
+                  onChange={(e) => setFormData({ ...formData, desired_salary_max: e.target.value })}
+                  placeholder="Es. 35000"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Anni di Esperienza
+                </label>
+                <input
+                  type="number"
+                  value={formData.experience_years}
+                  onChange={(e) => setFormData({ ...formData, experience_years: e.target.value })}
+                  placeholder="Es. 3"
+                  min="0"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Disponibile dal
+                </label>
+                <input
+                  type="date"
+                  value={formData.available_from}
+                  onChange={(e) => setFormData({ ...formData, available_from: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Livello di Istruzione
+              </label>
+              <select
+                value={formData.education_level}
+                onChange={(e) => setFormData({ ...formData, education_level: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Seleziona...</option>
+                <option value="Licenza Media">Licenza Media</option>
+                <option value="Diploma">Diploma</option>
+                <option value="Laurea Triennale">Laurea Triennale</option>
+                <option value="Laurea Magistrale">Laurea Magistrale</option>
+                <option value="Master">Master</option>
+                <option value="Dottorato">Dottorato</option>
+              </select>
+            </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 mt-6">
             <button
               type="submit"
               className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
@@ -359,15 +523,15 @@ export function JobRequestForm({ customerId, familyMemberId }: JobRequestFormPro
         </form>
       )}
 
-      {memberRequests.length === 0 ? (
+      {memberJobs.length === 0 ? (
         <p className="text-gray-600 text-center py-8">Nessun annuncio creato</p>
       ) : (
         <div className="space-y-4">
-          {memberRequests.map((jobRequest) => (
+          {memberJobs.map((jobSeeker) => (
             <div
-              key={jobRequest.id}
+              key={jobSeeker.id}
               className={`border-2 rounded-lg p-6 transition-colors ${
-                jobRequest.active
+                jobSeeker.status === 'active'
                   ? 'border-blue-200 bg-blue-50'
                   : 'border-gray-200 bg-gray-50'
               }`}
@@ -375,34 +539,39 @@ export function JobRequestForm({ customerId, familyMemberId }: JobRequestFormPro
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-bold text-xl text-gray-900">{jobRequest.title}</h3>
+                    <h3 className="font-bold text-xl text-gray-900">{jobSeeker.title}</h3>
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                        jobRequest.active
+                        jobSeeker.status === 'active'
                           ? 'bg-green-100 text-green-700'
                           : 'bg-gray-200 text-gray-600'
                       }`}
                     >
-                      {jobRequest.active ? 'Attivo' : 'Non attivo'}
+                      {jobSeeker.status === 'active' ? 'Attivo' : 'Non attivo'}
                     </span>
                   </div>
                   <p className="text-sm text-gray-600 mb-1">
-                    {jobRequest.category} • {jobRequest.location} • {jobRequest.employment_type}
+                    {jobSeeker.business_categories?.name || 'Categoria non specificata'} • {jobSeeker.location} • {jobSeeker.contract_type}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {jobRequest.experience_years} {jobRequest.experience_years === 1 ? 'anno' : 'anni'} di esperienza
+                    {jobSeeker.experience_years} {jobSeeker.experience_years === 1 ? 'anno' : 'anni'} di esperienza
                   </p>
+                  {jobSeeker.education_level && (
+                    <p className="text-sm text-gray-600">
+                      Istruzione: {jobSeeker.education_level}
+                    </p>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => handleEdit(jobRequest)}
+                    onClick={() => handleEdit(jobSeeker)}
                     className="text-blue-600 hover:text-blue-700 p-2"
                     title="Modifica"
                   >
                     <Edit className="w-5 h-5" />
                   </button>
                   <button
-                    onClick={() => handleDelete(jobRequest.id)}
+                    onClick={() => handleDelete(jobSeeker.id)}
                     className="text-red-600 hover:text-red-700 p-2"
                     title="Elimina"
                   >
@@ -411,21 +580,39 @@ export function JobRequestForm({ customerId, familyMemberId }: JobRequestFormPro
                 </div>
               </div>
 
-              <p className="text-gray-700 leading-relaxed mb-4">{jobRequest.description}</p>
+              <p className="text-gray-700 leading-relaxed mb-4">{jobSeeker.description}</p>
+
+              {jobSeeker.skills.length > 0 && (
+                <div className="mb-4 flex flex-wrap gap-2">
+                  {jobSeeker.skills.map((skill, idx) => (
+                    <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {(jobSeeker.desired_salary_min || jobSeeker.desired_salary_max) && (
+                <p className="text-sm text-gray-600 mb-2">
+                  Stipendio desiderato: {jobSeeker.desired_salary_min ? `€${jobSeeker.desired_salary_min.toLocaleString()}` : '?'}
+                  {' - '}
+                  {jobSeeker.desired_salary_max ? `€${jobSeeker.desired_salary_max.toLocaleString()}` : '?'} /anno
+                </p>
+              )}
 
               <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                 <p className="text-sm text-gray-500">
-                  Creato il {new Date(jobRequest.created_at).toLocaleDateString('it-IT')}
+                  Creato il {new Date(jobSeeker.created_at).toLocaleDateString('it-IT')}
                 </p>
                 <button
-                  onClick={() => toggleActive(jobRequest.id, jobRequest.active)}
+                  onClick={() => toggleActive(jobSeeker.id, jobSeeker.status)}
                   className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                    jobRequest.active
+                    jobSeeker.status === 'active'
                       ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                       : 'bg-green-600 text-white hover:bg-green-700'
                   }`}
                 >
-                  {jobRequest.active ? 'Disattiva' : 'Attiva'}
+                  {jobSeeker.status === 'active' ? 'Disattiva' : 'Attiva'}
                 </button>
               </div>
             </div>
@@ -458,7 +645,7 @@ export function JobRequestForm({ customerId, familyMemberId }: JobRequestFormPro
           <p className="text-sm text-gray-600 mt-1">Gestisci gli annunci di ricerca lavoro</p>
         </div>
 
-        {renderJobRequestSection(selectedMember.id, selectedMember.nickname, selectedMember.avatar_url)}
+        {renderJobSeekerSection(selectedMember.id, selectedMember.nickname, selectedMember.avatar_url)}
       </div>
     );
   }
@@ -473,7 +660,7 @@ export function JobRequestForm({ customerId, familyMemberId }: JobRequestFormPro
         <p className="text-sm text-gray-600 mt-1">Gestisci i tuoi annunci di ricerca lavoro</p>
       </div>
 
-      {renderJobRequestSection(null, 'Account Principale')}
+      {renderJobSeekerSection(null, 'Account Principale')}
     </div>
   );
 }
