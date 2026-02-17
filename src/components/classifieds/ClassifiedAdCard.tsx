@@ -1,10 +1,12 @@
-import { MapPin, Eye, Calendar } from 'lucide-react';
+import { MapPin, Eye, Calendar, MessageCircle } from 'lucide-react';
 import { FavoriteButton } from '../favorites/FavoriteButton';
 import ReportButton from '../moderation/ReportButton';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 
 interface ClassifiedAd {
   id: string;
+  user_id: string;
   ad_type: 'sell' | 'buy' | 'gift';
   title: string;
   description: string;
@@ -30,7 +32,58 @@ interface ClassifiedAdCardProps {
 }
 
 export function ClassifiedAdCard({ ad }: ClassifiedAdCardProps) {
-  const { activeProfile } = useAuth();
+  const { user, activeProfile } = useAuth();
+
+  const startConversation = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      window.location.href = '/';
+      return;
+    }
+
+    if (user.id === ad.user_id) {
+      alert('Non puoi contattarti da solo');
+      return;
+    }
+
+    try {
+      const { data: existingConv, error: convError } = await supabase
+        .from('ad_conversations')
+        .select('id')
+        .eq('ad_id', ad.id)
+        .eq('buyer_id', user.id)
+        .eq('seller_id', ad.user_id)
+        .maybeSingle();
+
+      if (convError) throw convError;
+
+      if (existingConv) {
+        window.location.href = `/messages?conversation=${existingConv.id}`;
+        return;
+      }
+
+      const { data: newConv, error: createError } = await supabase
+        .from('ad_conversations')
+        .insert([
+          {
+            ad_id: ad.id,
+            buyer_id: user.id,
+            seller_id: ad.user_id,
+          },
+        ])
+        .select()
+        .single();
+
+      if (createError) throw createError;
+
+      window.location.href = `/messages?conversation=${newConv.id}`;
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+      alert('Errore nell\'avvio della conversazione');
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -148,12 +201,21 @@ export function ClassifiedAdCard({ ad }: ClassifiedAdCardProps) {
 
       {/* Action Buttons */}
       <div className="px-4 pb-4 flex gap-2">
+        {user && user.id !== ad.user_id && (
+          <button
+            onClick={startConversation}
+            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Contatta
+          </button>
+        )}
         <FavoriteButton
           type="ad"
           itemId={ad.id}
           familyMemberId={activeProfile && !activeProfile.isOwner ? activeProfile.id : null}
           showLabel={false}
-          className="flex-1 justify-center text-xs"
+          className={user && user.id !== ad.user_id ? '' : 'flex-1 justify-center text-xs'}
         />
         <ReportButton
           entityType="classified_ad"
