@@ -56,7 +56,7 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
 
     setLoading(true);
     try {
-      const { error } = await supabase.from('job_seekers').insert({
+      const dataToInsert = {
         user_id: user.id,
         title: formData.title,
         description: formData.description,
@@ -72,14 +72,21 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
         email: formData.email || null,
         category_id: formData.category_id || null,
         status: 'active',
-      });
+      };
+
+      console.log('Inserting job seeker ad:', dataToInsert);
+
+      const { data, error } = await supabase.from('job_seekers').insert(dataToInsert).select();
+
+      console.log('Insert result:', { data, error });
 
       if (error) throw error;
 
+      alert('Annuncio pubblicato con successo!');
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating job seeker ad:', error);
-      alert('Errore nella creazione dell\'annuncio');
+      alert(`Errore nella creazione dell'annuncio: ${error.message || 'Errore sconosciuto'}`);
     } finally {
       setLoading(false);
     }
