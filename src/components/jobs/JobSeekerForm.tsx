@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { SearchableSelect } from '../common/SearchableSelect';
 import { X } from 'lucide-react';
 
 interface JobSeekerFormProps {
@@ -120,18 +121,18 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Categoria Lavorativa
           </label>
-          <select
+          <SearchableSelect
             value={formData.category_id}
-            onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">Seleziona una categoria...</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => setFormData({ ...formData, category_id: value })}
+            options={[
+              { value: '', label: 'Seleziona una categoria...' },
+              ...categories.map((cat) => ({
+                value: cat.id,
+                label: cat.name,
+              }))
+            ]}
+            placeholder="Seleziona una categoria..."
+          />
         </div>
 
         <div>

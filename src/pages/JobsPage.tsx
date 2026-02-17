@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Briefcase, MapPin, DollarSign, Filter, X, Check, MessageCircle, Plus, Building2, UserCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { SearchableSelect } from '../components/common/SearchableSelect';
 import { JobSeekerForm } from '../components/jobs/JobSeekerForm';
 import { JobSeekerCard } from '../components/jobs/JobSeekerCard';
 import { JobConversation } from '../components/jobs/JobConversation';
@@ -67,6 +68,7 @@ interface SearchFilters {
   remote_work: string;
   education_level: string;
   skill: string;
+  category: string;
 }
 
 export function JobsPage() {
@@ -85,6 +87,7 @@ export function JobsPage() {
     type: 'job_seeker' | 'job_offer';
     otherUserName: string;
   } | null>(null);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const { user, profile, selectedBusinessLocationId, activeProfile } = useAuth();
 
   const [filters, setFilters] = useState<SearchFilters>({
@@ -97,7 +100,12 @@ export function JobsPage() {
     remote_work: '',
     education_level: '',
     skill: '',
+    category: '',
   });
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
 
   useEffect(() => {
     if (activeTab === 'offers') {
@@ -110,6 +118,19 @@ export function JobsPage() {
       loadJobSeekers();
     }
   }, [activeTab, user, filters, selectedBusinessLocationId]);
+
+  const loadCategories = async () => {
+    try {
+      const { data } = await supabase
+        .from('business_categories')
+        .select('id, name')
+        .order('name');
+
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
 
   const loadJobs = async () => {
     setLoading(true);
@@ -160,6 +181,10 @@ export function JobsPage() {
         query = query.contains('required_skills', [filters.skill]);
       }
 
+      if (filters.category) {
+        query = query.eq('category_id', filters.category);
+      }
+
       const { data } = await query;
       setJobs(data || []);
     } catch (error) {
@@ -208,6 +233,10 @@ export function JobsPage() {
 
       if (filters.skill) {
         query = query.contains('skills', [filters.skill]);
+      }
+
+      if (filters.category) {
+        query = query.eq('category_id', filters.category);
       }
 
       const { data } = await query;
@@ -384,6 +413,7 @@ export function JobsPage() {
       remote_work: '',
       education_level: '',
       skill: '',
+      category: '',
     });
   };
 
@@ -396,7 +426,8 @@ export function JobsPage() {
     filters.salary_max ||
     filters.remote_work ||
     filters.education_level ||
-    filters.skill;
+    filters.skill ||
+    filters.category;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -483,7 +514,7 @@ export function JobsPage() {
             <span>Filtri</span>
             {hasActiveFilters && (
               <span className="ml-2 px-2 py-0.5 bg-white text-green-600 text-xs rounded-full font-medium">
-                {[filters.position_type, filters.experience_level, filters.location, filters.salary_min, filters.salary_max, filters.remote_work, filters.education_level, filters.skill].filter(Boolean).length}
+                {[filters.category, filters.position_type, filters.experience_level, filters.location, filters.salary_min, filters.salary_max, filters.remote_work, filters.education_level, filters.skill].filter(Boolean).length}
               </span>
             )}
           </button>
@@ -491,6 +522,24 @@ export function JobsPage() {
           {showFilters && (
             <div className="bg-white rounded-lg shadow-md p-6 mb-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Categoria Lavorativa
+                  </label>
+                  <SearchableSelect
+                    value={filters.category}
+                    onChange={(value) => setFilters({ ...filters, category: value })}
+                    options={[
+                      { value: '', label: 'Tutte le categorie' },
+                      ...categories.map((cat) => ({
+                        value: cat.id,
+                        label: cat.name,
+                      }))
+                    ]}
+                    placeholder="Tutte le categorie"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Tipo di Contratto

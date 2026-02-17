@@ -8,8 +8,14 @@ interface Business {
   name: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 interface JobFormData {
   businessId: string;
+  categoryId: string;
   title: string;
   description: string;
   positionType: string;
@@ -28,6 +34,7 @@ interface BusinessJobFormProps {
 
 export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
   const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -35,6 +42,7 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
 
   const [formData, setFormData] = useState<JobFormData>({
     businessId: '',
+    categoryId: '',
     title: '',
     description: '',
     positionType: 'Full-time',
@@ -49,6 +57,7 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
 
   useEffect(() => {
     loadBusinesses();
+    loadCategories();
   }, [user]);
 
   const loadBusinesses = async () => {
@@ -68,6 +77,19 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
       }
     } catch (err) {
       console.error('Error loading businesses:', err);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const { data } = await supabase
+        .from('business_categories')
+        .select('id, name')
+        .order('name');
+
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error loading categories:', error);
     }
   };
 
@@ -118,6 +140,7 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
         .from('job_postings')
         .insert({
           business_id: formData.businessId,
+          category_id: formData.categoryId || null,
           title: formData.title.trim(),
           description: formData.description.trim(),
           position_type: formData.positionType,
@@ -135,6 +158,7 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
       setSuccess('Annuncio pubblicato con successo!');
       setFormData({
         businessId: formData.businessId,
+        categoryId: '',
         title: '',
         description: '',
         positionType: 'Full-time',
@@ -178,6 +202,24 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
             label: b.name,
           }))}
           placeholder="Seleziona azienda"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Categoria Lavorativa
+        </label>
+        <SearchableSelect
+          value={formData.categoryId}
+          onChange={(value) => setFormData(prev => ({ ...prev, categoryId: value }))}
+          options={[
+            { value: '', label: 'Seleziona una categoria...' },
+            ...categories.map((cat) => ({
+              value: cat.id,
+              label: cat.name,
+            }))
+          ]}
+          placeholder="Seleziona una categoria..."
         />
       </div>
 
