@@ -48,10 +48,9 @@ interface JobSeeker {
   phone: string | null;
   email: string | null;
   created_at: string;
-  user: {
-    profiles: {
-      full_name: string;
-    };
+  profiles: {
+    full_name: string;
+    nickname: string;
   };
   business_categories: {
     name: string;
@@ -177,9 +176,7 @@ export function JobsPage() {
         .from('job_seekers')
         .select(`
           *,
-          user:auth.users!inner(
-            profiles!inner(full_name, nickname)
-          ),
+          profiles!inner(full_name, nickname),
           business_categories(name)
         `)
         .eq('status', 'active')
@@ -291,7 +288,7 @@ export function JobsPage() {
       setConversationData({
         conversationId,
         type: 'job_seeker',
-        otherUserName: jobSeeker.user.profiles.full_name,
+        otherUserName: jobSeeker.profiles.nickname || jobSeeker.profiles.full_name,
       });
     } catch (error) {
       console.error('Error creating conversation:', error);

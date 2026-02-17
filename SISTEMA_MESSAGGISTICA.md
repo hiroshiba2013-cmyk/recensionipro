@@ -10,6 +10,26 @@ Il sistema di messaggistica permette agli utenti (privati e professionisti) di c
 
 ---
 
+## IMPORTANTE: Dove Creare gli Annunci
+
+### Annunci "Cerco Lavoro" vs Annunci Classificati
+
+**Se vuoi VENDERE/COMPRARE/REGALARE oggetti:**
+- Usa la sezione `/classified-ads` (Annunci Classificati)
+- Clicca su "Pubblica Annuncio"
+- Scegli tipo: Vendo / Cerco / Regalo
+
+**Se vuoi CERCARE LAVORO:**
+- NON usare gli annunci classificati
+- Vai alla pagina `/jobs` (Sezione Lavoro)
+- Clicca sul tab "Cerco Lavoro"
+- Clicca su "Crea Annuncio Cerco Lavoro"
+- Compila con la tua esperienza professionale
+
+Il tuo annuncio di ricerca lavoro apparirà nella sezione "Cerco Lavoro" della pagina Jobs e i datori di lavoro (utenti Business) potranno contattarti.
+
+---
+
 ## 1. Messaggistica per Annunci di Vendita
 
 ### Come Funziona
