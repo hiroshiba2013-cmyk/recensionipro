@@ -366,10 +366,9 @@ function AuthenticatedHomePage() {
               business:business_id(
                 name,
                 business_locations(city, province)
-              ),
-              category:category_id(name)
+              )
             `)
-            .eq('status', 'open');
+            .eq('status', 'active');
 
           if (selectedBusinessLocationId) {
             query = query.eq('business_location_id', selectedBusinessLocationId);
