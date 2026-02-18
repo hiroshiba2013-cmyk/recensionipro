@@ -7,6 +7,7 @@ import { JobSeekerForm } from '../components/jobs/JobSeekerForm';
 import { JobSeekerCard } from '../components/jobs/JobSeekerCard';
 import { JobConversation } from '../components/jobs/JobConversation';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
+import { LocationFilters } from '../components/common/LocationFilters';
 
 interface JobPosting {
   id: string;
@@ -61,7 +62,9 @@ interface JobSeeker {
 interface SearchFilters {
   position_type: string;
   experience_level: string;
-  location: string;
+  region: string;
+  province: string;
+  city: string;
   searchTerm: string;
   salary_min: string;
   salary_max: string;
@@ -93,7 +96,9 @@ export function JobsPage() {
   const [filters, setFilters] = useState<SearchFilters>({
     position_type: '',
     experience_level: '',
-    location: '',
+    region: '',
+    province: '',
+    city: '',
     searchTerm: '',
     salary_min: '',
     salary_max: '',
@@ -157,8 +162,16 @@ export function JobsPage() {
         query = query.eq('experience_level', filters.experience_level);
       }
 
-      if (filters.location) {
-        query = query.ilike('location', `%${filters.location}%`);
+      if (filters.region) {
+        query = query.ilike('region', `%${filters.region}%`);
+      }
+
+      if (filters.province) {
+        query = query.ilike('province', `%${filters.province}%`);
+      }
+
+      if (filters.city) {
+        query = query.ilike('city', `%${filters.city}%`);
       }
 
       if (filters.searchTerm) {
@@ -211,8 +224,16 @@ export function JobsPage() {
         query = query.eq('contract_type', filters.position_type);
       }
 
-      if (filters.location) {
-        query = query.ilike('location', `%${filters.location}%`);
+      if (filters.region) {
+        query = query.ilike('region', `%${filters.region}%`);
+      }
+
+      if (filters.province) {
+        query = query.ilike('province', `%${filters.province}%`);
+      }
+
+      if (filters.city) {
+        query = query.ilike('city', `%${filters.city}%`);
       }
 
       if (filters.searchTerm) {
@@ -378,7 +399,9 @@ export function JobsPage() {
     setFilters({
       position_type: '',
       experience_level: '',
-      location: '',
+      region: '',
+      province: '',
+      city: '',
       searchTerm: '',
       salary_min: '',
       salary_max: '',
@@ -392,7 +415,9 @@ export function JobsPage() {
   const hasActiveFilters =
     filters.position_type ||
     filters.experience_level ||
-    filters.location ||
+    filters.region ||
+    filters.province ||
+    filters.city ||
     filters.searchTerm ||
     filters.salary_min ||
     filters.salary_max ||
@@ -486,7 +511,7 @@ export function JobsPage() {
             <span>Filtri</span>
             {hasActiveFilters && (
               <span className="ml-2 px-2 py-0.5 bg-white text-green-600 text-xs rounded-full font-medium">
-                {[filters.category, filters.position_type, filters.experience_level, filters.location, filters.salary_min, filters.salary_max, filters.remote_work, filters.education_level, filters.skill].filter(Boolean).length}
+                {[filters.category, filters.position_type, filters.experience_level, filters.region, filters.province, filters.city, filters.salary_min, filters.salary_max, filters.remote_work, filters.education_level, filters.skill].filter(Boolean).length}
               </span>
             )}
           </button>
@@ -568,18 +593,19 @@ export function JobsPage() {
                   </div>
                 )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Città
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Es. Milano, Roma..."
-                    value={filters.location}
-                    onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
+              </div>
+
+              <div className="border-t pt-4 mb-4">
+                <LocationFilters
+                  selectedRegion={filters.region}
+                  selectedProvince={filters.province}
+                  selectedCity={filters.city}
+                  onRegionChange={(region) => setFilters({ ...filters, region })}
+                  onProvinceChange={(province) => setFilters({ ...filters, province })}
+                  onCityChange={(city) => setFilters({ ...filters, city })}
+                  showAllOption={true}
+                  label="Filtra per Posizione"
+                />
               </div>
 
               <div className="border-t pt-4">
