@@ -289,36 +289,17 @@ export function JobsPage() {
       const jobSeeker = jobSeekers.find(js => js.id === jobSeekerId);
       if (!jobSeeker) return;
 
-      const { data: existingConv } = await supabase
-        .from('job_seeker_conversations')
-        .select('id')
-        .eq('job_seeker_id', jobSeekerId)
-        .eq('employer_id', user.id)
-        .eq('seeker_id', jobSeeker.user_id)
-        .maybeSingle();
+      const { data: conversationId, error: funcError } = await supabase
+        .rpc('get_or_create_conversation', {
+          p_user1_id: user.id,
+          p_user2_id: jobSeeker.user_id,
+          p_conversation_type: 'job_seeker',
+          p_reference_id: jobSeekerId,
+        });
 
-      let conversationId = existingConv?.id;
+      if (funcError) throw funcError;
 
-      if (!conversationId) {
-        const { data: newConv, error } = await supabase
-          .from('job_seeker_conversations')
-          .insert({
-            job_seeker_id: jobSeekerId,
-            employer_id: user.id,
-            seeker_id: jobSeeker.user_id,
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-        conversationId = newConv.id;
-      }
-
-      setConversationData({
-        conversationId,
-        type: 'job_seeker',
-        otherUserName: jobSeeker.profiles.nickname || jobSeeker.profiles.full_name,
-      });
+      window.location.href = `/messages?conversation=${conversationId}`;
     } catch (error) {
       console.error('Error creating conversation:', error);
       alert('Errore nell\'apertura della chat');
@@ -343,36 +324,17 @@ export function JobsPage() {
         return;
       }
 
-      const { data: existingConv } = await supabase
-        .from('job_offer_conversations')
-        .select('id')
-        .eq('job_posting_id', jobId)
-        .eq('applicant_id', user.id)
-        .eq('employer_id', job.business.owner_id)
-        .maybeSingle();
+      const { data: conversationId, error: funcError } = await supabase
+        .rpc('get_or_create_conversation', {
+          p_user1_id: user.id,
+          p_user2_id: job.business.owner_id,
+          p_conversation_type: 'job_posting',
+          p_reference_id: jobId,
+        });
 
-      let conversationId = existingConv?.id;
+      if (funcError) throw funcError;
 
-      if (!conversationId) {
-        const { data: newConv, error } = await supabase
-          .from('job_offer_conversations')
-          .insert({
-            job_posting_id: jobId,
-            applicant_id: user.id,
-            employer_id: job.business.owner_id,
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-        conversationId = newConv.id;
-      }
-
-      setConversationData({
-        conversationId,
-        type: 'job_offer',
-        otherUserName: job.company_name || job.business?.name || 'Azienda',
-      });
+      window.location.href = `/messages?conversation=${conversationId}`;
     } catch (error) {
       console.error('Error creating conversation:', error);
       alert('Errore nell\'apertura della chat');

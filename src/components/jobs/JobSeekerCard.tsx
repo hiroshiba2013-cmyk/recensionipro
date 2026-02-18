@@ -83,24 +83,6 @@ export function JobSeekerCard({ jobSeeker, onContact, showContactButton = true }
             </span>
           </div>
         )}
-
-        {jobSeeker.phone && (
-          <div className="flex items-center gap-2">
-            <Phone className="w-4 h-4 text-gray-500" />
-            <a href={`tel:${jobSeeker.phone}`} className="text-sm text-blue-600 hover:underline">
-              {jobSeeker.phone}
-            </a>
-          </div>
-        )}
-
-        {jobSeeker.email && (
-          <div className="flex items-center gap-2">
-            <Mail className="w-4 h-4 text-gray-500" />
-            <a href={`mailto:${jobSeeker.email}`} className="text-sm text-blue-600 hover:underline">
-              {jobSeeker.email}
-            </a>
-          </div>
-        )}
       </div>
 
       {jobSeeker.skills.length > 0 && (
@@ -123,7 +105,7 @@ export function JobSeekerCard({ jobSeeker, onContact, showContactButton = true }
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
           >
             <MessageCircle className="w-4 h-4" />
-            Contatta
+            Invia Messaggio
           </button>
         )}
       </div>

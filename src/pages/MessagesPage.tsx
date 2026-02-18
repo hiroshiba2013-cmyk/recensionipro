@@ -19,6 +19,8 @@ interface Message {
 interface Conversation {
   id: string;
   ad_id: string | null;
+  conversation_type: string;
+  reference_id: string;
   participant1_id: string;
   participant2_id: string;
   last_message_at: string;
@@ -26,6 +28,13 @@ interface Conversation {
   classified_ads?: {
     title: string;
     images: string[] | null;
+  };
+  job_seekers?: {
+    title: string;
+  };
+  job_postings?: {
+    title: string;
+    company_name: string | null;
   };
   unread_count?: number;
 }
@@ -102,16 +111,13 @@ export function MessagesPage() {
 
       const { data, error } = await supabase
         .from('conversations')
-        .select(`
-          *,
-          classified_ads:ad_id(title, images)
-        `)
+        .select('*')
         .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
         .order('last_message_at', { ascending: false });
 
       if (error) throw error;
 
-      const conversationsWithProfiles = await Promise.all(
+      const conversationsWithDetails = await Promise.all(
         (data || []).map(async (conv) => {
           const otherUserId =
             conv.participant1_id === user.id
@@ -124,6 +130,34 @@ export function MessagesPage() {
             .eq('id', otherUserId)
             .single();
 
+          let referenceData = null;
+
+          if (conv.conversation_type === 'classified_ad') {
+            const { data: adData } = await supabase
+              .from('classified_ads')
+              .select('title, images')
+              .eq('id', conv.reference_id)
+              .maybeSingle();
+
+            referenceData = { classified_ads: adData };
+          } else if (conv.conversation_type === 'job_seeker') {
+            const { data: jobSeekerData } = await supabase
+              .from('job_seekers')
+              .select('title')
+              .eq('id', conv.reference_id)
+              .maybeSingle();
+
+            referenceData = { job_seekers: jobSeekerData };
+          } else if (conv.conversation_type === 'job_posting') {
+            const { data: jobPostingData } = await supabase
+              .from('job_postings')
+              .select('title, company_name')
+              .eq('id', conv.reference_id)
+              .maybeSingle();
+
+            referenceData = { job_postings: jobPostingData };
+          }
+
           const { count } = await supabase
             .from('messages')
             .select('*', { count: 'exact', head: true })
@@ -135,13 +169,14 @@ export function MessagesPage() {
 
           return {
             ...conv,
+            ...referenceData,
             profiles: profileData ? { ...profileData, full_name: displayName } : null,
             unread_count: count || 0,
           };
         })
       );
 
-      setConversations(conversationsWithProfiles);
+      setConversations(conversationsWithDetails);
     } catch (error) {
       console.error('Error loading conversations:', error);
     } finally {
@@ -293,7 +328,17 @@ export function MessagesPage() {
                   </div>
                   {conv.classified_ads && (
                     <div className="text-sm text-gray-600 truncate">
-                      {conv.classified_ads.title}
+                      📦 {conv.classified_ads.title}
+                    </div>
+                  )}
+                  {conv.job_seekers && (
+                    <div className="text-sm text-gray-600 truncate">
+                      💼 {conv.job_seekers.title}
+                    </div>
+                  )}
+                  {conv.job_postings && (
+                    <div className="text-sm text-gray-600 truncate">
+                      🏢 {conv.job_postings.title}
                     </div>
                   )}
                   <div className="text-xs text-gray-500 mt-1">
@@ -343,7 +388,17 @@ export function MessagesPage() {
                 </div>
                 {selectedConv.classified_ads && (
                   <div className="text-sm text-gray-600">
-                    {selectedConv.classified_ads.title}
+                    📦 {selectedConv.classified_ads.title}
+                  </div>
+                )}
+                {selectedConv.job_seekers && (
+                  <div className="text-sm text-gray-600">
+                    💼 {selectedConv.job_seekers.title}
+                  </div>
+                )}
+                {selectedConv.job_postings && (
+                  <div className="text-sm text-gray-600">
+                    🏢 {selectedConv.job_postings.title}
                   </div>
                 )}
               </div>

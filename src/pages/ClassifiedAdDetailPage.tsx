@@ -154,38 +154,17 @@ export function ClassifiedAdDetailPage() {
     if (!ad) return;
 
     try {
-      // Check if conversation already exists
-      const { data: existingConv, error: convError } = await supabase
-        .from('ad_conversations')
-        .select('id')
-        .eq('ad_id', ad.id)
-        .eq('buyer_id', user.id)
-        .eq('seller_id', ad.user_id)
-        .maybeSingle();
+      const { data: conversationId, error: funcError } = await supabase
+        .rpc('get_or_create_conversation', {
+          p_user1_id: user.id,
+          p_user2_id: ad.user_id,
+          p_conversation_type: 'classified_ad',
+          p_reference_id: ad.id,
+        });
 
-      if (convError) throw convError;
+      if (funcError) throw funcError;
 
-      if (existingConv) {
-        window.location.href = `/messages?conversation=${existingConv.id}`;
-        return;
-      }
-
-      // Create new conversation
-      const { data: newConv, error: createError } = await supabase
-        .from('ad_conversations')
-        .insert([
-          {
-            ad_id: ad.id,
-            buyer_id: user.id,
-            seller_id: ad.user_id,
-          },
-        ])
-        .select()
-        .single();
-
-      if (createError) throw createError;
-
-      window.location.href = `/messages?conversation=${newConv.id}`;
+      window.location.href = `/messages?conversation=${conversationId}`;
     } catch (error) {
       console.error('Error starting conversation:', error);
       alert('Errore nell\'avvio della conversazione');
@@ -437,31 +416,11 @@ export function ClassifiedAdDetailPage() {
               {!isOwner && (
                 <button
                   onClick={startConversation}
-                  className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors mb-3"
+                  className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <MessageCircle className="w-5 h-5" />
                   Invia Messaggio
                 </button>
-              )}
-
-              {ad.contact_phone && (
-                <a
-                  href={`tel:${ad.contact_phone}`}
-                  className="w-full flex items-center justify-center gap-2 border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors mb-2"
-                >
-                  <Phone className="w-5 h-5" />
-                  Chiama
-                </a>
-              )}
-
-              {ad.contact_email && (
-                <a
-                  href={`mailto:${ad.contact_email}`}
-                  className="w-full flex items-center justify-center gap-2 border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <Mail className="w-5 h-5" />
-                  Email
-                </a>
               )}
             </div>
 

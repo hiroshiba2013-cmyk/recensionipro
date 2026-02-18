@@ -49,36 +49,17 @@ export function ClassifiedAdCard({ ad }: ClassifiedAdCardProps) {
     }
 
     try {
-      const { data: existingConv, error: convError } = await supabase
-        .from('ad_conversations')
-        .select('id')
-        .eq('ad_id', ad.id)
-        .eq('buyer_id', user.id)
-        .eq('seller_id', ad.user_id)
-        .maybeSingle();
+      const { data: conversationId, error: funcError } = await supabase
+        .rpc('get_or_create_conversation', {
+          p_user1_id: user.id,
+          p_user2_id: ad.user_id,
+          p_conversation_type: 'classified_ad',
+          p_reference_id: ad.id,
+        });
 
-      if (convError) throw convError;
+      if (funcError) throw funcError;
 
-      if (existingConv) {
-        window.location.href = `/messages?conversation=${existingConv.id}`;
-        return;
-      }
-
-      const { data: newConv, error: createError } = await supabase
-        .from('ad_conversations')
-        .insert([
-          {
-            ad_id: ad.id,
-            buyer_id: user.id,
-            seller_id: ad.user_id,
-          },
-        ])
-        .select()
-        .single();
-
-      if (createError) throw createError;
-
-      window.location.href = `/messages?conversation=${newConv.id}`;
+      window.location.href = `/messages?conversation=${conversationId}`;
     } catch (error) {
       console.error('Error starting conversation:', error);
       alert('Errore nell\'avvio della conversazione');
@@ -207,21 +188,9 @@ export function ClassifiedAdCard({ ad }: ClassifiedAdCardProps) {
             className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
           >
             <MessageCircle className="w-4 h-4" />
-            Contatta
+            Invia Messaggio
           </button>
         )}
-        <FavoriteButton
-          type="ad"
-          itemId={ad.id}
-          familyMemberId={activeProfile && !activeProfile.isOwner ? activeProfile.id : null}
-          showLabel={false}
-          className={user && user.id !== ad.user_id ? '' : 'flex-1 justify-center text-xs'}
-        />
-        <ReportButton
-          entityType="classified_ad"
-          entityId={ad.id}
-          compact={false}
-        />
       </div>
     </div>
   );
