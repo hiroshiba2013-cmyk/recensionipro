@@ -6,17 +6,19 @@ Il sistema invia automaticamente notifiche agli utenti per i seguenti eventi:
 
 ### 1. Annuncio Classificato nei Preferiti
 - **Trigger**: Quando un utente aggiunge un annuncio classificato ai preferiti
-- **Destinatario**: Proprietario dell'annuncio
+- **Destinatario**: Proprietario principale dell'account (user_id)
 - **Tipo**: `ad_favorited`
 - **Icona**: Cuore rosso ❤️
-- **Messaggio**: "Il tuo annuncio '[titolo]' è stato aggiunto ai preferiti da [nome utente]"
+- **Messaggio**: "L'annuncio '[titolo]' [di nome membro famiglia] è stato aggiunto ai preferiti da [nome utente]"
+- **Supporto Famiglia**: Se l'annuncio è stato creato da un membro della famiglia, il messaggio include il nome del membro
 
 ### 2. Annuncio Lavoro nei Preferiti
 - **Trigger**: Quando un utente aggiunge un annuncio "Cerco Lavoro" ai preferiti
-- **Destinatario**: Proprietario dell'annuncio
+- **Destinatario**: Proprietario principale dell'account (user_id)
 - **Tipo**: `job_favorited`
 - **Icona**: Valigetta blu 💼
-- **Messaggio**: "Il tuo annuncio '[titolo]' è stato aggiunto ai preferiti da [nome utente]"
+- **Messaggio**: "L'annuncio '[titolo]' [di nome membro famiglia] è stato aggiunto ai preferiti da [nome utente]"
+- **Supporto Famiglia**: Se l'annuncio è stato creato da un membro della famiglia, il messaggio include il nome del membro
 
 ### 3. Attività nei Preferiti
 - **Trigger**: Quando un utente aggiunge un'attività commerciale ai preferiti
@@ -31,6 +33,30 @@ Il sistema invia automaticamente notifiche agli utenti per i seguenti eventi:
 - **Tipo**: `subscription_expiring`
 - **Icona**: Carta di credito arancione 💳
 - **Messaggio**: "Il tuo abbonamento per '[nome attività]' scadrà tra X giorni. Rinnova ora per non perdere i vantaggi!"
+
+## Gestione Membri della Famiglia
+
+### Come Funziona
+- **Account Principale**: Ogni utente ha un account principale identificato da `user_id`
+- **Membri Famiglia**: Gli utenti possono aggiungere membri della famiglia che condividono l'account
+- **Notifiche**: Tutte le notifiche vengono inviate all'account principale (user_id), mai ai singoli membri
+- **Privacy**: Ogni utente vede solo le proprie notifiche, anche se riguardano azioni di membri della famiglia
+
+### Comportamento delle Notifiche
+1. Quando un membro della famiglia crea un annuncio (vendita, regalo, cerco lavoro)
+2. Qualcun altro aggiunge quell'annuncio ai preferiti
+3. La notifica viene inviata all'account principale
+4. Il messaggio include il nome del membro della famiglia che ha creato l'annuncio
+
+### Esempio
+```
+Utente: Mario Rossi (account principale)
+Membro famiglia: Lucia (figlia)
+
+1. Lucia crea annuncio "Vendo bicicletta"
+2. Giovanni Bianchi aggiunge l'annuncio ai preferiti
+3. Mario riceve notifica: "L'annuncio 'Vendo bicicletta' di Lucia è stato aggiunto ai preferiti da Giovanni Bianchi"
+```
 
 ## Controlli Periodici
 
@@ -133,7 +159,7 @@ Per un sistema completamente automatico in produzione:
 ```typescript
 {
   id: uuid,
-  user_id: uuid,
+  user_id: uuid,  // Sempre l'account principale, mai il family_member_id
   type: 'ad_favorited' | 'job_favorited' | 'business_favorited' | 'subscription_expiring',
   title: string,
   message: string,
@@ -144,6 +170,7 @@ Per un sistema completamente automatico in produzione:
     business_id?: uuid,
     subscription_id?: uuid,
     favorited_by?: uuid,
+    family_member_id?: uuid,  // ID del membro famiglia che ha creato l'annuncio
     days_until_expiry?: number,
     url?: string  // Link per aprire l'entità
   },
@@ -158,3 +185,6 @@ Per un sistema completamente automatico in produzione:
 - Per la scadenza abbonamento, viene inviata una sola notifica al giorno per evitare spam
 - Tutte le notifiche includono un link (`data.url`) per navigare direttamente all'entità correlata
 - Gli utenti possono segnare le notifiche come lette o eliminarle
+- **Membri della famiglia**: Le notifiche vengono sempre inviate all'account principale (user_id), mai ai singoli membri
+- **Privacy**: Ogni utente vede solo le proprie notifiche grazie alle RLS policies
+- **Messaggi personalizzati**: Se un annuncio è creato da un membro famiglia, il messaggio include il nome del membro
