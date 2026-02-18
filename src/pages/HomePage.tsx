@@ -338,10 +338,11 @@ function AuthenticatedHomePage() {
   const [topBusinesses, setTopBusinesses] = useState<any[]>([]);
   const [userType, setUserType] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reviewCity, setReviewCity] = useState('');
 
   useEffect(() => {
     loadHomeData();
-  }, [user, selectedBusinessLocationId]);
+  }, [user, selectedBusinessLocationId, reviewCity]);
 
   const loadHomeData = async () => {
     try {
@@ -409,7 +410,7 @@ function AuthenticatedHomePage() {
       }
 
       if (topBusinessesResult.data && topBusinessesResult.data.length > 0) {
-        const normalizedBusinesses = topBusinessesResult.data.map((business: any) => ({
+        let normalizedBusinesses = topBusinessesResult.data.map((business: any) => ({
           id: business.business_id,
           name: business.business_name,
           business_categories: business.category_name ? {
@@ -427,6 +428,14 @@ function AuthenticatedHomePage() {
           review_count: parseInt(business.total_review_count) || 0,
           positive_review_count: parseInt(business.positive_review_count) || 0
         }));
+
+        if (reviewCity) {
+          normalizedBusinesses = normalizedBusinesses.filter((business: any) =>
+            business.business_locations.some((loc: any) =>
+              loc.city.toLowerCase().includes(reviewCity.toLowerCase())
+            )
+          );
+        }
 
         setTopBusinesses(normalizedBusinesses);
       } else {
@@ -560,6 +569,19 @@ function AuthenticatedHomePage() {
           </div>
         ) : (
           <>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Filtra Attività per Città
+              </label>
+              <input
+                type="text"
+                value={reviewCity}
+                onChange={(e) => setReviewCity(e.target.value)}
+                placeholder="Es: Milano, Roma, Napoli..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
             {topBusinesses.length > 0 && (
               <TopBusinessesBanner businesses={topBusinesses} />
             )}

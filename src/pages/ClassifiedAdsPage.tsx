@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ClassifiedAdCard } from '../components/classifieds/ClassifiedAdCard';
 import { ClassifiedAdForm } from '../components/classifieds/ClassifiedAdForm';
+import { LocationFilters } from '../components/common/LocationFilters';
 
 interface Category {
   id: string;
@@ -49,6 +50,8 @@ export function ClassifiedAdsPage() {
   const [adType, setAdType] = useState<'all' | 'sell' | 'buy' | 'gift'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRegion, setSelectedRegion] = useState('');
+  const [selectedProvince, setSelectedProvince] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
@@ -56,7 +59,7 @@ export function ClassifiedAdsPage() {
   useEffect(() => {
     loadCategories();
     loadAds();
-  }, [adType, selectedCategory, searchQuery, selectedCity, minPrice, maxPrice]);
+  }, [adType, selectedCategory, searchQuery, selectedRegion, selectedProvince, selectedCity, minPrice, maxPrice]);
 
   const loadCategories = async () => {
     try {
@@ -94,6 +97,14 @@ export function ClassifiedAdsPage() {
 
       if (searchQuery) {
         query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+      }
+
+      if (selectedRegion) {
+        query = query.ilike('region', `%${selectedRegion}%`);
+      }
+
+      if (selectedProvince) {
+        query = query.ilike('province', `%${selectedProvince}%`);
       }
 
       if (selectedCity) {
@@ -278,7 +289,7 @@ export function ClassifiedAdsPage() {
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {/* Search */}
             <div className="lg:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -315,23 +326,6 @@ export function ClassifiedAdsPage() {
               </select>
             </div>
 
-            {/* City */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Città
-              </label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  value={selectedCity}
-                  onChange={(e) => setSelectedCity(e.target.value)}
-                  placeholder="Es. Milano"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-
             {/* Price Range */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -356,13 +350,28 @@ export function ClassifiedAdsPage() {
             </div>
           </div>
 
+          <div className="mt-6">
+            <LocationFilters
+              selectedRegion={selectedRegion}
+              selectedProvince={selectedProvince}
+              selectedCity={selectedCity}
+              onRegionChange={setSelectedRegion}
+              onProvinceChange={setSelectedProvince}
+              onCityChange={setSelectedCity}
+              showAllOption={true}
+              label="Filtra per Posizione"
+            />
+          </div>
+
           {/* Clear Filters */}
-          {(adType !== 'all' || selectedCategory || searchQuery || selectedCity || minPrice || maxPrice) && (
+          {(adType !== 'all' || selectedCategory || searchQuery || selectedRegion || selectedProvince || selectedCity || minPrice || maxPrice) && (
             <button
               onClick={() => {
                 setAdType('all');
                 setSelectedCategory('');
                 setSearchQuery('');
+                setSelectedRegion('');
+                setSelectedProvince('');
                 setSelectedCity('');
                 setMinPrice('');
                 setMaxPrice('');
