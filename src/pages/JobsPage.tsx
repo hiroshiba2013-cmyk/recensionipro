@@ -79,7 +79,7 @@ export function JobsPage() {
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [jobSeekers, setJobSeekers] = useState<JobSeeker[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
   const [showJobSeekerForm, setShowJobSeekerForm] = useState(false);
   const [userApplications, setUserApplications] = useState<string[]>([]);
   const [viewedJobs, setViewedJobs] = useState<string[]>([]);
