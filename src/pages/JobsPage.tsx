@@ -518,7 +518,7 @@ export function JobsPage() {
 
           {showFilters && (
             <div className="bg-white rounded-lg shadow-md p-6 mb-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Categoria Lavorativa
@@ -554,7 +554,20 @@ export function JobsPage() {
                     <option value="Internship">Tirocinio</option>
                   </select>
                 </div>
+              </div>
 
+              <LocationFilters
+                selectedRegion={filters.region}
+                selectedProvince={filters.province}
+                selectedCity={filters.city}
+                onRegionChange={(region) => setFilters({ ...filters, region })}
+                onProvinceChange={(province) => setFilters({ ...filters, province })}
+                onCityChange={(city) => setFilters({ ...filters, city })}
+                showAllOption={true}
+                label="Filtra per Posizione"
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {activeTab === 'offers' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -592,20 +605,6 @@ export function JobsPage() {
                     </select>
                   </div>
                 )}
-
-              </div>
-
-              <div className="border-t pt-4 mb-4">
-                <LocationFilters
-                  selectedRegion={filters.region}
-                  selectedProvince={filters.province}
-                  selectedCity={filters.city}
-                  onRegionChange={(region) => setFilters({ ...filters, region })}
-                  onProvinceChange={(province) => setFilters({ ...filters, province })}
-                  onCityChange={(city) => setFilters({ ...filters, city })}
-                  showAllOption={true}
-                  label="Filtra per Posizione"
-                />
               </div>
 
               <div className="border-t pt-4">
