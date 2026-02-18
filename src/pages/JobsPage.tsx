@@ -79,7 +79,7 @@ export function JobsPage() {
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [jobSeekers, setJobSeekers] = useState<JobSeeker[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
   const [showJobSeekerForm, setShowJobSeekerForm] = useState(false);
   const [userApplications, setUserApplications] = useState<string[]>([]);
   const [viewedJobs, setViewedJobs] = useState<string[]>([]);
@@ -147,8 +147,7 @@ export function JobsPage() {
           business:businesses(id, name, owner_id)
         `)
         .eq('status', 'active')
-        .gt('expires_at', new Date().toISOString())
-        .order('published_at', { ascending: false });
+        .gt('expires_at', new Date().toISOString());
 
       if (selectedBusinessLocationId) {
         query = query.eq('business_location_id', selectedBusinessLocationId);
@@ -199,7 +198,41 @@ export function JobsPage() {
       }
 
       const { data } = await query;
-      setJobs(data || []);
+
+      if (data) {
+        const businessIds = [...new Set(data.map(job => job.business?.id).filter(Boolean))];
+
+        const reviewCounts = await Promise.all(
+          businessIds.map(async (businessId) => {
+            const { count } = await supabase
+              .from('reviews')
+              .select('id', { count: 'exact', head: true })
+              .eq('business_id', businessId)
+              .eq('status', 'approved');
+
+            return { businessId, count: count || 0 };
+          })
+        );
+
+        const reviewCountMap = Object.fromEntries(
+          reviewCounts.map(({ businessId, count }) => [businessId, count])
+        );
+
+        const sortedJobs = [...data].sort((a, b) => {
+          const countA = reviewCountMap[a.business?.id || ''] || 0;
+          const countB = reviewCountMap[b.business?.id || ''] || 0;
+
+          if (countB !== countA) {
+            return countB - countA;
+          }
+
+          return new Date(b.published_at).getTime() - new Date(a.published_at).getTime();
+        });
+
+        setJobs(sortedJobs);
+      } else {
+        setJobs([]);
+      }
     } catch (error) {
       console.error('Error loading jobs:', error);
     } finally {
