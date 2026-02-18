@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, Check, CheckCheck, Trash2, ArrowLeft } from 'lucide-react';
+import { Bell, Check, CheckCheck, Trash2, ArrowLeft, Heart, Briefcase, CreditCard, Store, ShoppingBag } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -137,6 +137,21 @@ export function NotificationsPage() {
     return date.toLocaleDateString('it-IT');
   }
 
+  function getNotificationIcon(type: string) {
+    switch (type) {
+      case 'ad_favorited':
+        return { icon: Heart, color: 'text-red-600', bg: 'bg-red-100' };
+      case 'job_favorited':
+        return { icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-100' };
+      case 'business_favorited':
+        return { icon: Store, color: 'text-green-600', bg: 'bg-green-100' };
+      case 'subscription_expiring':
+        return { icon: CreditCard, color: 'text-orange-600', bg: 'bg-orange-100' };
+      default:
+        return { icon: Bell, color: 'text-blue-600', bg: 'bg-blue-100' };
+    }
+  }
+
   const filteredNotifications =
     filter === 'unread'
       ? notifications.filter((n) => !n.read)
@@ -228,7 +243,11 @@ export function NotificationsPage() {
               </p>
             </div>
           ) : (
-            filteredNotifications.map((notification) => (
+            filteredNotifications.map((notification) => {
+              const iconConfig = getNotificationIcon(notification.type);
+              const IconComponent = iconConfig.icon;
+
+              return (
               <div
                 key={notification.id}
                 className={`bg-white hover:bg-gray-50 transition-colors cursor-pointer group ${
@@ -240,12 +259,12 @@ export function NotificationsPage() {
                   <div className="flex items-start gap-4">
                     <div
                       className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${
-                        !notification.read ? 'bg-blue-100' : 'bg-gray-100'
+                        !notification.read ? iconConfig.bg : 'bg-gray-100'
                       }`}
                     >
-                      <Bell
+                      <IconComponent
                         className={`w-6 h-6 ${
-                          !notification.read ? 'text-blue-600' : 'text-gray-400'
+                          !notification.read ? iconConfig.color : 'text-gray-400'
                         }`}
                       />
                     </div>
@@ -299,7 +318,8 @@ export function NotificationsPage() {
                   </div>
                 </div>
               </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
