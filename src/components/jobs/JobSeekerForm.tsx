@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { SearchableSelect } from '../common/SearchableSelect';
+import { LocationFilters } from '../common/LocationFilters';
 import { X } from 'lucide-react';
 
 interface JobSeekerFormProps {
@@ -26,6 +27,9 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
     desired_salary_min: '',
     desired_salary_max: '',
     location: '',
+    region: '',
+    province: '',
+    city: '',
     available_from: '',
     experience_years: '',
     education_level: '',
@@ -57,6 +61,10 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
 
     setLoading(true);
     try {
+      const locationString = [formData.city, formData.province, formData.region]
+        .filter(Boolean)
+        .join(', ') || formData.location;
+
       const dataToInsert = {
         user_id: user.id,
         title: formData.title,
@@ -65,7 +73,7 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
         contract_type: formData.contract_type,
         desired_salary_min: formData.desired_salary_min ? parseFloat(formData.desired_salary_min) : null,
         desired_salary_max: formData.desired_salary_max ? parseFloat(formData.desired_salary_max) : null,
-        location: formData.location,
+        location: locationString,
         available_from: formData.available_from || null,
         experience_years: formData.experience_years ? parseInt(formData.experience_years) : 0,
         education_level: formData.education_level || null,
@@ -149,32 +157,40 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tipo Contratto Cercato *
-            </label>
-            <select
-              required
-              value={formData.contract_type}
-              onChange={(e) => setFormData({ ...formData, contract_type: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="Full-time">Full-time</option>
-              <option value="Part-time">Part-time</option>
-              <option value="Contract">Contratto</option>
-              <option value="Freelance">Freelance</option>
-              <option value="Internship">Tirocinio</option>
-            </select>
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Tipo Contratto Cercato *
+          </label>
+          <select
+            required
+            value={formData.contract_type}
+            onChange={(e) => setFormData({ ...formData, contract_type: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="Full-time">Full-time</option>
+            <option value="Part-time">Part-time</option>
+            <option value="Contract">Contratto</option>
+            <option value="Freelance">Freelance</option>
+            <option value="Internship">Tirocinio</option>
+          </select>
+        </div>
 
+        <div className="space-y-4 border-t pt-4">
+          <h3 className="text-lg font-semibold text-gray-900">Località di Lavoro</h3>
+          <LocationFilters
+            region={formData.region}
+            province={formData.province}
+            city={formData.city}
+            onRegionChange={(value) => setFormData({ ...formData, region: value, province: '', city: '' })}
+            onProvinceChange={(value) => setFormData({ ...formData, province: value, city: '' })}
+            onCityChange={(value) => setFormData({ ...formData, city: value })}
+          />
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Città *
+              Oppure scrivi manualmente la località
             </label>
             <input
               type="text"
-              required
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"

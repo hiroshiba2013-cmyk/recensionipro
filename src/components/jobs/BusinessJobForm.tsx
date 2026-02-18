@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { SearchableSelect } from '../common/SearchableSelect';
+import { LocationFilters } from '../common/LocationFilters';
 
 interface Business {
   id: string;
@@ -23,6 +24,9 @@ interface JobFormData {
   salaryMax: string;
   salaryCurrency: string;
   location: string;
+  region: string;
+  province: string;
+  city: string;
   requiredSkills: string;
   experienceLevel: string;
   expiresAt: string;
@@ -50,6 +54,9 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
     salaryMax: '',
     salaryCurrency: 'EUR',
     location: '',
+    region: '',
+    province: '',
+    city: '',
     requiredSkills: '',
     experienceLevel: 'Mid',
     expiresAt: '',
@@ -136,6 +143,10 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
         .map(s => s.trim())
         .filter(s => s);
 
+      const locationString = [formData.city, formData.province, formData.region]
+        .filter(Boolean)
+        .join(', ') || formData.location.trim();
+
       const { error: insertError } = await supabase
         .from('job_postings')
         .insert({
@@ -147,7 +158,7 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
           salary_min: formData.salaryMin ? parseFloat(formData.salaryMin) : null,
           salary_max: formData.salaryMax ? parseFloat(formData.salaryMax) : null,
           salary_currency: formData.salaryCurrency,
-          location: formData.location.trim(),
+          location: locationString,
           required_skills: skillsArray,
           experience_level: formData.experienceLevel,
           expires_at: new Date(formData.expiresAt).toISOString(),
@@ -166,6 +177,9 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
         salaryMax: '',
         salaryCurrency: 'EUR',
         location: '',
+        region: '',
+        province: '',
+        city: '',
         requiredSkills: '',
         experienceLevel: 'Mid',
         expiresAt: '',
@@ -321,27 +335,36 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Valuta
-          </label>
-          <SearchableSelect
-            name="salaryCurrency"
-            value={formData.salaryCurrency}
-            onChange={(value) => setFormData(prev => ({ ...prev, salaryCurrency: value }))}
-            options={[
-              { value: 'EUR', label: 'EUR' },
-              { value: 'USD', label: 'USD' },
-              { value: 'GBP', label: 'GBP' },
-            ]}
-            placeholder="Seleziona valuta"
-          />
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Valuta
+        </label>
+        <SearchableSelect
+          name="salaryCurrency"
+          value={formData.salaryCurrency}
+          onChange={(value) => setFormData(prev => ({ ...prev, salaryCurrency: value }))}
+          options={[
+            { value: 'EUR', label: 'EUR' },
+            { value: 'USD', label: 'USD' },
+            { value: 'GBP', label: 'GBP' },
+          ]}
+          placeholder="Seleziona valuta"
+        />
+      </div>
 
+      <div className="space-y-4 border-t pt-4">
+        <h3 className="text-sm font-medium text-gray-700">Località di Lavoro</h3>
+        <LocationFilters
+          region={formData.region}
+          province={formData.province}
+          city={formData.city}
+          onRegionChange={(value) => setFormData(prev => ({ ...prev, region: value, province: '', city: '' }))}
+          onProvinceChange={(value) => setFormData(prev => ({ ...prev, province: value, city: '' }))}
+          onCityChange={(value) => setFormData(prev => ({ ...prev, city: value }))}
+        />
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Città/Location *
+            Oppure scrivi manualmente la località
           </label>
           <input
             type="text"
@@ -350,7 +373,6 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
             onChange={handleChange}
             placeholder="Es. Milano"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            required
           />
         </div>
       </div>
