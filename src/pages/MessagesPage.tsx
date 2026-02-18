@@ -40,7 +40,7 @@ interface Conversation {
 }
 
 export function MessagesPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, activeProfile, profile, selectedBusinessLocationId } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -86,7 +86,7 @@ export function MessagesPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, authLoading]);
+  }, [user, authLoading, activeProfile, selectedBusinessLocationId]);
 
   useEffect(() => {
     if (selectedConversation) {
@@ -109,11 +109,44 @@ export function MessagesPage() {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('conversations')
         .select('*')
-        .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
-        .order('last_message_at', { ascending: false });
+        .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`);
+
+      // Filter by active profile context
+      if (profile?.user_type === 'customer') {
+        // Private user - filter by family member
+        const familyMemberId = activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
+
+        if (familyMemberId) {
+          // Show only conversations for this specific family member
+          query = query.or(
+            `and(participant1_id.eq.${user.id},participant1_family_member_id.eq.${familyMemberId}),` +
+            `and(participant2_id.eq.${user.id},participant2_family_member_id.eq.${familyMemberId})`
+          );
+        } else {
+          // Show only conversations for main account (where family_member_id is NULL)
+          query = query.or(
+            `and(participant1_id.eq.${user.id},participant1_family_member_id.is.null),` +
+            `and(participant2_id.eq.${user.id},participant2_family_member_id.is.null)`
+          );
+        }
+      } else if (profile?.user_type === 'business') {
+        // Business user - filter by location
+        if (selectedBusinessLocationId) {
+          // Show only conversations for this specific location
+          query = query.or(
+            `and(participant1_id.eq.${user.id},participant1_location_id.eq.${selectedBusinessLocationId}),` +
+            `and(participant2_id.eq.${user.id},participant2_location_id.eq.${selectedBusinessLocationId})`
+          );
+        }
+        // If selectedBusinessLocationId is null, show ALL conversations (all locations)
+      }
+
+      query = query.order('last_message_at', { ascending: false });
+
+      const { data, error } = await query;
 
       if (error) throw error;
 

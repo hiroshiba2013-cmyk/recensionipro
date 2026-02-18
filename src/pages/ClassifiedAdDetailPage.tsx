@@ -154,12 +154,16 @@ export function ClassifiedAdDetailPage() {
     if (!ad) return;
 
     try {
+      const familyMemberId = activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
+
       const { data: conversationId, error: funcError } = await supabase
         .rpc('get_or_create_conversation', {
           p_user1_id: user.id,
           p_user2_id: ad.user_id,
           p_conversation_type: 'classified_ad',
           p_reference_id: ad.id,
+          p_user1_family_member_id: familyMemberId,
+          p_user2_family_member_id: ad.family_member_id || null,
         });
 
       if (funcError) throw funcError;

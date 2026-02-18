@@ -289,12 +289,17 @@ export function JobsPage() {
       const jobSeeker = jobSeekers.find(js => js.id === jobSeekerId);
       if (!jobSeeker) return;
 
+      const locationId = selectedBusinessLocationId || null;
+      const familyMemberId = jobSeeker.family_member_id || null;
+
       const { data: conversationId, error: funcError } = await supabase
         .rpc('get_or_create_conversation', {
           p_user1_id: user.id,
           p_user2_id: jobSeeker.user_id,
           p_conversation_type: 'job_seeker',
           p_reference_id: jobSeekerId,
+          p_user1_location_id: locationId,
+          p_user2_family_member_id: familyMemberId,
         });
 
       if (funcError) throw funcError;
@@ -324,12 +329,17 @@ export function JobsPage() {
         return;
       }
 
+      const familyMemberId = activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
+      const businessLocationId = job.business_location_id || null;
+
       const { data: conversationId, error: funcError } = await supabase
         .rpc('get_or_create_conversation', {
           p_user1_id: user.id,
           p_user2_id: job.business.owner_id,
           p_conversation_type: 'job_posting',
           p_reference_id: jobId,
+          p_user1_family_member_id: familyMemberId,
+          p_user2_location_id: businessLocationId,
         });
 
       if (funcError) throw funcError;
