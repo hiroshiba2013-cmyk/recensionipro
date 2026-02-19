@@ -602,33 +602,33 @@ export function RulesPage() {
                         <div className="bg-white p-4 rounded-lg">
                           <h4 className="font-bold mb-3">Come Guadagnare Punti:</h4>
                           <div className="space-y-2">
+                            <div className="flex items-center justify-between p-3 bg-green-50 rounded">
+                              <span>⭐ Recensione completa (con valutazioni dettagliate)</span>
+                              <span className="font-bold text-green-700">+50 punti</span>
+                            </div>
                             <div className="flex items-center justify-between p-3 bg-yellow-50 rounded">
-                              <span>📝 Pubblicare un annuncio</span>
-                              <span className="font-bold text-yellow-700">+5 punti</span>
+                              <span>👥 Presenta un amico (che si abbona)</span>
+                              <span className="font-bold text-yellow-700">+30 punti</span>
                             </div>
                             <div className="flex items-center justify-between p-3 bg-blue-50 rounded">
-                              <span>📦 Inserire un prodotto</span>
-                              <span className="font-bold text-blue-700">+10 punti</span>
-                            </div>
-                            <div className="flex items-center justify-between p-3 bg-green-50 rounded">
-                              <span>🏪 Segnalare un'attività (nome e indirizzo)</span>
-                              <span className="font-bold text-green-700">+10 punti</span>
+                              <span>⭐ Recensione base (solo voto finale)</span>
+                              <span className="font-bold text-blue-700">+25 punti</span>
                             </div>
                             <div className="flex items-center justify-between p-3 bg-emerald-50 rounded">
-                              <span>🏪 Segnalare un'attività completa (con sito, email, telefono)</span>
+                              <span>🏪 Inserimento attività completa (con sito, email, telefono)</span>
                               <span className="font-bold text-emerald-700">+25 punti</span>
                             </div>
                             <div className="flex items-center justify-between p-3 bg-orange-50 rounded">
-                              <span>⭐ Recensione approvata (base)</span>
-                              <span className="font-bold text-orange-700">+25 punti</span>
-                            </div>
-                            <div className="flex items-center justify-between p-3 bg-red-50 rounded">
-                              <span>⭐ Recensione con prova documentale</span>
-                              <span className="font-bold text-red-700">+50 punti</span>
+                              <span>🏪 Inserimento attività base (nome e indirizzo)</span>
+                              <span className="font-bold text-orange-700">+10 punti</span>
                             </div>
                             <div className="flex items-center justify-between p-3 bg-purple-50 rounded">
-                              <span>👥 Presenta un amico (che si abbona)</span>
-                              <span className="font-bold text-purple-700">+30 punti</span>
+                              <span>📦 Inserire un prodotto</span>
+                              <span className="font-bold text-purple-700">+10 punti</span>
+                            </div>
+                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                              <span>📝 Pubblicare un annuncio</span>
+                              <span className="font-bold text-gray-700">+5 punti</span>
                             </div>
                           </div>
                         </div>
@@ -639,34 +639,34 @@ export function RulesPage() {
                           </h4>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
                             <div className="bg-white p-3 rounded text-center">
+                              <div className="text-2xl mb-1">🎯</div>
+                              <div className="font-bold">Nuovo Arrivato</div>
+                              <div className="text-xs text-gray-600">0 punti</div>
+                            </div>
+                            <div className="bg-white p-3 rounded text-center">
                               <div className="text-2xl mb-1">🥉</div>
-                              <div className="font-bold">Bronzo</div>
+                              <div className="font-bold">Principiante</div>
                               <div className="text-xs text-gray-600">100+ punti</div>
                             </div>
                             <div className="bg-white p-3 rounded text-center">
+                              <div className="text-2xl mb-1">🔍</div>
+                              <div className="font-bold">Esploratore</div>
+                              <div className="text-xs text-gray-600">300+ punti</div>
+                            </div>
+                            <div className="bg-white p-3 rounded text-center">
                               <div className="text-2xl mb-1">🥈</div>
-                              <div className="font-bold">Argento</div>
-                              <div className="text-xs text-gray-600">500+ punti</div>
+                              <div className="font-bold">Veterano</div>
+                              <div className="text-xs text-gray-600">800+ punti</div>
                             </div>
                             <div className="bg-white p-3 rounded text-center">
                               <div className="text-2xl mb-1">🥇</div>
-                              <div className="font-bold">Oro</div>
-                              <div className="text-xs text-gray-600">1000+ punti</div>
-                            </div>
-                            <div className="bg-white p-3 rounded text-center">
-                              <div className="text-2xl mb-1">💎</div>
-                              <div className="font-bold">Platino</div>
+                              <div className="font-bold">Maestro</div>
                               <div className="text-xs text-gray-600">2500+ punti</div>
                             </div>
                             <div className="bg-white p-3 rounded text-center">
                               <div className="text-2xl mb-1">👑</div>
                               <div className="font-bold">Leggenda</div>
                               <div className="text-xs text-gray-600">5000+ punti</div>
-                            </div>
-                            <div className="bg-white p-3 rounded text-center">
-                              <div className="text-2xl mb-1">⭐</div>
-                              <div className="font-bold">Top 10</div>
-                              <div className="text-xs text-gray-600">Classifica mese</div>
                             </div>
                           </div>
                         </div>
