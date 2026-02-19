@@ -485,7 +485,11 @@ function AuthenticatedHomePage() {
         setJobSeekers(jobSeekersResult);
       }
 
-      if (sellAdsResult.data) {
+      console.log('Sell ads result:', sellAdsResult);
+      console.log('Buy ads result:', buyAdsResult);
+      console.log('Gift ads result:', giftAdsResult);
+
+      if (sellAdsResult.data && sellAdsResult.data.length > 0) {
         const adsWithProfiles = sellAdsResult.data.map((ad: any) => ({
           ...ad,
           profiles: {
@@ -495,10 +499,13 @@ function AuthenticatedHomePage() {
             avatar_url: ad.user_avatar_url
           }
         }));
+        console.log('Featured sell ads:', adsWithProfiles);
         setFeaturedSellAds(adsWithProfiles);
+      } else {
+        setFeaturedSellAds([]);
       }
 
-      if (buyAdsResult.data) {
+      if (buyAdsResult.data && buyAdsResult.data.length > 0) {
         const adsWithProfiles = buyAdsResult.data.map((ad: any) => ({
           ...ad,
           profiles: {
@@ -508,10 +515,13 @@ function AuthenticatedHomePage() {
             avatar_url: ad.user_avatar_url
           }
         }));
+        console.log('Featured buy ads:', adsWithProfiles);
         setFeaturedBuyAds(adsWithProfiles);
+      } else {
+        setFeaturedBuyAds([]);
       }
 
-      if (giftAdsResult.data) {
+      if (giftAdsResult.data && giftAdsResult.data.length > 0) {
         const adsWithProfiles = giftAdsResult.data.map((ad: any) => ({
           ...ad,
           profiles: {
@@ -521,7 +531,10 @@ function AuthenticatedHomePage() {
             avatar_url: ad.user_avatar_url
           }
         }));
+        console.log('Featured gift ads:', adsWithProfiles);
         setFeaturedGiftAds(adsWithProfiles);
+      } else {
+        setFeaturedGiftAds([]);
       }
 
       if (topBusinessesResult.data && topBusinessesResult.data.length > 0) {
@@ -769,86 +782,98 @@ function AuthenticatedHomePage() {
 
             {userType !== 'business' && (
               <>
-                {featuredSellAds.length > 0 && (
-                  <section className="mb-8 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-8 shadow-md border-2 border-blue-200">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-4 rounded-xl shadow-lg">
-                          <Package className="w-7 h-7 text-white" />
-                        </div>
-                        <div>
-                          <h2 className="text-3xl font-bold text-gray-900">Annunci in Evidenza - Vendo</h2>
-                          <p className="text-sm text-gray-600">Dai utenti più attivi della piattaforma</p>
-                        </div>
+                <section className="mb-8 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-8 shadow-md border-2 border-blue-200">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-4 rounded-xl shadow-lg">
+                        <Package className="w-7 h-7 text-white" />
                       </div>
-                      <button
-                        onClick={() => navigate('/classified-ads?type=sell')}
-                        className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold shadow-md transition-all hover:scale-105"
-                      >
-                        Vedi tutti <ArrowRight className="w-4 h-4" />
-                      </button>
+                      <div>
+                        <h2 className="text-3xl font-bold text-gray-900">Annunci in Evidenza - Vendo</h2>
+                        <p className="text-sm text-gray-600">Dai utenti più attivi della piattaforma</p>
+                      </div>
                     </div>
+                    <button
+                      onClick={() => navigate('/classified-ads?type=sell')}
+                      className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold shadow-md transition-all hover:scale-105"
+                    >
+                      Vedi tutti <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                  {featuredSellAds.length > 0 ? (
                     <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
                       {featuredSellAds.map((ad) => (
                         <ClassifiedAdCard key={ad.id} ad={ad} onClick={() => navigate(`/classified-ads/${ad.id}`)} />
                       ))}
                     </div>
-                  </section>
-                )}
-
-                {featuredBuyAds.length > 0 && (
-                  <section className="mb-8 bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-8 shadow-md border-2 border-orange-200">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-gradient-to-br from-orange-500 to-amber-500 p-4 rounded-xl shadow-lg">
-                          <Search className="w-7 h-7 text-white" />
-                        </div>
-                        <div>
-                          <h2 className="text-3xl font-bold text-gray-900">Annunci in Evidenza - Cerco</h2>
-                          <p className="text-sm text-gray-600">Dai utenti più attivi della piattaforma</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => navigate('/classified-ads?type=buy')}
-                        className="flex items-center gap-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 font-semibold shadow-md transition-all hover:scale-105"
-                      >
-                        Vedi tutti <ArrowRight className="w-4 h-4" />
-                      </button>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">Nessun annuncio al momento. Pubblica il primo annuncio e ottieni visibilità!</p>
                     </div>
+                  )}
+                </section>
+
+                <section className="mb-8 bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-8 shadow-md border-2 border-orange-200">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-gradient-to-br from-orange-500 to-amber-500 p-4 rounded-xl shadow-lg">
+                        <Search className="w-7 h-7 text-white" />
+                      </div>
+                      <div>
+                        <h2 className="text-3xl font-bold text-gray-900">Annunci in Evidenza - Cerco</h2>
+                        <p className="text-sm text-gray-600">Dai utenti più attivi della piattaforma</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => navigate('/classified-ads?type=buy')}
+                      className="flex items-center gap-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 font-semibold shadow-md transition-all hover:scale-105"
+                    >
+                      Vedi tutti <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                  {featuredBuyAds.length > 0 ? (
                     <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
                       {featuredBuyAds.map((ad) => (
                         <ClassifiedAdCard key={ad.id} ad={ad} onClick={() => navigate(`/classified-ads/${ad.id}`)} />
                       ))}
                     </div>
-                  </section>
-                )}
-
-                {featuredGiftAds.length > 0 && (
-                  <section className="mb-12 bg-gradient-to-r from-pink-50 to-rose-50 rounded-2xl p-8 shadow-md border-2 border-pink-200">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-gradient-to-br from-pink-500 to-rose-500 p-4 rounded-xl shadow-lg">
-                          <Gift className="w-7 h-7 text-white" />
-                        </div>
-                        <div>
-                          <h2 className="text-3xl font-bold text-gray-900">Annunci in Evidenza - Regalo</h2>
-                          <p className="text-sm text-gray-600">Dai utenti più attivi della piattaforma</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => navigate('/classified-ads?type=gift')}
-                        className="flex items-center gap-2 bg-pink-600 text-white px-6 py-3 rounded-lg hover:bg-pink-700 font-semibold shadow-md transition-all hover:scale-105"
-                      >
-                        Vedi tutti <ArrowRight className="w-4 h-4" />
-                      </button>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">Nessun annuncio al momento. Pubblica il primo annuncio e ottieni visibilità!</p>
                     </div>
+                  )}
+                </section>
+
+                <section className="mb-12 bg-gradient-to-r from-pink-50 to-rose-50 rounded-2xl p-8 shadow-md border-2 border-pink-200">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-gradient-to-br from-pink-500 to-rose-500 p-4 rounded-xl shadow-lg">
+                        <Gift className="w-7 h-7 text-white" />
+                      </div>
+                      <div>
+                        <h2 className="text-3xl font-bold text-gray-900">Annunci in Evidenza - Regalo</h2>
+                        <p className="text-sm text-gray-600">Dai utenti più attivi della piattaforma</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => navigate('/classified-ads?type=gift')}
+                      className="flex items-center gap-2 bg-pink-600 text-white px-6 py-3 rounded-lg hover:bg-pink-700 font-semibold shadow-md transition-all hover:scale-105"
+                    >
+                      Vedi tutti <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                  {featuredGiftAds.length > 0 ? (
                     <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
                       {featuredGiftAds.map((ad) => (
                         <ClassifiedAdCard key={ad.id} ad={ad} onClick={() => navigate(`/classified-ads/${ad.id}`)} />
                       ))}
                     </div>
-                  </section>
-                )}
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">Nessun annuncio al momento. Pubblica il primo annuncio e ottieni visibilità!</p>
+                    </div>
+                  )}
+                </section>
               </>
             )}
           </>
