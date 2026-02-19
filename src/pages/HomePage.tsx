@@ -334,6 +334,7 @@ function AuthenticatedHomePage() {
   const { user, selectedBusinessLocationId } = useAuth();
   const navigate = useNavigate();
   const [jobPostings, setJobPostings] = useState<any[]>([]);
+  const [jobSeekers, setJobSeekers] = useState<any[]>([]);
   const [classifiedAds, setClassifiedAds] = useState<any[]>([]);
   const [topBusinesses, setTopBusinesses] = useState<any[]>([]);
   const [userType, setUserType] = useState<string | null>(null);
@@ -358,26 +359,112 @@ function AuthenticatedHomePage() {
         setUserType(profileResult.data.user_type);
       }
 
-      const [jobsResult, adsResult, topBusinessesResult] = await Promise.all([
-        (() => {
+      const [jobsResult, jobSeekersResult, adsResult, topBusinessesResult] = await Promise.all([
+        (async () => {
           let query = supabase
             .from('job_postings')
             .select(`
               *,
-              business:business_id(
-                name,
-                business_locations(city, province)
-              )
+              business:business_id(id, name, business_locations(city, province))
             `)
-            .eq('status', 'active');
+            .eq('status', 'active')
+            .gt('expires_at', new Date().toISOString());
 
           if (selectedBusinessLocationId) {
             query = query.eq('business_location_id', selectedBusinessLocationId);
           }
 
-          return query
-            .order('created_at', { ascending: false })
-            .limit(3);
+          const { data } = await query;
+
+          if (data) {
+            const businessIds = [...new Set(data.map(job => job.business?.id).filter(Boolean))];
+
+            const reviewCounts = await Promise.all(
+              businessIds.map(async (businessId) => {
+                const { count } = await supabase
+                  .from('reviews')
+                  .select('id', { count: 'exact', head: true })
+                  .eq('business_id', businessId)
+                  .eq('status', 'approved');
+
+                return { businessId, count: count || 0 };
+              })
+            );
+
+            const reviewCountMap = Object.fromEntries(
+              reviewCounts.map(({ businessId, count }) => [businessId, count])
+            );
+
+            const sortedJobs = [...data].sort((a, b) => {
+              const countA = reviewCountMap[a.business?.id || ''] || 0;
+              const countB = reviewCountMap[b.business?.id || ''] || 0;
+
+              if (countB !== countA) {
+                return countB - countA;
+              }
+
+              return new Date(b.published_at).getTime() - new Date(a.published_at).getTime();
+            });
+
+            return sortedJobs.slice(0, 6);
+          }
+          return [];
+        })(),
+
+        (async () => {
+          const { data: seekersData } = await supabase
+            .from('job_seekers')
+            .select(`
+              *,
+              profiles!inner(id, full_name, nickname),
+              business_categories(name)
+            `)
+            .eq('status', 'active');
+
+          if (seekersData && seekersData.length > 0) {
+            const userIds = [...new Set(seekersData.map(js => js.user_id))];
+
+            const activityCounts = await Promise.all(
+              userIds.map(async (userId) => {
+                const { data: activityData } = await supabase
+                  .from('user_activity')
+                  .select('total_points, reviews_count')
+                  .eq('user_id', userId)
+                  .single();
+
+                return {
+                  userId,
+                  totalPoints: activityData?.total_points || 0,
+                  reviewsCount: activityData?.reviews_count || 0
+                };
+              })
+            );
+
+            const activityMap = Object.fromEntries(
+              activityCounts.map(({ userId, totalPoints, reviewsCount }) => [
+                userId,
+                { totalPoints, reviewsCount }
+              ])
+            );
+
+            const sortedSeekers = [...seekersData].sort((a, b) => {
+              const activityA = activityMap[a.user_id] || { totalPoints: 0, reviewsCount: 0 };
+              const activityB = activityMap[b.user_id] || { totalPoints: 0, reviewsCount: 0 };
+
+              if (activityB.totalPoints !== activityA.totalPoints) {
+                return activityB.totalPoints - activityA.totalPoints;
+              }
+
+              if (activityB.reviewsCount !== activityA.reviewsCount) {
+                return activityB.reviewsCount - activityA.reviewsCount;
+              }
+
+              return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            });
+
+            return sortedSeekers.slice(0, 6);
+          }
+          return [];
         })(),
 
         supabase
@@ -390,7 +477,8 @@ function AuthenticatedHomePage() {
         supabase.rpc('get_top_businesses_by_positive_reviews', { limit_count: 8 })
       ]);
 
-      if (jobsResult.data) setJobPostings(jobsResult.data);
+      if (jobsResult) setJobPostings(jobsResult);
+      if (jobSeekersResult) setJobSeekers(jobSeekersResult);
 
       if (adsResult.data && adsResult.data.length > 0) {
         const userIds = [...new Set(adsResult.data.map((ad: any) => ad.user_id))];
@@ -586,7 +674,7 @@ function AuthenticatedHomePage() {
               <TopBusinessesBanner businesses={topBusinesses} />
             )}
 
-            {jobPostings.length > 0 && (
+            {userType !== 'business' && jobPostings.length > 0 && (
               <section className="mb-12 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl p-8 shadow-md border-2 border-purple-200">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
@@ -594,8 +682,8 @@ function AuthenticatedHomePage() {
                       <Briefcase className="w-7 h-7 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-3xl font-bold text-gray-900">Ultime Offerte di Lavoro</h2>
-                      <p className="text-sm text-gray-600">Trova il lavoro perfetto per te</p>
+                      <h2 className="text-3xl font-bold text-gray-900">Trova Lavoro - Offerte in Evidenza</h2>
+                      <p className="text-sm text-gray-600">Opportunità dalle aziende più recensite</p>
                     </div>
                   </div>
                   <button
@@ -605,9 +693,36 @@ function AuthenticatedHomePage() {
                     Vedi tutte <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="grid md:grid-cols-3 gap-6">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {jobPostings.map((job) => (
-                    <JobCard key={job.id} job={job} onClick={() => navigate('/jobs')} />
+                    <JobOfferCard key={job.id} job={job} onClick={() => navigate('/jobs')} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {userType !== 'business' && jobSeekers.length > 0 && (
+              <section className="mb-12 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-8 shadow-md border-2 border-blue-200">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-4 rounded-xl shadow-lg">
+                      <Users className="w-7 h-7 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-bold text-gray-900">Cerco Lavoro - Candidati in Evidenza</h2>
+                      <p className="text-sm text-gray-600">Profili degli utenti più attivi sulla piattaforma</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => navigate('/jobs')}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold shadow-md transition-all hover:scale-105"
+                  >
+                    Vedi tutti <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {jobSeekers.map((seeker) => (
+                    <JobSeekerCard key={seeker.id} seeker={seeker} onClick={() => navigate('/jobs')} />
                   ))}
                 </div>
               </section>
@@ -710,7 +825,7 @@ function QuickActionCard({ icon, title, description, color, onClick }: {
   );
 }
 
-function JobCard({ job, onClick }: { job: any; onClick: () => void }) {
+function JobOfferCard({ job, onClick }: { job: any; onClick: () => void }) {
   return (
     <div
       onClick={onClick}
@@ -718,21 +833,93 @@ function JobCard({ job, onClick }: { job: any; onClick: () => void }) {
     >
       <div className="flex items-start justify-between mb-3">
         <h3 className="font-bold text-lg text-gray-900 line-clamp-2">{job.title}</h3>
-        <div className="bg-purple-100 p-2 rounded-lg">
+        <div className="bg-purple-100 p-2 rounded-lg flex-shrink-0">
           <Briefcase className="w-5 h-5 text-purple-600" />
         </div>
       </div>
-      <p className="text-sm text-gray-600 mb-3 font-medium">{job.business?.name}</p>
+      <p className="text-sm text-gray-600 mb-3 font-medium line-clamp-1">{job.business?.name}</p>
       <div className="flex items-center gap-2 text-sm text-gray-500 mb-2 bg-gray-50 p-2 rounded-lg">
         <MapPin className="w-4 h-4 text-blue-500" />
-        <span>{job.business?.business_locations?.[0]?.city}</span>
+        <span className="line-clamp-1">{job.business?.business_locations?.[0]?.city}, {job.business?.business_locations?.[0]?.province}</span>
       </div>
-      {job.salary_range && (
+      {job.gross_annual_salary && (
         <div className="flex items-center gap-2 text-sm text-green-600 font-semibold bg-green-50 p-2 rounded-lg mt-2">
           <Euro className="w-4 h-4" />
-          <span>{job.salary_range}</span>
+          <span>{job.gross_annual_salary.toLocaleString()} €/anno</span>
         </div>
       )}
+      <div className="mt-3 flex items-center gap-2">
+        <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded">
+          {job.position_type}
+        </span>
+        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
+          {job.experience_level}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function JobSeekerCard({ seeker, onClick }: { seeker: any; onClick: () => void }) {
+  const displayName = seeker.profiles?.nickname || seeker.profiles?.full_name || 'Utente';
+
+  return (
+    <div
+      onClick={onClick}
+      className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-6 cursor-pointer border-2 border-blue-100 hover:border-blue-300 transform hover:scale-105"
+    >
+      <div className="flex items-start gap-3 mb-3">
+        <div className="bg-blue-100 p-3 rounded-full flex-shrink-0">
+          <Users className="w-6 h-6 text-blue-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-bold text-lg text-gray-900 line-clamp-1">{displayName}</h3>
+          <p className="text-sm text-gray-600 font-medium line-clamp-1">{seeker.title}</p>
+        </div>
+      </div>
+
+      <p className="text-sm text-gray-700 mb-3 line-clamp-2">{seeker.description}</p>
+
+      <div className="flex items-center gap-2 text-sm text-gray-500 mb-2 bg-gray-50 p-2 rounded-lg">
+        <MapPin className="w-4 h-4 text-blue-500" />
+        <span className="line-clamp-1">{seeker.city}, {seeker.province}</span>
+      </div>
+
+      {seeker.desired_salary_min && (
+        <div className="flex items-center gap-2 text-sm text-green-600 font-semibold bg-green-50 p-2 rounded-lg mb-3">
+          <Euro className="w-4 h-4" />
+          <span>
+            {seeker.desired_salary_min.toLocaleString()}
+            {seeker.desired_salary_max ? ` - ${seeker.desired_salary_max.toLocaleString()}` : '+'} €/anno
+          </span>
+        </div>
+      )}
+
+      {seeker.skills && seeker.skills.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-3">
+          {seeker.skills.slice(0, 3).map((skill: string, index: number) => (
+            <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
+              {skill}
+            </span>
+          ))}
+          {seeker.skills.length > 3 && (
+            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+              +{seeker.skills.length - 3}
+            </span>
+          )}
+        </div>
+      )}
+
+      <div className="flex items-center gap-2">
+        <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+          {seeker.contract_type}
+        </span>
+        {seeker.experience_years !== undefined && (
+          <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
+            {seeker.experience_years} anni esp.
+          </span>
+        )}
+      </div>
     </div>
   );
 }
