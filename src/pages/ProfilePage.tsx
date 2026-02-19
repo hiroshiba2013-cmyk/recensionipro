@@ -1876,9 +1876,23 @@ export function ProfilePage() {
                 <div className="border-t-4 border-orange-500 bg-gradient-to-r from-orange-50 to-white rounded-lg p-4 mb-6 mt-8">
                   <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                     <User className="w-6 h-6 text-orange-600" />
-                    Punti Vendita
+                    {selectedBusinessLocationId ? (
+                      <>
+                        Punto Vendita:{' '}
+                        {businessLocations.find(loc => loc.id === selectedBusinessLocationId)?.internal_name ||
+                         businessLocations.find(loc => loc.id === selectedBusinessLocationId)?.name ||
+                         'Sede Selezionata'}
+                      </>
+                    ) : (
+                      'Punti Vendita'
+                    )}
                   </h2>
-                  <p className="text-sm text-gray-600 mt-1">Gestisci i punti vendita dell'azienda</p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {selectedBusinessLocationId
+                      ? 'Visualizzazione e modifica del punto vendita selezionato'
+                      : 'Gestisci i punti vendita dell\'azienda'
+                    }
+                  </p>
                 </div>
 
                 <EditBusinessLocationsForm
