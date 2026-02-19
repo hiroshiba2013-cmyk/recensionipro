@@ -220,11 +220,18 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
 
       if (businessError) throw businessError;
 
+      // Calcola i punti in base ai campi compilati
+      const hasWebsite = formData.website && formData.website.trim() !== '';
+      const hasEmail = formData.email && formData.email.trim() !== '';
+      const hasPhone = formData.phone && formData.phone.trim() !== '';
+      const isComplete = hasWebsite && hasEmail && hasPhone;
+      const points = isComplete ? 25 : 10;
+
       await supabase.rpc('award_points', {
         p_user_id: customerId,
-        p_points: 20,
+        p_points: points,
         p_activity_type: 'business_submission',
-        p_description: `Aggiunta attività: ${formData.name}`
+        p_description: `Aggiunta attività: ${formData.name}${isComplete ? ' (completa)' : ''}`
       });
 
       setFormData({
@@ -240,7 +247,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
         phone: '',
       });
       setShowForm(false);
-      alert('Attività aggiunta con successo! Hai guadagnato 20 punti!');
+      alert(`Attività aggiunta con successo! Hai guadagnato ${points} punti!${isComplete ? ' (Attività completa)' : ''}`);
       loadUserAddedBusinesses();
       onSuccess();
     } catch (error) {
@@ -380,7 +387,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
             <h2 className="text-2xl font-bold text-gray-900">Aggiungi Attività</h2>
           </div>
           <p className="text-gray-600">
-            Aggiungi un'attività che conosci e guadagna <span className="font-bold text-blue-600">20 punti</span> per la classifica!
+            Aggiungi un'attività e guadagna <span className="font-bold text-orange-600">10 punti</span> (base) o <span className="font-bold text-green-600">25 punti</span> (completa con sito, email, telefono)!
           </p>
         </div>
         {!showForm && (
@@ -406,7 +413,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
               ) : (
                 <>
                   <Award className="w-5 h-5" />
-                  <span className="font-semibold">Guadagna 20 punti!</span>
+                  <span className="font-semibold">Guadagna 10-25 punti!</span>
                 </>
               )}
             </div>
@@ -541,10 +548,28 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
           </div>
 
           {!editingBusinessId && (
-            <div className="bg-blue-100 border border-blue-200 rounded-lg p-4 mb-4">
-              <p className="text-sm text-blue-800">
-                <strong>Nota:</strong> L'attività verrà aggiunta al database e potrà essere rivendicata dal proprietario in futuro. Riceverai 20 punti per questo contributo!
-              </p>
+            <div className="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-300 rounded-lg p-4 mb-4">
+              <div className="flex items-start gap-3">
+                <Award className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm text-gray-800 font-semibold mb-2">
+                    Sistema di Punteggio:
+                  </p>
+                  <ul className="space-y-1 text-sm text-gray-700">
+                    <li className="flex items-center gap-2">
+                      <span className="text-orange-600 font-bold">•</span>
+                      <span><strong>10 punti</strong> - Inserimento base (nome, categoria, indirizzo)</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-green-600 font-bold">•</span>
+                      <span><strong>25 punti</strong> - Inserimento completo (+ sito web, email e telefono)</span>
+                    </li>
+                  </ul>
+                  <p className="text-xs text-gray-600 mt-3">
+                    L'attività verrà aggiunta al database e potrà essere rivendicata dal proprietario in futuro.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
@@ -556,7 +581,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
             >
               {loading
                 ? (editingBusinessId ? 'Aggiornamento...' : 'Invio in corso...')
-                : (editingBusinessId ? 'Aggiorna Attività' : 'Aggiungi Attività e Guadagna 20 Punti')
+                : (editingBusinessId ? 'Aggiorna Attività' : 'Aggiungi Attività e Guadagna Punti')
               }
             </button>
             <button
@@ -576,15 +601,15 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
           <ul className="space-y-2 text-gray-700">
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">1.</span>
-              <span>Inserisci i dati di un'attività che conosci (nome, indirizzo, sito web)</span>
+              <span>Inserisci i dati di un'attività che conosci (nome, categoria e indirizzo sono obbligatori)</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">2.</span>
               <span>L'attività viene aggiunta al nostro database</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-blue-600 font-bold">3.</span>
-              <span>Guadagni <strong>20 punti</strong> per la classifica premi!</span>
+              <span className="text-orange-600 font-bold">3.</span>
+              <span>Guadagni <strong>10 punti</strong> (inserimento base) o <strong>25 punti</strong> (se aggiungi anche sito, email e telefono)</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">4.</span>

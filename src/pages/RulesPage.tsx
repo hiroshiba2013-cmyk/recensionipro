@@ -31,7 +31,7 @@ const faqs: FAQItem[] = [
   {
     category: 'Punti e Classifica',
     question: 'Come funziona il sistema dei punti?',
-    answer: 'Guadagni punti per ogni attività: annunci (5pt), prodotti (10pt), segnalazioni attività (20pt), recensioni approvate (25pt base o 50pt con prova), presenta un amico che si abbona (30pt). I punti ti posizionano nella classifica mensile e ti fanno guadagnare badge.'
+    answer: 'Guadagni punti per ogni attività: annunci (5pt), prodotti (10pt), segnalazioni attività base nome e indirizzo (10pt), segnalazioni attività complete con sito/email/telefono (25pt), recensioni approvate (25pt base o 50pt con prova), presenta un amico che si abbona (30pt). I punti ti posizionano nella classifica mensile e ti fanno guadagnare badge.'
   },
   {
     category: 'Punti e Classifica',
@@ -126,7 +126,7 @@ const faqs: FAQItem[] = [
   {
     category: 'Aziende',
     question: 'La mia azienda non è nel database, come la aggiungo?',
-    answer: 'Gli utenti privati possono segnalare attività mancanti (20 punti). Come azienda, puoi creare direttamente la tua scheda durante il processo di rivendicazione fornendo tutti i dati necessari.'
+    answer: 'Gli utenti privati possono segnalare attività mancanti (10 punti per nome e indirizzo, 25 punti se includi anche sito web, email e telefono). Come azienda, puoi creare direttamente la tua scheda durante il processo di rivendicazione fornendo tutti i dati necessari.'
   },
   {
     category: 'Aziende',
@@ -611,8 +611,12 @@ export function RulesPage() {
                               <span className="font-bold text-blue-700">+10 punti</span>
                             </div>
                             <div className="flex items-center justify-between p-3 bg-green-50 rounded">
-                              <span>🏪 Segnalare un'attività mancante</span>
-                              <span className="font-bold text-green-700">+20 punti</span>
+                              <span>🏪 Segnalare un'attività (nome e indirizzo)</span>
+                              <span className="font-bold text-green-700">+10 punti</span>
+                            </div>
+                            <div className="flex items-center justify-between p-3 bg-emerald-50 rounded">
+                              <span>🏪 Segnalare un'attività completa (con sito, email, telefono)</span>
+                              <span className="font-bold text-emerald-700">+25 punti</span>
                             </div>
                             <div className="flex items-center justify-between p-3 bg-orange-50 rounded">
                               <span>⭐ Recensione approvata (base)</span>
