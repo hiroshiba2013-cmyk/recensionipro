@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react';
 import { MapPin } from 'lucide-react';
 
 interface LocationFiltersProps {
-  selectedRegion: string;
-  selectedProvince: string;
-  selectedCity: string;
+  selectedRegion?: string;
+  selectedProvince?: string;
+  selectedCity?: string;
+  region?: string;
+  province?: string;
+  city?: string;
   onRegionChange: (region: string) => void;
   onProvinceChange: (province: string) => void;
   onCityChange: (city: string) => void;
@@ -155,6 +158,9 @@ export function LocationFilters({
   selectedRegion,
   selectedProvince,
   selectedCity,
+  region,
+  province,
+  city,
   onRegionChange,
   onProvinceChange,
   onCityChange,
@@ -164,22 +170,26 @@ export function LocationFilters({
   const [provinces, setProvinces] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
 
+  const currentRegion = selectedRegion ?? region ?? '';
+  const currentProvince = selectedProvince ?? province ?? '';
+  const currentCity = selectedCity ?? city ?? '';
+
   useEffect(() => {
-    if (selectedRegion && selectedRegion !== '') {
-      setProvinces(PROVINCES_BY_REGION[selectedRegion] || []);
+    if (currentRegion && currentRegion !== '') {
+      setProvinces(PROVINCES_BY_REGION[currentRegion] || []);
     } else {
       setProvinces([]);
       setCities([]);
     }
-  }, [selectedRegion]);
+  }, [currentRegion]);
 
   useEffect(() => {
-    if (selectedProvince && selectedProvince !== '') {
-      setCities(CITIES_BY_PROVINCE[selectedProvince] || []);
+    if (currentProvince && currentProvince !== '') {
+      setCities(CITIES_BY_PROVINCE[currentProvince] || []);
     } else {
       setCities([]);
     }
-  }, [selectedProvince]);
+  }, [currentProvince]);
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
@@ -194,7 +204,7 @@ export function LocationFilters({
             Regione
           </label>
           <select
-            value={selectedRegion}
+            value={currentRegion}
             onChange={(e) => onRegionChange(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
@@ -213,9 +223,9 @@ export function LocationFilters({
             Provincia
           </label>
           <select
-            value={selectedProvince}
+            value={currentProvince}
             onChange={(e) => onProvinceChange(e.target.value)}
-            disabled={!selectedRegion}
+            disabled={!currentRegion}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
           >
             {showAllOption && <option value="">Tutte le province</option>}
@@ -233,9 +243,9 @@ export function LocationFilters({
             Città
           </label>
           <select
-            value={selectedCity}
+            value={currentCity}
             onChange={(e) => onCityChange(e.target.value)}
-            disabled={!selectedProvince}
+            disabled={!currentProvince}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
           >
             {showAllOption && <option value="">Tutte le città</option>}

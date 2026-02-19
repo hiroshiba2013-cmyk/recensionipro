@@ -355,8 +355,15 @@ export function ClassifiedAdsPage() {
               selectedRegion={selectedRegion}
               selectedProvince={selectedProvince}
               selectedCity={selectedCity}
-              onRegionChange={setSelectedRegion}
-              onProvinceChange={setSelectedProvince}
+              onRegionChange={(region) => {
+                setSelectedRegion(region);
+                setSelectedProvince('');
+                setSelectedCity('');
+              }}
+              onProvinceChange={(province) => {
+                setSelectedProvince(province);
+                setSelectedCity('');
+              }}
               onCityChange={setSelectedCity}
               showAllOption={true}
               label="Filtra per Posizione"
