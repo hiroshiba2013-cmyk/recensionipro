@@ -88,6 +88,7 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
     pec_email: '',
     ateco_code: '',
     description: '',
+    location_name: '',
     location_description: '',
     location_services: '',
     billing_street: '',
@@ -352,6 +353,7 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
           .insert({
             business_id: business.id,
             name: formData.name,
+            internal_name: formData.location_name || null,
             address: formData.address,
             city: formData.city,
             province: formData.province,
@@ -921,6 +923,22 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
           <div className="border-t pt-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Sede Operativa</h3>
             <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Nome Sede (opzionale)
+                </label>
+                <input
+                  type="text"
+                  value={formData.location_name}
+                  onChange={(e) => setFormData({ ...formData, location_name: e.target.value })}
+                  placeholder="Es. Sede di Milano, Negozio Centro, Filiale Roma Nord"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Un nome descrittivo per identificare questa sede nel tuo profilo (lascia vuoto per usare la ragione sociale)
+                </p>
+              </div>
+
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
