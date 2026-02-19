@@ -167,8 +167,6 @@ export function LocationFilters({
   useEffect(() => {
     if (selectedRegion && selectedRegion !== '') {
       setProvinces(PROVINCES_BY_REGION[selectedRegion] || []);
-      onProvinceChange('');
-      onCityChange('');
     } else {
       setProvinces([]);
       setCities([]);
@@ -178,7 +176,6 @@ export function LocationFilters({
   useEffect(() => {
     if (selectedProvince && selectedProvince !== '') {
       setCities(CITIES_BY_PROVINCE[selectedProvince] || []);
-      onCityChange('');
     } else {
       setCities([]);
     }

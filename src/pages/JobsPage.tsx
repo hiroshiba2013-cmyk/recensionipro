@@ -593,8 +593,8 @@ export function JobsPage() {
                 selectedRegion={filters.region}
                 selectedProvince={filters.province}
                 selectedCity={filters.city}
-                onRegionChange={(region) => setFilters({ ...filters, region })}
-                onProvinceChange={(province) => setFilters({ ...filters, province })}
+                onRegionChange={(region) => setFilters({ ...filters, region, province: '', city: '' })}
+                onProvinceChange={(province) => setFilters({ ...filters, province, city: '' })}
                 onCityChange={(city) => setFilters({ ...filters, city })}
                 showAllOption={true}
                 label="Filtra per Posizione"
