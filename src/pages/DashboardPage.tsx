@@ -402,7 +402,7 @@ export function DashboardPage() {
                     }}
                     onCancel={() => setShowCreateBusinessForm(false)}
                   />
-                ) : (
+                ) : !selectedBusinessLocationId ? (
                   <>
                     <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl shadow-lg p-8 border-4 border-blue-200">
                       <div className="flex items-center justify-between mb-6">
@@ -477,9 +477,11 @@ export function DashboardPage() {
                       </>
                     )}
                   </>
-                )}
+                ) : null}
 
-                <ImportBusinessesForm onImportComplete={loadDashboardData} />
+                {!selectedBusinessLocationId && (
+                  <ImportBusinessesForm onImportComplete={loadDashboardData} />
+                )}
 
                 <FavoritesSection />
 
