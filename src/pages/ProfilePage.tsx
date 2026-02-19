@@ -1883,6 +1883,7 @@ export function ProfilePage() {
 
                 <EditBusinessLocationsForm
                   businessId={business.id}
+                  selectedLocationId={selectedBusinessLocationId}
                   onUpdate={loadBusinessData}
                 />
 
