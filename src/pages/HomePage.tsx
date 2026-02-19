@@ -335,7 +335,9 @@ function AuthenticatedHomePage() {
   const navigate = useNavigate();
   const [jobPostings, setJobPostings] = useState<any[]>([]);
   const [jobSeekers, setJobSeekers] = useState<any[]>([]);
-  const [classifiedAds, setClassifiedAds] = useState<any[]>([]);
+  const [featuredSellAds, setFeaturedSellAds] = useState<any[]>([]);
+  const [featuredBuyAds, setFeaturedBuyAds] = useState<any[]>([]);
+  const [featuredGiftAds, setFeaturedGiftAds] = useState<any[]>([]);
   const [topBusinesses, setTopBusinesses] = useState<any[]>([]);
   const [userType, setUserType] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -359,7 +361,7 @@ function AuthenticatedHomePage() {
         setUserType(profileResult.data.user_type);
       }
 
-      const [jobsResult, jobSeekersResult, adsResult, topBusinessesResult] = await Promise.all([
+      const [jobsResult, jobSeekersResult, sellAdsResult, buyAdsResult, giftAdsResult, topBusinessesResult] = await Promise.all([
         (async () => {
           let query = supabase
             .from('job_postings')
@@ -467,12 +469,9 @@ function AuthenticatedHomePage() {
           return [];
         })(),
 
-        supabase
-          .from('classified_ads')
-          .select('*')
-          .eq('status', 'active')
-          .order('created_at', { ascending: false })
-          .limit(6),
+        supabase.rpc('get_featured_classified_ads', { ad_type_filter: 'sell', limit_count: 6 }),
+        supabase.rpc('get_featured_classified_ads', { ad_type_filter: 'buy', limit_count: 6 }),
+        supabase.rpc('get_featured_classified_ads', { ad_type_filter: 'gift', limit_count: 6 }),
 
         supabase.rpc('get_top_businesses_by_positive_reviews', { limit_count: 8 })
       ]);
@@ -486,21 +485,43 @@ function AuthenticatedHomePage() {
         setJobSeekers(jobSeekersResult);
       }
 
-      if (adsResult.data && adsResult.data.length > 0) {
-        const userIds = [...new Set(adsResult.data.map((ad: any) => ad.user_id))];
-        const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('id, full_name, avatar_url')
-          .in('id', userIds);
-
-        const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
-        const adsWithProfiles = adsResult.data.map((ad: any) => ({
+      if (sellAdsResult.data) {
+        const adsWithProfiles = sellAdsResult.data.map((ad: any) => ({
           ...ad,
-          profiles: profilesMap.get(ad.user_id) || { full_name: 'Utente', avatar_url: null }
+          profiles: {
+            id: ad.user_id,
+            full_name: ad.user_full_name,
+            nickname: ad.user_nickname,
+            avatar_url: ad.user_avatar_url
+          }
         }));
-        setClassifiedAds(adsWithProfiles);
-      } else {
-        setClassifiedAds([]);
+        setFeaturedSellAds(adsWithProfiles);
+      }
+
+      if (buyAdsResult.data) {
+        const adsWithProfiles = buyAdsResult.data.map((ad: any) => ({
+          ...ad,
+          profiles: {
+            id: ad.user_id,
+            full_name: ad.user_full_name,
+            nickname: ad.user_nickname,
+            avatar_url: ad.user_avatar_url
+          }
+        }));
+        setFeaturedBuyAds(adsWithProfiles);
+      }
+
+      if (giftAdsResult.data) {
+        const adsWithProfiles = giftAdsResult.data.map((ad: any) => ({
+          ...ad,
+          profiles: {
+            id: ad.user_id,
+            full_name: ad.user_full_name,
+            nickname: ad.user_nickname,
+            avatar_url: ad.user_avatar_url
+          }
+        }));
+        setFeaturedGiftAds(adsWithProfiles);
       }
 
       if (topBusinessesResult.data && topBusinessesResult.data.length > 0) {
@@ -746,31 +767,89 @@ function AuthenticatedHomePage() {
               </section>
             )}
 
-            {userType !== 'business' && classifiedAds.length > 0 && (
-              <section className="mb-12 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-8 shadow-md border-2 border-green-200">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-green-500 to-emerald-500 p-4 rounded-xl shadow-lg">
-                      <Tag className="w-7 h-7 text-white" />
+            {userType !== 'business' && (
+              <>
+                {featuredSellAds.length > 0 && (
+                  <section className="mb-8 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-8 shadow-md border-2 border-blue-200">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-4 rounded-xl shadow-lg">
+                          <Package className="w-7 h-7 text-white" />
+                        </div>
+                        <div>
+                          <h2 className="text-3xl font-bold text-gray-900">Annunci in Evidenza - Vendo</h2>
+                          <p className="text-sm text-gray-600">Dai utenti più attivi della piattaforma</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => navigate('/classified-ads?type=sell')}
+                        className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold shadow-md transition-all hover:scale-105"
+                      >
+                        Vedi tutti <ArrowRight className="w-4 h-4" />
+                      </button>
                     </div>
-                    <div>
-                      <h2 className="text-3xl font-bold text-gray-900">Ultimi Annunci</h2>
-                      <p className="text-sm text-gray-600">Compra, vendi e scambia nella tua zona</p>
+                    <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
+                      {featuredSellAds.map((ad) => (
+                        <ClassifiedAdCard key={ad.id} ad={ad} onClick={() => navigate(`/classified-ads/${ad.id}`)} />
+                      ))}
                     </div>
-                  </div>
-                  <button
-                    onClick={() => navigate('/classified-ads')}
-                    className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold shadow-md transition-all hover:scale-105"
-                  >
-                    Vedi tutti <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
-                  {classifiedAds.map((ad) => (
-                    <ClassifiedAdCard key={ad.id} ad={ad} onClick={() => navigate(`/classified-ads/${ad.id}`)} />
-                  ))}
-                </div>
-              </section>
+                  </section>
+                )}
+
+                {featuredBuyAds.length > 0 && (
+                  <section className="mb-8 bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-8 shadow-md border-2 border-orange-200">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-gradient-to-br from-orange-500 to-amber-500 p-4 rounded-xl shadow-lg">
+                          <Search className="w-7 h-7 text-white" />
+                        </div>
+                        <div>
+                          <h2 className="text-3xl font-bold text-gray-900">Annunci in Evidenza - Cerco</h2>
+                          <p className="text-sm text-gray-600">Dai utenti più attivi della piattaforma</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => navigate('/classified-ads?type=buy')}
+                        className="flex items-center gap-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 font-semibold shadow-md transition-all hover:scale-105"
+                      >
+                        Vedi tutti <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
+                      {featuredBuyAds.map((ad) => (
+                        <ClassifiedAdCard key={ad.id} ad={ad} onClick={() => navigate(`/classified-ads/${ad.id}`)} />
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {featuredGiftAds.length > 0 && (
+                  <section className="mb-12 bg-gradient-to-r from-pink-50 to-rose-50 rounded-2xl p-8 shadow-md border-2 border-pink-200">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-gradient-to-br from-pink-500 to-rose-500 p-4 rounded-xl shadow-lg">
+                          <Gift className="w-7 h-7 text-white" />
+                        </div>
+                        <div>
+                          <h2 className="text-3xl font-bold text-gray-900">Annunci in Evidenza - Regalo</h2>
+                          <p className="text-sm text-gray-600">Dai utenti più attivi della piattaforma</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => navigate('/classified-ads?type=gift')}
+                        className="flex items-center gap-2 bg-pink-600 text-white px-6 py-3 rounded-lg hover:bg-pink-700 font-semibold shadow-md transition-all hover:scale-105"
+                      >
+                        Vedi tutti <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
+                      {featuredGiftAds.map((ad) => (
+                        <ClassifiedAdCard key={ad.id} ad={ad} onClick={() => navigate(`/classified-ads/${ad.id}`)} />
+                      ))}
+                    </div>
+                  </section>
+                )}
+              </>
             )}
           </>
         )}

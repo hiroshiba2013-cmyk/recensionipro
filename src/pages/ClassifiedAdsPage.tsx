@@ -47,7 +47,9 @@ export function ClassifiedAdsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   // Filters
-  const [adType, setAdType] = useState<'all' | 'sell' | 'buy' | 'gift'>('all');
+  const urlParams = new URLSearchParams(window.location.search);
+  const typeParam = urlParams.get('type') as 'sell' | 'buy' | 'gift' | null;
+  const [adType, setAdType] = useState<'all' | 'sell' | 'buy' | 'gift'>(typeParam || 'all');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('');
