@@ -16,6 +16,7 @@ import { EditBusinessForm } from '../components/business/EditBusinessForm';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
 import { EditBusinessLocationsForm } from '../components/business/EditBusinessLocationsForm';
 import { SubscriptionManagement } from '../components/subscription/SubscriptionManagement';
+import TrialStatusBanner from '../components/subscription/TrialStatusBanner';
 import { DeleteAccountButton } from '../components/profile/DeleteAccountButton';
 import { PinSetup } from '../components/profile/PinSetup';
 import { ReviewForm } from '../components/reviews/ReviewForm';
@@ -1159,13 +1160,26 @@ export function ProfilePage() {
           </div>
         </div>
 
-        {isOwner && (
-          <SubscriptionManagement
-            userId={profile.id}
-            userType={profile.user_type}
-            currentSubscriptionStatus={profile.subscription_status}
-            onUpdate={loadProfileData}
+        {isOwner && profile.user_type === 'business' && (
+          <TrialStatusBanner
+            onUpgradeClick={() => {
+              const subscriptionSection = document.querySelector('.subscription-management');
+              if (subscriptionSection) {
+                subscriptionSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }}
           />
+        )}
+
+        {isOwner && (
+          <div className="subscription-management">
+            <SubscriptionManagement
+              userId={profile.id}
+              userType={profile.user_type}
+              currentSubscriptionStatus={profile.subscription_status}
+              onUpdate={loadProfileData}
+            />
+          </div>
         )}
 
         {profile.user_type === 'customer' && isOwner && userRank && (
