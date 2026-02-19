@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { User, Star, Tag, Plus, Calendar, Percent, X, Package, LogOut, Trophy, TrendingUp, Briefcase, MapPin, Edit2, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -213,6 +213,14 @@ export function ProfilePage() {
     locationId: '',
   });
   const [editingReview, setEditingReview] = useState<Review | null>(null);
+
+  const selectedLocationName = useMemo(() => {
+    if (!selectedBusinessLocationId || businessLocations.length === 0) {
+      return null;
+    }
+    const location = businessLocations.find(loc => loc.id === selectedBusinessLocationId);
+    return location?.internal_name || location?.name || 'Sede Selezionata';
+  }, [selectedBusinessLocationId, businessLocations]);
   const [showEditAdForm, setShowEditAdForm] = useState(false);
   const [editingAdId, setEditingAdId] = useState<string | null>(null);
 
@@ -1876,19 +1884,16 @@ export function ProfilePage() {
                 <div className="border-t-4 border-orange-500 bg-gradient-to-r from-orange-50 to-white rounded-lg p-4 mb-6 mt-8">
                   <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                     <User className="w-6 h-6 text-orange-600" />
-                    {selectedBusinessLocationId ? (
+                    {selectedLocationName ? (
                       <>
-                        Punto Vendita:{' '}
-                        {businessLocations.find(loc => loc.id === selectedBusinessLocationId)?.internal_name ||
-                         businessLocations.find(loc => loc.id === selectedBusinessLocationId)?.name ||
-                         'Sede Selezionata'}
+                        Punto Vendita: {selectedLocationName}
                       </>
                     ) : (
                       'Punti Vendita'
                     )}
                   </h2>
                   <p className="text-sm text-gray-600 mt-1">
-                    {selectedBusinessLocationId
+                    {selectedLocationName
                       ? 'Visualizzazione e modifica del punto vendita selezionato'
                       : 'Gestisci i punti vendita dell\'azienda'
                     }
