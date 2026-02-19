@@ -219,6 +219,13 @@ export function ProfilePage() {
       return null;
     }
     const location = businessLocations.find(loc => loc.id === selectedBusinessLocationId);
+    console.log('Computing selectedLocationName:', {
+      selectedBusinessLocationId,
+      location,
+      internal_name: location?.internal_name,
+      name: location?.name,
+      allLocations: businessLocations
+    });
     return location?.internal_name || location?.name || 'Sede Selezionata';
   }, [selectedBusinessLocationId, businessLocations]);
   const [showEditAdForm, setShowEditAdForm] = useState(false);
@@ -895,6 +902,7 @@ export function ProfilePage() {
         .order('created_at', { ascending: true });
 
       if (locationsData) {
+        console.log('Loading business locations:', locationsData);
         setBusinessLocations(locationsData);
       }
 
