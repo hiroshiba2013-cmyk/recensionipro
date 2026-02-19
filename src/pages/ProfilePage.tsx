@@ -221,10 +221,10 @@ export function ProfilePage() {
     const location = businessLocations.find(loc => loc.id === selectedBusinessLocationId);
     console.log('Computing selectedLocationName:', {
       selectedBusinessLocationId,
-      location,
+      location: JSON.parse(JSON.stringify(location)),
       internal_name: location?.internal_name,
       name: location?.name,
-      allLocations: businessLocations
+      allLocations: JSON.parse(JSON.stringify(businessLocations))
     });
     return location?.internal_name || location?.name || 'Sede Selezionata';
   }, [selectedBusinessLocationId, businessLocations]);
@@ -902,7 +902,7 @@ export function ProfilePage() {
         .order('created_at', { ascending: true });
 
       if (locationsData) {
-        console.log('Loading business locations:', locationsData);
+        console.log('Loading business locations:', JSON.parse(JSON.stringify(locationsData)));
         setBusinessLocations(locationsData);
       }
 
