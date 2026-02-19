@@ -477,8 +477,14 @@ function AuthenticatedHomePage() {
         supabase.rpc('get_top_businesses_by_positive_reviews', { limit_count: 8 })
       ]);
 
-      if (jobsResult) setJobPostings(jobsResult);
-      if (jobSeekersResult) setJobSeekers(jobSeekersResult);
+      if (jobsResult) {
+        console.log('Job postings loaded:', jobsResult.length);
+        setJobPostings(jobsResult);
+      }
+      if (jobSeekersResult) {
+        console.log('Job seekers loaded:', jobSeekersResult.length);
+        setJobSeekers(jobSeekersResult);
+      }
 
       if (adsResult.data && adsResult.data.length > 0) {
         const userIds = [...new Set(adsResult.data.map((ad: any) => ad.user_id))];
@@ -674,7 +680,7 @@ function AuthenticatedHomePage() {
               <TopBusinessesBanner businesses={topBusinesses} />
             )}
 
-            {userType !== 'business' && jobPostings.length > 0 && (
+            {userType !== 'business' && (
               <section className="mb-12 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl p-8 shadow-md border-2 border-purple-200">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
@@ -693,15 +699,21 @@ function AuthenticatedHomePage() {
                     Vedi tutte <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {jobPostings.map((job) => (
-                    <JobOfferCard key={job.id} job={job} onClick={() => navigate('/jobs')} />
-                  ))}
-                </div>
+                {jobPostings.length > 0 ? (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {jobPostings.map((job) => (
+                      <JobOfferCard key={job.id} job={job} onClick={() => navigate('/jobs')} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">Nessuna offerta di lavoro al momento</p>
+                  </div>
+                )}
               </section>
             )}
 
-            {userType !== 'business' && jobSeekers.length > 0 && (
+            {userType !== 'business' && (
               <section className="mb-12 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-8 shadow-md border-2 border-blue-200">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
@@ -720,11 +732,17 @@ function AuthenticatedHomePage() {
                     Vedi tutti <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {jobSeekers.map((seeker) => (
-                    <JobSeekerCard key={seeker.id} seeker={seeker} onClick={() => navigate('/jobs')} />
-                  ))}
-                </div>
+                {jobSeekers.length > 0 ? (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {jobSeekers.map((seeker) => (
+                      <JobSeekerCard key={seeker.id} seeker={seeker} onClick={() => navigate('/jobs')} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">Nessun candidato al momento</p>
+                  </div>
+                )}
               </section>
             )}
 
