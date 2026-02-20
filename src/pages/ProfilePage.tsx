@@ -1739,7 +1739,7 @@ export function ProfilePage() {
                       }}
                       className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base font-medium bg-white"
                     >
-                      <option value="">Tutte le Sedi (Sede Principale)</option>
+                      <option value="">Tutte le Sedi</option>
                       {businessLocations.map((location, index) => (
                         <option key={location.id} value={location.id}>
                           {location.internal_name || `Sede ${index + 1}`} - {location.name || location.city}
