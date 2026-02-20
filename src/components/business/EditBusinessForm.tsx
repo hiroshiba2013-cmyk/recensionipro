@@ -57,10 +57,11 @@ interface OwnerData {
 
 interface EditBusinessFormProps {
   businessId: string;
+  selectedLocationId?: string | null;
   onUpdate: () => void;
 }
 
-export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps) {
+export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: EditBusinessFormProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -273,6 +274,10 @@ export function EditBusinessForm({ businessId, onUpdate }: EditBusinessFormProps
     }
     setIsEditing(false);
   };
+
+  if (selectedLocationId) {
+    return null;
+  }
 
   if (loading) {
     return (
