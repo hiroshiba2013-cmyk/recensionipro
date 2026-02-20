@@ -21,10 +21,10 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 });
 
 const ADMIN_CREDENTIALS = {
-  email: 'admin@test.com',
-  password: 'AdminTest123!',
-  full_name: 'Admin Test',
-  profile_type: 'customer'
+  email: 'admin@cittabella.it',
+  password: 'AdminCitta2026!',
+  full_name: 'Admin Cittabella',
+  user_type: 'customer'
 };
 
 async function createAdmin() {
@@ -60,7 +60,8 @@ async function createAdmin() {
       .from('profiles')
       .update({
         is_admin: true,
-        full_name: ADMIN_CREDENTIALS.full_name
+        full_name: ADMIN_CREDENTIALS.full_name,
+        user_type: ADMIN_CREDENTIALS.user_type
       })
       .eq('id', authData.user.id);
 
@@ -74,7 +75,7 @@ async function createAdmin() {
     // Verify admin status
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, full_name, email, is_admin, profile_type')
+      .select('id, full_name, email, is_admin, user_type')
       .eq('id', authData.user.id)
       .single();
 
@@ -86,7 +87,7 @@ async function createAdmin() {
       console.log('   Name:', profile.full_name);
       console.log('   Email:', profile.email);
       console.log('   Admin:', profile.is_admin ? '✓ YES' : '✗ NO');
-      console.log('   Type:', profile.profile_type);
+      console.log('   Type:', profile.user_type);
       console.log('');
     }
 
