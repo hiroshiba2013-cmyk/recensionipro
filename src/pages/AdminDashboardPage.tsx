@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Shield, Users, FileText, ShoppingBag, Activity, CheckCircle, XCircle, Clock, Eye, Trash2, LogOut, Building2 } from 'lucide-react';
+import { Shield, Users, FileText, ShoppingBag, Activity, CheckCircle, XCircle, Clock, Eye, Trash2, LogOut, Building2, AlertTriangle, Briefcase, Package, MapPin, UserCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { AdminStats } from '../components/admin/AdminStats';
+import { ReportsSection } from '../components/admin/ReportsSection';
+import { BusinessesSection } from '../components/admin/BusinessesSection';
+import { JobPostingsSection } from '../components/admin/JobPostingsSection';
+import { ProductsSection } from '../components/admin/ProductsSection';
 
 interface DashboardStats {
   totalUsers: number;
@@ -11,6 +16,14 @@ interface DashboardStats {
   activeSubscriptions: number;
   totalBusinesses: number;
   totalProducts: number;
+  totalReports: number;
+  pendingReports: number;
+  totalJobPostings: number;
+  registeredBusinesses: number;
+  importedBusinesses: number;
+  userAddedBusinesses: number;
+  totalLocations: number;
+  totalFamilyMembers: number;
 }
 
 interface PendingReview {
@@ -70,6 +83,60 @@ interface ClassifiedAd {
   };
 }
 
+interface Report {
+  id: string;
+  reason: string;
+  description: string;
+  status: string;
+  created_at: string;
+  reporter: {
+    full_name: string;
+    email: string;
+  };
+  content_type: string;
+}
+
+interface JobPosting {
+  id: string;
+  title: string;
+  description: string;
+  salary_range: string | null;
+  location: string;
+  status: string;
+  created_at: string;
+  business: {
+    name: string;
+  } | null;
+}
+
+interface RegisteredBusiness {
+  id: string;
+  name: string;
+  vat_number: string | null;
+  verified: boolean;
+  created_at: string;
+  owner: {
+    full_name: string;
+    email: string;
+  };
+  category: {
+    name: string;
+  } | null;
+  locations_count: number;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  created_at: string;
+  business: {
+    name: string;
+  } | null;
+}
+
 export function AdminDashboardPage() {
   const { profile, user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -81,11 +148,23 @@ export function AdminDashboardPage() {
     activeSubscriptions: 0,
     totalBusinesses: 0,
     totalProducts: 0,
+    totalReports: 0,
+    pendingReports: 0,
+    totalJobPostings: 0,
+    registeredBusinesses: 0,
+    importedBusinesses: 0,
+    userAddedBusinesses: 0,
+    totalLocations: 0,
+    totalFamilyMembers: 0,
   });
   const [pendingReviews, setPendingReviews] = useState<PendingReview[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [classifiedAds, setClassifiedAds] = useState<ClassifiedAd[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
+  const [businesses, setBusinesses] = useState<RegisteredBusiness[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReview, setSelectedReview] = useState<PendingReview | null>(null);
 
@@ -113,6 +192,14 @@ export function AdminDashboardPage() {
         await loadSubscriptions();
       } else if (activeTab === 'ads') {
         await loadClassifiedAds();
+      } else if (activeTab === 'reports') {
+        await loadReports();
+      } else if (activeTab === 'jobs') {
+        await loadJobPostings();
+      } else if (activeTab === 'businesses') {
+        await loadBusinesses();
+      } else if (activeTab === 'products') {
+        await loadProducts();
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -122,14 +209,36 @@ export function AdminDashboardPage() {
   };
 
   const loadStats = async () => {
-    const [usersCount, reviewsCount, pendingCount, adsCount, subsCount, businessCount, productsCount] = await Promise.all([
+    const [
+      usersCount,
+      reviewsCount,
+      pendingCount,
+      adsCount,
+      subsCount,
+      productsCount,
+      reportsCount,
+      pendingReportsCount,
+      jobsCount,
+      registeredCount,
+      importedCount,
+      userAddedCount,
+      locationsCount,
+      familyCount
+    ] = await Promise.all([
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
       supabase.from('reviews').select('id', { count: 'exact', head: true }),
       supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('review_status', 'pending'),
       supabase.from('classified_ads').select('id', { count: 'exact', head: true }),
       supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-      supabase.from('business_locations').select('id', { count: 'exact', head: true }),
       supabase.from('products').select('id', { count: 'exact', head: true }),
+      supabase.from('reports').select('id', { count: 'exact', head: true }),
+      supabase.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('job_postings').select('id', { count: 'exact', head: true }),
+      supabase.from('registered_businesses').select('id', { count: 'exact', head: true }),
+      supabase.from('imported_businesses').select('id', { count: 'exact', head: true }),
+      supabase.from('user_added_businesses').select('id', { count: 'exact', head: true }),
+      supabase.from('registered_business_locations').select('id', { count: 'exact', head: true }),
+      supabase.from('customer_family_members').select('id', { count: 'exact', head: true })
     ]);
 
     setStats({
@@ -138,8 +247,16 @@ export function AdminDashboardPage() {
       pendingReviews: pendingCount.count || 0,
       totalAds: adsCount.count || 0,
       activeSubscriptions: subsCount.count || 0,
-      totalBusinesses: businessCount.count || 0,
+      totalBusinesses: (registeredCount.count || 0) + (importedCount.count || 0) + (userAddedCount.count || 0),
       totalProducts: productsCount.count || 0,
+      totalReports: reportsCount.count || 0,
+      pendingReports: pendingReportsCount.count || 0,
+      totalJobPostings: jobsCount.count || 0,
+      registeredBusinesses: registeredCount.count || 0,
+      importedBusinesses: importedCount.count || 0,
+      userAddedBusinesses: userAddedCount.count || 0,
+      totalLocations: locationsCount.count || 0,
+      totalFamilyMembers: familyCount.count || 0,
     });
   };
 
@@ -219,6 +336,113 @@ export function AdminDashboardPage() {
     }
 
     setClassifiedAds(data || []);
+  };
+
+  const loadReports = async () => {
+    const { data, error } = await supabase
+      .from('reports')
+      .select(`
+        id,
+        reason,
+        description,
+        status,
+        created_at,
+        content_type,
+        reporter:profiles!reports_reporter_id_fkey(full_name, email)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (error) {
+      console.error('Error loading reports:', error);
+      return;
+    }
+
+    setReports(data || []);
+  };
+
+  const loadJobPostings = async () => {
+    const { data, error } = await supabase
+      .from('job_postings')
+      .select(`
+        id,
+        title,
+        description,
+        salary_range,
+        location,
+        status,
+        created_at,
+        business:registered_businesses(name)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (error) {
+      console.error('Error loading job postings:', error);
+      return;
+    }
+
+    setJobPostings(data || []);
+  };
+
+  const loadBusinesses = async () => {
+    const { data, error } = await supabase
+      .from('registered_businesses')
+      .select(`
+        id,
+        name,
+        vat_number,
+        verified,
+        created_at,
+        owner:profiles!registered_businesses_owner_id_fkey(full_name, email),
+        category:business_categories(name)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (error) {
+      console.error('Error loading businesses:', error);
+      return;
+    }
+
+    const businessesWithLocations = await Promise.all(
+      (data || []).map(async (business) => {
+        const { count } = await supabase
+          .from('registered_business_locations')
+          .select('id', { count: 'exact', head: true })
+          .eq('business_id', business.id);
+
+        return {
+          ...business,
+          locations_count: count || 0,
+        };
+      })
+    );
+
+    setBusinesses(businessesWithLocations);
+  };
+
+  const loadProducts = async () => {
+    const { data, error } = await supabase
+      .from('products')
+      .select(`
+        id,
+        name,
+        description,
+        price,
+        stock,
+        created_at,
+        business:registered_businesses(name)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (error) {
+      console.error('Error loading products:', error);
+      return;
+    }
+
+    setProducts(data || []);
   };
 
   const approveReview = async (reviewId: string) => {
@@ -434,6 +658,50 @@ export function AdminDashboardPage() {
                 <ShoppingBag className="w-4 h-4 inline mr-2" />
                 Annunci
               </button>
+              <button
+                onClick={() => setActiveTab('reports')}
+                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${
+                  activeTab === 'reports'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <AlertTriangle className="w-4 h-4 inline mr-2" />
+                Segnalazioni ({stats.pendingReports})
+              </button>
+              <button
+                onClick={() => setActiveTab('businesses')}
+                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${
+                  activeTab === 'businesses'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Building2 className="w-4 h-4 inline mr-2" />
+                Attività
+              </button>
+              <button
+                onClick={() => setActiveTab('jobs')}
+                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${
+                  activeTab === 'jobs'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Briefcase className="w-4 h-4 inline mr-2" />
+                Lavoro
+              </button>
+              <button
+                onClick={() => setActiveTab('products')}
+                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${
+                  activeTab === 'products'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Package className="w-4 h-4 inline mr-2" />
+                Prodotti
+              </button>
             </div>
           </div>
         </div>
@@ -446,79 +714,7 @@ export function AdminDashboardPage() {
           </div>
         ) : (
           <>
-            {activeTab === 'dashboard' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white rounded-lg shadow p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Utenti Totali</p>
-                      <p className="text-3xl font-bold text-gray-900">{stats.totalUsers}</p>
-                    </div>
-                    <Users className="w-12 h-12 text-blue-600" />
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg shadow p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Recensioni</p>
-                      <p className="text-3xl font-bold text-gray-900">{stats.totalReviews}</p>
-                    </div>
-                    <FileText className="w-12 h-12 text-green-600" />
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg shadow p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">In Attesa</p>
-                      <p className="text-3xl font-bold text-gray-900">{stats.pendingReviews}</p>
-                    </div>
-                    <Clock className="w-12 h-12 text-orange-600" />
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg shadow p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Annunci</p>
-                      <p className="text-3xl font-bold text-gray-900">{stats.totalAds}</p>
-                    </div>
-                    <ShoppingBag className="w-12 h-12 text-purple-600" />
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg shadow p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Abbonamenti Attivi</p>
-                      <p className="text-3xl font-bold text-gray-900">{stats.activeSubscriptions}</p>
-                    </div>
-                    <Activity className="w-12 h-12 text-teal-600" />
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg shadow p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Attività Registrate</p>
-                      <p className="text-3xl font-bold text-gray-900">{stats.totalBusinesses}</p>
-                    </div>
-                    <Building2 className="w-12 h-12 text-indigo-600" />
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg shadow p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Prodotti Totali</p>
-                      <p className="text-3xl font-bold text-gray-900">{stats.totalProducts}</p>
-                    </div>
-                    <ShoppingBag className="w-12 h-12 text-pink-600" />
-                  </div>
-                </div>
-              </div>
-            )}
+            {activeTab === 'dashboard' && <AdminStats stats={stats} />}
 
             {activeTab === 'reviews' && (
               <div className="space-y-4">
@@ -861,6 +1057,14 @@ export function AdminDashboardPage() {
                 </div>
               </div>
             )}
+
+            {activeTab === 'reports' && <ReportsSection reports={reports} onReload={loadReports} />}
+
+            {activeTab === 'businesses' && <BusinessesSection businesses={businesses} onReload={loadBusinesses} />}
+
+            {activeTab === 'jobs' && <JobPostingsSection jobPostings={jobPostings} onReload={loadJobPostings} />}
+
+            {activeTab === 'products' && <ProductsSection products={products} onReload={loadProducts} />}
           </>
         )}
       </div>
