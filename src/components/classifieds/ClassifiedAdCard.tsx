@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase';
 interface ClassifiedAd {
   id: string;
   user_id: string;
+  family_member_id?: string | null;
   ad_type: 'sell' | 'buy' | 'gift';
   title: string;
   description: string;
@@ -19,8 +20,15 @@ interface ClassifiedAd {
   created_at: string;
   profiles: {
     full_name: string;
+    nickname: string | null;
     avatar_url: string | null;
   };
+  family_member?: {
+    nickname: string;
+    first_name: string;
+    last_name: string;
+    avatar_url: string | null;
+  } | null;
   classified_categories: {
     name: string;
     icon: string;
@@ -152,22 +160,45 @@ export function ClassifiedAdCard({ ad }: ClassifiedAdCardProps) {
           {/* Footer */}
           <div className="flex items-center justify-between pt-3 border-t border-gray-100">
             <div className="flex items-center gap-2">
-              {ad.profiles.avatar_url ? (
-                <img
-                  src={ad.profiles.avatar_url}
-                  alt={ad.profiles.full_name}
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                  <span className="text-sm font-medium text-gray-600">
-                    {ad.profiles.full_name.charAt(0)}
+              {ad.family_member ? (
+                <>
+                  {ad.family_member.avatar_url ? (
+                    <img
+                      src={ad.family_member.avatar_url}
+                      alt={ad.family_member.nickname}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                      <span className="text-sm font-medium text-gray-600">
+                        {ad.family_member.nickname.charAt(0)}
+                      </span>
+                    </div>
+                  )}
+                  <span className="text-sm text-gray-700 font-medium">
+                    {ad.family_member.nickname}
                   </span>
-                </div>
+                </>
+              ) : (
+                <>
+                  {ad.profiles.avatar_url ? (
+                    <img
+                      src={ad.profiles.avatar_url}
+                      alt={ad.profiles.nickname || ad.profiles.full_name}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                      <span className="text-sm font-medium text-gray-600">
+                        {(ad.profiles.nickname || ad.profiles.full_name).charAt(0)}
+                      </span>
+                    </div>
+                  )}
+                  <span className="text-sm text-gray-700 font-medium">
+                    {ad.profiles.nickname || ad.profiles.full_name}
+                  </span>
+                </>
               )}
-              <span className="text-sm text-gray-700 font-medium">
-                {ad.profiles.full_name}
-              </span>
             </div>
 
             <div className="flex items-center gap-3 text-gray-500 text-sm">
