@@ -127,11 +127,11 @@ export function Header() {
                   )}
                   <a
                     href="/profile"
-                    className="flex items-center gap-0.5 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                    className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium px-4 py-2 rounded-lg"
                     title={t('header.myProfile')}
                   >
                     <User className="w-4 h-4" />
-                    <span className="text-xs">{t('header.profile')}</span>
+                    <span className="text-sm">{t('header.profile')}</span>
                   </a>
                 </nav>
               </>
