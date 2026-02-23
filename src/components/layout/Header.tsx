@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle, Heart, Building2, Shield, Tag, Briefcase, Award } from 'lucide-react';
+import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle, Heart, Building2, Shield, Tag, Briefcase, Award, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { LoginForm } from '../auth/LoginForm';
@@ -61,6 +61,14 @@ export function Header() {
                   >
                     <Home className="w-4 h-4" />
                     <span className="text-sm">{t('header.home')}</span>
+                  </a>
+                  <a
+                    href="/dashboard"
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
+                    title="Dashboard"
+                  >
+                    <LayoutDashboard className="w-4 h-4" />
+                    <span className="text-sm">Dashboard</span>
                   </a>
                   <a
                     href="/messages"
@@ -205,6 +213,14 @@ export function Header() {
                     >
                       <Home className="w-5 h-5" />
                       <span>{t('header.home')}</span>
+                    </a>
+                    <a
+                      href="/dashboard"
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <LayoutDashboard className="w-5 h-5" />
+                      <span>Dashboard</span>
                     </a>
                     <a
                       href="/messages"
