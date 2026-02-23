@@ -31,8 +31,13 @@ interface ClassifiedAd {
   ad_type: 'sell' | 'buy' | 'gift';
   profiles: {
     full_name: string;
+    nickname: string | null;
     avatar_url: string | null;
   };
+  family_member?: {
+    nickname: string;
+    avatar_url: string | null;
+  } | null;
   classified_categories: {
     name: string;
     icon: string;
@@ -156,23 +161,16 @@ export function ClassifiedAdsPage() {
         const familyMembersMap = new Map(familyMembersData.map(fm => [fm.id, fm]));
 
         const adsWithProfiles = data.map((ad: any) => {
-          if (ad.family_member_id) {
-            const familyMember = familyMembersMap.get(ad.family_member_id);
-            return {
-              ...ad,
-              profiles: familyMember
-                ? { full_name: familyMember.nickname, avatar_url: familyMember.avatar_url }
-                : { full_name: 'Utente', avatar_url: null }
-            };
-          } else {
-            const profile = profilesMap.get(ad.user_id);
-            return {
-              ...ad,
-              profiles: profile
-                ? { full_name: profile.nickname || profile.full_name, avatar_url: profile.avatar_url }
-                : { full_name: 'Utente', avatar_url: null }
-            };
-          }
+          const profile = profilesMap.get(ad.user_id);
+          const familyMember = ad.family_member_id ? familyMembersMap.get(ad.family_member_id) : null;
+
+          return {
+            ...ad,
+            profiles: profile
+              ? { full_name: profile.full_name, nickname: profile.nickname, avatar_url: profile.avatar_url }
+              : { full_name: 'Utente', nickname: null, avatar_url: null },
+            family_member: familyMember || null
+          };
         });
 
         setAds(adsWithProfiles);
