@@ -61,6 +61,15 @@ function LandingPage() {
             <p className="text-lg text-blue-200 mb-8 max-w-2xl mx-auto">
               {t('home.trialInfo')}
             </p>
+
+            <div className="mb-8">
+              <AdvancedSearch
+                onSearch={() => {}}
+                isLoading={false}
+                navigateToSearchPage={true}
+              />
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => window.location.href = '/?register=user'}
