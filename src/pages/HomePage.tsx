@@ -8,20 +8,38 @@ import { useNavigate } from '../components/Router';
 import TopBusinessesBanner from '../components/business/TopBusinessesBanner';
 
 export function HomePage() {
-  const { user, profile } = useAuth();
+  const { user, profile, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user && profile) {
+    if (user && profile && !loading) {
       navigate('/dashboard');
     }
-  }, [user, profile]);
+  }, [user, profile, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Caricamento...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return <LandingPage />;
   }
 
-  return null;
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Reindirizzamento...</p>
+      </div>
+    </div>
+  );
 }
 
 function LandingPage() {
