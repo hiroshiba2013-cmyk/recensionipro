@@ -208,54 +208,6 @@ function LandingPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            {t('home.whatCanYouDo')}
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            {t('home.completeDescription')}
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          <FeatureCard
-            icon={<Search className="w-12 h-12 text-blue-600" />}
-            title={t('home.feature.search.title')}
-            description={t('home.feature.search.description')}
-            gradient="from-blue-50 to-blue-100"
-          />
-          <FeatureCard
-            icon={<Star className="w-12 h-12 text-yellow-500" />}
-            title={t('home.feature.reviews.title')}
-            description={t('home.feature.reviews.description')}
-            gradient="from-yellow-50 to-yellow-100"
-          />
-          <FeatureCard
-            icon={<Award className="w-12 h-12 text-purple-600" />}
-            title={t('home.feature.prizes.title')}
-            description={t('home.feature.prizes.description')}
-            gradient="from-purple-50 to-purple-100"
-          />
-          <FeatureCard
-            icon={<Package className="w-12 h-12 text-green-600" />}
-            title={t('home.feature.products.title')}
-            description={t('home.feature.products.description')}
-            gradient="from-green-50 to-green-100"
-          />
-          <FeatureCard
-            icon={<Tag className="w-12 h-12 text-orange-600" />}
-            title={t('home.feature.classifieds.title')}
-            description={t('home.feature.classifieds.description')}
-            gradient="from-orange-50 to-orange-100"
-          />
-          <FeatureCard
-            icon={<Briefcase className="w-12 h-12 text-indigo-600" />}
-            title={t('home.feature.jobs.title')}
-            description={t('home.feature.jobs.description')}
-            gradient="from-indigo-50 to-indigo-100"
-          />
-        </div>
-
         <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-2xl shadow-xl p-8 md:p-12 mb-16">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="bg-yellow-400 p-6 rounded-full flex-shrink-0">
