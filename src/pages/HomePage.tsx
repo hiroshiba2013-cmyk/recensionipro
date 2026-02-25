@@ -9,13 +9,6 @@ import TopBusinessesBanner from '../components/business/TopBusinessesBanner';
 
 export function HomePage() {
   const { user, profile, loading } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (user && profile && !loading) {
-      navigate('/dashboard');
-    }
-  }, [user, profile, loading, navigate]);
 
   if (loading) {
     return (
@@ -32,14 +25,7 @@ export function HomePage() {
     return <LandingPage />;
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Reindirizzamento...</p>
-      </div>
-    </div>
-  );
+  return <AuthenticatedHomePage />;
 }
 
 function LandingPage() {
@@ -382,39 +368,24 @@ function LandingPage() {
 }
 
 function AuthenticatedHomePage() {
-  const { user, selectedBusinessLocationId } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [jobPostings, setJobPostings] = useState<any[]>([]);
-  const [jobSeekers, setJobSeekers] = useState<any[]>([]);
   const [featuredSellAds, setFeaturedSellAds] = useState<any[]>([]);
-  const [featuredBuyAds, setFeaturedBuyAds] = useState<any[]>([]);
-  const [featuredGiftAds, setFeaturedGiftAds] = useState<any[]>([]);
-  const [topBusinesses, setTopBusinesses] = useState<any[]>([]);
-  const [userType, setUserType] = useState<string | null>(null);
+  const [topUsers, setTopUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [reviewCity, setReviewCity] = useState('');
 
   useEffect(() => {
     loadHomeData();
-  }, [user, selectedBusinessLocationId, reviewCity]);
+  }, [user]);
 
   const loadHomeData = async () => {
     try {
       setLoading(true);
 
-      const profileResult = await supabase
-        .from('profiles')
-        .select('user_type')
-        .eq('id', user?.id)
-        .single();
-
-      if (profileResult.data) {
-        setUserType(profileResult.data.user_type);
-      }
-
-      const [jobsResult, jobSeekersResult, sellAdsResult, buyAdsResult, giftAdsResult, topBusinessesResult] = await Promise.all([
+      const [jobsResult, sellAdsResult, topUsersResult] = await Promise.all([
         (async () => {
-          let query = supabase
+          const { data } = await supabase
             .from('job_postings')
             .select(`
               *,
@@ -422,12 +393,6 @@ function AuthenticatedHomePage() {
             `)
             .eq('status', 'active')
             .gt('expires_at', new Date().toISOString());
-
-          if (selectedBusinessLocationId) {
-            query = query.eq('business_location_id', selectedBusinessLocationId);
-          }
-
-          const { data } = await query;
 
           if (data) {
             const businessIds = [...new Set(data.map(job => job.business?.id).filter(Boolean))];
@@ -464,81 +429,23 @@ function AuthenticatedHomePage() {
           return [];
         })(),
 
-        (async () => {
-          const { data: seekersData } = await supabase
-            .from('job_seekers')
-            .select(`
-              *,
-              profiles!inner(id, full_name, nickname),
-              business_categories(name)
-            `)
-            .eq('status', 'active');
-
-          if (seekersData && seekersData.length > 0) {
-            const userIds = [...new Set(seekersData.map(js => js.user_id))];
-
-            const activityCounts = await Promise.all(
-              userIds.map(async (userId) => {
-                const { data: activityData } = await supabase
-                  .from('user_activity')
-                  .select('total_points, reviews_count')
-                  .eq('user_id', userId)
-                  .single();
-
-                return {
-                  userId,
-                  totalPoints: activityData?.total_points || 0,
-                  reviewsCount: activityData?.reviews_count || 0
-                };
-              })
-            );
-
-            const activityMap = Object.fromEntries(
-              activityCounts.map(({ userId, totalPoints, reviewsCount }) => [
-                userId,
-                { totalPoints, reviewsCount }
-              ])
-            );
-
-            const sortedSeekers = [...seekersData].sort((a, b) => {
-              const activityA = activityMap[a.user_id] || { totalPoints: 0, reviewsCount: 0 };
-              const activityB = activityMap[b.user_id] || { totalPoints: 0, reviewsCount: 0 };
-
-              if (activityB.totalPoints !== activityA.totalPoints) {
-                return activityB.totalPoints - activityA.totalPoints;
-              }
-
-              if (activityB.reviewsCount !== activityA.reviewsCount) {
-                return activityB.reviewsCount - activityA.reviewsCount;
-              }
-
-              return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-            });
-
-            return sortedSeekers.slice(0, 6);
-          }
-          return [];
-        })(),
-
         supabase.rpc('get_featured_classified_ads', { ad_type_filter: 'sell', limit_count: 6 }),
-        supabase.rpc('get_featured_classified_ads', { ad_type_filter: 'buy', limit_count: 6 }),
-        supabase.rpc('get_featured_classified_ads', { ad_type_filter: 'gift', limit_count: 6 }),
 
-        supabase.rpc('get_top_businesses_by_positive_reviews', { limit_count: 8 })
+        supabase
+          .from('user_activity')
+          .select(`
+            user_id,
+            total_points,
+            reviews_count,
+            profiles:user_id(id, nickname, full_name, avatar_url)
+          `)
+          .order('total_points', { ascending: false })
+          .limit(20)
       ]);
 
       if (jobsResult) {
-        console.log('Job postings loaded:', jobsResult.length);
         setJobPostings(jobsResult);
       }
-      if (jobSeekersResult) {
-        console.log('Job seekers loaded:', jobSeekersResult.length);
-        setJobSeekers(jobSeekersResult);
-      }
-
-      console.log('Sell ads result:', sellAdsResult);
-      console.log('Buy ads result:', buyAdsResult);
-      console.log('Gift ads result:', giftAdsResult);
 
       if (sellAdsResult.data && sellAdsResult.data.length > 0) {
         const adsWithProfiles = sellAdsResult.data.map((ad: any) => ({
@@ -550,99 +457,13 @@ function AuthenticatedHomePage() {
             avatar_url: ad.user_avatar_url
           }
         }));
-        console.log('Featured sell ads:', adsWithProfiles);
         setFeaturedSellAds(adsWithProfiles);
       } else {
         setFeaturedSellAds([]);
       }
 
-      if (buyAdsResult.data && buyAdsResult.data.length > 0) {
-        const adsWithProfiles = buyAdsResult.data.map((ad: any) => ({
-          ...ad,
-          profiles: {
-            id: ad.user_id,
-            full_name: ad.user_full_name,
-            nickname: ad.user_nickname,
-            avatar_url: ad.user_avatar_url
-          }
-        }));
-        console.log('Featured buy ads:', adsWithProfiles);
-        setFeaturedBuyAds(adsWithProfiles);
-      } else {
-        setFeaturedBuyAds([]);
-      }
-
-      if (giftAdsResult.data && giftAdsResult.data.length > 0) {
-        const adsWithProfiles = giftAdsResult.data.map((ad: any) => ({
-          ...ad,
-          profiles: {
-            id: ad.user_id,
-            full_name: ad.user_full_name,
-            nickname: ad.user_nickname,
-            avatar_url: ad.user_avatar_url
-          }
-        }));
-        console.log('Featured gift ads:', adsWithProfiles);
-        setFeaturedGiftAds(adsWithProfiles);
-      } else {
-        setFeaturedGiftAds([]);
-      }
-
-      if (topBusinessesResult.data && topBusinessesResult.data.length > 0) {
-        let normalizedBusinesses = topBusinessesResult.data.map((business: any) => ({
-          id: business.business_id,
-          name: business.business_name,
-          business_categories: business.category_name ? {
-            id: business.category_id,
-            name: business.category_name
-          } : null,
-          business_locations: [{
-            city: business.city,
-            province: business.province,
-            region: business.region,
-            address: business.address || '',
-            avatar_url: business.avatar_url
-          }],
-          avg_rating: parseFloat(business.avg_rating) || 0,
-          review_count: parseInt(business.total_review_count) || 0,
-          positive_review_count: parseInt(business.positive_review_count) || 0
-        }));
-
-        if (reviewCity) {
-          normalizedBusinesses = normalizedBusinesses.filter((business: any) =>
-            business.business_locations.some((loc: any) =>
-              loc.city.toLowerCase().includes(reviewCity.toLowerCase())
-            )
-          );
-        }
-
-        setTopBusinesses(normalizedBusinesses);
-      } else {
-        const fallbackBusinesses = await supabase
-          .from('unclaimed_business_locations')
-          .select('id, name, category_id, city, province, region, street')
-          .order('created_at', { ascending: false })
-          .limit(8);
-
-        if (fallbackBusinesses.data && fallbackBusinesses.data.length > 0) {
-          const normalizedBusinesses = fallbackBusinesses.data.map((business: any) => ({
-            id: business.id,
-            name: business.name,
-            business_categories: business.category_id ? { id: business.category_id } : null,
-            business_locations: [{
-              city: business.city,
-              province: business.province,
-              region: business.region,
-              address: business.street || '',
-              avatar_url: null
-            }],
-            avg_rating: 0,
-            review_count: 0,
-            positive_review_count: 0
-          }));
-
-          setTopBusinesses(normalizedBusinesses);
-        }
+      if (topUsersResult.data) {
+        setTopUsers(topUsersResult.data);
       }
     } catch (error) {
       console.error('Error loading home data:', error);
@@ -651,18 +472,19 @@ function AuthenticatedHomePage() {
     }
   };
 
+  const displayName = profile?.nickname || profile?.full_name || 'Utente';
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-purple-50">
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 text-white py-20 shadow-lg">
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 text-white py-12 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-5xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tight drop-shadow-lg">
-              Trova quello che cerchi
+          <div className="text-center mb-8">
+            <h1 className="text-4xl md:text-5xl font-extrabold mb-2 leading-tight tracking-tight drop-shadow-lg">
+              Bentornato, {displayName}
             </h1>
-            <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Attività locali, prodotti, offerte di lavoro e annunci nella tua zona
-            </p>
+          </div>
 
+          <div className="max-w-4xl mx-auto">
             <AdvancedSearch
               onSearch={() => {}}
               isLoading={false}
@@ -673,328 +495,148 @@ function AuthenticatedHomePage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          <div
-            onClick={() => navigate('/search')}
-            className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all cursor-pointer"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <Star className="w-8 h-8" />
-              <h3 className="text-2xl font-bold">Recensioni</h3>
-            </div>
-            <p className="text-blue-100 text-sm leading-relaxed">
-              Leggi e scrivi recensioni verificate sulle attività locali. Condividi la tua esperienza e guadagna punti per ogni recensione approvata.
-            </p>
-          </div>
-
-          {userType !== 'business' && (
-            <div
-              onClick={() => navigate('/classified-ads')}
-              className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all cursor-pointer"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <Tag className="w-8 h-8" />
-                <h3 className="text-2xl font-bold">Annunci</h3>
-              </div>
-              <p className="text-green-100 text-sm leading-relaxed">
-                Compra, vendi o scambia oggetti usati nella tua zona. Pubblica annunci gratuiti e trova occasioni vicino a casa tua.
-              </p>
-            </div>
-          )}
-
-          <div
-            onClick={() => navigate('/jobs')}
-            className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all cursor-pointer"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <Briefcase className="w-8 h-8" />
-              <h3 className="text-2xl font-bold">Lavoro</h3>
-            </div>
-            <p className="text-indigo-100 text-sm leading-relaxed">
-              Cerca opportunità di lavoro nella tua zona o pubblica annunci se sei un'attività. Connetti talenti locali con le aziende.
-            </p>
-          </div>
-
-          <div
-            onClick={() => navigate('/solidarity')}
-            className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all cursor-pointer"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <Heart className="w-8 h-8" />
-              <h3 className="text-2xl font-bold">Solidarietà</h3>
-            </div>
-            <p className="text-pink-100 text-sm leading-relaxed">
-              Aiuta chi è in difficoltà nella tua comunità. Richiedi o offri supporto solidale documentato e verificato dalla piattaforma.
-            </p>
-          </div>
-
-          <div
-            onClick={() => navigate('/leaderboard')}
-            className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all cursor-pointer"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <Award className="w-8 h-8" />
-              <h3 className="text-2xl font-bold">Classifica</h3>
-            </div>
-            <p className="text-yellow-100 text-sm leading-relaxed">
-              Guadagna punti con le tue recensioni e scala la classifica. I primi 20 utenti dell'anno vincono gift card ricaricabili.
-            </p>
-          </div>
-        </div>
-
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
           </div>
         ) : (
           <>
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Filtra Attività per Città
-              </label>
-              <input
-                type="text"
-                value={reviewCity}
-                onChange={(e) => setReviewCity(e.target.value)}
-                placeholder="Es: Milano, Roma, Napoli..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            {topBusinesses.length > 0 && (
-              <TopBusinessesBanner businesses={topBusinesses} />
-            )}
-
-            {userType !== 'business' && (
-              <section className="mb-12 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl p-8 shadow-md border-2 border-purple-200">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-purple-500 to-indigo-500 p-4 rounded-xl shadow-lg">
-                      <Briefcase className="w-7 h-7 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-3xl font-bold text-gray-900">Trova Lavoro - Offerte in Evidenza</h2>
-                      <p className="text-sm text-gray-600">Opportunità dalle aziende più recensite</p>
-                    </div>
+            <section className="mb-12 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl p-8 shadow-md border-2 border-yellow-200">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="bg-gradient-to-br from-yellow-500 to-orange-500 p-4 rounded-xl shadow-lg">
+                    <Award className="w-7 h-7 text-white" />
                   </div>
-                  <button
-                    onClick={() => navigate('/jobs')}
-                    className="flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 font-semibold shadow-md transition-all hover:scale-105"
-                  >
-                    Vedi tutte <ArrowRight className="w-4 h-4" />
-                  </button>
+                  <div>
+                    <h2 className="text-3xl font-bold text-gray-900">Classifica Utenti</h2>
+                    <p className="text-sm text-gray-600">I migliori 20 utenti vincono gift card ricaricabili</p>
+                  </div>
                 </div>
-                {jobPostings.length > 0 ? (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {jobPostings.map((job) => (
-                      <JobOfferCard key={job.id} job={job} onClick={() => navigate('/jobs')} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">Nessuna offerta di lavoro al momento</p>
-                  </div>
-                )}
-              </section>
-            )}
-
-            {userType !== 'business' && (
-              <section className="mb-12 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-8 shadow-md border-2 border-blue-200">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-4 rounded-xl shadow-lg">
-                      <Users className="w-7 h-7 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-3xl font-bold text-gray-900">Cerco Lavoro - Candidati in Evidenza</h2>
-                      <p className="text-sm text-gray-600">Profili degli utenti più attivi sulla piattaforma</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => navigate('/jobs')}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold shadow-md transition-all hover:scale-105"
-                  >
-                    Vedi tutti <ArrowRight className="w-4 h-4" />
-                  </button>
+                <button
+                  onClick={() => navigate('/leaderboard')}
+                  className="flex items-center gap-2 bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 font-semibold shadow-md transition-all hover:scale-105"
+                >
+                  Vedi tutti <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+              {topUsers.length > 0 ? (
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {topUsers.slice(0, 8).map((userActivity: any, index: number) => (
+                    <TopUserCard key={userActivity.user_id} userActivity={userActivity} rank={index + 1} />
+                  ))}
                 </div>
-                {jobSeekers.length > 0 ? (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {jobSeekers.map((seeker) => (
-                      <JobSeekerCard key={seeker.id} seeker={seeker} onClick={() => navigate('/jobs')} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">Nessun candidato al momento</p>
-                  </div>
-                )}
-              </section>
-            )}
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Nessun utente in classifica al momento</p>
+                </div>
+              )}
+            </section>
 
-            {userType !== 'business' && (
-              <>
-                <section className="mb-8 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-8 shadow-md border-2 border-blue-200">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-4 rounded-xl shadow-lg">
-                        <Package className="w-7 h-7 text-white" />
-                      </div>
-                      <div>
-                        <h2 className="text-3xl font-bold text-gray-900">Annunci in Evidenza - Vendo</h2>
-                        <p className="text-sm text-gray-600">Dai utenti più attivi della piattaforma</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => navigate('/classified-ads?type=sell')}
-                      className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold shadow-md transition-all hover:scale-105"
-                    >
-                      Vedi tutti <ArrowRight className="w-4 h-4" />
-                    </button>
+            <section className="mb-12 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-8 shadow-md border-2 border-blue-200">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-4 rounded-xl shadow-lg">
+                    <Briefcase className="w-7 h-7 text-white" />
                   </div>
-                  {featuredSellAds.length > 0 ? (
-                    <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
-                      {featuredSellAds.map((ad) => (
-                        <ClassifiedAdCard key={ad.id} ad={ad} onClick={() => navigate(`/classified-ads/${ad.id}`)} />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500">Nessun annuncio al momento. Pubblica il primo annuncio e ottieni visibilità!</p>
-                    </div>
-                  )}
-                </section>
+                  <div>
+                    <h2 className="text-3xl font-bold text-gray-900">Migliori Offerte di Lavoro</h2>
+                    <p className="text-sm text-gray-600">Dalle aziende più recensite</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => navigate('/jobs')}
+                  className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold shadow-md transition-all hover:scale-105"
+                >
+                  Vedi tutte <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+              {jobPostings.length > 0 ? (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {jobPostings.map((job) => (
+                    <JobOfferCard key={job.id} job={job} onClick={() => navigate('/jobs')} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Nessuna offerta di lavoro al momento</p>
+                </div>
+              )}
+            </section>
 
-                <section className="mb-8 bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-8 shadow-md border-2 border-orange-200">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-gradient-to-br from-orange-500 to-amber-500 p-4 rounded-xl shadow-lg">
-                        <Search className="w-7 h-7 text-white" />
-                      </div>
-                      <div>
-                        <h2 className="text-3xl font-bold text-gray-900">Annunci in Evidenza - Cerco</h2>
-                        <p className="text-sm text-gray-600">Dai utenti più attivi della piattaforma</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => navigate('/classified-ads?type=buy')}
-                      className="flex items-center gap-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 font-semibold shadow-md transition-all hover:scale-105"
-                    >
-                      Vedi tutti <ArrowRight className="w-4 h-4" />
-                    </button>
+            <section className="mb-12 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-8 shadow-md border-2 border-green-200">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="bg-gradient-to-br from-green-500 to-emerald-500 p-4 rounded-xl shadow-lg">
+                    <Tag className="w-7 h-7 text-white" />
                   </div>
-                  {featuredBuyAds.length > 0 ? (
-                    <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
-                      {featuredBuyAds.map((ad) => (
-                        <ClassifiedAdCard key={ad.id} ad={ad} onClick={() => navigate(`/classified-ads/${ad.id}`)} />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500">Nessun annuncio al momento. Pubblica il primo annuncio e ottieni visibilità!</p>
-                    </div>
-                  )}
-                </section>
-
-                <section className="mb-12 bg-gradient-to-r from-pink-50 to-rose-50 rounded-2xl p-8 shadow-md border-2 border-pink-200">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-gradient-to-br from-pink-500 to-rose-500 p-4 rounded-xl shadow-lg">
-                        <Gift className="w-7 h-7 text-white" />
-                      </div>
-                      <div>
-                        <h2 className="text-3xl font-bold text-gray-900">Annunci in Evidenza - Regalo</h2>
-                        <p className="text-sm text-gray-600">Dai utenti più attivi della piattaforma</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => navigate('/classified-ads?type=gift')}
-                      className="flex items-center gap-2 bg-pink-600 text-white px-6 py-3 rounded-lg hover:bg-pink-700 font-semibold shadow-md transition-all hover:scale-105"
-                    >
-                      Vedi tutti <ArrowRight className="w-4 h-4" />
-                    </button>
+                  <div>
+                    <h2 className="text-3xl font-bold text-gray-900">Migliori Annunci di Vendita</h2>
+                    <p className="text-sm text-gray-600">Dagli utenti più attivi</p>
                   </div>
-                  {featuredGiftAds.length > 0 ? (
-                    <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
-                      {featuredGiftAds.map((ad) => (
-                        <ClassifiedAdCard key={ad.id} ad={ad} onClick={() => navigate(`/classified-ads/${ad.id}`)} />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500">Nessun annuncio al momento. Pubblica il primo annuncio e ottieni visibilità!</p>
-                    </div>
-                  )}
-                </section>
-              </>
-            )}
+                </div>
+                <button
+                  onClick={() => navigate('/classified-ads?type=sell')}
+                  className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold shadow-md transition-all hover:scale-105"
+                >
+                  Vedi tutti <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+              {featuredSellAds.length > 0 ? (
+                <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  {featuredSellAds.map((ad) => (
+                    <ClassifiedAdCard key={ad.id} ad={ad} onClick={() => navigate(`/classified-ads/${ad.id}`)} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Nessun annuncio al momento</p>
+                </div>
+              )}
+            </section>
           </>
         )}
-
-        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-2xl shadow-lg p-8 mb-12">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="bg-yellow-400 p-4 rounded-full">
-                <Award className="w-10 h-10 text-white" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-1">
-                  Scrivi recensioni e vinci premi!
-                </h3>
-                <p className="text-gray-700">
-                  I migliori 20 utenti dell'anno vincono gift card ricaricabili
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => navigate('/leaderboard')}
-              className="bg-yellow-400 text-gray-900 px-6 py-3 rounded-lg font-bold hover:bg-yellow-500 transition-colors whitespace-nowrap"
-            >
-              Vedi Classifica
-            </button>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 rounded-2xl shadow-lg p-8">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="bg-gradient-to-br from-green-500 to-blue-500 p-4 rounded-full">
-              <Heart className="w-10 h-10 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900">
-              Il 10% del fatturato in beneficenza
-            </h3>
-          </div>
-          <p className="text-gray-700 leading-relaxed">
-            Trovafacile dona ogni anno il 10% del proprio fatturato ad associazioni no profit e progetti di beneficenza.
-            Tutti i documenti sono pubblicati nella sezione Solidarietà per garantire massima trasparenza.
-          </p>
-          <button
-            onClick={() => navigate('/solidarity')}
-            className="mt-4 text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-2"
-          >
-            Scopri di più <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
       </div>
     </div>
   );
 }
 
-function QuickActionCard({ icon, title, description, color, onClick }: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  color: string;
-  onClick: () => void;
-}) {
+function TopUserCard({ userActivity, rank }: { userActivity: any; rank: number }) {
+  const displayName = userActivity.profiles?.nickname || userActivity.profiles?.full_name || 'Utente';
+
   return (
-    <button
-      onClick={onClick}
-      className={`bg-gradient-to-br ${color} text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 text-left`}
-    >
-      <div className="mb-3">{icon}</div>
-      <h3 className="text-xl font-bold mb-1">{title}</h3>
-      <p className="text-sm opacity-90">{description}</p>
-    </button>
+    <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-6 border-2 border-yellow-100">
+      <div className="flex items-center gap-3 mb-3">
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
+          rank === 1 ? 'bg-yellow-500' : rank === 2 ? 'bg-gray-400' : rank === 3 ? 'bg-orange-600' : 'bg-blue-500'
+        }`}>
+          {rank}
+        </div>
+        {userActivity.profiles?.avatar_url ? (
+          <img
+            src={userActivity.profiles.avatar_url}
+            alt={displayName}
+            className="w-12 h-12 rounded-full object-cover"
+          />
+        ) : (
+          <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+            <Users className="w-6 h-6 text-gray-400" />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-bold text-gray-900 truncate">{displayName}</h3>
+        </div>
+      </div>
+      <div className="space-y-2 text-sm">
+        <div className="flex justify-between items-center">
+          <span className="text-gray-600">Punti Totali</span>
+          <span className="font-bold text-yellow-600">{userActivity.total_points}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-gray-600">Recensioni</span>
+          <span className="font-semibold text-blue-600">{userActivity.reviews_count}</span>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1033,69 +675,6 @@ function JobOfferCard({ job, onClick }: { job: any; onClick: () => void }) {
   );
 }
 
-function JobSeekerCard({ seeker, onClick }: { seeker: any; onClick: () => void }) {
-  const displayName = seeker.profiles?.nickname || seeker.profiles?.full_name || 'Utente';
-
-  return (
-    <div
-      onClick={onClick}
-      className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-6 cursor-pointer border-2 border-blue-100 hover:border-blue-300 transform hover:scale-105"
-    >
-      <div className="flex items-start gap-3 mb-3">
-        <div className="bg-blue-100 p-3 rounded-full flex-shrink-0">
-          <Users className="w-6 h-6 text-blue-600" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-lg text-gray-900 line-clamp-1">{displayName}</h3>
-          <p className="text-sm text-gray-600 font-medium line-clamp-1">{seeker.title}</p>
-        </div>
-      </div>
-
-      <p className="text-sm text-gray-700 mb-3 line-clamp-2">{seeker.description}</p>
-
-      <div className="flex items-center gap-2 text-sm text-gray-500 mb-2 bg-gray-50 p-2 rounded-lg">
-        <MapPin className="w-4 h-4 text-blue-500" />
-        <span className="line-clamp-1">{seeker.city}, {seeker.province}</span>
-      </div>
-
-      {seeker.desired_salary_min && (
-        <div className="flex items-center gap-2 text-sm text-green-600 font-semibold bg-green-50 p-2 rounded-lg mb-3">
-          <Euro className="w-4 h-4" />
-          <span>
-            {seeker.desired_salary_min.toLocaleString()}
-            {seeker.desired_salary_max ? ` - ${seeker.desired_salary_max.toLocaleString()}` : '+'} €/anno
-          </span>
-        </div>
-      )}
-
-      {seeker.skills && seeker.skills.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-3">
-          {seeker.skills.slice(0, 3).map((skill: string, index: number) => (
-            <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
-              {skill}
-            </span>
-          ))}
-          {seeker.skills.length > 3 && (
-            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-              +{seeker.skills.length - 3}
-            </span>
-          )}
-        </div>
-      )}
-
-      <div className="flex items-center gap-2">
-        <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
-          {seeker.contract_type}
-        </span>
-        {seeker.experience_years !== undefined && (
-          <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
-            {seeker.experience_years} anni esp.
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function ClassifiedAdCard({ ad, onClick }: { ad: any; onClick: () => void }) {
   return (
@@ -1132,17 +711,3 @@ function ClassifiedAdCard({ ad, onClick }: { ad: any; onClick: () => void }) {
   );
 }
 
-function FeatureCard({ icon, title, description, gradient }: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  gradient: string;
-}) {
-  return (
-    <div className={`bg-gradient-to-br ${gradient} rounded-xl p-6 shadow-sm hover:shadow-lg transition-all transform hover:scale-105`}>
-      <div className="mb-4">{icon}</div>
-      <h3 className="text-xl font-bold text-gray-900 mb-3">{title}</h3>
-      <p className="text-gray-700 leading-relaxed">{description}</p>
-    </div>
-  );
-}
