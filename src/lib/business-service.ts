@@ -30,6 +30,7 @@ export interface SearchFilters {
   province?: string;
   region?: string;
   category_id?: string;
+  verified_only?: boolean;
   limit?: number;
 }
 
@@ -40,6 +41,7 @@ export async function searchAllBusinesses(filters: SearchFilters = {}): Promise<
     search_province: filters.province || null,
     search_region: filters.region || null,
     search_category_id: filters.category_id || null,
+    verified_only: filters.verified_only || false,
     limit_count: filters.limit || 50
   });
 
