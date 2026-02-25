@@ -7,6 +7,8 @@ import { ReportsSection } from '../components/admin/ReportsSection';
 import { BusinessesSection } from '../components/admin/BusinessesSection';
 import { JobPostingsSection } from '../components/admin/JobPostingsSection';
 import { ProductsSection } from '../components/admin/ProductsSection';
+import { ReviewsSection } from '../components/admin/ReviewsSection';
+import { ClassifiedAdsSection } from '../components/admin/ClassifiedAdsSection';
 
 interface DashboardStats {
   totalUsers: number;
@@ -265,10 +267,12 @@ export function AdminDashboardPage() {
       .from('reviews')
       .select(`
         *,
-        customer:profiles!reviews_customer_id_fkey(full_name, email)
+        customer:profiles!reviews_customer_id_fkey(full_name, email),
+        business:registered_businesses(name),
+        unclaimed_business_location:unclaimed_business_locations(name)
       `)
-      .eq('review_status', 'pending')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(200);
 
     if (error) {
       console.error('Error loading reviews:', error);
@@ -324,11 +328,17 @@ export function AdminDashboardPage() {
         description,
         price,
         status,
+        ad_type,
+        category,
+        city,
+        province,
+        images,
         created_at,
-        user:profiles(full_name, email)
+        expires_at,
+        user:profiles(full_name, email, nickname)
       `)
       .order('created_at', { ascending: false })
-      .limit(100);
+      .limit(200);
 
     if (error) {
       console.error('Error loading ads:', error);
@@ -369,13 +379,18 @@ export function AdminDashboardPage() {
         title,
         description,
         salary_range,
+        gross_annual_salary,
         location,
         status,
+        position_type,
+        experience_level,
         created_at,
+        expires_at,
+        published_at,
         business:registered_businesses(name)
       `)
       .order('created_at', { ascending: false })
-      .limit(100);
+      .limit(200);
 
     if (error) {
       console.error('Error loading job postings:', error);
@@ -717,103 +732,7 @@ export function AdminDashboardPage() {
             {activeTab === 'dashboard' && <AdminStats stats={stats} />}
 
             {activeTab === 'reviews' && (
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                  Recensioni in Attesa di Approvazione
-                </h2>
-
-                {pendingReviews.length === 0 ? (
-                  <div className="bg-white rounded-lg shadow p-8 text-center">
-                    <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600">Nessuna recensione in attesa</p>
-                  </div>
-                ) : (
-                  pendingReviews.map((review) => (
-                    <div key={review.id} className="bg-white rounded-lg shadow p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex-1">
-                          <h3 className="font-bold text-lg text-gray-900">{review.title}</h3>
-                          <p className="text-sm text-gray-600">
-                            di {review.customer.full_name} ({review.customer.email})
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {new Date(review.created_at).toLocaleDateString('it-IT')}
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <div className="flex items-center gap-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <span
-                                key={star}
-                                className={`${
-                                  star <= review.overall_rating ? 'text-yellow-400' : 'text-gray-300'
-                                }`}
-                              >
-                                ★
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      <p className="text-gray-700 mb-4">{review.content}</p>
-
-                      {(review.price_rating || review.service_rating || review.quality_rating) && (
-                        <div className="flex gap-4 mb-4 text-sm">
-                          {review.price_rating && (
-                            <div>
-                              <span className="text-gray-600">Prezzo:</span>{' '}
-                              <span className="font-semibold">{review.price_rating}/5</span>
-                            </div>
-                          )}
-                          {review.service_rating && (
-                            <div>
-                              <span className="text-gray-600">Servizio:</span>{' '}
-                              <span className="font-semibold">{review.service_rating}/5</span>
-                            </div>
-                          )}
-                          {review.quality_rating && (
-                            <div>
-                              <span className="text-gray-600">Qualità:</span>{' '}
-                              <span className="font-semibold">{review.quality_rating}/5</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {review.proof_image_url && (
-                        <div className="mb-4">
-                          <p className="text-sm text-gray-600 mb-2">Prova di acquisto:</p>
-                          <button
-                            onClick={() => setSelectedReview(review)}
-                            className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
-                          >
-                            <Eye className="w-4 h-4" />
-                            Visualizza immagine
-                          </button>
-                        </div>
-                      )}
-
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => approveReview(review.id)}
-                          className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                        >
-                          <CheckCircle className="w-5 h-5" />
-                          Approva {review.proof_image_url ? '(50 punti)' : '(25 punti)'}
-                        </button>
-                        <button
-                          onClick={() => rejectReview(review.id)}
-                          className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
-                        >
-                          <XCircle className="w-5 h-5" />
-                          Rifiuta
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+              <ReviewsSection reviews={pendingReviews} onReload={loadPendingReviews} adminId={profile!.id} />
             )}
 
             {activeTab === 'users' && (
@@ -1002,60 +921,7 @@ export function AdminDashboardPage() {
             )}
 
             {activeTab === 'ads' && (
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <h2 className="text-2xl font-bold text-gray-900">Gestione Annunci</h2>
-                </div>
-                <div className="space-y-4 p-6">
-                  {classifiedAds.map((ad) => (
-                    <div key={ad.id} className="border rounded-lg p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex-1">
-                          <h3 className="font-bold text-lg text-gray-900">{ad.title}</h3>
-                          <p className="text-sm text-gray-600">
-                            di {ad.user.full_name} ({ad.user.email})
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          {ad.price && (
-                            <p className="font-bold text-lg text-gray-900">€{ad.price}</p>
-                          )}
-                          <p className="text-sm text-gray-500">
-                            {new Date(ad.created_at).toLocaleDateString('it-IT')}
-                          </p>
-                        </div>
-                      </div>
-
-                      <p className="text-gray-700 mb-4 line-clamp-2">{ad.description}</p>
-
-                      <div className="flex items-center gap-4">
-                        <span
-                          className={`px-3 py-1 text-xs rounded-full ${
-                            ad.status === 'active'
-                              ? 'bg-green-100 text-green-800'
-                              : ad.status === 'sold'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {ad.status}
-                        </span>
-
-                        <select
-                          value={ad.status}
-                          onChange={(e) => updateAdStatus(ad.id, e.target.value)}
-                          className="border rounded px-3 py-1 text-sm"
-                        >
-                          <option value="active">Attivo</option>
-                          <option value="sold">Venduto</option>
-                          <option value="expired">Scaduto</option>
-                          <option value="deleted">Eliminato</option>
-                        </select>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <ClassifiedAdsSection ads={classifiedAds} onReload={loadClassifiedAds} />
             )}
 
             {activeTab === 'reports' && <ReportsSection reports={reports} onReload={loadReports} />}
@@ -1069,28 +935,6 @@ export function AdminDashboardPage() {
         )}
       </div>
 
-      {selectedReview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-bold">Prova di Acquisto</h3>
-                <button
-                  onClick={() => setSelectedReview(null)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <XCircle className="w-6 h-6" />
-                </button>
-              </div>
-              <img
-                src={selectedReview.proof_image_url || ''}
-                alt="Proof"
-                className="w-full rounded-lg"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
