@@ -8,13 +8,20 @@ import { useNavigate } from '../components/Router';
 import TopBusinessesBanner from '../components/business/TopBusinessesBanner';
 
 export function HomePage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && profile) {
+      navigate('/dashboard');
+    }
+  }, [user, profile]);
 
   if (!user) {
     return <LandingPage />;
   }
 
-  return <AuthenticatedHomePage />;
+  return null;
 }
 
 function LandingPage() {
