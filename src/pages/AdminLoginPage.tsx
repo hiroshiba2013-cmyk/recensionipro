@@ -25,15 +25,15 @@ export function AdminLoginPage() {
         throw new Error('Errore durante l\'accesso');
       }
 
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', authData.user.id)
-        .single();
+      const { data: adminCheck, error: adminError } = await supabase
+        .from('admins')
+        .select('user_id')
+        .eq('user_id', authData.user.id)
+        .maybeSingle();
 
-      if (profileError) throw profileError;
+      if (adminError) throw adminError;
 
-      if (!profile?.is_admin) {
+      if (!adminCheck) {
         await supabase.auth.signOut();
         throw new Error('Non hai i permessi di amministratore');
       }
