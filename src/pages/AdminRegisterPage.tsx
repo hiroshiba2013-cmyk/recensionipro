@@ -66,75 +66,29 @@ export function AdminRegisterPage() {
     }
 
     try {
-      // Check if user code already exists
-      const { data: existingCode } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('nickname', formData.userCode)
-        .maybeSingle();
-
-      if (existingCode) {
-        setError('Codice utente già in uso, scegline un altro');
-        setLoading(false);
-        return;
-      }
-
       const fullName = `${formData.firstName} ${formData.lastName}`;
 
-      // Create the user with metadata
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            full_name: fullName,
-          }
-        }
+      // Call the Edge Function to create admin account
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/admin-register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          fullName,
+          fiscalCode: formData.fiscalCode,
+          userCode: formData.userCode,
+          adminKey: formData.adminKey,
+        }),
       });
 
-      if (signUpError) throw signUpError;
+      const data = await response.json();
 
-      if (!authData.user) {
-        throw new Error('Errore durante la creazione dell\'account');
-      }
-
-      // Wait for trigger to complete
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Sign in to get authenticated session
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
-
-      if (signInError) {
-        console.error('Sign in error:', signInError);
-        throw new Error(`Errore nell'accesso: ${signInError.message}`);
-      }
-
-      // Update the profile with additional admin details
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          full_name: fullName,
-          fiscal_code: formData.fiscalCode.toUpperCase(),
-          nickname: formData.userCode,
-        })
-        .eq('id', authData.user.id);
-
-      if (updateError) {
-        console.error('Update error:', updateError);
-        throw new Error(`Errore nell'aggiornamento del profilo: ${updateError.message}`);
-      }
-
-      // Promote to admin
-      const { error: promoteError } = await supabase.rpc('promote_to_admin', {
-        target_user_id: authData.user.id
-      });
-
-      if (promoteError) {
-        console.error('Promote error:', promoteError);
-        throw new Error(`Errore nella promozione ad admin: ${promoteError.message}`);
+      if (!response.ok) {
+        throw new Error(data.error || 'Errore durante la registrazione');
       }
 
       setSuccess(true);
