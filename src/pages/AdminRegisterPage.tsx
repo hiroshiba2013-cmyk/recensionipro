@@ -70,6 +70,8 @@ export function AdminRegisterPage() {
 
       // Call the Edge Function to create admin account
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      console.log('Calling admin-register function:', `${supabaseUrl}/functions/v1/admin-register`);
+
       const response = await fetch(`${supabaseUrl}/functions/v1/admin-register`, {
         method: 'POST',
         headers: {
@@ -85,10 +87,19 @@ export function AdminRegisterPage() {
         }),
       });
 
-      const data = await response.json();
+      console.log('Response status:', response.status);
+
+      let data;
+      try {
+        data = await response.json();
+        console.log('Response data:', data);
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError);
+        throw new Error('Errore nel server, impossibile leggere la risposta');
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Errore durante la registrazione');
+        throw new Error(data.error || `Errore ${response.status}: ${response.statusText}`);
       }
 
       setSuccess(true);
@@ -96,7 +107,7 @@ export function AdminRegisterPage() {
         window.location.href = '/admin-login';
       }, 2000);
     } catch (err: any) {
-      console.error('Error:', err);
+      console.error('Full error:', err);
       setError(err.message || 'Errore durante la registrazione');
     } finally {
       setLoading(false);
