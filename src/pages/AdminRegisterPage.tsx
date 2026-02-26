@@ -81,6 +81,7 @@ export function AdminRegisterPage() {
 
       const fullName = `${formData.firstName} ${formData.lastName}`;
 
+      // First create the user in auth.users
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -92,28 +93,46 @@ export function AdminRegisterPage() {
         throw new Error('Errore durante la creazione dell\'account');
       }
 
-      // Wait a moment for the automatic profile creation trigger to complete
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Sign in immediately to get a session (this helps with permissions)
+      await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
 
-      // Update the profile with admin details
+      // Wait a bit to ensure auth is fully set up
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Create the profile using upsert to avoid conflicts
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({
+        .upsert({
+          id: authData.user.id,
+          email: formData.email,
           full_name: fullName,
           fiscal_code: formData.fiscalCode.toUpperCase(),
           nickname: formData.userCode,
           user_type: 'customer',
-        })
-        .eq('id', authData.user.id);
+          subscription_status: 'none',
+          is_admin: false,
+        }, {
+          onConflict: 'id',
+          ignoreDuplicates: false
+        });
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        throw new Error(`Errore nella creazione del profilo: ${profileError.message}`);
+      }
 
       // Now promote to admin using the dedicated function
       const { error: promoteError } = await supabase.rpc('promote_to_admin', {
         target_user_id: authData.user.id
       });
 
-      if (promoteError) throw promoteError;
+      if (promoteError) {
+        console.error('Promote error:', promoteError);
+        throw new Error(`Errore nella promozione ad admin: ${promoteError.message}`);
+      }
 
       setSuccess(true);
       setTimeout(() => {
