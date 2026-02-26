@@ -99,6 +99,7 @@ export function AdminRegisterPage() {
         throw new Error('Errore durante la creazione dell\'account');
       }
 
+      // Create profile first WITHOUT admin flag to avoid trigger issues
       const { error: profileError } = await supabase.from('profiles').insert({
         id: authData.user.id,
         email: formData.email,
@@ -106,14 +107,18 @@ export function AdminRegisterPage() {
         fiscal_code: formData.fiscalCode.toUpperCase(),
         nickname: formData.userCode,
         user_type: 'customer',
-        is_admin: true,
+        is_admin: false,
         subscription_status: 'none',
       });
 
       if (profileError) throw profileError;
 
-      // The admins table is automatically populated by a database trigger
-      // when is_admin is set to true in the profiles table
+      // Now promote to admin using the dedicated function
+      const { error: promoteError } = await supabase.rpc('promote_to_admin', {
+        target_user_id: authData.user.id
+      });
+
+      if (promoteError) throw promoteError;
 
       setSuccess(true);
       setTimeout(() => {
