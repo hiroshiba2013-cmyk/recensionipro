@@ -166,6 +166,14 @@ export function Header() {
                     <FileText className="w-4 h-4" />
                     <span className="text-sm">{t('header.rules')}</span>
                   </a>
+                  <a
+                    href="/admin/login"
+                    className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors font-medium px-2"
+                    title="Area Admin"
+                  >
+                    <Shield className="w-4 h-4" />
+                    <span className="text-sm">Admin</span>
+                  </a>
                   <button
                     onClick={() => {
                       setAuthMode('login');
@@ -288,6 +296,14 @@ export function Header() {
                     >
                       <FileText className="w-5 h-5" />
                       <span>{t('header.rules')}</span>
+                    </a>
+                    <a
+                      href="/admin/login"
+                      className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors font-medium"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Shield className="w-5 h-5" />
+                      <span>Area Admin</span>
                     </a>
                     <button
                       onClick={() => {
