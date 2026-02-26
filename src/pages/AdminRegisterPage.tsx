@@ -81,10 +81,15 @@ export function AdminRegisterPage() {
 
       const fullName = `${formData.firstName} ${formData.lastName}`;
 
-      // First create the user in auth.users
+      // Create the user with metadata
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
+        options: {
+          data: {
+            full_name: fullName,
+          }
+        }
       });
 
       if (signUpError) throw signUpError;
@@ -93,38 +98,36 @@ export function AdminRegisterPage() {
         throw new Error('Errore durante la creazione dell\'account');
       }
 
-      // Sign in immediately to get a session (this helps with permissions)
-      await supabase.auth.signInWithPassword({
+      // Wait for trigger to complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Sign in to get authenticated session
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
 
-      // Wait a bit to ensure auth is fully set up
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (signInError) {
+        console.error('Sign in error:', signInError);
+        throw new Error(`Errore nell'accesso: ${signInError.message}`);
+      }
 
-      // Create the profile using upsert to avoid conflicts
-      const { error: profileError } = await supabase
+      // Update the profile with additional admin details
+      const { error: updateError } = await supabase
         .from('profiles')
-        .upsert({
-          id: authData.user.id,
-          email: formData.email,
+        .update({
           full_name: fullName,
           fiscal_code: formData.fiscalCode.toUpperCase(),
           nickname: formData.userCode,
-          user_type: 'customer',
-          subscription_status: 'none',
-          is_admin: false,
-        }, {
-          onConflict: 'id',
-          ignoreDuplicates: false
-        });
+        })
+        .eq('id', authData.user.id);
 
-      if (profileError) {
-        console.error('Profile error:', profileError);
-        throw new Error(`Errore nella creazione del profilo: ${profileError.message}`);
+      if (updateError) {
+        console.error('Update error:', updateError);
+        throw new Error(`Errore nell'aggiornamento del profilo: ${updateError.message}`);
       }
 
-      // Now promote to admin using the dedicated function
+      // Promote to admin
       const { error: promoteError } = await supabase.rpc('promote_to_admin', {
         target_user_id: authData.user.id
       });
