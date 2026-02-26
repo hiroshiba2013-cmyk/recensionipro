@@ -4,10 +4,13 @@ import { supabase } from '../lib/supabase';
 
 export function AdminRegisterPage() {
   const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    fiscalCode: '',
     email: '',
     password: '',
     confirmPassword: '',
-    fullName: '',
+    userCode: '',
     adminKey: '',
   });
   const [error, setError] = useState('');
@@ -16,10 +19,33 @@ export function AdminRegisterPage() {
 
   const ADMIN_SECRET_KEY = 'ADMIN_2024_SECRET_KEY';
 
+  const validateFiscalCode = (code: string) => {
+    // Basic validation: 16 alphanumeric characters
+    const fiscalCodeRegex = /^[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]$/i;
+    return fiscalCodeRegex.test(code.toUpperCase());
+  };
+
+  const validateUserCode = (code: string) => {
+    // Must be exactly 6 digits
+    return /^\d{6}$/.test(code);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    if (!validateFiscalCode(formData.fiscalCode)) {
+      setError('Codice fiscale non valido');
+      setLoading(false);
+      return;
+    }
+
+    if (!validateUserCode(formData.userCode)) {
+      setError('Il codice utente deve essere di 6 cifre');
+      setLoading(false);
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError('Le password non corrispondono');
@@ -40,12 +66,29 @@ export function AdminRegisterPage() {
     }
 
     try {
+      // Check if user code already exists
+      const { data: existingCode } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('nickname', formData.userCode)
+        .maybeSingle();
+
+      if (existingCode) {
+        setError('Codice utente già in uso, scegline un altro');
+        setLoading(false);
+        return;
+      }
+
+      const fullName = `${formData.firstName} ${formData.lastName}`;
+
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: {
-            full_name: formData.fullName,
+            full_name: fullName,
+            fiscal_code: formData.fiscalCode.toUpperCase(),
+            user_code: formData.userCode,
           },
         },
       });
@@ -59,13 +102,22 @@ export function AdminRegisterPage() {
       const { error: profileError } = await supabase.from('profiles').insert({
         id: authData.user.id,
         email: formData.email,
-        full_name: formData.fullName,
+        full_name: fullName,
+        fiscal_code: formData.fiscalCode.toUpperCase(),
+        nickname: formData.userCode,
         user_type: 'customer',
         is_admin: true,
         subscription_status: 'none',
       });
 
       if (profileError) throw profileError;
+
+      // Insert into admins table
+      const { error: adminError } = await supabase.from('admins').insert({
+        user_id: authData.user.id,
+      });
+
+      if (adminError) throw adminError;
 
       setSuccess(true);
       setTimeout(() => {
@@ -111,18 +163,72 @@ export function AdminRegisterPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                Nome
+              </label>
+              <input
+                id="firstName"
+                type="text"
+                value={formData.firstName}
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                Cognome
+              </label>
+              <input
+                id="lastName"
+                type="text"
+                value={formData.lastName}
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
           <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-              Nome Completo
+            <label htmlFor="fiscalCode" className="block text-sm font-medium text-gray-700 mb-1">
+              Codice Fiscale
             </label>
             <input
-              id="fullName"
+              id="fiscalCode"
               type="text"
-              value={formData.fullName}
-              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+              value={formData.fiscalCode}
+              onChange={(e) => setFormData({ ...formData, fiscalCode: e.target.value.toUpperCase() })}
               required
+              maxLength={16}
+              placeholder="RSSMRA80A01H501Z"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent uppercase"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              16 caratteri alfanumerici
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="userCode" className="block text-sm font-medium text-gray-700 mb-1">
+              Codice Utente
+            </label>
+            <input
+              id="userCode"
+              type="text"
+              value={formData.userCode}
+              onChange={(e) => setFormData({ ...formData, userCode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+              required
+              maxLength={6}
+              placeholder="123456"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Scegli un codice di 6 cifre univoco
+            </p>
           </div>
 
           <div>
@@ -201,12 +307,18 @@ export function AdminRegisterPage() {
             {loading ? 'Registrazione in corso...' : 'Registra Admin'}
           </button>
 
-          <div className="text-center pt-4">
+          <div className="text-center pt-4 space-y-2">
             <a
-              href="/admin"
-              className="text-sm text-gray-600 hover:text-gray-900"
+              href="/admin-login"
+              className="block text-sm text-blue-600 hover:text-blue-800 font-medium"
             >
               Hai già un account admin? Accedi
+            </a>
+            <a
+              href="/"
+              className="block text-sm text-gray-600 hover:text-gray-900"
+            >
+              Torna alla Home
             </a>
           </div>
         </form>
