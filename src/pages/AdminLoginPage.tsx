@@ -116,7 +116,7 @@ export function AdminLoginPage() {
 
           <div className="text-center pt-4 space-y-2">
             <a
-              href="/admin/register"
+              href="/admin-secure-register-2024"
               className="block text-sm text-blue-600 hover:text-blue-800 font-medium"
             >
               Non hai un account admin? Registrati

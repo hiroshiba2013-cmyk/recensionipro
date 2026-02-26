@@ -121,7 +121,7 @@ export function AdminRegisterPage() {
 
       setSuccess(true);
       setTimeout(() => {
-        window.location.href = '/admin';
+        window.location.href = '/admin-login';
       }, 2000);
     } catch (err: any) {
       console.error('Error:', err);
