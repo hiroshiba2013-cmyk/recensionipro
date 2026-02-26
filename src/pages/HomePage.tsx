@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Star, TrendingUp, ShieldCheck, Search, Award, Package, Tag, Briefcase, Heart, Users, Building2, Gift, MapPin, Clock, Euro, ArrowRight, Percent } from 'lucide-react';
+import { Star, TrendingUp, ShieldCheck, Search, Award, Package, Tag, Briefcase, Heart, Users, Building2, Gift, MapPin, Clock, Euro, ArrowRight, Percent, Shield } from 'lucide-react';
 import { AdvancedSearch } from '../components/search/AdvancedSearch';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
