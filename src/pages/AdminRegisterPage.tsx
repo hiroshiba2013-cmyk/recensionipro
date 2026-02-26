@@ -84,13 +84,6 @@ export function AdminRegisterPage() {
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
-        options: {
-          data: {
-            full_name: fullName,
-            fiscal_code: formData.fiscalCode.toUpperCase(),
-            user_code: formData.userCode,
-          },
-        },
       });
 
       if (signUpError) throw signUpError;
@@ -99,17 +92,19 @@ export function AdminRegisterPage() {
         throw new Error('Errore durante la creazione dell\'account');
       }
 
-      // Create profile first WITHOUT admin flag to avoid trigger issues
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: authData.user.id,
-        email: formData.email,
-        full_name: fullName,
-        fiscal_code: formData.fiscalCode.toUpperCase(),
-        nickname: formData.userCode,
-        user_type: 'customer',
-        is_admin: false,
-        subscription_status: 'none',
-      });
+      // Wait a moment for the automatic profile creation trigger to complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Update the profile with admin details
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          full_name: fullName,
+          fiscal_code: formData.fiscalCode.toUpperCase(),
+          nickname: formData.userCode,
+          user_type: 'customer',
+        })
+        .eq('id', authData.user.id);
 
       if (profileError) throw profileError;
 
