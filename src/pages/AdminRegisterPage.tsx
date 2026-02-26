@@ -112,12 +112,8 @@ export function AdminRegisterPage() {
 
       if (profileError) throw profileError;
 
-      // Insert into admins table
-      const { error: adminError } = await supabase.from('admins').insert({
-        user_id: authData.user.id,
-      });
-
-      if (adminError) throw adminError;
+      // The admins table is automatically populated by a database trigger
+      // when is_admin is set to true in the profiles table
 
       setSuccess(true);
       setTimeout(() => {
