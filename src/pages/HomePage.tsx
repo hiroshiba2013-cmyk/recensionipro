@@ -21,10 +21,10 @@ export function HomePage() {
   }
 
   if (!user) {
-    return <LandingPage />;
+    return <LandingPage key="landing-page" />;
   }
 
-  return <AuthenticatedHomePage />;
+  return <AuthenticatedHomePage key={`auth-home-${user.id}`} />;
 }
 
 function LandingPage() {
