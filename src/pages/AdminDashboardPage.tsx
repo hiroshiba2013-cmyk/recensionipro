@@ -632,122 +632,137 @@ export function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="bg-white shadow-lg border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
               <div className="flex items-center gap-3">
-                <Shield className="w-8 h-8 text-blue-600" />
-                <h1 className="text-3xl font-bold text-gray-900">Pannello di Amministrazione</h1>
+                <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
+                  <Shield className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Pannello Amministratore</h1>
+                  <p className="text-sm text-gray-600">Benvenuto, {profile?.full_name}</p>
+                </div>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-md hover:shadow-lg font-medium"
               >
                 <LogOut className="w-4 h-4" />
                 Esci
               </button>
             </div>
 
-            <div className="flex gap-2 overflow-x-auto">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               <button
                 onClick={() => setActiveTab('dashboard')}
-                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'dashboard'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                 }`}
               >
-                <Activity className="w-4 h-4 inline mr-2" />
+                <Activity className="w-4 h-4" />
                 Dashboard
               </button>
               <button
                 onClick={() => setActiveTab('reviews')}
-                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'reviews'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                 }`}
               >
-                <FileText className="w-4 h-4 inline mr-2" />
-                Recensioni ({stats.pendingReviews})
+                <FileText className="w-4 h-4" />
+                Recensioni
+                {stats.pendingReviews > 0 && (
+                  <span className="ml-1 px-2 py-0.5 bg-white/20 rounded-full text-xs font-bold">
+                    {stats.pendingReviews}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setActiveTab('users')}
-                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'users'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                 }`}
               >
-                <Users className="w-4 h-4 inline mr-2" />
+                <Users className="w-4 h-4" />
                 Utenti
               </button>
               <button
                 onClick={() => setActiveTab('subscriptions')}
-                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'subscriptions'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                 }`}
               >
-                <Activity className="w-4 h-4 inline mr-2" />
+                <Activity className="w-4 h-4" />
                 Abbonamenti
               </button>
               <button
                 onClick={() => setActiveTab('ads')}
-                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'ads'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                 }`}
               >
-                <ShoppingBag className="w-4 h-4 inline mr-2" />
+                <ShoppingBag className="w-4 h-4" />
                 Annunci
               </button>
               <button
                 onClick={() => setActiveTab('reports')}
-                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'reports'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                 }`}
               >
-                <AlertTriangle className="w-4 h-4 inline mr-2" />
-                Segnalazioni ({stats.pendingReports})
+                <AlertTriangle className="w-4 h-4" />
+                Segnalazioni
+                {stats.pendingReports > 0 && (
+                  <span className="ml-1 px-2 py-0.5 bg-white/20 rounded-full text-xs font-bold">
+                    {stats.pendingReports}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setActiveTab('businesses')}
-                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'businesses'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                 }`}
               >
-                <Building2 className="w-4 h-4 inline mr-2" />
+                <Building2 className="w-4 h-4" />
                 Attività
               </button>
               <button
                 onClick={() => setActiveTab('jobs')}
-                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'jobs'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                 }`}
               >
-                <Briefcase className="w-4 h-4 inline mr-2" />
+                <Briefcase className="w-4 h-4" />
                 Lavoro
               </button>
               <button
                 onClick={() => setActiveTab('products')}
-                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'products'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                 }`}
               >
-                <Package className="w-4 h-4 inline mr-2" />
+                <Package className="w-4 h-4" />
                 Prodotti
               </button>
             </div>
@@ -769,81 +784,95 @@ export function AdminDashboardPage() {
             )}
 
             {activeTab === 'users' && (
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <h2 className="text-2xl font-bold text-gray-900">Gestione Utenti</h2>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-500 rounded-lg">
+                        <Users className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900">Gestione Utenti</h2>
+                        <p className="text-sm text-gray-600">{users.length} utenti registrati</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Nome
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Utente
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Email
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Tipo
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Abbonamento
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Iscritto il
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Admin
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Ruolo
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Azioni
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-white divide-y divide-gray-100">
                       {users.map((user) => (
-                        <tr key={user.id}>
+                        <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{user.full_name}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">{user.email}</div>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold">
+                                {user.full_name.charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <div className="text-sm font-semibold text-gray-900">{user.full_name}</div>
+                                <div className="text-sm text-gray-500">{user.email}</div>
+                              </div>
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
-                              className={`px-2 py-1 text-xs rounded-full ${
+                              className={`px-3 py-1 text-xs font-semibold rounded-full ${
                                 user.user_type === 'business'
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : 'bg-gray-100 text-gray-800'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : user.user_type === 'customer'
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-gray-100 text-gray-700'
                               }`}
                             >
-                              {user.user_type}
+                              {user.user_type === 'business' ? 'Attività' : user.user_type === 'customer' ? 'Cliente' : user.user_type}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
-                              className={`px-2 py-1 text-xs rounded-full ${
+                              className={`px-3 py-1 text-xs font-semibold rounded-full ${
                                 user.subscription_status === 'active'
-                                  ? 'bg-green-100 text-green-800'
+                                  ? 'bg-green-100 text-green-700'
                                   : user.subscription_status === 'trial'
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-red-100 text-red-800'
+                                  ? 'bg-yellow-100 text-yellow-700'
+                                  : 'bg-red-100 text-red-700'
                               }`}
                             >
-                              {user.subscription_status}
+                              {user.subscription_status === 'active' ? 'Attivo' : user.subscription_status === 'trial' ? 'Prova' : 'Scaduto'}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                             {new Date(user.created_at).toLocaleDateString('it-IT')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <button
                               onClick={() => toggleAdmin(user.id, user.is_admin)}
-                              className={`px-3 py-1 text-xs rounded-full ${
+                              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                                 user.is_admin
-                                  ? 'bg-purple-100 text-purple-800'
-                                  : 'bg-gray-100 text-gray-800'
-                              } hover:opacity-80`}
+                                  ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-sm hover:shadow-md'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
                             >
                               {user.is_admin ? 'Admin' : 'Utente'}
                             </button>
@@ -852,10 +881,10 @@ export function AdminDashboardPage() {
                             {user.id !== profile?.id && (
                               <button
                                 onClick={() => deleteUser(user.id)}
-                                className="text-red-600 hover:text-red-800 transition-colors"
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
                                 title="Elimina utente"
                               >
-                                <Trash2 className="w-5 h-5" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             )}
                           </td>
@@ -868,9 +897,19 @@ export function AdminDashboardPage() {
             )}
 
             {activeTab === 'subscriptions' && (
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <h2 className="text-2xl font-bold text-gray-900">Gestione Abbonamenti</h2>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-teal-50 to-teal-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-teal-500 rounded-lg">
+                        <Activity className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900">Gestione Abbonamenti</h2>
+                        <p className="text-sm text-gray-600">{subscriptions.length} abbonamenti totali</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
