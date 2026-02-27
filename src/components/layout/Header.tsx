@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle, Heart, Building2, Shield, Tag, Briefcase, Award } from 'lucide-react';
+import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle, Heart, Building2, Shield, Tag, Briefcase, Award, UserCog } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { LoginForm } from '../auth/LoginForm';
@@ -21,6 +21,7 @@ export function Header() {
     : null;
 
   const userType = profile?.user_type || 'customer';
+  const isAdmin = profile?.user_type === 'admin';
 
   useEffect(() => {
     const selectedPlanId = localStorage.getItem('selectedPlanId');
@@ -116,6 +117,20 @@ export function Header() {
                   >
                     <User className="w-4 h-4" />
                     <span className="text-sm">{t('header.profile')}</span>
+                  </a>
+                </nav>
+              </>
+            ) : user && profile && profile.user_type === 'admin' ? (
+              <>
+                <div className="flex-1"></div>
+                <nav className="hidden lg:flex items-center gap-2">
+                  <a
+                    href="/admin-profile"
+                    className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 transition-colors font-medium px-4 py-2 rounded-lg shadow-md"
+                    title="Dashboard Profilo Admin"
+                  >
+                    <UserCog className="w-5 h-5" />
+                    <span className="text-sm">Dashboard Profilo</span>
                   </a>
                 </nav>
               </>

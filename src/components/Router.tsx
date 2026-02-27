@@ -17,6 +17,7 @@ import { RulesPage } from '../pages/RulesPage';
 import { ProfileSelectionPage } from '../pages/ProfileSelectionPage';
 import { ClaimBusinessPage } from '../pages/ClaimBusinessPage';
 import { AdminDashboardPage } from '../pages/AdminDashboardPage';
+import { AdminProfilePage } from '../pages/AdminProfilePage';
 import { AdminRegisterPage } from '../pages/AdminRegisterPage';
 import { AdminLoginPage } from '../pages/AdminLoginPage';
 import { useAuth } from '../contexts/AuthContext';
@@ -133,7 +134,7 @@ export function Router() {
     return <ClaimBusinessPage />;
   }
 
-  if (currentPath === '/admin') {
+  if (currentPath === '/admin' || currentPath === '/admin-dashboard') {
     if (loading) {
       return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -151,6 +152,10 @@ export function Router() {
     }
 
     return <AdminDashboardPage />;
+  }
+
+  if (currentPath === '/admin-profile') {
+    return <AdminProfilePage />;
   }
 
   if (currentPath === '/admin-secure-register-2024') {

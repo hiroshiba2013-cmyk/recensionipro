@@ -603,6 +603,9 @@ export function AdminDashboardPage() {
   const handleLogout = async () => {
     if (confirm('Sei sicuro di voler uscire?')) {
       try {
+        // Log the logout time
+        await supabase.rpc('log_admin_logout');
+
         await supabase.auth.signOut();
         localStorage.clear();
         window.location.href = '/';
@@ -677,17 +680,6 @@ export function AdminDashboardPage() {
               >
                 <Activity className="w-4 h-4" />
                 Dashboard
-              </button>
-              <button
-                onClick={() => setActiveTab('profile')}
-                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
-                  activeTab === 'profile'
-                    ? 'bg-gradient-to-r from-violet-500 to-violet-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
-                }`}
-              >
-                <UserCheck className="w-4 h-4" />
-                Dashboard Profilo
               </button>
               <button
                 onClick={() => setActiveTab('reviews')}
@@ -777,17 +769,6 @@ export function AdminDashboardPage() {
                 Lavoro
               </button>
               <button
-                onClick={() => setActiveTab('products')}
-                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
-                  activeTab === 'products'
-                    ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
-                }`}
-              >
-                <Package className="w-4 h-4" />
-                Prodotti
-              </button>
-              <button
                 onClick={() => setActiveTab('solidarity')}
                 className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'solidarity'
@@ -833,8 +814,6 @@ export function AdminDashboardPage() {
         ) : (
           <>
             {activeTab === 'dashboard' && <AdminStats stats={stats} />}
-
-            {activeTab === 'profile' && <AdminProfileDashboard adminId={user!.id} />}
 
             {activeTab === 'reviews' && (
               <ReviewsSection reviews={pendingReviews} onReload={loadPendingReviews} adminId={profile!.id} />
@@ -949,8 +928,6 @@ export function AdminDashboardPage() {
             {activeTab === 'businesses' && <BusinessesSection businesses={businesses} onReload={loadBusinesses} />}
 
             {activeTab === 'jobs' && <JobPostingsSection jobPostings={jobPostings} onReload={loadJobPostings} />}
-
-            {activeTab === 'products' && <ProductsSection products={products} onReload={loadProducts} />}
 
             {activeTab === 'solidarity' && <SolidaritySection onReload={loadData} />}
 
