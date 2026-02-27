@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, Users, FileText, ShoppingBag, Activity, CheckCircle, XCircle, Clock, Eye, Trash2, LogOut, Building2, AlertTriangle, Briefcase, Package, MapPin, UserCheck } from 'lucide-react';
+import { Shield, Users, FileText, ShoppingBag, Activity, CheckCircle, XCircle, Clock, Eye, Trash2, LogOut, Building2, AlertTriangle, Briefcase, Package, MapPin, UserCheck, Heart, Award, TrendingUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { AdminStats } from '../components/admin/AdminStats';
@@ -10,6 +10,10 @@ import { ProductsSection } from '../components/admin/ProductsSection';
 import { ReviewsSection } from '../components/admin/ReviewsSection';
 import { ClassifiedAdsSection } from '../components/admin/ClassifiedAdsSection';
 import { AdminProfileDashboard } from '../components/admin/AdminProfileDashboard';
+import { UsersManagementSection } from '../components/admin/UsersManagementSection';
+import { SolidaritySection } from '../components/admin/SolidaritySection';
+import { LeaderboardSection } from '../components/admin/LeaderboardSection';
+import { BusinessTrackingSection } from '../components/admin/BusinessTrackingSection';
 
 interface DashboardStats {
   totalUsers: number;
@@ -783,6 +787,39 @@ export function AdminDashboardPage() {
                 <Package className="w-4 h-4" />
                 Prodotti
               </button>
+              <button
+                onClick={() => setActiveTab('solidarity')}
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'solidarity'
+                    ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <Heart className="w-4 h-4" />
+                Solidarietà
+              </button>
+              <button
+                onClick={() => setActiveTab('leaderboard')}
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'leaderboard'
+                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <Award className="w-4 h-4" />
+                Classifica
+              </button>
+              <button
+                onClick={() => setActiveTab('tracking')}
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'tracking'
+                    ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <TrendingUp className="w-4 h-4" />
+                Tracking
+              </button>
             </div>
           </div>
         </div>
@@ -804,116 +841,7 @@ export function AdminDashboardPage() {
             )}
 
             {activeTab === 'users' && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-500 rounded-lg">
-                        <Users className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900">Gestione Utenti</h2>
-                        <p className="text-sm text-gray-600">{users.length} utenti registrati</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          Utente
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          Tipo
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          Abbonamento
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          Iscritto il
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          Ruolo
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          Azioni
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-100">
-                      {users.map((user) => (
-                        <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold">
-                                {user.full_name.charAt(0).toUpperCase()}
-                              </div>
-                              <div>
-                                <div className="text-sm font-semibold text-gray-900">{user.full_name}</div>
-                                <div className="text-sm text-gray-500">{user.email}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                                user.user_type === 'business'
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : user.user_type === 'customer'
-                                  ? 'bg-green-100 text-green-700'
-                                  : 'bg-gray-100 text-gray-700'
-                              }`}
-                            >
-                              {user.user_type === 'business' ? 'Attività' : user.user_type === 'customer' ? 'Cliente' : user.user_type}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                                user.subscription_status === 'active'
-                                  ? 'bg-green-100 text-green-700'
-                                  : user.subscription_status === 'trial'
-                                  ? 'bg-yellow-100 text-yellow-700'
-                                  : 'bg-red-100 text-red-700'
-                              }`}
-                            >
-                              {user.subscription_status === 'active' ? 'Attivo' : user.subscription_status === 'trial' ? 'Prova' : 'Scaduto'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            {new Date(user.created_at).toLocaleDateString('it-IT')}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <button
-                              onClick={() => toggleAdmin(user.id, user.is_admin)}
-                              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                                user.is_admin
-                                  ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-sm hover:shadow-md'
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }`}
-                            >
-                              {user.is_admin ? 'Admin' : 'Utente'}
-                            </button>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {user.id !== profile?.id && (
-                              <button
-                                onClick={() => deleteUser(user.id)}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                title="Elimina utente"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              <UsersManagementSection onReload={loadData} />
             )}
 
             {activeTab === 'subscriptions' && (
@@ -1023,6 +951,12 @@ export function AdminDashboardPage() {
             {activeTab === 'jobs' && <JobPostingsSection jobPostings={jobPostings} onReload={loadJobPostings} />}
 
             {activeTab === 'products' && <ProductsSection products={products} onReload={loadProducts} />}
+
+            {activeTab === 'solidarity' && <SolidaritySection onReload={loadData} />}
+
+            {activeTab === 'leaderboard' && <LeaderboardSection />}
+
+            {activeTab === 'tracking' && <BusinessTrackingSection onReload={loadData} />}
           </>
         )}
       </div>
