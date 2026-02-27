@@ -94,7 +94,7 @@ Deno.serve(async (req: Request) => {
         fiscal_code: fiscalCode.toUpperCase(),
         nickname: userCode,
         user_type: 'admin',
-        subscription_status: 'none',
+        subscription_status: 'active',
         is_admin: true,
       });
 
