@@ -72,18 +72,12 @@ function LandingPage() {
               Prova gratuita di 30 giorni per utenti privati e aziende
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex justify-center">
               <button
                 onClick={() => window.location.href = '/?register=user'}
                 className="bg-yellow-400 text-gray-900 px-8 py-4 rounded-lg text-lg font-bold hover:bg-yellow-300 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 Inizia Gratis
-              </button>
-              <button
-                onClick={() => navigate('/search')}
-                className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-bold hover:bg-gray-100 transition-all shadow-lg"
-              >
-                Esplora Attività
               </button>
             </div>
           </div>
