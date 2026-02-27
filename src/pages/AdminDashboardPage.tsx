@@ -188,21 +188,31 @@ export function AdminDashboardPage() {
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user) {
+        console.log('No user found, redirecting to admin login');
         window.location.href = '/admin-login';
         return;
       }
 
-      const { data: adminCheck } = await supabase
+      console.log('Checking admin status for user:', user.id, user.email);
+
+      const { data: adminCheck, error: adminError } = await supabase
         .from('admins')
         .select('user_id')
         .eq('user_id', user.id)
         .maybeSingle();
 
+      console.log('Admin check result:', { adminCheck, adminError });
+
       if (!adminCheck) {
+        console.log('User is not an admin, redirecting to admin login');
+        // Sign out the user first
+        await supabase.auth.signOut();
+        alert('Non hai i permessi di amministratore. Effettua il logout e accedi con un account admin.');
         window.location.href = '/admin-login';
         return;
       }
 
+      console.log('User is admin, loading dashboard');
       setIsAdmin(true);
       setCheckingAdmin(false);
     };
