@@ -67,39 +67,60 @@ export function AdminRegisterPage() {
 
     try {
       const fullName = `${formData.firstName} ${formData.lastName}`;
+      const nickname = `admin_${formData.userCode}`;
 
-      // Call the Edge Function to create admin account
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      console.log('Calling admin-register function:', `${supabaseUrl}/functions/v1/admin-register`);
+      // Check if nickname already exists
+      const { data: existingNickname } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('nickname', nickname)
+        .maybeSingle();
 
-      const response = await fetch(`${supabaseUrl}/functions/v1/admin-register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          fullName,
-          fiscalCode: formData.fiscalCode,
-          userCode: formData.userCode,
-          adminKey: formData.adminKey,
-        }),
-      });
-
-      console.log('Response status:', response.status);
-
-      let data;
-      try {
-        data = await response.json();
-        console.log('Response data:', data);
-      } catch (parseError) {
-        console.error('Failed to parse response:', parseError);
-        throw new Error('Errore nel server, impossibile leggere la risposta');
+      if (existingNickname) {
+        throw new Error('Codice utente già in uso');
       }
 
-      if (!response.ok) {
-        throw new Error(data.error || `Errore ${response.status}: ${response.statusText}`);
+      // Sign up the user
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            full_name: fullName,
+            fiscal_code: formData.fiscalCode.toUpperCase(),
+            nickname: nickname,
+            user_type: 'admin',
+          },
+        },
+      });
+
+      if (signUpError) throw signUpError;
+      if (!authData.user) throw new Error('Errore durante la creazione dell\'account');
+
+      // Update profile to admin
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          user_type: 'admin',
+          is_admin: true,
+          fiscal_code: formData.fiscalCode.toUpperCase(),
+          nickname: nickname,
+        })
+        .eq('id', authData.user.id);
+
+      if (updateError) {
+        console.error('Error updating profile:', updateError);
+      }
+
+      // Add to admins table
+      const { error: adminError } = await supabase
+        .from('admins')
+        .insert({
+          user_id: authData.user.id,
+        });
+
+      if (adminError && !adminError.message.includes('duplicate')) {
+        console.error('Error adding to admins table:', adminError);
       }
 
       setSuccess(true);
