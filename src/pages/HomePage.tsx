@@ -8,17 +8,8 @@ import TopBusinessesBanner from '../components/business/TopBusinessesBanner';
 
 export function HomePage() {
   const { user, profile, loading } = useAuth();
-  const [isReady, setIsReady] = useState(false);
 
-  useEffect(() => {
-    if (!loading) {
-      setIsReady(false);
-      const timer = setTimeout(() => setIsReady(true), 50);
-      return () => clearTimeout(timer);
-    }
-  }, [loading, user]);
-
-  if (loading || !isReady) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -30,10 +21,10 @@ export function HomePage() {
   }
 
   if (!user) {
-    return <LandingPage key="landing-page" />;
+    return <LandingPage />;
   }
 
-  return <AuthenticatedHomePage key={`auth-home-${user.id}`} />;
+  return <AuthenticatedHomePage />;
 }
 
 function LandingPage() {
