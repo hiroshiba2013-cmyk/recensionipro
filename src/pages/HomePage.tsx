@@ -80,7 +80,7 @@ function LandingPage() {
                 Inizia Gratis
               </button>
               <button
-                onClick={() => navigate('/search-results')}
+                onClick={() => navigate('/search')}
                 className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-bold hover:bg-gray-100 transition-all shadow-lg"
               >
                 Esplora Attività
