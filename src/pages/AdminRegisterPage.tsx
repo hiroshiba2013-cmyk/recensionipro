@@ -69,58 +69,30 @@ export function AdminRegisterPage() {
       const fullName = `${formData.firstName} ${formData.lastName}`;
       const nickname = `admin_${formData.userCode}`;
 
-      // Check if nickname already exists
-      const { data: existingNickname } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('nickname', nickname)
-        .maybeSingle();
-
-      if (existingNickname) {
-        throw new Error('Codice utente già in uso');
-      }
-
-      // Sign up the user
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            full_name: fullName,
-            fiscal_code: formData.fiscalCode.toUpperCase(),
-            nickname: nickname,
-            user_type: 'admin',
+      // Use the edge function to register the admin
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-register`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
-        },
-      });
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+            fullName,
+            fiscalCode: formData.fiscalCode.toUpperCase(),
+            userCode: nickname,
+            adminKey: formData.adminKey,
+          }),
+        }
+      );
 
-      if (signUpError) throw signUpError;
-      if (!authData.user) throw new Error('Errore durante la creazione dell\'account');
+      const result = await response.json();
 
-      // Update profile to admin
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          user_type: 'admin',
-          is_admin: true,
-          fiscal_code: formData.fiscalCode.toUpperCase(),
-          nickname: nickname,
-        })
-        .eq('id', authData.user.id);
-
-      if (updateError) {
-        console.error('Error updating profile:', updateError);
-      }
-
-      // Add to admins table
-      const { error: adminError } = await supabase
-        .from('admins')
-        .insert({
-          user_id: authData.user.id,
-        });
-
-      if (adminError && !adminError.message.includes('duplicate')) {
-        console.error('Error adding to admins table:', adminError);
+      if (!response.ok) {
+        throw new Error(result.error || 'Errore durante la registrazione');
       }
 
       setSuccess(true);
