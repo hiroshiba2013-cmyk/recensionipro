@@ -9,6 +9,7 @@ import { JobPostingsSection } from '../components/admin/JobPostingsSection';
 import { ProductsSection } from '../components/admin/ProductsSection';
 import { ReviewsSection } from '../components/admin/ReviewsSection';
 import { ClassifiedAdsSection } from '../components/admin/ClassifiedAdsSection';
+import { AdminProfileDashboard } from '../components/admin/AdminProfileDashboard';
 
 interface DashboardStats {
   totalUsers: number;
@@ -643,7 +644,7 @@ export function AdminDashboardPage() {
                 </div>
                 <div>
                   <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Pannello Amministratore</h1>
-                  <p className="text-sm text-gray-600">Benvenuto, {profile?.full_name}</p>
+                  <p className="text-sm text-gray-600">Benvenuto, {profile?.full_name} - Numero Utente: 123456</p>
                 </div>
               </div>
               <button
@@ -666,6 +667,17 @@ export function AdminDashboardPage() {
               >
                 <Activity className="w-4 h-4" />
                 Dashboard
+              </button>
+              <button
+                onClick={() => setActiveTab('profile')}
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'profile'
+                    ? 'bg-gradient-to-r from-violet-500 to-violet-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <UserCheck className="w-4 h-4" />
+                Dashboard Profilo
               </button>
               <button
                 onClick={() => setActiveTab('reviews')}
@@ -778,6 +790,8 @@ export function AdminDashboardPage() {
         ) : (
           <>
             {activeTab === 'dashboard' && <AdminStats stats={stats} />}
+
+            {activeTab === 'profile' && <AdminProfileDashboard adminId={user!.id} />}
 
             {activeTab === 'reviews' && (
               <ReviewsSection reviews={pendingReviews} onReload={loadPendingReviews} adminId={profile!.id} />

@@ -46,7 +46,13 @@ export function AdminLoginPage() {
         throw new Error('Non hai i permessi di amministratore');
       }
 
-      console.log('Admin verified, redirecting');
+      console.log('Admin verified, logging access');
+
+      // Log the admin login
+      await supabase.from('admin_login_logs').insert({
+        admin_id: authData.user.id,
+        login_time: new Date().toISOString(),
+      });
 
       window.location.href = '/admin';
     } catch (err: any) {
