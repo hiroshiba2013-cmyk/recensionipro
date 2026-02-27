@@ -53,7 +53,7 @@ export function Header() {
               />
             </a>
 
-            {user && profile ? (
+            {user && profile && profile.user_type !== 'admin' ? (
               <>
                 <nav className="hidden lg:flex items-center gap-3 ml-6">
                   <a
@@ -97,16 +97,6 @@ export function Header() {
                     <FileText className="w-4 h-4" />
                     <span className="text-sm">{t('header.rules')}</span>
                   </a>
-                  {profile?.is_admin && (
-                    <a
-                      href="/admin"
-                      className="flex items-center gap-1 text-purple-700 hover:text-purple-900 transition-colors font-medium px-2"
-                      title="Admin"
-                    >
-                      <Shield className="w-4 h-4" />
-                      <span className="text-sm">Admin</span>
-                    </a>
-                  )}
                 </nav>
 
                 <div className="flex-1"></div>
@@ -200,7 +190,7 @@ export function Header() {
           {showMobileMenu && (
             <div className="lg:hidden border-t border-gray-200 py-4">
               <nav className="flex flex-col gap-5">
-                {user && profile ? (
+                {user && profile && profile.user_type !== 'admin' ? (
                   <>
                     {selectedLocation && (
                       <div className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium border border-blue-300">
