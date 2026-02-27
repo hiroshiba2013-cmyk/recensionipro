@@ -17,7 +17,7 @@ async function testAdminLogin() {
   console.log('🔐 Testing admin login...\n');
 
   const email = 'admin@example.com';
-  const password = 'admin123456'; // Prova con questa
+  const password = 'Hiro2013';
 
   try {
     // Step 1: Sign in
