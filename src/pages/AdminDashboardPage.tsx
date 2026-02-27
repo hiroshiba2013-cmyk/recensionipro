@@ -598,8 +598,14 @@ export function AdminDashboardPage() {
 
   const handleLogout = async () => {
     if (confirm('Sei sicuro di voler uscire?')) {
-      await supabase.auth.signOut();
-      window.location.href = '/admin-login';
+      try {
+        await supabase.auth.signOut();
+        localStorage.clear();
+        window.location.href = '/';
+      } catch (error) {
+        console.error('Error during logout:', error);
+        window.location.href = '/';
+      }
     }
   };
 

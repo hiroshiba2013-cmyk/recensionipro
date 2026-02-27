@@ -8,8 +8,17 @@ import TopBusinessesBanner from '../components/business/TopBusinessesBanner';
 
 export function HomePage() {
   const { user, profile, loading } = useAuth();
+  const [isReady, setIsReady] = useState(false);
 
-  if (loading) {
+  useEffect(() => {
+    if (!loading) {
+      setIsReady(false);
+      const timer = setTimeout(() => setIsReady(true), 50);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, user]);
+
+  if (loading || !isReady) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
