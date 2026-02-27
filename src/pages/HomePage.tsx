@@ -29,7 +29,6 @@ export function HomePage() {
 
 function LandingPage() {
   const navigate = useNavigate();
-  const [businesses, setBusinesses] = useState<any[]>([]);
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
@@ -41,24 +40,14 @@ function LandingPage() {
     try {
       setLoadingData(true);
 
-      const [businessesResult, plansResult] = await Promise.all([
-        supabase
-          .from('unclaimed_business_locations')
-          .select('*')
-          .limit(6),
-        supabase
-          .from('subscription_plans')
-          .select('*')
-          .in('name', ['Base', 'Standard'])
-          .order('monthly_price', { ascending: true })
-      ]);
+      const { data: plansResult } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .in('name', ['Base', 'Standard'])
+        .order('monthly_price', { ascending: true });
 
-      if (businessesResult.data) {
-        setBusinesses(businessesResult.data);
-      }
-
-      if (plansResult.data) {
-        setSubscriptionPlans(plansResult.data);
+      if (plansResult) {
+        setSubscriptionPlans(plansResult);
       }
     } catch (error) {
       console.error('Error loading landing data:', error);
@@ -102,68 +91,6 @@ function LandingPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <section className="mb-16">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Attività Locali Verificate
-            </h2>
-            <p className="text-xl text-gray-600">
-              Scopri migliaia di attività nella tua zona
-            </p>
-          </div>
-
-          {loadingData ? (
-            <div className="text-center py-12">
-              <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
-            </div>
-          ) : businesses.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {businesses.map((business) => (
-                <div
-                  key={business.id}
-                  onClick={() => navigate(`/business/${business.id}`)}
-                  className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer border-2 border-gray-100 hover:border-blue-300 p-6"
-                >
-                  <div className="flex items-start gap-4 mb-4">
-                    {business.avatar_url ? (
-                      <img
-                        src={business.avatar_url}
-                        alt={business.name}
-                        className="w-16 h-16 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                        <Building2 className="w-8 h-8 text-white" />
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg text-gray-900 mb-1">{business.name}</h3>
-                      <p className="text-sm text-gray-600">{business.category}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <MapPin className="w-4 h-4" />
-                    <span>{business.city}, {business.province}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Caricamento attività in corso...</p>
-            </div>
-          )}
-
-          <div className="text-center">
-            <button
-              onClick={() => navigate('/search-results')}
-              className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all inline-flex items-center gap-2"
-            >
-              Vedi Tutte le Attività <ArrowRight className="w-5 h-5" />
-            </button>
-          </div>
-        </section>
-
         <section className="mb-16">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
