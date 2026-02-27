@@ -32,10 +32,9 @@ export function BusinessesSection({ businesses, onReload }: BusinessesSectionPro
 
     try {
       const { error } = await supabase
-        .from('registered_businesses')
+        .from('businesses')
         .update({
-          verified: !currentStatus,
-          verification_badge: !currentStatus ? 'verified' : null
+          is_verified: !currentStatus
         })
         .eq('id', businessId);
 

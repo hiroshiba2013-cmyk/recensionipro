@@ -15,7 +15,7 @@ interface JobPosting {
   created_at: string;
   expires_at: string;
   published_at: string;
-  business: {
+  business_location: {
     name: string;
   } | null;
 }
@@ -134,9 +134,9 @@ export function JobPostingsSection({ jobPostings, onReload }: JobPostingsSection
                     </span>
                   </div>
                   <h3 className="font-bold text-lg text-gray-900 mb-2">{job.title}</h3>
-                  {job.business && (
+                  {job.business_location && (
                     <p className="text-sm text-blue-600 mb-2 font-medium">
-                      {job.business.name}
+                      {job.business_location.name}
                     </p>
                   )}
                 </div>

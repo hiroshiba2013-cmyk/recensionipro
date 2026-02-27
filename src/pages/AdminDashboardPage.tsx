@@ -49,7 +49,14 @@ interface PendingReview {
     email: string;
   };
   business_id: string | null;
-  unclaimed_business_id: string | null;
+  business_location_id: string | null;
+  unclaimed_business_location_id: string | null;
+  business_location?: {
+    name: string;
+  } | null;
+  unclaimed_business_location?: {
+    name: string;
+  } | null;
 }
 
 interface User {
@@ -111,7 +118,7 @@ interface JobPosting {
   location: string;
   status: string;
   created_at: string;
-  business: {
+  business_location: {
     name: string;
   } | null;
 }
@@ -121,6 +128,7 @@ interface RegisteredBusiness {
   name: string;
   vat_number: string | null;
   verified: boolean;
+  is_verified?: boolean;
   created_at: string;
   owner: {
     full_name: string;
@@ -139,7 +147,7 @@ interface Product {
   price: number;
   stock: number;
   created_at: string;
-  business: {
+  business_location: {
     name: string;
   } | null;
 }
@@ -248,9 +256,8 @@ export function AdminDashboardPage() {
       reportsCount,
       pendingReportsCount,
       jobsCount,
-      registeredCount,
-      importedCount,
-      userAddedCount,
+      claimedBusinessesCount,
+      unclaimedLocationsCount,
       locationsCount,
       familyCount
     ] = await Promise.all([
@@ -263,10 +270,9 @@ export function AdminDashboardPage() {
       supabase.from('reports').select('id', { count: 'exact', head: true }),
       supabase.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('job_postings').select('id', { count: 'exact', head: true }),
-      supabase.from('registered_businesses').select('id', { count: 'exact', head: true }),
-      supabase.from('imported_businesses').select('id', { count: 'exact', head: true }),
-      supabase.from('user_added_businesses').select('id', { count: 'exact', head: true }),
-      supabase.from('registered_business_locations').select('id', { count: 'exact', head: true }),
+      supabase.from('businesses').select('id', { count: 'exact', head: true }).eq('is_claimed', true),
+      supabase.from('unclaimed_business_locations').select('id', { count: 'exact', head: true }),
+      supabase.from('business_locations').select('id', { count: 'exact', head: true }),
       supabase.from('customer_family_members').select('id', { count: 'exact', head: true })
     ]);
 
@@ -276,14 +282,14 @@ export function AdminDashboardPage() {
       pendingReviews: pendingCount.count || 0,
       totalAds: adsCount.count || 0,
       activeSubscriptions: subsCount.count || 0,
-      totalBusinesses: (registeredCount.count || 0) + (importedCount.count || 0) + (userAddedCount.count || 0),
+      totalBusinesses: (claimedBusinessesCount.count || 0) + (unclaimedLocationsCount.count || 0),
       totalProducts: productsCount.count || 0,
       totalReports: reportsCount.count || 0,
       pendingReports: pendingReportsCount.count || 0,
       totalJobPostings: jobsCount.count || 0,
-      registeredBusinesses: registeredCount.count || 0,
-      importedBusinesses: importedCount.count || 0,
-      userAddedBusinesses: userAddedCount.count || 0,
+      registeredBusinesses: claimedBusinessesCount.count || 0,
+      importedBusinesses: unclaimedLocationsCount.count || 0,
+      userAddedBusinesses: 0,
       totalLocations: locationsCount.count || 0,
       totalFamilyMembers: familyCount.count || 0,
     });
@@ -295,7 +301,7 @@ export function AdminDashboardPage() {
       .select(`
         *,
         customer:profiles!reviews_customer_id_fkey(full_name, email),
-        business:registered_businesses(name),
+        business_location:business_locations(name),
         unclaimed_business_location:unclaimed_business_locations(name)
       `)
       .order('created_at', { ascending: false })
@@ -414,7 +420,7 @@ export function AdminDashboardPage() {
         created_at,
         expires_at,
         published_at,
-        business:registered_businesses(name)
+        business_location:business_locations(name)
       `)
       .order('created_at', { ascending: false })
       .limit(200);
@@ -429,16 +435,17 @@ export function AdminDashboardPage() {
 
   const loadBusinesses = async () => {
     const { data, error } = await supabase
-      .from('registered_businesses')
+      .from('businesses')
       .select(`
         id,
         name,
         vat_number,
-        verified,
+        is_verified,
         created_at,
-        owner:profiles!registered_businesses_owner_id_fkey(full_name, email),
+        owner:profiles!businesses_owner_id_fkey(full_name, email),
         category:business_categories(name)
       `)
+      .eq('is_claimed', true)
       .order('created_at', { ascending: false })
       .limit(100);
 
@@ -450,12 +457,13 @@ export function AdminDashboardPage() {
     const businessesWithLocations = await Promise.all(
       (data || []).map(async (business) => {
         const { count } = await supabase
-          .from('registered_business_locations')
+          .from('business_locations')
           .select('id', { count: 'exact', head: true })
           .eq('business_id', business.id);
 
         return {
           ...business,
+          verified: business.is_verified,
           locations_count: count || 0,
         };
       })
@@ -474,7 +482,7 @@ export function AdminDashboardPage() {
         price,
         stock,
         created_at,
-        business:registered_businesses(name)
+        business_location:business_locations(name)
       `)
       .order('created_at', { ascending: false })
       .limit(100);

@@ -8,7 +8,7 @@ interface Product {
   price: number;
   stock: number;
   created_at: string;
-  business: {
+  business_location: {
     name: string;
   } | null;
 }
@@ -83,7 +83,7 @@ export function ProductsSection({ products, onReload }: ProductsSectionProps) {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{product.business?.name || 'N/A'}</div>
+                      <div className="text-sm text-gray-900">{product.business_location?.name || 'N/A'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">€{product.price.toFixed(2)}</div>
