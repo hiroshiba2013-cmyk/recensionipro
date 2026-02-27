@@ -37,7 +37,7 @@ export function useNavigate() {
 export function Router() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
   const [params, setParams] = useState<Record<string, string>>({});
-  const { needsProfileSelection, loading } = useAuth();
+  const { needsProfileSelection, loading, user, profile } = useAuth();
 
   useEffect(() => {
     const handlePopState = () => {
@@ -60,13 +60,15 @@ export function Router() {
 
   useEffect(() => {
     if (loading) return;
+
+    if (profile?.user_type === 'admin') return;
+
     if (!needsProfileSelection) return;
     if (currentPath === '/select-profile') return;
 
-    // Redirect to profile selection immediately after login if needed
     window.history.pushState({}, '', '/select-profile');
     setCurrentPath('/select-profile');
-  }, [needsProfileSelection, loading, currentPath]);
+  }, [needsProfileSelection, loading, currentPath, profile]);
 
   if (currentPath === '/select-profile') {
     return <ProfileSelectionPage />;
@@ -132,6 +134,22 @@ export function Router() {
   }
 
   if (currentPath === '/admin') {
+    if (loading) {
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Caricamento...</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (!user || !profile || profile.user_type !== 'admin') {
+      window.location.href = '/admin-login';
+      return null;
+    }
+
     return <AdminDashboardPage />;
   }
 

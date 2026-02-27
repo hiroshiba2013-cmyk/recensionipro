@@ -169,17 +169,39 @@ export function AdminDashboardPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReview, setSelectedReview] = useState<PendingReview | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
 
   useEffect(() => {
-    if (!user) {
-      window.location.href = '/admin-login';
-      return;
-    }
+    const checkAdminStatus = async () => {
+      if (!user) {
+        window.location.href = '/admin-login';
+        return;
+      }
 
-    if (profile?.is_admin) {
+      const { data: adminCheck } = await supabase
+        .from('admins')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!adminCheck) {
+        window.location.href = '/admin-login';
+        return;
+      }
+
+      setIsAdmin(true);
+      setCheckingAdmin(false);
+    };
+
+    checkAdminStatus();
+  }, [user]);
+
+  useEffect(() => {
+    if (!checkingAdmin && isAdmin) {
       loadData();
     }
-  }, [profile, activeTab, user]);
+  }, [checkingAdmin, isAdmin, activeTab]);
 
   const loadData = async () => {
     setLoading(true);
@@ -580,7 +602,18 @@ export function AdminDashboardPage() {
     }
   };
 
-  if (!profile?.is_admin) {
+  if (checkingAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verifica permessi amministratore...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

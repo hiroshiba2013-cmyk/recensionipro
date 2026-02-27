@@ -125,6 +125,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       setProfile(data);
 
+      if (data && data.user_type === 'admin') {
+        setLoading(false);
+        return;
+      }
+
       if (data && data.user_type === 'customer') {
         await loadFamilyMembersInternal(userId, data);
       } else if (data && data.user_type === 'business') {
