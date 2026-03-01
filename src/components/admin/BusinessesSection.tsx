@@ -439,30 +439,30 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="min-w-full divide-y divide-gray-200 text-sm">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                       Attività
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Indirizzo
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                      Località
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                       Contatti
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Categoria
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                      Cat.
                     </th>
                     {(activeTab === 'user_added' || activeTab === 'claimed' || activeTab === 'self_registered') && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        {activeTab === 'self_registered' ? 'Proprietario' : 'Aggiunto da'}
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                        {activeTab === 'self_registered' ? 'Prop.' : 'Agg. da'}
                       </th>
                     )}
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                       Stato
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                       Azioni
                     </th>
                   </tr>
@@ -470,117 +470,95 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {businesses.map((business) => (
                     <tr key={business.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{business.name}</div>
-                            {business.vat_number && (
-                              <div className="text-xs text-gray-500">P.IVA: {business.vat_number}</div>
-                            )}
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-1.5">
+                          <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <div className="text-xs font-medium text-gray-900 truncate max-w-[200px]" title={business.name}>
+                            {business.name}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-start gap-2">
-                          <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                          <div className="text-sm text-gray-900">
-                            <div>{business.address}</div>
-                            <div className="text-gray-500">
-                              {business.city}, {business.province} {business.postal_code}
-                            </div>
-                          </div>
+                      <td className="px-3 py-2">
+                        <div className="text-xs text-gray-900 whitespace-nowrap">
+                          {business.city}, {business.province}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="space-y-1">
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-2 text-xs">
                           {business.phone && (
-                            <div className="flex items-center gap-2 text-sm text-gray-900">
-                              <Phone className="w-4 h-4 text-gray-400" />
-                              {business.phone}
-                            </div>
+                            <span className="text-gray-600" title={business.phone}>
+                              <Phone className="w-3 h-3 inline" />
+                            </span>
                           )}
                           {business.email && (
-                            <div className="flex items-center gap-2 text-sm text-gray-900">
-                              <Mail className="w-4 h-4 text-gray-400" />
-                              {business.email}
-                            </div>
+                            <span className="text-gray-600" title={business.email}>
+                              <Mail className="w-3 h-3 inline" />
+                            </span>
                           )}
+                          {!business.phone && !business.email && <span className="text-gray-400">-</span>}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{business.category?.name || 'N/A'}</div>
+                      <td className="px-3 py-2">
+                        <div className="text-xs text-gray-900 truncate max-w-[100px]" title={business.category?.name}>
+                          {business.category?.name || '-'}
+                        </div>
                       </td>
                       {(activeTab === 'user_added' || activeTab === 'claimed' || activeTab === 'self_registered') && (
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-2">
                           {activeTab === 'self_registered' && business.business?.owner ? (
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {business.business.owner.full_name}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {business.business.owner.email}
-                              </div>
+                            <div className="text-xs text-gray-900 truncate max-w-[120px]" title={business.business.owner.full_name}>
+                              {business.business.owner.full_name}
                             </div>
                           ) : activeTab === 'claimed' && business.business?.owner ? (
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {business.business.owner.full_name}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {business.business.owner.email}
-                              </div>
+                            <div className="text-xs text-gray-900 truncate max-w-[120px]" title={business.business.owner.full_name}>
+                              {business.business.owner.full_name}
                             </div>
                           ) : business.unclaimed_business?.added_by_profile ? (
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {business.unclaimed_business.added_by_profile.full_name}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {business.unclaimed_business.added_by_profile.email}
-                              </div>
+                            <div className="text-xs text-gray-900 truncate max-w-[120px]" title={business.unclaimed_business.added_by_profile.full_name}>
+                              {business.unclaimed_business.added_by_profile.full_name}
                             </div>
                           ) : (
-                            <span className="text-sm text-gray-500">N/A</span>
+                            <span className="text-xs text-gray-400">-</span>
                           )}
                         </td>
                       )}
-                      <td className="px-6 py-4">
+                      <td className="px-3 py-2">
                         <span
-                          className={`px-2 py-1 text-xs rounded-full ${
+                          className={`px-1.5 py-0.5 text-xs rounded whitespace-nowrap ${
                             business.is_verified
                               ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
+                              : 'bg-gray-100 text-gray-600'
                           }`}
                         >
-                          {business.is_verified ? 'Verificata' : 'Non verificata'}
+                          {business.is_verified ? '✓' : '✗'}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-1">
                           <button
                             onClick={() => setSelectedBusiness(business)}
                             className="text-blue-600 hover:text-blue-800 p-1"
-                            title="Visualizza dettagli"
+                            title="Visualizza"
                           >
-                            <Search className="w-4 h-4" />
+                            <Search className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => setEditingBusiness(business)}
                             className="text-gray-600 hover:text-gray-800 p-1"
                             title="Modifica"
                           >
-                            <Edit2 className="w-4 h-4" />
+                            <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleToggleVerification(business.id, business.is_verified)}
-                            className={`px-2 py-1 text-xs rounded ${
+                            className={`px-1.5 py-0.5 text-xs rounded whitespace-nowrap ${
                               business.is_verified
-                                ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                                : 'bg-green-100 text-green-800 hover:bg-green-200'
+                                ? 'bg-red-50 text-red-700 hover:bg-red-100'
+                                : 'bg-green-50 text-green-700 hover:bg-green-100'
                             }`}
+                            title={business.is_verified ? 'Rimuovi verifica' : 'Verifica attività'}
                           >
-                            {business.is_verified ? 'Rimuovi' : 'Verifica'}
+                            {business.is_verified ? '✗' : '✓'}
                           </button>
                         </div>
                       </td>
