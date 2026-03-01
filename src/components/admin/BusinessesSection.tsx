@@ -60,54 +60,77 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
   const loadBusinesses = async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from('business_locations')
-        .select(`
-          *,
-          category:business_category_id(name),
-          business:business_id(
-            owner_id,
-            owner:owner_id(full_name, email)
-          ),
-          unclaimed_business:unclaimed_business_id(
-            added_by,
+      let allBusinesses: BusinessLocation[] = [];
+
+      if (activeTab === 'imported' || activeTab === 'user_added') {
+        // Load from unclaimed_business_locations
+        const { data: unclaimedData, error: unclaimedError } = await supabase
+          .from('unclaimed_business_locations')
+          .select(`
+            *,
+            category:category_id(name),
             added_by_profile:added_by(full_name, email)
-          )
-        `)
-        .order('created_at', { ascending: false });
+          `)
+          .order('created_at', { ascending: false });
 
-      const { data, error } = await query;
+        if (unclaimedError) throw unclaimedError;
 
-      if (error) throw error;
+        allBusinesses = (unclaimedData || []).map(business => {
+          const source: 'imported' | 'user_added' = business.added_by ? 'user_added' : 'imported';
+          return {
+            id: business.id,
+            business_id: null,
+            unclaimed_business_id: business.id,
+            name: business.name,
+            address: business.street || '',
+            city: business.city,
+            province: business.province,
+            region: business.region,
+            postal_code: business.postal_code,
+            phone: business.phone,
+            email: business.email,
+            website: business.website,
+            vat_number: null,
+            is_verified: business.verification_badge === 'verified',
+            is_main: false,
+            created_at: business.created_at,
+            category: business.category,
+            unclaimed_business: {
+              added_by: business.added_by,
+              added_by_profile: business.added_by_profile
+            },
+            source
+          };
+        }).filter(b => b.source === activeTab);
 
-      // Categorize businesses
-      const categorized = (data || []).map(business => {
-        let source: 'imported' | 'user_added' | 'claimed' | 'self_registered';
+      } else if (activeTab === 'claimed' || activeTab === 'self_registered') {
+        // Load from business_locations
+        const { data: claimedData, error: claimedError } = await supabase
+          .from('business_locations')
+          .select(`
+            *,
+            category:business_category_id(name),
+            business:business_id(
+              owner_id,
+              owner:owner_id(full_name, email)
+            )
+          `)
+          .order('created_at', { ascending: false });
 
-        if (business.business_id) {
-          // Has business_id = claimed or self-registered
-          if (business.unclaimed_business_id) {
-            source = 'claimed';
-          } else {
-            source = 'self_registered';
-          }
-        } else if (business.unclaimed_business_id) {
-          // Has unclaimed_business_id only
-          if (business.unclaimed_business?.added_by) {
-            source = 'user_added';
-          } else {
-            source = 'imported';
-          }
-        } else {
-          source = 'imported';
-        }
+        if (claimedError) throw claimedError;
 
-        return { ...business, source };
-      });
+        allBusinesses = (claimedData || []).map(business => {
+          const source: 'claimed' | 'self_registered' = business.is_claimed ? 'claimed' : 'self_registered';
+          return {
+            ...business,
+            unclaimed_business_id: null,
+            is_main: business.is_primary || false,
+            source
+          };
+        }).filter(b => b.source === activeTab);
+      }
 
-      // Filter by active tab
-      const filtered = categorized.filter(b => b.source === activeTab);
-      setBusinesses(filtered);
+      setBusinesses(allBusinesses);
     } catch (error) {
       console.error('Error loading businesses:', error);
     } finally {
@@ -119,9 +142,20 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     if (!confirm(`Sei sicuro di voler ${currentStatus ? 'rimuovere la verifica da' : 'verificare'} questa attività?`)) return;
 
     try {
+      const tableName = activeTab === 'imported' || activeTab === 'user_added'
+        ? 'unclaimed_business_locations'
+        : 'business_locations';
+
+      let updateData: any;
+      if (tableName === 'unclaimed_business_locations') {
+        updateData = { verification_badge: !currentStatus ? 'verified' : null };
+      } else {
+        updateData = { is_verified: !currentStatus };
+      }
+
       const { error } = await supabase
-        .from('business_locations')
-        .update({ is_verified: !currentStatus })
+        .from(tableName)
+        .update(updateData)
         .eq('id', businessId);
 
       if (error) throw error;
@@ -138,20 +172,31 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     if (!editingBusiness) return;
 
     try {
+      const tableName = activeTab === 'imported' || activeTab === 'user_added'
+        ? 'unclaimed_business_locations'
+        : 'business_locations';
+
+      let updateData: any = {
+        name: editingBusiness.name,
+        city: editingBusiness.city,
+        province: editingBusiness.province,
+        region: editingBusiness.region,
+        postal_code: editingBusiness.postal_code,
+        phone: editingBusiness.phone,
+        email: editingBusiness.email,
+        website: editingBusiness.website,
+      };
+
+      if (tableName === 'unclaimed_business_locations') {
+        updateData.street = editingBusiness.address;
+      } else {
+        updateData.address = editingBusiness.address;
+        updateData.vat_number = editingBusiness.vat_number;
+      }
+
       const { error } = await supabase
-        .from('business_locations')
-        .update({
-          name: editingBusiness.name,
-          address: editingBusiness.address,
-          city: editingBusiness.city,
-          province: editingBusiness.province,
-          region: editingBusiness.region,
-          postal_code: editingBusiness.postal_code,
-          phone: editingBusiness.phone,
-          email: editingBusiness.email,
-          website: editingBusiness.website,
-          vat_number: editingBusiness.vat_number,
-        })
+        .from(tableName)
+        .update(updateData)
         .eq('id', editingBusiness.id);
 
       if (error) throw error;
@@ -169,8 +214,12 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     if (!confirm('Sei sicuro di voler eliminare questa attività? Questa azione non può essere annullata.')) return;
 
     try {
+      const tableName = activeTab === 'imported' || activeTab === 'user_added'
+        ? 'unclaimed_business_locations'
+        : 'business_locations';
+
       const { error } = await supabase
-        .from('business_locations')
+        .from(tableName)
         .delete()
         .eq('id', businessId);
 
