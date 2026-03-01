@@ -165,8 +165,10 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
 
         // Filter by source
         if (activeTab === 'claimed') {
+          // Claimed: businesses that were imported or user_added and then claimed by an owner
           query = query.eq('is_claimed', true);
         } else {
+          // Self-registered: businesses registered directly by the owner (not claimed)
           query = query.or('is_claimed.is.false,is_claimed.is.null');
         }
 
