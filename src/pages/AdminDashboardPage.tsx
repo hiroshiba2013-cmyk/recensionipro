@@ -943,7 +943,7 @@ export function AdminDashboardPage() {
 
             {activeTab === 'reports' && <ReportsSection reports={reports} onReload={loadReports} />}
 
-            {activeTab === 'businesses' && <BusinessesSection businesses={businesses} onReload={loadBusinesses} />}
+            {activeTab === 'businesses' && <BusinessesSection onReload={loadBusinesses} />}
 
             {activeTab === 'jobs' && <JobPostingsSection jobPostings={jobPostings} onReload={loadJobPostings} />}
 
