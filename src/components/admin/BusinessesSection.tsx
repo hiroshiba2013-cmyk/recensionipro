@@ -53,59 +53,106 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessLocation | null>(null);
   const [editingBusiness, setEditingBusiness] = useState<BusinessLocation | null>(null);
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const itemsPerPage = 50;
+
+  // Advanced filters
+  const [filters, setFilters] = useState({
+    city: '',
+    province: '',
+    region: '',
+    category: '',
+    verified: 'all' as 'all' | 'verified' | 'unverified'
+  });
+
+  useEffect(() => {
+    setCurrentPage(1);
+    loadBusinesses();
+  }, [activeTab, filters]);
+
   useEffect(() => {
     loadBusinesses();
-  }, [activeTab]);
+  }, [currentPage]);
 
   const loadBusinesses = async () => {
     setLoading(true);
     try {
       let allBusinesses: BusinessLocation[] = [];
+      let count = 0;
+
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
 
       if (activeTab === 'imported' || activeTab === 'user_added') {
-        // Load from unclaimed_business_locations
-        const { data: unclaimedData, error: unclaimedError } = await supabase
+        // Build query for unclaimed_business_locations
+        let query = supabase
           .from('unclaimed_business_locations')
           .select(`
             *,
-            category:category_id(name),
-            added_by_profile:added_by(full_name, email)
-          `)
-          .order('created_at', { ascending: false });
+            category:category_id(name)
+          `, { count: 'exact' });
+
+        // Filter by source (imported vs user_added)
+        if (activeTab === 'imported') {
+          query = query.is('added_by', null);
+        } else {
+          query = query.not('added_by', 'is', null);
+        }
+
+        // Apply advanced filters
+        if (filters.city) {
+          query = query.ilike('city', `%${filters.city}%`);
+        }
+        if (filters.province) {
+          query = query.ilike('province', `%${filters.province}%`);
+        }
+        if (filters.region) {
+          query = query.ilike('region', `%${filters.region}%`);
+        }
+        if (filters.verified === 'verified') {
+          query = query.eq('verification_badge', 'verified');
+        } else if (filters.verified === 'unverified') {
+          query = query.is('verification_badge', null);
+        }
+
+        // Apply search
+        if (searchTerm) {
+          query = query.or(`name.ilike.%${searchTerm}%,city.ilike.%${searchTerm}%,street.ilike.%${searchTerm}%`);
+        }
+
+        const { data: unclaimedData, error: unclaimedError, count: totalCount } = await query
+          .order('created_at', { ascending: false })
+          .range(from, to);
 
         if (unclaimedError) throw unclaimedError;
 
-        allBusinesses = (unclaimedData || []).map(business => {
-          const source: 'imported' | 'user_added' = business.added_by ? 'user_added' : 'imported';
-          return {
-            id: business.id,
-            business_id: null,
-            unclaimed_business_id: business.id,
-            name: business.name,
-            address: business.street || '',
-            city: business.city,
-            province: business.province,
-            region: business.region,
-            postal_code: business.postal_code,
-            phone: business.phone,
-            email: business.email,
-            website: business.website,
-            vat_number: null,
-            is_verified: business.verification_badge === 'verified',
-            is_main: false,
-            created_at: business.created_at,
-            category: business.category,
-            unclaimed_business: {
-              added_by: business.added_by,
-              added_by_profile: business.added_by_profile
-            },
-            source
-          };
-        }).filter(b => b.source === activeTab);
+        count = totalCount || 0;
+        allBusinesses = (unclaimedData || []).map(business => ({
+          id: business.id,
+          business_id: null,
+          unclaimed_business_id: business.id,
+          name: business.name,
+          address: business.street || '',
+          city: business.city,
+          province: business.province,
+          region: business.region,
+          postal_code: business.postal_code,
+          phone: business.phone,
+          email: business.email,
+          website: business.website,
+          vat_number: null,
+          is_verified: business.verification_badge === 'verified',
+          is_main: false,
+          created_at: business.created_at,
+          category: business.category,
+          source: activeTab
+        }));
 
       } else if (activeTab === 'claimed' || activeTab === 'self_registered') {
-        // Load from business_locations
-        const { data: claimedData, error: claimedError } = await supabase
+        // Build query for business_locations
+        let query = supabase
           .from('business_locations')
           .select(`
             *,
@@ -114,23 +161,53 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
               owner_id,
               owner:owner_id(full_name, email)
             )
-          `)
-          .order('created_at', { ascending: false });
+          `, { count: 'exact' });
+
+        // Filter by source
+        if (activeTab === 'claimed') {
+          query = query.eq('is_claimed', true);
+        } else {
+          query = query.or('is_claimed.is.false,is_claimed.is.null');
+        }
+
+        // Apply advanced filters
+        if (filters.city) {
+          query = query.ilike('city', `%${filters.city}%`);
+        }
+        if (filters.province) {
+          query = query.ilike('province', `%${filters.province}%`);
+        }
+        if (filters.region) {
+          query = query.ilike('region', `%${filters.region}%`);
+        }
+        if (filters.verified === 'verified') {
+          query = query.eq('is_verified', true);
+        } else if (filters.verified === 'unverified') {
+          query = query.eq('is_verified', false);
+        }
+
+        // Apply search
+        if (searchTerm) {
+          query = query.or(`name.ilike.%${searchTerm}%,city.ilike.%${searchTerm}%,address.ilike.%${searchTerm}%`);
+        }
+
+        const { data: claimedData, error: claimedError, count: totalCount } = await query
+          .order('created_at', { ascending: false })
+          .range(from, to);
 
         if (claimedError) throw claimedError;
 
-        allBusinesses = (claimedData || []).map(business => {
-          const source: 'claimed' | 'self_registered' = business.is_claimed ? 'claimed' : 'self_registered';
-          return {
-            ...business,
-            unclaimed_business_id: null,
-            is_main: business.is_primary || false,
-            source
-          };
-        }).filter(b => b.source === activeTab);
+        count = totalCount || 0;
+        allBusinesses = (claimedData || []).map(business => ({
+          ...business,
+          unclaimed_business_id: null,
+          is_main: business.is_primary || false,
+          source: activeTab
+        }));
       }
 
       setBusinesses(allBusinesses);
+      setTotalCount(count);
     } catch (error) {
       console.error('Error loading businesses:', error);
     } finally {
@@ -233,11 +310,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     }
   };
 
-  const filteredBusinesses = businesses.filter(b =>
-    b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    b.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    b.address.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   const tabs = [
     { id: 'imported' as TabType, label: 'Importate', icon: Download },
@@ -254,7 +327,6 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           <nav className="flex -mb-px">
             {tabs.map((tab) => {
               const Icon = tab.icon;
-              const count = businesses.length;
               return (
                 <button
                   key={tab.id}
@@ -269,7 +341,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                   {tab.label}
                   {activeTab === tab.id && (
                     <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                      {count}
+                      {totalCount.toLocaleString()}
                     </span>
                   )}
                 </button>
@@ -278,8 +350,8 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           </nav>
         </div>
 
-        {/* Search Bar */}
-        <div className="p-4 border-b border-gray-200">
+        {/* Search Bar and Filters */}
+        <div className="p-4 border-b border-gray-200 space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
@@ -290,6 +362,67 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
+
+          {/* Advanced Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Città</label>
+              <input
+                type="text"
+                placeholder="Filtra per città..."
+                value={filters.city}
+                onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Provincia</label>
+              <input
+                type="text"
+                placeholder="Filtra per provincia..."
+                value={filters.province}
+                onChange={(e) => setFilters({ ...filters, province: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Regione</label>
+              <input
+                type="text"
+                placeholder="Filtra per regione..."
+                value={filters.region}
+                onChange={(e) => setFilters({ ...filters, region: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Stato Verifica</label>
+              <select
+                value={filters.verified}
+                onChange={(e) => setFilters({ ...filters, verified: e.target.value as any })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              >
+                <option value="all">Tutte</option>
+                <option value="verified">Solo Verificate</option>
+                <option value="unverified">Solo Non Verificate</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Stats and Reset */}
+          <div className="flex items-center justify-between text-sm">
+            <div className="text-gray-600">
+              Visualizzazione {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, totalCount)} di {totalCount.toLocaleString()} attività
+            </div>
+            {(filters.city || filters.province || filters.region || filters.verified !== 'all') && (
+              <button
+                onClick={() => setFilters({ city: '', province: '', region: '', category: '', verified: 'all' })}
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Ripristina filtri
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Business List */}
@@ -299,7 +432,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               <p className="mt-2 text-gray-600">Caricamento...</p>
             </div>
-          ) : filteredBusinesses.length === 0 ? (
+          ) : businesses.length === 0 ? (
             <div className="text-center py-8">
               <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600">Nessuna attività trovata</p>
@@ -335,7 +468,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredBusinesses.map((business) => (
+                  {businesses.map((business) => (
                     <tr key={business.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
@@ -455,6 +588,76 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {!loading && businesses.length > 0 && totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
+              <div className="text-sm text-gray-600">
+                Pagina {currentPage} di {totalPages}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Prima
+                </button>
+                <button
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Precedente
+                </button>
+
+                {/* Page numbers */}
+                <div className="flex gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`px-3 py-2 text-sm border rounded-lg ${
+                          currentPage === pageNum
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Successiva
+                </button>
+                <button
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Ultima
+                </button>
+              </div>
             </div>
           )}
         </div>
