@@ -733,6 +733,24 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
                 <p className="text-gray-900">{selectedBusiness.category?.name || 'N/A'}</p>
               </div>
+              {selectedBusiness.description && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Descrizione</label>
+                  <p className="text-gray-900 whitespace-pre-wrap">{selectedBusiness.description}</p>
+                </div>
+              )}
+              {selectedBusiness.business_hours && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Orari di Apertura</label>
+                  <p className="text-gray-900 whitespace-pre-wrap">{selectedBusiness.business_hours}</p>
+                </div>
+              )}
+              {selectedBusiness.services && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Servizi Offerti</label>
+                  <p className="text-gray-900 whitespace-pre-wrap">{selectedBusiness.services}</p>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Stato</label>
                 <span
