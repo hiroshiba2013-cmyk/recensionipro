@@ -56,6 +56,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessLocation | null>(null);
   const [editingBusiness, setEditingBusiness] = useState<BusinessLocation | null>(null);
+  const [allLocations, setAllLocations] = useState<BusinessLocation[]>([]);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -322,6 +323,61 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     }
   };
 
+  const loadAllLocations = async (business: BusinessLocation) => {
+    if (!business.business_id) {
+      setAllLocations([business]);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('business_locations')
+        .select(`
+          *,
+          category:business_category_id(name),
+          business:business_id(
+            owner_id,
+            owner:owner_id(full_name, email)
+          )
+        `)
+        .eq('business_id', business.business_id)
+        .order('is_main', { ascending: false })
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      const locations = (data || []).map(loc => ({
+        id: loc.id,
+        business_id: loc.business_id,
+        unclaimed_business_id: null,
+        name: loc.name,
+        address: loc.address,
+        city: loc.city,
+        province: loc.province,
+        region: loc.region,
+        postal_code: loc.postal_code,
+        phone: loc.phone,
+        email: loc.email,
+        website: loc.website,
+        vat_number: loc.vat_number,
+        is_verified: loc.is_verified,
+        is_main: loc.is_main,
+        created_at: loc.created_at,
+        description: loc.description,
+        business_hours: loc.business_hours,
+        services: loc.services,
+        category: loc.category,
+        business: loc.business,
+        source: activeTab
+      }));
+
+      setAllLocations(locations);
+    } catch (error: any) {
+      console.error('Error loading locations:', error);
+      setAllLocations([business]);
+    }
+  };
+
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   const tabs = [
@@ -582,7 +638,10 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => setSelectedBusiness(business)}
+                            onClick={() => {
+                              setSelectedBusiness(business);
+                              loadAllLocations(business);
+                            }}
                             className="text-blue-600 hover:text-blue-800 p-1"
                             title="Visualizza dettagli"
                           >
@@ -689,17 +748,122 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
       {/* View Modal */}
       {selectedBusiness && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-xl font-bold text-gray-900">Dettagli Attività</h3>
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Dettagli Attività</h3>
+                {allLocations.length > 1 && (
+                  <p className="text-sm text-gray-600 mt-1">{allLocations.length} sedi totali</p>
+                )}
+              </div>
               <button
-                onClick={() => setSelectedBusiness(null)}
+                onClick={() => {
+                  setSelectedBusiness(null);
+                  setAllLocations([]);
+                }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-6">
+              {allLocations.length > 1 ? (
+                <>
+                  {/* Business Owner Info */}
+                  {allLocations[0]?.business?.owner && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="text-sm font-semibold text-gray-900 mb-2">Informazioni Proprietario</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Nome</label>
+                          <p className="text-sm text-gray-900">{allLocations[0].business.owner.full_name}</p>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+                          <p className="text-sm text-gray-900">{allLocations[0].business.owner.email}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Multiple locations */}
+                  {allLocations.map((location, index) => (
+                  <div key={location.id} className="border border-gray-200 rounded-lg p-6 space-y-4">
+                    <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+                      <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <MapPin className="w-5 h-5 text-blue-600" />
+                        Sede {index + 1}
+                        {location.is_main && (
+                          <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                            Principale
+                          </span>
+                        )}
+                      </h4>
+                      {location.is_verified && (
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+                      <p className="text-gray-900">{location.name}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Indirizzo</label>
+                      <p className="text-gray-900">{location.address}</p>
+                      <p className="text-gray-600">
+                        {location.city}, {location.province} {location.postal_code}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Telefono</label>
+                        <p className="text-gray-900">{location.phone || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <p className="text-gray-900">{location.email || 'N/A'}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Sito Web</label>
+                        <p className="text-gray-900">{location.website || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">P.IVA</label>
+                        <p className="text-gray-900">{location.vat_number || 'N/A'}</p>
+                      </div>
+                    </div>
+                    {location.category && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                        <p className="text-gray-900">{location.category.name}</p>
+                      </div>
+                    )}
+                    {location.description && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Descrizione</label>
+                        <p className="text-gray-900 whitespace-pre-wrap">{location.description}</p>
+                      </div>
+                    )}
+                    {location.business_hours && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Orari di Apertura</label>
+                        <p className="text-gray-900 whitespace-pre-wrap">{location.business_hours}</p>
+                      </div>
+                    )}
+                    {location.services && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Servizi Offerti</label>
+                        <p className="text-gray-900 whitespace-pre-wrap">{location.services}</p>
+                      </div>
+                    )}
+                  </div>
+                  ))}
+                </>
+              ) : (
+                // Single location view
+                <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
                 <p className="text-gray-900">{selectedBusiness.name}</p>
@@ -767,23 +931,31 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Data Creazione</label>
                 <p className="text-gray-900">{new Date(selectedBusiness.created_at).toLocaleString('it-IT')}</p>
               </div>
+                </div>
+              )}
             </div>
             <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
               <button
-                onClick={() => setSelectedBusiness(null)}
+                onClick={() => {
+                  setSelectedBusiness(null);
+                  setAllLocations([]);
+                }}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 Chiudi
               </button>
-              <button
-                onClick={() => {
-                  setEditingBusiness(selectedBusiness);
-                  setSelectedBusiness(null);
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Modifica
-              </button>
+              {allLocations.length === 1 && (
+                <button
+                  onClick={() => {
+                    setEditingBusiness(selectedBusiness);
+                    setSelectedBusiness(null);
+                    setAllLocations([]);
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Modifica
+                </button>
+              )}
             </div>
           </div>
         </div>
