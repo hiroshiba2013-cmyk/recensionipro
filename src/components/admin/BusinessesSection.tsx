@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Building2, CheckCircle, MapPin, Mail, Phone, Edit2, Search, Filter, Download, Upload, UserPlus, X } from 'lucide-react';
+import { Building2, CheckCircle, MapPin, Mail, Phone, Edit2, Search, Filter, Download, Upload, UserPlus, X, Clock, FileText, Briefcase } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { ITALIAN_REGIONS, PROVINCES_BY_REGION, CITIES_BY_PROVINCE } from '../../lib/cities';
 
 interface BusinessLocation {
   id: string;
@@ -19,6 +20,9 @@ interface BusinessLocation {
   is_verified: boolean;
   is_main: boolean;
   created_at: string;
+  description?: string | null;
+  business_hours?: any;
+  services?: string[] | null;
   category: {
     name: string;
   } | null;
@@ -91,7 +95,10 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           .from('unclaimed_business_locations')
           .select(`
             *,
-            category:category_id(name)
+            category:category_id(name),
+            description,
+            business_hours,
+            services
           `, { count: 'exact' });
 
         // Filter by source (imported vs user_added)
@@ -160,7 +167,10 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
             business:business_id(
               owner_id,
               owner:owner_id(full_name, email)
-            )
+            ),
+            description,
+            business_hours,
+            services
           `, { count: 'exact' });
 
         // Filter by source
@@ -264,6 +274,9 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
         phone: editingBusiness.phone,
         email: editingBusiness.email,
         website: editingBusiness.website,
+        description: editingBusiness.description,
+        business_hours: editingBusiness.business_hours,
+        services: editingBusiness.services,
       };
 
       if (tableName === 'unclaimed_business_locations') {
@@ -368,34 +381,45 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           {/* Advanced Filters */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Città</label>
-              <input
-                type="text"
-                placeholder="Filtra per città..."
-                value={filters.city}
-                onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Regione</label>
+              <select
+                value={filters.region}
+                onChange={(e) => setFilters({ ...filters, region: e.target.value, province: '', city: '' })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              />
+              >
+                <option value="">Tutte le regioni</option>
+                {ITALIAN_REGIONS.map((region) => (
+                  <option key={region} value={region}>{region}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Provincia</label>
-              <input
-                type="text"
-                placeholder="Filtra per provincia..."
+              <select
                 value={filters.province}
-                onChange={(e) => setFilters({ ...filters, province: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              />
+                onChange={(e) => setFilters({ ...filters, province: e.target.value, city: '' })}
+                disabled={!filters.region}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">Tutte le province</option>
+                {filters.region && PROVINCES_BY_REGION[filters.region]?.map((province) => (
+                  <option key={province} value={province}>{province}</option>
+                ))}
+              </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Regione</label>
-              <input
-                type="text"
-                placeholder="Filtra per regione..."
-                value={filters.region}
-                onChange={(e) => setFilters({ ...filters, region: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Città</label>
+              <select
+                value={filters.city}
+                onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+                disabled={!filters.province}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">Tutte le città</option>
+                {filters.province && CITIES_BY_PROVINCE[filters.province]?.map((city) => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Stato Verifica</label>
@@ -753,8 +777,8 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
       {/* Edit Modal */}
       {editingBusiness && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
               <h3 className="text-xl font-bold text-gray-900">Modifica Attività</h3>
               <button
                 onClick={() => setEditingBusiness(null)}
@@ -763,119 +787,255 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
-                <input
-                  type="text"
-                  value={editingBusiness.name}
-                  onChange={(e) => setEditingBusiness({ ...editingBusiness, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Indirizzo</label>
-                <input
-                  type="text"
-                  value={editingBusiness.address}
-                  onChange={(e) => setEditingBusiness({ ...editingBusiness, address: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-4">
+            <div className="p-6 space-y-6">
+              {/* Informazioni Base */}
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Building2 className="w-5 h-5" />
+                  Informazioni Base
+                </h4>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Città</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nome Attività</label>
                   <input
                     type="text"
-                    value={editingBusiness.city}
-                    onChange={(e) => setEditingBusiness({ ...editingBusiness, city: e.target.value })}
+                    value={editingBusiness.name}
+                    onChange={(e) => setEditingBusiness({ ...editingBusiness, name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Provincia</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <span className="flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      Descrizione
+                    </span>
+                  </label>
+                  <textarea
+                    value={editingBusiness.description || ''}
+                    onChange={(e) => setEditingBusiness({ ...editingBusiness, description: e.target.value })}
+                    rows={4}
+                    placeholder="Inserisci una descrizione dell'attività..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Indirizzo */}
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <MapPin className="w-5 h-5" />
+                  Indirizzo
+                </h4>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Via e Numero</label>
                   <input
                     type="text"
-                    value={editingBusiness.province}
-                    onChange={(e) => setEditingBusiness({ ...editingBusiness, province: e.target.value })}
+                    value={editingBusiness.address}
+                    onChange={(e) => setEditingBusiness({ ...editingBusiness, address: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Città</label>
+                    <input
+                      type="text"
+                      value={editingBusiness.city}
+                      onChange={(e) => setEditingBusiness({ ...editingBusiness, city: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Provincia</label>
+                    <input
+                      type="text"
+                      value={editingBusiness.province}
+                      onChange={(e) => setEditingBusiness({ ...editingBusiness, province: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">CAP</label>
+                    <input
+                      type="text"
+                      value={editingBusiness.postal_code || ''}
+                      onChange={(e) => setEditingBusiness({ ...editingBusiness, postal_code: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">CAP</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Regione</label>
                   <input
                     type="text"
-                    value={editingBusiness.postal_code || ''}
-                    onChange={(e) => setEditingBusiness({ ...editingBusiness, postal_code: e.target.value })}
+                    value={editingBusiness.region}
+                    onChange={(e) => setEditingBusiness({ ...editingBusiness, region: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Regione</label>
-                <input
-                  type="text"
-                  value={editingBusiness.region}
-                  onChange={(e) => setEditingBusiness({ ...editingBusiness, region: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
+
+              {/* Contatti */}
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Phone className="w-5 h-5" />
+                  Contatti
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Telefono</label>
+                    <input
+                      type="text"
+                      value={editingBusiness.phone || ''}
+                      onChange={(e) => setEditingBusiness({ ...editingBusiness, phone: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input
+                      type="email"
+                      value={editingBusiness.email || ''}
+                      onChange={(e) => setEditingBusiness({ ...editingBusiness, email: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Sito Web</label>
+                    <input
+                      type="url"
+                      value={editingBusiness.website || ''}
+                      onChange={(e) => setEditingBusiness({ ...editingBusiness, website: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">P.IVA</label>
+                    <input
+                      type="text"
+                      value={editingBusiness.vat_number || ''}
+                      onChange={(e) => setEditingBusiness({ ...editingBusiness, vat_number: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+
+              {/* Orari */}
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Clock className="w-5 h-5" />
+                  Orari di Apertura
+                </h4>
+                <div className="space-y-2">
+                  {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
+                    const dayLabels: Record<string, string> = {
+                      monday: 'Lunedì',
+                      tuesday: 'Martedì',
+                      wednesday: 'Mercoledì',
+                      thursday: 'Giovedì',
+                      friday: 'Venerdì',
+                      saturday: 'Sabato',
+                      sunday: 'Domenica'
+                    };
+                    const hours = editingBusiness.business_hours?.[day] || { open: '', close: '', closed: false };
+                    return (
+                      <div key={day} className="grid grid-cols-12 gap-4 items-center">
+                        <div className="col-span-3">
+                          <label className="text-sm font-medium text-gray-700">{dayLabels[day]}</label>
+                        </div>
+                        <div className="col-span-3">
+                          <input
+                            type="time"
+                            value={hours.open || ''}
+                            disabled={hours.closed}
+                            onChange={(e) => {
+                              const newHours = { ...editingBusiness.business_hours };
+                              if (!newHours[day]) newHours[day] = { open: '', close: '', closed: false };
+                              newHours[day].open = e.target.value;
+                              setEditingBusiness({ ...editingBusiness, business_hours: newHours });
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm disabled:bg-gray-100"
+                          />
+                        </div>
+                        <div className="col-span-3">
+                          <input
+                            type="time"
+                            value={hours.close || ''}
+                            disabled={hours.closed}
+                            onChange={(e) => {
+                              const newHours = { ...editingBusiness.business_hours };
+                              if (!newHours[day]) newHours[day] = { open: '', close: '', closed: false };
+                              newHours[day].close = e.target.value;
+                              setEditingBusiness({ ...editingBusiness, business_hours: newHours });
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm disabled:bg-gray-100"
+                          />
+                        </div>
+                        <div className="col-span-3">
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={hours.closed || false}
+                              onChange={(e) => {
+                                const newHours = { ...editingBusiness.business_hours };
+                                if (!newHours[day]) newHours[day] = { open: '', close: '', closed: false };
+                                newHours[day].closed = e.target.checked;
+                                setEditingBusiness({ ...editingBusiness, business_hours: newHours });
+                              }}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-gray-700">Chiuso</span>
+                          </label>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Servizi */}
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Briefcase className="w-5 h-5" />
+                  Servizi Offerti
+                </h4>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Telefono</label>
-                  <input
-                    type="text"
-                    value={editingBusiness.phone || ''}
-                    onChange={(e) => setEditingBusiness({ ...editingBusiness, phone: e.target.value })}
+                  <textarea
+                    value={(editingBusiness.services || []).join(', ')}
+                    onChange={(e) => {
+                      const services = e.target.value.split(',').map(s => s.trim()).filter(s => s);
+                      setEditingBusiness({ ...editingBusiness, services });
+                    }}
+                    rows={3}
+                    placeholder="Inserisci i servizi separati da virgola (es: Consegna a domicilio, Wifi gratuito, Parcheggio)"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
+                  <p className="mt-1 text-sm text-gray-500">
+                    Servizi attuali: {(editingBusiness.services || []).length > 0 ? (editingBusiness.services || []).join(', ') : 'Nessun servizio inserito'}
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={editingBusiness.email || ''}
-                    onChange={(e) => setEditingBusiness({ ...editingBusiness, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Sito Web</label>
-                <input
-                  type="url"
-                  value={editingBusiness.website || ''}
-                  onChange={(e) => setEditingBusiness({ ...editingBusiness, website: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">P.IVA</label>
-                <input
-                  type="text"
-                  value={editingBusiness.vat_number || ''}
-                  onChange={(e) => setEditingBusiness({ ...editingBusiness, vat_number: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
               </div>
             </div>
-            <div className="p-6 border-t border-gray-200 flex justify-between">
+            <div className="p-6 border-t border-gray-200 flex justify-between sticky bottom-0 bg-white">
               <button
                 onClick={() => handleDelete(editingBusiness.id)}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
               >
                 Elimina Attività
               </button>
               <div className="flex gap-3">
                 <button
                   onClick={() => setEditingBusiness(null)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
                 >
                   Annulla
                 </button>
                 <button
                   onClick={handleSaveEdit}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
                 >
                   Salva Modifiche
                 </button>
