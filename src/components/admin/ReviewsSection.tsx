@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle, XCircle, Eye, Star, Filter, MapPin, Building2, Calendar, Clock, User, Search, X, Edit, Save, X as CloseIcon } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Star, Filter, MapPin, Building2, Calendar, Clock, User, Search, X, FileEdit as Edit, Save, X as CloseIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Review {
