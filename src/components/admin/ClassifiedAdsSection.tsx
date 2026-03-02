@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trash2, Eye, Filter, Tag, Calendar, User, MapPin, Euro, Search, Edit, Save, X as CloseIcon } from 'lucide-react';
+import { Trash2, Eye, Filter, Tag, Calendar, User, MapPin, Euro, Search, FileEdit as Edit, Save, X as CloseIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface ClassifiedAd {
