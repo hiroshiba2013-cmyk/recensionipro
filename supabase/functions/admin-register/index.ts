@@ -102,7 +102,6 @@ Deno.serve(async (req: Request) => {
         nickname: userCode,
         phone: phone || null,
         user_type: 'admin',
-        subscription_status: 'active',
         is_admin: true,
       });
 
