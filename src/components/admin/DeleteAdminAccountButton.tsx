@@ -33,9 +33,7 @@ export function DeleteAdminAccountButton({ adminId, adminEmail }: DeleteAdminAcc
     setError('');
 
     try {
-      const { error: deleteError } = await supabase.rpc('delete_user_account', {
-        user_id_to_delete: adminId,
-      });
+      const { error: deleteError } = await supabase.rpc('delete_admin_account');
 
       if (deleteError) throw deleteError;
 
