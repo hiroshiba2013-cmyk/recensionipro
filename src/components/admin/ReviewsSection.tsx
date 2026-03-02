@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle, XCircle, Eye, Star, Filter, MapPin, Building2, Calendar, Clock, User, Search, X } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Star, Filter, MapPin, Building2, Calendar, Clock, User, Search, X, Edit, Save, X as CloseIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Review {
@@ -59,6 +59,8 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
   const [rejectReason, setRejectReason] = useState('');
   const [reviewToReject, setReviewToReject] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const [editForm, setEditForm] = useState<Partial<Review> | null>(null);
 
   const getReviewerName = (review: Review) => {
     if (review.family_member) {
@@ -175,6 +177,54 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
     setReviewToReject(reviewId);
     setRejectReason('');
     setShowRejectModal(true);
+  };
+
+  const startEditReview = (review: Review) => {
+    setEditingReview(review);
+    setEditForm({
+      title: review.title,
+      content: review.content,
+      overall_rating: review.overall_rating,
+      quality_rating: review.quality_rating,
+      price_rating: review.price_rating,
+      service_rating: review.service_rating,
+    });
+  };
+
+  const cancelEditReview = () => {
+    setEditingReview(null);
+    setEditForm(null);
+  };
+
+  const saveReviewEdit = async () => {
+    if (!editingReview || !editForm) return;
+
+    try {
+      const { error } = await supabase
+        .from('reviews')
+        .update({
+          title: editForm.title,
+          content: editForm.content,
+          overall_rating: editForm.overall_rating,
+          quality_rating: editForm.quality_rating,
+          price_rating: editForm.price_rating,
+          service_rating: editForm.service_rating,
+        })
+        .eq('id', editingReview.id);
+
+      if (error) throw error;
+
+      alert('Recensione aggiornata con successo');
+      setEditingReview(null);
+      setEditForm(null);
+      onReload();
+      if (selectedReview?.id === editingReview.id) {
+        setSelectedReview(null);
+      }
+    } catch (error: any) {
+      console.error('Error updating review:', error);
+      alert(`Errore: ${error.message}`);
+    }
   };
 
   const confirmReject = async () => {
@@ -413,6 +463,14 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                 </div>
 
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => startEditReview(review)}
+                    className="flex items-center gap-2 bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors"
+                    title="Modifica recensione"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Modifica
+                  </button>
                   <button
                     onClick={() => setSelectedReview(review)}
                     className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -672,6 +730,191 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                   Annulla
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Modifica Recensione */}
+      {editingReview && editForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[70]">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-gradient-to-r from-amber-600 to-amber-700 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-white">Modifica Recensione</h3>
+              <button
+                onClick={cancelEditReview}
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <CloseIcon className="w-5 h-5 text-white" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {/* Info Recensore (sola lettura) */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-semibold text-gray-900 mb-2">Informazioni Recensore</h4>
+                <div className="text-sm space-y-1">
+                  <p>
+                    <span className="text-gray-600">Nome:</span>
+                    <span className="ml-2 font-medium">{getReviewerName(editingReview)}</span>
+                  </p>
+                  <p>
+                    <span className="text-gray-600">Email:</span>
+                    <span className="ml-2 font-medium">{editingReview.customer.email}</span>
+                  </p>
+                  <p>
+                    <span className="text-gray-600">Attività:</span>
+                    <span className="ml-2 font-medium">{getBusinessName(editingReview)}</span>
+                  </p>
+                  <p>
+                    <span className="text-gray-600">Data:</span>
+                    <span className="ml-2 font-medium">
+                      {formatDate(editingReview.created_at)} alle {formatTime(editingReview.created_at)}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Titolo */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Titolo Recensione *
+                </label>
+                <input
+                  type="text"
+                  value={editForm.title || ''}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  maxLength={100}
+                />
+              </div>
+
+              {/* Contenuto */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Contenuto Recensione *
+                </label>
+                <textarea
+                  value={editForm.content || ''}
+                  onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
+                  rows={6}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none"
+                />
+              </div>
+
+              {/* Valutazioni */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-gray-900">Valutazioni</h4>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    1. Qualità *
+                  </label>
+                  <select
+                    value={editForm.quality_rating || ''}
+                    onChange={(e) => setEditForm({ ...editForm, quality_rating: Number(e.target.value) })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  >
+                    <option value="">Seleziona...</option>
+                    <option value="1">⭐ Pessimo (1)</option>
+                    <option value="2">⭐⭐ Discreto (2)</option>
+                    <option value="3">⭐⭐⭐ Buono (3)</option>
+                    <option value="4">⭐⭐⭐⭐ Eccellente (4)</option>
+                    <option value="5">⭐⭐⭐⭐⭐ Ottimo (5)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    2. Prezzo *
+                  </label>
+                  <select
+                    value={editForm.price_rating || ''}
+                    onChange={(e) => setEditForm({ ...editForm, price_rating: Number(e.target.value) })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  >
+                    <option value="">Seleziona...</option>
+                    <option value="1">⭐ Pessimo (1)</option>
+                    <option value="2">⭐⭐ Discreto (2)</option>
+                    <option value="3">⭐⭐⭐ Buono (3)</option>
+                    <option value="4">⭐⭐⭐⭐ Eccellente (4)</option>
+                    <option value="5">⭐⭐⭐⭐⭐ Ottimo (5)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    3. Esperienza / Servizio *
+                  </label>
+                  <select
+                    value={editForm.service_rating || ''}
+                    onChange={(e) => setEditForm({ ...editForm, service_rating: Number(e.target.value) })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  >
+                    <option value="">Seleziona...</option>
+                    <option value="1">⭐ Pessimo (1)</option>
+                    <option value="2">⭐⭐ Discreto (2)</option>
+                    <option value="3">⭐⭐⭐ Buono (3)</option>
+                    <option value="4">⭐⭐⭐⭐ Eccellente (4)</option>
+                    <option value="5">⭐⭐⭐⭐⭐ Ottimo (5)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    4. Voto Generale *
+                  </label>
+                  <select
+                    value={editForm.overall_rating || ''}
+                    onChange={(e) => setEditForm({ ...editForm, overall_rating: Number(e.target.value) })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  >
+                    <option value="">Seleziona...</option>
+                    <option value="1">⭐ Pessimo (1)</option>
+                    <option value="2">⭐⭐ Discreto (2)</option>
+                    <option value="3">⭐⭐⭐ Buono (3)</option>
+                    <option value="4">⭐⭐⭐⭐ Eccellente (4)</option>
+                    <option value="5">⭐⭐⭐⭐⭐ Ottimo (5)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Stato Recensione (sola lettura) */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-semibold text-gray-900 mb-2">Stato</h4>
+                <span
+                  className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                    editingReview.review_status === 'approved'
+                      ? 'bg-green-100 text-green-700'
+                      : editingReview.review_status === 'rejected'
+                      ? 'bg-red-100 text-red-700'
+                      : 'bg-yellow-100 text-yellow-700'
+                  }`}
+                >
+                  {editingReview.review_status === 'approved'
+                    ? 'Approvata'
+                    : editingReview.review_status === 'rejected'
+                    ? 'Rifiutata'
+                    : 'In Attesa'}
+                </span>
+              </div>
+            </div>
+
+            <div className="sticky bottom-0 bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
+              <button
+                onClick={cancelEditReview}
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={saveReviewEdit}
+                disabled={!editForm.title || !editForm.content || !editForm.overall_rating}
+                className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                <Save className="w-4 h-4" />
+                Salva Modifiche
+              </button>
             </div>
           </div>
         </div>

@@ -1,15 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Users, ChevronDown, ChevronRight, Trash2, Shield, Building2, User as UserIcon } from 'lucide-react';
+import { Users, ChevronDown, ChevronRight, Trash2, Shield, Building2, User as UserIcon, Search, Save, X as CloseIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface User {
   id: string;
   full_name: string;
+  nickname?: string;
   email: string;
   user_type: string;
   subscription_status: string;
+  subscription_type?: string;
   created_at: string;
   is_admin: boolean;
+  phone?: string;
+  fiscal_code?: string;
+  address?: string;
+  city?: string;
+  province?: string;
+  postal_code?: string;
 }
 
 interface FamilyMember {
@@ -38,6 +46,7 @@ interface ExpandedUserData {
     status: string;
     end_date: string;
   };
+  businessName?: string;
 }
 
 interface UsersManagementSectionProps {
@@ -50,6 +59,8 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
   const [userData, setUserData] = useState<Map<string, ExpandedUserData>>(new Map());
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<'all' | 'customer' | 'business' | 'admin'>('all');
+  const [editingUser, setEditingUser] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<User | null>(null);
 
   useEffect(() => {
     loadUsers();
@@ -60,7 +71,7 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
     try {
       let query = supabase
         .from('profiles')
-        .select('id, full_name, email, user_type, subscription_status, created_at, is_admin')
+        .select('id, full_name, nickname, email, user_type, subscription_status, subscription_type, created_at, is_admin, phone, fiscal_code, address, city, province, postal_code')
         .order('created_at', { ascending: false });
 
       if (filterType !== 'all') {
@@ -127,11 +138,13 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
       } else if (userType === 'business') {
         const { data: businessData } = await supabase
           .from('businesses')
-          .select('id')
+          .select('id, name')
           .eq('owner_id', userId)
           .maybeSingle();
 
         if (businessData) {
+          details.businessName = businessData.name;
+
           const { data: locationsData } = await supabase
             .from('business_locations')
             .select('id, name, internal_name, address, city, province')
@@ -224,6 +237,57 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
     }
   };
 
+  const startEditUser = (user: User) => {
+    setEditingUser(user.id);
+    setEditForm({ ...user });
+  };
+
+  const cancelEdit = () => {
+    setEditingUser(null);
+    setEditForm(null);
+  };
+
+  const saveUserEdit = async () => {
+    if (!editForm) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: editForm.full_name,
+          nickname: editForm.nickname,
+          phone: editForm.phone,
+          fiscal_code: editForm.fiscal_code,
+          address: editForm.address,
+          city: editForm.city,
+          province: editForm.province,
+          postal_code: editForm.postal_code,
+        })
+        .eq('id', editForm.id);
+
+      if (error) throw error;
+
+      alert('Utente aggiornato con successo');
+      setEditingUser(null);
+      setEditForm(null);
+      loadUsers();
+      onReload();
+    } catch (error: any) {
+      console.error('Error updating user:', error);
+      alert(`Errore: ${error.message}`);
+    }
+  };
+
+  const getDisplayName = (user: User, details?: ExpandedUserData) => {
+    if (user.user_type === 'business' && details?.businessName) {
+      return details.businessName;
+    }
+    if (user.user_type === 'customer' && user.nickname) {
+      return user.nickname;
+    }
+    return user.full_name;
+  };
+
   if (loading) {
     return (
       <div className="text-center py-12">
@@ -297,35 +361,39 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
 
           return (
             <div key={user.id} className="hover:bg-gray-50 transition-colors">
-              <div className="px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-4 flex-1">
-                  <button
-                    onClick={() => toggleUserExpansion(user.id, user.user_type)}
-                    className="p-1 hover:bg-gray-200 rounded"
-                  >
-                    {isExpanded ? (
-                      <ChevronDown className="w-5 h-5 text-gray-600" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-gray-600" />
-                    )}
-                  </button>
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold">
-                    {user.full_name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-gray-900">{user.full_name}</span>
-                      {user.is_admin && (
-                        <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded">
-                          ADMIN
-                        </span>
+              <div className="px-6 py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-4 flex-1">
+                    <button
+                      onClick={() => toggleUserExpansion(user.id, user.user_type)}
+                      className="p-1 hover:bg-gray-200 rounded"
+                    >
+                      {isExpanded ? (
+                        <ChevronDown className="w-5 h-5 text-gray-600" />
+                      ) : (
+                        <ChevronRight className="w-5 h-5 text-gray-600" />
                       )}
+                    </button>
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold">
+                      {(getDisplayName(user, details) || user.full_name).charAt(0).toUpperCase()}
                     </div>
-                    <div className="text-sm text-gray-500">{user.email}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-semibold text-gray-900 truncate">
+                          {getDisplayName(user, details)}
+                        </span>
+                        {user.is_admin && (
+                          <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded">
+                            ADMIN
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-500 truncate">{user.email}</div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <span
-                      className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                      className={`px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
                         user.user_type === 'business'
                           ? 'bg-orange-100 text-orange-700'
                           : user.user_type === 'customer'
@@ -335,8 +403,13 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
                     >
                       {user.user_type === 'business' ? 'Attività' : user.user_type === 'customer' ? 'Privato' : 'Admin'}
                     </span>
+                    {details?.subscription && (
+                      <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 whitespace-nowrap">
+                        {details.subscription.plan_name}
+                      </span>
+                    )}
                     <span
-                      className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                      className={`px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
                         user.subscription_status === 'active'
                           ? 'bg-green-100 text-green-700'
                           : user.subscription_status === 'trial'
@@ -348,29 +421,34 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
                         ? 'Attivo'
                         : user.subscription_status === 'trial'
                         ? 'Prova'
-                        : 'Scaduto'}
+                        : user.subscription_status || 'N/A'}
                     </span>
+                    <button
+                      onClick={() => startEditUser(user)}
+                      className="p-2 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded-lg transition-all"
+                      title="Visualizza/Modifica dettagli"
+                    >
+                      <Search className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => toggleAdmin(user.id, user.is_admin)}
+                      className={`p-2 rounded-lg transition-all ${
+                        user.is_admin
+                          ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                      title={user.is_admin ? 'Rimuovi admin' : 'Rendi admin'}
+                    >
+                      <Shield className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteUser(user.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                      title="Elimina utente"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-                </div>
-                <div className="flex items-center gap-2 ml-4">
-                  <button
-                    onClick={() => toggleAdmin(user.id, user.is_admin)}
-                    className={`p-2 rounded-lg transition-all ${
-                      user.is_admin
-                        ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                    title={user.is_admin ? 'Rimuovi admin' : 'Rendi admin'}
-                  >
-                    <Shield className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => deleteUser(user.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                    title="Elimina utente"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
                 </div>
               </div>
 
@@ -479,6 +557,180 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
           );
         })}
       </div>
+
+      {/* Modal Modifica Utente */}
+      {editingUser && editForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-white">Modifica Utente</h3>
+              <button
+                onClick={cancelEdit}
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <CloseIcon className="w-5 h-5 text-white" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {/* Info Base */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Nome Completo *
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.full_name}
+                    onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Nickname
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.nickname || ''}
+                    onChange={(e) => setEditForm({ ...editForm, nickname: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email (sola lettura)
+                </label>
+                <input
+                  type="email"
+                  value={editForm.email}
+                  disabled
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100 text-gray-500 cursor-not-allowed"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Telefono
+                  </label>
+                  <input
+                    type="tel"
+                    value={editForm.phone || ''}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Codice Fiscale
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.fiscal_code || ''}
+                    onChange={(e) => setEditForm({ ...editForm, fiscal_code: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Indirizzo
+                </label>
+                <input
+                  type="text"
+                  value={editForm.address || ''}
+                  onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Città
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.city || ''}
+                    onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Provincia
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.province || ''}
+                    onChange={(e) => setEditForm({ ...editForm, province: e.target.value })}
+                    maxLength={2}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    CAP
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.postal_code || ''}
+                    onChange={(e) => setEditForm({ ...editForm, postal_code: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Info Account */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-semibold text-gray-900 mb-3">Informazioni Account</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-600">Tipo:</span>
+                    <span className="ml-2 font-medium capitalize">{editForm.user_type}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Abbonamento:</span>
+                    <span className="ml-2 font-medium capitalize">{editForm.subscription_type || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Stato:</span>
+                    <span className="ml-2 font-medium capitalize">{editForm.subscription_status || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Admin:</span>
+                    <span className="ml-2 font-medium">{editForm.is_admin ? 'Sì' : 'No'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="sticky bottom-0 bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
+              <button
+                onClick={cancelEdit}
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={saveUserEdit}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                Salva Modifiche
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
