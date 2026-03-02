@@ -43,18 +43,32 @@ interface PendingReview {
   service_rating: number | null;
   quality_rating: number | null;
   proof_image_url: string | null;
+  review_status: string;
   created_at: string;
   customer: {
     full_name: string;
+    nickname: string | null;
     email: string;
   };
+  family_member?: {
+    nickname: string | null;
+    full_name: string;
+  } | null;
   business_id: string | null;
   business_location_id: string | null;
   unclaimed_business_location_id: string | null;
   business_location?: {
     name: string;
+    internal_name: string | null;
+    city: string;
+    address: string;
   } | null;
   unclaimed_business_location?: {
+    name: string;
+    city: string;
+    street: string;
+  } | null;
+  businesses?: {
     name: string;
   } | null;
 }
@@ -310,9 +324,11 @@ export function AdminDashboardPage() {
       .from('reviews')
       .select(`
         *,
-        customer:profiles!reviews_customer_id_fkey(full_name, email),
-        business_location:business_locations(name),
-        unclaimed_business_location:unclaimed_business_locations(name)
+        customer:profiles!reviews_customer_id_fkey(full_name, nickname, email),
+        family_member:customer_family_members(full_name, nickname),
+        business_location:business_locations(name, internal_name, city, address),
+        unclaimed_business_location:unclaimed_business_locations(name, city, street),
+        businesses(name)
       `)
       .order('created_at', { ascending: false })
       .limit(200);

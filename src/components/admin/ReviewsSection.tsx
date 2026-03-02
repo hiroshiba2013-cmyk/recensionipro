@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle, XCircle, Eye, Trash2, Edit, Star, Filter } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Star, Filter, MapPin, Building2, Calendar, Clock, User } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Review {
@@ -15,14 +15,28 @@ interface Review {
   created_at: string;
   customer: {
     full_name: string;
+    nickname: string | null;
     email: string;
   };
+  family_member?: {
+    nickname: string | null;
+    full_name: string;
+  } | null;
   business_id: string | null;
-  unclaimed_business_id: string | null;
-  business?: {
+  business_location_id: string | null;
+  unclaimed_business_location_id: string | null;
+  business_location?: {
     name: string;
+    internal_name: string | null;
+    city: string;
+    address: string;
   } | null;
   unclaimed_business_location?: {
+    name: string;
+    city: string;
+    street: string;
+  } | null;
+  businesses?: {
     name: string;
   } | null;
 }
@@ -36,19 +50,60 @@ interface ReviewsSectionProps {
 export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionProps) {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [editingReview, setEditingReview] = useState<Review | null>(null);
-  const [editForm, setEditForm] = useState({
-    title: '',
-    content: '',
-    overall_rating: 5,
-    price_rating: null as number | null,
-    service_rating: null as number | null,
-    quality_rating: null as number | null,
-  });
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [reviewToReject, setReviewToReject] = useState<string | null>(null);
 
   const filteredReviews = filterStatus === 'all'
     ? reviews
     : reviews.filter(r => r.review_status === filterStatus);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('it-IT', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('it-IT', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const getReviewerName = (review: Review) => {
+    if (review.family_member) {
+      return review.family_member.nickname || review.family_member.full_name;
+    }
+    return review.customer.nickname || review.customer.full_name;
+  };
+
+  const getBusinessName = (review: Review) => {
+    if (review.business_location) {
+      return review.business_location.internal_name || review.business_location.name || review.businesses?.name || 'Attività';
+    }
+    if (review.unclaimed_business_location) {
+      return review.unclaimed_business_location.name;
+    }
+    if (review.businesses) {
+      return review.businesses.name;
+    }
+    return 'Attività non specificata';
+  };
+
+  const getLocationInfo = (review: Review) => {
+    if (review.business_location) {
+      return `${review.business_location.address}, ${review.business_location.city}`;
+    }
+    if (review.unclaimed_business_location) {
+      return `${review.unclaimed_business_location.street}, ${review.unclaimed_business_location.city}`;
+    }
+    return 'Sede non specificata';
+  };
 
   const approveReview = async (reviewId: string) => {
     try {
@@ -68,99 +123,47 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
     }
   };
 
-  const rejectReview = async (reviewId: string) => {
-    if (!confirm('Sei sicuro di voler rifiutare questa recensione?')) return;
+  const openRejectModal = (reviewId: string) => {
+    setReviewToReject(reviewId);
+    setRejectReason('');
+    setShowRejectModal(true);
+  };
+
+  const confirmReject = async () => {
+    if (!reviewToReject) return;
+
+    if (!rejectReason.trim()) {
+      alert('Inserisci la motivazione del rifiuto');
+      return;
+    }
 
     try {
       const { error } = await supabase.rpc('reject_review', {
-        review_id_param: reviewId,
+        review_id_param: reviewToReject,
         staff_id_param: adminId,
       });
 
       if (error) throw error;
 
+      // Invia notifica all'utente con la motivazione
+      const review = reviews.find(r => r.id === reviewToReject);
+      if (review) {
+        await supabase.from('notifications').insert({
+          user_id: review.customer.email,
+          title: 'Recensione rifiutata',
+          message: `La tua recensione "${review.title}" è stata rifiutata. Motivazione: ${rejectReason}`,
+          type: 'review_rejected',
+        });
+      }
+
       alert('Recensione rifiutata');
+      setShowRejectModal(false);
+      setRejectReason('');
+      setReviewToReject(null);
       onReload();
       setSelectedReview(null);
     } catch (error: any) {
       console.error('Error rejecting review:', error);
-      alert(`Errore: ${error.message}`);
-    }
-  };
-
-  const deleteReview = async (reviewId: string) => {
-    if (!confirm('Sei sicuro di voler eliminare definitivamente questa recensione? Questa azione è irreversibile.')) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('reviews')
-        .delete()
-        .eq('id', reviewId);
-
-      if (error) throw error;
-
-      alert('Recensione eliminata con successo');
-      onReload();
-    } catch (error: any) {
-      console.error('Error deleting review:', error);
-      alert(`Errore: ${error.message}`);
-    }
-  };
-
-  const startEdit = (review: Review) => {
-    setEditingReview(review);
-    setEditForm({
-      title: review.title,
-      content: review.content,
-      overall_rating: review.overall_rating,
-      price_rating: review.price_rating,
-      service_rating: review.service_rating,
-      quality_rating: review.quality_rating,
-    });
-  };
-
-  const saveEdit = async () => {
-    if (!editingReview) return;
-
-    try {
-      const { error } = await supabase
-        .from('reviews')
-        .update({
-          title: editForm.title,
-          content: editForm.content,
-          overall_rating: editForm.overall_rating,
-          price_rating: editForm.price_rating,
-          service_rating: editForm.service_rating,
-          quality_rating: editForm.quality_rating,
-        })
-        .eq('id', editingReview.id);
-
-      if (error) throw error;
-
-      alert('Recensione modificata con successo');
-      setEditingReview(null);
-      onReload();
-    } catch (error: any) {
-      console.error('Error updating review:', error);
-      alert(`Errore: ${error.message}`);
-    }
-  };
-
-  const changeStatus = async (reviewId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from('reviews')
-        .update({ review_status: newStatus })
-        .eq('id', reviewId);
-
-      if (error) throw error;
-
-      alert('Stato recensione aggiornato');
-      onReload();
-    } catch (error: any) {
-      console.error('Error changing status:', error);
       alert(`Errore: ${error.message}`);
     }
   };
@@ -176,10 +179,10 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
             onChange={(e) => setFilterStatus(e.target.value)}
             className="border border-gray-300 rounded-lg px-4 py-2"
           >
-            <option value="all">Tutte</option>
-            <option value="pending">In attesa</option>
-            <option value="approved">Approvate</option>
-            <option value="rejected">Rifiutate</option>
+            <option value="all">Tutte ({reviews.length})</option>
+            <option value="pending">In attesa ({reviews.filter(r => r.review_status === 'pending').length})</option>
+            <option value="approved">Approvate ({reviews.filter(r => r.review_status === 'approved').length})</option>
+            <option value="rejected">Rifiutate ({reviews.filter(r => r.review_status === 'rejected').length})</option>
           </select>
         </div>
       </div>
@@ -190,307 +193,309 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
           <p className="text-gray-600">Nessuna recensione trovata</p>
         </div>
       ) : (
-        filteredReviews.map((review) => (
-          <div key={review.id} className="bg-white rounded-lg shadow p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex-1">
-                <h3 className="font-bold text-lg text-gray-900">{review.title}</h3>
-                <p className="text-sm text-gray-600">
-                  di {review.customer.full_name} ({review.customer.email})
-                </p>
-                <p className="text-sm text-gray-500">
-                  {new Date(review.created_at).toLocaleDateString('it-IT', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
-                {(review.business?.name || review.unclaimed_business_location?.name) && (
-                  <p className="text-sm text-blue-600 mt-1">
-                    Attività: {review.business?.name || review.unclaimed_business_location?.name}
-                  </p>
-                )}
-              </div>
-              <div className="flex flex-col items-end gap-2">
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className={`w-5 h-5 ${
-                        star <= review.overall_rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+        <div className="grid gap-4">
+          {filteredReviews.map((review) => (
+            <div key={review.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <User className="w-5 h-5 text-gray-500" />
+                    <h3 className="font-bold text-lg text-gray-900">{getReviewerName(review)}</h3>
+                    <span
+                      className={`px-3 py-1 text-xs rounded-full font-medium ${
+                        review.review_status === 'approved'
+                          ? 'bg-green-100 text-green-800'
+                          : review.review_status === 'pending'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
                       }`}
-                    />
-                  ))}
+                    >
+                      {review.review_status === 'approved' ? 'Approvata' : review.review_status === 'pending' ? 'In attesa' : 'Rifiutata'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>{formatDate(review.created_at)}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      <span>{formatTime(review.created_at)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2 mb-2">
+                    <Building2 className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-blue-900">{getBusinessName(review)}</p>
+                      <div className="flex items-center gap-1 text-sm text-gray-600">
+                        <MapPin className="w-3 h-3" />
+                        <span>{getLocationInfo(review)}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <span
-                  className={`px-3 py-1 text-xs rounded-full font-medium ${
-                    review.review_status === 'approved'
-                      ? 'bg-green-100 text-green-800'
-                      : review.review_status === 'pending'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}
-                >
-                  {review.review_status === 'approved' ? 'Approvata' : review.review_status === 'pending' ? 'In attesa' : 'Rifiutata'}
-                </span>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setSelectedReview(review)}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Visualizza
+                  </button>
+                </div>
               </div>
             </div>
+          ))}
+        </div>
+      )}
 
-            <p className="text-gray-700 mb-4 whitespace-pre-wrap">{review.content}</p>
-
-            {(review.price_rating || review.service_rating || review.quality_rating) && (
-              <div className="flex gap-6 mb-4 p-3 bg-gray-50 rounded-lg">
-                {review.price_rating && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-600 text-sm">Prezzo:</span>
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`w-4 h-4 ${
-                            star <= review.price_rating! ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {review.service_rating && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-600 text-sm">Servizio:</span>
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`w-4 h-4 ${
-                            star <= review.service_rating! ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {review.quality_rating && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-600 text-sm">Qualità:</span>
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`w-4 h-4 ${
-                            star <= review.quality_rating! ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
+      {/* Modal Dettaglio Recensione */}
+      {selectedReview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">Dettaglio Recensione</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  {formatDate(selectedReview.created_at)} alle {formatTime(selectedReview.created_at)}
+                </p>
               </div>
-            )}
+              <button
+                onClick={() => setSelectedReview(null)}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
 
-            {review.proof_image_url && (
-              <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-2 font-medium">Prova di acquisto:</p>
-                <button
-                  onClick={() => setSelectedReview(review)}
-                  className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
-                >
-                  <Eye className="w-4 h-4" />
-                  Visualizza immagine
-                </button>
+            <div className="p-6 space-y-6">
+              {/* Info Recensore */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-semibold text-gray-900 mb-2">Recensore</h4>
+                <p className="text-gray-700">{getReviewerName(selectedReview)}</p>
+                <p className="text-sm text-gray-500">{selectedReview.customer.email}</p>
               </div>
-            )}
 
-            <div className="flex gap-2 flex-wrap">
-              {review.review_status === 'pending' && (
-                <>
+              {/* Info Attività */}
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-blue-600" />
+                  Attività Recensita
+                </h4>
+                <p className="font-semibold text-blue-900">{getBusinessName(selectedReview)}</p>
+                <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                  <MapPin className="w-4 h-4" />
+                  {getLocationInfo(selectedReview)}
+                </p>
+              </div>
+
+              {/* Form Recensione (stessi campi del form utente) */}
+              <div className="border-t pt-6">
+                <h4 className="font-semibold text-gray-900 mb-4">Valutazioni</h4>
+
+                <div className="space-y-4">
+                  {/* Qualità */}
+                  {selectedReview.quality_rating && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        1. Qualità
+                      </label>
+                      <div className="flex gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`w-8 h-8 ${
+                              star <= selectedReview.quality_rating!
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2">
+                        {selectedReview.quality_rating === 1 && 'Pessimo'}
+                        {selectedReview.quality_rating === 2 && 'Discreto'}
+                        {selectedReview.quality_rating === 3 && 'Buono'}
+                        {selectedReview.quality_rating === 4 && 'Eccellente'}
+                        {selectedReview.quality_rating === 5 && 'Ottimo'}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Prezzo */}
+                  {selectedReview.price_rating && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        2. Prezzo
+                      </label>
+                      <div className="flex gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`w-8 h-8 ${
+                              star <= selectedReview.price_rating!
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2">
+                        {selectedReview.price_rating === 1 && 'Pessimo'}
+                        {selectedReview.price_rating === 2 && 'Discreto'}
+                        {selectedReview.price_rating === 3 && 'Buono'}
+                        {selectedReview.price_rating === 4 && 'Eccellente'}
+                        {selectedReview.price_rating === 5 && 'Ottimo'}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Servizio */}
+                  {selectedReview.service_rating && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        3. Esperienza / Servizio
+                      </label>
+                      <div className="flex gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`w-8 h-8 ${
+                              star <= selectedReview.service_rating!
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2">
+                        {selectedReview.service_rating === 1 && 'Pessimo'}
+                        {selectedReview.service_rating === 2 && 'Discreto'}
+                        {selectedReview.service_rating === 3 && 'Buono'}
+                        {selectedReview.service_rating === 4 && 'Eccellente'}
+                        {selectedReview.service_rating === 5 && 'Ottimo'}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Voto Generale */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      4. Voto Generale
+                    </label>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`w-8 h-8 ${
+                            star <= selectedReview.overall_rating
+                              ? 'fill-yellow-400 text-yellow-400'
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-sm text-gray-600 mt-2">
+                      {selectedReview.overall_rating === 1 && 'Pessimo'}
+                      {selectedReview.overall_rating === 2 && 'Discreto'}
+                      {selectedReview.overall_rating === 3 && 'Buono'}
+                      {selectedReview.overall_rating === 4 && 'Eccellente'}
+                      {selectedReview.overall_rating === 5 && 'Ottimo'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Titolo e Contenuto */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Titolo della recensione
+                </label>
+                <p className="text-gray-900 font-medium">{selectedReview.title}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Descrizione dell'esperienza
+                </label>
+                <p className="text-gray-700 whitespace-pre-wrap">{selectedReview.content}</p>
+              </div>
+
+              {/* Prova di Acquisto */}
+              {selectedReview.proof_image_url && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Prova di Acquisto
+                  </label>
+                  <img
+                    src={selectedReview.proof_image_url}
+                    alt="Prova di acquisto"
+                    className="w-full rounded-lg border border-gray-300"
+                  />
+                </div>
+              )}
+
+              {/* Azioni */}
+              {selectedReview.review_status === 'pending' && (
+                <div className="flex gap-3 pt-6 border-t">
                   <button
-                    onClick={() => approveReview(review.id)}
-                    className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                    onClick={() => approveReview(selectedReview.id)}
+                    className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-semibold"
                   >
                     <CheckCircle className="w-5 h-5" />
-                    Approva {review.proof_image_url ? '(50 punti)' : '(25 punti)'}
+                    Approva {selectedReview.proof_image_url ? '(50 punti)' : '(25 punti)'}
                   </button>
                   <button
-                    onClick={() => rejectReview(review.id)}
-                    className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                    onClick={() => openRejectModal(selectedReview.id)}
+                    className="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 font-semibold"
                   >
                     <XCircle className="w-5 h-5" />
                     Rifiuta
                   </button>
-                </>
+                </div>
               )}
-
-              {review.review_status === 'approved' && (
-                <select
-                  value={review.review_status}
-                  onChange={(e) => changeStatus(review.id, e.target.value)}
-                  className="border border-gray-300 rounded-lg px-4 py-2"
-                >
-                  <option value="approved">Approvata</option>
-                  <option value="rejected">Rifiuta</option>
-                </select>
-              )}
-
-              <button
-                onClick={() => startEdit(review)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-              >
-                <Edit className="w-5 h-5" />
-                Modifica
-              </button>
-
-              <button
-                onClick={() => deleteReview(review.id)}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
-              >
-                <Trash2 className="w-5 h-5" />
-                Elimina
-              </button>
-            </div>
-          </div>
-        ))
-      )}
-
-      {selectedReview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-bold">Prova di Acquisto</h3>
-                <button
-                  onClick={() => setSelectedReview(null)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <XCircle className="w-6 h-6" />
-                </button>
-              </div>
-              <img
-                src={selectedReview.proof_image_url || ''}
-                alt="Proof"
-                className="w-full rounded-lg"
-              />
             </div>
           </div>
         </div>
       )}
 
-      {editingReview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      {/* Modal Rifiuto con Motivazione */}
+      {showRejectModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
             <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-bold">Modifica Recensione</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Rifiuta Recensione</h3>
+              <p className="text-gray-600 mb-4">
+                Inserisci la motivazione del rifiuto. L'utente riceverà una notifica con questa spiegazione.
+              </p>
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Es: La recensione contiene linguaggio inappropriato..."
+                rows={4}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+              />
+              <div className="flex gap-3 mt-6">
                 <button
-                  onClick={() => setEditingReview(null)}
-                  className="text-gray-500 hover:text-gray-700"
+                  onClick={confirmReject}
+                  disabled={!rejectReason.trim()}
+                  className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  <XCircle className="w-6 h-6" />
+                  Conferma Rifiuto
                 </button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Titolo
-                  </label>
-                  <input
-                    type="text"
-                    value={editForm.title}
-                    onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contenuto
-                  </label>
-                  <textarea
-                    value={editForm.content}
-                    onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
-                    rows={6}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Valutazione Complessiva: {editForm.overall_rating}/5
-                  </label>
-                  <input
-                    type="range"
-                    min="1"
-                    max="5"
-                    value={editForm.overall_rating}
-                    onChange={(e) => setEditForm({ ...editForm, overall_rating: parseInt(e.target.value) })}
-                    className="w-full"
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Prezzo
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="5"
-                      value={editForm.price_rating || ''}
-                      onChange={(e) => setEditForm({ ...editForm, price_rating: e.target.value ? parseInt(e.target.value) : null })}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2"
-                      placeholder="1-5"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Servizio
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="5"
-                      value={editForm.service_rating || ''}
-                      onChange={(e) => setEditForm({ ...editForm, service_rating: e.target.value ? parseInt(e.target.value) : null })}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2"
-                      placeholder="1-5"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Qualità
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="5"
-                      value={editForm.quality_rating || ''}
-                      onChange={(e) => setEditForm({ ...editForm, quality_rating: e.target.value ? parseInt(e.target.value) : null })}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2"
-                      placeholder="1-5"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={saveEdit}
-                    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Salva Modifiche
-                  </button>
-                  <button
-                    onClick={() => setEditingReview(null)}
-                    className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
-                  >
-                    Annulla
-                  </button>
-                </div>
+                <button
+                  onClick={() => {
+                    setShowRejectModal(false);
+                    setRejectReason('');
+                    setReviewToReject(null);
+                  }}
+                  className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+                >
+                  Annulla
+                </button>
               </div>
             </div>
           </div>
