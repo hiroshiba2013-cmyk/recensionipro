@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { User, Calendar, Mail, Shield, Clock, LogOut, CheckCircle, XCircle, Edit2, Save, X } from 'lucide-react';
+import { User, Calendar, Mail, Shield, Clock, LogOut, CheckCircle, XCircle, Edit2, Save, X, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { DeleteAdminAccountButton } from '../components/admin/DeleteAdminAccountButton';
 
 interface AdminProfileData {
   id: string;
@@ -581,6 +582,34 @@ export function AdminProfilePage() {
                   <p className="text-gray-600">Nessun accesso registrato</p>
                 </div>
               )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border-2 border-red-300 overflow-hidden">
+            <div className="px-6 py-5 border-b border-red-200 bg-gradient-to-r from-red-50 to-red-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-600 rounded-lg">
+                  <Trash2 className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Zona Pericolosa</h2>
+                  <p className="text-sm text-red-700 font-semibold">Azioni irreversibili</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="flex items-start justify-between gap-6">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">Elimina Account Admin</h3>
+                  <p className="text-gray-600 mb-1">
+                    Questa azione eliminerà permanentemente il tuo account amministratore e tutti i dati associati.
+                  </p>
+                  <p className="text-sm text-red-600 font-semibold">
+                    Questa operazione NON può essere annullata!
+                  </p>
+                </div>
+                <DeleteAdminAccountButton adminId={profileData.id} adminEmail={profileData.email} />
+              </div>
             </div>
           </div>
         </div>
