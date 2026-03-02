@@ -103,6 +103,8 @@ Deno.serve(async (req: Request) => {
         phone: phone || null,
         user_type: 'admin',
         is_admin: true,
+        subscription_status: null,
+        subscription_type: null,
       });
 
     if (profileError) {
