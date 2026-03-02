@@ -96,11 +96,14 @@ Deno.serve(async (req: Request) => {
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
 
-    // Create profile directly (bypassing RLS)
-    console.log('Creating profile for user ID:', authData.user.id);
+    // Wait a moment for trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Update or create profile directly (bypassing RLS)
+    console.log('Updating/Creating profile for user ID:', authData.user.id);
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .insert({
+      .upsert({
         id: authData.user.id,
         email,
         full_name: fullName,
@@ -113,6 +116,8 @@ Deno.serve(async (req: Request) => {
         is_admin: true,
         subscription_status: null,
         subscription_type: null,
+      }, {
+        onConflict: 'id'
       });
 
     if (profileError) {
