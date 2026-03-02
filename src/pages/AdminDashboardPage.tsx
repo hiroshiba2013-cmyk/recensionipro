@@ -237,10 +237,16 @@ export function AdminDashboardPage() {
         await loadUsers();
       } else if (activeTab === 'subscriptions') {
         await loadSubscriptions();
+      } else if (activeTab === 'ads') {
+        await loadClassifiedAds();
       } else if (activeTab === 'reports') {
         await loadReports();
+      } else if (activeTab === 'jobs') {
+        await loadJobPostings();
       } else if (activeTab === 'businesses') {
         await loadBusinesses();
+      } else if (activeTab === 'products') {
+        await loadProducts();
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -732,6 +738,17 @@ export function AdminDashboardPage() {
                 Abbonamenti
               </button>
               <button
+                onClick={() => setActiveTab('ads')}
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'ads'
+                    ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <ShoppingBag className="w-4 h-4" />
+                Annunci
+              </button>
+              <button
                 onClick={() => setActiveTab('reports')}
                 className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'reports'
@@ -757,6 +774,39 @@ export function AdminDashboardPage() {
               >
                 <Building2 className="w-4 h-4" />
                 Attività
+              </button>
+              <button
+                onClick={() => setActiveTab('jobs')}
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'jobs'
+                    ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <Briefcase className="w-4 h-4" />
+                Lavoro
+              </button>
+              <button
+                onClick={() => setActiveTab('solidarity')}
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'solidarity'
+                    ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <Heart className="w-4 h-4" />
+                Solidarietà
+              </button>
+              <button
+                onClick={() => setActiveTab('leaderboard')}
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'leaderboard'
+                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <Award className="w-4 h-4" />
+                Classifica
               </button>
               <button
                 onClick={() => setActiveTab('tracking')}
@@ -887,9 +937,19 @@ export function AdminDashboardPage() {
               </div>
             )}
 
+            {activeTab === 'ads' && (
+              <ClassifiedAdsSection ads={classifiedAds} onReload={loadClassifiedAds} />
+            )}
+
             {activeTab === 'reports' && <ReportsSection reports={reports} onReload={loadReports} />}
 
             {activeTab === 'businesses' && <BusinessesSection onReload={loadBusinesses} />}
+
+            {activeTab === 'jobs' && <JobPostingsSection jobPostings={jobPostings} onReload={loadJobPostings} />}
+
+            {activeTab === 'solidarity' && <SolidaritySection onReload={loadData} />}
+
+            {activeTab === 'leaderboard' && <LeaderboardSection />}
 
             {activeTab === 'tracking' && <BusinessTrackingSection onReload={loadData} />}
           </>
