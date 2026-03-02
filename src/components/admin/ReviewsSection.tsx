@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle, XCircle, Eye, Star, Filter, MapPin, Building2, Calendar, Clock, User } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Star, Filter, MapPin, Building2, Calendar, Clock, User, Search, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Review {
@@ -50,13 +50,68 @@ interface ReviewsSectionProps {
 export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionProps) {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchNickname, setSearchNickname] = useState('');
+  const [filterQuality, setFilterQuality] = useState<number | ''>('');
+  const [filterPrice, setFilterPrice] = useState<number | ''>('');
+  const [filterService, setFilterService] = useState<number | ''>('');
+  const [filterOverall, setFilterOverall] = useState<number | ''>('');
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [reviewToReject, setReviewToReject] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
 
-  const filteredReviews = filterStatus === 'all'
-    ? reviews
-    : reviews.filter(r => r.review_status === filterStatus);
+  const getReviewerName = (review: Review) => {
+    if (review.family_member) {
+      return review.family_member.nickname || review.family_member.full_name;
+    }
+    return review.customer.nickname || review.customer.full_name;
+  };
+
+  const filteredReviews = reviews.filter(review => {
+    // Filtro per stato
+    if (filterStatus !== 'all' && review.review_status !== filterStatus) {
+      return false;
+    }
+
+    // Filtro per nickname
+    if (searchNickname.trim()) {
+      const reviewerName = getReviewerName(review).toLowerCase();
+      if (!reviewerName.includes(searchNickname.toLowerCase())) {
+        return false;
+      }
+    }
+
+    // Filtro per qualità
+    if (filterQuality !== '' && review.quality_rating !== filterQuality) {
+      return false;
+    }
+
+    // Filtro per prezzo
+    if (filterPrice !== '' && review.price_rating !== filterPrice) {
+      return false;
+    }
+
+    // Filtro per servizio
+    if (filterService !== '' && review.service_rating !== filterService) {
+      return false;
+    }
+
+    // Filtro per voto generale
+    if (filterOverall !== '' && review.overall_rating !== filterOverall) {
+      return false;
+    }
+
+    return true;
+  });
+
+  const clearFilters = () => {
+    setFilterStatus('all');
+    setSearchNickname('');
+    setFilterQuality('');
+    setFilterPrice('');
+    setFilterService('');
+    setFilterOverall('');
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -73,13 +128,6 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
-
-  const getReviewerName = (review: Review) => {
-    if (review.family_member) {
-      return review.family_member.nickname || review.family_member.full_name;
-    }
-    return review.customer.nickname || review.customer.full_name;
   };
 
   const getBusinessName = (review: Review) => {
@@ -172,20 +220,147 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold text-gray-900">Gestione Recensioni</h2>
-        <div className="flex items-center gap-2">
-          <Filter className="w-5 h-5 text-gray-500" />
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="border border-gray-300 rounded-lg px-4 py-2"
-          >
-            <option value="all">Tutte ({reviews.length})</option>
-            <option value="pending">In attesa ({reviews.filter(r => r.review_status === 'pending').length})</option>
-            <option value="approved">Approvate ({reviews.filter(r => r.review_status === 'approved').length})</option>
-            <option value="rejected">Rifiutate ({reviews.filter(r => r.review_status === 'rejected').length})</option>
-          </select>
-        </div>
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <Filter className="w-5 h-5" />
+          {showFilters ? 'Nascondi Filtri' : 'Mostra Filtri'}
+        </button>
       </div>
+
+      {/* Pannello Filtri */}
+      {showFilters && (
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold text-gray-900">Filtri di Ricerca</h3>
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-2 text-red-600 hover:text-red-700 font-medium"
+            >
+              <X className="w-4 h-4" />
+              Pulisci Filtri
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Ricerca per Nickname */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <Search className="w-4 h-4 inline mr-1" />
+                Cerca per Nickname
+              </label>
+              <input
+                type="text"
+                value={searchNickname}
+                onChange={(e) => setSearchNickname(e.target.value)}
+                placeholder="Inserisci nickname..."
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Filtro Stato */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Stato Recensione
+              </label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">Tutte ({reviews.length})</option>
+                <option value="pending">In attesa ({reviews.filter(r => r.review_status === 'pending').length})</option>
+                <option value="approved">Approvate ({reviews.filter(r => r.review_status === 'approved').length})</option>
+                <option value="rejected">Rifiutate ({reviews.filter(r => r.review_status === 'rejected').length})</option>
+              </select>
+            </div>
+
+            {/* Filtro Qualità */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                1. Qualità
+              </label>
+              <select
+                value={filterQuality}
+                onChange={(e) => setFilterQuality(e.target.value === '' ? '' : Number(e.target.value))}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Tutte</option>
+                <option value="1">⭐ Pessimo (1)</option>
+                <option value="2">⭐⭐ Discreto (2)</option>
+                <option value="3">⭐⭐⭐ Buono (3)</option>
+                <option value="4">⭐⭐⭐⭐ Eccellente (4)</option>
+                <option value="5">⭐⭐⭐⭐⭐ Ottimo (5)</option>
+              </select>
+            </div>
+
+            {/* Filtro Prezzo */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                2. Prezzo
+              </label>
+              <select
+                value={filterPrice}
+                onChange={(e) => setFilterPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Tutte</option>
+                <option value="1">⭐ Pessimo (1)</option>
+                <option value="2">⭐⭐ Discreto (2)</option>
+                <option value="3">⭐⭐⭐ Buono (3)</option>
+                <option value="4">⭐⭐⭐⭐ Eccellente (4)</option>
+                <option value="5">⭐⭐⭐⭐⭐ Ottimo (5)</option>
+              </select>
+            </div>
+
+            {/* Filtro Servizio */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                3. Esperienza / Servizio
+              </label>
+              <select
+                value={filterService}
+                onChange={(e) => setFilterService(e.target.value === '' ? '' : Number(e.target.value))}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Tutte</option>
+                <option value="1">⭐ Pessimo (1)</option>
+                <option value="2">⭐⭐ Discreto (2)</option>
+                <option value="3">⭐⭐⭐ Buono (3)</option>
+                <option value="4">⭐⭐⭐⭐ Eccellente (4)</option>
+                <option value="5">⭐⭐⭐⭐⭐ Ottimo (5)</option>
+              </select>
+            </div>
+
+            {/* Filtro Voto Generale */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                4. Voto Generale
+              </label>
+              <select
+                value={filterOverall}
+                onChange={(e) => setFilterOverall(e.target.value === '' ? '' : Number(e.target.value))}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Tutte</option>
+                <option value="1">⭐ Pessimo (1)</option>
+                <option value="2">⭐⭐ Discreto (2)</option>
+                <option value="3">⭐⭐⭐ Buono (3)</option>
+                <option value="4">⭐⭐⭐⭐ Eccellente (4)</option>
+                <option value="5">⭐⭐⭐⭐⭐ Ottimo (5)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Contatore Risultati */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <p className="text-sm text-gray-600">
+              <strong className="text-gray-900">{filteredReviews.length}</strong> recensioni trovate su <strong className="text-gray-900">{reviews.length}</strong> totali
+            </p>
+          </div>
+        </div>
+      )}
 
       {filteredReviews.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-8 text-center">
