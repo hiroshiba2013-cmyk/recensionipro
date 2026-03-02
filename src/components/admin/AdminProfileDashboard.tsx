@@ -171,16 +171,6 @@ export function AdminProfileDashboard({ adminId }: Props) {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <User className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Numero Utente</p>
-                  <p className="text-lg font-bold text-gray-900">123456</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
                 <div className="p-2 bg-green-50 rounded-lg">
                   <User className="w-5 h-5 text-green-600" />
                 </div>
@@ -192,8 +182,8 @@ export function AdminProfileDashboard({ adminId }: Props) {
 
               {profileData.nickname && (
                 <div className="flex items-start gap-3">
-                  <div className="p-2 bg-purple-50 rounded-lg">
-                    <User className="w-5 h-5 text-purple-600" />
+                  <div className="p-2 bg-blue-50 rounded-lg">
+                    <User className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Nickname</p>
@@ -222,18 +212,6 @@ export function AdminProfileDashboard({ adminId }: Props) {
                   <div>
                     <p className="text-sm text-gray-600">Codice Fiscale</p>
                     <p className="text-lg font-semibold text-gray-900">{profileData.fiscal_code}</p>
-                  </div>
-                </div>
-              )}
-
-              {profileData.phone && (
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-teal-50 rounded-lg">
-                    <User className="w-5 h-5 text-teal-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Telefono</p>
-                    <p className="text-lg font-semibold text-gray-900">{profileData.phone}</p>
                   </div>
                 </div>
               )}
