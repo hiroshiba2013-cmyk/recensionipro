@@ -54,6 +54,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Create user in auth
+    console.log('Creating auth user with email:', email);
     const { data: authData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -66,7 +67,10 @@ Deno.serve(async (req: Request) => {
     if (signUpError) {
       console.error('SignUp error:', signUpError);
       return new Response(
-        JSON.stringify({ error: signUpError.message }),
+        JSON.stringify({
+          error: `Errore creazione utente auth: ${signUpError.message}`,
+          details: signUpError
+        }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -75,8 +79,9 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!authData.user) {
+      console.error('No user data returned from auth.admin.createUser');
       return new Response(
-        JSON.stringify({ error: 'Errore durante la creazione dell\'account' }),
+        JSON.stringify({ error: 'Errore durante la creazione dell\'account - nessun dato utente restituito' }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -84,12 +89,15 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    console.log('Auth user created successfully with ID:', authData.user.id);
+
     // Split full name into first and last name
     const nameParts = fullName.trim().split(' ');
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
 
     // Create profile directly (bypassing RLS)
+    console.log('Creating profile for user ID:', authData.user.id);
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .insert({
@@ -108,19 +116,27 @@ Deno.serve(async (req: Request) => {
       });
 
     if (profileError) {
-      console.error('Profile error:', profileError);
+      console.error('Profile creation error:', profileError);
+      console.error('Profile error details:', JSON.stringify(profileError, null, 2));
 
       // Cleanup: delete the auth user if profile creation fails
+      console.log('Cleaning up auth user...');
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
 
       return new Response(
-        JSON.stringify({ error: `Errore nella creazione del profilo: ${profileError.message}` }),
+        JSON.stringify({
+          error: `Errore database creazione profilo: ${profileError.message}`,
+          code: profileError.code,
+          details: profileError.details
+        }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
     }
+
+    console.log('Profile created successfully');
 
     // Add to admins table
     const { error: adminError } = await supabaseAdmin
