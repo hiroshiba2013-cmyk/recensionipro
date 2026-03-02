@@ -158,7 +158,8 @@ export function AdminProfilePage() {
   };
 
   const filteredLogs = loginLogs.filter((log) => {
-    if (viewMode === 'login') return true;
+    if (viewMode === 'all') return true;
+    if (viewMode === 'login') return log.logout_time === null;
     if (viewMode === 'logout') return log.logout_time !== null;
     return true;
   });
@@ -271,6 +272,18 @@ export function AdminProfilePage() {
             <div className="p-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-blue-50 rounded-lg">
+                      <Shield className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-600 mb-1">Numero Utente (ID)</p>
+                      <p className="text-sm font-mono font-semibold text-gray-900 bg-gray-100 px-3 py-2 rounded-lg border border-gray-300">
+                        {profileData.id}
+                      </p>
+                    </div>
+                  </div>
+
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-green-50 rounded-lg">
                       <User className="w-5 h-5 text-green-600" />
@@ -465,8 +478,56 @@ export function AdminProfilePage() {
                 <div className="space-y-3">
                   {filteredLogs.map((log) => (
                     <div key={log.id}>
-                      {(viewMode === 'all' || viewMode === 'login') && (
-                        <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors border-l-4 border-green-500 mb-2">
+                      {viewMode === 'all' && (
+                        <>
+                          <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors border-l-4 border-green-500 mb-2">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-green-500 rounded-lg">
+                                <CheckCircle className="w-5 h-5 text-white" />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-gray-900">
+                                  Login: {new Date(log.login_time).toLocaleString('it-IT', {
+                                    day: 'numeric',
+                                    month: 'long',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </p>
+                                {log.ip_address && (
+                                  <p className="text-sm text-gray-600">IP: {log.ip_address}</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          {log.logout_time && (
+                            <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors border-l-4 border-red-500 mb-2">
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 bg-red-500 rounded-lg">
+                                  <XCircle className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-gray-900">
+                                    Logout: {new Date(log.logout_time).toLocaleString('it-IT', {
+                                      day: 'numeric',
+                                      month: 'long',
+                                      year: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </p>
+                                  {log.ip_address && (
+                                    <p className="text-sm text-gray-600">IP: {log.ip_address}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                      {viewMode === 'login' && (
+                        <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors border-l-4 border-green-500">
                           <div className="flex items-center gap-3">
                             <div className="p-2 bg-green-500 rounded-lg">
                               <CheckCircle className="w-5 h-5 text-white" />
@@ -488,7 +549,7 @@ export function AdminProfilePage() {
                           </div>
                         </div>
                       )}
-                      {log.logout_time && (viewMode === 'all' || viewMode === 'logout') && (
+                      {viewMode === 'logout' && log.logout_time && (
                         <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors border-l-4 border-red-500">
                           <div className="flex items-center gap-3">
                             <div className="p-2 bg-red-500 rounded-lg">

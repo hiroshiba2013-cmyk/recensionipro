@@ -23,7 +23,7 @@ Deno.serve(async (req: Request) => {
     // Create admin client with service role (bypasses RLS)
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { email, password, fullName, fiscalCode, userCode, adminKey } = await req.json();
+    const { email, password, fullName, fiscalCode, userCode, phone, adminKey } = await req.json();
 
     // Verify admin key
     if (adminKey !== ADMIN_SECRET_KEY) {
@@ -84,6 +84,11 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Split full name into first and last name
+    const nameParts = fullName.trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
     // Create profile directly (bypassing RLS)
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
@@ -91,8 +96,11 @@ Deno.serve(async (req: Request) => {
         id: authData.user.id,
         email,
         full_name: fullName,
+        first_name: firstName,
+        last_name: lastName,
         fiscal_code: fiscalCode.toUpperCase(),
         nickname: userCode,
+        phone: phone || null,
         user_type: 'admin',
         subscription_status: 'active',
         is_admin: true,
