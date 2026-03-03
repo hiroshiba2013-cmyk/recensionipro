@@ -88,14 +88,35 @@ interface Subscription {
   status: string;
   start_date: string;
   end_date: string;
+  customer_id: string;
   customer: {
     full_name: string;
     email: string;
+    user_type: string;
+    nickname?: string;
   };
   plan: {
     name: string;
     price: number;
   };
+}
+
+interface FamilyMember {
+  id: string;
+  nickname: string | null;
+  full_name: string;
+  relationship: string;
+}
+
+interface BusinessLocation {
+  id: string;
+  name: string;
+  internal_name: string | null;
+  city: string;
+  province: string;
+  address: string;
+  phone: string | null;
+  email: string | null;
 }
 
 interface ClassifiedAd {
@@ -198,6 +219,10 @@ export function AdminDashboardPage() {
   const [selectedReview, setSelectedReview] = useState<PendingReview | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
+  const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -364,7 +389,8 @@ export function AdminDashboardPage() {
         status,
         start_date,
         end_date,
-        customer:profiles!subscriptions_customer_id_fkey(full_name, email),
+        customer_id,
+        customer:profiles!subscriptions_customer_id_fkey(full_name, email, user_type, nickname),
         plan:subscription_plans(name, price)
       `)
       .order('start_date', { ascending: false })
@@ -615,6 +641,48 @@ export function AdminDashboardPage() {
       console.error('Error updating subscription:', error);
       alert(`Errore: ${error.message}`);
     }
+  };
+
+  const viewSubscriptionDetails = async (subscription: Subscription) => {
+    setSelectedSubscription(subscription);
+    setLoadingDetails(true);
+    setFamilyMembers([]);
+    setBusinessLocations([]);
+
+    try {
+      if (subscription.customer.user_type === 'customer') {
+        // Carica membri famiglia per utenti privati
+        const { data: familyData, error: familyError } = await supabase
+          .from('family_members')
+          .select('id, nickname, full_name, relationship')
+          .eq('customer_id', subscription.customer_id)
+          .order('relationship');
+
+        if (familyError) throw familyError;
+        setFamilyMembers(familyData || []);
+      } else if (subscription.customer.user_type === 'business') {
+        // Carica sedi per aziende
+        const { data: locationsData, error: locationsError } = await supabase
+          .from('business_locations')
+          .select('id, name, internal_name, city, province, address, phone, email')
+          .eq('business_id', subscription.customer_id)
+          .order('name');
+
+        if (locationsError) throw locationsError;
+        setBusinessLocations(locationsData || []);
+      }
+    } catch (error: any) {
+      console.error('Error loading subscription details:', error);
+      alert(`Errore nel caricamento dei dettagli: ${error.message}`);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  const closeSubscriptionDetails = () => {
+    setSelectedSubscription(null);
+    setFamilyMembers([]);
+    setBusinessLocations([]);
   };
 
   const updateAdStatus = async (adId: string, newStatus: string) => {
@@ -933,7 +1001,14 @@ export function AdminDashboardPage() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {new Date(sub.end_date).toLocaleDateString('it-IT')}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm flex gap-2">
+                            <button
+                              onClick={() => viewSubscriptionDetails(sub)}
+                              className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors"
+                              title="Visualizza dettagli"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
                             <select
                               value={sub.status}
                               onChange={(e) => updateSubscriptionStatus(sub.id, e.target.value)}
@@ -950,6 +1025,182 @@ export function AdminDashboardPage() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Modal Dettagli Abbonamento */}
+                {selectedSubscription && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                      <div className="sticky top-0 bg-gradient-to-r from-teal-600 to-teal-700 px-6 py-4 flex items-center justify-between">
+                        <h3 className="text-xl font-bold text-white">Dettagli Abbonamento</h3>
+                        <button
+                          onClick={closeSubscriptionDetails}
+                          className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                        >
+                          <XCircle className="w-5 h-5 text-white" />
+                        </button>
+                      </div>
+
+                      <div className="p-6 space-y-6">
+                        {/* Informazioni Utente */}
+                        <div className="bg-gray-50 rounded-lg p-4">
+                          <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                            <Users className="w-5 h-5 text-teal-600" />
+                            Informazioni Utente
+                          </h4>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="text-gray-600">Nome:</span>
+                              <p className="font-medium">{selectedSubscription.customer.nickname || selectedSubscription.customer.full_name}</p>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Email:</span>
+                              <p className="font-medium">{selectedSubscription.customer.email}</p>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Tipo:</span>
+                              <p className="font-medium">
+                                {selectedSubscription.customer.user_type === 'customer' ? 'Privato' : 'Azienda'}
+                              </p>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Piano:</span>
+                              <p className="font-medium">{selectedSubscription.plan.name}</p>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Prezzo:</span>
+                              <p className="font-medium text-green-600">€{selectedSubscription.plan.price}</p>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Stato:</span>
+                              <span
+                                className={`inline-block px-2 py-1 text-xs rounded-full font-medium ${
+                                  selectedSubscription.status === 'active'
+                                    ? 'bg-green-100 text-green-800'
+                                    : selectedSubscription.status === 'trial'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-red-100 text-red-800'
+                                }`}
+                              >
+                                {selectedSubscription.status}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Loading State */}
+                        {loadingDetails && (
+                          <div className="flex items-center justify-center py-8">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+                          </div>
+                        )}
+
+                        {/* Membri Famiglia (per utenti privati) */}
+                        {!loadingDetails && selectedSubscription.customer.user_type === 'customer' && (
+                          <div>
+                            <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                              <Users className="w-5 h-5 text-teal-600" />
+                              Membri Famiglia ({familyMembers.length})
+                            </h4>
+                            {familyMembers.length === 0 ? (
+                              <div className="bg-gray-50 rounded-lg p-6 text-center">
+                                <Users className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                                <p className="text-gray-600">Nessun membro famiglia registrato</p>
+                              </div>
+                            ) : (
+                              <div className="grid md:grid-cols-2 gap-4">
+                                {familyMembers.map((member) => (
+                                  <div key={member.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                                    <div className="flex items-start gap-3">
+                                      <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <Users className="w-5 h-5 text-teal-600" />
+                                      </div>
+                                      <div className="flex-1">
+                                        <p className="font-semibold text-gray-900">
+                                          {member.nickname || member.full_name}
+                                        </p>
+                                        {member.nickname && (
+                                          <p className="text-sm text-gray-600">{member.full_name}</p>
+                                        )}
+                                        <p className="text-sm text-gray-500 mt-1">
+                                          <span className="inline-block px-2 py-1 bg-gray-100 rounded text-xs">
+                                            {member.relationship}
+                                          </span>
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Sedi Business (per aziende) */}
+                        {!loadingDetails && selectedSubscription.customer.user_type === 'business' && (
+                          <div>
+                            <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                              <Building2 className="w-5 h-5 text-teal-600" />
+                              Sedi Aziendali ({businessLocations.length})
+                            </h4>
+                            {businessLocations.length === 0 ? (
+                              <div className="bg-gray-50 rounded-lg p-6 text-center">
+                                <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                                <p className="text-gray-600">Nessuna sede registrata</p>
+                              </div>
+                            ) : (
+                              <div className="space-y-4">
+                                {businessLocations.map((location) => (
+                                  <div key={location.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                                    <div className="flex items-start gap-3">
+                                      <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <MapPin className="w-5 h-5 text-teal-600" />
+                                      </div>
+                                      <div className="flex-1">
+                                        <h5 className="font-semibold text-gray-900">
+                                          {location.internal_name || location.name}
+                                        </h5>
+                                        {location.internal_name && (
+                                          <p className="text-sm text-gray-600">{location.name}</p>
+                                        )}
+                                        <div className="mt-2 space-y-1 text-sm">
+                                          <p className="text-gray-700">
+                                            <span className="font-medium">Indirizzo:</span> {location.address}
+                                          </p>
+                                          <p className="text-gray-700">
+                                            <span className="font-medium">Città:</span> {location.city}, {location.province}
+                                          </p>
+                                          {location.phone && (
+                                            <p className="text-gray-700">
+                                              <span className="font-medium">Telefono:</span> {location.phone}
+                                            </p>
+                                          )}
+                                          {location.email && (
+                                            <p className="text-gray-700">
+                                              <span className="font-medium">Email:</span> {location.email}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="sticky bottom-0 bg-gray-50 px-6 py-4 flex justify-end border-t border-gray-200">
+                        <button
+                          onClick={closeSubscriptionDetails}
+                          className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium"
+                        >
+                          Chiudi
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
