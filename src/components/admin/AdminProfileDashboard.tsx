@@ -260,131 +260,130 @@ export function AdminProfileDashboard({ adminId }: Props) {
           </div>
         </div>
         <div className="p-6">
-          <div className="mb-8 flex items-center gap-6 p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200">
-            <div className="relative group">
-              <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 border-4 border-white shadow-lg">
-                {adminData?.avatar_url ? (
-                  <img
-                    src={adminData.avatar_url}
-                    alt="Avatar Admin"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600">
-                    <User className="w-16 h-16 text-white" />
-                  </div>
-                )}
-              </div>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="absolute bottom-0 right-0 p-2 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
-                title="Cambia Avatar"
-              >
-                {uploading ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                ) : (
-                  <Camera className="w-5 h-5" />
-                )}
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarUpload}
-                className="hidden"
-              />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">{profileData.full_name}</h3>
-              {editingNickname ? (
-                <div className="flex items-center gap-2 mb-3">
-                  <input
-                    type="text"
-                    value={newNickname}
-                    onChange={(e) => setNewNickname(e.target.value)}
-                    placeholder="Inserisci nickname"
-                    className="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <button
-                    onClick={handleNicknameUpdate}
-                    className="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm"
-                  >
-                    Salva
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEditingNickname(false);
-                      setNewNickname(adminData?.nickname || '');
-                    }}
-                    className="px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
-                  >
-                    Annulla
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 mb-3">
-                  {adminData?.nickname ? (
-                    <span className="text-lg text-gray-700 font-medium">@{adminData.nickname}</span>
-                  ) : (
-                    <span className="text-gray-500 italic">Nessun nickname</span>
-                  )}
-                  <button
-                    onClick={() => setEditingNickname(true)}
-                    className="text-blue-600 hover:text-blue-700 text-sm underline"
-                  >
-                    Modifica
-                  </button>
-                </div>
-              )}
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Shield className="w-4 h-4 text-red-600" />
-                <span>Amministratore</span>
-              </div>
-            </div>
-          </div>
           <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <User className="w-5 h-5 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-600">Avatar</p>
+                  <div className="mt-2">
+                    <div className="relative inline-block">
+                      <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 border-2 border-gray-300">
+                        {adminData?.avatar_url ? (
+                          <img
+                            src={adminData.avatar_url}
+                            alt="Avatar Admin"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600">
+                            <User className="w-12 h-12 text-white" />
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                        className="absolute bottom-0 right-0 p-1.5 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+                        title="Cambia Avatar"
+                      >
+                        {uploading ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        ) : (
+                          <Camera className="w-4 h-4" />
+                        )}
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarUpload}
+                        className="hidden"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <div className="p-2 bg-green-50 rounded-lg">
                   <User className="w-5 h-5 text-green-600" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-sm text-gray-600">Nome Completo</p>
                   <p className="text-lg font-semibold text-gray-900">{profileData.full_name}</p>
                 </div>
               </div>
 
-              {profileData.nickname && (
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-blue-50 rounded-lg">
-                    <User className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Nickname</p>
-                    <p className="text-lg font-semibold text-gray-900">{profileData.nickname}</p>
-                  </div>
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <User className="w-5 h-5 text-blue-600" />
                 </div>
-              )}
+                <div className="flex-1">
+                  <p className="text-sm text-gray-600 mb-2">Nickname</p>
+                  {editingNickname ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newNickname}
+                        onChange={(e) => setNewNickname(e.target.value)}
+                        placeholder="Inserisci nickname"
+                        className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      />
+                      <button
+                        onClick={handleNicknameUpdate}
+                        className="px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+                      >
+                        Salva
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingNickname(false);
+                          setNewNickname(adminData?.nickname || '');
+                        }}
+                        className="px-3 py-1.5 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm font-medium"
+                      >
+                        Annulla
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      {adminData?.nickname ? (
+                        <span className="text-lg font-semibold text-gray-900">@{adminData.nickname}</span>
+                      ) : (
+                        <span className="text-gray-500 italic">Nessun nickname</span>
+                      )}
+                      <button
+                        onClick={() => setEditingNickname(true)}
+                        className="text-blue-600 hover:text-blue-700 text-sm underline font-medium"
+                      >
+                        Modifica
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               <div className="flex items-start gap-3">
                 <div className="p-2 bg-yellow-50 rounded-lg">
                   <Mail className="w-5 h-5 text-yellow-600" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-sm text-gray-600">Email</p>
                   <p className="text-lg font-semibold text-gray-900">{profileData.email}</p>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-4">
               {profileData.fiscal_code && (
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-orange-50 rounded-lg">
                     <User className="w-5 h-5 text-orange-600" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <p className="text-sm text-gray-600">Codice Fiscale</p>
                     <p className="text-lg font-semibold text-gray-900">{profileData.fiscal_code}</p>
                   </div>
@@ -395,7 +394,7 @@ export function AdminProfileDashboard({ adminId }: Props) {
                 <div className="p-2 bg-red-50 rounded-lg">
                   <Shield className="w-5 h-5 text-red-600" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-sm text-gray-600">Ruolo</p>
                   <p className="text-lg font-semibold text-gray-900">Amministratore</p>
                 </div>
@@ -405,7 +404,7 @@ export function AdminProfileDashboard({ adminId }: Props) {
                 <div className="p-2 bg-gray-50 rounded-lg">
                   <Calendar className="w-5 h-5 text-gray-600" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-sm text-gray-600">Data Iscrizione</p>
                   <p className="text-lg font-semibold text-gray-900">
                     {new Date(profileData.created_at).toLocaleDateString('it-IT', {
