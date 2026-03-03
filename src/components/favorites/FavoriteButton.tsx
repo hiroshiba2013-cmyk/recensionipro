@@ -109,8 +109,14 @@ export function FavoriteButton({
           query = query.is('family_member_id', null);
         }
 
-        const result = await query;
-        console.log('Delete result:', result);
+        const { error } = await query;
+        console.log('Delete error:', error);
+
+        if (error) {
+          console.error('Delete error:', error);
+          throw error;
+        }
+
         setIsFavorite(false);
         onToggle?.(false);
       } else {
@@ -123,11 +129,17 @@ export function FavoriteButton({
 
         console.log('Insert data:', insertData);
 
-        const result = await supabase
+        const { error } = await supabase
           .from(tableName)
           .insert(insertData);
 
-        console.log('Insert result:', result);
+        console.log('Insert error:', error);
+
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
+
         setIsFavorite(true);
         onToggle?.(true);
       }

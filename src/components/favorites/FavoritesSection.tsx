@@ -63,6 +63,7 @@ export function FavoritesSection() {
             created_at,
             family_member_id,
             business_id,
+            business_location_id,
             unclaimed_business_location_id
           `)
           .eq('user_id', user.id)
@@ -76,11 +77,37 @@ export function FavoritesSection() {
         console.log('Favorites data from DB:', favoritesData);
 
         const enrichedFavorites = await Promise.all(
-          favoritesData.map(async (fav) => {
+          favoritesData.map(async (fav: any) => {
             let itemData = null;
 
-            if (fav.business_id) {
-              // Per attività rivendicate, recupera da businesses e locations
+            if (fav.business_location_id) {
+              // Per sedi specifiche di business rivendicati
+              const { data: locationData } = await supabase
+                .from('business_locations')
+                .select(`
+                  id,
+                  name,
+                  internal_name,
+                  address,
+                  city,
+                  phone,
+                  business:businesses(id, name)
+                `)
+                .eq('id', fav.business_location_id)
+                .maybeSingle();
+
+              if (locationData && locationData.business) {
+                itemData = {
+                  id: locationData.id,
+                  business_id: locationData.business.id,
+                  address: locationData.address,
+                  city: locationData.city,
+                  phone: locationData.phone,
+                  businesses: { name: locationData.business.name }
+                };
+              }
+            } else if (fav.business_id) {
+              // Per attività rivendicate (generiche, senza sede specifica)
               const { data: businessData } = await supabase
                 .from('businesses')
                 .select(`
