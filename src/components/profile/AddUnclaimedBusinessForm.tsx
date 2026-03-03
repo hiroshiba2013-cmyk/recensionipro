@@ -344,6 +344,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
     }
 
     try {
+      // Elimina l'attività (i punti vengono sottratti automaticamente dal trigger del database)
       const { error: deleteError } = await supabase
         .from('unclaimed_business_locations')
         .delete()
@@ -351,7 +352,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
 
       if (deleteError) throw deleteError;
 
-      alert('Attività eliminata con successo!');
+      alert('Attività eliminata con successo! I punti sono stati sottratti dalla classifica.');
       loadUserAddedBusinesses();
       onSuccess();
     } catch (error) {
