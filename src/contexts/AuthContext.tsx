@@ -306,8 +306,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const billingAddress = `${data.billingStreet} ${data.billingStreetNumber}, ${data.billingPostalCode} ${data.billingCity}, ${data.billingProvince}`;
 
       const profileData: any = {
-        id: authData.user.id,
-        email,
         full_name: `${data.firstName} ${data.lastName}`,
         first_name: data.firstName,
         last_name: data.lastName,
@@ -334,27 +332,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert(profileData);
+        .update(profileData)
+        .eq('id', authData.user.id);
 
       if (profileError) throw profileError;
-
-      const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 30);
-
-      const { error: subscriptionError } = await supabase
-        .from('subscriptions')
-        .insert({
-          customer_id: authData.user.id,
-          plan_id: 'a3fbba4c-29e4-4bb7-8316-7387547cfb68',
-          status: 'trial',
-          start_date: new Date().toISOString(),
-          end_date: trialEndDate.toISOString(),
-          trial_end_date: trialEndDate.toISOString(),
-          payment_method_added: false,
-          reminder_sent: false,
-        });
-
-      if (subscriptionError) throw subscriptionError;
     }
   };
 
@@ -369,13 +350,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (authData.user) {
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert({
-          id: authData.user.id,
-          email,
+        .update({
           full_name: data.companyName,
           user_type: 'business',
           subscription_status: 'trial',
-        });
+        })
+        .eq('id', authData.user.id);
 
       if (profileError) throw profileError;
 
