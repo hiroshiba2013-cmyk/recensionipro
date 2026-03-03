@@ -205,8 +205,6 @@ export function DashboardPage() {
         .in('status', ['active', 'trial'])
         .maybeSingle();
 
-      console.log('Subscription Data:', subscriptionData);
-
       if (subscriptionData) {
         setCurrentSubscription(subscriptionData as any);
       }
@@ -234,9 +232,6 @@ export function DashboardPage() {
           setAvailablePlans(plansData);
         }
       }
-
-      console.log('Current Subscription:', subscriptionData);
-      console.log('Available Plans:', profile.user_type === 'business' ? 'Business Plans' : 'Customer Plans');
     } catch (error) {
       console.error('Error loading subscription data:', error);
     }

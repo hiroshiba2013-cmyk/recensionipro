@@ -409,6 +409,46 @@ export function Header() {
         </div>
       </header>
 
+      {user && profile && profile.user_type !== 'admin' && (
+        <div className="bg-white border-b border-gray-200 shadow-sm sticky top-16 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav className="flex items-center justify-center gap-1 py-3">
+              <a
+                href="/jobs"
+                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all font-medium px-4 py-2 rounded-lg"
+                title="Offerte di Lavoro"
+              >
+                <Briefcase className="w-5 h-5" />
+                <span className="text-sm font-semibold">Lavoro</span>
+              </a>
+              <a
+                href="/classified-ads"
+                className="flex items-center gap-2 text-gray-700 hover:text-green-600 hover:bg-green-50 transition-all font-medium px-4 py-2 rounded-lg"
+                title="Annunci"
+              >
+                <Tag className="w-5 h-5" />
+                <span className="text-sm font-semibold">Annunci</span>
+              </a>
+              <a
+                href="/solidarity"
+                className="flex items-center gap-2 text-gray-700 hover:text-pink-600 hover:bg-pink-50 transition-all font-medium px-4 py-2 rounded-lg"
+                title="Solidarietà"
+              >
+                <Heart className="w-5 h-5" />
+                <span className="text-sm font-semibold">Solidarietà</span>
+              </a>
+              <a
+                href="/leaderboard"
+                className="flex items-center gap-2 text-gray-700 hover:text-yellow-600 hover:bg-yellow-50 transition-all font-medium px-4 py-2 rounded-lg"
+                title="Classifica"
+              >
+                <Award className="w-5 h-5" />
+                <span className="text-sm font-semibold">Classifica</span>
+              </a>
+            </nav>
+          </div>
+        </div>
+      )}
 
       {showAuthModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
