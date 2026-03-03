@@ -127,7 +127,7 @@ export function AdminProfileDashboard({ adminId }: Props) {
       setUploading(true);
 
       const fileExt = file.name.split('.').pop();
-      const fileName = `${adminId}-${Date.now()}.${fileExt}`;
+      const fileName = `${adminId}/${adminId}-${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
