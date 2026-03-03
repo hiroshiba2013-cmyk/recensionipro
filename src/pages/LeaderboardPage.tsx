@@ -85,17 +85,16 @@ export function LeaderboardPage() {
           }
         }
       } else {
-        // Carica solo i dati del profilo principale, senza membri della famiglia
-        const { data: reviews } = await supabase
-          .from('reviews')
-          .select('id, points_awarded, review_status')
-          .eq('customer_id', profile.id)
-          .is('family_member_id', null)
-          .eq('review_status', 'approved');
+        // Carica i dati dalla tabella user_activity
+        const { data: activityData } = await supabase
+          .from('user_activity')
+          .select('total_points, reviews_count')
+          .eq('user_id', profile.id)
+          .maybeSingle();
 
-        if (reviews) {
-          const reviewsCount = reviews.length;
-          const totalPoints = reviews.reduce((sum, r) => sum + (r.points_awarded || 0), 0);
+        if (activityData) {
+          const totalPoints = activityData.total_points || 0;
+          const reviewsCount = activityData.reviews_count || 0;
 
           // Calcola il rank globale
           const { count } = await supabase
@@ -110,6 +109,17 @@ export function LeaderboardPage() {
             points: totalPoints,
             reviews_count: reviewsCount,
             rank: (count || 0) + 1,
+            is_family_member: false,
+          });
+        } else {
+          // Se non ci sono dati in user_activity, mostra 0
+          setUserRank({
+            id: profile.id,
+            full_name: profile.full_name,
+            avatar_url: profile.avatar_url,
+            points: 0,
+            reviews_count: 0,
+            rank: 0,
             is_family_member: false,
           });
         }

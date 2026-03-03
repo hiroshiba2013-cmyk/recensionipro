@@ -33,6 +33,13 @@ interface ActivitySummary {
   activities_this_month: number;
 }
 
+interface UserActivityStats {
+  total_points: number;
+  reviews_count: number;
+  businesses_added_count: number;
+  ads_posted_count: number;
+}
+
 const iconMap: { [key: string]: any } = {
   activity: Activity,
   eye: Eye,
@@ -50,6 +57,7 @@ export function ActivityFeed() {
   const { profile, activeProfile } = useAuth();
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [summary, setSummary] = useState<ActivitySummary | null>(null);
+  const [userStats, setUserStats] = useState<UserActivityStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'week' | 'month'>('all');
 
@@ -57,6 +65,7 @@ export function ActivityFeed() {
     if (profile && activeProfile) {
       loadActivities();
       loadSummary();
+      loadUserStats();
     }
   }, [profile, activeProfile, filter]);
 
@@ -112,6 +121,33 @@ export function ActivityFeed() {
     }
   };
 
+  const loadUserStats = async () => {
+    if (!profile || !activeProfile) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_activity')
+        .select('total_points, reviews_count, businesses_added_count, ads_posted_count')
+        .eq('user_id', activeProfile.id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setUserStats(data);
+      } else {
+        setUserStats({
+          total_points: 0,
+          reviews_count: 0,
+          businesses_added_count: 0,
+          ads_posted_count: 0
+        });
+      }
+    } catch (error) {
+      console.error('Error loading user stats:', error);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -155,8 +191,54 @@ export function ActivityFeed() {
 
   return (
     <div className="space-y-6">
+      {userStats && (
+        <div className="bg-white rounded-xl shadow-lg p-8 border-2 border-blue-200">
+          <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+            <Award className="w-8 h-8 text-blue-600" />
+            Riepilogo Completo della Tua Attività
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-6 border-2 border-yellow-300">
+              <div className="flex items-center justify-between mb-2">
+                <Star className="w-8 h-8 text-yellow-600" />
+                <span className="text-3xl font-bold text-yellow-700">{userStats.total_points}</span>
+              </div>
+              <p className="text-sm font-semibold text-gray-700">Punti Totali</p>
+              <p className="text-xs text-gray-600 mt-1">Posizione in classifica</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-300">
+              <div className="flex items-center justify-between mb-2">
+                <FileText className="w-8 h-8 text-blue-600" />
+                <span className="text-3xl font-bold text-blue-700">{userStats.reviews_count}</span>
+              </div>
+              <p className="text-sm font-semibold text-gray-700">Recensioni</p>
+              <p className="text-xs text-gray-600 mt-1">25-50 punti ciascuna</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border-2 border-green-300">
+              <div className="flex items-center justify-between mb-2">
+                <Building className="w-8 h-8 text-green-600" />
+                <span className="text-3xl font-bold text-green-700">{userStats.businesses_added_count}</span>
+              </div>
+              <p className="text-sm font-semibold text-gray-700">Attività Aggiunte</p>
+              <p className="text-xs text-gray-600 mt-1">10-25 punti ciascuna</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border-2 border-purple-300">
+              <div className="flex items-center justify-between mb-2">
+                <Package className="w-8 h-8 text-purple-600" />
+                <span className="text-3xl font-bold text-purple-700">{userStats.ads_posted_count}</span>
+              </div>
+              <p className="text-sm font-semibold text-gray-700">Annunci Pubblicati</p>
+              <p className="text-xs text-gray-600 mt-1">5 punti ciascuno</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {summary && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200">
             <div className="flex items-center justify-between">
               <div>
@@ -164,16 +246,6 @@ export function ActivityFeed() {
                 <p className="text-3xl font-bold text-blue-700">{summary.total_activities}</p>
               </div>
               <Activity className="w-12 h-12 text-blue-500 opacity-50" />
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border-2 border-green-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Punti Guadagnati</p>
-                <p className="text-3xl font-bold text-green-700">{summary.total_points_earned}</p>
-              </div>
-              <Star className="w-12 h-12 text-green-500 opacity-50" />
             </div>
           </div>
 
