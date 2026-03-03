@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { User, Calendar, Mail, Shield, Clock, Activity, CheckCircle, MessageSquare, Star, Tag, Briefcase, MapPin } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { User, Calendar, Mail, Shield, Clock, Activity, CheckCircle, MessageSquare, Star, Tag, Briefcase, MapPin, Camera, Upload } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface AdminProfileData {
@@ -11,6 +11,12 @@ interface AdminProfileData {
   nickname: string | null;
   fiscal_code: string | null;
   phone: string | null;
+}
+
+interface AdminData {
+  user_id: string;
+  avatar_url: string | null;
+  nickname: string | null;
 }
 
 interface AdminLoginLog {
@@ -35,6 +41,7 @@ interface Props {
 
 export function AdminProfileDashboard({ adminId }: Props) {
   const [profileData, setProfileData] = useState<AdminProfileData | null>(null);
+  const [adminData, setAdminData] = useState<AdminData | null>(null);
   const [loginLogs, setLoginLogs] = useState<AdminLoginLog[]>([]);
   const [activity, setActivity] = useState<AdminActivity>({
     reviews_approved: 0,
@@ -45,6 +52,10 @@ export function AdminProfileDashboard({ adminId }: Props) {
     users_managed: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [editingNickname, setEditingNickname] = useState(false);
+  const [newNickname, setNewNickname] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadAdminData();
@@ -54,12 +65,18 @@ export function AdminProfileDashboard({ adminId }: Props) {
     try {
       setLoading(true);
 
-      const [profileResult, logsResult, activityResult] = await Promise.all([
+      const [profileResult, adminResult, logsResult, activityResult] = await Promise.all([
         supabase
           .from('profiles')
           .select('*')
           .eq('id', adminId)
           .single(),
+
+        supabase
+          .from('admins')
+          .select('*')
+          .eq('user_id', adminId)
+          .maybeSingle(),
 
         supabase
           .from('admin_login_logs')
@@ -75,6 +92,11 @@ export function AdminProfileDashboard({ adminId }: Props) {
         setProfileData(profileResult.data);
       }
 
+      if (adminResult.data) {
+        setAdminData(adminResult.data);
+        setNewNickname(adminResult.data.nickname || '');
+      }
+
       if (logsResult.data) {
         setLoginLogs(logsResult.data);
       }
@@ -84,6 +106,76 @@ export function AdminProfileDashboard({ adminId }: Props) {
       console.error('Error loading admin data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        alert('Seleziona un file immagine valido');
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Il file deve essere inferiore a 5MB');
+        return;
+      }
+
+      setUploading(true);
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${adminId}-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      const { error: updateError } = await supabase
+        .from('admins')
+        .update({ avatar_url: publicUrl })
+        .eq('user_id', adminId);
+
+      if (updateError) throw updateError;
+
+      setAdminData(prev => prev ? { ...prev, avatar_url: publicUrl } : null);
+      alert('Avatar aggiornato con successo!');
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      alert('Errore durante il caricamento dell\'avatar');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleNicknameUpdate = async () => {
+    if (!newNickname.trim()) {
+      alert('Inserisci un nickname valido');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('admins')
+        .update({ nickname: newNickname.trim() })
+        .eq('user_id', adminId);
+
+      if (error) throw error;
+
+      setAdminData(prev => prev ? { ...prev, nickname: newNickname.trim() } : null);
+      setEditingNickname(false);
+      alert('Nickname aggiornato con successo!');
+    } catch (error) {
+      console.error('Error updating nickname:', error);
+      alert('Errore durante l\'aggiornamento del nickname');
     }
   };
 
@@ -168,6 +260,89 @@ export function AdminProfileDashboard({ adminId }: Props) {
           </div>
         </div>
         <div className="p-6">
+          <div className="mb-8 flex items-center gap-6 p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200">
+            <div className="relative group">
+              <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 border-4 border-white shadow-lg">
+                {adminData?.avatar_url ? (
+                  <img
+                    src={adminData.avatar_url}
+                    alt="Avatar Admin"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600">
+                    <User className="w-16 h-16 text-white" />
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="absolute bottom-0 right-0 p-2 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+                title="Cambia Avatar"
+              >
+                {uploading ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                ) : (
+                  <Camera className="w-5 h-5" />
+                )}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarUpload}
+                className="hidden"
+              />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">{profileData.full_name}</h3>
+              {editingNickname ? (
+                <div className="flex items-center gap-2 mb-3">
+                  <input
+                    type="text"
+                    value={newNickname}
+                    onChange={(e) => setNewNickname(e.target.value)}
+                    placeholder="Inserisci nickname"
+                    className="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <button
+                    onClick={handleNicknameUpdate}
+                    className="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm"
+                  >
+                    Salva
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingNickname(false);
+                      setNewNickname(adminData?.nickname || '');
+                    }}
+                    className="px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
+                  >
+                    Annulla
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 mb-3">
+                  {adminData?.nickname ? (
+                    <span className="text-lg text-gray-700 font-medium">@{adminData.nickname}</span>
+                  ) : (
+                    <span className="text-gray-500 italic">Nessun nickname</span>
+                  )}
+                  <button
+                    onClick={() => setEditingNickname(true)}
+                    className="text-blue-600 hover:text-blue-700 text-sm underline"
+                  >
+                    Modifica
+                  </button>
+                </div>
+              )}
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Shield className="w-4 h-4 text-red-600" />
+                <span>Amministratore</span>
+              </div>
+            </div>
+          </div>
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="flex items-start gap-3">

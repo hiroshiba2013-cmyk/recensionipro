@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle, Heart, Building2, Shield, Tag, Briefcase, Award, UserCog } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { supabase } from '../../lib/supabase';
 import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
 import NotificationBell from '../notifications/NotificationBell';
@@ -15,6 +16,7 @@ export function Header() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [adminData, setAdminData] = useState<{ avatar_url: string | null; nickname: string | null } | null>(null);
 
   const selectedLocation = selectedBusinessLocationId
     ? businessLocations.find(loc => loc.id === selectedBusinessLocationId)
@@ -40,6 +42,26 @@ export function Header() {
       setShowAuthModal(true);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user && profile?.user_type === 'admin') {
+      loadAdminData();
+    }
+  }, [user, profile]);
+
+  const loadAdminData = async () => {
+    if (!user?.id) return;
+
+    const { data } = await supabase
+      .from('admins')
+      .select('avatar_url, nickname')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (data) {
+      setAdminData(data);
+    }
+  };
 
   return (
     <>
@@ -123,14 +145,36 @@ export function Header() {
             ) : user && profile && profile.user_type === 'admin' ? (
               <>
                 <div className="flex-1"></div>
-                <nav className="hidden lg:flex items-center gap-2">
+                <nav className="hidden lg:flex items-center gap-3">
                   <a
                     href="/admin-profile"
-                    className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 transition-colors font-medium px-4 py-2 rounded-lg shadow-md"
+                    className="flex items-center gap-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 transition-colors font-medium px-4 py-2 rounded-lg shadow-md"
                     title="Dashboard Profilo Admin"
                   >
+                    <div className="flex items-center gap-2">
+                      {adminData?.avatar_url ? (
+                        <img
+                          src={adminData.avatar_url}
+                          alt="Avatar Admin"
+                          className="w-8 h-8 rounded-full object-cover border-2 border-white"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                          <User className="w-5 h-5 text-white" />
+                        </div>
+                      )}
+                      <div className="flex flex-col items-start">
+                        {adminData?.nickname ? (
+                          <>
+                            <span className="text-xs font-medium">@{adminData.nickname}</span>
+                            <span className="text-xs opacity-80">Dashboard</span>
+                          </>
+                        ) : (
+                          <span className="text-sm">Dashboard Profilo</span>
+                        )}
+                      </div>
+                    </div>
                     <UserCog className="w-5 h-5" />
-                    <span className="text-sm">Dashboard Profilo</span>
                   </a>
                 </nav>
               </>
