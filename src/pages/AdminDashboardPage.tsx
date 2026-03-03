@@ -138,11 +138,13 @@ interface Report {
   description: string;
   status: string;
   created_at: string;
+  reported_entity_type: string;
+  reported_entity_id: string;
   reporter: {
     full_name: string;
+    nickname: string | null;
     email: string;
   };
-  content_type: string;
 }
 
 interface JobPosting {
@@ -442,8 +444,9 @@ export function AdminDashboardPage() {
         description,
         status,
         created_at,
-        content_type,
-        reporter:profiles!reports_reporter_id_fkey(full_name, email)
+        reported_entity_type,
+        reported_entity_id,
+        reporter:profiles!reports_reporter_id_fkey(full_name, email, nickname)
       `)
       .order('created_at', { ascending: false })
       .limit(100);
