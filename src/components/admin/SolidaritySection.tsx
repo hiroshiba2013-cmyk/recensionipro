@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Heart, Upload, FileText, Download, Euro, Users, TrendingUp, Calendar, Plus, Edit2, Trash2, X, Building, Globe, Mail, Phone, MapPin } from 'lucide-react';
+import { Heart, Upload, FileText, Download, Euro, Users, TrendingUp, Calendar, Plus, FileEdit as Edit2, Trash2, X, Building, Globe, Mail, Phone, MapPin } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface SolidarityDocument {
