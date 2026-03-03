@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, X, Award, MapPin, Phone, Mail, Globe, User, Edit2, Trash2 } from 'lucide-react';
+import { Plus, X, Award, MapPin, Phone, Mail, Globe, User, FileEdit as Edit2, Trash2 } from 'lucide-react';
 import { supabase, BusinessCategory } from '../../lib/supabase';
 import { CITIES_BY_PROVINCE, PROVINCE_TO_CODE, PROVINCES_BY_REGION } from '../../lib/cities';
 
