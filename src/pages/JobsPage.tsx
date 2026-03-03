@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Briefcase, MapPin, DollarSign, Filter, X, Check, MessageCircle, Plus, Building2, UserCircle } from 'lucide-react';
+import { Briefcase, MapPin, DollarSign, Filter, X, Check, MessageCircle, Plus, Building2, CircleUser as UserCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { SearchableSelect } from '../components/common/SearchableSelect';
