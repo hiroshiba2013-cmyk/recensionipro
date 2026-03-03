@@ -248,16 +248,9 @@ export function AdminProfileDashboard({ adminId }: Props) {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500 rounded-lg">
-              <User className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">Dati di Iscrizione</h2>
-              <p className="text-sm text-gray-600">Informazioni del profilo amministratore</p>
-            </div>
-          </div>
+        <div className="px-6 py-5 border-b border-gray-200">
+          <h2 className="text-xl font-bold text-gray-900">Dati di Iscrizione</h2>
+          <p className="text-sm text-gray-600 mt-1">Informazioni del profilo amministratore</p>
         </div>
         <div className="p-6">
           <div className="grid md:grid-cols-2 gap-6">
@@ -421,16 +414,9 @@ export function AdminProfileDashboard({ adminId }: Props) {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-green-50 to-green-100">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-500 rounded-lg">
-              <Clock className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">Ultimi Accessi</h2>
-              <p className="text-sm text-gray-600">Cronologia degli accessi al pannello amministratore</p>
-            </div>
-          </div>
+        <div className="px-6 py-5 border-b border-gray-200">
+          <h2 className="text-xl font-bold text-gray-900">Ultimi Accessi</h2>
+          <p className="text-sm text-gray-600 mt-1">Cronologia degli accessi al pannello amministratore</p>
         </div>
         <div className="p-6">
           {loginLogs.length > 0 ? (
