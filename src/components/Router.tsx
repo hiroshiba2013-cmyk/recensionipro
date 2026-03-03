@@ -196,5 +196,12 @@ export function Router() {
     }
   }
 
+  // Redirect admins to admin dashboard when accessing home
+  if (currentPath === '/' && !loading && profile?.user_type === 'admin') {
+    window.history.pushState({}, '', '/admin');
+    setCurrentPath('/admin');
+    return <AdminDashboardPage />;
+  }
+
   return <HomePage />;
 }
