@@ -247,7 +247,6 @@ export function JobsPage() {
         .from('job_seekers')
         .select(`
           *,
-          profiles!inner(full_name, nickname),
           business_categories(name)
         `)
         .eq('status', 'active')
@@ -301,7 +300,29 @@ export function JobsPage() {
         console.error('Error in job seekers query:', error);
       }
 
-      setJobSeekers(data || []);
+      if (data && data.length > 0) {
+        // Get unique user IDs
+        const userIds = [...new Set(data.map(js => js.user_id))];
+
+        // Fetch profiles for these users
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, nickname')
+          .in('id', userIds);
+
+        // Create a map for quick lookup
+        const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+
+        // Merge profiles into job seekers data
+        const enrichedData = data.map(js => ({
+          ...js,
+          profiles: profilesMap.get(js.user_id) || { full_name: 'Utente', nickname: 'Utente' }
+        }));
+
+        setJobSeekers(enrichedData);
+      } else {
+        setJobSeekers([]);
+      }
     } catch (error) {
       console.error('Error loading job seekers:', error);
     } finally {
