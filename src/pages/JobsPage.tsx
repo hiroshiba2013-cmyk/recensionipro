@@ -293,7 +293,14 @@ export function JobsPage() {
         query = query.eq('category_id', filters.category);
       }
 
-      const { data } = await query;
+      const { data, error } = await query;
+
+      console.log('Job seekers query result:', { data, error, filtersApplied: filters });
+
+      if (error) {
+        console.error('Error in job seekers query:', error);
+      }
+
       setJobSeekers(data || []);
     } catch (error) {
       console.error('Error loading job seekers:', error);
