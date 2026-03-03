@@ -191,7 +191,7 @@ export function SubscriptionManagement({
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-sm text-gray-600 mb-1">
-                {currentSubscription.status === 'trial' ? 'Periodo di Prova Gratuito' : 'Piano Attuale'}
+                {currentSubscription.status === 'trial' ? 'Abbonamento Gratuito per 1 Mese' : 'Piano Attuale'}
               </p>
               <p className="text-2xl font-bold text-gray-900">{currentSubscription.plan.name}</p>
             </div>
@@ -199,7 +199,7 @@ export function SubscriptionManagement({
               {currentSubscription.status === 'trial' ? (
                 <>
                   <p className="text-3xl font-bold text-purple-600">GRATIS</p>
-                  <p className="text-sm text-gray-600">1 mese di prova</p>
+                  <p className="text-sm text-gray-600">Primo mese gratuito</p>
                 </>
               ) : (
                 <>
@@ -220,17 +220,22 @@ export function SubscriptionManagement({
               : 'bg-green-50 border-green-200'
           }`}>
             <div className="flex items-center justify-between">
-              <div>
+              <div className="flex-1">
                 <p className={`font-semibold ${
                   currentSubscription.status === 'trial' ? 'text-purple-800' : 'text-green-800'
                 }`}>
-                  {currentSubscription.status === 'trial' ? 'Periodo di Prova Attivo' : 'Abbonamento Attivo'}
+                  {currentSubscription.status === 'trial' ? 'Periodo Gratuito Attivo' : 'Abbonamento Attivo'}
                 </p>
                 <p className={`text-sm ${
                   currentSubscription.status === 'trial' ? 'text-purple-700' : 'text-green-700'
                 }`}>
                   {currentSubscription.status === 'trial'
-                    ? `La prova termina il ${new Date(currentSubscription.trial_end_date || currentSubscription.end_date).toLocaleDateString('it-IT')}`
+                    ? (() => {
+                        const endDate = new Date(currentSubscription.trial_end_date || currentSubscription.end_date);
+                        const today = new Date();
+                        const daysRemaining = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                        return `Giorni rimanenti: ${daysRemaining} - Termina il ${endDate.toLocaleDateString('it-IT')}`;
+                      })()
                     : `Scade il ${new Date(currentSubscription.end_date).toLocaleDateString('it-IT')}`
                   }
                 </p>
