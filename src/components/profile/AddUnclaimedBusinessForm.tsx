@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, X, Award, MapPin, Phone, Mail, Globe, User, FileEdit as Edit2, Trash2 } from 'lucide-react';
+import { Plus, X, Award, MapPin, Phone, Mail, Globe, User, FileEdit as Edit2, Trash2, CheckCircle } from 'lucide-react';
 import { supabase, BusinessCategory } from '../../lib/supabase';
 import { CITIES_BY_PROVINCE, PROVINCE_TO_CODE, PROVINCES_BY_REGION } from '../../lib/cities';
 
@@ -40,6 +40,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
   const [userAddedBusinesses, setUserAddedBusinesses] = useState<UserAddedBusiness[]>([]);
   const [loadingBusinesses, setLoadingBusinesses] = useState(true);
   const [editingBusinessId, setEditingBusinessId] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     category_id: '',
@@ -246,7 +247,16 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
         phone: '',
       });
       setShowForm(false);
-      alert(`Attività aggiunta con successo! Hai guadagnato ${points} punti!${hasExtraInfo ? ' (Con informazioni extra)' : ''}`);
+
+      // Mostra messaggio di successo
+      const message = `Attività "${formData.name}" aggiunta con successo! Hai guadagnato ${points} punti!${hasExtraInfo ? ' (Con informazioni extra)' : ''}`;
+      setSuccessMessage(message);
+
+      // Nascondi il messaggio dopo 5 secondi
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 5000);
+
       loadUserAddedBusinesses();
       onSuccess();
     } catch (error) {
@@ -313,6 +323,8 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
 
       if (updateError) throw updateError;
 
+      const businessName = formData.name;
+
       setFormData({
         name: '',
         category_id: '',
@@ -327,7 +339,16 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
       });
       setShowForm(false);
       setEditingBusinessId(null);
-      alert('Attività aggiornata con successo!');
+
+      // Mostra messaggio di successo
+      const message = `Attività "${businessName}" aggiornata con successo!`;
+      setSuccessMessage(message);
+
+      // Nascondi il messaggio dopo 5 secondi
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 5000);
+
       loadUserAddedBusinesses();
       onSuccess();
     } catch (error) {
@@ -352,7 +373,15 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
 
       if (deleteError) throw deleteError;
 
-      alert('Attività eliminata con successo! I punti sono stati sottratti dalla classifica.');
+      // Mostra messaggio di successo
+      const message = `Attività "${businessName}" eliminata con successo! I punti sono stati sottratti dalla classifica.`;
+      setSuccessMessage(message);
+
+      // Nascondi il messaggio dopo 5 secondi
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 5000);
+
       loadUserAddedBusinesses();
       onSuccess();
     } catch (error) {
@@ -380,6 +409,21 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
 
   return (
     <div className="bg-white rounded-xl shadow-md p-8 mb-8">
+      {successMessage && (
+        <div className="mb-6 bg-green-50 border-2 border-green-500 rounded-lg p-4 flex items-start gap-3 animate-fade-in">
+          <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-green-900">{successMessage}</p>
+          </div>
+          <button
+            onClick={() => setSuccessMessage('')}
+            className="ml-auto text-green-600 hover:text-green-800"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className="flex items-center gap-3 mb-2">
