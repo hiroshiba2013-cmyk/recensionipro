@@ -90,7 +90,7 @@ export function AdminProfilePage() {
 
         supabase
           .from('admins')
-          .select('avatar')
+          .select('avatar_url')
           .eq('user_id', user.id)
           .single(),
 
@@ -105,7 +105,7 @@ export function AdminProfilePage() {
       if (profileResult.data) {
         setProfileData({
           ...profileResult.data,
-          avatar: adminResult.data?.avatar || null,
+          avatar: adminResult.data?.avatar_url || null,
         });
         setEditForm({
           first_name: profileResult.data.first_name || '',
@@ -186,7 +186,7 @@ export function AdminProfilePage() {
 
       const { error: updateError } = await supabase
         .from('admins')
-        .update({ avatar: publicUrl })
+        .update({ avatar_url: publicUrl })
         .eq('user_id', user.id);
 
       if (updateError) throw updateError;
