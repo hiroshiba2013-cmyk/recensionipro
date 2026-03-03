@@ -271,8 +271,8 @@ export function AdminProfileDashboard({ adminId }: Props) {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600">
-                            <User className="w-12 h-12 text-white" />
+                          <div className="w-full h-full flex items-center justify-center bg-gray-300">
+                            <User className="w-12 h-12 text-gray-600" />
                           </div>
                         )}
                       </div>
@@ -459,73 +459,66 @@ export function AdminProfileDashboard({ adminId }: Props) {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-purple-100">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-500 rounded-lg">
-              <Activity className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">Attività Svolte</h2>
-              <p className="text-sm text-gray-600">Riepilogo delle azioni amministrative</p>
-            </div>
-          </div>
+        <div className="px-6 py-5 border-b border-gray-200">
+          <h2 className="text-xl font-bold text-gray-900">Attività Svolte</h2>
+          <p className="text-sm text-gray-600 mt-1">Riepilogo delle azioni amministrative</p>
         </div>
         <div className="p-6">
           <div className="grid md:grid-cols-3 gap-4">
-            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-5 border-2 border-green-200">
+            <div className="bg-white rounded-xl p-5 border border-gray-200">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-green-500 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-white" />
+                <div className="p-2 bg-green-50 rounded-lg">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900">Recensioni Approvate</h3>
               </div>
               <p className="text-3xl font-bold text-green-600">{activity.reviews_approved}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-5 border-2 border-red-200">
+            <div className="bg-white rounded-xl p-5 border border-gray-200">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-red-500 rounded-lg">
-                  <MessageSquare className="w-5 h-5 text-white" />
+                <div className="p-2 bg-red-50 rounded-lg">
+                  <MessageSquare className="w-5 h-5 text-red-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900">Recensioni Rifiutate</h3>
               </div>
               <p className="text-3xl font-bold text-red-600">{activity.reviews_rejected}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 border-2 border-blue-200">
+            <div className="bg-white rounded-xl p-5 border border-gray-200">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-blue-500 rounded-lg">
-                  <Star className="w-5 h-5 text-white" />
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <Star className="w-5 h-5 text-blue-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900">Attività Verificate</h3>
               </div>
               <p className="text-3xl font-bold text-blue-600">{activity.businesses_verified}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-5 border-2 border-yellow-200">
+            <div className="bg-white rounded-xl p-5 border border-gray-200">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-yellow-500 rounded-lg">
-                  <MapPin className="w-5 h-5 text-white" />
+                <div className="p-2 bg-yellow-50 rounded-lg">
+                  <MapPin className="w-5 h-5 text-yellow-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900">Segnalazioni Gestite</h3>
               </div>
               <p className="text-3xl font-bold text-yellow-600">{activity.reports_handled}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl p-5 border-2 border-pink-200">
+            <div className="bg-white rounded-xl p-5 border border-gray-200">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-pink-500 rounded-lg">
-                  <Tag className="w-5 h-5 text-white" />
+                <div className="p-2 bg-pink-50 rounded-lg">
+                  <Tag className="w-5 h-5 text-pink-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900">Annunci Moderati</h3>
               </div>
               <p className="text-3xl font-bold text-pink-600">{activity.ads_moderated}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-5 border-2 border-teal-200">
+            <div className="bg-white rounded-xl p-5 border border-gray-200">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-teal-500 rounded-lg">
-                  <User className="w-5 h-5 text-white" />
+                <div className="p-2 bg-teal-50 rounded-lg">
+                  <User className="w-5 h-5 text-teal-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900">Utenti Gestiti</h3>
               </div>
