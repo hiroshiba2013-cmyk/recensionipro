@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Calendar, Mail, Shield, Clock, LogOut, CheckCircle, XCircle, Edit2, Save, X, Trash2, Upload } from 'lucide-react';
+import { User, Calendar, Mail, Shield, Clock, LogOut, CheckCircle, XCircle, FileEdit as Edit2, Save, X, Trash2, Upload } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { DeleteAdminAccountButton } from '../components/admin/DeleteAdminAccountButton';
