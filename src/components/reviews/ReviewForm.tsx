@@ -138,7 +138,7 @@ export function ReviewForm({ businessId, businessName, businessLocationId, revie
       // Controlla se è un unclaimed_business_location
       const { data: unclaimedBusiness } = await supabase
         .from('unclaimed_business_locations')
-        .select('id, name, street, street_number, city, province')
+        .select('id, name, street, city, province')
         .eq('id', businessId)
         .maybeSingle();
 
@@ -147,7 +147,7 @@ export function ReviewForm({ businessId, businessName, businessLocationId, revie
           id: unclaimedBusiness.id,
           name: unclaimedBusiness.name,
           internal_name: null,
-          address: `${unclaimedBusiness.street}${unclaimedBusiness.street_number ? ', ' + unclaimedBusiness.street_number : ''}`,
+          address: unclaimedBusiness.street,
           city: unclaimedBusiness.city,
           province: unclaimedBusiness.province,
         }]);
