@@ -249,7 +249,40 @@ export function Header() {
           {showMobileMenu && (
             <div className="lg:hidden border-t border-gray-200 py-4">
               <nav className="flex flex-col gap-5">
-                {user && profile && profile.user_type !== 'admin' ? (
+                {user && profile && profile.user_type === 'admin' ? (
+                  <>
+                    <a
+                      href="/admin-profile"
+                      className="flex items-center gap-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 transition-colors font-medium px-4 py-3 rounded-lg shadow-md"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <div className="flex items-center gap-2">
+                        {adminData?.avatar_url ? (
+                          <img
+                            src={adminData.avatar_url}
+                            alt="Avatar Admin"
+                            className="w-10 h-10 rounded-full object-cover border-2 border-white"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                            <User className="w-6 h-6 text-white" />
+                          </div>
+                        )}
+                        <div className="flex flex-col items-start">
+                          {adminData?.nickname ? (
+                            <>
+                              <span className="text-sm font-medium">@{adminData.nickname}</span>
+                              <span className="text-xs opacity-80">Dashboard Profilo</span>
+                            </>
+                          ) : (
+                            <span className="text-sm">Dashboard Profilo</span>
+                          )}
+                        </div>
+                      </div>
+                      <UserCog className="w-5 h-5 ml-auto" />
+                    </a>
+                  </>
+                ) : user && profile && profile.user_type !== 'admin' ? (
                   <>
                     {selectedLocation && (
                       <div className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium border border-blue-300">
