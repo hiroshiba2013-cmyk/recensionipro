@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Calendar, Mail, Shield, Clock, LogOut, CheckCircle, XCircle, Edit2, Save, X, Trash2 } from 'lucide-react';
+import { User, Calendar, Mail, Shield, Clock, LogOut, CheckCircle, XCircle, Edit2, Save, X, Trash2, Upload } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { DeleteAdminAccountButton } from '../components/admin/DeleteAdminAccountButton';
@@ -15,6 +15,7 @@ interface AdminProfileData {
   nickname: string | null;
   fiscal_code: string | null;
   phone: string | null;
+  avatar: string | null;
 }
 
 interface AdminLoginLog {
@@ -41,6 +42,7 @@ export function AdminProfilePage() {
   const [viewMode, setViewMode] = useState<'all' | 'login' | 'logout'>('all');
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -79,11 +81,17 @@ export function AdminProfilePage() {
     try {
       setLoading(true);
 
-      const [profileResult, logsResult] = await Promise.all([
+      const [profileResult, adminResult, logsResult] = await Promise.all([
         supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
+          .single(),
+
+        supabase
+          .from('admins')
+          .select('avatar')
+          .eq('user_id', user.id)
           .single(),
 
         supabase
@@ -95,7 +103,10 @@ export function AdminProfilePage() {
       ]);
 
       if (profileResult.data) {
-        setProfileData(profileResult.data);
+        setProfileData({
+          ...profileResult.data,
+          avatar: adminResult.data?.avatar || null,
+        });
         setEditForm({
           first_name: profileResult.data.first_name || '',
           last_name: profileResult.data.last_name || '',
@@ -139,6 +150,54 @@ export function AdminProfilePage() {
     } catch (error: any) {
       console.error('Error updating profile:', error);
       alert(`Errore: ${error.message}`);
+    }
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Per favore seleziona un file immagine');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Il file è troppo grande. Massimo 5MB');
+      return;
+    }
+
+    try {
+      setUploading(true);
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from('admins')
+        .update({ avatar: publicUrl })
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      await loadAdminData();
+      alert('Avatar aggiornato con successo!');
+    } catch (error: any) {
+      console.error('Error uploading avatar:', error);
+      alert(`Errore durante il caricamento: ${error.message}`);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -271,6 +330,54 @@ export function AdminProfilePage() {
               </div>
             </div>
             <div className="p-6">
+              <div className="mb-6">
+                <div className="flex items-center gap-6">
+                  <div className="relative">
+                    {profileData.avatar ? (
+                      <img
+                        src={profileData.avatar}
+                        alt={profileData.full_name}
+                        className="w-24 h-24 rounded-full object-cover border-4 border-blue-100"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center border-4 border-blue-100">
+                        <User className="w-12 h-12 text-white" />
+                      </div>
+                    )}
+                    {uploading && (
+                      <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <label className="block">
+                      <span className="sr-only">Scegli avatar</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarUpload}
+                        disabled={uploading}
+                        className="hidden"
+                        id="avatar-upload"
+                      />
+                      <label
+                        htmlFor="avatar-upload"
+                        className={`inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors cursor-pointer ${
+                          uploading ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                      >
+                        <Upload className="w-4 h-4" />
+                        {uploading ? 'Caricamento...' : 'Carica Avatar'}
+                      </label>
+                    </label>
+                    <p className="text-sm text-gray-500 mt-2">
+                      Formato: JPG, PNG o GIF. Massimo 5MB
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
