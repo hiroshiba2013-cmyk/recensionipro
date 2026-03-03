@@ -450,7 +450,7 @@ export function ReviewForm({ businessId, businessName, businessLocationId, revie
         proof_image_url: proofImageUrl,
         review_status: reviewStatus,
         points_awarded: pointsAwarded,
-        business_location_id: selectedLocationId || null,
+        business_location_id: null,
         business_id: null,
         imported_business_id: null,
         user_added_business_id: null,
@@ -460,6 +460,10 @@ export function ReviewForm({ businessId, businessName, businessLocationId, revie
       // Imposta il business_id corretto a seconda del tipo
       if (businessType === 'registered') {
         reviewData.business_id = businessId;
+        // business_location_id può essere impostato solo per business rivendicati
+        if (selectedLocationId) {
+          reviewData.business_location_id = selectedLocationId;
+        }
       } else if (businessType === 'unclaimed') {
         reviewData.unclaimed_business_location_id = businessId;
       } else if (businessType === 'imported') {
