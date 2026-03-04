@@ -352,11 +352,11 @@ export function AdminDashboardPage() {
       .from('reviews')
       .select(`
         *,
-        customer:profiles!reviews_customer_id_fkey(full_name, nickname, email),
-        family_member:customer_family_members(full_name, nickname),
-        business_location:business_locations(name, internal_name, city, address),
-        unclaimed_business_location:unclaimed_business_locations(name, city, street),
-        businesses(name)
+        customer:customer_id(full_name, nickname, email),
+        family_member:family_member_id(full_name, nickname),
+        business_location:business_location_id(name, internal_name, city, address),
+        unclaimed_business_location:unclaimed_business_location_id(name, city, street),
+        businesses:business_id(name)
       `)
       .order('created_at', { ascending: false })
       .limit(200);
