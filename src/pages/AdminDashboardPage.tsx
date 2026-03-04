@@ -347,6 +347,7 @@ export function AdminDashboardPage() {
   };
 
   const loadPendingReviews = async () => {
+    console.log('Loading reviews...');
     const { data, error } = await supabase
       .from('reviews')
       .select(`
@@ -365,6 +366,8 @@ export function AdminDashboardPage() {
       return;
     }
 
+    console.log('Reviews loaded:', data?.length || 0, 'reviews');
+    console.log('Reviews data:', data);
     setPendingReviews(data || []);
   };
 
