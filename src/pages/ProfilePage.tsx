@@ -1397,28 +1397,30 @@ export function ProfilePage() {
                     }`}>
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-3">
+                          <div className="flex items-start gap-3 mb-3">
                             <div className="flex-1">
-                              <h3 className="font-bold text-xl text-gray-900 mb-1">{review.business?.name || 'Attività'}</h3>
+                              <div className="flex items-center gap-2 mb-2">
+                                <h3 className="font-bold text-xl text-gray-900">{review.business?.name || 'Attività'}</h3>
+                                {review.review_status === 'pending' && (
+                                  <span className="px-3 py-1 bg-yellow-200 text-yellow-800 text-xs font-semibold rounded-full">
+                                    In attesa di approvazione
+                                  </span>
+                                )}
+                                {review.review_status === 'rejected' && (
+                                  <span className="px-3 py-1 bg-red-200 text-red-800 text-xs font-semibold rounded-full">
+                                    Rifiutata
+                                  </span>
+                                )}
+                              </div>
                               {review.location_info && (
-                                <p className="text-sm text-gray-600 flex items-center gap-1">
+                                <p className="text-sm text-gray-600 flex items-center gap-1 mb-2">
                                   <MapPin className="w-4 h-4" />
                                   {review.location_info.name && `${review.location_info.name} - `}{review.location_info.city}
                                 </p>
                               )}
+                              <h4 className="font-semibold text-base text-gray-700">{review.title}</h4>
                             </div>
-                            {review.review_status === 'pending' && (
-                              <span className="px-3 py-1 bg-yellow-200 text-yellow-800 text-xs font-semibold rounded-full">
-                                In attesa di approvazione
-                              </span>
-                            )}
-                            {review.review_status === 'rejected' && (
-                              <span className="px-3 py-1 bg-red-200 text-red-800 text-xs font-semibold rounded-full">
-                                Rifiutata
-                              </span>
-                            )}
                           </div>
-                          <h4 className="font-semibold text-base text-gray-700 mb-2">{review.title}</h4>
                           {review.review_status === 'pending' && (
                             <p className="text-xs text-yellow-700 mt-2 font-medium">
                               La tua recensione sarà visibile dopo la verifica dello staff.
