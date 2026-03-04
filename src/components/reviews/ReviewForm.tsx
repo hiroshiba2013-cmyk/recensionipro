@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Star, X, Upload, Image as ImageIcon, Award, MapPin } from 'lucide-react';
+import { Star, X, Upload, Image as ImageIcon, Award } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -23,15 +23,6 @@ interface ReviewFormProps {
   reviewToEdit?: ReviewToEdit;
   onClose: () => void;
   onSuccess: () => void;
-}
-
-interface BusinessLocation {
-  id: string;
-  name: string | null;
-  internal_name: string | null;
-  address: string;
-  city: string;
-  province: string;
 }
 
 const provinceMap: { [key: string]: string } = {
@@ -87,8 +78,6 @@ export function ReviewForm({ businessId, businessName, businessLocationId, revie
   const [hoveredOverallRating, setHoveredOverallRating] = useState(0);
   const [title, setTitle] = useState(reviewToEdit?.title || '');
   const [content, setContent] = useState(reviewToEdit?.content || '');
-  const [selectedLocationId, setSelectedLocationId] = useState<string>(reviewToEdit?.business_location_id || businessLocationId || '');
-  const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [proofImage, setProofImage] = useState<File | null>(null);
   const [proofImagePreview, setProofImagePreview] = useState<string | null>(reviewToEdit?.proof_image_url || null);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -97,99 +86,6 @@ export function ReviewForm({ businessId, businessName, businessLocationId, revie
 
   const hasDetailedRatings = priceRating > 0 && serviceRating > 0 && qualityRating > 0;
   const estimatedPoints = proofImage ? 50 : 25;
-
-  useEffect(() => {
-    loadBusinessLocations();
-  }, [businessId]);
-
-  useEffect(() => {
-    if (businessLocationId) {
-      setSelectedLocationId(businessLocationId);
-    }
-  }, [businessLocationId]);
-
-  const loadBusinessLocations = async () => {
-    // Prima controlla se è un business rivendicato (businesses + business_locations)
-    const { data: businessData } = await supabase
-      .from('businesses')
-      .select('id, is_claimed')
-      .eq('id', businessId)
-      .maybeSingle();
-
-    if (businessData && businessData.is_claimed) {
-      // È un business rivendicato, cerca le sue location
-      const { data: locationsData } = await supabase
-        .from('business_locations')
-        .select('id, internal_name, name, address, street_number, city, province')
-        .eq('business_id', businessId)
-        .order('created_at', { ascending: true });
-
-      if (locationsData && locationsData.length > 0) {
-        setBusinessLocations(locationsData.map(loc => ({
-          id: loc.id,
-          name: loc.internal_name || loc.name,
-          internal_name: loc.internal_name,
-          address: loc.address,
-          city: loc.city,
-          province: loc.province,
-        })));
-      }
-    } else {
-      // Controlla se è un unclaimed_business_location
-      const { data: unclaimedBusiness } = await supabase
-        .from('unclaimed_business_locations')
-        .select('id, name, street, city, province')
-        .eq('id', businessId)
-        .maybeSingle();
-
-      if (unclaimedBusiness) {
-        setBusinessLocations([{
-          id: unclaimedBusiness.id,
-          name: unclaimedBusiness.name,
-          internal_name: null,
-          address: unclaimedBusiness.street,
-          city: unclaimedBusiness.city,
-          province: unclaimedBusiness.province,
-        }]);
-      } else {
-        // Controlla se è un imported_business
-        const { data: importedBusiness } = await supabase
-          .from('imported_businesses')
-          .select('id, name, street, street_number, city, province')
-          .eq('id', businessId)
-          .maybeSingle();
-
-        if (importedBusiness) {
-          setBusinessLocations([{
-            id: importedBusiness.id,
-            name: importedBusiness.name,
-            internal_name: null,
-            address: `${importedBusiness.street}${importedBusiness.street_number ? ', ' + importedBusiness.street_number : ''}`,
-            city: importedBusiness.city,
-            province: importedBusiness.province,
-          }]);
-        } else {
-          // Controlla se è un user_added_business
-          const { data: userAddedBusiness } = await supabase
-            .from('user_added_businesses')
-            .select('id, name, street, street_number, city, province')
-            .eq('id', businessId)
-            .maybeSingle();
-
-          if (userAddedBusiness) {
-            setBusinessLocations([{
-              id: userAddedBusiness.id,
-              name: userAddedBusiness.name,
-              internal_name: null,
-              address: `${userAddedBusiness.street}${userAddedBusiness.street_number ? ', ' + userAddedBusiness.street_number : ''}`,
-              city: userAddedBusiness.city,
-              province: userAddedBusiness.province,
-            }]);
-          }
-        }
-      }
-    }
-  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -295,7 +191,7 @@ export function ReviewForm({ businessId, businessName, businessLocationId, revie
             title: title.trim(),
             content: content.trim(),
             proof_image_url: proofImageUrl,
-            business_location_id: selectedLocationId || null,
+            business_location_id: businessLocationId || null,
           })
           .eq('id', reviewToEdit.id);
 
@@ -461,8 +357,8 @@ export function ReviewForm({ businessId, businessName, businessLocationId, revie
       if (businessType === 'registered') {
         reviewData.business_id = businessId;
         // business_location_id può essere impostato solo per business rivendicati
-        if (selectedLocationId) {
-          reviewData.business_location_id = selectedLocationId;
+        if (businessLocationId) {
+          reviewData.business_location_id = businessLocationId;
         }
       } else if (businessType === 'unclaimed') {
         reviewData.unclaimed_business_location_id = businessId;
@@ -557,30 +453,6 @@ export function ReviewForm({ businessId, businessName, businessLocationId, revie
                     : "Recensione base: 25 punti (pubblicata immediatamente)"}
                 </p>
               </div>
-            </div>
-          )}
-
-          {businessLocations.length > 0 && (
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                <MapPin className="w-4 h-4 inline mr-1" />
-                Sede (Opzionale)
-              </label>
-              <p className="text-xs text-gray-500 mb-3">
-                Se vuoi recensire una sede specifica, selezionala qui. Altrimenti la recensione sarà generale per l'attività.
-              </p>
-              <select
-                value={selectedLocationId}
-                onChange={(e) => setSelectedLocationId(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Recensione generale (tutte le sedi)</option>
-                {businessLocations.map((location) => (
-                  <option key={location.id} value={location.id}>
-                    {location.name || `${location.address}, ${location.city} (${location.province})`}
-                  </option>
-                ))}
-              </select>
             </div>
           )}
 
