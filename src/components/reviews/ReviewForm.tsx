@@ -256,12 +256,12 @@ export function ReviewForm({ businessId, businessName, businessLocationId, revie
         return;
       }
 
-      // Verifica se questo specifico profilo ha già recensito questa attività
+      // Verifica se questo specifico profilo ha già recensito questa attività negli ultimi 365 giorni
       // Il titolare e i family members sono considerati separati
       let existingReview;
       let reviewQuery = supabase
         .from('reviews')
-        .select('id')
+        .select('id, created_at')
         .eq('customer_id', profile.id);
 
       // Controlla in base al profilo attivo
@@ -287,12 +287,28 @@ export function ReviewForm({ businessId, businessName, businessLocationId, revie
       existingReview = data;
 
       if (existingReview) {
-        const profileName = activeProfile?.isOwner === false
-          ? activeProfile.nickname || activeProfile.name
-          : 'tu (titolare)';
-        setError(`${profileName} ha già recensito questa attività. Seleziona un altro profilo per lasciare una nuova recensione.`);
-        setLoading(false);
-        return;
+        // Calcola se sono passati 365 giorni dalla recensione precedente
+        const reviewDate = new Date(existingReview.created_at);
+        const today = new Date();
+        const daysSinceReview = Math.floor((today.getTime() - reviewDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (daysSinceReview < 365) {
+          const daysRemaining = 365 - daysSinceReview;
+          const profileName = activeProfile?.isOwner === false
+            ? activeProfile.nickname || activeProfile.name
+            : 'tu (titolare)';
+          setError(
+            `${profileName} ha già recensito questa attività. Potrai recensire di nuovo tra ${daysRemaining} giorni (dopo 365 giorni dalla prima recensione).`
+          );
+          setLoading(false);
+          return;
+        }
+        // Se sono passati 365+ giorni, l'utente può recensire di nuovo
+        // La nuova recensione sostituirà la vecchia (cancellare quella vecchia)
+        await supabase
+          .from('reviews')
+          .delete()
+          .eq('id', existingReview.id);
       }
 
       let proofImageUrl = null;
