@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { User, Star, Plus, X, Package, LogOut, Trophy, TrendingUp, Briefcase, MapPin, Edit2, Trash2 } from 'lucide-react';
+import { User, Star, Plus, X, Package, LogOut, Trophy, TrendingUp, Briefcase, MapPin, FileEdit as Edit2, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
