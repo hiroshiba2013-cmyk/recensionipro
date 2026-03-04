@@ -1249,47 +1249,57 @@ export function ProfilePage() {
 
             <JobRequestForm customerId={profile.id} familyMemberId={isFamilyMember ? selectedFamilyMember?.id : undefined} />
 
-            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl shadow-lg p-8 mb-8 border-4 border-yellow-200">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="bg-gradient-to-br from-yellow-500 to-orange-500 p-3 rounded-xl shadow-lg">
-                    <Star className="w-7 h-7 text-white" />
+            <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-100 overflow-hidden relative">
+              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400"></div>
+
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-4 rounded-2xl shadow-lg">
+                    <Star className="w-8 h-8 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-3xl font-bold text-gray-900">
+                    <h2 className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
                       {isFamilyMember ? 'Recensioni di ' + (selectedFamilyMember?.nickname || `${selectedFamilyMember?.first_name}`) : 'Le Tue Recensioni'}
                     </h2>
-                    <p className="text-sm text-gray-600 mt-1">Condividi le tue esperienze</p>
+                    <p className="text-gray-600 mt-1 font-medium">Condividi le tue esperienze con la community</p>
                   </div>
                 </div>
                 <a
                   href="/"
-                  className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-8 py-4 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all font-bold shadow-lg transform hover:scale-105"
+                  className="flex items-center gap-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-8 py-4 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all font-bold shadow-xl transform hover:scale-105 hover:shadow-2xl"
                 >
-                  <Star className="w-5 h-5" />
-                  Scrivi Recensioni
+                  <Plus className="w-5 h-5" />
+                  Scrivi Recensione
                 </a>
               </div>
 
               {isOwner && (
-                <div className="mb-6 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-lg p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Trophy className="w-6 h-6 text-yellow-600" />
-                    <p className="text-gray-800 font-semibold text-lg">Guadagna Punti Scrivendo Recensioni!</p>
+                <div className="mb-8 bg-gradient-to-br from-yellow-50 via-orange-50 to-yellow-50 border-2 border-yellow-300 rounded-2xl p-6 shadow-md">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="bg-gradient-to-br from-yellow-400 to-yellow-500 p-3 rounded-xl shadow-md">
+                      <Trophy className="w-6 h-6 text-white" />
+                    </div>
+                    <p className="text-gray-900 font-bold text-xl">Guadagna Punti Scrivendo Recensioni!</p>
                   </div>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    <div className="bg-white rounded-lg p-3 border border-yellow-300">
-                      <div className="flex items-center gap-2">
-                        <Star className="w-5 h-5 text-yellow-600" />
-                        <span className="text-gray-700 font-medium">Recensione Base:</span>
-                        <span className="text-yellow-600 font-bold text-lg">25 punti</span>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-white rounded-xl p-5 border-2 border-yellow-200 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Star className="w-6 h-6 text-yellow-500" />
+                        <span className="text-gray-800 font-semibold text-lg">Recensione Base</span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-bold bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent">25</span>
+                        <span className="text-gray-600 font-medium">punti</span>
                       </div>
                     </div>
-                    <div className="bg-white rounded-lg p-3 border border-orange-300">
-                      <div className="flex items-center gap-2">
-                        <Star className="w-5 h-5 text-orange-600 fill-orange-600" />
-                        <span className="text-gray-700 font-medium">Recensione Completa:</span>
-                        <span className="text-orange-600 font-bold text-lg">50 punti</span>
+                    <div className="bg-white rounded-xl p-5 border-2 border-orange-200 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Star className="w-6 h-6 text-orange-500 fill-orange-500" />
+                        <span className="text-gray-800 font-semibold text-lg">Con Prova</span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">50</span>
+                        <span className="text-gray-600 font-medium">punti</span>
                       </div>
                     </div>
                   </div>
@@ -1297,39 +1307,42 @@ export function ProfilePage() {
               )}
 
               {reviews.length > 0 && (
-                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Filtra Recensioni</h3>
+                <div className="mb-8 p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 shadow-sm">
+                  <h3 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <div className="w-1 h-6 bg-gradient-to-b from-yellow-400 to-orange-400 rounded-full"></div>
+                    Filtra Recensioni
+                  </h3>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm text-gray-600 mb-1">Valutazione</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Valutazione</label>
                       <select
                         value={reviewFilters.rating}
                         onChange={(e) => setReviewFilters({ ...reviewFilters, rating: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all bg-white"
                       >
                         <option value="">Tutte le valutazioni</option>
-                        <option value="5">5 stelle</option>
-                        <option value="4">4 stelle</option>
-                        <option value="3">3 stelle</option>
-                        <option value="2">2 stelle</option>
-                        <option value="1">1 stella</option>
+                        <option value="5">⭐⭐⭐⭐⭐ 5 stelle</option>
+                        <option value="4">⭐⭐⭐⭐ 4 stelle</option>
+                        <option value="3">⭐⭐⭐ 3 stelle</option>
+                        <option value="2">⭐⭐ 2 stelle</option>
+                        <option value="1">⭐ 1 stella</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-600 mb-1">Nome Azienda</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Nome Azienda</label>
                       <input
                         type="text"
                         value={reviewFilters.businessName}
                         onChange={(e) => setReviewFilters({ ...reviewFilters, businessName: e.target.value })}
-                        placeholder="Cerca per azienda"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Cerca per azienda..."
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all"
                       />
                     </div>
                   </div>
                   {(reviewFilters.rating || reviewFilters.businessName) && (
                     <button
                       onClick={() => setReviewFilters({ nickname: '', rating: '', businessName: '', locationId: '' })}
-                      className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-semibold"
+                      className="mt-4 px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 font-semibold transition-colors"
                     >
                       Resetta Filtri
                     </button>
@@ -1360,20 +1373,27 @@ export function ProfilePage() {
               )}
 
               {reviews.length === 0 ? (
-                <p className="text-gray-600 text-center py-8">
-                  {isFamilyMember ? 'Nessuna recensione scritta da questo membro' : 'Non hai ancora scritto recensioni'}
-                </p>
+                <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-white rounded-2xl border-2 border-dashed border-gray-200">
+                  <Star className="w-20 h-20 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-600 text-lg font-medium mb-2">
+                    {isFamilyMember ? 'Nessuna recensione scritta da questo membro' : 'Non hai ancora scritto recensioni'}
+                  </p>
+                  <p className="text-gray-500 text-sm">Inizia a condividere le tue esperienze!</p>
+                </div>
               ) : filteredReviews.length === 0 ? (
-                <p className="text-gray-600 text-center py-8">Nessuna recensione trovata con questi filtri</p>
+                <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-white rounded-2xl border-2 border-dashed border-gray-200">
+                  <Star className="w-20 h-20 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-600 text-lg font-medium">Nessuna recensione trovata con questi filtri</p>
+                </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {filteredReviews.map((review) => (
-                    <div key={review.id} className={`border rounded-lg p-6 transition-colors ${
+                    <div key={review.id} className={`rounded-2xl p-6 transition-all shadow-md hover:shadow-lg ${
                       review.review_status === 'pending'
-                        ? 'border-yellow-300 bg-yellow-50'
+                        ? 'border-2 border-yellow-300 bg-gradient-to-br from-yellow-50 to-yellow-100'
                         : review.review_status === 'rejected'
-                        ? 'border-red-300 bg-red-50'
-                        : 'border-gray-200 hover:border-blue-300'
+                        ? 'border-2 border-red-300 bg-gradient-to-br from-red-50 to-red-100'
+                        : 'border-2 border-gray-200 bg-white hover:border-yellow-300'
                     }`}>
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">

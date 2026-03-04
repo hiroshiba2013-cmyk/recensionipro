@@ -408,39 +408,45 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-8 mb-8">
+    <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-100 overflow-hidden relative">
+      <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400"></div>
+
       {successMessage && (
-        <div className="mb-6 bg-green-50 border-2 border-green-500 rounded-lg p-4 flex items-start gap-3 animate-fade-in">
-          <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+        <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-5 flex items-start gap-3 shadow-md animate-fade-in">
+          <CheckCircle className="w-7 h-7 text-green-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-green-900">{successMessage}</p>
+            <p className="font-bold text-green-900 text-lg">{successMessage}</p>
           </div>
           <button
             onClick={() => setSuccessMessage('')}
-            className="ml-auto text-green-600 hover:text-green-800"
+            className="ml-auto text-green-600 hover:text-green-800 text-2xl font-bold"
           >
             ×
           </button>
         </div>
       )}
 
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <Plus className="w-6 h-6 text-blue-600" />
-            <h2 className="text-2xl font-bold text-gray-900">Aggiungi Attività</h2>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="bg-gradient-to-br from-green-400 to-emerald-500 p-4 rounded-2xl shadow-lg">
+            <MapPin className="w-8 h-8 text-white" />
           </div>
-          <p className="text-gray-600">
-            Aggiungi un'attività e guadagna <span className="font-bold text-orange-600">10 punti</span> (base) o <span className="font-bold text-green-600">25 punti</span> (con email o telefono)!
-          </p>
+          <div>
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+              Attività Aggiunte
+            </h2>
+            <p className="text-gray-600 mt-1 font-medium">
+              Guadagna <span className="font-bold text-orange-600">10 punti</span> o <span className="font-bold text-green-600">25 punti</span> con info extra!
+            </p>
+          </div>
         </div>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-md"
+            className="flex items-center gap-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-8 py-4 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all font-bold shadow-xl transform hover:scale-105 hover:shadow-2xl"
           >
             <Plus className="w-5 h-5" />
-            Aggiungi
+            Aggiungi Attività
           </button>
         )}
       </div>
@@ -664,69 +670,75 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
       )}
 
       {!showForm && (
-        <div className="mt-6">
-          <div className="flex items-center gap-2 mb-4">
-            <User className="w-5 h-5 text-green-600" />
-            <h3 className="text-lg font-semibold text-gray-900">
+        <div className="mt-8">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-gray-100">
+            <div className="bg-gradient-to-br from-green-100 to-emerald-100 p-2 rounded-lg">
+              <User className="w-6 h-6 text-green-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900">
               Le Tue Attività Aggiunte
             </h3>
             {userAddedBusinesses.length > 0 && (
-              <span className="bg-green-100 text-green-800 text-sm font-semibold px-3 py-1 rounded-full">
+              <span className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-base font-bold px-4 py-2 rounded-full shadow-md">
                 {userAddedBusinesses.length}
               </span>
             )}
           </div>
 
           {loadingBusinesses ? (
-            <div className="text-center py-8 text-gray-500">
-              Caricamento attività...
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+              <p className="text-gray-500 mt-4 font-medium">Caricamento attività...</p>
             </div>
           ) : userAddedBusinesses.length === 0 ? (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
-              <User className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-600">
-                Non hai ancora aggiunto nessuna attività dalla ricerca.
+            <div className="bg-gradient-to-br from-gray-50 to-white border-2 border-dashed border-gray-200 rounded-2xl p-12 text-center">
+              <User className="w-20 h-20 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-700 text-lg font-semibold mb-2">
+                Non hai ancora aggiunto nessuna attività
               </p>
-              <p className="text-sm text-gray-500 mt-2">
-                Quando cerchi un'attività per recensirla e l'aggiungi al database, apparirà qui!
+              <p className="text-gray-500">
+                Quando aggiungi un'attività, apparirà qui!
               </p>
             </div>
           ) : (
-            <div className="grid gap-4">
+            <div className="grid gap-5">
               {userAddedBusinesses.map((business) => (
                 <div
                   key={business.id}
-                  className="bg-white border-2 border-green-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  className="bg-white border-2 border-green-200 rounded-2xl p-6 hover:shadow-xl hover:border-green-300 transition-all"
                 >
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-gray-900 text-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="font-bold text-gray-900 text-xl">
                           {business.name}
                         </h4>
-                        <span className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                        <span className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 shadow-sm">
                           <User className="w-3 h-3" />
-                          Attività aggiunta da utente
+                          Da te
                         </span>
                       </div>
                       {business.category && (
-                        <p className="text-sm text-gray-600 mb-2">
-                          {business.category}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <p className="text-sm text-gray-700 font-medium">
+                            {business.category}
+                          </p>
+                        </div>
                       )}
                     </div>
                     {business.source === 'unclaimed' && (
                       <div className="flex gap-2 ml-4">
                         <button
                           onClick={() => handleEdit(business)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-3 text-blue-600 hover:bg-blue-50 rounded-xl transition-all shadow-sm hover:shadow-md"
                           title="Modifica attività"
                         >
                           <Edit2 className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => handleDelete(business.id, business.name)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-3 text-red-600 hover:bg-red-50 rounded-xl transition-all shadow-sm hover:shadow-md"
                           title="Elimina attività"
                         >
                           <Trash2 className="w-5 h-5" />
@@ -735,11 +747,11 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
                     )}
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {business.street && (
-                      <div className="flex items-start gap-2 text-sm text-gray-600">
-                        <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                        <span>
+                      <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+                        <MapPin className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700 font-medium">
                           {business.street}
                           {business.city && `, ${business.city}`}
                           {business.province && ` (${business.province})`}
@@ -747,16 +759,16 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
                       </div>
                     )}
 
-                    <div className="flex flex-wrap gap-4 text-sm">
+                    <div className="flex flex-wrap gap-3">
                       {business.phone && (
-                        <div className="flex items-center gap-1.5 text-gray-600">
-                          <Phone className="w-4 h-4 text-gray-400" />
+                        <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg text-gray-700 font-medium">
+                          <Phone className="w-4 h-4 text-blue-500" />
                           <span>{business.phone}</span>
                         </div>
                       )}
                       {business.email && (
-                        <div className="flex items-center gap-1.5 text-gray-600">
-                          <Mail className="w-4 h-4 text-gray-400" />
+                        <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 rounded-lg text-gray-700 font-medium">
+                          <Mail className="w-4 h-4 text-orange-500" />
                           <span>{business.email}</span>
                         </div>
                       )}
@@ -765,7 +777,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
                           href={business.website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800"
+                          className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg text-green-700 hover:bg-green-100 font-medium transition-colors"
                         >
                           <Globe className="w-4 h-4" />
                           <span>Visita sito</span>
@@ -774,8 +786,8 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
                     </div>
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-gray-200">
-                    <p className="text-xs text-gray-500">
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <p className="text-xs text-gray-500 font-medium">
                       Aggiunta il {new Date(business.created_at).toLocaleDateString('it-IT', {
                         day: 'numeric',
                         month: 'long',
