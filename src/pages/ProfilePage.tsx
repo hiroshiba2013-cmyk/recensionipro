@@ -1395,10 +1395,18 @@ export function ProfilePage() {
                         ? 'border-2 border-red-300 bg-gradient-to-br from-red-50 to-red-100'
                         : 'border-2 border-gray-200 bg-white hover:border-yellow-300'
                     }`}>
-                      <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold text-lg text-gray-900">{review.title}</h3>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="flex-1">
+                              <h3 className="font-bold text-xl text-gray-900 mb-1">{review.business?.name || 'Attività'}</h3>
+                              {review.location_info && (
+                                <p className="text-sm text-gray-600 flex items-center gap-1">
+                                  <MapPin className="w-4 h-4" />
+                                  {review.location_info.name && `${review.location_info.name} - `}{review.location_info.city}
+                                </p>
+                              )}
+                            </div>
                             {review.review_status === 'pending' && (
                               <span className="px-3 py-1 bg-yellow-200 text-yellow-800 text-xs font-semibold rounded-full">
                                 In attesa di approvazione
@@ -1410,14 +1418,7 @@ export function ProfilePage() {
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {review.business?.name}
-                            {review.location_info && (
-                              <span className="text-gray-500">
-                                {review.location_info.name && ` - ${review.location_info.name}`} ({review.location_info.city})
-                              </span>
-                            )}
-                          </p>
+                          <h4 className="font-semibold text-base text-gray-700 mb-2">{review.title}</h4>
                           {review.review_status === 'pending' && (
                             <p className="text-xs text-yellow-700 mt-2 font-medium">
                               La tua recensione sarà visibile dopo la verifica dello staff.
