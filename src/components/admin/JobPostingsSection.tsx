@@ -17,6 +17,13 @@ interface JobPosting {
   published_at: string;
   business_location: {
     name: string;
+    business: {
+      profile: {
+        full_name: string;
+        nickname: string | null;
+        email: string;
+      } | null;
+    } | null;
   } | null;
 }
 
@@ -53,18 +60,56 @@ interface JobPostingsSectionProps {
 type JobType = 'all' | 'trova' | 'cerca';
 type StatusFilter = 'all' | 'active' | 'closed' | 'draft';
 
-export function JobPostingsSection({ jobPostings, onReload }: JobPostingsSectionProps) {
+export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }: JobPostingsSectionProps) {
   const [jobType, setJobType] = useState<JobType>('all');
   const [filterStatus, setFilterStatus] = useState<StatusFilter>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedJobPosting, setSelectedJobPosting] = useState<JobPosting | null>(null);
   const [selectedJobSeeker, setSelectedJobSeeker] = useState<JobSeeker | null>(null);
   const [jobSeekers, setJobSeekers] = useState<JobSeeker[]>([]);
+  const [jobPostings, setJobPostings] = useState<JobPosting[]>(initialJobPostings);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadJobSeekers();
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    await Promise.all([loadJobSeekers(), loadJobPostings()]);
+  };
+
+  const loadJobPostings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('job_postings')
+        .select(`
+          id,
+          title,
+          description,
+          salary_range,
+          gross_annual_salary,
+          location,
+          status,
+          position_type,
+          experience_level,
+          created_at,
+          expires_at,
+          published_at,
+          business_location:business_locations!job_postings_business_location_id_fkey(
+            name,
+            business:businesses(
+              profile:profiles(full_name, nickname, email)
+            )
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setJobPostings(data || []);
+    } catch (error: any) {
+      console.error('Error loading job postings:', error);
+    }
+  };
 
   const loadJobSeekers = async () => {
     setLoading(true);
@@ -125,7 +170,7 @@ export function JobPostingsSection({ jobPostings, onReload }: JobPostingsSection
       if (error) throw error;
 
       alert('Stato offerta aggiornato');
-      await onReload();
+      await loadJobPostings();
     } catch (error: any) {
       console.error('Error updating job posting:', error);
       alert(`Errore: ${error.message}`);
@@ -163,7 +208,7 @@ export function JobPostingsSection({ jobPostings, onReload }: JobPostingsSection
       if (error) throw error;
 
       alert('Offerta di lavoro eliminata con successo');
-      await onReload();
+      await loadJobPostings();
     } catch (error: any) {
       console.error('Error deleting job posting:', error);
       alert(`Errore: ${error.message}`);
@@ -275,32 +320,42 @@ export function JobPostingsSection({ jobPostings, onReload }: JobPostingsSection
             </div>
           ) : (
             <div className="grid md:grid-cols-2 gap-4">
-              {displayedJobPostings.map((job) => (
-                <div key={job.id} className="bg-white rounded-lg shadow border border-blue-200 p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span
-                          className={`px-3 py-1 text-xs rounded-full font-medium ${
-                            job.status === 'active'
-                              ? 'bg-green-100 text-green-800'
-                              : job.status === 'closed'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                        >
-                          {job.status}
-                        </span>
+              {displayedJobPostings.map((job) => {
+                const businessOwner = job.business_location?.business?.profile;
+                const ownerName = businessOwner?.nickname || businessOwner?.full_name || 'Azienda';
+
+                return (
+                  <div key={job.id} className="bg-white rounded-lg shadow border border-blue-200 p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span
+                            className={`px-3 py-1 text-xs rounded-full font-medium ${
+                              job.status === 'active'
+                                ? 'bg-green-100 text-green-800'
+                                : job.status === 'closed'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}
+                          >
+                            {job.status}
+                          </span>
+                        </div>
+                        <h3 className="font-bold text-lg text-gray-900 mb-2">{job.title}</h3>
+                        {job.business_location && (
+                          <p className="text-sm text-blue-600 mb-2 font-medium flex items-center gap-1">
+                            <Briefcase className="w-4 h-4" />
+                            {job.business_location.name}
+                          </p>
+                        )}
+                        {businessOwner && (
+                          <p className="text-xs text-gray-600 mb-2">
+                            Creato da: <span className="font-bold text-gray-900">{ownerName}</span>
+                            {businessOwner.email && <span className="text-gray-500"> • {businessOwner.email}</span>}
+                          </p>
+                        )}
                       </div>
-                      <h3 className="font-bold text-lg text-gray-900 mb-2">{job.title}</h3>
-                      {job.business_location && (
-                        <p className="text-sm text-blue-600 mb-2 font-medium flex items-center gap-1">
-                          <Briefcase className="w-4 h-4" />
-                          {job.business_location.name}
-                        </p>
-                      )}
                     </div>
-                  </div>
 
                   <p className="text-gray-700 mb-4 line-clamp-3">{job.description}</p>
 
@@ -355,7 +410,8 @@ export function JobPostingsSection({ jobPostings, onReload }: JobPostingsSection
                     </button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -401,8 +457,11 @@ export function JobPostingsSection({ jobPostings, onReload }: JobPostingsSection
                         <h3 className="font-bold text-lg text-gray-900 mb-2">{seeker.title}</h3>
                         <p className="text-sm text-green-600 mb-2 font-medium flex items-center gap-1">
                           <Users className="w-4 h-4" />
-                          {displayName}
+                          <span className="font-bold text-gray-900">{displayName}</span>
                         </p>
+                        {seeker.profile?.email && (
+                          <p className="text-xs text-gray-600 mb-2">{seeker.profile.email}</p>
+                        )}
                         {seeker.category && (
                           <p className="text-xs text-gray-500">{seeker.category.name}</p>
                         )}
@@ -493,6 +552,17 @@ export function JobPostingsSection({ jobPostings, onReload }: JobPostingsSection
                 {selectedJobPosting.business_location && (
                   <p className="text-lg text-blue-600 mb-2 font-medium">
                     {selectedJobPosting.business_location.name}
+                  </p>
+                )}
+                {selectedJobPosting.business_location?.business?.profile && (
+                  <p className="text-sm text-gray-600 mb-2">
+                    Creato da: <span className="font-bold text-gray-900">
+                      {selectedJobPosting.business_location.business.profile.nickname ||
+                       selectedJobPosting.business_location.business.profile.full_name}
+                    </span>
+                    {selectedJobPosting.business_location.business.profile.email && (
+                      <span className="text-gray-500"> • {selectedJobPosting.business_location.business.profile.email}</span>
+                    )}
                   </p>
                 )}
                 <span
