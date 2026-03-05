@@ -6,14 +6,9 @@ interface Plan {
   id: string;
   name: string;
   price: number;
-  duration_days: number;
-  max_family_members: number;
-  max_locations: number;
-  max_job_postings: number;
-  max_products: number;
-  description: string;
-  features: string[];
-  is_active: boolean;
+  billing_period: string;
+  max_persons: number;
+  created_at: string;
 }
 
 interface PlansSectionProps {
@@ -34,7 +29,7 @@ export function PlansSection({ adminId }: PlansSectionProps) {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('business_subscription_plans')
+        .from('subscription_plans')
         .select('*')
         .order('price', { ascending: true });
 
@@ -54,18 +49,12 @@ export function PlansSection({ adminId }: PlansSectionProps) {
     try {
       setSaving(true);
       const { error } = await supabase
-        .from('business_subscription_plans')
+        .from('subscription_plans')
         .update({
           name: editingPlan.name,
           price: editingPlan.price,
-          duration_days: editingPlan.duration_days,
-          max_family_members: editingPlan.max_family_members,
-          max_locations: editingPlan.max_locations,
-          max_job_postings: editingPlan.max_job_postings,
-          max_products: editingPlan.max_products,
-          description: editingPlan.description,
-          features: editingPlan.features,
-          is_active: editingPlan.is_active,
+          billing_period: editingPlan.billing_period,
+          max_persons: editingPlan.max_persons,
         })
         .eq('id', editingPlan.id);
 
@@ -82,31 +71,22 @@ export function PlansSection({ adminId }: PlansSectionProps) {
     }
   };
 
-  const addFeature = () => {
-    if (!editingPlan) return;
-    setEditingPlan({
-      ...editingPlan,
-      features: [...editingPlan.features, ''],
-    });
+  const getPeriodLabel = (period: string) => {
+    switch (period) {
+      case 'monthly':
+        return 'Mensile';
+      case 'yearly':
+        return 'Annuale';
+      default:
+        return period;
+    }
   };
 
-  const updateFeature = (index: number, value: string) => {
-    if (!editingPlan) return;
-    const newFeatures = [...editingPlan.features];
-    newFeatures[index] = value;
-    setEditingPlan({
-      ...editingPlan,
-      features: newFeatures,
-    });
-  };
-
-  const removeFeature = (index: number) => {
-    if (!editingPlan) return;
-    const newFeatures = editingPlan.features.filter((_, i) => i !== index);
-    setEditingPlan({
-      ...editingPlan,
-      features: newFeatures,
-    });
+  const getPlanType = (name: string) => {
+    if (name.toLowerCase().includes('business')) {
+      return 'Business';
+    }
+    return 'Privato';
   };
 
   if (loading) {
@@ -123,83 +103,79 @@ export function PlansSection({ adminId }: PlansSectionProps) {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Gestione Piani</h2>
           <p className="text-sm text-gray-600 mt-1">
-            Modifica i piani di abbonamento della piattaforma
+            Modifica i piani di abbonamento della piattaforma ({plans.length} piani totali)
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {plans.map((plan) => (
-          <div
-            key={plan.id}
-            className={`bg-white rounded-lg shadow-lg overflow-hidden ${
-              !plan.is_active ? 'opacity-60' : ''
-            }`}
-          >
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-2xl font-bold">{plan.name}</h3>
-                {!plan.is_active && (
-                  <span className="bg-red-500 text-white text-xs px-2 py-1 rounded">
-                    Disattivo
+        {plans.map((plan) => {
+          const planType = getPlanType(plan.name);
+          const isBusiness = planType === 'Business';
+
+          return (
+            <div
+              key={plan.id}
+              className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+            >
+              <div className={`p-6 text-white ${isBusiness ? 'bg-gradient-to-r from-orange-600 to-orange-700' : 'bg-gradient-to-r from-blue-600 to-blue-700'}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-semibold">
+                    {planType}
                   </span>
-                )}
+                  <span className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-semibold">
+                    {getPeriodLabel(plan.billing_period)}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold mb-3 line-clamp-2">{plan.name}</h3>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-bold">€{parseFloat(plan.price.toString()).toFixed(2)}</span>
+                  <span className="text-blue-100">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
+                </div>
               </div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-bold">€{plan.price}</span>
-                <span className="text-blue-100">/{plan.duration_days} giorni</span>
+
+              <div className="p-6 space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Users className="w-5 h-5 text-blue-600" />
+                    <span className="font-medium">
+                      {isBusiness ? (
+                        plan.max_persons === 999 ? (
+                          'Sedi illimitate'
+                        ) : (
+                          `Fino a ${plan.max_persons} ${plan.max_persons === 1 ? 'sede' : 'sedi'}`
+                        )
+                      ) : (
+                        `Fino a ${plan.max_persons} ${plan.max_persons === 1 ? 'persona' : 'persone'}`
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <span>Tutte le funzionalità incluse</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <span>{plan.billing_period === 'yearly' ? 'Risparmio annuale' : 'Flessibilità mensile'}</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setEditingPlan(plan)}
+                  className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  <Edit className="w-4 h-4" />
+                  Modifica Piano
+                </button>
               </div>
             </div>
-
-            <div className="p-6 space-y-4">
-              <p className="text-gray-600 text-sm">{plan.description}</p>
-
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <Users className="w-4 h-4 text-blue-600" />
-                  <span>Fino a {plan.max_family_members} membri famiglia</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                  <span>{plan.max_locations} sedi</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                  <span>{plan.max_job_postings} offerte lavoro</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                  <span>{plan.max_products} prodotti</span>
-                </div>
-              </div>
-
-              <div className="border-t pt-4">
-                <h4 className="font-semibold text-gray-900 mb-2 text-sm">Caratteristiche:</h4>
-                <ul className="space-y-1">
-                  {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-2 text-sm text-gray-600">
-                      <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <button
-                onClick={() => setEditingPlan(plan)}
-                className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Edit className="w-4 h-4" />
-                Modifica Piano
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {editingPlan && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900">Modifica Piano</h3>
@@ -216,19 +192,20 @@ export function PlansSection({ adminId }: PlansSectionProps) {
             </div>
 
             <div className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Nome Piano *
-                  </label>
-                  <input
-                    type="text"
-                    value={editingPlan.name}
-                    onChange={(e) => setEditingPlan({ ...editingPlan, name: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Nome Piano *
+                </label>
+                <input
+                  type="text"
+                  value={editingPlan.name}
+                  onChange={(e) => setEditingPlan({ ...editingPlan, name: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Es: Piano Mensile - 2 Persone"
+                />
+              </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Prezzo (€) *
@@ -236,127 +213,60 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                   <input
                     type="number"
                     step="0.01"
+                    min="0"
                     value={editingPlan.price}
-                    onChange={(e) => setEditingPlan({ ...editingPlan, price: parseFloat(e.target.value) })}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, price: parseFloat(e.target.value) || 0 })}
                     className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Durata (giorni) *
+                    Periodo di Fatturazione *
                   </label>
-                  <input
-                    type="number"
-                    value={editingPlan.duration_days}
-                    onChange={(e) => setEditingPlan({ ...editingPlan, duration_days: parseInt(e.target.value) })}
+                  <select
+                    value={editingPlan.billing_period}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, billing_period: e.target.value })}
                     className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Max Membri Famiglia *
-                  </label>
-                  <input
-                    type="number"
-                    value={editingPlan.max_family_members}
-                    onChange={(e) => setEditingPlan({ ...editingPlan, max_family_members: parseInt(e.target.value) })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Max Sedi *
-                  </label>
-                  <input
-                    type="number"
-                    value={editingPlan.max_locations}
-                    onChange={(e) => setEditingPlan({ ...editingPlan, max_locations: parseInt(e.target.value) })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Max Offerte Lavoro *
-                  </label>
-                  <input
-                    type="number"
-                    value={editingPlan.max_job_postings}
-                    onChange={(e) => setEditingPlan({ ...editingPlan, max_job_postings: parseInt(e.target.value) })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Max Prodotti *
-                  </label>
-                  <input
-                    type="number"
-                    value={editingPlan.max_products}
-                    onChange={(e) => setEditingPlan({ ...editingPlan, max_products: parseInt(e.target.value) })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div className="flex items-center">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={editingPlan.is_active}
-                      onChange={(e) => setEditingPlan({ ...editingPlan, is_active: e.target.checked })}
-                      className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                    />
-                    <span className="text-sm font-semibold text-gray-700">Piano Attivo</span>
-                  </label>
+                  >
+                    <option value="monthly">Mensile</option>
+                    <option value="yearly">Annuale</option>
+                  </select>
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Descrizione *
+                  {getPlanType(editingPlan.name) === 'Business' ? 'Numero Massimo Sedi *' : 'Numero Massimo Persone *'}
                 </label>
-                <textarea
-                  value={editingPlan.description}
-                  onChange={(e) => setEditingPlan({ ...editingPlan, description: e.target.value })}
-                  rows={3}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                <input
+                  type="number"
+                  min="1"
+                  value={editingPlan.max_persons}
+                  onChange={(e) => setEditingPlan({ ...editingPlan, max_persons: parseInt(e.target.value) || 1 })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  {getPlanType(editingPlan.name) === 'Business'
+                    ? 'Per sedi illimitate, usa 999'
+                    : 'Numero di membri famiglia inclusi nel piano'}
+                </p>
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-semibold text-gray-700">
-                    Caratteristiche
-                  </label>
-                  <button
-                    onClick={addFeature}
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    + Aggiungi
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {editingPlan.features.map((feature, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={feature}
-                        onChange={(e) => updateFeature(index, e.target.value)}
-                        placeholder="Inserisci caratteristica..."
-                        className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                      <button
-                        onClick={() => removeFeature(index)}
-                        className="text-red-600 hover:text-red-700 p-2"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
-                  ))}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-semibold text-blue-900 mb-2">Anteprima</h4>
+                <div className="space-y-1 text-sm text-blue-800">
+                  <p><span className="font-medium">Nome:</span> {editingPlan.name}</p>
+                  <p><span className="font-medium">Prezzo:</span> €{parseFloat(editingPlan.price.toString()).toFixed(2)}</p>
+                  <p><span className="font-medium">Periodo:</span> {getPeriodLabel(editingPlan.billing_period)}</p>
+                  <p>
+                    <span className="font-medium">Capacità:</span>{' '}
+                    {getPlanType(editingPlan.name) === 'Business'
+                      ? editingPlan.max_persons === 999
+                        ? 'Sedi illimitate'
+                        : `${editingPlan.max_persons} ${editingPlan.max_persons === 1 ? 'sede' : 'sedi'}`
+                      : `${editingPlan.max_persons} ${editingPlan.max_persons === 1 ? 'persona' : 'persone'}`}
+                  </p>
                 </div>
               </div>
 
@@ -369,8 +279,8 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                 </button>
                 <button
                   onClick={savePlan}
-                  disabled={saving}
-                  className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-semibold disabled:bg-gray-400"
+                  disabled={saving || !editingPlan.name || editingPlan.price <= 0 || editingPlan.max_persons < 1}
+                  className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   <Save className="w-5 h-5" />
                   {saving ? 'Salvataggio...' : 'Salva Modifiche'}

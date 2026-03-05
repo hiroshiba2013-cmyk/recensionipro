@@ -7,15 +7,17 @@ interface Message {
   content: string;
   created_at: string;
   sender_id: string;
-  sender: {
+  conversation_id: string;
+  is_read: boolean;
+  sender?: {
     full_name: string;
     email: string;
     nickname: string | null;
   };
-  conversation: {
+  conversation?: {
     id: string;
-    context_type: string;
-    context_id: string;
+    conversation_type: string;
+    reference_id: string;
     participant1: {
       full_name: string;
       email: string;
@@ -48,39 +50,59 @@ export function MessagingSection({ adminId }: MessagingSectionProps) {
   const loadMessages = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+
+      const { data: messagesData, error: messagesError } = await supabase
         .from('messages')
-        .select(`
-          id,
-          content,
-          created_at,
-          sender_id,
-          sender:profiles!messages_sender_id_fkey (
-            full_name,
-            email,
-            nickname
-          ),
-          conversation:conversations (
-            id,
-            context_type,
-            context_id,
-            participant1:profiles!conversations_participant1_id_fkey (
-              full_name,
-              email,
-              nickname
-            ),
-            participant2:profiles!conversations_participant2_id_fkey (
-              full_name,
-              email,
-              nickname
-            )
-          )
-        `)
+        .select('id, content, created_at, sender_id, conversation_id, is_read')
         .order('created_at', { ascending: false })
         .limit(500);
 
-      if (error) throw error;
-      setMessages(data || []);
+      if (messagesError) throw messagesError;
+
+      const messagesWithDetails = await Promise.all(
+        (messagesData || []).map(async (msg) => {
+          const { data: sender } = await supabase
+            .from('profiles')
+            .select('full_name, email, nickname')
+            .eq('id', msg.sender_id)
+            .single();
+
+          const { data: conversation } = await supabase
+            .from('conversations')
+            .select('id, conversation_type, reference_id, participant1_id, participant2_id')
+            .eq('id', msg.conversation_id)
+            .single();
+
+          let conversationDetails: any = null;
+          if (conversation) {
+            const { data: p1 } = await supabase
+              .from('profiles')
+              .select('full_name, email, nickname')
+              .eq('id', conversation.participant1_id)
+              .single();
+
+            const { data: p2 } = await supabase
+              .from('profiles')
+              .select('full_name, email, nickname')
+              .eq('id', conversation.participant2_id)
+              .single();
+
+            conversationDetails = {
+              ...conversation,
+              participant1: p1,
+              participant2: p2,
+            };
+          }
+
+          return {
+            ...msg,
+            sender,
+            conversation: conversationDetails,
+          };
+        })
+      );
+
+      setMessages(messagesWithDetails);
     } catch (error: any) {
       console.error('Error loading messages:', error);
       alert('Errore nel caricamento dei messaggi');
@@ -93,12 +115,14 @@ export function MessagingSection({ adminId }: MessagingSectionProps) {
     const matchesSearch =
       searchTerm === '' ||
       message.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      message.sender.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      message.sender.email.toLowerCase().includes(searchTerm.toLowerCase());
+      (message.sender && (
+        message.sender.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        message.sender.email.toLowerCase().includes(searchTerm.toLowerCase())
+      ));
 
     const matchesType =
       filterType === 'all' ||
-      message.conversation.context_type === filterType;
+      (message.conversation && message.conversation.conversation_type === filterType);
 
     return matchesSearch && matchesType;
   });
@@ -173,7 +197,7 @@ export function MessagingSection({ adminId }: MessagingSectionProps) {
       case 'job_seeker':
         return 'Cerca Lavoro';
       default:
-        return contextType;
+        return contextType || 'Sconosciuto';
     }
   };
 
@@ -254,11 +278,18 @@ export function MessagingSection({ adminId }: MessagingSectionProps) {
                   <div className="flex items-center gap-3 mb-2">
                     <User className="w-5 h-5 text-gray-500" />
                     <h3 className="font-bold text-lg text-gray-900">
-                      {message.sender.nickname || message.sender.full_name}
+                      {message.sender ? (message.sender.nickname || message.sender.full_name) : 'Utente Sconosciuto'}
                     </h3>
-                    <span className="px-3 py-1 text-xs rounded-full font-medium bg-blue-100 text-blue-800">
-                      {getContextLabel(message.conversation.context_type)}
-                    </span>
+                    {message.conversation && (
+                      <span className="px-3 py-1 text-xs rounded-full font-medium bg-blue-100 text-blue-800">
+                        {getContextLabel(message.conversation.conversation_type)}
+                      </span>
+                    )}
+                    {!message.is_read && (
+                      <span className="px-3 py-1 text-xs rounded-full font-medium bg-green-100 text-green-800">
+                        Non letto
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
@@ -311,26 +342,38 @@ export function MessagingSection({ adminId }: MessagingSectionProps) {
             <div className="p-6 space-y-6">
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="font-semibold text-gray-900 mb-2">Mittente</h4>
-                <p className="text-gray-700">{selectedMessage.sender.nickname || selectedMessage.sender.full_name}</p>
-                <p className="text-sm text-gray-500">{selectedMessage.sender.email}</p>
+                {selectedMessage.sender ? (
+                  <>
+                    <p className="text-gray-700">{selectedMessage.sender.nickname || selectedMessage.sender.full_name}</p>
+                    <p className="text-sm text-gray-500">{selectedMessage.sender.email}</p>
+                  </>
+                ) : (
+                  <p className="text-gray-500">Informazioni mittente non disponibili</p>
+                )}
               </div>
 
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-900 mb-2">Conversazione</h4>
-                <div className="space-y-2 text-sm">
-                  <p>
-                    <span className="font-medium">Tipo:</span> {getContextLabel(selectedMessage.conversation.context_type)}
-                  </p>
-                  <p>
-                    <span className="font-medium">Partecipante 1:</span>{' '}
-                    {selectedMessage.conversation.participant1.nickname || selectedMessage.conversation.participant1.full_name}
-                  </p>
-                  <p>
-                    <span className="font-medium">Partecipante 2:</span>{' '}
-                    {selectedMessage.conversation.participant2.nickname || selectedMessage.conversation.participant2.full_name}
-                  </p>
+              {selectedMessage.conversation && (
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-900 mb-2">Conversazione</h4>
+                  <div className="space-y-2 text-sm">
+                    <p>
+                      <span className="font-medium">Tipo:</span> {getContextLabel(selectedMessage.conversation.conversation_type)}
+                    </p>
+                    {selectedMessage.conversation.participant1 && (
+                      <p>
+                        <span className="font-medium">Partecipante 1:</span>{' '}
+                        {selectedMessage.conversation.participant1.nickname || selectedMessage.conversation.participant1.full_name}
+                      </p>
+                    )}
+                    {selectedMessage.conversation.participant2 && (
+                      <p>
+                        <span className="font-medium">Partecipante 2:</span>{' '}
+                        {selectedMessage.conversation.participant2.nickname || selectedMessage.conversation.participant2.full_name}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
