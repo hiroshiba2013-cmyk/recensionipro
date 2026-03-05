@@ -1,5 +1,6 @@
 import { Shield, FileText, AlertCircle, CheckCircle, Award, Tag, Briefcase, Building, Star, HelpCircle, UserPlus, Users, Heart, MessageSquare, MapPin, Gift, TrendingUp, Lock, Home } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
 interface FAQItem {
   question: string;
@@ -7,7 +8,7 @@ interface FAQItem {
   category: string;
 }
 
-const faqs: FAQItem[] = [
+const hardcodedFaqs: FAQItem[] = [
   {
     category: 'Iscrizione e Account',
     question: 'Come mi iscrivo alla piattaforma?',
@@ -189,6 +190,37 @@ export function RulesPage() {
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('Tutte');
   const [activeSection, setActiveSection] = useState<string>('');
+  const [faqs, setFaqs] = useState<FAQItem[]>(hardcodedFaqs);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadFAQs();
+  }, []);
+
+  const loadFAQs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('faqs')
+        .select('*')
+        .eq('is_active', true)
+        .order('category')
+        .order('display_order');
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        setFaqs(data.map(faq => ({
+          category: faq.category,
+          question: faq.question,
+          answer: faq.answer,
+        })));
+      }
+    } catch (error: any) {
+      console.error('Error loading FAQs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const categories = ['Tutte', ...Array.from(new Set(faqs.map(faq => faq.category)))];
   const filteredFAQs = selectedCategory === 'Tutte'

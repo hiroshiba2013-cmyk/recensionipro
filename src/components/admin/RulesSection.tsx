@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, FileEdit as Edit, Save, X, Plus, Trash2 } from 'lucide-react';
+import { BookOpen, FileEdit as Edit, Save, X, Plus, Trash2, HelpCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
-interface RuleCategory {
+interface FAQ {
   id: string;
-  setting_key: string;
-  description: string;
-  rules: string[];
+  category: string;
+  question: string;
+  answer: string;
+  display_order: number;
+  is_active: boolean;
 }
 
 interface RulesSectionProps {
@@ -14,130 +16,119 @@ interface RulesSectionProps {
 }
 
 export function RulesSection({ adminId }: RulesSectionProps) {
-  const [categories, setCategories] = useState<RuleCategory[]>([]);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingCategory, setEditingCategory] = useState<RuleCategory | null>(null);
+  const [editingFAQ, setEditingFAQ] = useState<FAQ | null>(null);
+  const [isNewFAQ, setIsNewFAQ] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Tutte');
 
   useEffect(() => {
-    loadRules();
+    loadFAQs();
   }, []);
 
-  const loadRules = async () => {
+  const loadFAQs = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('platform_settings')
+        .from('faqs')
         .select('*')
-        .eq('category', 'rules')
-        .order('setting_key');
+        .order('category')
+        .order('display_order');
 
       if (error) throw error;
-
-      const rulesCategories = data?.map((item) => ({
-        id: item.id,
-        setting_key: item.setting_key,
-        description: item.description,
-        rules: item.setting_value.rules || [],
-      })) || [];
-
-      setCategories(rulesCategories);
+      setFaqs(data || []);
     } catch (error: any) {
-      console.error('Error loading rules:', error);
-      alert('Errore nel caricamento delle regole');
+      console.error('Error loading FAQs:', error);
+      alert('Errore nel caricamento delle FAQ');
     } finally {
       setLoading(false);
     }
   };
 
-  const saveRules = async () => {
-    if (!editingCategory) return;
+  const saveFAQ = async () => {
+    if (!editingFAQ) return;
 
     try {
       setSaving(true);
-      const { error } = await supabase
-        .from('platform_settings')
-        .update({
-          setting_value: { rules: editingCategory.rules },
-          updated_by: adminId,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', editingCategory.id);
 
-      if (error) throw error;
+      if (isNewFAQ) {
+        const { error } = await supabase
+          .from('faqs')
+          .insert({
+            category: editingFAQ.category,
+            question: editingFAQ.question,
+            answer: editingFAQ.answer,
+            display_order: editingFAQ.display_order,
+            is_active: editingFAQ.is_active,
+            updated_by: adminId,
+          });
 
-      alert('Regole aggiornate con successo!');
-      setEditingCategory(null);
-      loadRules();
+        if (error) throw error;
+        alert('FAQ aggiunta con successo!');
+      } else {
+        const { error } = await supabase
+          .from('faqs')
+          .update({
+            category: editingFAQ.category,
+            question: editingFAQ.question,
+            answer: editingFAQ.answer,
+            display_order: editingFAQ.display_order,
+            is_active: editingFAQ.is_active,
+            updated_by: adminId,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editingFAQ.id);
+
+        if (error) throw error;
+        alert('FAQ aggiornata con successo!');
+      }
+
+      setEditingFAQ(null);
+      setIsNewFAQ(false);
+      loadFAQs();
     } catch (error: any) {
-      console.error('Error saving rules:', error);
+      console.error('Error saving FAQ:', error);
       alert(`Errore: ${error.message}`);
     } finally {
       setSaving(false);
     }
   };
 
-  const addRule = () => {
-    if (!editingCategory) return;
-    setEditingCategory({
-      ...editingCategory,
-      rules: [...editingCategory.rules, ''],
-    });
-  };
+  const deleteFAQ = async (id: string) => {
+    if (!confirm('Sei sicuro di voler eliminare questa FAQ?')) return;
 
-  const updateRule = (index: number, value: string) => {
-    if (!editingCategory) return;
-    const newRules = [...editingCategory.rules];
-    newRules[index] = value;
-    setEditingCategory({
-      ...editingCategory,
-      rules: newRules,
-    });
-  };
+    try {
+      const { error } = await supabase
+        .from('faqs')
+        .delete()
+        .eq('id', id);
 
-  const removeRule = (index: number) => {
-    if (!editingCategory) return;
-    const newRules = editingCategory.rules.filter((_, i) => i !== index);
-    setEditingCategory({
-      ...editingCategory,
-      rules: newRules,
-    });
-  };
-
-  const getCategoryTitle = (key: string) => {
-    switch (key) {
-      case 'rules_reviews':
-        return 'Recensioni';
-      case 'rules_classified_ads':
-        return 'Annunci';
-      case 'rules_messaging':
-        return 'Messaggistica';
-      case 'rules_points':
-        return 'Sistema Punti';
-      case 'rules_general':
-        return 'Regole Generali';
-      default:
-        return key.replace('rules_', '').replace(/_/g, ' ');
+      if (error) throw error;
+      alert('FAQ eliminata con successo!');
+      loadFAQs();
+    } catch (error: any) {
+      console.error('Error deleting FAQ:', error);
+      alert(`Errore: ${error.message}`);
     }
   };
 
-  const getCategoryIcon = (key: string) => {
-    const iconClass = "w-6 h-6";
-    switch (key) {
-      case 'rules_reviews':
-        return '⭐';
-      case 'rules_classified_ads':
-        return '📢';
-      case 'rules_messaging':
-        return '💬';
-      case 'rules_points':
-        return '🏆';
-      case 'rules_general':
-        return '📋';
-      default:
-        return '📄';
-    }
+  const addNewFAQ = () => {
+    setEditingFAQ({
+      id: '',
+      category: 'Generale',
+      question: '',
+      answer: '',
+      display_order: faqs.length + 1,
+      is_active: true,
+    });
+    setIsNewFAQ(true);
   };
+
+  const categories = ['Tutte', ...Array.from(new Set(faqs.map(faq => faq.category)))];
+  const filteredFAQs = selectedCategory === 'Tutte'
+    ? faqs
+    : faqs.filter(faq => faq.category === selectedCategory);
 
   if (loading) {
     return (
@@ -151,135 +142,212 @@ export function RulesSection({ adminId }: RulesSectionProps) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Gestione Regole</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Gestione Regole e FAQ</h2>
           <p className="text-sm text-gray-600 mt-1">
-            Modifica le regole e linee guida della piattaforma
+            Modifica le domande frequenti visualizzate nella pagina Regole ({faqs.length} FAQ totali)
           </p>
         </div>
+        <button
+          onClick={addNewFAQ}
+          className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
+        >
+          <Plus className="w-5 h-5" />
+          Aggiungi FAQ
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {categories.map((category) => (
-          <div key={category.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">{getCategoryIcon(category.setting_key)}</span>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold">{getCategoryTitle(category.setting_key)}</h3>
-                  <p className="text-blue-100 text-sm mt-1">{category.description}</p>
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-3">
+            Filtra per categoria:
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  selectedCategory === category
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {filteredFAQs.map((faq) => (
+            <div key={faq.id} className="bg-gray-50 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition">
+              <div className="p-4">
+                <div className="flex items-start justify-between gap-4 mb-2">
+                  <div className="flex-1">
+                    <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded mb-2">
+                      {faq.category}
+                    </span>
+                    <h3 className="font-bold text-gray-900 mb-2">{faq.question}</h3>
+                    <p className="text-gray-700 text-sm">{faq.answer}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {!faq.is_active && (
+                      <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded">
+                        Disattivata
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={() => {
+                      setEditingFAQ(faq);
+                      setIsNewFAQ(false);
+                    }}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Modifica
+                  </button>
+                  <button
+                    onClick={() => deleteFAQ(faq.id)}
+                    className="flex items-center gap-2 bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Elimina
+                  </button>
                 </div>
               </div>
             </div>
+          ))}
 
-            <div className="p-6">
-              <div className="space-y-3 mb-4">
-                {category.rules.map((rule, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold">
-                      {index + 1}
-                    </span>
-                    <p className="text-gray-700 text-sm flex-1">{rule}</p>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={() => setEditingCategory(category)}
-                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Edit className="w-4 h-4" />
-                Modifica Regole
-              </button>
+          {filteredFAQs.length === 0 && (
+            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-8 text-center">
+              <HelpCircle className="w-12 h-12 text-yellow-600 mx-auto mb-3" />
+              <p className="text-yellow-800 font-medium">Nessuna FAQ presente in questa categoria</p>
             </div>
-          </div>
-        ))}
+          )}
+        </div>
       </div>
 
-      {editingCategory && (
+      {editingFAQ && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                  <span className="text-3xl">{getCategoryIcon(editingCategory.setting_key)}</span>
-                  Modifica: {getCategoryTitle(editingCategory.setting_key)}
+                  <HelpCircle className="w-8 h-8 text-blue-600" />
+                  {isNewFAQ ? 'Aggiungi Nuova FAQ' : 'Modifica FAQ'}
                 </h3>
-                <p className="text-sm text-gray-600 mt-1">{editingCategory.description}</p>
               </div>
               <button
-                onClick={() => setEditingCategory(null)}
+                onClick={() => {
+                  setEditingFAQ(null);
+                  setIsNewFAQ(false);
+                }}
                 className="text-gray-500 hover:text-gray-700 transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <label className="text-lg font-semibold text-gray-900">
-                  Regole ({editingCategory.rules.length})
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Categoria *
                 </label>
-                <button
-                  onClick={addRule}
-                  className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                <select
+                  value={editingFAQ.category}
+                  onChange={(e) => setEditingFAQ({ ...editingFAQ, category: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <Plus className="w-4 h-4" />
-                  Aggiungi Regola
-                </button>
+                  <option value="Iscrizione e Account">Iscrizione e Account</option>
+                  <option value="Punti e Classifica">Punti e Classifica</option>
+                  <option value="Recensioni">Recensioni</option>
+                  <option value="Annunci">Annunci</option>
+                  <option value="Lavoro">Lavoro</option>
+                  <option value="Solidarietà">Solidarietà</option>
+                  <option value="Aziende">Aziende</option>
+                  <option value="Abbonamenti">Abbonamenti</option>
+                  <option value="Privacy e Sicurezza">Privacy e Sicurezza</option>
+                  <option value="Generale">Generale</option>
+                </select>
               </div>
 
-              <div className="space-y-3">
-                {editingCategory.rules.map((rule, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                      <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold">
-                        {index + 1}
-                      </span>
-                      <div className="flex-1">
-                        <textarea
-                          value={rule}
-                          onChange={(e) => updateRule(index, e.target.value)}
-                          placeholder="Inserisci la regola..."
-                          rows={3}
-                          className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                        />
-                      </div>
-                      <button
-                        onClick={() => removeRule(index)}
-                        className="text-red-600 hover:text-red-700 p-2"
-                        title="Elimina regola"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Domanda *
+                </label>
+                <input
+                  type="text"
+                  value={editingFAQ.question}
+                  onChange={(e) => setEditingFAQ({ ...editingFAQ, question: e.target.value })}
+                  placeholder="Inserisci la domanda..."
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
               </div>
 
-              {editingCategory.rules.length === 0 && (
-                <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-8 text-center">
-                  <BookOpen className="w-12 h-12 text-yellow-600 mx-auto mb-3" />
-                  <p className="text-yellow-800 font-medium">Nessuna regola presente</p>
-                  <p className="text-yellow-600 text-sm mt-1">
-                    Clicca su "Aggiungi Regola" per iniziare
-                  </p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Risposta *
+                </label>
+                <textarea
+                  value={editingFAQ.answer}
+                  onChange={(e) => setEditingFAQ({ ...editingFAQ, answer: e.target.value })}
+                  placeholder="Inserisci la risposta..."
+                  rows={6}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Ordine di visualizzazione
+                  </label>
+                  <input
+                    type="number"
+                    value={editingFAQ.display_order}
+                    onChange={(e) => setEditingFAQ({ ...editingFAQ, display_order: parseInt(e.target.value) || 0 })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
                 </div>
-              )}
 
-              <div className="flex gap-3 pt-6 border-t mt-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Stato
+                  </label>
+                  <div className="flex items-center gap-4 h-10">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editingFAQ.is_active}
+                        onChange={(e) => setEditingFAQ({ ...editingFAQ, is_active: e.target.checked })}
+                        className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                      />
+                      <span className="text-sm font-medium">Attiva</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-6 border-t">
                 <button
-                  onClick={() => setEditingCategory(null)}
+                  onClick={() => {
+                    setEditingFAQ(null);
+                    setIsNewFAQ(false);
+                  }}
                   className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-semibold"
                 >
                   Annulla
                 </button>
                 <button
-                  onClick={saveRules}
-                  disabled={saving}
+                  onClick={saveFAQ}
+                  disabled={saving || !editingFAQ.question || !editingFAQ.answer}
                   className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-semibold disabled:bg-gray-400"
                 >
                   <Save className="w-5 h-5" />
-                  {saving ? 'Salvataggio...' : 'Salva Modifiche'}
+                  {saving ? 'Salvataggio...' : isNewFAQ ? 'Aggiungi FAQ' : 'Salva Modifiche'}
                 </button>
               </div>
             </div>
