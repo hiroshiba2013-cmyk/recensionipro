@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AlertTriangle, CheckCircle, XCircle, Eye, Filter, Search, FileText, MessageSquare, Briefcase } from 'lucide-react';
+import { AlertTriangle, CheckCircle, XCircle, Eye, Filter, Search, FileText, MessageSquare, Store, Star, ShoppingBag } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Report {
@@ -322,8 +322,10 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
                       </span>
                     </div>
                     {report.entity_name && (
-                      <p className="text-base font-bold text-gray-900 mb-2">
-                        {report.reported_entity_type === 'business' && <Briefcase className="w-4 h-4 inline mr-1" />}
+                      <p className="text-base font-bold text-gray-900 mb-2 flex items-center gap-1">
+                        {report.reported_entity_type === 'business' && <Store className="w-4 h-4 text-gray-700" />}
+                        {report.reported_entity_type === 'classified_ad' && <ShoppingBag className="w-4 h-4 text-gray-700" />}
+                        {report.reported_entity_type === 'review' && <Star className="w-4 h-4 text-gray-700" />}
                         {report.entity_name}
                       </p>
                     )}
@@ -405,8 +407,10 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
                       </span>
                     </div>
                     {report.entity_name && (
-                      <p className="text-sm font-bold text-gray-900 mb-1">
-                        {report.reported_entity_type === 'business' && <Briefcase className="w-4 h-4 inline mr-1" />}
+                      <p className="text-sm font-bold text-gray-900 mb-1 flex items-center gap-1">
+                        {report.reported_entity_type === 'business' && <Store className="w-3 h-3 text-gray-700" />}
+                        {report.reported_entity_type === 'classified_ad' && <ShoppingBag className="w-3 h-3 text-gray-700" />}
+                        {report.reported_entity_type === 'review' && <Star className="w-3 h-3 text-gray-700" />}
                         {report.entity_name}
                       </p>
                     )}
