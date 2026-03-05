@@ -68,18 +68,26 @@ export function ReviewCard({ review }: ReviewCardProps) {
               </span>
             )}
           </div>
-          {review.family_member ? (
-            <p className="text-sm font-medium text-gray-900">{review.family_member.nickname}</p>
-          ) : review.customer ? (
-            <p className="text-sm font-medium text-gray-900">{review.customer.nickname || review.customer.full_name}</p>
-          ) : null}
-          <span className="text-xs text-gray-500">{formatDate(review.created_at)}</span>
-          {review.business_location && (
-            <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
-              <MapPin className="w-3 h-3" />
-              {review.business_location.name || `${review.business_location.address}, ${review.business_location.city}`}
+          {(review as any).business?.name && (
+            <p className="text-base font-semibold text-gray-900 mb-1">
+              {(review as any).business.name}
             </p>
           )}
+          {(review as any).location_info && (
+            <p className="text-sm text-gray-600 flex items-center gap-1 mb-1">
+              <MapPin className="w-3 h-3" />
+              {(review as any).location_info.name ?
+                `${(review as any).location_info.name} - ${(review as any).location_info.city}` :
+                (review as any).location_info.city
+              }
+            </p>
+          )}
+          {review.family_member ? (
+            <p className="text-sm font-medium text-gray-700">{review.family_member.nickname}</p>
+          ) : review.customer ? (
+            <p className="text-sm font-medium text-gray-700">{review.customer.nickname || review.customer.full_name}</p>
+          ) : null}
+          <span className="text-xs text-gray-500">{formatDate(review.created_at)}</span>
         </div>
       </div>
 
