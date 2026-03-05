@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Award, TrendingUp, Star, MessageCircle, Briefcase, Tag } from 'lucide-react';
+import { Award, TrendingUp, Star, MessageCircle, Briefcase, Tag, Search } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface LeaderboardUser {
@@ -15,12 +15,37 @@ interface LeaderboardUser {
 
 export function LeaderboardSection() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
+  const [filteredLeaderboard, setFilteredLeaderboard] = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'points' | 'reviews' | 'ads' | 'jobs' | 'referrals'>('points');
+  const [searchName, setSearchName] = useState('');
+  const [searchEmail, setSearchEmail] = useState('');
 
   useEffect(() => {
     loadLeaderboard();
   }, [sortBy]);
+
+  useEffect(() => {
+    filterLeaderboard();
+  }, [leaderboard, searchName, searchEmail]);
+
+  const filterLeaderboard = () => {
+    let filtered = [...leaderboard];
+
+    if (searchName) {
+      filtered = filtered.filter(user =>
+        user.full_name.toLowerCase().includes(searchName.toLowerCase())
+      );
+    }
+
+    if (searchEmail) {
+      filtered = filtered.filter(user =>
+        user.email.toLowerCase().includes(searchEmail.toLowerCase())
+      );
+    }
+
+    setFilteredLeaderboard(filtered);
+  };
 
   const loadLeaderboard = async () => {
     setLoading(true);
@@ -107,15 +132,15 @@ export function LeaderboardSection() {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-      <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-100">
+      <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-cyan-50">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-500 rounded-lg">
+            <div className="p-2 bg-blue-600 rounded-lg">
               <Award className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">Classifica Utenti</h2>
-              <p className="text-sm text-gray-600">{leaderboard.length} utenti attivi</p>
+              <p className="text-sm text-gray-600">{filteredLeaderboard.length} di {leaderboard.length} utenti</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -123,7 +148,7 @@ export function LeaderboardSection() {
               onClick={() => setSortBy('points')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
                 sortBy === 'points'
-                  ? 'bg-purple-600 text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -178,6 +203,48 @@ export function LeaderboardSection() {
         </div>
       </div>
 
+      {/* Filtri di ricerca */}
+      <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Cerca per nome utente..."
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Cerca per email..."
+              value={searchEmail}
+              onChange={(e) => setSearchEmail(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+        {(searchName || searchEmail) && (
+          <div className="mt-3 flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              {filteredLeaderboard.length} risultat{filteredLeaderboard.length === 1 ? 'o' : 'i'} trovat{filteredLeaderboard.length === 1 ? 'o' : 'i'}
+            </p>
+            <button
+              onClick={() => {
+                setSearchName('');
+                setSearchEmail('');
+              }}
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Cancella filtri
+            </button>
+          </div>
+        )}
+      </div>
+
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -206,7 +273,7 @@ export function LeaderboardSection() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
-            {leaderboard.map((user, index) => (
+            {filteredLeaderboard.map((user, index) => (
               <tr
                 key={user.user_id}
                 className={`hover:bg-gray-50 transition-colors ${
@@ -244,7 +311,7 @@ export function LeaderboardSection() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-center">
                   <div className="flex items-center justify-center">
-                    <div className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full font-bold text-sm">
+                    <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-bold text-sm">
                       {user.total_points.toLocaleString()}
                     </div>
                   </div>
@@ -279,7 +346,7 @@ export function LeaderboardSection() {
         </table>
       </div>
 
-      {leaderboard.length === 0 && (
+      {filteredLeaderboard.length === 0 && !loading && (
         <div className="text-center py-12">
           <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-500 text-lg font-medium">Nessun utente attivo</p>
