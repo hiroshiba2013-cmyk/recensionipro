@@ -89,6 +89,35 @@ export function PlansSection({ adminId }: PlansSectionProps) {
     return 'Privato';
   };
 
+  const getPlanColor = (plan: Plan) => {
+    const isBusiness = getPlanType(plan.name) === 'Business';
+    const isYearly = plan.billing_period === 'yearly';
+
+    if (!isBusiness && !isYearly) {
+      return 'from-blue-600 to-blue-700';
+    } else if (!isBusiness && isYearly) {
+      return 'from-green-600 to-green-700';
+    } else if (isBusiness && !isYearly) {
+      return 'from-orange-600 to-orange-700';
+    } else {
+      return 'from-purple-600 to-purple-700';
+    }
+  };
+
+  const organizePlans = () => {
+    const privateMonthly = plans.filter(p => !p.name.toLowerCase().includes('business') && p.billing_period === 'monthly');
+    const privateYearly = plans.filter(p => !p.name.toLowerCase().includes('business') && p.billing_period === 'yearly');
+    const businessMonthly = plans.filter(p => p.name.toLowerCase().includes('business') && p.billing_period === 'monthly');
+    const businessYearly = plans.filter(p => p.name.toLowerCase().includes('business') && p.billing_period === 'yearly');
+
+    return [
+      { title: 'Piani Privati Mensili', plans: privateMonthly, borderColor: 'border-blue-600', bgColor: 'bg-blue-50' },
+      { title: 'Piani Privati Annuali', plans: privateYearly, borderColor: 'border-green-600', bgColor: 'bg-green-50' },
+      { title: 'Piani Business Mensili', plans: businessMonthly, borderColor: 'border-orange-600', bgColor: 'bg-orange-50' },
+      { title: 'Piani Business Annuali', plans: businessYearly, borderColor: 'border-purple-600', bgColor: 'bg-purple-50' },
+    ];
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -97,8 +126,10 @@ export function PlansSection({ adminId }: PlansSectionProps) {
     );
   }
 
+  const planGroups = organizePlans();
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Gestione Piani</h2>
@@ -108,17 +139,26 @@ export function PlansSection({ adminId }: PlansSectionProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {plans.map((plan) => {
-          const planType = getPlanType(plan.name);
-          const isBusiness = planType === 'Business';
+      {planGroups.map((group, groupIndex) => (
+        group.plans.length > 0 && (
+          <div key={groupIndex} className="space-y-4">
+            <div className={`border-l-4 ${group.borderColor} pl-4 py-2 ${group.bgColor} rounded-r-lg`}>
+              <h3 className="text-xl font-bold text-gray-900">{group.title}</h3>
+              <p className="text-sm text-gray-600">{group.plans.length} {group.plans.length === 1 ? 'piano disponibile' : 'piani disponibili'}</p>
+            </div>
 
-          return (
-            <div
-              key={plan.id}
-              className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
-            >
-              <div className={`p-6 text-white ${isBusiness ? 'bg-gradient-to-r from-orange-600 to-orange-700' : 'bg-gradient-to-r from-blue-600 to-blue-700'}`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {group.plans.map((plan) => {
+                const planType = getPlanType(plan.name);
+                const isBusiness = planType === 'Business';
+                const colorClass = getPlanColor(plan);
+
+                return (
+                  <div
+                    key={plan.id}
+                    className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+                  >
+                    <div className={`p-6 text-white bg-gradient-to-r ${colorClass}`}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-semibold">
                     {planType}
@@ -167,11 +207,14 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                   <Edit className="w-4 h-4" />
                   Modifica Piano
                 </button>
-              </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
-      </div>
+          </div>
+        )
+      ))}
 
       {editingPlan && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
