@@ -28,18 +28,23 @@ export default function ReportButton({ entityType, entityId, compact = false }: 
     }
   };
 
+  const handleClick = () => {
+    console.log('🚩 Report button clicked:', { entityType, entityId });
+    setShowModal(true);
+  };
+
   return (
     <>
       <button
-        onClick={() => setShowModal(true)}
+        onClick={handleClick}
         className={`flex items-center gap-2 ${
           compact
-            ? 'text-xs text-gray-500 hover:text-red-600'
+            ? 'text-xs text-white hover:text-red-300 cursor-pointer'
             : 'text-sm px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-300'
         } transition-all duration-200`}
         title="Segnala contenuto inappropriato"
       >
-        <Flag className={compact ? 'w-3 h-3' : 'w-4 h-4'} />
+        <Flag className={compact ? 'w-4 h-4' : 'w-4 h-4'} />
         {!compact && <span>{getButtonText()}</span>}
       </button>
 
