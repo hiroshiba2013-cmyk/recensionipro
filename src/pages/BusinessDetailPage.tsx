@@ -248,7 +248,8 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
             *,
             customer:profiles!customer_id(full_name, nickname),
             responses:review_responses(*),
-            family_member:customer_family_members(first_name, last_name, nickname)
+            family_member:customer_family_members(first_name, last_name, nickname),
+            business_location:business_locations(id, name, internal_name, address, city)
           `)
           .eq('review_status', 'approved')
           .order('created_at', { ascending: false });
@@ -264,7 +265,16 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
         const { data: fullReviewsData } = await fullReviewsQuery;
 
         if (fullReviewsData) {
-          setReviews(fullReviewsData);
+          // Aggiungi il nome dell'attività a ciascuna recensione
+          const reviewsWithBusinessName = fullReviewsData.map(review => ({
+            ...review,
+            business: { name: businessData.name },
+            location_info: review.business_location ? {
+              name: review.business_location.internal_name || review.business_location.name,
+              city: review.business_location.city
+            } : { city: businessData.city }
+          }));
+          setReviews(reviewsWithBusinessName);
         }
 
         // Job postings solo per registered businesses
