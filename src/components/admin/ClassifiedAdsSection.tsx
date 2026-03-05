@@ -287,7 +287,7 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
               <div className="space-y-2 mb-4">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <User className="w-4 h-4" />
-                  <span>{ad.user.nickname || ad.user.full_name}</span>
+                  <span className="font-bold text-gray-900">{ad.user.nickname || ad.user.full_name}</span>
                   <span className="text-gray-400">•</span>
                   <span>{ad.user.email}</span>
                 </div>
