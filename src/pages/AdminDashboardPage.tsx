@@ -419,13 +419,17 @@ export function AdminDashboardPage() {
         price,
         status,
         ad_type,
-        category,
         city,
         province,
+        region,
         images,
         created_at,
         expires_at,
-        user:profiles(full_name, email, nickname)
+        user_id,
+        family_member_id,
+        category_id,
+        classified_categories!classified_ads_category_id_fkey(name),
+        profiles!classified_ads_user_id_fkey(full_name, email, nickname)
       `)
       .order('created_at', { ascending: false })
       .limit(200);
@@ -435,7 +439,14 @@ export function AdminDashboardPage() {
       return;
     }
 
-    setClassifiedAds(data || []);
+    // Transform data to match expected format
+    const transformedData = (data || []).map(ad => ({
+      ...ad,
+      category: ad.classified_categories?.name || 'N/A',
+      user: ad.profiles || { full_name: 'Unknown', email: '', nickname: null }
+    }));
+
+    setClassifiedAds(transformedData as any);
   };
 
   const loadReports = async () => {
