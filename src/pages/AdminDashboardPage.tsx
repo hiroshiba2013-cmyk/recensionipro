@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, Users, FileText, ShoppingBag, Activity, CheckCircle, XCircle, Clock, Eye, Trash2, LogOut, Building2, AlertTriangle, Briefcase, Package, MapPin, UserCheck, Heart, Award, TrendingUp } from 'lucide-react';
+import { Shield, Users, FileText, ShoppingBag, Activity, CheckCircle, XCircle, Clock, Eye, Trash2, LogOut, Building2, AlertTriangle, Briefcase, Package, MapPin, UserCheck, Heart, Award, TrendingUp, MessageSquare, Mail, CreditCard, BookOpen } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { AdminStats } from '../components/admin/AdminStats';
@@ -14,6 +14,10 @@ import { UsersManagementSection } from '../components/admin/UsersManagementSecti
 import { SolidaritySection } from '../components/admin/SolidaritySection';
 import { LeaderboardSection } from '../components/admin/LeaderboardSection';
 import { BusinessTrackingSection } from '../components/admin/BusinessTrackingSection';
+import { MessagingSection } from '../components/admin/MessagingSection';
+import { ContactSection } from '../components/admin/ContactSection';
+import { PlansSection } from '../components/admin/PlansSection';
+import { RulesSection } from '../components/admin/RulesSection';
 
 interface DashboardStats {
   totalUsers: number;
@@ -977,6 +981,50 @@ export function AdminDashboardPage() {
                 <TrendingUp className="w-4 h-4" />
                 Tracking
               </button>
+              <button
+                onClick={() => setActiveTab('messaging')}
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'messaging'
+                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <MessageSquare className="w-4 h-4" />
+                Messaggi
+              </button>
+              <button
+                onClick={() => setActiveTab('contact')}
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'contact'
+                    ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <Mail className="w-4 h-4" />
+                Contatti
+              </button>
+              <button
+                onClick={() => setActiveTab('plans')}
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'plans'
+                    ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <CreditCard className="w-4 h-4" />
+                Piani
+              </button>
+              <button
+                onClick={() => setActiveTab('rules')}
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'rules'
+                    ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <BookOpen className="w-4 h-4" />
+                Regole
+              </button>
             </div>
           </div>
         </div>
@@ -1293,6 +1341,14 @@ export function AdminDashboardPage() {
             {activeTab === 'leaderboard' && <LeaderboardSection />}
 
             {activeTab === 'tracking' && <BusinessTrackingSection onReload={loadData} />}
+
+            {activeTab === 'messaging' && <MessagingSection adminId={profile!.id} />}
+
+            {activeTab === 'contact' && <ContactSection adminId={profile!.id} />}
+
+            {activeTab === 'plans' && <PlansSection adminId={profile!.id} />}
+
+            {activeTab === 'rules' && <RulesSection adminId={profile!.id} />}
           </>
         )}
       </div>
