@@ -157,6 +157,16 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
 
   const approveReview = async (reviewId: string) => {
     try {
+      const review = reviews.find(r => r.id === reviewId);
+
+      // Elimina l'immagine se presente
+      if (review?.proof_image_url) {
+        const filePath = review.proof_image_url.split('/').pop();
+        if (filePath) {
+          await supabase.storage.from('review-proofs').remove([filePath]);
+        }
+      }
+
       const { error } = await supabase.rpc('approve_review', {
         review_id_param: reviewId,
         staff_id_param: adminId,
@@ -164,11 +174,52 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
 
       if (error) throw error;
 
-      alert('Recensione approvata con successo!');
+      // Rimuovi il riferimento all'immagine dal database
+      await supabase
+        .from('reviews')
+        .update({ proof_image_url: null })
+        .eq('id', reviewId);
+
+      alert('Recensione approvata con successo! L\'immagine di prova è stata eliminata.');
       onReload();
       setSelectedReview(null);
     } catch (error: any) {
       console.error('Error approving review:', error);
+      alert(`Errore: ${error.message}`);
+    }
+  };
+
+  const approveReviewWithoutProof = async (reviewId: string) => {
+    try {
+      const review = reviews.find(r => r.id === reviewId);
+
+      // Elimina l'immagine
+      if (review?.proof_image_url) {
+        const filePath = review.proof_image_url.split('/').pop();
+        if (filePath) {
+          await supabase.storage.from('review-proofs').remove([filePath]);
+        }
+      }
+
+      // Rimuovi il riferimento all'immagine PRIMA dell'approvazione
+      await supabase
+        .from('reviews')
+        .update({ proof_image_url: null })
+        .eq('id', reviewId);
+
+      // Approva la recensione (assegnerà 25 punti perché proof_image_url è ora null)
+      const { error } = await supabase.rpc('approve_review', {
+        review_id_param: reviewId,
+        staff_id_param: adminId,
+      });
+
+      if (error) throw error;
+
+      alert('Recensione approvata con 25 punti (prova rifiutata). L\'immagine è stata eliminata.');
+      onReload();
+      setSelectedReview(null);
+    } catch (error: any) {
+      console.error('Error approving review without proof:', error);
       alert(`Errore: ${error.message}`);
     }
   };
@@ -236,6 +287,16 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
     }
 
     try {
+      const review = reviews.find(r => r.id === reviewToReject);
+
+      // Elimina l'immagine se presente
+      if (review?.proof_image_url) {
+        const filePath = review.proof_image_url.split('/').pop();
+        if (filePath) {
+          await supabase.storage.from('review-proofs').remove([filePath]);
+        }
+      }
+
       const { error } = await supabase.rpc('reject_review', {
         review_id_param: reviewToReject,
         staff_id_param: adminId,
@@ -243,8 +304,13 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
 
       if (error) throw error;
 
+      // Rimuovi il riferimento all'immagine dal database
+      await supabase
+        .from('reviews')
+        .update({ proof_image_url: null })
+        .eq('id', reviewToReject);
+
       // Invia notifica all'utente con la motivazione
-      const review = reviews.find(r => r.id === reviewToReject);
       if (review) {
         await supabase.from('notifications').insert({
           user_id: review.customer.email,
@@ -254,7 +320,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
         });
       }
 
-      alert('Recensione rifiutata');
+      alert('Recensione rifiutata. L\'immagine di prova è stata eliminata.');
       setShowRejectModal(false);
       setRejectReason('');
       setReviewToReject(null);
@@ -657,37 +723,62 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                 <p className="text-gray-700 whitespace-pre-wrap">{selectedReview.content}</p>
               </div>
 
-              {/* Prova di Acquisto */}
+              {/* Prova di Acquisto - VISIBILE SOLO IN ADMIN */}
               {selectedReview.proof_image_url && (
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Prova di Acquisto
-                  </label>
-                  <img
-                    src={selectedReview.proof_image_url}
-                    alt="Prova di acquisto"
-                    className="w-full rounded-lg border border-gray-300"
-                  />
+                <div className="bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-300 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CheckCircle className="w-5 h-5 text-blue-600" />
+                    <label className="text-base font-bold text-blue-900">
+                      Prova di Acquisto (Visibile SOLO in Admin)
+                    </label>
+                  </div>
+                  <div className="bg-white rounded-lg p-2 border border-blue-200">
+                    <img
+                      src={selectedReview.proof_image_url}
+                      alt="Prova di acquisto"
+                      className="w-full rounded-lg"
+                    />
+                  </div>
+                  <p className="text-xs text-blue-700 mt-2 italic">
+                    Questa immagine NON è visibile pubblicamente. Verrà eliminata automaticamente dopo l'approvazione o il rifiuto della recensione.
+                  </p>
                 </div>
               )}
 
               {/* Azioni */}
               {selectedReview.review_status === 'pending' && (
-                <div className="flex gap-3 pt-6 border-t">
-                  <button
-                    onClick={() => approveReview(selectedReview.id)}
-                    className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-semibold"
-                  >
-                    <CheckCircle className="w-5 h-5" />
-                    Approva {selectedReview.proof_image_url ? '(50 punti)' : '(25 punti)'}
-                  </button>
-                  <button
-                    onClick={() => openRejectModal(selectedReview.id)}
-                    className="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 font-semibold"
-                  >
-                    <XCircle className="w-5 h-5" />
-                    Rifiuta
-                  </button>
+                <div className="space-y-3 pt-6 border-t">
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => approveReview(selectedReview.id)}
+                      className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-semibold"
+                    >
+                      <CheckCircle className="w-5 h-5" />
+                      Approva {selectedReview.proof_image_url ? '(50 punti)' : '(25 punti)'}
+                    </button>
+                    <button
+                      onClick={() => openRejectModal(selectedReview.id)}
+                      className="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 font-semibold"
+                    >
+                      <XCircle className="w-5 h-5" />
+                      Rifiuta Completamente
+                    </button>
+                  </div>
+
+                  {selectedReview.proof_image_url && (
+                    <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
+                      <p className="text-sm text-yellow-800 font-medium mb-3">
+                        Se l'immagine non è valida ma la recensione è corretta, puoi approvarla comunque con 25 punti:
+                      </p>
+                      <button
+                        onClick={() => approveReviewWithoutProof(selectedReview.id)}
+                        className="w-full bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors flex items-center justify-center gap-2 font-semibold"
+                      >
+                        <CheckCircle className="w-5 h-5" />
+                        Approva senza prova (25 punti)
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
