@@ -33,8 +33,7 @@ export function LeaderboardSection() {
           reviews_count,
           ads_count,
           job_postings_count,
-          referrals_count,
-          profile:profiles!user_activity_user_id_fkey(full_name, email)
+          referrals_count
         `)
         .order(
           sortBy === 'points'
@@ -52,18 +51,27 @@ export function LeaderboardSection() {
 
       if (error) throw error;
 
-      const formattedData = (data || []).map((item: any) => ({
-        user_id: item.user_id,
-        full_name: item.profile.full_name,
-        email: item.profile.email,
-        total_points: item.total_points,
-        reviews_count: item.reviews_count,
-        ads_count: item.ads_count,
-        job_postings_count: item.job_postings_count,
-        referrals_count: item.referrals_count,
+      // Load profile data separately for each user
+      const enrichedData = await Promise.all((data || []).map(async (item) => {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', item.user_id)
+          .maybeSingle();
+
+        return {
+          user_id: item.user_id,
+          full_name: profile?.full_name || 'Unknown User',
+          email: profile?.email || '',
+          total_points: item.total_points,
+          reviews_count: item.reviews_count,
+          ads_count: item.ads_count,
+          job_postings_count: item.job_postings_count,
+          referrals_count: item.referrals_count,
+        };
       }));
 
-      setLeaderboard(formattedData);
+      setLeaderboard(enrichedData);
     } catch (error) {
       console.error('Error loading leaderboard:', error);
     } finally {
