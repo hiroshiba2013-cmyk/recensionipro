@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   MapPin, Phone, Mail, Globe, Star, Briefcase,
-  Building2, Clock, AlertCircle, CheckCircle, ArrowLeft
+  Building2, Clock, AlertCircle, CheckCircle, ArrowLeft, Flag
 } from 'lucide-react';
 import { supabase, Business, Review, JobPosting, BusinessLocation } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,6 +9,7 @@ import { ReviewForm } from '../components/reviews/ReviewForm';
 import { ReviewCard } from '../components/reviews/ReviewCard';
 import BusinessMap from '../components/map/BusinessMap';
 import ReportButton from '../components/moderation/ReportButton';
+import ReportModal from '../components/moderation/ReportModal';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
 import { VerificationBadge } from '../components/business/VerificationBadge';
 
@@ -31,6 +32,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [claimingBusiness, setClaimingBusiness] = useState(false);
   const [filterLocationId, setFilterLocationId] = useState<string | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -631,9 +633,16 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                           isClaimedBusinessLocation={business.business_type === 'registered'}
                         />
                       </div>
-                      <div className="bg-white/20 backdrop-blur-md rounded-lg px-3 py-2 hover:bg-white/30 transition-colors">
-                        <ReportButton entityType="business" entityId={businessId} compact />
-                      </div>
+                      <button
+                        onClick={() => {
+                          console.log('🚩 Segnala attività clicked');
+                          setShowReportModal(true);
+                        }}
+                        className="bg-white/20 backdrop-blur-md rounded-lg px-3 py-2 hover:bg-red-500/30 transition-colors flex items-center justify-center"
+                        title="Segnala attività"
+                      >
+                        <Flag className="w-5 h-5 text-white" />
+                      </button>
                     </>
                   )}
                   {canShowClaimButton && (
@@ -1131,6 +1140,14 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
             setShowReviewForm(false);
             loadBusinessData();
           }}
+        />
+      )}
+
+      {showReportModal && (
+        <ReportModal
+          entityType="business"
+          entityId={businessId}
+          onClose={() => setShowReportModal(false)}
         />
       )}
     </div>
