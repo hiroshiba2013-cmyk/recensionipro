@@ -128,14 +128,54 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
           experience_years,
           education_level,
           created_at,
-          profile:profiles!job_seekers_user_id_fkey(full_name, nickname, email),
-          family_member:customer_family_members(nickname),
-          category:business_categories(name)
+          user_id,
+          family_member_id,
+          category_id
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setJobSeekers(data || []);
+
+      // Load related data manually
+      const enrichedData = await Promise.all((data || []).map(async (seeker) => {
+        let profile = null;
+        let family_member = null;
+        let category = null;
+
+        // Load profile
+        if (seeker.user_id) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('full_name, nickname, email')
+            .eq('id', seeker.user_id)
+            .maybeSingle();
+          profile = profileData;
+        }
+
+        // Load family member
+        if (seeker.family_member_id) {
+          const { data: familyData } = await supabase
+            .from('customer_family_members')
+            .select('nickname')
+            .eq('id', seeker.family_member_id)
+            .maybeSingle();
+          family_member = familyData;
+        }
+
+        // Load category
+        if (seeker.category_id) {
+          const { data: categoryData } = await supabase
+            .from('business_categories')
+            .select('name')
+            .eq('id', seeker.category_id)
+            .maybeSingle();
+          category = categoryData;
+        }
+
+        return { ...seeker, profile, family_member, category };
+      }));
+
+      setJobSeekers(enrichedData);
     } catch (error: any) {
       console.error('Error loading job seekers:', error);
     } finally {
