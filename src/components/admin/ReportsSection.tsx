@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AlertTriangle, CheckCircle, XCircle, Eye, Filter, Search, FileText, MessageSquare } from 'lucide-react';
+import { AlertTriangle, CheckCircle, XCircle, Eye, Filter, Search, FileText, MessageSquare, Briefcase } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Report {
