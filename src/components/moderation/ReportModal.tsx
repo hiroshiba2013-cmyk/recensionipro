@@ -9,17 +9,55 @@ interface ReportModalProps {
   onClose: () => void;
 }
 
-const REPORT_REASONS = [
-  { value: 'false_review', label: 'Recensione falsa o incentivata' },
-  { value: 'offensive', label: 'Linguaggio offensivo, volgare o discriminatorio' },
-  { value: 'defamation', label: 'Diffamazione o accuse infondate' },
-  { value: 'privacy', label: 'Violazione privacy (dati personali di terzi)' },
-  { value: 'spam', label: 'Spam o pubblicità ingannevole' },
-  { value: 'inappropriate', label: 'Contenuto inappropriato o illegale' },
-  { value: 'harassment', label: 'Molestie o bullismo' },
-  { value: 'copyright', label: 'Violazione copyright' },
-  { value: 'other', label: 'Altro' },
-];
+const REPORT_REASONS: Record<string, Array<{ value: string; label: string }>> = {
+  review: [
+    { value: 'false_review', label: 'Recensione falsa o incentivata' },
+    { value: 'offensive', label: 'Linguaggio offensivo, volgare o discriminatorio' },
+    { value: 'defamation', label: 'Diffamazione o accuse infondate' },
+    { value: 'privacy', label: 'Violazione privacy (dati personali di terzi)' },
+    { value: 'spam', label: 'Spam o pubblicità ingannevole' },
+    { value: 'inappropriate', label: 'Contenuto inappropriato' },
+    { value: 'harassment', label: 'Molestie o bullismo' },
+    { value: 'other', label: 'Altro' },
+  ],
+  business: [
+    { value: 'fake_business', label: 'Attività inesistente o informazioni false' },
+    { value: 'duplicate', label: 'Attività duplicata' },
+    { value: 'wrong_info', label: 'Informazioni errate (indirizzo, telefono, orari)' },
+    { value: 'closed', label: 'Attività chiusa definitivamente' },
+    { value: 'wrong_category', label: 'Categoria errata' },
+    { value: 'illegal', label: 'Attività illegale o non autorizzata' },
+    { value: 'inappropriate', label: 'Contenuti inappropriati nella descrizione o foto' },
+    { value: 'other', label: 'Altro' },
+  ],
+  classified_ad: [
+    { value: 'fake', label: 'Annuncio falso o truffa' },
+    { value: 'illegal_product', label: 'Prodotto illegale o contraffatto' },
+    { value: 'prohibited', label: 'Prodotto vietato (armi, droga, farmaci)' },
+    { value: 'offensive', label: 'Contenuto offensivo o inappropriato' },
+    { value: 'spam', label: 'Spam o pubblicità ingannevole' },
+    { value: 'wrong_category', label: 'Categoria errata' },
+    { value: 'already_sold', label: 'Prodotto già venduto ma non rimosso' },
+    { value: 'other', label: 'Altro' },
+  ],
+  job_posting: [
+    { value: 'fake', label: 'Offerta di lavoro falsa' },
+    { value: 'scam', label: 'Truffa o schema piramidale' },
+    { value: 'illegal', label: 'Condizioni illegali o sfruttamento' },
+    { value: 'offensive', label: 'Contenuto offensivo o discriminatorio' },
+    { value: 'spam', label: 'Spam o pubblicità' },
+    { value: 'wrong_category', label: 'Categoria errata' },
+    { value: 'other', label: 'Altro' },
+  ],
+  product: [
+    { value: 'fake', label: 'Prodotto falso o ingannevole' },
+    { value: 'illegal', label: 'Prodotto illegale o contraffatto' },
+    { value: 'offensive', label: 'Contenuto offensivo o inappropriato' },
+    { value: 'spam', label: 'Spam o pubblicità ingannevole' },
+    { value: 'wrong_category', label: 'Categoria errata' },
+    { value: 'other', label: 'Altro' },
+  ],
+};
 
 export default function ReportModal({ entityType, entityId, onClose }: ReportModalProps) {
   const { user } = useAuth();
@@ -27,6 +65,8 @@ export default function ReportModal({ entityType, entityId, onClose }: ReportMod
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const reasons = REPORT_REASONS[entityType] || REPORT_REASONS.review;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -98,8 +138,8 @@ export default function ReportModal({ entityType, entityId, onClose }: ReportMod
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Motivo della segnalazione *
             </label>
-            <div className="space-y-2">
-              {REPORT_REASONS.map((r) => (
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {reasons.map((r) => (
                 <label
                   key={r.value}
                   className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
