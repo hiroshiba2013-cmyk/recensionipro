@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Edit, Save, X, Plus, Trash2 } from 'lucide-react';
+import { BookOpen, FileEdit as Edit, Save, X, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface RuleCategory {

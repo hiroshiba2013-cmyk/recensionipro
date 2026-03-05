@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CreditCard, Edit, Save, X, CheckCircle, Users } from 'lucide-react';
+import { CreditCard, FileEdit as Edit, Save, X, CheckCircle, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Plan {

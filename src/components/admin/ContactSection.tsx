@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Mail, Phone, MapPin, Facebook, Instagram, Twitter, MessageCircle, Clock, Save, Edit } from 'lucide-react';
+import { Mail, Phone, MapPin, Facebook, Instagram, Twitter, MessageCircle, Clock, Save, FileEdit as Edit } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface ContactSettings {
