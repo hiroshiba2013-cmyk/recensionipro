@@ -141,6 +141,11 @@ export function ReviewForm({ businessId, businessName, businessLocationId, revie
       return;
     }
 
+    if (content.trim().length < 100) {
+      setError('La descrizione deve contenere almeno 100 caratteri per garantire una recensione completa e credibile');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -687,8 +692,14 @@ export function ReviewForm({ businessId, businessName, businessLocationId, revie
 
           <div className="mb-6">
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Descrizione della tua esperienza *
+              Descrizione della tua esperienza * (minimo 100 caratteri)
             </label>
+            <div className="mb-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Requisito importante:</strong> Per garantire recensioni credibili e complete, la descrizione deve contenere <strong>almeno 100 caratteri</strong>.
+                Racconta nel dettaglio la tua esperienza: cosa ti è piaciuto, cosa potrebbe essere migliorato, consiglieresti questa attività ad altri?
+              </p>
+            </div>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -698,7 +709,15 @@ export function ReviewForm({ businessId, businessName, businessLocationId, revie
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             />
-            <p className="text-xs text-gray-500 mt-1">{content.length}/1000 caratteri</p>
+            <div className="flex items-center justify-between mt-1">
+              <p className={`text-xs font-medium ${content.length < 100 ? 'text-red-600' : 'text-green-600'}`}>
+                {content.length < 100
+                  ? `Ancora ${100 - content.length} caratteri necessari (minimo 100)`
+                  : `✓ Requisito minimo soddisfatto`
+                }
+              </p>
+              <p className="text-xs text-gray-500">{content.length}/1000 caratteri</p>
+            </div>
           </div>
 
           <div className="flex gap-3">

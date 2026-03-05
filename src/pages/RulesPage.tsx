@@ -340,7 +340,7 @@ export function RulesPage() {
                                 <li><strong>Voto Generale:</strong> valutazione complessiva</li>
                               </ul>
                             </li>
-                            <li>Scrivi un commento dettagliato sulla tua esperienza</li>
+                            <li><strong className="text-red-700">IMPORTANTE:</strong> Scrivi una descrizione dettagliata di <strong>almeno 100 caratteri</strong> sulla tua esperienza. Questo requisito garantisce recensioni credibili e complete.</li>
                             <li><strong>Opzionale ma consigliato:</strong> Carica una prova (scontrino, fattura, foto) per ricevere 50 punti invece di 25</li>
                           </ol>
                         </div>
@@ -350,11 +350,21 @@ export function RulesPage() {
                             Punti e Badge
                           </h4>
                           <ul className="space-y-1 text-sm">
-                            <li><strong>25 punti:</strong> per ogni recensione approvata</li>
+                            <li><strong>25 punti:</strong> per ogni recensione approvata (minimo 100 caratteri)</li>
                             <li><strong>50 punti:</strong> per recensioni con prova documentale + Badge "Verificata"</li>
                             <li>Le recensioni vengono verificate entro 7 giorni</li>
                             <li>Recensioni false = perdita punti e sospensione account</li>
                           </ul>
+                        </div>
+                        <div className="bg-blue-50 border-2 border-blue-400 p-4 rounded-lg">
+                          <h4 className="font-bold mb-2 text-blue-900 flex items-center gap-2">
+                            <AlertCircle className="w-5 h-5" />
+                            Requisito Minimo Caratteri
+                          </h4>
+                          <p className="text-sm text-blue-800">
+                            Per garantire recensioni credibili e dettagliate, la descrizione deve contenere <strong>almeno 100 caratteri</strong>.
+                            Questo si applica sia alle recensioni base che a quelle con prova documentale. Recensioni troppo brevi non verranno accettate.
+                          </p>
                         </div>
                         <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
                           <h4 className="font-bold mb-2 text-red-800 flex items-center gap-2">
@@ -363,6 +373,7 @@ export function RulesPage() {
                           </h4>
                           <ul className="space-y-1 text-sm text-red-700">
                             <li>Non lasciare recensioni false o inventate</li>
+                            <li>Non scrivere recensioni troppo brevi (minimo 100 caratteri richiesti)</li>
                             <li>Non usare linguaggio offensivo o diffamatorio</li>
                             <li>Non recensire la stessa azienda più di una volta all'anno</li>
                             <li>Non chiedere/offrire compensi per recensioni positive</li>

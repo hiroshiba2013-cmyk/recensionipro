@@ -9,10 +9,13 @@
 - **Recensione senza prova**: **25 punti**
 
 **Regole:**
+- **REQUISITO OBBLIGATORIO:** La descrizione deve contenere **almeno 100 caratteri**
+- Questo requisito si applica sia alle recensioni base che a quelle con prova
 - Le recensioni devono essere approvate da un admin prima di assegnare punti
 - La prova (proof_image_url) viene verificata manualmente dall'admin
 - I punti vengono assegnati solo dopo approvazione
 - Se una recensione viene eliminata, i punti vengono sottratti
+- Recensioni con meno di 100 caratteri non vengono accettate
 
 ### 2. ATTIVITÀ COMMERCIALI AGGIUNTE
 - **Attività completa** (con almeno email, telefono o sito web): **25 punti**
