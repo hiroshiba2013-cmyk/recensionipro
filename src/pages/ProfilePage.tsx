@@ -259,12 +259,32 @@ export function ProfilePage() {
     const { data: reviewsData } = await reviewsQuery;
 
     if (reviewsData) {
+      console.log('📝 Loading customer reviews:', reviewsData.length);
       const reviewsWithBusinessNames = await Promise.all(
         reviewsData.map(async (review) => {
           let businessName = 'Attività';
           let locationInfo = null;
 
-          if (review.business_id) {
+          console.log('🔍 Review IDs:', {
+            business_id: review.business_id,
+            imported_business_id: review.imported_business_id,
+            user_added_business_id: review.user_added_business_id,
+            unclaimed_business_location_id: review.unclaimed_business_location_id,
+            business_location_id: review.business_location_id
+          });
+
+          // Prova prima con unclaimed_business_location_id (nuovo sistema)
+          if (review.unclaimed_business_location_id) {
+            const { data: location } = await supabase
+              .from('unclaimed_business_locations')
+              .select('name, city')
+              .eq('id', review.unclaimed_business_location_id)
+              .maybeSingle();
+            if (location) {
+              businessName = location.name;
+              locationInfo = { city: location.city };
+            }
+          } else if (review.business_id) {
             const { data: business } = await supabase
               .from('businesses')
               .select('name, city')
@@ -302,19 +322,26 @@ export function ProfilePage() {
             }
           }
 
+          // Recupera info sulla sede specifica se disponibile
           if (review.business_location_id) {
             const { data: location } = await supabase
               .from('business_locations')
-              .select('internal_name, name, city')
+              .select('internal_name, name, city, business_id, business:businesses(name)')
               .eq('id', review.business_location_id)
               .maybeSingle();
             if (location) {
+              // Usa il nome del business se disponibile
+              if (location.business && location.business.name) {
+                businessName = location.business.name;
+              }
               locationInfo = {
                 name: location.internal_name || location.name,
                 city: location.city
               };
             }
           }
+
+          console.log('✅ Business name resolved:', businessName);
 
           return {
             ...review,
@@ -351,12 +378,32 @@ export function ProfilePage() {
       .order('created_at', { ascending: false });
 
     if (reviewsData) {
+      console.log('📝 Loading family member reviews:', reviewsData.length);
       const reviewsWithBusinessNames = await Promise.all(
         reviewsData.map(async (review) => {
           let businessName = 'Attività';
           let locationInfo = null;
 
-          if (review.business_id) {
+          console.log('🔍 Family Review IDs:', {
+            business_id: review.business_id,
+            imported_business_id: review.imported_business_id,
+            user_added_business_id: review.user_added_business_id,
+            unclaimed_business_location_id: review.unclaimed_business_location_id,
+            business_location_id: review.business_location_id
+          });
+
+          // Prova prima con unclaimed_business_location_id (nuovo sistema)
+          if (review.unclaimed_business_location_id) {
+            const { data: location } = await supabase
+              .from('unclaimed_business_locations')
+              .select('name, city')
+              .eq('id', review.unclaimed_business_location_id)
+              .maybeSingle();
+            if (location) {
+              businessName = location.name;
+              locationInfo = { city: location.city };
+            }
+          } else if (review.business_id) {
             const { data: business } = await supabase
               .from('businesses')
               .select('name, city')
@@ -394,19 +441,26 @@ export function ProfilePage() {
             }
           }
 
+          // Recupera info sulla sede specifica se disponibile
           if (review.business_location_id) {
             const { data: location } = await supabase
               .from('business_locations')
-              .select('internal_name, name, city')
+              .select('internal_name, name, city, business_id, business:businesses(name)')
               .eq('id', review.business_location_id)
               .maybeSingle();
             if (location) {
+              // Usa il nome del business se disponibile
+              if (location.business && location.business.name) {
+                businessName = location.business.name;
+              }
               locationInfo = {
                 name: location.internal_name || location.name,
                 city: location.city
               };
             }
           }
+
+          console.log('✅ Family Business name resolved:', businessName);
 
           return {
             ...review,
