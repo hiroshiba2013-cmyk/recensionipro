@@ -15,6 +15,7 @@ interface Report {
     nickname: string | null;
     email: string;
   };
+  entity_name?: string;
 }
 
 interface ClassifiedAdDetails {
@@ -320,6 +321,12 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
                         In sospeso
                       </span>
                     </div>
+                    {report.entity_name && (
+                      <p className="text-base font-bold text-gray-900 mb-2">
+                        {report.reported_entity_type === 'business' && <Briefcase className="w-4 h-4 inline mr-1" />}
+                        {report.entity_name}
+                      </p>
+                    )}
                     <p className="text-sm font-semibold text-gray-900">
                       Segnalato da: {report.reporter.nickname || report.reporter.full_name}
                     </p>
@@ -397,6 +404,12 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
                         {report.status === 'resolved' ? 'Risolta' : 'Respinta'}
                       </span>
                     </div>
+                    {report.entity_name && (
+                      <p className="text-sm font-bold text-gray-900 mb-1">
+                        {report.reported_entity_type === 'business' && <Briefcase className="w-4 h-4 inline mr-1" />}
+                        {report.entity_name}
+                      </p>
+                    )}
                     <p className="text-sm font-medium text-gray-900">
                       Segnalato da: {report.reporter.nickname || report.reporter.full_name}
                     </p>

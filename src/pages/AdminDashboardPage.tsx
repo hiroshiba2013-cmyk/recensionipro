@@ -459,7 +459,64 @@ export function AdminDashboardPage() {
       return;
     }
 
-    setReports(data || []);
+    // Enrich reports with entity names
+    const enrichedReports = await Promise.all((data || []).map(async (report: any) => {
+      let entityName = '';
+
+      try {
+        if (report.reported_entity_type === 'classified_ad') {
+          const { data: ad } = await supabase
+            .from('classified_ads')
+            .select('title')
+            .eq('id', report.reported_entity_id)
+            .maybeSingle();
+          entityName = ad?.title || '';
+        } else if (report.reported_entity_type === 'review') {
+          const { data: review } = await supabase
+            .from('reviews')
+            .select('title')
+            .eq('id', report.reported_entity_id)
+            .maybeSingle();
+          entityName = review?.title || '';
+        } else if (report.reported_entity_type === 'business') {
+          // Try different business tables
+          let { data: business } = await supabase
+            .from('businesses')
+            .select('name')
+            .eq('id', report.reported_entity_id)
+            .maybeSingle();
+
+          if (!business) {
+            const { data: location } = await supabase
+              .from('business_locations')
+              .select('name')
+              .eq('id', report.reported_entity_id)
+              .maybeSingle();
+            business = location;
+          }
+
+          if (!business) {
+            const { data: unclaimed } = await supabase
+              .from('unclaimed_business_locations')
+              .select('name')
+              .eq('id', report.reported_entity_id)
+              .maybeSingle();
+            business = unclaimed;
+          }
+
+          entityName = business?.name || '';
+        }
+      } catch (err) {
+        console.error('Error loading entity name:', err);
+      }
+
+      return {
+        ...report,
+        entity_name: entityName
+      };
+    }));
+
+    setReports(enrichedReports);
   };
 
   const loadJobPostings = async () => {
