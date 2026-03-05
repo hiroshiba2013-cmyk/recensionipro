@@ -38,18 +38,30 @@ interface ReviewDetails {
   } | null;
 }
 
+interface BusinessDetails {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  address: string | null;
+  city: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+}
+
 interface ReportsSectionProps {
   reports: Report[];
   onReload: () => Promise<void>;
 }
 
-type FilterType = 'all' | 'classified_ad' | 'review';
+type FilterType = 'all' | 'classified_ad' | 'review' | 'business';
 
 export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [entityDetails, setEntityDetails] = useState<ClassifiedAdDetails | ReviewDetails | null>(null);
+  const [entityDetails, setEntityDetails] = useState<ClassifiedAdDetails | ReviewDetails | BusinessDetails | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
   const handleResolveReport = async (reportId: string) => {
@@ -125,6 +137,41 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
 
         if (error) throw error;
         setEntityDetails(data);
+      } else if (report.reported_entity_type === 'business') {
+        // Try claimed businesses first
+        let { data, error } = await supabase
+          .from('businesses')
+          .select('id, name, description, category, address, city, phone, email, website')
+          .eq('id', report.reported_entity_id)
+          .maybeSingle();
+
+        if (!data && !error) {
+          // Try business locations
+          const locationResult = await supabase
+            .from('business_locations')
+            .select('id, name, description, address, city, phone, email, website')
+            .eq('id', report.reported_entity_id)
+            .maybeSingle();
+
+          if (!locationResult.error && locationResult.data) {
+            data = { ...locationResult.data, category: null };
+          }
+        }
+
+        if (!data) {
+          // Try unclaimed businesses
+          const unclaimedResult = await supabase
+            .from('unclaimed_business_locations')
+            .select('id, name, description, category, address, city, phone, email, website')
+            .eq('id', report.reported_entity_id)
+            .maybeSingle();
+
+          if (!unclaimedResult.error) {
+            data = unclaimedResult.data;
+          }
+        }
+
+        setEntityDetails(data);
       }
     } catch (error: any) {
       console.error('Error loading entity details:', error);
@@ -152,6 +199,8 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
         return 'bg-blue-100 text-blue-800';
       case 'review':
         return 'bg-purple-100 text-purple-800';
+      case 'business':
+        return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -163,9 +212,40 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
         return 'Annuncio';
       case 'review':
         return 'Recensione';
+      case 'business':
+        return 'Attività';
       default:
         return type;
     }
+  };
+
+  const getReasonLabel = (reason: string) => {
+    const reasonLabels: Record<string, string> = {
+      // Review reasons
+      'false_review': 'Recensione falsa o incentivata',
+      'offensive': 'Linguaggio offensivo o discriminatorio',
+      'defamation': 'Diffamazione o accuse infondate',
+      'privacy': 'Violazione privacy',
+      'spam': 'Spam o pubblicità ingannevole',
+      'inappropriate': 'Contenuto inappropriato',
+      'harassment': 'Molestie o bullismo',
+      // Business reasons
+      'fake_business': 'Attività inesistente o informazioni false',
+      'duplicate': 'Attività duplicata',
+      'wrong_info': 'Informazioni errate',
+      'closed': 'Attività chiusa definitivamente',
+      'wrong_category': 'Categoria errata',
+      'illegal': 'Attività o prodotto illegale',
+      // Classified ad reasons
+      'fake': 'Annuncio o offerta falsa',
+      'illegal_product': 'Prodotto illegale o contraffatto',
+      'prohibited': 'Prodotto vietato',
+      'already_sold': 'Prodotto già venduto',
+      'scam': 'Truffa o schema piramidale',
+      'copyright': 'Violazione copyright',
+      'other': 'Altro'
+    };
+    return reasonLabels[reason] || reason;
   };
 
   return (
@@ -193,6 +273,7 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
             >
               <option value="all">Tutte le segnalazioni</option>
+              <option value="business">Solo attività</option>
               <option value="classified_ad">Solo annunci</option>
               <option value="review">Solo recensioni</option>
             </select>
@@ -233,7 +314,7 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
                         {getEntityTypeLabel(report.reported_entity_type)}
                       </span>
                       <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
-                        {report.reason}
+                        {getReasonLabel(report.reason)}
                       </span>
                       <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
                         In sospeso
@@ -305,6 +386,9 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
                       <span className={`px-2 py-1 rounded text-xs font-medium ${getEntityTypeBadgeColor(report.reported_entity_type)}`}>
                         {getEntityTypeLabel(report.reported_entity_type)}
                       </span>
+                      <span className="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-medium">
+                        {getReasonLabel(report.reason)}
+                      </span>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         report.status === 'resolved'
                           ? 'bg-green-100 text-green-700'
@@ -314,7 +398,7 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
                       </span>
                     </div>
                     <p className="text-sm font-medium text-gray-900">
-                      {report.reporter.nickname || report.reporter.full_name}
+                      Segnalato da: {report.reporter.nickname || report.reporter.full_name}
                     </p>
                     <p className="text-sm text-gray-600 mt-1">{report.description || 'Nessuna descrizione'}</p>
                     <p className="text-xs text-gray-500 mt-2">
@@ -369,7 +453,7 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
                   </div>
                   <div>
                     <span className="text-gray-600">Motivo:</span>
-                    <p className="font-medium">{selectedReport.reason}</p>
+                    <p className="font-medium">{getReasonLabel(selectedReport.reason)}</p>
                   </div>
                   <div className="col-span-2">
                     <span className="text-gray-600">Data segnalazione:</span>
@@ -454,6 +538,61 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
                       <span className="text-gray-600">Contenuto:</span>
                       <p className="font-medium mt-1 text-gray-700">{(entityDetails as ReviewDetails).content}</p>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {!loadingDetails && entityDetails && selectedReport.reported_entity_type === 'business' && (
+                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <Briefcase className="w-5 h-5 text-green-600" />
+                    Dettagli Attività Segnalata
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-gray-600">Nome:</span>
+                      <p className="font-medium text-gray-900">{(entityDetails as BusinessDetails).name}</p>
+                    </div>
+                    {(entityDetails as BusinessDetails).category && (
+                      <div>
+                        <span className="text-gray-600">Categoria:</span>
+                        <p className="font-medium">{(entityDetails as BusinessDetails).category}</p>
+                      </div>
+                    )}
+                    {(entityDetails as BusinessDetails).address && (
+                      <div>
+                        <span className="text-gray-600">Indirizzo:</span>
+                        <p className="font-medium">{(entityDetails as BusinessDetails).address}, {(entityDetails as BusinessDetails).city}</p>
+                      </div>
+                    )}
+                    {(entityDetails as BusinessDetails).phone && (
+                      <div>
+                        <span className="text-gray-600">Telefono:</span>
+                        <p className="font-medium">{(entityDetails as BusinessDetails).phone}</p>
+                      </div>
+                    )}
+                    {(entityDetails as BusinessDetails).email && (
+                      <div>
+                        <span className="text-gray-600">Email:</span>
+                        <p className="font-medium">{(entityDetails as BusinessDetails).email}</p>
+                      </div>
+                    )}
+                    {(entityDetails as BusinessDetails).website && (
+                      <div>
+                        <span className="text-gray-600">Sito web:</span>
+                        <p className="font-medium">
+                          <a href={(entityDetails as BusinessDetails).website!} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                            {(entityDetails as BusinessDetails).website}
+                          </a>
+                        </p>
+                      </div>
+                    )}
+                    {(entityDetails as BusinessDetails).description && (
+                      <div>
+                        <span className="text-gray-600">Descrizione:</span>
+                        <p className="font-medium mt-1 text-gray-700">{(entityDetails as BusinessDetails).description}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
