@@ -650,31 +650,25 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
                       <div className="text-sm font-semibold text-gray-900">{editForm.full_name || '—'}</div>
                     </div>
 
-                    {editForm.nickname && (
-                      <div className="bg-white rounded-lg p-3">
-                        <div className="text-xs text-gray-500 mb-1">Nickname</div>
-                        <div className="text-sm font-semibold text-gray-900">{editForm.nickname}</div>
-                      </div>
-                    )}
+                    <div className="bg-white rounded-lg p-3">
+                      <div className="text-xs text-gray-500 mb-1">Nickname</div>
+                      <div className="text-sm font-semibold text-gray-900">{editForm.nickname || '—'}</div>
+                    </div>
 
                     <div className="bg-white rounded-lg p-3">
                       <div className="text-xs text-gray-500 mb-1">Email</div>
                       <div className="text-sm font-semibold text-gray-900">{editForm.email || '—'}</div>
                     </div>
 
-                    {editForm.phone && (
-                      <div className="bg-white rounded-lg p-3">
-                        <div className="text-xs text-gray-500 mb-1">Telefono</div>
-                        <div className="text-sm font-semibold text-gray-900">{editForm.phone}</div>
-                      </div>
-                    )}
+                    <div className="bg-white rounded-lg p-3">
+                      <div className="text-xs text-gray-500 mb-1">Telefono</div>
+                      <div className="text-sm font-semibold text-gray-900">{editForm.phone || '—'}</div>
+                    </div>
 
-                    {editForm.fiscal_code && (
-                      <div className="bg-white rounded-lg p-3">
-                        <div className="text-xs text-gray-500 mb-1">Codice Fiscale</div>
-                        <div className="text-sm font-semibold text-gray-900 uppercase">{editForm.fiscal_code}</div>
-                      </div>
-                    )}
+                    <div className="bg-white rounded-lg p-3">
+                      <div className="text-xs text-gray-500 mb-1">Codice Fiscale</div>
+                      <div className="text-sm font-semibold text-gray-900 uppercase">{editForm.fiscal_code || '—'}</div>
+                    </div>
                   </div>
 
                   {/* Colonna Destra */}
