@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, ChevronDown, ChevronRight, Trash2, Shield, Building2, User as UserIcon, Search, Save, X as CloseIcon } from 'lucide-react';
+import { Users, ChevronDown, ChevronRight, Trash2, Building2, User as UserIcon, Search, Save, X as CloseIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface User {
@@ -177,45 +177,6 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
       setUserData(new Map(userData.set(userId, details)));
     } catch (error) {
       console.error('Error loading user details:', error);
-    }
-  };
-
-  const toggleAdmin = async (userId: string, currentStatus: boolean) => {
-    const confirmMessage = currentStatus
-      ? 'Rimuovere privilegi admin?'
-      : 'Concedere privilegi admin?';
-
-    if (!confirm(confirmMessage)) return;
-
-    try {
-      if (currentStatus) {
-        const { error } = await supabase
-          .from('admins')
-          .delete()
-          .eq('user_id', userId);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('admins')
-          .insert({ user_id: userId });
-
-        if (error) throw error;
-      }
-
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ is_admin: !currentStatus, user_type: !currentStatus ? 'admin' : 'customer' })
-        .eq('id', userId);
-
-      if (profileError) throw profileError;
-
-      alert('Stato admin aggiornato');
-      loadUsers();
-      onReload();
-    } catch (error: any) {
-      console.error('Error updating admin status:', error);
-      alert(`Errore: ${error.message}`);
     }
   };
 
@@ -459,17 +420,6 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
                       title="Visualizza/Modifica dettagli"
                     >
                       <Search className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => toggleAdmin(user.id, user.is_admin)}
-                      className={`p-2 rounded-lg transition-all ${
-                        user.is_admin
-                          ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                      title={user.is_admin ? 'Rimuovi admin' : 'Rendi admin'}
-                    >
-                      <Shield className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => deleteUser(user.id)}
