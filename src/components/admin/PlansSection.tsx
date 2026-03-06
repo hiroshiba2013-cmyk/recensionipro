@@ -69,8 +69,9 @@ export function PlansSection({ adminId }: PlansSectionProps) {
 
   const loadSubscriptions = async () => {
     try {
-      const { data, error } = await supabase
-        .from('customer_subscriptions')
+      // Carica abbonamenti dalla tabella subscriptions
+      const { data: activeSubscriptions, error: subsError } = await supabase
+        .from('subscriptions')
         .select(`
           id,
           customer_id,
@@ -79,13 +80,13 @@ export function PlansSection({ adminId }: PlansSectionProps) {
           start_date,
           end_date,
           trial_end_date,
-          customer:profiles!customer_subscriptions_customer_id_fkey(
+          profiles!subscriptions_customer_id_fkey(
             full_name,
             nickname,
             email,
             subscription_status
           ),
-          plan:subscription_plans!customer_subscriptions_plan_id_fkey(
+          subscription_plans!subscriptions_plan_id_fkey(
             name,
             price,
             billing_period
@@ -93,8 +94,62 @@ export function PlansSection({ adminId }: PlansSectionProps) {
         `)
         .order('start_date', { ascending: false });
 
-      if (error) throw error;
-      setSubscriptions(data || []);
+      if (subsError) {
+        console.error('Supabase error loading subscriptions:', subsError);
+      }
+
+      // Carica utenti in prova che non hanno record in subscriptions
+      const { data: trialUsers, error: trialError } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          full_name,
+          nickname,
+          email,
+          subscription_status,
+          subscription_type,
+          trial_start_date,
+          trial_end_date
+        `)
+        .eq('subscription_status', 'trial')
+        .order('trial_start_date', { ascending: false });
+
+      if (trialError) {
+        console.error('Supabase error loading trial users:', trialError);
+      }
+
+      // Trasforma i dati da subscriptions
+      const transformedSubs = activeSubscriptions?.map(sub => ({
+        ...sub,
+        customer: Array.isArray(sub.profiles) ? sub.profiles[0] : sub.profiles,
+        plan: Array.isArray(sub.subscription_plans) ? sub.subscription_plans[0] : sub.subscription_plans
+      })) || [];
+
+      // Trasforma gli utenti in prova in formato subscription
+      const transformedTrials = trialUsers?.map(user => ({
+        id: `trial-${user.id}`,
+        customer_id: user.id,
+        plan_id: null,
+        status: 'trial',
+        start_date: user.trial_start_date || new Date().toISOString(),
+        end_date: user.trial_end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        trial_end_date: user.trial_end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        customer: {
+          full_name: user.full_name,
+          nickname: user.nickname,
+          email: user.email,
+          subscription_status: user.subscription_status
+        },
+        plan: {
+          name: user.subscription_type === 'business' ? 'Piano Business Trial' : 'Piano Trial Gratuito',
+          price: 0,
+          billing_period: 'trial'
+        }
+      })) || [];
+
+      // Combina entrambi i risultati
+      const allSubscriptions = [...transformedSubs, ...transformedTrials];
+      setSubscriptions(allSubscriptions as any);
     } catch (error: any) {
       console.error('Error loading subscriptions:', error);
     }
@@ -134,6 +189,8 @@ export function PlansSection({ adminId }: PlansSectionProps) {
         return 'Mensile';
       case 'yearly':
         return 'Annuale';
+      case 'trial':
+        return 'Prova Gratuita';
       default:
         return period;
     }
