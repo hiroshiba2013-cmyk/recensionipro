@@ -69,6 +69,18 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
   const loadUsers = async () => {
     setLoading(true);
     try {
+      // Debug: Check current session
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('🔍 Current session:', session?.user?.id);
+
+      // Debug: Check if user is in admins table
+      const { data: adminCheck } = await supabase
+        .from('admins')
+        .select('user_id')
+        .eq('user_id', session?.user?.id)
+        .maybeSingle();
+      console.log('🔍 Admin check:', adminCheck);
+
       let query = supabase
         .from('profiles')
         .select('id, full_name, nickname, email, user_type, subscription_status, subscription_type, created_at, is_admin, phone, fiscal_code, address, city, province, postal_code')
@@ -84,7 +96,10 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
         }
       }
 
+      console.log('🔍 Executing query with filter:', filterType);
       const { data, error } = await query.limit(200);
+
+      console.log('🔍 Query result:', { data, error, count: data?.length });
 
       if (error) throw error;
       setUsers(data || []);
