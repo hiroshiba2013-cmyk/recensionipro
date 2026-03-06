@@ -410,39 +410,47 @@ export function Header() {
       </header>
 
       {user && profile && profile.user_type !== 'admin' && (
-        <div className="bg-white border-b border-gray-200 shadow-sm sticky top-16 z-40">
+        <div className="bg-gradient-to-r from-gray-50 via-white to-gray-50 border-b border-gray-200 shadow-sm sticky top-16 z-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <nav className="flex items-center justify-center gap-1 py-3">
+            <nav className="flex items-center justify-center gap-2 py-3">
               <a
                 href="/jobs"
-                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all font-medium px-4 py-2 rounded-lg"
+                className="group flex items-center gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-all font-medium px-4 py-2.5 rounded-xl hover:shadow-md"
                 title="Offerte di Lavoro"
               >
-                <Briefcase className="w-5 h-5" />
+                <div className="bg-blue-100 p-1.5 rounded-lg group-hover:bg-blue-200 transition-colors">
+                  <Briefcase className="w-4 h-4 text-blue-600" />
+                </div>
                 <span className="text-sm font-semibold">Lavoro</span>
               </a>
               <a
                 href="/classified-ads"
-                className="flex items-center gap-2 text-gray-700 hover:text-green-600 hover:bg-green-50 transition-all font-medium px-4 py-2 rounded-lg"
+                className="group flex items-center gap-2 text-green-600 hover:text-green-700 hover:bg-green-50 transition-all font-medium px-4 py-2.5 rounded-xl hover:shadow-md"
                 title="Annunci"
               >
-                <Tag className="w-5 h-5" />
+                <div className="bg-green-100 p-1.5 rounded-lg group-hover:bg-green-200 transition-colors">
+                  <Tag className="w-4 h-4 text-green-600" />
+                </div>
                 <span className="text-sm font-semibold">Annunci</span>
               </a>
               <a
                 href="/solidarity"
-                className="flex items-center gap-2 text-gray-700 hover:text-pink-600 hover:bg-pink-50 transition-all font-medium px-4 py-2 rounded-lg"
+                className="group flex items-center gap-2 text-pink-600 hover:text-pink-700 hover:bg-pink-50 transition-all font-medium px-4 py-2.5 rounded-xl hover:shadow-md"
                 title="Solidarietà"
               >
-                <Heart className="w-5 h-5" />
+                <div className="bg-pink-100 p-1.5 rounded-lg group-hover:bg-pink-200 transition-colors">
+                  <Heart className="w-4 h-4 text-pink-600" />
+                </div>
                 <span className="text-sm font-semibold">Solidarietà</span>
               </a>
               <a
                 href="/leaderboard"
-                className="flex items-center gap-2 text-gray-700 hover:text-yellow-600 hover:bg-yellow-50 transition-all font-medium px-4 py-2 rounded-lg"
+                className="group flex items-center gap-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 transition-all font-medium px-4 py-2.5 rounded-xl hover:shadow-md"
                 title="Classifica"
               >
-                <Award className="w-5 h-5" />
+                <div className="bg-yellow-100 p-1.5 rounded-lg group-hover:bg-yellow-200 transition-colors">
+                  <Award className="w-4 h-4 text-yellow-600" />
+                </div>
                 <span className="text-sm font-semibold">Classifica</span>
               </a>
             </nav>
