@@ -218,9 +218,14 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
     }
   };
 
-  const startEditUser = (user: User) => {
+  const startEditUser = async (user: User) => {
     setEditingUser(user.id);
     setEditForm({ ...user });
+
+    // Load user details if not already loaded
+    if (!userData.has(user.id)) {
+      await loadUserDetails(user.id, user.user_type);
+    }
   };
 
   const cancelEdit = () => {
@@ -813,6 +818,163 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
                   />
                 </div>
               </div>
+
+              {/* Membri della Famiglia */}
+              {editForm.user_type === 'customer' && userData.get(editForm.id)?.familyMembers && (
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <Users className="w-5 h-5 text-green-600" />
+                    Membri della Famiglia ({userData.get(editForm.id)?.familyMembers?.length || 0})
+                  </h3>
+
+                  {userData.get(editForm.id)?.familyMembers && userData.get(editForm.id)!.familyMembers!.length > 0 ? (
+                    <div className="space-y-3">
+                      {userData.get(editForm.id)!.familyMembers!.map((member) => (
+                        <div
+                          key={member.id}
+                          className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-lg">
+                                {member.first_name.charAt(0)}
+                              </div>
+                              <div>
+                                <div className="text-sm font-bold text-gray-900">
+                                  {member.first_name} {member.last_name}
+                                  {member.nickname && (
+                                    <span className="ml-2 text-gray-500 text-xs font-normal">({member.nickname})</span>
+                                  )}
+                                </div>
+                                <div className="text-xs text-gray-600 mt-1">
+                                  <span className="font-semibold">{member.relationship}</span>
+                                  <span className="mx-2">•</span>
+                                  <span>Nato il {new Date(member.date_of_birth).toLocaleDateString('it-IT')}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => deleteFamilyMember(member.id, editForm.id)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                              title="Elimina membro"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      Nessun membro della famiglia registrato
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Sedi Attività */}
+              {editForm.user_type === 'business' && userData.get(editForm.id)?.businessLocations && (
+                <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-6 border border-orange-200">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <Building2 className="w-5 h-5 text-orange-600" />
+                    Sedi Attività ({userData.get(editForm.id)?.businessLocations?.length || 0})
+                  </h3>
+
+                  {userData.get(editForm.id)?.businessLocations && userData.get(editForm.id)!.businessLocations!.length > 0 ? (
+                    <div className="space-y-3">
+                      {userData.get(editForm.id)!.businessLocations!.map((location) => (
+                        <div
+                          key={location.id}
+                          className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+                        >
+                          <div className="font-bold text-gray-900 text-sm mb-1">{location.name}</div>
+                          {location.internal_name && (
+                            <div className="text-xs text-gray-500 mb-2">
+                              Nome interno: <span className="font-semibold">{location.internal_name}</span>
+                            </div>
+                          )}
+                          <div className="text-xs text-gray-600">
+                            <span className="font-medium">{location.address}</span>
+                            <span className="mx-1">—</span>
+                            <span>{location.city}</span>
+                            <span className="mx-1">({location.province.toUpperCase()})</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      Nessuna sede registrata
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Abbonamento Dettagliato */}
+              {userData.get(editForm.id)?.subscription && (
+                <div className={`rounded-xl p-6 border-2 ${
+                  userData.get(editForm.id)?.subscription?.status === 'trial'
+                    ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-300'
+                    : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
+                }`}>
+                  <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <UserIcon className="w-5 h-5 text-blue-600" />
+                    Dettagli Abbonamento
+                    {userData.get(editForm.id)?.subscription?.status === 'trial' && (
+                      <span className="px-3 py-1 bg-yellow-200 text-yellow-800 text-xs font-bold rounded-full">
+                        PROVA GRATUITA
+                      </span>
+                    )}
+                  </h3>
+
+                  <div className="bg-white rounded-lg p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <div className="text-xs text-gray-500 mb-1">Piano</div>
+                        <div className="font-bold text-gray-900">{userData.get(editForm.id)?.subscription?.plan_name}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500 mb-1">Stato</div>
+                        <div className={`font-bold capitalize ${
+                          userData.get(editForm.id)?.subscription?.status === 'trial'
+                            ? 'text-yellow-700'
+                            : userData.get(editForm.id)?.subscription?.status === 'active'
+                            ? 'text-green-700'
+                            : 'text-red-700'
+                        }`}>
+                          {userData.get(editForm.id)?.subscription?.status === 'trial'
+                            ? 'In Prova'
+                            : userData.get(editForm.id)?.subscription?.status === 'active'
+                            ? 'Attivo'
+                            : userData.get(editForm.id)?.subscription?.status}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500 mb-1">
+                          {userData.get(editForm.id)?.subscription?.status === 'trial' ? 'Scade il' : 'Scadenza'}
+                        </div>
+                        <div className={`font-bold ${
+                          userData.get(editForm.id)?.subscription?.status === 'trial' ? 'text-yellow-800' : 'text-gray-900'
+                        }`}>
+                          {new Date(userData.get(editForm.id)!.subscription!.end_date).toLocaleDateString('it-IT', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {userData.get(editForm.id)?.subscription?.status === 'trial' && (
+                      <div className="mt-4 pt-4 border-t border-yellow-200">
+                        <div className="text-xs font-bold text-yellow-800">
+                          Giorni rimanenti: {Math.ceil((new Date(userData.get(editForm.id)!.subscription!.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} giorni
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Info Account */}
               <div className="bg-gray-50 rounded-lg p-4">
