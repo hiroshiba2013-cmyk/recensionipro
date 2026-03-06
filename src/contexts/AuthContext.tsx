@@ -8,7 +8,7 @@ export interface CustomerData {
   nickname?: string;
   relationship?: string;
   dateOfBirth: string;
-  taxCode: string;
+  fiscalCode: string;
   phone: string;
   billingStreet: string;
   billingStreetNumber: string;
@@ -310,7 +310,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         first_name: data.firstName,
         last_name: data.lastName,
         date_of_birth: data.dateOfBirth,
-        tax_code: data.taxCode,
+        fiscal_code: data.fiscalCode,
         phone: data.phone,
         billing_street: data.billingStreet,
         billing_street_number: data.billingStreetNumber,

@@ -32,7 +32,7 @@ interface OwnerData {
   last_name: string;
   email: string;
   phone: string;
-  tax_code: string;
+  fiscal_code: string;
   billing_street: string;
   billing_street_number: string;
   billing_postal_code: string;
@@ -72,7 +72,7 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
     owner_last_name: '',
     owner_email: '',
     owner_phone: '',
-    owner_tax_code: '',
+    owner_fiscal_code: '',
     name: '',
     vat_number: '',
     unique_code: '',
@@ -120,7 +120,7 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
           owner_last_name: ownerData?.last_name || '',
           owner_email: ownerData?.email || '',
           owner_phone: ownerData?.phone || '',
-          owner_tax_code: ownerData?.tax_code || '',
+          owner_fiscal_code: ownerData?.fiscal_code || '',
           name: ownerData?.company_name || data.name || '',
           vat_number: ownerData?.vat_number || data.vat_number || '',
           unique_code: ownerData?.unique_code || data.unique_code || '',
@@ -169,7 +169,7 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
             first_name: formData.owner_first_name,
             last_name: formData.owner_last_name,
             phone: formData.owner_phone,
-            tax_code: formData.owner_tax_code,
+            fiscal_code: formData.owner_fiscal_code,
             full_name: `${formData.owner_first_name} ${formData.owner_last_name}`,
             company_name: formData.name,
             vat_number: formData.vat_number,
@@ -251,7 +251,7 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
         owner_last_name: owner.last_name || '',
         owner_email: owner.email || '',
         owner_phone: owner.phone || '',
-        owner_tax_code: owner.tax_code || '',
+        owner_fiscal_code: owner.fiscal_code || '',
         name: owner.company_name || business.name || '',
         vat_number: owner.vat_number || business.vat_number || '',
         unique_code: owner.unique_code || business.unique_code || '',
@@ -457,8 +457,8 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
             </label>
             <input
               type="text"
-              name="owner_tax_code"
-              value={formData.owner_tax_code}
+              name="owner_fiscal_code"
+              value={formData.owner_fiscal_code}
               onChange={handleChange}
               required
               maxLength={16}

@@ -11,7 +11,7 @@ interface ProfileData {
   nickname: string;
   relationship: string;
   date_of_birth: string;
-  tax_code: string;
+  fiscal_code: string;
   phone: string;
   billing_street: string;
   billing_street_number: string;
@@ -56,7 +56,7 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
     nickname: profile.nickname || '',
     relationship: profile.relationship || 'Titolare',
     date_of_birth: profile.date_of_birth || '',
-    tax_code: profile.tax_code || '',
+    fiscal_code: profile.fiscal_code || '',
     phone: profile.phone || '',
     billing_street: profile.billing_street || '',
     billing_street_number: profile.billing_street_number || '',
@@ -113,7 +113,7 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
         nickname: formData.nickname,
         relationship: formData.relationship,
         date_of_birth: formData.date_of_birth,
-        tax_code: formData.tax_code,
+        fiscal_code: formData.fiscal_code,
         phone: formData.phone,
         billing_street: formData.billing_street,
         billing_street_number: formData.billing_street_number,
@@ -169,7 +169,7 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
       nickname: profile.nickname || '',
       relationship: profile.relationship || 'Titolare',
       date_of_birth: profile.date_of_birth || '',
-      tax_code: profile.tax_code || '',
+      fiscal_code: profile.fiscal_code || '',
       phone: profile.phone || '',
       billing_street: profile.billing_street || '',
       billing_street_number: profile.billing_street_number || '',
@@ -299,7 +299,7 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
             </div>
             <div>
               <p className="text-sm text-gray-600 mb-1">Codice Fiscale</p>
-              <p className="text-lg font-semibold text-gray-900">{profile.tax_code || '-'}</p>
+              <p className="text-lg font-semibold text-gray-900">{profile.fiscal_code || '-'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600 mb-1">Telefono</p>
@@ -697,8 +697,8 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
               </label>
               <input
                 type="text"
-                name="tax_code"
-                value={formData.tax_code}
+                name="fiscal_code"
+                value={formData.fiscal_code}
                 onChange={handleChange}
                 required
                 maxLength={16}

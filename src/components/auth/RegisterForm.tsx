@@ -9,7 +9,7 @@ interface FamilyMember {
   lastName: string;
   nickname: string;
   dateOfBirth: string;
-  taxCode: string;
+  fiscalCode: string;
   relationship: string;
 }
 
@@ -299,7 +299,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             lastName: '',
             nickname: '',
             dateOfBirth: '',
-            taxCode: '',
+            fiscalCode: '',
             relationship: 'Coniuge',
           });
         }
@@ -319,7 +319,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     nickname: '',
     relationship: 'Titolare',
     dateOfBirth: '',
-    taxCode: '',
+    fiscalCode: '',
     phone: '',
     billingStreet: '',
     billingStreetNumber: '',
@@ -519,7 +519,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
           last_name: member.lastName,
           nickname: member.nickname,
           date_of_birth: member.dateOfBirth,
-          tax_code: member.taxCode,
+          fiscal_code: member.fiscalCode,
           relationship: member.relationship,
         }));
 
@@ -1000,14 +1000,14 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             </div>
 
             <div className="mb-3">
-              <label htmlFor="taxCode" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="fiscalCode" className="block text-sm font-medium text-gray-700 mb-1">
                 Codice Fiscale
               </label>
               <input
-                id="taxCode"
-                name="taxCode"
+                id="fiscalCode"
+                name="fiscalCode"
                 type="text"
-                value={customerForm.taxCode}
+                value={customerForm.fiscalCode}
                 onChange={handleCustomerChange}
                 required
                 placeholder="Es. RSSMRA85T10A562S"
@@ -1090,8 +1090,8 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 </label>
                 <input
                   type="text"
-                  value={member.taxCode}
-                  onChange={(e) => updateFamilyMember(index, 'taxCode', e.target.value)}
+                  value={member.fiscalCode}
+                  onChange={(e) => updateFamilyMember(index, 'fiscalCode', e.target.value)}
                   required
                   placeholder="Es. RSSMRA85T10A562S"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"

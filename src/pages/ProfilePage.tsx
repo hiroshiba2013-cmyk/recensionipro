@@ -29,7 +29,7 @@ interface Profile {
   last_name: string;
   nickname: string;
   date_of_birth: string;
-  tax_code: string;
+  fiscal_code: string;
   phone: string;
   billing_address: string;
   avatar_url: string | null;

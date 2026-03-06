@@ -11,7 +11,7 @@ interface FamilyMember {
   nickname: string;
   relationship: string;
   date_of_birth: string;
-  tax_code: string;
+  fiscal_code: string;
   avatar_url: string | null;
   resume_url: string | null;
 }
@@ -117,7 +117,7 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
         nickname: '',
         relationship: 'Coniuge',
         date_of_birth: '',
-        tax_code: '',
+        fiscal_code: '',
         avatar_url: null,
         resume_url: null,
       },
@@ -216,7 +216,7 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
               nickname: member.nickname,
               relationship: member.relationship,
               date_of_birth: member.date_of_birth,
-              tax_code: member.tax_code,
+              fiscal_code: member.fiscal_code,
             });
 
           if (error) throw error;
@@ -229,7 +229,7 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
               nickname: member.nickname,
               relationship: member.relationship,
               date_of_birth: member.date_of_birth,
-              tax_code: member.tax_code,
+              fiscal_code: member.fiscal_code,
             })
             .eq('id', member.id);
 
@@ -419,7 +419,7 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
                   </div>
                   <div className="md:col-span-2">
                     <p className="text-sm text-gray-600 mb-1">Codice Fiscale</p>
-                    <p className="text-lg font-semibold text-gray-900">{member.tax_code}</p>
+                    <p className="text-lg font-semibold text-gray-900">{member.fiscal_code}</p>
                   </div>
                 </div>
               </div>
@@ -616,8 +616,8 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
                   </label>
                   <input
                     type="text"
-                    value={member.tax_code}
-                    onChange={(e) => handleChange(member.id, 'tax_code', e.target.value.toUpperCase())}
+                    value={member.fiscal_code}
+                    onChange={(e) => handleChange(member.id, 'fiscal_code', e.target.value.toUpperCase())}
                     required
                     maxLength={16}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
