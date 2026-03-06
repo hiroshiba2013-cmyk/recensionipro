@@ -385,15 +385,28 @@ function AuthenticatedHomePage() {
   };
 
   const displayName = profile?.nickname || profile?.full_name || 'Utente';
+  const firstName = displayName.split(' ')[0];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-purple-50">
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 text-white py-12 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-extrabold mb-2 leading-tight tracking-tight drop-shadow-lg">
-              Bentornato, {displayName}
+    <div className="min-h-screen bg-gray-50">
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djItaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bS0yIDJ2Mmgydi0yaC0yem0wLTJ2Mmgydi0yaC0yem0yLTJ2Mmgydi0yaC0yem0wLTJ2Mmgydi0yaC0yem0tMiAydjJoMnYtMmgtMnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30"></div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center mb-10">
+            <div className="inline-block mb-4">
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-white text-sm font-medium">Online</span>
+              </div>
+            </div>
+
+            <h1 className="text-4xl md:text-6xl font-bold mb-3 text-white drop-shadow-lg">
+              Ciao, {firstName}!
             </h1>
+            <p className="text-blue-100 text-lg md:text-xl max-w-2xl mx-auto mb-8">
+              Esplora attività locali, trova lavoro, compra e vendi oggetti
+            </p>
           </div>
 
           <div className="max-w-4xl mx-auto">
@@ -403,6 +416,40 @@ function AuthenticatedHomePage() {
               navigateToSearchPage={true}
             />
           </div>
+
+          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+            <button
+              onClick={() => navigate('/classified-ads')}
+              className="group bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-xl p-4 transition-all hover:scale-105"
+            >
+              <Tag className="w-6 h-6 text-white mx-auto mb-2 group-hover:scale-110 transition-transform" />
+              <span className="text-white text-sm font-medium block">Annunci</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/jobs')}
+              className="group bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-xl p-4 transition-all hover:scale-105"
+            >
+              <Briefcase className="w-6 h-6 text-white mx-auto mb-2 group-hover:scale-110 transition-transform" />
+              <span className="text-white text-sm font-medium block">Lavoro</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/leaderboard')}
+              className="group bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-xl p-4 transition-all hover:scale-105"
+            >
+              <Award className="w-6 h-6 text-white mx-auto mb-2 group-hover:scale-110 transition-transform" />
+              <span className="text-white text-sm font-medium block">Classifica</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/solidarity')}
+              className="group bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-xl p-4 transition-all hover:scale-105"
+            >
+              <Heart className="w-6 h-6 text-white mx-auto mb-2 group-hover:scale-110 transition-transform" />
+              <span className="text-white text-sm font-medium block">Solidarietà</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -410,104 +457,116 @@ function AuthenticatedHomePage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
+          <div className="text-center py-20">
+            <div className="inline-block">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent"></div>
+              <p className="mt-4 text-gray-600 font-medium">Caricamento contenuti...</p>
+            </div>
           </div>
         ) : (
-          <>
-            <section className="mb-12 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl p-8 shadow-md border-2 border-yellow-200">
+          <div className="space-y-12">
+            <section>
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="bg-gradient-to-br from-yellow-500 to-orange-500 p-4 rounded-xl shadow-lg">
-                    <Award className="w-7 h-7 text-white" />
+                  <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-3 rounded-xl shadow-lg">
+                    <Award className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-3xl font-bold text-gray-900">Classifica Utenti</h2>
-                    <p className="text-sm text-gray-600">I migliori 20 utenti vincono gift card ricaricabili</p>
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Top Utenti</h2>
+                    <p className="text-sm text-gray-600">I primi 20 vincono gift card</p>
                   </div>
                 </div>
                 <button
                   onClick={() => navigate('/leaderboard')}
-                  className="flex items-center gap-2 bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 font-semibold shadow-md transition-all hover:scale-105"
+                  className="group flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-5 py-2.5 rounded-xl hover:shadow-lg font-semibold transition-all hover:scale-105"
                 >
-                  Vedi tutti <ArrowRight className="w-4 h-4" />
+                  Vedi tutti
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
+
               {topUsers.length > 0 ? (
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {topUsers.slice(0, 8).map((userActivity: any, index: number) => (
                     <TopUserCard key={userActivity.user_id} userActivity={userActivity} rank={index + 1} />
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">Nessun utente in classifica al momento</p>
+                <div className="text-center py-12 bg-white rounded-2xl">
+                  <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">Nessun utente in classifica</p>
                 </div>
               )}
             </section>
 
-            <section className="mb-12 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-8 shadow-md border-2 border-blue-200">
+            <section>
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-4 rounded-xl shadow-lg">
-                    <Briefcase className="w-7 h-7 text-white" />
+                  <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-3 rounded-xl shadow-lg">
+                    <Briefcase className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-3xl font-bold text-gray-900">Migliori Offerte di Lavoro</h2>
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Offerte di Lavoro</h2>
                     <p className="text-sm text-gray-600">Dalle aziende più recensite</p>
                   </div>
                 </div>
                 <button
                   onClick={() => navigate('/jobs')}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold shadow-md transition-all hover:scale-105"
+                  className="group flex items-center gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-5 py-2.5 rounded-xl hover:shadow-lg font-semibold transition-all hover:scale-105"
                 >
-                  Vedi tutte <ArrowRight className="w-4 h-4" />
+                  Vedi tutte
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
+
               {jobPostings.length > 0 ? (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {jobPostings.map((job) => (
                     <JobOfferCard key={job.id} job={job} onClick={() => navigate('/jobs')} />
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">Nessuna offerta di lavoro al momento</p>
+                <div className="text-center py-12 bg-white rounded-2xl">
+                  <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">Nessuna offerta disponibile</p>
                 </div>
               )}
             </section>
 
-            <section className="mb-12 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-8 shadow-md border-2 border-green-200">
+            <section>
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="bg-gradient-to-br from-green-500 to-emerald-500 p-4 rounded-xl shadow-lg">
-                    <Tag className="w-7 h-7 text-white" />
+                  <div className="bg-gradient-to-br from-green-500 to-emerald-500 p-3 rounded-xl shadow-lg">
+                    <Tag className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-3xl font-bold text-gray-900">Migliori Annunci di Vendita</h2>
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Annunci in Evidenza</h2>
                     <p className="text-sm text-gray-600">Dagli utenti più attivi</p>
                   </div>
                 </div>
                 <button
                   onClick={() => navigate('/classified-ads?type=sell')}
-                  className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold shadow-md transition-all hover:scale-105"
+                  className="group flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-5 py-2.5 rounded-xl hover:shadow-lg font-semibold transition-all hover:scale-105"
                 >
-                  Vedi tutti <ArrowRight className="w-4 h-4" />
+                  Vedi tutti
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
+
               {featuredSellAds.length > 0 ? (
-                <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                   {featuredSellAds.map((ad) => (
                     <ClassifiedAdCard key={ad.id} ad={ad} onClick={() => navigate(`/classified-ads/${ad.id}`)} />
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">Nessun annuncio al momento</p>
+                <div className="text-center py-12 bg-white rounded-2xl">
+                  <Tag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">Nessun annuncio disponibile</p>
                 </div>
               )}
             </section>
-          </>
+          </div>
         )}
       </div>
     </div>
@@ -516,38 +575,51 @@ function AuthenticatedHomePage() {
 
 function TopUserCard({ userActivity, rank }: { userActivity: any; rank: number }) {
   const displayName = userActivity.profiles?.nickname || userActivity.profiles?.full_name || 'Utente';
+  const isTopThree = rank <= 3;
 
   return (
-    <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-6 border-2 border-yellow-100">
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
-          rank === 1 ? 'bg-yellow-500' : rank === 2 ? 'bg-gray-400' : rank === 3 ? 'bg-orange-600' : 'bg-blue-500'
-        }`}>
-          {rank}
+    <div className={`relative bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-5 border-2 ${
+      isTopThree ? 'border-yellow-300 bg-gradient-to-br from-yellow-50 to-white' : 'border-gray-200'
+    }`}>
+      {isTopThree && (
+        <div className="absolute -top-3 -right-3 w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+          <Award className="w-5 h-5 text-white" />
         </div>
+      )}
+
+      <div className="flex items-center gap-3 mb-4">
+        <div className={`relative w-12 h-12 rounded-full flex items-center justify-center font-bold text-white shadow-md ${
+          rank === 1 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600' :
+          rank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-500' :
+          rank === 3 ? 'bg-gradient-to-br from-orange-400 to-orange-600' :
+          'bg-gradient-to-br from-blue-400 to-blue-600'
+        }`}>
+          <span className="text-lg">{rank}</span>
+        </div>
+
         {userActivity.profiles?.avatar_url ? (
           <img
             src={userActivity.profiles.avatar_url}
             alt={displayName}
-            className="w-12 h-12 rounded-full object-cover"
+            className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-md"
           />
         ) : (
-          <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-            <Users className="w-6 h-6 text-gray-400" />
+          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center border-2 border-white shadow-md">
+            <Users className="w-7 h-7 text-gray-500" />
           </div>
         )}
-        <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-gray-900 truncate">{displayName}</h3>
-        </div>
       </div>
-      <div className="space-y-2 text-sm">
-        <div className="flex justify-between items-center">
-          <span className="text-gray-600">Punti Totali</span>
-          <span className="font-bold text-yellow-600">{userActivity.total_points}</span>
+
+      <h3 className="font-bold text-gray-900 text-lg mb-4 truncate">{displayName}</h3>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between bg-yellow-50 rounded-lg px-3 py-2">
+          <span className="text-sm text-gray-700 font-medium">Punti</span>
+          <span className="font-bold text-yellow-600 text-lg">{userActivity.total_points}</span>
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-gray-600">Recensioni</span>
-          <span className="font-semibold text-blue-600">{userActivity.reviews_count}</span>
+        <div className="flex items-center justify-between bg-blue-50 rounded-lg px-3 py-2">
+          <span className="text-sm text-gray-700 font-medium">Recensioni</span>
+          <span className="font-bold text-blue-600">{userActivity.reviews_count}</span>
         </div>
       </div>
     </div>
@@ -558,30 +630,42 @@ function JobOfferCard({ job, onClick }: { job: any; onClick: () => void }) {
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-6 cursor-pointer border-2 border-purple-100 hover:border-purple-300 transform hover:scale-105"
+      className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all p-6 cursor-pointer border-2 border-blue-100 hover:border-blue-300 transform hover:-translate-y-1"
     >
-      <div className="flex items-start justify-between mb-3">
-        <h3 className="font-bold text-lg text-gray-900 line-clamp-2">{job.title}</h3>
-        <div className="bg-purple-100 p-2 rounded-lg flex-shrink-0">
-          <Briefcase className="w-5 h-5 text-purple-600" />
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <h3 className="font-bold text-lg text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors mb-2">
+            {job.title}
+          </h3>
+          <p className="text-sm text-gray-600 font-medium line-clamp-1 flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-blue-500" />
+            {job.business?.name}
+          </p>
+        </div>
+        <div className="bg-gradient-to-br from-blue-100 to-cyan-100 p-3 rounded-xl flex-shrink-0 group-hover:scale-110 transition-transform">
+          <Briefcase className="w-5 h-5 text-blue-600" />
         </div>
       </div>
-      <p className="text-sm text-gray-600 mb-3 font-medium line-clamp-1">{job.business?.name}</p>
-      <div className="flex items-center gap-2 text-sm text-gray-500 mb-2 bg-gray-50 p-2 rounded-lg">
-        <MapPin className="w-4 h-4 text-blue-500" />
-        <span className="line-clamp-1">{job.business?.business_locations?.[0]?.city}, {job.business?.business_locations?.[0]?.province}</span>
-      </div>
-      {job.gross_annual_salary && (
-        <div className="flex items-center gap-2 text-sm text-green-600 font-semibold bg-green-50 p-2 rounded-lg mt-2">
-          <Euro className="w-4 h-4" />
-          <span>{job.gross_annual_salary.toLocaleString()} €/anno</span>
+
+      <div className="space-y-2 mb-4">
+        <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
+          <MapPin className="w-4 h-4 text-blue-500 flex-shrink-0" />
+          <span className="line-clamp-1">{job.business?.business_locations?.[0]?.city}, {job.business?.business_locations?.[0]?.province}</span>
         </div>
-      )}
-      <div className="mt-3 flex items-center gap-2">
-        <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded">
+
+        {job.gross_annual_salary && (
+          <div className="flex items-center gap-2 text-sm bg-gradient-to-r from-green-50 to-emerald-50 px-3 py-2 rounded-lg border border-green-200">
+            <Euro className="w-4 h-4 text-green-600" />
+            <span className="font-bold text-green-700">{job.gross_annual_salary.toLocaleString()} €/anno</span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="px-3 py-1 bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 text-xs font-semibold rounded-full">
           {job.position_type}
         </span>
-        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
+        <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
           {job.experience_level}
         </span>
       </div>
@@ -593,29 +677,38 @@ function ClassifiedAdCard({ ad, onClick }: { ad: any; onClick: () => void }) {
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all cursor-pointer overflow-hidden border-2 border-green-100 hover:border-green-300 transform hover:scale-105"
+      className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all cursor-pointer overflow-hidden border-2 border-green-100 hover:border-green-300 transform hover:-translate-y-1"
     >
-      {ad.images?.[0] ? (
-        <img
-          src={ad.images[0]}
-          alt={ad.title}
-          className="w-full h-32 object-cover"
-        />
-      ) : (
-        <div className="w-full h-32 bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center">
-          <Tag className="w-8 h-8 text-green-500" />
+      <div className="relative overflow-hidden">
+        {ad.images?.[0] ? (
+          <img
+            src={ad.images[0]}
+            alt={ad.title}
+            className="w-full h-40 object-cover group-hover:scale-110 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-40 bg-gradient-to-br from-green-100 via-emerald-100 to-green-200 flex items-center justify-center">
+            <Tag className="w-12 h-12 text-green-500 group-hover:scale-110 transition-transform" />
+          </div>
+        )}
+        <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-semibold text-gray-700">
+          {ad.ad_type === 'gift' ? '🎁 Regalo' : ad.ad_type === 'exchange' ? '🔄 Scambio' : '💰 Vendita'}
         </div>
-      )}
-      <div className="p-3">
-        <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 mb-2">{ad.title}</h3>
+      </div>
+
+      <div className="p-4">
+        <h3 className="font-bold text-sm text-gray-900 line-clamp-2 mb-3 group-hover:text-green-600 transition-colors min-h-[2.5rem]">
+          {ad.title}
+        </h3>
+
         {ad.price > 0 ? (
-          <div className="bg-green-50 px-3 py-1.5 rounded-lg">
-            <p className="text-green-700 font-bold text-center">{ad.price.toFixed(2)}€</p>
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-2 rounded-xl border border-green-200">
+            <p className="text-green-700 font-bold text-center text-lg">{ad.price.toFixed(2)}€</p>
           </div>
         ) : (
-          <div className="bg-blue-50 px-3 py-1.5 rounded-lg">
-            <p className="text-blue-700 text-sm font-medium text-center">
-              {ad.ad_type === 'gift' ? 'Regalo' : ad.ad_type === 'exchange' ? 'Scambio' : 'Vendita'}
+          <div className="bg-gradient-to-r from-blue-50 to-cyan-50 px-4 py-2 rounded-xl border border-blue-200">
+            <p className="text-blue-700 text-sm font-semibold text-center">
+              {ad.ad_type === 'gift' ? 'Gratis' : 'Scambio'}
             </p>
           </div>
         )}
