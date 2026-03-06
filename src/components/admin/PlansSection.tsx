@@ -105,25 +105,6 @@ export function PlansSection({ adminId }: PlansSectionProps) {
         }));
       }
 
-      // Carica utenti in prova che non hanno record in subscriptions
-      const { data: trialUsers, error: trialError } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          full_name,
-          nickname,
-          email,
-          subscription_status,
-          subscription_type,
-          created_at
-        `)
-        .eq('subscription_status', 'trial')
-        .order('created_at', { ascending: false });
-
-      if (trialError) {
-        console.error('Supabase error loading trial users:', trialError);
-      }
-
       // Trasforma i dati da subscriptions (usa enrichedSubscriptions invece di activeSubscriptions)
       const transformedSubs = enrichedSubscriptions?.map(sub => ({
         ...sub,
@@ -131,40 +112,9 @@ export function PlansSection({ adminId }: PlansSectionProps) {
         plan: Array.isArray(sub.subscription_plans) ? sub.subscription_plans[0] : sub.subscription_plans
       })) || [];
 
-      // Trasforma gli utenti in prova in formato subscription
-      const transformedTrials = trialUsers?.map(user => {
-        const trialStartDate = user.created_at || new Date().toISOString();
-        const trialEndDate = new Date(new Date(trialStartDate).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
-        return {
-          id: `trial-${user.id}`,
-          customer_id: user.id,
-          plan_id: null,
-          status: 'trial',
-          start_date: trialStartDate,
-          end_date: trialEndDate,
-          trial_end_date: trialEndDate,
-          customer: {
-            full_name: user.full_name,
-            nickname: user.nickname,
-            email: user.email,
-            subscription_status: user.subscription_status
-          },
-          plan: {
-            name: user.subscription_type === 'business' ? 'Piano Business Trial' : 'Piano Trial Gratuito',
-            price: 0,
-            billing_period: 'trial'
-          }
-        };
-      }) || [];
-
-      // Combina entrambi i risultati
-      const allSubscriptions = [...transformedSubs, ...transformedTrials];
-      console.log('Total subscriptions loaded:', allSubscriptions.length);
-      console.log('Active subscriptions:', transformedSubs.length);
-      console.log('Trial users:', transformedTrials.length);
-      console.log('All subscriptions data:', allSubscriptions);
-      setSubscriptions(allSubscriptions as any);
+      console.log('Transformed subscriptions:', transformedSubs);
+      console.log('Total subscriptions loaded:', transformedSubs.length);
+      setSubscriptions(transformedSubs as any);
     } catch (error: any) {
       console.error('Error loading subscriptions:', error);
     }
