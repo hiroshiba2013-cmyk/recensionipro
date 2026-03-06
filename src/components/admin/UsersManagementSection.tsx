@@ -634,8 +634,127 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
-              {/* Info Base */}
+            <div className="p-6 space-y-6">
+              {/* Informazioni Complete Utente */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <UserIcon className="w-5 h-5 text-blue-600" />
+                  Dati Completi di Registrazione
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Colonna Sinistra */}
+                  <div className="space-y-3">
+                    <div className="bg-white rounded-lg p-3">
+                      <div className="text-xs text-gray-500 mb-1">Nome Completo</div>
+                      <div className="text-sm font-semibold text-gray-900">{editForm.full_name || '—'}</div>
+                    </div>
+
+                    {editForm.nickname && (
+                      <div className="bg-white rounded-lg p-3">
+                        <div className="text-xs text-gray-500 mb-1">Nickname</div>
+                        <div className="text-sm font-semibold text-gray-900">{editForm.nickname}</div>
+                      </div>
+                    )}
+
+                    <div className="bg-white rounded-lg p-3">
+                      <div className="text-xs text-gray-500 mb-1">Email</div>
+                      <div className="text-sm font-semibold text-gray-900">{editForm.email || '—'}</div>
+                    </div>
+
+                    {editForm.phone && (
+                      <div className="bg-white rounded-lg p-3">
+                        <div className="text-xs text-gray-500 mb-1">Telefono</div>
+                        <div className="text-sm font-semibold text-gray-900">{editForm.phone}</div>
+                      </div>
+                    )}
+
+                    {editForm.fiscal_code && (
+                      <div className="bg-white rounded-lg p-3">
+                        <div className="text-xs text-gray-500 mb-1">Codice Fiscale</div>
+                        <div className="text-sm font-semibold text-gray-900 uppercase">{editForm.fiscal_code}</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Colonna Destra */}
+                  <div className="space-y-3">
+                    <div className="bg-white rounded-lg p-3">
+                      <div className="text-xs text-gray-500 mb-1">Tipo Utente</div>
+                      <div className="text-sm font-semibold text-gray-900 capitalize">{editForm.user_type || '—'}</div>
+                    </div>
+
+                    <div className="bg-white rounded-lg p-3">
+                      <div className="text-xs text-gray-500 mb-1">Stato Abbonamento</div>
+                      <div className={`text-sm font-bold capitalize ${
+                        editForm.subscription_status === 'trial'
+                          ? 'text-yellow-700'
+                          : editForm.subscription_status === 'active'
+                          ? 'text-green-700'
+                          : 'text-red-700'
+                      }`}>
+                        {editForm.subscription_status === 'trial'
+                          ? 'In Prova'
+                          : editForm.subscription_status === 'active'
+                          ? 'Attivo'
+                          : editForm.subscription_status || '—'}
+                      </div>
+                    </div>
+
+                    {editForm.subscription_type && (
+                      <div className="bg-white rounded-lg p-3">
+                        <div className="text-xs text-gray-500 mb-1">Piano Abbonamento</div>
+                        <div className="text-sm font-semibold text-gray-900">{editForm.subscription_type}</div>
+                      </div>
+                    )}
+
+                    <div className="bg-white rounded-lg p-3">
+                      <div className="text-xs text-gray-500 mb-1">Registrato il</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {new Date(editForm.created_at).toLocaleDateString('it-IT', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg p-3">
+                      <div className="text-xs text-gray-500 mb-1">Admin</div>
+                      <div className={`text-sm font-bold ${editForm.is_admin ? 'text-red-600' : 'text-gray-500'}`}>
+                        {editForm.is_admin ? 'SÌ' : 'NO'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Indirizzo di Fatturazione */}
+                {(editForm.billing_address || editForm.billing_city || editForm.billing_province || editForm.billing_postal_code) && (
+                  <div className="mt-4 pt-4 border-t border-blue-200">
+                    <div className="text-xs font-semibold text-gray-700 mb-2">Indirizzo di Fatturazione</div>
+                    <div className="bg-white rounded-lg p-3">
+                      <div className="text-sm text-gray-900">
+                        {editForm.billing_address && <div className="font-medium">{editForm.billing_address}</div>}
+                        {(editForm.billing_postal_code || editForm.billing_city || editForm.billing_province) && (
+                          <div className="mt-1">
+                            {editForm.billing_postal_code && <span className="font-semibold">{editForm.billing_postal_code} </span>}
+                            {editForm.billing_city && <span>{editForm.billing_city}</span>}
+                            {editForm.billing_province && <span> ({editForm.billing_province.toUpperCase()})</span>}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Form di Modifica */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Modifica Dati</h3>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
