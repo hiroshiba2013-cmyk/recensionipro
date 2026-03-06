@@ -71,23 +71,10 @@ export function PlansSection({ adminId }: PlansSectionProps) {
     try {
       console.log('Loading subscriptions from database...');
 
-      // Carica abbonamenti dalla tabella subscriptions
+      // Carica abbonamenti dalla tabella subscriptions SENZA join
       const { data: activeSubscriptions, error: subsError } = await supabase
         .from('subscriptions')
-        .select(`
-          id,
-          customer_id,
-          plan_id,
-          status,
-          start_date,
-          end_date,
-          trial_end_date,
-          subscription_plans!subscriptions_plan_id_fkey(
-            name,
-            price,
-            billing_period
-          )
-        `)
+        .select('id, customer_id, plan_id, status, start_date, end_date, trial_end_date')
         .order('start_date', { ascending: false });
 
       if (subsError) {
@@ -96,6 +83,11 @@ export function PlansSection({ adminId }: PlansSectionProps) {
       } else {
         console.log('Subscriptions loaded:', activeSubscriptions);
       }
+
+      // Carica tutti i piani disponibili
+      const { data: allPlans } = await supabase
+        .from('subscription_plans')
+        .select('id, name, price, billing_period');
 
       // Carica i profili dei clienti separatamente
       let enrichedSubscriptions = [];
@@ -108,7 +100,8 @@ export function PlansSection({ adminId }: PlansSectionProps) {
 
         enrichedSubscriptions = activeSubscriptions.map(sub => ({
           ...sub,
-          profiles: customers?.find(c => c.id === sub.customer_id)
+          profiles: customers?.find(c => c.id === sub.customer_id),
+          subscription_plans: allPlans?.find(p => p.id === sub.plan_id)
         }));
       }
 
