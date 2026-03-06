@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Edit, Save, X } from 'lucide-react';
+import { FileEdit as Edit, Save, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
 

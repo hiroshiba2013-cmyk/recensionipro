@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Edit, Save, X, Building2, User } from 'lucide-react';
+import { FileEdit as Edit, Save, X, Building2, User } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface BusinessData {

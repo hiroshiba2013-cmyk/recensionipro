@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Edit, Save, X, Plus, Trash2, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Users, FileEdit as Edit, Save, X, Plus, Trash2, TrendingUp, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { FamilyMemberAvatarUpload } from './FamilyMemberAvatarUpload';
 import { SearchableSelect } from '../common/SearchableSelect';
