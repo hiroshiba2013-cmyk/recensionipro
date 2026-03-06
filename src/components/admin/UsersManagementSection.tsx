@@ -14,10 +14,10 @@ interface User {
   is_admin: boolean;
   phone?: string;
   fiscal_code?: string;
-  address?: string;
-  city?: string;
-  province?: string;
-  postal_code?: string;
+  billing_address?: string;
+  billing_city?: string;
+  billing_province?: string;
+  billing_postal_code?: string;
 }
 
 interface FamilyMember {
@@ -83,7 +83,7 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
 
       let query = supabase
         .from('profiles')
-        .select('id, full_name, nickname, email, user_type, subscription_status, subscription_type, created_at, is_admin, phone, fiscal_code, address, city, province, postal_code')
+        .select('id, full_name, nickname, email, user_type, subscription_status, subscription_type, created_at, is_admin, phone, fiscal_code, billing_address, billing_city, billing_province, billing_postal_code')
         .order('created_at', { ascending: false });
 
       if (filterType !== 'all') {
@@ -100,6 +100,9 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
       const { data, error } = await query.limit(200);
 
       console.log('🔍 Query result:', { data, error, count: data?.length });
+      if (error) {
+        console.error('🔴 DETAILED ERROR:', JSON.stringify(error, null, 2));
+      }
 
       if (error) throw error;
       setUsers(data || []);
@@ -275,10 +278,10 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
           nickname: editForm.nickname,
           phone: editForm.phone,
           fiscal_code: editForm.fiscal_code,
-          address: editForm.address,
-          city: editForm.city,
-          province: editForm.province,
-          postal_code: editForm.postal_code,
+          billing_address: editForm.billing_address,
+          billing_city: editForm.billing_city,
+          billing_province: editForm.billing_province,
+          billing_postal_code: editForm.billing_postal_code,
         })
         .eq('id', editForm.id);
 
@@ -703,8 +706,8 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
                 </label>
                 <input
                   type="text"
-                  value={editForm.address || ''}
-                  onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                  value={editForm.billing_address || ''}
+                  onChange={(e) => setEditForm({ ...editForm, billing_address: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -716,8 +719,8 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
                   </label>
                   <input
                     type="text"
-                    value={editForm.city || ''}
-                    onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                    value={editForm.billing_city || ''}
+                    onChange={(e) => setEditForm({ ...editForm, billing_city: e.target.value })}
                     className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -728,8 +731,8 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
                   </label>
                   <input
                     type="text"
-                    value={editForm.province || ''}
-                    onChange={(e) => setEditForm({ ...editForm, province: e.target.value })}
+                    value={editForm.billing_province || ''}
+                    onChange={(e) => setEditForm({ ...editForm, billing_province: e.target.value })}
                     maxLength={2}
                     className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
                   />
@@ -741,8 +744,8 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
                   </label>
                   <input
                     type="text"
-                    value={editForm.postal_code || ''}
-                    onChange={(e) => setEditForm({ ...editForm, postal_code: e.target.value })}
+                    value={editForm.billing_postal_code || ''}
+                    onChange={(e) => setEditForm({ ...editForm, billing_postal_code: e.target.value })}
                     className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
