@@ -108,11 +108,10 @@ export function PlansSection({ adminId }: PlansSectionProps) {
           email,
           subscription_status,
           subscription_type,
-          trial_start_date,
-          trial_end_date
+          created_at
         `)
         .eq('subscription_status', 'trial')
-        .order('trial_start_date', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (trialError) {
         console.error('Supabase error loading trial users:', trialError);
@@ -126,29 +125,38 @@ export function PlansSection({ adminId }: PlansSectionProps) {
       })) || [];
 
       // Trasforma gli utenti in prova in formato subscription
-      const transformedTrials = trialUsers?.map(user => ({
-        id: `trial-${user.id}`,
-        customer_id: user.id,
-        plan_id: null,
-        status: 'trial',
-        start_date: user.trial_start_date || new Date().toISOString(),
-        end_date: user.trial_end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        trial_end_date: user.trial_end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        customer: {
-          full_name: user.full_name,
-          nickname: user.nickname,
-          email: user.email,
-          subscription_status: user.subscription_status
-        },
-        plan: {
-          name: user.subscription_type === 'business' ? 'Piano Business Trial' : 'Piano Trial Gratuito',
-          price: 0,
-          billing_period: 'trial'
-        }
-      })) || [];
+      const transformedTrials = trialUsers?.map(user => {
+        const trialStartDate = user.created_at || new Date().toISOString();
+        const trialEndDate = new Date(new Date(trialStartDate).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+        return {
+          id: `trial-${user.id}`,
+          customer_id: user.id,
+          plan_id: null,
+          status: 'trial',
+          start_date: trialStartDate,
+          end_date: trialEndDate,
+          trial_end_date: trialEndDate,
+          customer: {
+            full_name: user.full_name,
+            nickname: user.nickname,
+            email: user.email,
+            subscription_status: user.subscription_status
+          },
+          plan: {
+            name: user.subscription_type === 'business' ? 'Piano Business Trial' : 'Piano Trial Gratuito',
+            price: 0,
+            billing_period: 'trial'
+          }
+        };
+      }) || [];
 
       // Combina entrambi i risultati
       const allSubscriptions = [...transformedSubs, ...transformedTrials];
+      console.log('Total subscriptions loaded:', allSubscriptions.length);
+      console.log('Active subscriptions:', transformedSubs.length);
+      console.log('Trial users:', transformedTrials.length);
+      console.log('All subscriptions data:', allSubscriptions);
       setSubscriptions(allSubscriptions as any);
     } catch (error: any) {
       console.error('Error loading subscriptions:', error);
@@ -427,6 +435,11 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                   </tr>
                 ) : (
                   subscriptions.map((sub) => {
+                    if (!sub.customer || !sub.plan) {
+                      console.error('Invalid subscription data:', sub);
+                      return null;
+                    }
+
                     const expired = isExpired(sub.end_date);
                     const expiringSoon = isExpiringSoon(sub.end_date);
                     const isTrial = sub.customer.subscription_status === 'trial';
