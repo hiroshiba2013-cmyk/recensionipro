@@ -58,7 +58,7 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [userData, setUserData] = useState<Map<string, ExpandedUserData>>(new Map());
   const [loading, setLoading] = useState(true);
-  const [filterType, setFilterType] = useState<'all' | 'customer' | 'business' | 'admin'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'customer' | 'business' | 'admin' | 'trial'>('all');
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<User | null>(null);
 
@@ -77,6 +77,8 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
       if (filterType !== 'all') {
         if (filterType === 'admin') {
           query = query.eq('is_admin', true);
+        } else if (filterType === 'trial') {
+          query = query.eq('subscription_status', 'trial');
         } else {
           query = query.eq('user_type', filterType);
         }
@@ -114,7 +116,7 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
 
       const { data: subData } = await supabase
         .from('subscriptions')
-        .select('status, end_date, plan:subscription_plans(name)')
+        .select('status, end_date, start_date, plan:subscription_plans(name)')
         .eq('customer_id', userId)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -350,6 +352,16 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
             >
               Admin
             </button>
+            <button
+              onClick={() => setFilterType('trial')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                filterType === 'trial'
+                  ? 'bg-yellow-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              In Prova
+            </button>
           </div>
         </div>
       </div>
@@ -455,10 +467,19 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
               {isExpanded && details && (
                 <div className="px-6 pb-4 pl-20 space-y-4">
                   {details.subscription && (
-                    <div className="bg-gray-50 rounded-lg p-4">
+                    <div className={`rounded-lg p-4 ${
+                      details.subscription.status === 'trial'
+                        ? 'bg-yellow-50 border-2 border-yellow-200'
+                        : 'bg-gray-50'
+                    }`}>
                       <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                         <UserIcon className="w-4 h-4" />
                         Abbonamento
+                        {details.subscription.status === 'trial' && (
+                          <span className="px-2 py-0.5 bg-yellow-200 text-yellow-800 text-xs font-bold rounded">
+                            PROVA GRATUITA
+                          </span>
+                        )}
                       </h4>
                       <div className="grid grid-cols-3 gap-4 text-sm">
                         <div>
@@ -467,15 +488,38 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
                         </div>
                         <div>
                           <span className="text-gray-600">Stato:</span>
-                          <span className="ml-2 font-medium capitalize">{details.subscription.status}</span>
+                          <span className={`ml-2 font-bold capitalize ${
+                            details.subscription.status === 'trial'
+                              ? 'text-yellow-700'
+                              : details.subscription.status === 'active'
+                              ? 'text-green-700'
+                              : 'text-red-700'
+                          }`}>
+                            {details.subscription.status === 'trial'
+                              ? 'In Prova'
+                              : details.subscription.status === 'active'
+                              ? 'Attivo'
+                              : details.subscription.status}
+                          </span>
                         </div>
                         <div>
-                          <span className="text-gray-600">Scadenza:</span>
-                          <span className="ml-2 font-medium">
+                          <span className="text-gray-600">
+                            {details.subscription.status === 'trial' ? 'Scade il:' : 'Scadenza:'}
+                          </span>
+                          <span className={`ml-2 font-medium ${
+                            details.subscription.status === 'trial' ? 'text-yellow-800 font-bold' : ''
+                          }`}>
                             {new Date(details.subscription.end_date).toLocaleDateString('it-IT')}
                           </span>
                         </div>
                       </div>
+                      {details.subscription.status === 'trial' && (
+                        <div className="mt-3 pt-3 border-t border-yellow-200">
+                          <div className="text-xs text-yellow-800 font-medium">
+                            Giorni rimanenti: {Math.ceil((new Date(details.subscription.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
