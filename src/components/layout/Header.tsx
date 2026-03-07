@@ -137,7 +137,15 @@ export function Header() {
                     className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium px-4 py-2 rounded-lg"
                     title={t('header.myProfile')}
                   >
-                    <User className="w-4 h-4" />
+                    {profile.avatar_url ? (
+                      <img
+                        src={profile.avatar_url}
+                        alt="Avatar"
+                        className="w-6 h-6 rounded-full object-cover border-2 border-white"
+                      />
+                    ) : (
+                      <User className="w-4 h-4" />
+                    )}
                     <span className="text-sm">{t('header.profile')}</span>
                   </a>
                 </nav>
@@ -332,11 +340,24 @@ export function Header() {
                     </a>
                     <a
                       href="/profile"
-                      className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium px-4 py-3 rounded-lg"
+                      className="flex items-center gap-3 bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium px-4 py-3 rounded-lg"
                       onClick={() => setShowMobileMenu(false)}
                     >
-                      <User className="w-5 h-5" />
-                      <span>{t('header.profile')} - {profile.full_name}</span>
+                      {profile.avatar_url ? (
+                        <img
+                          src={profile.avatar_url}
+                          alt="Avatar"
+                          className="w-8 h-8 rounded-full object-cover border-2 border-white"
+                        />
+                      ) : (
+                        <User className="w-5 h-5" />
+                      )}
+                      <div className="flex flex-col items-start">
+                        <span className="text-sm">{t('header.profile')}</span>
+                        {profile.nickname && (
+                          <span className="text-xs opacity-80">@{profile.nickname}</span>
+                        )}
+                      </div>
                     </a>
                   </>
                 ) : (
