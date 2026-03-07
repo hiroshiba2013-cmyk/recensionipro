@@ -160,6 +160,7 @@ export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionPro
       }
 
       if (typeFilter === 'all' || typeFilter === 'claimed') {
+        // Unclaimed businesses che sono state rivendicate
         const { data: claimed } = await supabase
           .from('unclaimed_business_locations')
           .select(`
@@ -201,6 +202,44 @@ export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionPro
             });
           }
         }
+
+        // Aggiungi anche le attività registrate come rivendicate
+        const { data: registered } = await supabase
+          .from('registered_businesses')
+          .select(`
+            id,
+            name,
+            verified,
+            created_at,
+            owner:profiles!registered_businesses_owner_id_fkey(full_name, email),
+            category:business_categories(name)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (registered) {
+          for (const biz of registered) {
+            const { data: location } = await supabase
+              .from('registered_business_locations')
+              .select('city, province, address')
+              .eq('business_id', biz.id)
+              .limit(1)
+              .maybeSingle();
+
+            allActivities.push({
+              id: `reg-${biz.id}`,
+              name: biz.name,
+              city: location?.city || 'N/A',
+              province: location?.province || 'N/A',
+              address: location?.address,
+              type: 'claimed',
+              created_at: biz.created_at,
+              verified: biz.verified,
+              owner: biz.owner,
+              category: biz.category,
+            });
+          }
+        }
       }
 
       allActivities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -232,7 +271,15 @@ export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionPro
     if (!confirm(`Eliminare "${business.name}"?`)) return;
 
     try {
-      if (business.type === 'registered') {
+      // Se l'ID inizia con "reg-", è un'attività registrata mostrata come rivendicata
+      if (business.id.startsWith('reg-')) {
+        const realId = business.id.replace('reg-', '');
+        const { error } = await supabase
+          .from('registered_businesses')
+          .delete()
+          .eq('id', realId);
+        if (error) throw error;
+      } else if (business.type === 'registered') {
         const { error } = await supabase
           .from('registered_businesses')
           .delete()
