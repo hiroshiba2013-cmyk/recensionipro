@@ -165,37 +165,29 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           .select(`
             *,
             category:category_id(name),
-            owner:owner_id(full_name, email)
+            owner:owner_id(full_name, email),
+            locations:registered_business_locations(*)
           `, { count: 'exact' });
 
-        // Filter by source
+        // Filter by source_type
         if (activeTab === 'claimed') {
           // Claimed: businesses that were originally unclaimed and then claimed
-          query = query.eq('is_claimed', true);
+          query = query.eq('source_type', 'claimed');
         } else {
-          // Self-registered: businesses registered directly by the owner (not claimed)
-          query = query.or('is_claimed.is.false,is_claimed.is.null');
+          // Self-registered: businesses registered directly by the owner
+          query = query.eq('source_type', 'self_registered');
         }
 
         // Apply advanced filters
-        if (filters.city) {
-          query = query.ilike('city', `%${filters.city}%`);
-        }
-        if (filters.province) {
-          query = query.ilike('province', `%${filters.province}%`);
-        }
-        if (filters.region) {
-          query = query.ilike('region', `%${filters.region}%`);
-        }
         if (filters.verified === 'verified') {
-          query = query.eq('is_verified', true);
+          query = query.eq('verified', true);
         } else if (filters.verified === 'unverified') {
-          query = query.eq('is_verified', false);
+          query = query.eq('verified', false);
         }
 
         // Apply search
         if (searchTerm) {
-          query = query.or(`name.ilike.%${searchTerm}%,city.ilike.%${searchTerm}%,address.ilike.%${searchTerm}%`);
+          query = query.or(`name.ilike.%${searchTerm}%`);
         }
 
         const { data: claimedData, error: claimedError, count: totalCount } = await query
@@ -205,33 +197,68 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
         if (claimedError) throw claimedError;
 
         count = totalCount || 0;
-        allBusinesses = (claimedData || []).map(business => ({
-          id: business.id,
-          business_id: business.id,
-          unclaimed_business_id: null,
-          name: business.business_name,
-          address: business.street || '',
-          city: business.city,
-          province: business.province,
-          region: business.region,
-          postal_code: business.postal_code,
-          phone: business.phone,
-          email: business.email,
-          website: business.website,
-          vat_number: business.vat_number,
-          is_verified: business.is_verified,
-          is_main: business.is_primary || false,
-          created_at: business.created_at,
-          description: business.description,
-          business_hours: business.business_hours,
-          services: business.services,
-          category: business.category,
-          business: business.owner ? {
-            owner_id: business.owner_id,
-            owner: business.owner
-          } : undefined,
-          source: activeTab
-        }));
+        // Flatten businesses with their locations
+        allBusinesses = (claimedData || []).flatMap(business => {
+          const primaryLocation = business.locations?.find((l: any) => l.is_primary) || business.locations?.[0];
+
+          if (!primaryLocation) {
+            return [{
+              id: business.id,
+              business_id: business.id,
+              unclaimed_business_id: null,
+              name: business.name,
+              address: business.billing_street || '',
+              city: business.billing_city || '',
+              province: business.billing_province || '',
+              region: '',
+              postal_code: business.billing_postal_code,
+              phone: null,
+              email: null,
+              website: business.website,
+              vat_number: business.vat_number,
+              is_verified: business.verified,
+              is_main: true,
+              created_at: business.created_at,
+              description: business.description,
+              business_hours: null,
+              services: null,
+              category: business.category,
+              business: business.owner ? {
+                owner_id: business.owner_id,
+                owner: business.owner
+              } : undefined,
+              source: activeTab
+            }];
+          }
+
+          return [{
+            id: primaryLocation.id,
+            business_id: business.id,
+            unclaimed_business_id: null,
+            name: primaryLocation.name || business.name,
+            address: primaryLocation.street || '',
+            city: primaryLocation.city,
+            province: primaryLocation.province,
+            region: primaryLocation.region,
+            postal_code: primaryLocation.postal_code,
+            phone: primaryLocation.phone,
+            email: primaryLocation.email,
+            website: primaryLocation.website || business.website,
+            vat_number: business.vat_number,
+            is_verified: business.verified,
+            is_main: primaryLocation.is_primary || false,
+            created_at: business.created_at,
+            description: primaryLocation.description,
+            business_hours: primaryLocation.business_hours,
+            services: primaryLocation.services,
+            category: business.category,
+            business: business.owner ? {
+              owner_id: business.owner_id,
+              owner: business.owner
+            } : undefined,
+            source: activeTab
+          }];
+        });
       }
 
       setBusinesses(allBusinesses);
@@ -255,7 +282,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
       if (tableName === 'unclaimed_business_locations') {
         updateData = { verification_badge: !currentStatus ? 'verified' : null };
       } else {
-        updateData = { is_verified: !currentStatus };
+        updateData = { verified: !currentStatus };
       }
 
       const { error } = await supabase

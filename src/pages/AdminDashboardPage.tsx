@@ -338,9 +338,9 @@ export function AdminDashboardPage() {
       supabase.from('reports').select('id', { count: 'exact', head: true }),
       supabase.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('job_postings').select('id', { count: 'exact', head: true }),
-      supabase.from('businesses').select('id', { count: 'exact', head: true }).eq('is_claimed', true),
+      supabase.from('registered_businesses').select('id', { count: 'exact', head: true }),
       supabase.from('unclaimed_business_locations').select('id', { count: 'exact', head: true }),
-      supabase.from('business_locations').select('id', { count: 'exact', head: true }),
+      supabase.from('registered_business_locations').select('id', { count: 'exact', head: true }),
       supabase.from('customer_family_members').select('id', { count: 'exact', head: true })
     ]);
 
@@ -550,14 +550,14 @@ export function AdminDashboardPage() {
         } else if (report.reported_entity_type === 'business') {
           // Try different business tables
           let { data: business } = await supabase
-            .from('businesses')
+            .from('registered_businesses')
             .select('name')
             .eq('id', report.reported_entity_id)
             .maybeSingle();
 
           if (!business) {
             const { data: location } = await supabase
-              .from('business_locations')
+              .from('registered_business_locations')
               .select('name')
               .eq('id', report.reported_entity_id)
               .maybeSingle();
@@ -619,17 +619,16 @@ export function AdminDashboardPage() {
 
   const loadBusinesses = async () => {
     const { data, error } = await supabase
-      .from('businesses')
+      .from('registered_businesses')
       .select(`
         id,
         name,
         vat_number,
-        is_verified,
+        verified,
         created_at,
-        owner:profiles!businesses_owner_id_fkey(full_name, email),
-        category:business_categories(name)
+        owner:owner_id(full_name, email),
+        category:category_id(name)
       `)
-      .eq('is_claimed', true)
       .order('created_at', { ascending: false })
       .limit(100);
 
