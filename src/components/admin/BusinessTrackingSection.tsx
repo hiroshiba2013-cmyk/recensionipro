@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Building2, CheckCircle, UserPlus, Plus, MapPin, Eye, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -33,13 +33,19 @@ export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionPro
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<'all' | 'claimed' | 'user_added' | 'imported' | 'registered'>('all');
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessActivity | null>(null);
+  const loadingRequestRef = useRef(0);
 
   useEffect(() => {
     loadActivities();
   }, [typeFilter]);
 
   const loadActivities = async () => {
+    // Increment request counter to invalidate previous requests
+    const currentRequest = ++loadingRequestRef.current;
+
     setLoading(true);
+    // Reset activities immediately to clear previous data
+    setActivities([]);
     try {
       const allActivities: BusinessActivity[] = [];
 
@@ -205,6 +211,19 @@ export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionPro
       }
 
       allActivities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      // Only update if this is still the current request
+      if (currentRequest !== loadingRequestRef.current) {
+        console.log(`[BusinessTracking] Request ${currentRequest} cancelled, current is ${loadingRequestRef.current}`);
+        return;
+      }
+
+      console.log(`[BusinessTracking] Filter: ${typeFilter}, Loaded ${allActivities.length} activities`, {
+        types: allActivities.reduce((acc, a) => {
+          acc[a.type] = (acc[a.type] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>)
+      });
 
       setActivities(allActivities);
     } catch (error) {
