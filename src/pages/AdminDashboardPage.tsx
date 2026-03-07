@@ -1164,6 +1164,7 @@ export function AdminDashboardPage() {
                         <option value="">Tutti</option>
                         <option value="customer">Privato</option>
                         <option value="business">Business</option>
+                        <option value="trial">Prova</option>
                       </select>
                     </div>
 
