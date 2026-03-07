@@ -69,34 +69,48 @@ export function PlansSection({ adminId }: PlansSectionProps) {
 
   const loadSubscriptions = async () => {
     try {
-      console.log('Loading subscriptions from database...');
-
       // Debug: verifica autenticazione
       const { data: { user } } = await supabase.auth.getUser();
-      console.log('Current user:', user?.id, user?.email);
+      alert(`User logged in: ${user?.email || 'NESSUNO'}\nID: ${user?.id || 'N/A'}`);
 
-      // Debug: verifica se è admin dalla tabella admins
+      // Test 1: prova a leggere dalla tabella admins
       const { data: adminCheck, error: adminCheckError } = await supabase
         .from('admins')
         .select('user_id')
         .eq('user_id', user?.id)
         .maybeSingle();
-      console.log('Admin check from table:', adminCheck, adminCheckError);
 
-      // Carica abbonamenti dalla tabella subscriptions SENZA join
+      if (adminCheckError) {
+        alert(`ERRORE Admin Check:\n${adminCheckError.message}\nCode: ${adminCheckError.code}`);
+        return;
+      }
+
+      alert(`Admin Check: ${adminCheck ? 'SI, sei admin!' : 'NO, non sei admin'}`);
+
+      // Test 2: prova query molto semplice - conta le subscriptions
+      const { count, error: countError } = await supabase
+        .from('subscriptions')
+        .select('*', { count: 'exact', head: true });
+
+      if (countError) {
+        alert(`ERRORE Count:\n${countError.message}\nCode: ${countError.code}\nDetails: ${countError.details}`);
+        return;
+      }
+
+      alert(`Totale subscriptions nel database: ${count}`);
+
+      // Test 3: ora prova a caricare i dati veri
       const { data: activeSubscriptions, error: subsError } = await supabase
         .from('subscriptions')
         .select('id, customer_id, plan_id, status, start_date, end_date, trial_end_date')
         .order('start_date', { ascending: false });
 
       if (subsError) {
-        console.error('Supabase error loading subscriptions:', subsError);
-        console.error('Error details:', JSON.stringify(subsError, null, 2));
-        console.error('User ID:', user?.id);
-        console.error('Is Admin from table:', adminCheck);
-      } else {
-        console.log('Subscriptions loaded:', activeSubscriptions);
+        alert(`ERRORE Caricamento:\n${subsError.message}\nCode: ${subsError.code}\nDetails: ${subsError.details}\nHint: ${subsError.hint}`);
+        return;
       }
+
+      alert(`SUCCESS! Caricati ${activeSubscriptions?.length || 0} abbonamenti`);
 
       // Carica tutti i piani disponibili
       const { data: allPlans } = await supabase
