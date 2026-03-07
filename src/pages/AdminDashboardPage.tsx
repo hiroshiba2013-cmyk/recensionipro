@@ -448,7 +448,7 @@ export function AdminDashboardPage() {
   const loadSubscriptionPlans = async () => {
     const { data, error } = await supabase
       .from('subscription_plans')
-      .select('id, name, price, target_user_type')
+      .select('id, name, price, billing_period, max_persons')
       .order('price', { ascending: true });
 
     if (error) {
@@ -456,7 +456,13 @@ export function AdminDashboardPage() {
       return;
     }
 
-    setAvailablePlans(data || []);
+    // Aggiungi il tipo utente determinato dal nome del piano
+    const plansWithType = (data || []).map(plan => ({
+      ...plan,
+      target_user_type: plan.name.toLowerCase().includes('business') ? 'business' : 'customer'
+    }));
+
+    setAvailablePlans(plansWithType);
   };
 
   const loadClassifiedAds = async () => {
