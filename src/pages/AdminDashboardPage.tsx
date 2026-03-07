@@ -229,6 +229,16 @@ export function AdminDashboardPage() {
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [subscriptionFilters, setSubscriptionFilters] = useState({
+    email: '',
+    status: '',
+    minPrice: '',
+    maxPrice: '',
+    startDateFrom: '',
+    startDateTo: '',
+    endDateFrom: '',
+    endDateTo: ''
+  });
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -1087,9 +1097,132 @@ export function AdminDashboardPage() {
                       </div>
                       <div>
                         <h2 className="text-xl font-bold text-gray-900">Gestione Abbonamenti</h2>
-                        <p className="text-sm text-gray-600">{subscriptions.length} abbonamenti totali</p>
+                        <p className="text-sm text-gray-600">
+                          {subscriptions.filter(sub => {
+                            if (subscriptionFilters.email && !sub.customer.email.toLowerCase().includes(subscriptionFilters.email.toLowerCase())) return false;
+                            if (subscriptionFilters.status && sub.status !== subscriptionFilters.status) return false;
+                            if (subscriptionFilters.minPrice && sub.plan.price < parseFloat(subscriptionFilters.minPrice)) return false;
+                            if (subscriptionFilters.maxPrice && sub.plan.price > parseFloat(subscriptionFilters.maxPrice)) return false;
+                            if (subscriptionFilters.startDateFrom && new Date(sub.start_date) < new Date(subscriptionFilters.startDateFrom)) return false;
+                            if (subscriptionFilters.startDateTo && new Date(sub.start_date) > new Date(subscriptionFilters.startDateTo)) return false;
+                            if (subscriptionFilters.endDateFrom && new Date(sub.end_date) < new Date(subscriptionFilters.endDateFrom)) return false;
+                            if (subscriptionFilters.endDateTo && new Date(sub.end_date) > new Date(subscriptionFilters.endDateTo)) return false;
+                            return true;
+                          }).length} di {subscriptions.length} abbonamenti
+                        </p>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* Filtri */}
+                <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <input
+                        type="text"
+                        placeholder="Cerca per email..."
+                        value={subscriptionFilters.email}
+                        onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, email: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Stato</label>
+                      <select
+                        value={subscriptionFilters.status}
+                        onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, status: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      >
+                        <option value="">Tutti</option>
+                        <option value="trial">Trial</option>
+                        <option value="active">Attivo</option>
+                        <option value="expired">Scaduto</option>
+                        <option value="cancelled">Cancellato</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Prezzo Min (€)</label>
+                      <input
+                        type="number"
+                        placeholder="0"
+                        value={subscriptionFilters.minPrice}
+                        onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, minPrice: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Prezzo Max (€)</label>
+                      <input
+                        type="number"
+                        placeholder="999"
+                        value={subscriptionFilters.maxPrice}
+                        onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, maxPrice: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Inizio Da</label>
+                      <input
+                        type="date"
+                        value={subscriptionFilters.startDateFrom}
+                        onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, startDateFrom: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Inizio A</label>
+                      <input
+                        type="date"
+                        value={subscriptionFilters.startDateTo}
+                        onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, startDateTo: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Scadenza Da</label>
+                      <input
+                        type="date"
+                        value={subscriptionFilters.endDateFrom}
+                        onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, endDateFrom: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Scadenza A</label>
+                      <input
+                        type="date"
+                        value={subscriptionFilters.endDateTo}
+                        onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, endDateTo: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() => setSubscriptionFilters({
+                        email: '',
+                        status: '',
+                        minPrice: '',
+                        maxPrice: '',
+                        startDateFrom: '',
+                        startDateTo: '',
+                        endDateFrom: '',
+                        endDateTo: ''
+                      })}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
+                    >
+                      Cancella Filtri
+                    </button>
                   </div>
                 </div>
                 <div className="overflow-x-auto">
@@ -1120,7 +1253,19 @@ export function AdminDashboardPage() {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {subscriptions.map((sub) => (
+                      {subscriptions
+                        .filter(sub => {
+                          if (subscriptionFilters.email && !sub.customer.email.toLowerCase().includes(subscriptionFilters.email.toLowerCase())) return false;
+                          if (subscriptionFilters.status && sub.status !== subscriptionFilters.status) return false;
+                          if (subscriptionFilters.minPrice && sub.plan.price < parseFloat(subscriptionFilters.minPrice)) return false;
+                          if (subscriptionFilters.maxPrice && sub.plan.price > parseFloat(subscriptionFilters.maxPrice)) return false;
+                          if (subscriptionFilters.startDateFrom && new Date(sub.start_date) < new Date(subscriptionFilters.startDateFrom)) return false;
+                          if (subscriptionFilters.startDateTo && new Date(sub.start_date) > new Date(subscriptionFilters.startDateTo)) return false;
+                          if (subscriptionFilters.endDateFrom && new Date(sub.end_date) < new Date(subscriptionFilters.endDateFrom)) return false;
+                          if (subscriptionFilters.endDateTo && new Date(sub.end_date) > new Date(subscriptionFilters.endDateTo)) return false;
+                          return true;
+                        })
+                        .map((sub) => (
                         <tr key={sub.id}>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">
@@ -1174,6 +1319,27 @@ export function AdminDashboardPage() {
                           </td>
                         </tr>
                       ))}
+                      {subscriptions.filter(sub => {
+                        if (subscriptionFilters.email && !sub.customer.email.toLowerCase().includes(subscriptionFilters.email.toLowerCase())) return false;
+                        if (subscriptionFilters.status && sub.status !== subscriptionFilters.status) return false;
+                        if (subscriptionFilters.minPrice && sub.plan.price < parseFloat(subscriptionFilters.minPrice)) return false;
+                        if (subscriptionFilters.maxPrice && sub.plan.price > parseFloat(subscriptionFilters.maxPrice)) return false;
+                        if (subscriptionFilters.startDateFrom && new Date(sub.start_date) < new Date(subscriptionFilters.startDateFrom)) return false;
+                        if (subscriptionFilters.startDateTo && new Date(sub.start_date) > new Date(subscriptionFilters.startDateTo)) return false;
+                        if (subscriptionFilters.endDateFrom && new Date(sub.end_date) < new Date(subscriptionFilters.endDateFrom)) return false;
+                        if (subscriptionFilters.endDateTo && new Date(sub.end_date) > new Date(subscriptionFilters.endDateTo)) return false;
+                        return true;
+                      }).length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="px-6 py-12 text-center">
+                            <div className="text-gray-500">
+                              <Activity className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                              <p className="text-lg font-medium">Nessun abbonamento trovato</p>
+                              <p className="text-sm">Prova a modificare i filtri di ricerca</p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
