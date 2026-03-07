@@ -232,13 +232,12 @@ export function AdminDashboardPage() {
   const [subscriptionFilters, setSubscriptionFilters] = useState({
     email: '',
     status: '',
-    minPrice: '',
-    maxPrice: '',
-    startDateFrom: '',
-    startDateTo: '',
-    endDateFrom: '',
-    endDateTo: ''
+    userType: '',
+    planId: '',
+    startDate: '',
+    endDate: ''
   });
+  const [availablePlans, setAvailablePlans] = useState<any[]>([]);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -292,6 +291,7 @@ export function AdminDashboardPage() {
         await loadUsers();
       } else if (activeTab === 'subscriptions') {
         await loadSubscriptions();
+        await loadSubscriptionPlans();
       } else if (activeTab === 'ads') {
         await loadClassifiedAds();
       } else if (activeTab === 'reports') {
@@ -442,6 +442,20 @@ export function AdminDashboardPage() {
 
     console.log('Enriched subscriptions:', enrichedSubs);
     setSubscriptions(enrichedSubs);
+  };
+
+  const loadSubscriptionPlans = async () => {
+    const { data, error } = await supabase
+      .from('subscription_plans')
+      .select('id, name, price, target_user_type')
+      .order('price', { ascending: true });
+
+    if (error) {
+      console.error('Error loading subscription plans:', error);
+      return;
+    }
+
+    setAvailablePlans(data || []);
   };
 
   const loadClassifiedAds = async () => {
@@ -1101,12 +1115,10 @@ export function AdminDashboardPage() {
                           {subscriptions.filter(sub => {
                             if (subscriptionFilters.email && !sub.customer.email.toLowerCase().includes(subscriptionFilters.email.toLowerCase())) return false;
                             if (subscriptionFilters.status && sub.status !== subscriptionFilters.status) return false;
-                            if (subscriptionFilters.minPrice && sub.plan.price < parseFloat(subscriptionFilters.minPrice)) return false;
-                            if (subscriptionFilters.maxPrice && sub.plan.price > parseFloat(subscriptionFilters.maxPrice)) return false;
-                            if (subscriptionFilters.startDateFrom && new Date(sub.start_date) < new Date(subscriptionFilters.startDateFrom)) return false;
-                            if (subscriptionFilters.startDateTo && new Date(sub.start_date) > new Date(subscriptionFilters.startDateTo)) return false;
-                            if (subscriptionFilters.endDateFrom && new Date(sub.end_date) < new Date(subscriptionFilters.endDateFrom)) return false;
-                            if (subscriptionFilters.endDateTo && new Date(sub.end_date) > new Date(subscriptionFilters.endDateTo)) return false;
+                            if (subscriptionFilters.userType && sub.customer.user_type !== subscriptionFilters.userType) return false;
+                            if (subscriptionFilters.planId && sub.plan_id !== subscriptionFilters.planId) return false;
+                            if (subscriptionFilters.startDate && new Date(sub.start_date).toISOString().split('T')[0] !== subscriptionFilters.startDate) return false;
+                            if (subscriptionFilters.endDate && new Date(sub.end_date).toISOString().split('T')[0] !== subscriptionFilters.endDate) return false;
                             return true;
                           }).length} di {subscriptions.length} abbonamenti
                         </p>
@@ -1117,7 +1129,7 @@ export function AdminDashboardPage() {
 
                 {/* Filtri */}
                 <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                       <input
@@ -1127,6 +1139,44 @@ export function AdminDashboardPage() {
                         onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, email: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                       />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Tipo Utente</label>
+                      <select
+                        value={subscriptionFilters.userType}
+                        onChange={(e) => {
+                          setSubscriptionFilters({
+                            ...subscriptionFilters,
+                            userType: e.target.value,
+                            planId: ''
+                          });
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      >
+                        <option value="">Tutti</option>
+                        <option value="customer">Privato</option>
+                        <option value="business">Business</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Piano Abbonamento</label>
+                      <select
+                        value={subscriptionFilters.planId}
+                        onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, planId: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        disabled={!subscriptionFilters.userType}
+                      >
+                        <option value="">Tutti i piani</option>
+                        {availablePlans
+                          .filter(plan => !subscriptionFilters.userType || plan.target_user_type === subscriptionFilters.userType)
+                          .map(plan => (
+                            <option key={plan.id} value={plan.id}>
+                              {plan.name} - €{plan.price.toFixed(2)}
+                            </option>
+                          ))}
+                      </select>
                     </div>
 
                     <div>
@@ -1145,63 +1195,21 @@ export function AdminDashboardPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Prezzo Min (€)</label>
-                      <input
-                        type="number"
-                        placeholder="0"
-                        value={subscriptionFilters.minPrice}
-                        onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, minPrice: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Prezzo Max (€)</label>
-                      <input
-                        type="number"
-                        placeholder="999"
-                        value={subscriptionFilters.maxPrice}
-                        onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, maxPrice: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Inizio Da</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Data Inizio</label>
                       <input
                         type="date"
-                        value={subscriptionFilters.startDateFrom}
-                        onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, startDateFrom: e.target.value })}
+                        value={subscriptionFilters.startDate}
+                        onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, startDate: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Inizio A</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Data Scadenza</label>
                       <input
                         type="date"
-                        value={subscriptionFilters.startDateTo}
-                        onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, startDateTo: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Scadenza Da</label>
-                      <input
-                        type="date"
-                        value={subscriptionFilters.endDateFrom}
-                        onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, endDateFrom: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Scadenza A</label>
-                      <input
-                        type="date"
-                        value={subscriptionFilters.endDateTo}
-                        onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, endDateTo: e.target.value })}
+                        value={subscriptionFilters.endDate}
+                        onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, endDate: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                       />
                     </div>
@@ -1212,12 +1220,10 @@ export function AdminDashboardPage() {
                       onClick={() => setSubscriptionFilters({
                         email: '',
                         status: '',
-                        minPrice: '',
-                        maxPrice: '',
-                        startDateFrom: '',
-                        startDateTo: '',
-                        endDateFrom: '',
-                        endDateTo: ''
+                        userType: '',
+                        planId: '',
+                        startDate: '',
+                        endDate: ''
                       })}
                       className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
                     >
@@ -1257,12 +1263,10 @@ export function AdminDashboardPage() {
                         .filter(sub => {
                           if (subscriptionFilters.email && !sub.customer.email.toLowerCase().includes(subscriptionFilters.email.toLowerCase())) return false;
                           if (subscriptionFilters.status && sub.status !== subscriptionFilters.status) return false;
-                          if (subscriptionFilters.minPrice && sub.plan.price < parseFloat(subscriptionFilters.minPrice)) return false;
-                          if (subscriptionFilters.maxPrice && sub.plan.price > parseFloat(subscriptionFilters.maxPrice)) return false;
-                          if (subscriptionFilters.startDateFrom && new Date(sub.start_date) < new Date(subscriptionFilters.startDateFrom)) return false;
-                          if (subscriptionFilters.startDateTo && new Date(sub.start_date) > new Date(subscriptionFilters.startDateTo)) return false;
-                          if (subscriptionFilters.endDateFrom && new Date(sub.end_date) < new Date(subscriptionFilters.endDateFrom)) return false;
-                          if (subscriptionFilters.endDateTo && new Date(sub.end_date) > new Date(subscriptionFilters.endDateTo)) return false;
+                          if (subscriptionFilters.userType && sub.customer.user_type !== subscriptionFilters.userType) return false;
+                          if (subscriptionFilters.planId && sub.plan_id !== subscriptionFilters.planId) return false;
+                          if (subscriptionFilters.startDate && new Date(sub.start_date).toISOString().split('T')[0] !== subscriptionFilters.startDate) return false;
+                          if (subscriptionFilters.endDate && new Date(sub.end_date).toISOString().split('T')[0] !== subscriptionFilters.endDate) return false;
                           return true;
                         })
                         .map((sub) => (
@@ -1322,12 +1326,10 @@ export function AdminDashboardPage() {
                       {subscriptions.filter(sub => {
                         if (subscriptionFilters.email && !sub.customer.email.toLowerCase().includes(subscriptionFilters.email.toLowerCase())) return false;
                         if (subscriptionFilters.status && sub.status !== subscriptionFilters.status) return false;
-                        if (subscriptionFilters.minPrice && sub.plan.price < parseFloat(subscriptionFilters.minPrice)) return false;
-                        if (subscriptionFilters.maxPrice && sub.plan.price > parseFloat(subscriptionFilters.maxPrice)) return false;
-                        if (subscriptionFilters.startDateFrom && new Date(sub.start_date) < new Date(subscriptionFilters.startDateFrom)) return false;
-                        if (subscriptionFilters.startDateTo && new Date(sub.start_date) > new Date(subscriptionFilters.startDateTo)) return false;
-                        if (subscriptionFilters.endDateFrom && new Date(sub.end_date) < new Date(subscriptionFilters.endDateFrom)) return false;
-                        if (subscriptionFilters.endDateTo && new Date(sub.end_date) > new Date(subscriptionFilters.endDateTo)) return false;
+                        if (subscriptionFilters.userType && sub.customer.user_type !== subscriptionFilters.userType) return false;
+                        if (subscriptionFilters.planId && sub.plan_id !== subscriptionFilters.planId) return false;
+                        if (subscriptionFilters.startDate && new Date(sub.start_date).toISOString().split('T')[0] !== subscriptionFilters.startDate) return false;
+                        if (subscriptionFilters.endDate && new Date(sub.end_date).toISOString().split('T')[0] !== subscriptionFilters.endDate) return false;
                         return true;
                       }).length === 0 && (
                         <tr>
