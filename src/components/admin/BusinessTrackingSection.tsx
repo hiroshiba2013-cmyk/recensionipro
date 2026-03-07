@@ -92,23 +92,23 @@ export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionPro
             province,
             address,
             created_at,
-            added_by_user_id,
+            added_by,
             family_member_id,
             category:business_categories(name)
           `)
-          .not('added_by_user_id', 'is', null)
-          .is('claimed_by_user_id', null)
+          .not('added_by', 'is', null)
+          .is('claimed_by', null)
           .order('created_at', { ascending: false })
           .limit(50);
 
         if (userAdded) {
           for (const biz of userAdded) {
             let adder = null;
-            if (biz.added_by_user_id) {
+            if (biz.added_by) {
               const { data: user } = await supabase
                 .from('profiles')
                 .select('full_name, email')
-                .eq('id', biz.added_by_user_id)
+                .eq('id', biz.added_by)
                 .maybeSingle();
               adder = user;
             }
@@ -140,8 +140,8 @@ export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionPro
             created_at,
             category:business_categories(name)
           `)
-          .is('added_by_user_id', null)
-          .is('claimed_by_user_id', null)
+          .is('added_by', null)
+          .is('claimed_by', null)
           .order('created_at', { ascending: false })
           .limit(50);
 
@@ -170,21 +170,21 @@ export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionPro
             province,
             address,
             created_at,
-            claimed_by_user_id,
+            claimed_by,
             category:business_categories(name)
           `)
-          .not('claimed_by_user_id', 'is', null)
+          .not('claimed_by', 'is', null)
           .order('created_at', { ascending: false })
           .limit(50);
 
         if (claimed) {
           for (const biz of claimed) {
             let claimer = null;
-            if (biz.claimed_by_user_id) {
+            if (biz.claimed_by) {
               const { data: user } = await supabase
                 .from('profiles')
                 .select('full_name, email')
-                .eq('id', biz.claimed_by_user_id)
+                .eq('id', biz.claimed_by)
                 .maybeSingle();
               claimer = user;
             }
