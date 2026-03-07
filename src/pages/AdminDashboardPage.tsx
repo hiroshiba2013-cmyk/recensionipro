@@ -277,6 +277,7 @@ export function AdminDashboardPage() {
   useEffect(() => {
     if (!checkingAdmin && isAdmin) {
       loadData();
+      loadSubscriptionPlans();
     }
   }, [checkingAdmin, isAdmin, activeTab]);
 
