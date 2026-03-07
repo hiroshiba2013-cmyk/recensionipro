@@ -93,10 +93,12 @@ interface Subscription {
   start_date: string;
   end_date: string;
   customer_id: string;
+  plan_id: string;
   customer: {
     full_name: string;
     email: string;
     user_type: string;
+    subscription_status: string | null;
     nickname?: string;
   };
   plan: {
@@ -423,7 +425,7 @@ export function AdminDashboardPage() {
         const [customerResult, planResult] = await Promise.all([
           supabase
             .from('profiles')
-            .select('full_name, email, user_type, nickname')
+            .select('full_name, email, user_type, subscription_status, nickname')
             .eq('id', sub.customer_id)
             .maybeSingle(),
           supabase
@@ -435,7 +437,7 @@ export function AdminDashboardPage() {
 
         return {
           ...sub,
-          customer: customerResult.data || { full_name: 'Unknown', email: '', user_type: 'customer', nickname: null },
+          customer: customerResult.data || { full_name: 'Unknown', email: '', user_type: 'customer', subscription_status: null, nickname: null },
           plan: planResult.data || { name: 'Unknown', price: 0 }
         };
       })
@@ -1122,7 +1124,13 @@ export function AdminDashboardPage() {
                           {subscriptions.filter(sub => {
                             if (subscriptionFilters.email && !sub.customer.email.toLowerCase().includes(subscriptionFilters.email.toLowerCase())) return false;
                             if (subscriptionFilters.status && sub.status !== subscriptionFilters.status) return false;
-                            if (subscriptionFilters.userType && sub.customer.user_type !== subscriptionFilters.userType) return false;
+                            if (subscriptionFilters.userType) {
+                              if (subscriptionFilters.userType === 'trial') {
+                                if (sub.customer.subscription_status !== 'trial') return false;
+                              } else {
+                                if (sub.customer.user_type !== subscriptionFilters.userType) return false;
+                              }
+                            }
                             if (subscriptionFilters.planId && sub.plan_id !== subscriptionFilters.planId) return false;
                             if (subscriptionFilters.startDate && new Date(sub.start_date).toISOString().split('T')[0] !== subscriptionFilters.startDate) return false;
                             if (subscriptionFilters.endDate && new Date(sub.end_date).toISOString().split('T')[0] !== subscriptionFilters.endDate) return false;
@@ -1270,7 +1278,13 @@ export function AdminDashboardPage() {
                         .filter(sub => {
                           if (subscriptionFilters.email && !sub.customer.email.toLowerCase().includes(subscriptionFilters.email.toLowerCase())) return false;
                           if (subscriptionFilters.status && sub.status !== subscriptionFilters.status) return false;
-                          if (subscriptionFilters.userType && sub.customer.user_type !== subscriptionFilters.userType) return false;
+                          if (subscriptionFilters.userType) {
+                            if (subscriptionFilters.userType === 'trial') {
+                              if (sub.customer.subscription_status !== 'trial') return false;
+                            } else {
+                              if (sub.customer.user_type !== subscriptionFilters.userType) return false;
+                            }
+                          }
                           if (subscriptionFilters.planId && sub.plan_id !== subscriptionFilters.planId) return false;
                           if (subscriptionFilters.startDate && new Date(sub.start_date).toISOString().split('T')[0] !== subscriptionFilters.startDate) return false;
                           if (subscriptionFilters.endDate && new Date(sub.end_date).toISOString().split('T')[0] !== subscriptionFilters.endDate) return false;
