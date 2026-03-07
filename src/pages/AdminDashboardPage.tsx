@@ -1166,14 +1166,13 @@ export function AdminDashboardPage() {
                         value={subscriptionFilters.planId}
                         onChange={(e) => setSubscriptionFilters({ ...subscriptionFilters, planId: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                        disabled={!subscriptionFilters.userType}
                       >
                         <option value="">Tutti i piani</option>
                         {availablePlans
                           .filter(plan => !subscriptionFilters.userType || plan.target_user_type === subscriptionFilters.userType)
                           .map(plan => (
                             <option key={plan.id} value={plan.id}>
-                              {plan.name} - €{plan.price.toFixed(2)}
+                              {plan.name} - €{plan.price.toFixed(2)} ({plan.target_user_type === 'customer' ? 'Privato' : 'Business'})
                             </option>
                           ))}
                       </select>
