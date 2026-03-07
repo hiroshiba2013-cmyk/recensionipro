@@ -391,26 +391,47 @@ export function AdminDashboardPage() {
   };
 
   const loadSubscriptions = async () => {
-    const { data, error } = await supabase
+    console.log('Loading subscriptions...');
+    const { data: subsData, error: subsError } = await supabase
       .from('subscriptions')
-      .select(`
-        id,
-        status,
-        start_date,
-        end_date,
-        customer_id,
-        customer:profiles!subscriptions_customer_id_fkey(full_name, email, user_type, nickname),
-        plan:subscription_plans(name, price)
-      `)
+      .select('id, status, start_date, end_date, customer_id, plan_id')
       .order('start_date', { ascending: false })
       .limit(100);
 
-    if (error) {
-      console.error('Error loading subscriptions:', error);
+    if (subsError) {
+      console.error('Error loading subscriptions:', subsError);
+      console.error('Supabase request failed', subsError);
       return;
     }
 
-    setSubscriptions(data || []);
+    console.log('Subscriptions loaded:', subsData);
+
+    // Carica i dati dei clienti e dei piani separatamente
+    const enrichedSubs = await Promise.all(
+      (subsData || []).map(async (sub) => {
+        const [customerResult, planResult] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('full_name, email, user_type, nickname')
+            .eq('id', sub.customer_id)
+            .maybeSingle(),
+          supabase
+            .from('subscription_plans')
+            .select('name, price')
+            .eq('id', sub.plan_id)
+            .maybeSingle()
+        ]);
+
+        return {
+          ...sub,
+          customer: customerResult.data || { full_name: 'Unknown', email: '', user_type: 'customer', nickname: null },
+          plan: planResult.data || { name: 'Unknown', price: 0 }
+        };
+      })
+    );
+
+    console.log('Enriched subscriptions:', enrichedSubs);
+    setSubscriptions(enrichedSubs);
   };
 
   const loadClassifiedAds = async () => {
@@ -731,13 +752,22 @@ export function AdminDashboardPage() {
       if (subscription.customer.user_type === 'customer') {
         // Carica membri famiglia per utenti privati
         const { data: familyData, error: familyError } = await supabase
-          .from('family_members')
-          .select('id, nickname, full_name, relationship')
+          .from('customer_family_members')
+          .select('id, nickname, first_name, last_name, relationship')
           .eq('customer_id', subscription.customer_id)
           .order('relationship');
 
         if (familyError) throw familyError;
-        setFamilyMembers(familyData || []);
+
+        // Transform to match expected format
+        const transformedFamily = (familyData || []).map(m => ({
+          id: m.id,
+          nickname: m.nickname,
+          full_name: `${m.first_name} ${m.last_name}`,
+          relationship: m.relationship
+        }));
+
+        setFamilyMembers(transformedFamily);
       } else if (subscription.customer.user_type === 'business') {
         // Carica sedi per aziende
         const { data: locationsData, error: locationsError } = await supabase
