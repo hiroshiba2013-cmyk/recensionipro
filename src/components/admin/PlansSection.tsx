@@ -69,6 +69,29 @@ export function PlansSection({ adminId }: PlansSectionProps) {
 
   const loadSubscriptions = async () => {
     try {
+      // Debug: verifica lo stato di autenticazione
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('Current session:', session?.user?.email, 'ID:', session?.user?.id);
+
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw sessionError;
+      }
+
+      if (!session) {
+        console.error('No active session found');
+        throw new Error('Devi essere autenticato per vedere gli abbonamenti');
+      }
+
+      // Verifica se sei admin
+      const { data: adminCheck, error: adminError } = await supabase
+        .from('admins')
+        .select('user_id')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      console.log('Admin check:', adminCheck ? 'SI' : 'NO', 'Error:', adminError?.message || 'nessuno');
+
       // Carica TUTTI gli abbonamenti (inclusi trial, active, expired)
       const { data: allSubscriptions, error: subsError } = await supabase
         .from('subscriptions')
@@ -77,6 +100,12 @@ export function PlansSection({ adminId }: PlansSectionProps) {
 
       if (subsError) {
         console.error('Error loading subscriptions:', subsError);
+        console.error('Error details:', {
+          message: subsError.message,
+          code: subsError.code,
+          details: subsError.details,
+          hint: subsError.hint
+        });
         throw subsError;
       }
 
