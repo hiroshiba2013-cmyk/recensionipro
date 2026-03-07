@@ -43,6 +43,8 @@ export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionPro
     // Increment request counter to invalidate previous requests
     const currentRequest = ++loadingRequestRef.current;
 
+    console.log(`[BusinessTracking] Starting load for filter: ${typeFilter}, request #${currentRequest}`);
+
     setLoading(true);
     // Reset activities immediately to clear previous data
     setActivities([]);
@@ -302,7 +304,16 @@ export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionPro
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">Tracking Attività</h2>
-              <p className="text-sm text-gray-600">{activities.length} attività trovate</p>
+              <p className="text-sm text-gray-600">
+                {loading ? (
+                  <span className="inline-flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-orange-600"></div>
+                    Caricamento...
+                  </span>
+                ) : (
+                  <span>{activities.length} attività trovate</span>
+                )}
+              </p>
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -392,10 +403,36 @@ export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionPro
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
-            {activities.map((activity) => {
-              const badge = getTypeBadge(activity.type);
-              return (
-                <tr key={`${activity.type}-${activity.id}`} className="hover:bg-gray-50 transition-colors">
+            {loading ? (
+              <tr>
+                <td colSpan={7} className="px-6 py-12 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-600"></div>
+                    <p className="text-sm text-gray-500">Caricamento attività...</p>
+                  </div>
+                </td>
+              </tr>
+            ) : activities.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-6 py-12 text-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <Building2 className="w-12 h-12 text-gray-300" />
+                    <p className="text-sm font-medium text-gray-600">Nessuna attività trovata</p>
+                    <p className="text-xs text-gray-500">
+                      {typeFilter === 'all' && 'Non ci sono attività da visualizzare'}
+                      {typeFilter === 'registered' && 'Nessuna attività registrata'}
+                      {typeFilter === 'claimed' && 'Nessuna attività rivendicata'}
+                      {typeFilter === 'user_added' && 'Nessuna attività aggiunta da utenti'}
+                      {typeFilter === 'imported' && 'Nessuna attività importata'}
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              activities.map((activity) => {
+                const badge = getTypeBadge(activity.type);
+                return (
+                  <tr key={`${activity.type}-${activity.id}`} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       {activity.verified && (
@@ -460,9 +497,10 @@ export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionPro
                       </button>
                     </div>
                   </td>
-                </tr>
-              );
-            })}
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
