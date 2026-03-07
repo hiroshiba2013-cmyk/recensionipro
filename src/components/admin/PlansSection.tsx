@@ -69,9 +69,11 @@ export function PlansSection({ adminId }: PlansSectionProps) {
 
   const loadSubscriptions = async () => {
     try {
+      console.log('=== INIZIO CARICAMENTO ABBONAMENTI ===');
+
       // Debug: verifica lo stato di autenticazione
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log('Current session:', session?.user?.email, 'ID:', session?.user?.id);
+      console.log('1. Session:', session?.user?.email, 'ID:', session?.user?.id);
 
       if (sessionError) {
         console.error('Session error:', sessionError);
@@ -90,16 +92,17 @@ export function PlansSection({ adminId }: PlansSectionProps) {
         .eq('user_id', session.user.id)
         .maybeSingle();
 
-      console.log('Admin check:', adminCheck ? 'SI' : 'NO', 'Error:', adminError?.message || 'nessuno');
+      console.log('2. Admin check:', adminCheck ? 'SI ✓' : 'NO ✗', 'Error:', adminError?.message || 'nessuno');
 
       // Carica TUTTI gli abbonamenti (inclusi trial, active, expired)
+      console.log('3. Caricamento subscriptions...');
       const { data: allSubscriptions, error: subsError } = await supabase
         .from('subscriptions')
         .select('id, customer_id, plan_id, status, start_date, end_date, trial_end_date')
         .order('start_date', { ascending: false });
 
       if (subsError) {
-        console.error('Error loading subscriptions:', subsError);
+        console.error('❌ Error loading subscriptions:', subsError);
         console.error('Error details:', {
           message: subsError.message,
           code: subsError.code,
@@ -109,28 +112,61 @@ export function PlansSection({ adminId }: PlansSectionProps) {
         throw subsError;
       }
 
+      console.log('✓ Subscriptions caricate:', allSubscriptions?.length || 0);
+      console.log('Subscriptions data:', allSubscriptions);
+
       if (!allSubscriptions || allSubscriptions.length === 0) {
-        console.log('No subscriptions found in database');
+        console.log('⚠️ No subscriptions found in database');
         setSubscriptions([]);
         return;
       }
 
       // Carica tutti i piani disponibili
-      const { data: allPlans } = await supabase
+      console.log('4. Caricamento plans...');
+      const { data: allPlans, error: plansError } = await supabase
         .from('subscription_plans')
         .select('id, name, price, billing_period');
 
+      if (plansError) {
+        console.error('❌ Error loading plans:', plansError);
+      } else {
+        console.log('✓ Plans caricati:', allPlans?.length || 0);
+      }
+
       // Carica i profili dei clienti
       const customerIds = allSubscriptions.map(sub => sub.customer_id);
-      const { data: customers } = await supabase
+      console.log('5. Caricamento profiles per customer IDs:', customerIds);
+
+      const { data: customers, error: customersError } = await supabase
         .from('profiles')
         .select('id, full_name, nickname, email, subscription_status')
         .in('id', customerIds);
 
+      if (customersError) {
+        console.error('❌ Error loading customers:', customersError);
+        console.error('Error details:', {
+          message: customersError.message,
+          code: customersError.code,
+          details: customersError.details,
+          hint: customersError.hint
+        });
+      } else {
+        console.log('✓ Customers caricati:', customers?.length || 0);
+        console.log('Customers data:', customers);
+      }
+
       // Combina i dati
+      console.log('6. Combinazione dati...');
       const enrichedSubscriptions = allSubscriptions.map(sub => {
         const customer = customers?.find(c => c.id === sub.customer_id);
         const plan = allPlans?.find(p => p.id === sub.plan_id);
+
+        if (!customer) {
+          console.warn('⚠️ Customer non trovato per subscription:', sub.id, 'customer_id:', sub.customer_id);
+        }
+        if (!plan) {
+          console.warn('⚠️ Plan non trovato per subscription:', sub.id, 'plan_id:', sub.plan_id);
+        }
 
         return {
           ...sub,
@@ -148,10 +184,12 @@ export function PlansSection({ adminId }: PlansSectionProps) {
         };
       });
 
-      console.log('Total subscriptions loaded:', enrichedSubscriptions.length);
+      console.log('✓ Total subscriptions enriched:', enrichedSubscriptions.length);
+      console.log('Final enriched data:', enrichedSubscriptions);
       setSubscriptions(enrichedSubscriptions as any);
+      console.log('=== FINE CARICAMENTO ABBONAMENTI ===');
     } catch (error: any) {
-      console.error('Error loading subscriptions:', error);
+      console.error('❌ ERRORE FINALE:', error);
       alert(`Errore caricamento abbonamenti: ${error.message}`);
     }
   };
