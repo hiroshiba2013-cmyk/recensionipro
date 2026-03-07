@@ -28,9 +28,15 @@ interface Profile {
   first_name: string;
   last_name: string;
   nickname: string;
+  relationship: string;
   date_of_birth: string;
   fiscal_code: string;
   phone: string;
+  billing_street: string;
+  billing_street_number: string;
+  billing_postal_code: string;
+  billing_city: string;
+  billing_province: string;
   billing_address: string;
   avatar_url: string | null;
   resume_url: string | null;
@@ -39,6 +45,20 @@ interface Profile {
   subscription_status: string;
   subscription_expires_at: string | null;
   pin_enabled?: boolean;
+  company_name?: string;
+  vat_number?: string;
+  unique_code?: string;
+  pec_email?: string;
+  ateco_code?: string;
+  website_url?: string;
+  office_street?: string;
+  office_street_number?: string;
+  office_postal_code?: string;
+  office_city?: string;
+  office_province?: string;
+  office_address?: string;
+  business_category_id?: string;
+  description?: string;
 }
 
 interface Review {
