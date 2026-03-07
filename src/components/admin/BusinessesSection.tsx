@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building2, CheckCircle, MapPin, Mail, Phone, Edit2, Search, Filter, Download, Upload, UserPlus, X, Clock, FileText, Briefcase } from 'lucide-react';
+import { Building2, CheckCircle, MapPin, Mail, Phone, FileEdit as Edit2, Search, Filter, Download, Upload, UserPlus, X, Clock, FileText, Briefcase } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { ITALIAN_REGIONS, PROVINCES_BY_REGION, CITIES_BY_PROVINCE } from '../../lib/cities';
 
