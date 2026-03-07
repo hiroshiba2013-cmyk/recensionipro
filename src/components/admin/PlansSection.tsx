@@ -71,6 +71,18 @@ export function PlansSection({ adminId }: PlansSectionProps) {
     try {
       console.log('Loading subscriptions from database...');
 
+      // Debug: verifica autenticazione
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('Current user:', user?.id, user?.email);
+
+      // Debug: verifica se è admin dalla tabella admins
+      const { data: adminCheck, error: adminCheckError } = await supabase
+        .from('admins')
+        .select('user_id')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+      console.log('Admin check from table:', adminCheck, adminCheckError);
+
       // Carica abbonamenti dalla tabella subscriptions SENZA join
       const { data: activeSubscriptions, error: subsError } = await supabase
         .from('subscriptions')
@@ -80,10 +92,10 @@ export function PlansSection({ adminId }: PlansSectionProps) {
       if (subsError) {
         console.error('Supabase error loading subscriptions:', subsError);
         console.error('Error details:', JSON.stringify(subsError, null, 2));
-        alert(`Errore caricamento abbonamenti: ${subsError.message}\n\nDettagli: ${JSON.stringify(subsError)}`);
+        console.error('User ID:', user?.id);
+        console.error('Is Admin from table:', adminCheck);
       } else {
         console.log('Subscriptions loaded:', activeSubscriptions);
-        alert(`Abbonamenti caricati: ${activeSubscriptions?.length || 0}`);
       }
 
       // Carica tutti i piani disponibili
