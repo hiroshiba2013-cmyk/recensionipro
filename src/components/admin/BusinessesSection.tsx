@@ -159,21 +159,18 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
         }));
 
       } else if (activeTab === 'claimed' || activeTab === 'self_registered') {
-        // Build query for business_locations
+        // Build query for registered_businesses
         let query = supabase
-          .from('business_locations')
+          .from('registered_businesses')
           .select(`
             *,
-            category:business_category_id(name),
-            business:business_id(
-              owner_id,
-              owner:owner_id(full_name, email)
-            )
+            category:category_id(name),
+            owner:owner_id(full_name, email)
           `, { count: 'exact' });
 
         // Filter by source
         if (activeTab === 'claimed') {
-          // Claimed: businesses that were imported or user_added and then claimed by an owner
+          // Claimed: businesses that were originally unclaimed and then claimed
           query = query.eq('is_claimed', true);
         } else {
           // Self-registered: businesses registered directly by the owner (not claimed)
@@ -209,9 +206,30 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
 
         count = totalCount || 0;
         allBusinesses = (claimedData || []).map(business => ({
-          ...business,
+          id: business.id,
+          business_id: business.id,
           unclaimed_business_id: null,
+          name: business.business_name,
+          address: business.street || '',
+          city: business.city,
+          province: business.province,
+          region: business.region,
+          postal_code: business.postal_code,
+          phone: business.phone,
+          email: business.email,
+          website: business.website,
+          vat_number: business.vat_number,
+          is_verified: business.is_verified,
           is_main: business.is_primary || false,
+          created_at: business.created_at,
+          description: business.description,
+          business_hours: business.business_hours,
+          services: business.services,
+          category: business.category,
+          business: business.owner ? {
+            owner_id: business.owner_id,
+            owner: business.owner
+          } : undefined,
           source: activeTab
         }));
       }
@@ -231,7 +249,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     try {
       const tableName = activeTab === 'imported' || activeTab === 'user_added'
         ? 'unclaimed_business_locations'
-        : 'business_locations';
+        : 'registered_businesses';
 
       let updateData: any;
       if (tableName === 'unclaimed_business_locations') {
@@ -261,10 +279,9 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     try {
       const tableName = activeTab === 'imported' || activeTab === 'user_added'
         ? 'unclaimed_business_locations'
-        : 'business_locations';
+        : 'registered_businesses';
 
       let updateData: any = {
-        name: editingBusiness.name,
         city: editingBusiness.city,
         province: editingBusiness.province,
         region: editingBusiness.region,
@@ -278,9 +295,11 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
       };
 
       if (tableName === 'unclaimed_business_locations') {
+        updateData.name = editingBusiness.name;
         updateData.street = editingBusiness.address;
       } else {
-        updateData.address = editingBusiness.address;
+        updateData.business_name = editingBusiness.name;
+        updateData.street = editingBusiness.address;
         updateData.vat_number = editingBusiness.vat_number;
       }
 
@@ -306,7 +325,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     try {
       const tableName = activeTab === 'imported' || activeTab === 'user_added'
         ? 'unclaimed_business_locations'
-        : 'business_locations';
+        : 'registered_businesses';
 
       const { error } = await supabase
         .from(tableName)
