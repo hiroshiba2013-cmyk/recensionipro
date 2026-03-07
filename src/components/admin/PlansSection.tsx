@@ -69,82 +69,61 @@ export function PlansSection({ adminId }: PlansSectionProps) {
 
   const loadSubscriptions = async () => {
     try {
-      // Debug: verifica autenticazione
-      const { data: { user } } = await supabase.auth.getUser();
-      alert(`User logged in: ${user?.email || 'NESSUNO'}\nID: ${user?.id || 'N/A'}`);
-
-      // Test 1: prova a leggere dalla tabella admins
-      const { data: adminCheck, error: adminCheckError } = await supabase
-        .from('admins')
-        .select('user_id')
-        .eq('user_id', user?.id)
-        .maybeSingle();
-
-      if (adminCheckError) {
-        alert(`ERRORE Admin Check:\n${adminCheckError.message}\nCode: ${adminCheckError.code}`);
-        return;
-      }
-
-      alert(`Admin Check: ${adminCheck ? 'SI, sei admin!' : 'NO, non sei admin'}`);
-
-      // Test 2: prova query molto semplice - conta le subscriptions
-      const { count, error: countError } = await supabase
-        .from('subscriptions')
-        .select('*', { count: 'exact', head: true });
-
-      if (countError) {
-        alert(`ERRORE Count:\n${countError.message}\nCode: ${countError.code}\nDetails: ${countError.details}`);
-        return;
-      }
-
-      alert(`Totale subscriptions nel database: ${count}`);
-
-      // Test 3: ora prova a caricare i dati veri
-      const { data: activeSubscriptions, error: subsError } = await supabase
+      // Carica TUTTI gli abbonamenti (inclusi trial, active, expired)
+      const { data: allSubscriptions, error: subsError } = await supabase
         .from('subscriptions')
         .select('id, customer_id, plan_id, status, start_date, end_date, trial_end_date')
         .order('start_date', { ascending: false });
 
       if (subsError) {
-        alert(`ERRORE Caricamento:\n${subsError.message}\nCode: ${subsError.code}\nDetails: ${subsError.details}\nHint: ${subsError.hint}`);
-        return;
+        console.error('Error loading subscriptions:', subsError);
+        throw subsError;
       }
 
-      alert(`SUCCESS! Caricati ${activeSubscriptions?.length || 0} abbonamenti`);
+      if (!allSubscriptions || allSubscriptions.length === 0) {
+        console.log('No subscriptions found in database');
+        setSubscriptions([]);
+        return;
+      }
 
       // Carica tutti i piani disponibili
       const { data: allPlans } = await supabase
         .from('subscription_plans')
         .select('id, name, price, billing_period');
 
-      // Carica i profili dei clienti separatamente
-      let enrichedSubscriptions = [];
-      if (activeSubscriptions && activeSubscriptions.length > 0) {
-        const customerIds = activeSubscriptions.map(sub => sub.customer_id);
-        const { data: customers } = await supabase
-          .from('profiles')
-          .select('id, full_name, nickname, email, subscription_status')
-          .in('id', customerIds);
+      // Carica i profili dei clienti
+      const customerIds = allSubscriptions.map(sub => sub.customer_id);
+      const { data: customers } = await supabase
+        .from('profiles')
+        .select('id, full_name, nickname, email, subscription_status')
+        .in('id', customerIds);
 
-        enrichedSubscriptions = activeSubscriptions.map(sub => ({
+      // Combina i dati
+      const enrichedSubscriptions = allSubscriptions.map(sub => {
+        const customer = customers?.find(c => c.id === sub.customer_id);
+        const plan = allPlans?.find(p => p.id === sub.plan_id);
+
+        return {
           ...sub,
-          profiles: customers?.find(c => c.id === sub.customer_id),
-          subscription_plans: allPlans?.find(p => p.id === sub.plan_id)
-        }));
-      }
+          customer: customer || {
+            full_name: 'Utente sconosciuto',
+            nickname: null,
+            email: 'N/A',
+            subscription_status: 'unknown'
+          },
+          plan: plan || {
+            name: 'Piano sconosciuto',
+            price: 0,
+            billing_period: 'monthly'
+          }
+        };
+      });
 
-      // Trasforma i dati da subscriptions (usa enrichedSubscriptions invece di activeSubscriptions)
-      const transformedSubs = enrichedSubscriptions?.map(sub => ({
-        ...sub,
-        customer: Array.isArray(sub.profiles) ? sub.profiles[0] : sub.profiles,
-        plan: Array.isArray(sub.subscription_plans) ? sub.subscription_plans[0] : sub.subscription_plans
-      })) || [];
-
-      console.log('Transformed subscriptions:', transformedSubs);
-      console.log('Total subscriptions loaded:', transformedSubs.length);
-      setSubscriptions(transformedSubs as any);
+      console.log('Total subscriptions loaded:', enrichedSubscriptions.length);
+      setSubscriptions(enrichedSubscriptions as any);
     } catch (error: any) {
       console.error('Error loading subscriptions:', error);
+      alert(`Errore caricamento abbonamenti: ${error.message}`);
     }
   };
 
