@@ -97,6 +97,7 @@ export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionPro
             category:business_categories(name)
           `)
           .not('added_by_user_id', 'is', null)
+          .is('claimed_by_user_id', null)
           .order('created_at', { ascending: false })
           .limit(50);
 
