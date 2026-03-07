@@ -80,8 +80,10 @@ export function PlansSection({ adminId }: PlansSectionProps) {
       if (subsError) {
         console.error('Supabase error loading subscriptions:', subsError);
         console.error('Error details:', JSON.stringify(subsError, null, 2));
+        alert(`Errore caricamento abbonamenti: ${subsError.message}\n\nDettagli: ${JSON.stringify(subsError)}`);
       } else {
         console.log('Subscriptions loaded:', activeSubscriptions);
+        alert(`Abbonamenti caricati: ${activeSubscriptions?.length || 0}`);
       }
 
       // Carica tutti i piani disponibili
