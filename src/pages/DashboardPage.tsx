@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Star, Building, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase } from 'lucide-react';
+import { Plus, Star, Building, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase, Users, DollarSign, Trophy } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Business, Review, FamilyMember } from '../lib/supabase';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
@@ -46,6 +46,40 @@ interface JobPosting {
   created_at: string;
 }
 
+interface JobSeeker {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string;
+  category: string;
+  city: string;
+  province: string;
+  created_at: string;
+  profiles: {
+    full_name: string;
+    nickname: string | null;
+    avatar_url: string | null;
+  };
+}
+
+interface TopLocation {
+  id: string;
+  name: string;
+  internal_name: string;
+  city: string;
+  province: string;
+  avg_rating: number;
+  review_count: number;
+  business: {
+    name: string;
+  };
+}
+
+interface SolidarityStats {
+  total_revenue: number;
+  charity_amount: number;
+}
+
 export function DashboardPage() {
   const { profile, selectedBusinessLocationId } = useAuth();
   const navigate = useNavigate();
@@ -53,6 +87,9 @@ export function DashboardPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
+  const [jobSeekers, setJobSeekers] = useState<JobSeeker[]>([]);
+  const [topLocations, setTopLocations] = useState<TopLocation[]>([]);
+  const [solidarityStats, setSolidarityStats] = useState<SolidarityStats | null>(null);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateBusinessForm, setShowCreateBusinessForm] = useState(false);
@@ -80,9 +117,46 @@ export function DashboardPage() {
     setReviews([]);
     setProducts([]);
     setJobPostings([]);
+    setJobSeekers([]);
+    setTopLocations([]);
 
     try {
       if (profile.user_type === 'business') {
+        // Carica job seekers (profili che cercano lavoro)
+        const { data: jobSeekersData } = await supabase
+          .from('job_seekers')
+          .select(`
+            *,
+            profiles!inner(full_name, nickname, avatar_url)
+          `)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        if (jobSeekersData) {
+          setJobSeekers(jobSeekersData);
+        }
+
+        // Carica le migliori sedi aziendali
+        const { data: topLocationsData } = await supabase
+          .rpc('get_top_business_locations', { limit_count: 10 });
+
+        if (topLocationsData) {
+          setTopLocations(topLocationsData);
+        }
+
+        // Carica statistiche solidarietà
+        const { data: revenueData } = await supabase
+          .rpc('get_total_revenue');
+
+        if (revenueData !== null) {
+          const totalRevenue = revenueData;
+          const charityAmount = totalRevenue * 0.1;
+          setSolidarityStats({
+            total_revenue: totalRevenue,
+            charity_amount: charityAmount,
+          });
+        }
         const { data: businessesData } = await supabase
           .from('businesses')
           .select('*')
@@ -493,6 +567,180 @@ export function DashboardPage() {
                 )}
 
                 <FavoritesSection />
+
+                {/* Sezione Cerco Lavoro */}
+                <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-lg p-8 border-4 border-blue-200">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-gradient-to-br from-blue-500 to-purple-500 p-3 rounded-xl shadow-lg">
+                      <Users className="w-7 h-7 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-bold text-gray-900">Cerco Lavoro</h2>
+                      <p className="text-sm text-gray-600">Profili di utenti in cerca di opportunità</p>
+                    </div>
+                  </div>
+
+                  {jobSeekers.length === 0 ? (
+                    <p className="text-gray-600 text-center py-8">
+                      Nessun profilo disponibile al momento
+                    </p>
+                  ) : (
+                    <div className="grid gap-4">
+                      {jobSeekers.map((seeker) => (
+                        <div key={seeker.id} className="bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-blue-400 transition-all">
+                          <div className="flex items-start gap-4">
+                            {seeker.profiles.avatar_url ? (
+                              <img
+                                src={seeker.profiles.avatar_url}
+                                alt={seeker.profiles.full_name}
+                                className="w-12 h-12 rounded-full"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+                                {seeker.profiles.full_name.charAt(0)}
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <h3 className="font-bold text-lg text-gray-900">{seeker.title}</h3>
+                                  <p className="text-sm text-gray-600">
+                                    {seeker.profiles.nickname || seeker.profiles.full_name}
+                                  </p>
+                                </div>
+                                <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
+                                  {seeker.category}
+                                </span>
+                              </div>
+                              <p className="text-gray-700 text-sm mt-2">{seeker.description}</p>
+                              <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                                <span>{seeker.city}, {seeker.province}</span>
+                                <span>{new Date(seeker.created_at).toLocaleDateString('it-IT')}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="mt-6 text-center">
+                    <button
+                      onClick={() => navigate('/jobs')}
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all font-bold shadow-lg"
+                    >
+                      Vedi Tutti i Profili
+                    </button>
+                  </div>
+                </div>
+
+                {/* Sezione Classifica Migliori Sedi */}
+                <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl shadow-lg p-8 border-4 border-yellow-200">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-gradient-to-br from-yellow-500 to-orange-500 p-3 rounded-xl shadow-lg">
+                      <Trophy className="w-7 h-7 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-bold text-gray-900">Classifica Migliori Sedi</h2>
+                      <p className="text-sm text-gray-600">Le sedi aziendali con le valutazioni più alte</p>
+                    </div>
+                  </div>
+
+                  {topLocations.length === 0 ? (
+                    <p className="text-gray-600 text-center py-8">
+                      Nessuna sede disponibile
+                    </p>
+                  ) : (
+                    <div className="grid gap-4">
+                      {topLocations.map((location, index) => (
+                        <div key={location.id} className="bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-yellow-400 transition-all">
+                          <div className="flex items-start gap-4">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl ${
+                              index === 0 ? 'bg-yellow-400 text-white' :
+                              index === 1 ? 'bg-gray-300 text-white' :
+                              index === 2 ? 'bg-orange-400 text-white' :
+                              'bg-gray-100 text-gray-600'
+                            }`}>
+                              {index + 1}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <h3 className="font-bold text-lg text-gray-900">{location.name}</h3>
+                                  <p className="text-sm text-gray-600">{location.business.name}</p>
+                                  <p className="text-xs text-gray-500">{location.city}, {location.province}</p>
+                                </div>
+                                <div className="text-right">
+                                  <div className="flex items-center gap-1">
+                                    <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                                    <span className="font-bold text-lg text-gray-900">
+                                      {Number(location.avg_rating).toFixed(1)}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-gray-500">{location.review_count} recensioni</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="mt-6 text-center">
+                    <button
+                      onClick={() => navigate('/leaderboard')}
+                      className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-3 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all font-bold shadow-lg"
+                    >
+                      Vedi Classifica Completa
+                    </button>
+                  </div>
+                </div>
+
+                {/* Sezione Solidarietà */}
+                {solidarityStats && (
+                  <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl shadow-lg p-8 border-4 border-green-200">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="bg-gradient-to-br from-green-500 to-blue-500 p-3 rounded-xl shadow-lg">
+                        <Heart className="w-7 h-7 text-white" />
+                      </div>
+                      <div>
+                        <h2 className="text-3xl font-bold text-gray-900">Solidarietà</h2>
+                        <p className="text-sm text-gray-600">Il 10% del fatturato va in beneficenza</p>
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="bg-white rounded-xl p-6 shadow-md border-2 border-green-300">
+                        <div className="flex items-center gap-3 mb-3">
+                          <DollarSign className="w-8 h-8 text-green-600" />
+                          <span className="text-sm font-bold text-gray-700">Fatturato Totale</span>
+                        </div>
+                        <p className="text-4xl font-bold text-green-600">
+                          €{solidarityStats.total_revenue.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div className="bg-white rounded-xl p-6 shadow-md border-2 border-blue-300">
+                        <div className="flex items-center gap-3 mb-3">
+                          <Heart className="w-8 h-8 text-blue-600" fill="currentColor" />
+                          <span className="text-sm font-bold text-gray-700">Donato in Beneficenza</span>
+                        </div>
+                        <p className="text-4xl font-bold text-blue-600">
+                          €{solidarityStats.charity_amount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 text-center">
+                      <button
+                        onClick={() => navigate('/solidarity')}
+                        className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-blue-600 transition-all font-bold shadow-lg"
+                      >
+                        Scopri di Più
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="bg-white rounded-lg shadow-sm p-6">
                   <div className="flex items-center justify-between mb-6">
