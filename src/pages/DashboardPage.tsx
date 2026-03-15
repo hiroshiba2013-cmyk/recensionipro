@@ -92,6 +92,12 @@ export function DashboardPage() {
   const [solidarityStats, setSolidarityStats] = useState<SolidarityStats | null>(null);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
+
+  console.log('🔍 DASHBOARD DEBUG:', {
+    jobSeekersCount: jobSeekers.length,
+    topLocationsCount: topLocations.length,
+    solidarityStats
+  });
   const [showCreateBusinessForm, setShowCreateBusinessForm] = useState(false);
   const [showResponseForm, setShowResponseForm] = useState<string | null>(null);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
