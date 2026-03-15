@@ -128,8 +128,8 @@ export function DashboardPage() {
 
     try {
       if (profile.user_type === 'business') {
-        // Carica job seekers (profili che cercano lavoro)
-        const { data: jobSeekersData } = await supabase
+        console.log('🔄 Caricamento job seekers...');
+        const { data: jobSeekersData, error: jobSeekersError } = await supabase
           .from('job_seekers')
           .select(`
             *,
@@ -139,23 +139,36 @@ export function DashboardPage() {
           .order('created_at', { ascending: false })
           .limit(10);
 
-        if (jobSeekersData) {
-          setJobSeekers(jobSeekersData);
+        if (jobSeekersError) {
+          console.error('❌ Errore caricamento job seekers:', jobSeekersError);
+        } else {
+          console.log('✅ Job seekers caricati:', jobSeekersData?.length || 0);
+          if (jobSeekersData) {
+            setJobSeekers(jobSeekersData);
+          }
         }
 
-        // Carica le migliori sedi aziendali
-        const { data: topLocationsData } = await supabase
+        console.log('🔄 Caricamento top locations...');
+        const { data: topLocationsData, error: topLocationsError } = await supabase
           .rpc('get_top_business_locations', { limit_count: 10 });
 
-        if (topLocationsData) {
-          setTopLocations(topLocationsData);
+        if (topLocationsError) {
+          console.error('❌ Errore caricamento top locations:', topLocationsError);
+        } else {
+          console.log('✅ Top locations caricate:', topLocationsData?.length || 0);
+          if (topLocationsData) {
+            setTopLocations(topLocationsData);
+          }
         }
 
-        // Carica statistiche solidarietà
-        const { data: revenueData } = await supabase
+        console.log('🔄 Caricamento statistiche solidarietà...');
+        const { data: revenueData, error: revenueError } = await supabase
           .rpc('get_total_revenue');
 
-        if (revenueData !== null) {
+        if (revenueError) {
+          console.error('❌ Errore caricamento statistiche solidarietà:', revenueError);
+        } else if (revenueData !== null) {
+          console.log('✅ Statistiche solidarietà caricate:', revenueData);
           const totalRevenue = revenueData;
           const charityAmount = totalRevenue * 0.1;
           setSolidarityStats({
