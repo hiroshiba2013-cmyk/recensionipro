@@ -282,7 +282,7 @@ function LandingPage() {
 function AuthenticatedHomePage() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
-  const [jobPostings, setJobPostings] = useState<any[]>([]);
+  const [jobSeekers, setJobSeekers] = useState<any[]>([]);
   const [featuredSellAds, setFeaturedSellAds] = useState<any[]>([]);
   const [topUsers, setTopUsers] = useState<any[]>([]);
   const [topBusinesses, setTopBusinesses] = useState<any[]>([]);
@@ -292,56 +292,38 @@ function AuthenticatedHomePage() {
 
   useEffect(() => {
     loadHomeData();
-  }, [user, profile?.user_type]);
+  }, [user, profile?.user_type, profile?.business_id]);
 
   const loadHomeData = async () => {
     try {
       setLoading(true);
 
-      const [jobsResult, sellAdsResult, topDataResult] = await Promise.all([
+      const [jobSeekersResult, sellAdsResult, topDataResult] = await Promise.all([
         (async () => {
-          const { data } = await supabase
-            .from('job_postings')
+          let query = supabase
+            .from('job_seekers')
             .select(`
               *,
-              business:business_id(id, name, business_locations(city, province))
+              profiles:user_id(id, nickname, full_name, avatar_url),
+              category:category_id(id, name)
             `)
             .eq('status', 'active')
-            .gt('expires_at', new Date().toISOString());
+            .order('created_at', { ascending: false });
 
-          if (data) {
-            const businessIds = [...new Set(data.map(job => job.business?.id).filter(Boolean))];
+          if (isBusiness && profile?.business_id) {
+            const { data: businessData } = await supabase
+              .from('businesses')
+              .select('category_id')
+              .eq('id', profile.business_id)
+              .single();
 
-            const reviewCounts = await Promise.all(
-              businessIds.map(async (businessId) => {
-                const { count } = await supabase
-                  .from('reviews')
-                  .select('id', { count: 'exact', head: true })
-                  .eq('business_id', businessId)
-                  .eq('status', 'approved');
-
-                return { businessId, count: count || 0 };
-              })
-            );
-
-            const reviewCountMap = Object.fromEntries(
-              reviewCounts.map(({ businessId, count }) => [businessId, count])
-            );
-
-            const sortedJobs = [...data].sort((a, b) => {
-              const countA = reviewCountMap[a.business?.id || ''] || 0;
-              const countB = reviewCountMap[b.business?.id || ''] || 0;
-
-              if (countB !== countA) {
-                return countB - countA;
-              }
-
-              return new Date(b.published_at).getTime() - new Date(a.published_at).getTime();
-            });
-
-            return sortedJobs.slice(0, 6);
+            if (businessData?.category_id) {
+              query = query.eq('category_id', businessData.category_id);
+            }
           }
-          return [];
+
+          const { data } = await query.limit(6);
+          return data || [];
         })(),
 
         supabase.rpc('get_featured_classified_ads', { ad_type_filter: 'sell', limit_count: 6 }),
@@ -360,8 +342,8 @@ function AuthenticatedHomePage() {
               .limit(20)
       ]);
 
-      if (jobsResult) {
-        setJobPostings(jobsResult);
+      if (jobSeekersResult) {
+        setJobSeekers(jobSeekersResult);
       }
 
       if (sellAdsResult.data && sellAdsResult.data.length > 0) {
@@ -539,29 +521,33 @@ function AuthenticatedHomePage() {
                     <Briefcase className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Offerte di Lavoro</h2>
-                    <p className="text-sm text-gray-600">Dalle aziende più recensite</p>
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Cerco Lavoro</h2>
+                    <p className="text-sm text-gray-600">
+                      {isBusiness ? 'Candidati nella tua categoria' : 'Annunci di chi cerca lavoro'}
+                    </p>
                   </div>
                 </div>
                 <button
                   onClick={() => navigate('/jobs')}
                   className="group flex items-center gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-5 py-2.5 rounded-xl hover:shadow-lg font-semibold transition-all hover:scale-105"
                 >
-                  Vedi tutte
+                  Vedi tutti
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
 
-              {jobPostings.length > 0 ? (
+              {jobSeekers.length > 0 ? (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {jobPostings.map((job) => (
-                    <JobOfferCard key={job.id} job={job} onClick={() => navigate('/jobs')} />
+                  {jobSeekers.map((seeker) => (
+                    <JobSeekerCard key={seeker.id} seeker={seeker} onClick={() => navigate('/jobs')} />
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-12 bg-white rounded-2xl">
                   <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">Nessuna offerta disponibile</p>
+                  <p className="text-gray-500">
+                    {isBusiness ? 'Nessun candidato disponibile nella tua categoria' : 'Nessun annuncio disponibile'}
+                  </p>
                 </div>
               )}
             </section>
@@ -721,48 +707,71 @@ function TopBusinessCard({ business, rank, onClick }: { business: any; rank: num
   );
 }
 
-function JobOfferCard({ job, onClick }: { job: any; onClick: () => void }) {
+function JobSeekerCard({ seeker, onClick }: { seeker: any; onClick: () => void }) {
+  const displayName = seeker.profiles?.nickname || seeker.profiles?.full_name || 'Utente';
+
   return (
     <div
       onClick={onClick}
       className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all p-6 cursor-pointer border-2 border-blue-100 hover:border-blue-300 transform hover:-translate-y-1"
     >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <h3 className="font-bold text-lg text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors mb-2">
-            {job.title}
+      <div className="flex items-start gap-4 mb-4">
+        {seeker.profiles?.avatar_url ? (
+          <img
+            src={seeker.profiles.avatar_url}
+            alt={displayName}
+            className="w-16 h-16 rounded-full object-cover border-2 border-blue-200"
+          />
+        ) : (
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center border-2 border-blue-200">
+            <Users className="w-8 h-8 text-blue-600" />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-bold text-lg text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors mb-1">
+            {seeker.title}
           </h3>
-          <p className="text-sm text-gray-600 font-medium line-clamp-1 flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-blue-500" />
-            {job.business?.name}
+          <p className="text-sm text-gray-600 font-medium line-clamp-1">
+            {displayName}
           </p>
         </div>
-        <div className="bg-gradient-to-br from-blue-100 to-cyan-100 p-3 rounded-xl flex-shrink-0 group-hover:scale-110 transition-transform">
-          <Briefcase className="w-5 h-5 text-blue-600" />
-        </div>
       </div>
+
+      <p className="text-sm text-gray-600 line-clamp-2 mb-4">
+        {seeker.description}
+      </p>
 
       <div className="space-y-2 mb-4">
         <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
           <MapPin className="w-4 h-4 text-blue-500 flex-shrink-0" />
-          <span className="line-clamp-1">{job.business?.business_locations?.[0]?.city}, {job.business?.business_locations?.[0]?.province}</span>
+          <span className="line-clamp-1">{seeker.city || seeker.location}</span>
         </div>
 
-        {job.gross_annual_salary && (
+        {seeker.desired_salary_min && (
           <div className="flex items-center gap-2 text-sm bg-gradient-to-r from-green-50 to-emerald-50 px-3 py-2 rounded-lg border border-green-200">
             <Euro className="w-4 h-4 text-green-600" />
-            <span className="font-bold text-green-700">{job.gross_annual_salary.toLocaleString()} €/anno</span>
+            <span className="font-bold text-green-700">
+              {seeker.desired_salary_min.toLocaleString()}
+              {seeker.desired_salary_max && ` - ${seeker.desired_salary_max.toLocaleString()}`} €
+            </span>
           </div>
         )}
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
         <span className="px-3 py-1 bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 text-xs font-semibold rounded-full">
-          {job.position_type}
+          {seeker.contract_type}
         </span>
-        <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
-          {job.experience_level}
-        </span>
+        {seeker.experience_years > 0 && (
+          <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
+            {seeker.experience_years} {seeker.experience_years === 1 ? 'anno' : 'anni'}
+          </span>
+        )}
+        {seeker.category?.name && (
+          <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+            {seeker.category.name}
+          </span>
+        )}
       </div>
     </div>
   );
