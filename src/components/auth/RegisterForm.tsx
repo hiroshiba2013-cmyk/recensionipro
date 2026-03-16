@@ -533,41 +533,49 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
       if (user) {
         const { data: plan } = await supabase
           .from('subscription_plans')
-          .select('id')
+          .select('id, name, price, billing_period, max_persons')
           .eq('max_persons', parseInt(numberOfPeople))
           .eq('billing_period', billingPeriod)
           .single();
 
         if (plan) {
           const startDate = new Date();
-          const endDate = new Date();
-
-          if (billingPeriod === 'monthly') {
-            endDate.setMonth(endDate.getMonth() + 1);
-          } else {
-            endDate.setFullYear(endDate.getFullYear() + 1);
-          }
+          const trialEndDate = new Date();
+          trialEndDate.setMonth(trialEndDate.getMonth() + 1);
 
           const { error: subscriptionError } = await supabase
             .from('subscriptions')
             .insert({
               customer_id: user.id,
               plan_id: plan.id,
-              status: 'active',
+              status: 'trial',
               start_date: startDate.toISOString(),
-              end_date: endDate.toISOString(),
-              payment_method_added: true,
+              end_date: trialEndDate.toISOString(),
+              trial_end_date: trialEndDate.toISOString(),
+              payment_method_added: false,
               reminder_sent: false,
             });
 
-          if (subscriptionError) throw subscriptionError;
+          if (subscriptionError) {
+            console.error('Errore inserimento subscription:', subscriptionError);
+            throw subscriptionError;
+          }
 
           const { error: profileUpdateError } = await supabase
             .from('profiles')
-            .update({ subscription_status: 'active' })
+            .update({
+              subscription_status: 'trial',
+              subscription_type: billingPeriod === 'monthly' ? 'monthly' : 'annual',
+              subscription_expires_at: trialEndDate.toISOString()
+            })
             .eq('id', user.id);
 
-          if (profileUpdateError) throw profileUpdateError;
+          if (profileUpdateError) {
+            console.error('Errore aggiornamento profile:', profileUpdateError);
+            throw profileUpdateError;
+          }
+        } else {
+          console.error('Piano non trovato per:', { numberOfPeople, billingPeriod });
         }
       }
 
@@ -706,7 +714,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
 
         const { data: plan } = await supabase
           .from('subscription_plans')
-          .select('id')
+          .select('id, name, price, billing_period, max_persons')
           .eq('max_persons', maxPersonsValue)
           .eq('billing_period', businessBillingPeriod)
           .like('name', 'Piano Business%')
@@ -714,34 +722,42 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
 
         if (plan) {
           const startDate = new Date();
-          const endDate = new Date();
-
-          if (businessBillingPeriod === 'monthly') {
-            endDate.setMonth(endDate.getMonth() + 1);
-          } else {
-            endDate.setFullYear(endDate.getFullYear() + 1);
-          }
+          const trialEndDate = new Date();
+          trialEndDate.setMonth(trialEndDate.getMonth() + 1);
 
           const { error: subscriptionError } = await supabase
             .from('subscriptions')
             .insert({
               customer_id: user.id,
               plan_id: plan.id,
-              status: 'active',
+              status: 'trial',
               start_date: startDate.toISOString(),
-              end_date: endDate.toISOString(),
-              payment_method_added: true,
+              end_date: trialEndDate.toISOString(),
+              trial_end_date: trialEndDate.toISOString(),
+              payment_method_added: false,
               reminder_sent: false,
             });
 
-          if (subscriptionError) throw subscriptionError;
+          if (subscriptionError) {
+            console.error('Errore inserimento subscription business:', subscriptionError);
+            throw subscriptionError;
+          }
 
           const { error: profileUpdateError } = await supabase
             .from('profiles')
-            .update({ subscription_status: 'active' })
+            .update({
+              subscription_status: 'trial',
+              subscription_type: businessBillingPeriod === 'monthly' ? 'monthly' : 'annual',
+              subscription_expires_at: trialEndDate.toISOString()
+            })
             .eq('id', user.id);
 
-          if (profileUpdateError) throw profileUpdateError;
+          if (profileUpdateError) {
+            console.error('Errore aggiornamento profile business:', profileUpdateError);
+            throw profileUpdateError;
+          }
+        } else {
+          console.error('Piano business non trovato per:', { numberOfLocations, maxPersonsValue, businessBillingPeriod });
         }
       }
 
