@@ -291,15 +291,22 @@ export function DashboardPage() {
     if (!profile) return;
 
     try {
-      const { data: subscriptionData } = await supabase
+      // Get all active/trial subscriptions ordered by creation date (most recent first)
+      const { data: subscriptionsData } = await supabase
         .from('subscriptions')
         .select('id, status, start_date, end_date, trial_end_date, plan:subscription_plans(id, name, price, billing_period, max_persons)')
         .eq('customer_id', profile.id)
         .in('status', ['active', 'trial'])
-        .maybeSingle();
+        .order('created_at', { ascending: false });
 
-      if (subscriptionData) {
-        setCurrentSubscription(subscriptionData as any);
+      // Use the most recent subscription
+      if (subscriptionsData && subscriptionsData.length > 0) {
+        setCurrentSubscription(subscriptionsData[0] as any);
+
+        // If there are duplicate subscriptions, log a warning
+        if (subscriptionsData.length > 1) {
+          console.warn('⚠️ Trovate subscription duplicate per l\'utente:', profile.id, subscriptionsData.length);
+        }
       }
 
       if (profile.user_type === 'business') {
