@@ -47,7 +47,7 @@ interface BusinessesSectionProps {
   onReload: () => Promise<void>;
 }
 
-type TabType = 'imported' | 'user_added' | 'claimed' | 'self_registered';
+type TabType = 'imported' | 'user_added' | 'claimed' | 'self_registered' | 'pending_registration';
 
 export function BusinessesSection({ onReload }: BusinessesSectionProps) {
   const [activeTab, setActiveTab] = useState<TabType>('imported');
@@ -155,6 +155,67 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           business_hours: business.business_hours,
           services: business.services,
           category: business.category,
+          source: activeTab
+        }));
+
+      } else if (activeTab === 'pending_registration') {
+        // Show business users who registered but haven't created their business yet
+        let query = supabase
+          .from('profiles')
+          .select('*', { count: 'exact' })
+          .eq('user_type', 'business');
+
+        // Apply search
+        if (searchTerm) {
+          query = query.or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
+        }
+
+        const { data: profilesData, error: profilesError, count: totalCount } = await query
+          .order('created_at', { ascending: false })
+          .range(from, to);
+
+        if (profilesError) throw profilesError;
+
+        // Filter out profiles that have already created a business
+        const profileIds = (profilesData || []).map(p => p.id);
+        const { data: existingBusinesses } = await supabase
+          .from('registered_businesses')
+          .select('owner_id')
+          .in('owner_id', profileIds);
+
+        const existingOwnerIds = new Set((existingBusinesses || []).map(b => b.owner_id));
+
+        const pendingProfiles = (profilesData || []).filter(p => !existingOwnerIds.has(p.id));
+
+        count = pendingProfiles.length;
+        allBusinesses = pendingProfiles.map(profile => ({
+          id: profile.id,
+          business_id: null,
+          unclaimed_business_id: null,
+          name: profile.full_name || 'N/A',
+          address: '',
+          city: '',
+          province: '',
+          region: '',
+          postal_code: null,
+          phone: null,
+          email: profile.email,
+          website: null,
+          vat_number: null,
+          is_verified: false,
+          is_main: false,
+          created_at: profile.created_at,
+          description: null,
+          business_hours: null,
+          services: null,
+          category: null,
+          business: {
+            owner_id: profile.id,
+            owner: {
+              full_name: profile.full_name,
+              email: profile.email
+            }
+          },
           source: activeTab
         }));
 
@@ -431,6 +492,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     { id: 'user_added' as TabType, label: 'Aggiunte da Utenti', icon: UserPlus },
     { id: 'claimed' as TabType, label: 'Rivendicate', icon: CheckCircle },
     { id: 'self_registered' as TabType, label: 'Iscritte da Sole', icon: Building2 },
+    { id: 'pending_registration' as TabType, label: 'In Attesa di Completamento', icon: Clock },
   ];
 
   return (
@@ -568,27 +630,33 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Attività
+                      {activeTab === 'pending_registration' ? 'Nome Utente' : 'Attività'}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Indirizzo
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Contatti
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Categoria
-                    </th>
-                    {(activeTab === 'user_added' || activeTab === 'claimed' || activeTab === 'self_registered') && (
+                    {activeTab !== 'pending_registration' && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        {activeTab === 'self_registered' ? 'Proprietario' : 'Aggiunto da'}
+                        Indirizzo
                       </th>
                     )}
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Stato
+                      Contatti
                     </th>
+                    {activeTab !== 'pending_registration' && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Categoria
+                      </th>
+                    )}
+                    {(activeTab === 'user_added' || activeTab === 'claimed' || activeTab === 'self_registered' || activeTab === 'pending_registration') && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        {activeTab === 'self_registered' || activeTab === 'pending_registration' ? 'Proprietario' : 'Aggiunto da'}
+                      </th>
+                    )}
+                    {activeTab !== 'pending_registration' && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Stato
+                      </th>
+                    )}
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Azioni
+                      {activeTab === 'pending_registration' ? 'Data Registrazione' : 'Azioni'}
                     </th>
                   </tr>
                 </thead>
@@ -606,17 +674,19 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-start gap-2">
-                          <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                          <div className="text-sm text-gray-900">
-                            <div>{business.address}</div>
-                            <div className="text-gray-500">
-                              {business.city}, {business.province} {business.postal_code}
+                      {activeTab !== 'pending_registration' && (
+                        <td className="px-6 py-4">
+                          <div className="flex items-start gap-2">
+                            <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                            <div className="text-sm text-gray-900">
+                              <div>{business.address}</div>
+                              <div className="text-gray-500">
+                                {business.city}, {business.province} {business.postal_code}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
+                        </td>
+                      )}
                       <td className="px-6 py-4">
                         <div className="space-y-1">
                           {business.phone && (
@@ -633,12 +703,14 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{business.category?.name || 'N/A'}</div>
-                      </td>
-                      {(activeTab === 'user_added' || activeTab === 'claimed' || activeTab === 'self_registered') && (
+                      {activeTab !== 'pending_registration' && (
                         <td className="px-6 py-4">
-                          {activeTab === 'self_registered' && business.business?.owner ? (
+                          <div className="text-sm text-gray-900">{business.category?.name || 'N/A'}</div>
+                        </td>
+                      )}
+                      {(activeTab === 'user_added' || activeTab === 'claimed' || activeTab === 'self_registered' || activeTab === 'pending_registration') && (
+                        <td className="px-6 py-4">
+                          {(activeTab === 'self_registered' || activeTab === 'pending_registration') && business.business?.owner ? (
                             <div>
                               <div className="text-sm font-medium text-gray-900">
                                 {business.business.owner.full_name}
@@ -670,47 +742,59 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                           )}
                         </td>
                       )}
-                      <td className="px-6 py-4">
-                        <span
-                          className={`px-2 py-1 text-xs rounded-full ${
-                            business.is_verified
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {business.is_verified ? 'Verificata' : 'Non verificata'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => {
-                              setSelectedBusiness(business);
-                              loadAllLocations(business);
-                            }}
-                            className="text-blue-600 hover:text-blue-800 p-1"
-                            title="Visualizza dettagli"
-                          >
-                            <Search className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => setEditingBusiness(business)}
-                            className="text-gray-600 hover:text-gray-800 p-1"
-                            title="Modifica"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleToggleVerification(business.id, business.is_verified)}
-                            className={`px-2 py-1 text-xs rounded ${
+                      {activeTab !== 'pending_registration' && (
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${
                               business.is_verified
-                                ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                                : 'bg-green-100 text-green-800 hover:bg-green-200'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-gray-100 text-gray-800'
                             }`}
                           >
-                            {business.is_verified ? 'Rimuovi' : 'Verifica'}
-                          </button>
-                        </div>
+                            {business.is_verified ? 'Verificata' : 'Non verificata'}
+                          </span>
+                        </td>
+                      )}
+                      <td className="px-6 py-4">
+                        {activeTab === 'pending_registration' ? (
+                          <div className="text-sm text-gray-600">
+                            {new Date(business.created_at).toLocaleDateString('it-IT', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric'
+                            })}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                setSelectedBusiness(business);
+                                loadAllLocations(business);
+                              }}
+                              className="text-blue-600 hover:text-blue-800 p-1"
+                              title="Visualizza dettagli"
+                            >
+                              <Search className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setEditingBusiness(business)}
+                              className="text-gray-600 hover:text-gray-800 p-1"
+                              title="Modifica"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleToggleVerification(business.id, business.is_verified)}
+                              className={`px-2 py-1 text-xs rounded ${
+                                business.is_verified
+                                  ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                                  : 'bg-green-100 text-green-800 hover:bg-green-200'
+                              }`}
+                            >
+                              {business.is_verified ? 'Rimuovi' : 'Verifica'}
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
