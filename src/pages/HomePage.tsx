@@ -285,17 +285,20 @@ function AuthenticatedHomePage() {
   const [jobPostings, setJobPostings] = useState<any[]>([]);
   const [featuredSellAds, setFeaturedSellAds] = useState<any[]>([]);
   const [topUsers, setTopUsers] = useState<any[]>([]);
+  const [topBusinesses, setTopBusinesses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const isBusiness = profile?.user_type === 'business';
 
   useEffect(() => {
     loadHomeData();
-  }, [user]);
+  }, [user, profile?.user_type]);
 
   const loadHomeData = async () => {
     try {
       setLoading(true);
 
-      const [jobsResult, sellAdsResult, topUsersResult] = await Promise.all([
+      const [jobsResult, sellAdsResult, topDataResult] = await Promise.all([
         (async () => {
           const { data } = await supabase
             .from('job_postings')
@@ -343,16 +346,18 @@ function AuthenticatedHomePage() {
 
         supabase.rpc('get_featured_classified_ads', { ad_type_filter: 'sell', limit_count: 6 }),
 
-        supabase
-          .from('user_activity')
-          .select(`
-            user_id,
-            total_points,
-            reviews_count,
-            profiles:user_id(id, nickname, full_name, avatar_url)
-          `)
-          .order('total_points', { ascending: false })
-          .limit(20)
+        isBusiness
+          ? supabase.rpc('get_top_business_locations', { limit_count: 20 })
+          : supabase
+              .from('user_activity')
+              .select(`
+                user_id,
+                total_points,
+                reviews_count,
+                profiles:user_id(id, nickname, full_name, avatar_url)
+              `)
+              .order('total_points', { ascending: false })
+              .limit(20)
       ]);
 
       if (jobsResult) {
@@ -374,8 +379,10 @@ function AuthenticatedHomePage() {
         setFeaturedSellAds([]);
       }
 
-      if (topUsersResult.data) {
-        setTopUsers(topUsersResult.data);
+      if (isBusiness && topDataResult.data) {
+        setTopBusinesses(topDataResult.data);
+      } else if (!isBusiness && topDataResult.data) {
+        setTopUsers(topDataResult.data);
       }
     } catch (error) {
       console.error('Error loading home data:', error);
@@ -469,33 +476,59 @@ function AuthenticatedHomePage() {
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-3 rounded-xl shadow-lg">
-                    <Award className="w-6 h-6 text-white" />
+                    {isBusiness ? <Building2 className="w-6 h-6 text-white" /> : <Award className="w-6 h-6 text-white" />}
                   </div>
                   <div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Top Utenti</h2>
-                    <p className="text-sm text-gray-600">I primi 20 vincono gift card</p>
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                      {isBusiness ? 'Top 20 Aziende' : 'Top Utenti'}
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      {isBusiness ? 'Le aziende più recensite' : 'I primi 20 vincono gift card'}
+                    </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => navigate('/leaderboard')}
-                  className="group flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-5 py-2.5 rounded-xl hover:shadow-lg font-semibold transition-all hover:scale-105"
-                >
-                  Vedi tutti
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
+                {!isBusiness && (
+                  <button
+                    onClick={() => navigate('/leaderboard')}
+                    className="group flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-5 py-2.5 rounded-xl hover:shadow-lg font-semibold transition-all hover:scale-105"
+                  >
+                    Vedi tutti
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                )}
               </div>
 
-              {topUsers.length > 0 ? (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {topUsers.slice(0, 8).map((userActivity: any, index: number) => (
-                    <TopUserCard key={userActivity.user_id} userActivity={userActivity} rank={index + 1} />
-                  ))}
-                </div>
+              {isBusiness ? (
+                topBusinesses.length > 0 ? (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {topBusinesses.slice(0, 8).map((business: any, index: number) => (
+                      <TopBusinessCard
+                        key={business.location_id}
+                        business={business}
+                        rank={index + 1}
+                        onClick={() => navigate(`/business/${business.location_id}`)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-white rounded-2xl">
+                    <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">Nessuna azienda disponibile</p>
+                  </div>
+                )
               ) : (
-                <div className="text-center py-12 bg-white rounded-2xl">
-                  <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">Nessun utente in classifica</p>
-                </div>
+                topUsers.length > 0 ? (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {topUsers.slice(0, 8).map((userActivity: any, index: number) => (
+                      <TopUserCard key={userActivity.user_id} userActivity={userActivity} rank={index + 1} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-white rounded-2xl">
+                    <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">Nessun utente in classifica</p>
+                  </div>
+                )
               )}
             </section>
 
@@ -620,6 +653,68 @@ function TopUserCard({ userActivity, rank }: { userActivity: any; rank: number }
         <div className="flex items-center justify-between bg-blue-50 rounded-lg px-3 py-2">
           <span className="text-sm text-gray-700 font-medium">Recensioni</span>
           <span className="font-bold text-blue-600">{userActivity.reviews_count}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TopBusinessCard({ business, rank, onClick }: { business: any; rank: number; onClick: () => void }) {
+  const isTopThree = rank <= 3;
+
+  return (
+    <div
+      onClick={onClick}
+      className={`relative bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-5 border-2 cursor-pointer ${
+        isTopThree ? 'border-yellow-300 bg-gradient-to-br from-yellow-50 to-white' : 'border-gray-200'
+      }`}
+    >
+      {isTopThree && (
+        <div className="absolute -top-3 -right-3 w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+          <Award className="w-5 h-5 text-white" />
+        </div>
+      )}
+
+      <div className="flex items-center gap-3 mb-4">
+        <div className={`relative w-12 h-12 rounded-full flex items-center justify-center font-bold text-white shadow-md ${
+          rank === 1 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600' :
+          rank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-500' :
+          rank === 3 ? 'bg-gradient-to-br from-orange-400 to-orange-600' :
+          'bg-gradient-to-br from-blue-400 to-blue-600'
+        }`}>
+          <span className="text-lg">{rank}</span>
+        </div>
+
+        {business.avatar_url ? (
+          <img
+            src={business.avatar_url}
+            alt={business.name}
+            className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-md"
+          />
+        ) : (
+          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-200 to-blue-300 flex items-center justify-center border-2 border-white shadow-md">
+            <Building2 className="w-7 h-7 text-blue-600" />
+          </div>
+        )}
+      </div>
+
+      <h3 className="font-bold text-gray-900 text-lg mb-2 truncate">{business.name}</h3>
+      <p className="text-sm text-gray-600 mb-4 flex items-center gap-1">
+        <MapPin className="w-4 h-4" />
+        <span className="truncate">{business.city}, {business.province}</span>
+      </p>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between bg-blue-50 rounded-lg px-3 py-2">
+          <span className="text-sm text-gray-700 font-medium">Recensioni</span>
+          <span className="font-bold text-blue-600 text-lg">{business.review_count}</span>
+        </div>
+        <div className="flex items-center justify-between bg-yellow-50 rounded-lg px-3 py-2">
+          <span className="text-sm text-gray-700 font-medium">Valutazione</span>
+          <div className="flex items-center gap-1">
+            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+            <span className="font-bold text-yellow-600">{business.avg_rating?.toFixed(1) || 'N/A'}</span>
+          </div>
         </div>
       </div>
     </div>
