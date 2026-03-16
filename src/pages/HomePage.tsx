@@ -374,7 +374,7 @@ function AuthenticatedHomePage() {
   };
 
   const displayName = profile?.nickname || profile?.full_name || 'Utente';
-  const firstName = displayName.split(' ')[0];
+  const firstName = isBusiness && profile?.business_name ? profile.business_name : displayName.split(' ')[0];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -394,7 +394,7 @@ function AuthenticatedHomePage() {
               Ciao, {firstName}!
             </h1>
             <p className="text-blue-100 text-lg md:text-xl max-w-2xl mx-auto mb-8">
-              Esplora attività locali, trova lavoro, compra e vendi oggetti
+              Esplora attività locali, trova candidati, vendi e compra oggetti
             </p>
           </div>
 
