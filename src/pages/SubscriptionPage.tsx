@@ -654,7 +654,7 @@ export function SubscriptionPage() {
                         <p className="font-semibold text-blue-900">Periodo di Prova Gratuita Attivo</p>
                       </div>
                       <p className="text-sm text-gray-700 mb-2">
-                        Il tuo periodo di prova scade il <span className="font-bold">{new Date(currentSubscription.trial_end_date!).toLocaleDateString('it-IT')}</span>
+                        Il tuo periodo di prova scade il <span className="font-bold">{new Date(currentSubscription.end_date).toLocaleDateString('it-IT')}</span>
                       </p>
                       <p className="text-xs text-gray-600 mb-4">
                         Riceverai un promemoria 7 giorni prima della scadenza. Nessuna carta di credito richiesta ora.
@@ -670,7 +670,7 @@ export function SubscriptionPage() {
                       {currentSubscription.payment_method_added && (
                         <div className="flex items-center gap-2 text-green-700 text-sm">
                           <Check className="w-5 h-5" />
-                          <span>Metodo di pagamento aggiunto - L'addebito avverrà il {new Date(currentSubscription.trial_end_date!).toLocaleDateString('it-IT')}</span>
+                          <span>Metodo di pagamento aggiunto - L'addebito avverrà il {new Date(currentSubscription.end_date).toLocaleDateString('it-IT')}</span>
                         </div>
                       )}
                     </div>
@@ -1068,7 +1068,7 @@ export function SubscriptionPage() {
                       <p className="font-semibold text-blue-900">Periodo di Prova Gratuita Attivo</p>
                     </div>
                     <p className="text-sm text-gray-700 mb-2">
-                      Il tuo periodo di prova scade il <span className="font-bold">{new Date(currentSubscription.trial_end_date!).toLocaleDateString('it-IT')}</span>
+                      Il tuo periodo di prova scade il <span className="font-bold">{new Date(currentSubscription.end_date).toLocaleDateString('it-IT')}</span>
                     </p>
                     <p className="text-xs text-gray-600 mb-4">
                       Riceverai un promemoria 7 giorni prima della scadenza. Nessuna carta di credito richiesta ora.
@@ -1084,7 +1084,7 @@ export function SubscriptionPage() {
                     {currentSubscription.payment_method_added && (
                       <div className="flex items-center gap-2 text-green-700 text-sm">
                         <Check className="w-5 h-5" />
-                        <span>Metodo di pagamento aggiunto - L'addebito avverrà il {new Date(currentSubscription.trial_end_date!).toLocaleDateString('it-IT')}</span>
+                        <span>Metodo di pagamento aggiunto - L'addebito avverrà il {new Date(currentSubscription.end_date).toLocaleDateString('it-IT')}</span>
                       </div>
                     )}
                   </div>

@@ -231,7 +231,7 @@ export function SubscriptionManagement({
                 }`}>
                   {currentSubscription.status === 'trial'
                     ? (() => {
-                        const endDate = new Date(currentSubscription.trial_end_date || currentSubscription.end_date);
+                        const endDate = new Date(currentSubscription.end_date);
                         const today = new Date();
                         const daysRemaining = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
                         return `Giorni rimanenti: ${daysRemaining} - Termina il ${endDate.toLocaleDateString('it-IT')}`;
