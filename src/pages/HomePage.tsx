@@ -88,6 +88,130 @@ function LandingPage() {
         <section className="mb-16">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Scegli il Tuo Account
+            </h2>
+            <p className="text-xl text-gray-600">
+              Unisciti a Trovafacile e scopri tutte le funzionalità della piattaforma
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <div className="bg-gradient-to-br from-blue-50 via-white to-cyan-50 rounded-2xl shadow-xl border-2 border-blue-200 p-8 hover:shadow-2xl transition-all transform hover:scale-105">
+              <div className="text-center mb-6">
+                <div className="inline-block bg-gradient-to-br from-blue-500 to-cyan-500 p-4 rounded-full mb-4">
+                  <Users className="w-12 h-12 text-white" />
+                </div>
+                <h3 className="text-3xl font-bold text-gray-900 mb-3">Utente Privato</h3>
+                <p className="text-gray-600 text-lg leading-relaxed">
+                  Perfetto per famiglie e persone che vogliono trovare attività locali, lasciare recensioni e accedere a vantaggi esclusivi
+                </p>
+              </div>
+
+              <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
+                <h4 className="font-bold text-gray-900 mb-4 text-lg">Cosa puoi fare:</h4>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-3">
+                    <div className="bg-blue-100 rounded-full p-1 flex-shrink-0 mt-0.5">
+                      <Check className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <span className="text-gray-700">Cerca e scopri attività locali verificate</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="bg-blue-100 rounded-full p-1 flex-shrink-0 mt-0.5">
+                      <Check className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <span className="text-gray-700">Scrivi recensioni e guadagna punti</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="bg-blue-100 rounded-full p-1 flex-shrink-0 mt-0.5">
+                      <Check className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <span className="text-gray-700">Pubblica annunci di compravendita e cerca lavoro</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="bg-blue-100 rounded-full p-1 flex-shrink-0 mt-0.5">
+                      <Check className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <span className="text-gray-700">Gestisci fino a 5 profili familiari</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="bg-blue-100 rounded-full p-1 flex-shrink-0 mt-0.5">
+                      <Check className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <span className="text-gray-700">Partecipa alla classifica e vinci gift card</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                onClick={() => window.location.href = '/?register=user'}
+                className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+              >
+                Inizia Gratis <ArrowRight className="w-5 h-5" />
+              </button>
+              <p className="text-center text-sm text-gray-500 mt-3">30 giorni di prova gratuita</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-green-50 via-white to-emerald-50 rounded-2xl shadow-xl border-2 border-green-200 p-8 hover:shadow-2xl transition-all transform hover:scale-105">
+              <div className="text-center mb-6">
+                <div className="inline-block bg-gradient-to-br from-green-500 to-emerald-500 p-4 rounded-full mb-4">
+                  <Building2 className="w-12 h-12 text-white" />
+                </div>
+                <h3 className="text-3xl font-bold text-gray-900 mb-3">Utente Business</h3>
+                <p className="text-gray-600 text-lg leading-relaxed">
+                  Ideale per aziende e attività commerciali che vogliono farsi trovare, gestire recensioni e pubblicare offerte di lavoro
+                </p>
+              </div>
+
+              <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
+                <h4 className="font-bold text-gray-900 mb-4 text-lg">Cosa puoi fare:</h4>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-3">
+                    <div className="bg-green-100 rounded-full p-1 flex-shrink-0 mt-0.5">
+                      <Check className="w-4 h-4 text-green-600" />
+                    </div>
+                    <span className="text-gray-700">Rivendica o registra la tua attività</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="bg-green-100 rounded-full p-1 flex-shrink-0 mt-0.5">
+                      <Check className="w-4 h-4 text-green-600" />
+                    </div>
+                    <span className="text-gray-700">Gestisci più sedi aziendali</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="bg-green-100 rounded-full p-1 flex-shrink-0 mt-0.5">
+                      <Check className="w-4 h-4 text-green-600" />
+                    </div>
+                    <span className="text-gray-700">Rispondi alle recensioni dei clienti</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="bg-green-100 rounded-full p-1 flex-shrink-0 mt-0.5">
+                      <Check className="w-4 h-4 text-green-600" />
+                    </div>
+                    <span className="text-gray-700">Pubblica offerte di lavoro e trova candidati</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="bg-green-100 rounded-full p-1 flex-shrink-0 mt-0.5">
+                      <Check className="w-4 h-4 text-green-600" />
+                    </div>
+                    <span className="text-gray-700">Crea sconti e promozioni verificate</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                onClick={() => window.location.href = '/?register=business'}
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-4 rounded-xl font-bold text-lg hover:from-green-600 hover:to-emerald-600 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+              >
+                Inizia Gratis <ArrowRight className="w-5 h-5" />
+              </button>
+              <p className="text-center text-sm text-gray-500 mt-3">30 giorni di prova gratuita</p>
+            </div>
+          </div>
+        </section>
+        <section className="mb-16">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
               Piani di Abbonamento
             </h2>
             <p className="text-xl text-gray-600">
