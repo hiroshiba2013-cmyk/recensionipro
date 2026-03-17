@@ -25,7 +25,7 @@ interface User {
   unique_code?: string;
   ateco_code?: string;
   pec_email?: string;
-  website?: string;
+  website_url?: string;
   description?: string;
   office_address?: string;
   office_city?: string;
@@ -62,7 +62,7 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
       // Carica tutti i profili
       let query = supabase
         .from('profiles')
-        .select('id, full_name, nickname, email, user_type, subscription_status, subscription_type, created_at, is_admin, phone, fiscal_code, billing_address, billing_city, billing_province, billing_postal_code, date_of_birth, relationship, company_name, vat_number, unique_code, ateco_code, pec_email, website, description, office_address, office_city, office_province, office_postal_code')
+        .select('id, full_name, nickname, email, user_type, subscription_status, subscription_type, created_at, is_admin, phone, fiscal_code, billing_address, billing_city, billing_province, billing_postal_code, date_of_birth, relationship, company_name, vat_number, unique_code, ateco_code, pec_email, website_url, description, office_address, office_city, office_province, office_postal_code')
         .order('created_at', { ascending: false });
 
       // Applica filtri
@@ -529,7 +529,7 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Sito Web</label>
                         <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
-                          {viewingUser.website || '—'}
+                          {viewingUser.website_url || '—'}
                         </div>
                       </div>
                       {viewingUser.description && (
