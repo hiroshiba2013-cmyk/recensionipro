@@ -57,10 +57,10 @@ export default function UsersManagementSection() {
     try {
       console.log('[UsersManagement] Loading users with filter:', filterType);
 
-      // Carica tutti i profili
+      // Carica tutti i profili con tutti i campi
       let query = supabase
         .from('profiles')
-        .select('id, full_name, nickname, email, user_type, subscription_status, subscription_type, created_at, is_admin, phone, fiscal_code, billing_address, billing_city, billing_province, billing_postal_code, date_of_birth, relationship, company_name, vat_number, unique_code, ateco_code, pec_email, website_url, description, office_address, office_city, office_province, office_postal_code')
+        .select('*')
         .order('created_at', { ascending: false });
 
       // Applica filtri
@@ -83,6 +83,9 @@ export default function UsersManagementSection() {
       }
 
       console.log('[UsersManagement] Loaded profiles:', data?.length || 0);
+      if (data && data.length > 0) {
+        console.log('[UsersManagement] Sample user data:', data[0]);
+      }
       setUsers(data || []);
     } catch (error) {
       console.error('[UsersManagement] Error:', error);
