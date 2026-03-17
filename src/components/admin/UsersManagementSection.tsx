@@ -57,72 +57,45 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
   const loadUsers = async () => {
     setLoading(true);
     try {
-      // Prima carica tutti i profili
-      let profilesQuery = supabase
+      console.log('[UsersManagement] Loading users with filter:', filterType);
+
+      // Carica tutti i profili
+      let query = supabase
         .from('profiles')
         .select('id, full_name, nickname, email, user_type, subscription_status, subscription_type, created_at, is_admin, phone, fiscal_code, billing_address, billing_city, billing_province, billing_postal_code, date_of_birth, relationship, company_name, vat_number, unique_code, ateco_code, pec_email, website, description, office_address, office_city, office_province, office_postal_code')
         .order('created_at', { ascending: false });
 
-      if (searchEmail) {
-        profilesQuery = profilesQuery.ilike('email', `%${searchEmail}%`);
-      }
-
-      const { data: profilesData, error: profilesError } = await profilesQuery.limit(500);
-
-      if (profilesError) throw profilesError;
-
-      let allUsers = profilesData || [];
-
-      // Ora carica anche gli admin dalla tabella admins
-      let adminsQuery = supabase
-        .from('admins')
-        .select('user_id, email, nickname, created_at');
-
-      if (searchEmail) {
-        adminsQuery = adminsQuery.ilike('email', `%${searchEmail}%`);
-      }
-
-      const { data: adminsData } = await adminsQuery;
-
-      if (adminsData) {
-        // Aggiungi gli admin come utenti
-        const adminUsers: User[] = adminsData.map(admin => ({
-          id: admin.user_id,
-          full_name: admin.nickname || 'Admin',
-          nickname: admin.nickname,
-          email: admin.email,
-          user_type: 'admin',
-          subscription_status: 'active',
-          created_at: admin.created_at,
-          is_admin: true,
-        } as User));
-
-        // Unisci gli admin con i profili (evita duplicati)
-        const existingIds = new Set(allUsers.map(u => u.id));
-        adminUsers.forEach(admin => {
-          if (!existingIds.has(admin.id)) {
-            allUsers.push(admin);
-          }
-        });
-      }
-
-      // Filtra per tipo
+      // Applica filtri
       if (filterType !== 'all') {
         if (filterType === 'admin') {
-          allUsers = allUsers.filter(u => u.is_admin);
+          query = query.eq('is_admin', true);
         } else if (filterType === 'trial') {
-          allUsers = allUsers.filter(u => u.subscription_status === 'trial');
+          query = query.eq('subscription_status', 'trial');
         } else {
-          allUsers = allUsers.filter(u => u.user_type === filterType);
+          query = query.eq('user_type', filterType);
         }
       }
 
-      // Ordina per data di creazione
-      allUsers.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      if (searchEmail) {
+        query = query.ilike('email', `%${searchEmail}%`);
+      }
 
-      setUsers(allUsers);
+      const { data, error } = await query.limit(500);
+
+      if (error) {
+        console.error('[UsersManagement] Error loading profiles:', error);
+        throw error;
+      }
+
+      console.log('[UsersManagement] Loaded users:', {
+        count: data?.length || 0,
+        filter: filterType,
+        searchEmail
+      });
+
+      setUsers(data || []);
     } catch (error) {
-      console.error('Error loading users:', error);
+      console.error('[UsersManagement] Error:', error);
     } finally {
       setLoading(false);
     }
