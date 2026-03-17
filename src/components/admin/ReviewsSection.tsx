@@ -51,6 +51,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchNickname, setSearchNickname] = useState('');
+  const [searchBusinessName, setSearchBusinessName] = useState('');
   const [filterQuality, setFilterQuality] = useState<number | ''>('');
   const [filterPrice, setFilterPrice] = useState<number | ''>('');
   const [filterService, setFilterService] = useState<number | ''>('');
@@ -83,6 +84,14 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
       }
     }
 
+    // Filtro per nome attività
+    if (searchBusinessName.trim()) {
+      const businessName = getBusinessName(review).toLowerCase();
+      if (!businessName.includes(searchBusinessName.toLowerCase())) {
+        return false;
+      }
+    }
+
     // Filtro per qualità
     if (filterQuality !== '' && review.quality_rating !== filterQuality) {
       return false;
@@ -109,6 +118,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
   const clearFilters = () => {
     setFilterStatus('all');
     setSearchNickname('');
+    setSearchBusinessName('');
     setFilterQuality('');
     setFilterPrice('');
     setFilterService('');
@@ -371,6 +381,21 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                 value={searchNickname}
                 onChange={(e) => setSearchNickname(e.target.value)}
                 placeholder="Inserisci nickname..."
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Ricerca per Nome Attività */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <Building2 className="w-4 h-4 inline mr-1" />
+                Cerca per Nome Attività
+              </label>
+              <input
+                type="text"
+                value={searchBusinessName}
+                onChange={(e) => setSearchBusinessName(e.target.value)}
+                placeholder="Inserisci nome attività..."
                 className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
