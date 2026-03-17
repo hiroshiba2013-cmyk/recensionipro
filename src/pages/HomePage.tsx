@@ -132,7 +132,7 @@ function LandingPage() {
                     <div className="bg-blue-100 rounded-full p-1 flex-shrink-0 mt-0.5">
                       <Check className="w-4 h-4 text-blue-600" />
                     </div>
-                    <span className="text-gray-700">Gestisci fino a 5 profili familiari</span>
+                    <span className="text-gray-700">Gestisci fino a 4 profili familiari</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <div className="bg-blue-100 rounded-full p-1 flex-shrink-0 mt-0.5">
