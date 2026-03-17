@@ -18,6 +18,19 @@ interface User {
   billing_city?: string;
   billing_province?: string;
   billing_postal_code?: string;
+  date_of_birth?: string;
+  relationship?: string;
+  company_name?: string;
+  vat_number?: string;
+  unique_code?: string;
+  ateco_code?: string;
+  pec_email?: string;
+  website?: string;
+  description?: string;
+  office_address?: string;
+  office_city?: string;
+  office_province?: string;
+  office_postal_code?: string;
 }
 
 interface FamilyMember {
@@ -74,7 +87,7 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
     try {
       let query = supabase
         .from('profiles')
-        .select('id, full_name, nickname, email, user_type, subscription_status, subscription_type, created_at, is_admin, phone, fiscal_code, billing_address, billing_city, billing_province, billing_postal_code')
+        .select('id, full_name, nickname, email, user_type, subscription_status, subscription_type, created_at, is_admin, phone, fiscal_code, billing_address, billing_city, billing_province, billing_postal_code, date_of_birth, relationship, company_name, vat_number, unique_code, ateco_code, pec_email, website, description, office_address, office_city, office_province, office_postal_code')
         .order('created_at', { ascending: false });
 
       if (filterType !== 'all') {
@@ -669,49 +682,181 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
 
             <div className="p-6 space-y-6">
               {/* Informazioni Complete Utente */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-300">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <UserIcon className="w-5 h-5 text-blue-600" />
                   Dati Completi di Registrazione
                 </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Colonna Sinistra */}
-                  <div className="space-y-3">
-                    <div className="bg-white rounded-lg p-3">
-                      <div className="text-xs text-gray-500 mb-1">Nome Completo</div>
-                      <div className="text-sm font-semibold text-gray-900">{editForm.full_name || '—'}</div>
+                {/* DATI PRIVATO */}
+                {editForm.user_type === 'customer' && (
+                  <div className="space-y-4">
+                    <div className="bg-white rounded-lg p-4 border-l-4 border-green-500">
+                      <h4 className="text-sm font-bold text-gray-900 mb-3 uppercase">Dati Personali</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Nome Completo</div>
+                          <div className="text-sm font-semibold text-gray-900">{editForm.full_name || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Nickname</div>
+                          <div className="text-sm font-semibold text-gray-900">{editForm.nickname || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Email</div>
+                          <div className="text-sm font-semibold text-gray-900">{editForm.email || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Telefono</div>
+                          <div className="text-sm font-semibold text-gray-900">{editForm.phone || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Codice Fiscale</div>
+                          <div className="text-sm font-semibold text-gray-900 uppercase">{editForm.fiscal_code || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Data di Nascita</div>
+                          <div className="text-sm font-semibold text-gray-900">
+                            {editForm.date_of_birth ? new Date(editForm.date_of_birth).toLocaleDateString('it-IT') : '—'}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Relazione</div>
+                          <div className="text-sm font-semibold text-gray-900">{editForm.relationship || '—'}</div>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="bg-white rounded-lg p-3">
-                      <div className="text-xs text-gray-500 mb-1">Nickname</div>
-                      <div className="text-sm font-semibold text-gray-900">{editForm.nickname || '—'}</div>
-                    </div>
-
-                    <div className="bg-white rounded-lg p-3">
-                      <div className="text-xs text-gray-500 mb-1">Email</div>
-                      <div className="text-sm font-semibold text-gray-900">{editForm.email || '—'}</div>
-                    </div>
-
-                    <div className="bg-white rounded-lg p-3">
-                      <div className="text-xs text-gray-500 mb-1">Telefono</div>
-                      <div className="text-sm font-semibold text-gray-900">{editForm.phone || '—'}</div>
-                    </div>
-
-                    <div className="bg-white rounded-lg p-3">
-                      <div className="text-xs text-gray-500 mb-1">Codice Fiscale</div>
-                      <div className="text-sm font-semibold text-gray-900 uppercase">{editForm.fiscal_code || '—'}</div>
+                    <div className="bg-white rounded-lg p-4 border-l-4 border-blue-500">
+                      <h4 className="text-sm font-bold text-gray-900 mb-3 uppercase">Indirizzo di Fatturazione</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                          <div className="text-xs text-gray-500 mb-1">Via e Numero Civico</div>
+                          <div className="text-sm font-semibold text-gray-900">{editForm.billing_address || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">CAP</div>
+                          <div className="text-sm font-semibold text-gray-900">{editForm.billing_postal_code || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Città</div>
+                          <div className="text-sm font-semibold text-gray-900">{editForm.billing_city || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Provincia</div>
+                          <div className="text-sm font-semibold text-gray-900 uppercase">{editForm.billing_province || '—'}</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
+                )}
 
-                  {/* Colonna Destra */}
-                  <div className="space-y-3">
-                    <div className="bg-white rounded-lg p-3">
-                      <div className="text-xs text-gray-500 mb-1">Tipo Utente</div>
-                      <div className="text-sm font-semibold text-gray-900 capitalize">{editForm.user_type || '—'}</div>
+                {/* DATI ATTIVITÀ */}
+                {editForm.user_type === 'business' && (
+                  <div className="space-y-4">
+                    <div className="bg-white rounded-lg p-4 border-l-4 border-orange-500">
+                      <h4 className="text-sm font-bold text-gray-900 mb-3 uppercase">Dati Aziendali</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Ragione Sociale</div>
+                          <div className="text-sm font-semibold text-gray-900">{editForm.company_name || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Partita IVA</div>
+                          <div className="text-sm font-semibold text-gray-900">{editForm.vat_number || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Codice Univoco SDI</div>
+                          <div className="text-sm font-semibold text-gray-900 uppercase">{editForm.unique_code || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Codice ATECO</div>
+                          <div className="text-sm font-semibold text-gray-900">{editForm.ateco_code || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Email PEC</div>
+                          <div className="text-sm font-semibold text-gray-900">{editForm.pec_email || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Telefono</div>
+                          <div className="text-sm font-semibold text-gray-900">{editForm.phone || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Sito Web</div>
+                          <div className="text-sm font-semibold text-gray-900">{editForm.website || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Email</div>
+                          <div className="text-sm font-semibold text-gray-900">{editForm.email || '—'}</div>
+                        </div>
+                        {editForm.description && (
+                          <div className="md:col-span-2">
+                            <div className="text-xs text-gray-500 mb-1">Descrizione</div>
+                            <div className="text-sm font-semibold text-gray-900">{editForm.description}</div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="bg-white rounded-lg p-3">
+                    <div className="bg-white rounded-lg p-4 border-l-4 border-blue-500">
+                      <h4 className="text-sm font-bold text-gray-900 mb-3 uppercase">Sede Legale / Fatturazione</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                          <div className="text-xs text-gray-500 mb-1">Via e Numero Civico</div>
+                          <div className="text-sm font-semibold text-gray-900">{editForm.billing_address || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">CAP</div>
+                          <div className="text-sm font-semibold text-gray-900">{editForm.billing_postal_code || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Città</div>
+                          <div className="text-sm font-semibold text-gray-900">{editForm.billing_city || '—'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Provincia</div>
+                          <div className="text-sm font-semibold text-gray-900 uppercase">{editForm.billing_province || '—'}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {(editForm.office_address || editForm.office_city) && (
+                      <div className="bg-white rounded-lg p-4 border-l-4 border-purple-500">
+                        <h4 className="text-sm font-bold text-gray-900 mb-3 uppercase">Sede Operativa</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="md:col-span-2">
+                            <div className="text-xs text-gray-500 mb-1">Via e Numero Civico</div>
+                            <div className="text-sm font-semibold text-gray-900">{editForm.office_address || '—'}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">CAP</div>
+                            <div className="text-sm font-semibold text-gray-900">{editForm.office_postal_code || '—'}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">Città</div>
+                            <div className="text-sm font-semibold text-gray-900">{editForm.office_city || '—'}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">Provincia</div>
+                            <div className="text-sm font-semibold text-gray-900 uppercase">{editForm.office_province || '—'}</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* INFO ACCOUNT */}
+                <div className="bg-white rounded-lg p-4 border-l-4 border-gray-500 mt-4">
+                  <h4 className="text-sm font-bold text-gray-900 mb-3 uppercase">Informazioni Account</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Tipo Utente</div>
+                      <div className="text-sm font-semibold text-gray-900 capitalize">
+                        {editForm.user_type === 'customer' ? 'Privato' : editForm.user_type === 'business' ? 'Attività' : editForm.user_type}
+                      </div>
+                    </div>
+                    <div>
                       <div className="text-xs text-gray-500 mb-1">Stato Abbonamento</div>
                       <div className={`text-sm font-bold capitalize ${
                         editForm.subscription_status === 'trial'
@@ -727,15 +872,13 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
                           : editForm.subscription_status || '—'}
                       </div>
                     </div>
-
-                    {editForm.subscription_type && (
-                      <div className="bg-white rounded-lg p-3">
-                        <div className="text-xs text-gray-500 mb-1">Piano Abbonamento</div>
-                        <div className="text-sm font-semibold text-gray-900">{editForm.subscription_type}</div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Admin</div>
+                      <div className={`text-sm font-bold ${editForm.is_admin ? 'text-red-600' : 'text-gray-500'}`}>
+                        {editForm.is_admin ? 'SÌ' : 'NO'}
                       </div>
-                    )}
-
-                    <div className="bg-white rounded-lg p-3">
+                    </div>
+                    <div>
                       <div className="text-xs text-gray-500 mb-1">Registrato il</div>
                       <div className="text-sm font-semibold text-gray-900">
                         {new Date(editForm.created_at).toLocaleDateString('it-IT', {
@@ -747,34 +890,8 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
                         })}
                       </div>
                     </div>
-
-                    <div className="bg-white rounded-lg p-3">
-                      <div className="text-xs text-gray-500 mb-1">Admin</div>
-                      <div className={`text-sm font-bold ${editForm.is_admin ? 'text-red-600' : 'text-gray-500'}`}>
-                        {editForm.is_admin ? 'SÌ' : 'NO'}
-                      </div>
-                    </div>
                   </div>
                 </div>
-
-                {/* Indirizzo di Fatturazione */}
-                {(editForm.billing_address || editForm.billing_city || editForm.billing_province || editForm.billing_postal_code) && (
-                  <div className="mt-4 pt-4 border-t border-blue-200">
-                    <div className="text-xs font-semibold text-gray-700 mb-2">Indirizzo di Fatturazione</div>
-                    <div className="bg-white rounded-lg p-3">
-                      <div className="text-sm text-gray-900">
-                        {editForm.billing_address && <div className="font-medium">{editForm.billing_address}</div>}
-                        {(editForm.billing_postal_code || editForm.billing_city || editForm.billing_province) && (
-                          <div className="mt-1">
-                            {editForm.billing_postal_code && <span className="font-semibold">{editForm.billing_postal_code} </span>}
-                            {editForm.billing_city && <span>{editForm.billing_city}</span>}
-                            {editForm.billing_province && <span> ({editForm.billing_province.toUpperCase()})</span>}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* Form di Modifica */}
@@ -1054,28 +1171,6 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
                 </div>
               )}
 
-              {/* Info Account */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-900 mb-3">Informazioni Account</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-600">Tipo:</span>
-                    <span className="ml-2 font-medium capitalize">{editForm.user_type}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Abbonamento:</span>
-                    <span className="ml-2 font-medium capitalize">{editForm.subscription_type || 'N/A'}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Stato:</span>
-                    <span className="ml-2 font-medium capitalize">{editForm.subscription_status || 'N/A'}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Admin:</span>
-                    <span className="ml-2 font-medium">{editForm.is_admin ? 'Sì' : 'No'}</span>
-                  </div>
-                </div>
-              </div>
             </div>
 
             <div className="sticky bottom-0 bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
