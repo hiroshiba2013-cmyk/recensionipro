@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, ChevronDown, ChevronRight, Trash2, Building2, User as UserIcon, Search, Save, X as CloseIcon, FilterX } from 'lucide-react';
+import { Users, Trash2, Eye, X as CloseIcon, FilterX } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface User {
@@ -33,33 +33,9 @@ interface User {
   office_postal_code?: string;
 }
 
-interface FamilyMember {
-  id: string;
-  first_name: string;
-  last_name: string;
-  nickname?: string;
-  date_of_birth: string;
-  relationship: string;
-}
-
-interface BusinessLocation {
-  id: string;
+interface SubscriptionPlan {
   name: string;
-  internal_name?: string;
-  address: string;
-  city: string;
-  province: string;
-}
-
-interface ExpandedUserData {
-  familyMembers?: FamilyMember[];
-  businessLocations?: BusinessLocation[];
-  subscription?: {
-    plan_name: string;
-    status: string;
-    end_date: string;
-  };
-  businessName?: string;
+  billing_period: string;
 }
 
 interface UsersManagementSectionProps {
@@ -68,19 +44,15 @@ interface UsersManagementSectionProps {
 
 export function UsersManagementSection({ onReload }: UsersManagementSectionProps) {
   const [users, setUsers] = useState<User[]>([]);
-  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
-  const [userData, setUserData] = useState<Map<string, ExpandedUserData>>(new Map());
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<'all' | 'customer' | 'business' | 'admin' | 'trial'>('all');
-  const [editingUser, setEditingUser] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<User | null>(null);
-  const [searchNickname, setSearchNickname] = useState('');
+  const [viewingUser, setViewingUser] = useState<User | null>(null);
+  const [subscriptionPlan, setSubscriptionPlan] = useState<SubscriptionPlan | null>(null);
   const [searchEmail, setSearchEmail] = useState('');
-  const [searchFiscalCode, setSearchFiscalCode] = useState('');
 
   useEffect(() => {
     loadUsers();
-  }, [filterType, searchNickname, searchEmail, searchFiscalCode]);
+  }, [filterType, searchEmail]);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -100,40 +72,14 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
         }
       }
 
-      if (searchNickname) {
-        query = query.ilike('nickname', `%${searchNickname}%`);
-      }
-
       if (searchEmail) {
         query = query.ilike('email', `%${searchEmail}%`);
       }
 
-      if (searchFiscalCode) {
-        query = query.ilike('fiscal_code', `%${searchFiscalCode}%`);
-      }
-
-      const { data, error } = await query.limit(200);
+      const { data, error } = await query.limit(500);
 
       if (error) throw error;
       setUsers(data || []);
-
-      // Load family member counts for all customer users
-      if (data) {
-        const customerUsers = data.filter(u => u.user_type === 'customer');
-        for (const user of customerUsers) {
-          const { data: familyData } = await supabase
-            .from('customer_family_members')
-            .select('id, first_name, last_name, nickname, date_of_birth, relationship')
-            .eq('customer_id', user.id);
-
-          if (familyData) {
-            setUserData(prev => new Map(prev.set(user.id, {
-              ...prev.get(user.id),
-              familyMembers: familyData
-            })));
-          }
-        }
-      }
     } catch (error) {
       console.error('Error loading users:', error);
     } finally {
@@ -141,71 +87,32 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
     }
   };
 
-  const toggleUserExpansion = async (userId: string, userType: string) => {
-    const newExpanded = new Set(expandedUsers);
+  const viewUserDetails = async (user: User) => {
+    setViewingUser(user);
 
-    if (expandedUsers.has(userId)) {
-      newExpanded.delete(userId);
-    } else {
-      newExpanded.add(userId);
-      if (!userData.has(userId)) {
-        await loadUserDetails(userId, userType);
-      }
-    }
-
-    setExpandedUsers(newExpanded);
-  };
-
-  const loadUserDetails = async (userId: string, userType: string) => {
     try {
-      const details: ExpandedUserData = {};
-
       const { data: subData } = await supabase
         .from('subscriptions')
-        .select('status, end_date, start_date, plan:subscription_plans(name)')
-        .eq('customer_id', userId)
+        .select('plan:subscription_plans(name, billing_period)')
+        .eq('customer_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (subData) {
-        details.subscription = {
-          plan_name: (subData.plan as any)?.name || 'N/A',
-          status: subData.status,
-          end_date: subData.end_date,
-        };
+      if (subData && subData.plan) {
+        setSubscriptionPlan(subData.plan as any);
+      } else {
+        setSubscriptionPlan(null);
       }
-
-      if (userType === 'customer') {
-        const { data: familyData } = await supabase
-          .from('customer_family_members')
-          .select('id, first_name, last_name, nickname, date_of_birth, relationship')
-          .eq('customer_id', userId);
-
-        details.familyMembers = familyData || [];
-      } else if (userType === 'business') {
-        const { data: businessData } = await supabase
-          .from('businesses')
-          .select('id, name')
-          .eq('owner_id', userId)
-          .maybeSingle();
-
-        if (businessData) {
-          details.businessName = businessData.name;
-
-          const { data: locationsData } = await supabase
-            .from('business_locations')
-            .select('id, name, internal_name, address, city, province')
-            .eq('business_id', businessData.id);
-
-          details.businessLocations = locationsData || [];
-        }
-      }
-
-      setUserData(new Map(userData.set(userId, details)));
     } catch (error) {
-      console.error('Error loading user details:', error);
+      console.error('Error loading subscription:', error);
+      setSubscriptionPlan(null);
     }
+  };
+
+  const closeUserDetails = () => {
+    setViewingUser(null);
+    setSubscriptionPlan(null);
   };
 
   const deleteUser = async (userId: string) => {
@@ -219,87 +126,13 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
       if (error) throw error;
 
       alert('Utente eliminato');
+      closeUserDetails();
       loadUsers();
       onReload();
     } catch (error: any) {
       console.error('Error deleting user:', error);
       alert(`Errore: ${error.message}`);
     }
-  };
-
-  const deleteFamilyMember = async (memberId: string, userId: string) => {
-    if (!confirm('Eliminare questo membro della famiglia?')) return;
-
-    try {
-      const { error } = await supabase
-        .from('customer_family_members')
-        .delete()
-        .eq('id', memberId);
-
-      if (error) throw error;
-
-      alert('Membro eliminato');
-      await loadUserDetails(userId, 'customer');
-    } catch (error: any) {
-      console.error('Error deleting family member:', error);
-      alert(`Errore: ${error.message}`);
-    }
-  };
-
-  const startEditUser = async (user: User) => {
-    setEditingUser(user.id);
-    setEditForm({ ...user });
-
-    // Load user details if not already loaded
-    if (!userData.has(user.id)) {
-      await loadUserDetails(user.id, user.user_type);
-    }
-  };
-
-  const cancelEdit = () => {
-    setEditingUser(null);
-    setEditForm(null);
-  };
-
-  const saveUserEdit = async () => {
-    if (!editForm) return;
-
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: editForm.full_name,
-          nickname: editForm.nickname,
-          phone: editForm.phone,
-          fiscal_code: editForm.fiscal_code,
-          billing_address: editForm.billing_address,
-          billing_city: editForm.billing_city,
-          billing_province: editForm.billing_province,
-          billing_postal_code: editForm.billing_postal_code,
-        })
-        .eq('id', editForm.id);
-
-      if (error) throw error;
-
-      alert('Utente aggiornato con successo');
-      setEditingUser(null);
-      setEditForm(null);
-      loadUsers();
-      onReload();
-    } catch (error: any) {
-      console.error('Error updating user:', error);
-      alert(`Errore: ${error.message}`);
-    }
-  };
-
-  const getDisplayName = (user: User, details?: ExpandedUserData) => {
-    if (user.user_type === 'business' && details?.businessName) {
-      return details.businessName;
-    }
-    if (user.user_type === 'customer' && user.nickname) {
-      return user.nickname;
-    }
-    return user.full_name;
   };
 
   if (loading) {
@@ -319,7 +152,7 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
               <Users className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Gestione Utenti Completa</h2>
+              <h2 className="text-xl font-bold text-gray-900">Gestione Utenti</h2>
               <p className="text-sm text-gray-600">{users.length} utenti trovati</p>
             </div>
           </div>
@@ -352,7 +185,7 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Attività
+              Business
             </button>
             <button
               onClick={() => setFilterType('admin')}
@@ -377,303 +210,146 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
           </div>
         </div>
 
-        {/* Filtri di Ricerca */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-gray-900">Filtri di Ricerca</h3>
-            {(searchNickname || searchEmail || searchFiscalCode) && (
-              <button
-                onClick={() => {
-                  setSearchNickname('');
-                  setSearchEmail('');
-                  setSearchFiscalCode('');
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg text-xs font-semibold transition-colors"
-              >
-                <FilterX className="w-3.5 h-3.5" />
-                Cancella Filtri
-              </button>
-            )}
+        <div className="flex items-center gap-3">
+          <div className="flex-1">
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              Cerca per Email
+            </label>
+            <input
+              type="email"
+              value={searchEmail}
+              onChange={(e) => setSearchEmail(e.target.value)}
+              placeholder="Inserisci email..."
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Cerca per Nickname
-              </label>
-              <input
-                type="text"
-                value={searchNickname}
-                onChange={(e) => setSearchNickname(e.target.value)}
-                placeholder="Inserisci nickname..."
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Cerca per Email
-              </label>
-              <input
-                type="email"
-                value={searchEmail}
-                onChange={(e) => setSearchEmail(e.target.value)}
-                placeholder="Inserisci email..."
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Cerca per Codice Fiscale
-              </label>
-              <input
-                type="text"
-                value={searchFiscalCode}
-                onChange={(e) => setSearchFiscalCode(e.target.value.toUpperCase())}
-                placeholder="Inserisci codice fiscale..."
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
-              />
-            </div>
-          </div>
+          {searchEmail && (
+            <button
+              onClick={() => setSearchEmail('')}
+              className="flex items-center gap-1.5 px-3 py-2 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg text-xs font-semibold transition-colors mt-5"
+            >
+              <FilterX className="w-3.5 h-3.5" />
+              Cancella
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="divide-y divide-gray-200">
-        {users.map((user) => {
-          const isExpanded = expandedUsers.has(user.id);
-          const details = userData.get(user.id);
-
-          return (
-            <div key={user.id} className="hover:bg-gray-50 transition-colors">
-              <div className="px-6 py-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-4 flex-1">
-                    <button
-                      onClick={() => toggleUserExpansion(user.id, user.user_type)}
-                      className="p-1 hover:bg-gray-200 rounded"
-                    >
-                      {isExpanded ? (
-                        <ChevronDown className="w-5 h-5 text-gray-600" />
-                      ) : (
-                        <ChevronRight className="w-5 h-5 text-gray-600" />
-                      )}
-                    </button>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold">
-                      {(getDisplayName(user, details) || user.full_name).charAt(0).toUpperCase()}
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Nome
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Email
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Tipo
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Abbonamento
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Stato
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Registrazione
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Azioni
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {users.map((user) => (
+              <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                      {user.full_name.charAt(0).toUpperCase()}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-gray-900 truncate">
-                          {getDisplayName(user, details)}
-                        </span>
-                        {user.is_admin && (
-                          <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded">
-                            ADMIN
-                          </span>
-                        )}
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {user.user_type === 'business' && user.company_name ? user.company_name : user.full_name}
                       </div>
-                      <div className="text-sm text-gray-500 truncate">{user.email}</div>
+                      {user.is_admin && (
+                        <span className="text-xs font-bold text-red-600">ADMIN</span>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
-                        user.user_type === 'business'
-                          ? 'bg-orange-100 text-orange-700'
-                          : user.user_type === 'customer'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-purple-100 text-purple-700'
-                      }`}
-                    >
-                      {user.user_type === 'business' ? 'Attività' : user.user_type === 'customer' ? 'Privato' : 'Admin'}
-                      {user.user_type === 'customer' && (
-                        <span className="ml-1.5 px-1.5 py-0.5 bg-white rounded text-xs font-bold">
-                          {details?.familyMembers?.length || 0}
-                        </span>
-                      )}
-                    </span>
-                    {details?.subscription && (
-                      <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 whitespace-nowrap">
-                        {details.subscription.plan_name}
-                      </span>
-                    )}
-                    <span
-                      className={`px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
-                        user.subscription_status === 'active'
-                          ? 'bg-green-100 text-green-700'
-                          : user.subscription_status === 'trial'
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-red-100 text-red-700'
-                      }`}
-                    >
-                      {user.subscription_status === 'active'
-                        ? 'Attivo'
-                        : user.subscription_status === 'trial'
-                        ? 'Prova'
-                        : user.subscription_status || 'N/A'}
-                    </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {user.email}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                    user.user_type === 'business'
+                      ? 'bg-orange-100 text-orange-700'
+                      : user.user_type === 'customer'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}>
+                    {user.user_type === 'business' ? 'Business' : user.user_type === 'customer' ? 'Privato' : 'Admin'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {subscriptionPlan ? `${subscriptionPlan.name} (${subscriptionPlan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'})` : user.subscription_type || '—'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                    user.subscription_status === 'active'
+                      ? 'bg-green-100 text-green-700'
+                      : user.subscription_status === 'trial'
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : 'bg-gray-100 text-gray-700'
+                  }`}>
+                    {user.subscription_status === 'active'
+                      ? 'Attivo'
+                      : user.subscription_status === 'trial'
+                      ? 'Prova'
+                      : user.subscription_status || 'N/A'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  {new Date(user.created_at).toLocaleDateString('it-IT')}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-center">
+                  <div className="flex items-center justify-center gap-2">
                     <button
-                      onClick={() => startEditUser(user)}
+                      onClick={() => viewUserDetails(user)}
                       className="p-2 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded-lg transition-all"
-                      title="Visualizza/Modifica dettagli"
+                      title="Visualizza dettagli"
                     >
-                      <Search className="w-4 h-4" />
+                      <Eye className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => deleteUser(user.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                      className="p-2 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg transition-all"
                       title="Elimina utente"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                </div>
-              </div>
-
-              {isExpanded && details && (
-                <div className="px-6 pb-4 pl-20 space-y-4">
-                  {details.subscription && (
-                    <div className={`rounded-lg p-4 ${
-                      details.subscription.status === 'trial'
-                        ? 'bg-yellow-50 border-2 border-yellow-200'
-                        : 'bg-gray-50'
-                    }`}>
-                      <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                        <UserIcon className="w-4 h-4" />
-                        Abbonamento
-                        {details.subscription.status === 'trial' && (
-                          <span className="px-2 py-0.5 bg-yellow-200 text-yellow-800 text-xs font-bold rounded">
-                            PROVA GRATUITA
-                          </span>
-                        )}
-                      </h4>
-                      <div className="grid grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-600">Piano:</span>
-                          <span className="ml-2 font-medium">{details.subscription.plan_name}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Stato:</span>
-                          <span className={`ml-2 font-bold capitalize ${
-                            details.subscription.status === 'trial'
-                              ? 'text-yellow-700'
-                              : details.subscription.status === 'active'
-                              ? 'text-green-700'
-                              : 'text-red-700'
-                          }`}>
-                            {details.subscription.status === 'trial'
-                              ? 'In Prova'
-                              : details.subscription.status === 'active'
-                              ? 'Attivo'
-                              : details.subscription.status}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">
-                            {details.subscription.status === 'trial' ? 'Scade il:' : 'Scadenza:'}
-                          </span>
-                          <span className={`ml-2 font-medium ${
-                            details.subscription.status === 'trial' ? 'text-yellow-800 font-bold' : ''
-                          }`}>
-                            {new Date(details.subscription.end_date).toLocaleDateString('it-IT')}
-                          </span>
-                        </div>
-                      </div>
-                      {details.subscription.status === 'trial' && (
-                        <div className="mt-3 pt-3 border-t border-yellow-200">
-                          <div className="text-xs text-yellow-800 font-medium">
-                            Giorni rimanenti: {Math.ceil((new Date(details.subscription.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {details.familyMembers && details.familyMembers.length > 0 && (
-                    <div className="bg-green-50 rounded-lg p-4">
-                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        Membri della Famiglia ({details.familyMembers.length})
-                      </h4>
-                      <div className="space-y-2">
-                        {details.familyMembers.map((member) => (
-                          <div
-                            key={member.id}
-                            className="flex items-center justify-between bg-white rounded-lg p-3"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-semibold text-sm">
-                                {member.first_name.charAt(0)}
-                              </div>
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">
-                                  {member.first_name} {member.last_name}
-                                  {member.nickname && (
-                                    <span className="ml-2 text-gray-500 text-xs">({member.nickname})</span>
-                                  )}
-                                </div>
-                                <div className="text-xs text-gray-600">
-                                  {member.relationship} - {new Date(member.date_of_birth).toLocaleDateString('it-IT')}
-                                </div>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => deleteFamilyMember(member.id, user.id)}
-                              className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-all"
-                              title="Elimina membro"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {details.businessLocations && details.businessLocations.length > 0 && (
-                    <div className="bg-orange-50 rounded-lg p-4">
-                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                        <Building2 className="w-4 h-4" />
-                        Sedi Attività ({details.businessLocations.length})
-                      </h4>
-                      <div className="space-y-2">
-                        {details.businessLocations.map((location) => (
-                          <div
-                            key={location.id}
-                            className="bg-white rounded-lg p-3"
-                          >
-                            <div className="font-medium text-gray-900 text-sm">{location.name}</div>
-                            {location.internal_name && (
-                              <div className="text-xs text-gray-500 mt-1">
-                                Nome interno: {location.internal_name}
-                              </div>
-                            )}
-                            <div className="text-xs text-gray-600 mt-1">
-                              {location.address}, {location.city} ({location.province})
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="text-xs text-gray-500">
-                    Registrato il {new Date(user.created_at).toLocaleDateString('it-IT')} alle{' '}
-                    {new Date(user.created_at).toLocaleTimeString('it-IT')}
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* Modal Modifica Utente */}
-      {editingUser && editForm && (
+      {/* Modal Visualizzazione Utente */}
+      {viewingUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-white">Modifica Utente</h3>
+          <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between z-10">
+              <div>
+                <h3 className="text-xl font-bold text-white">Form di Registrazione Compilato</h3>
+                <p className="text-sm text-blue-100 mt-1">Tutti i dati inseriti dall'utente durante la registrazione</p>
+              </div>
               <button
-                onClick={cancelEdit}
+                onClick={closeUserDetails}
                 className="p-2 hover:bg-white/20 rounded-lg transition-colors"
               >
                 <CloseIcon className="w-5 h-5 text-white" />
@@ -681,511 +357,324 @@ export function UsersManagementSection({ onReload }: UsersManagementSectionProps
             </div>
 
             <div className="p-6 space-y-6">
-              {/* Informazioni Complete Utente */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-300">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <UserIcon className="w-5 h-5 text-blue-600" />
-                  Dati Completi di Registrazione
-                </h3>
-
-                {/* DATI PRIVATO */}
-                {editForm.user_type === 'customer' && (
-                  <div className="space-y-4">
-                    <div className="bg-white rounded-lg p-4 border-l-4 border-green-500">
-                      <h4 className="text-sm font-bold text-gray-900 mb-3 uppercase">Dati Personali</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Nome Completo</div>
-                          <div className="text-sm font-semibold text-gray-900">{editForm.full_name || '—'}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Nickname</div>
-                          <div className="text-sm font-semibold text-gray-900">{editForm.nickname || '—'}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Email</div>
-                          <div className="text-sm font-semibold text-gray-900">{editForm.email || '—'}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Telefono</div>
-                          <div className="text-sm font-semibold text-gray-900">{editForm.phone || '—'}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Codice Fiscale</div>
-                          <div className="text-sm font-semibold text-gray-900 uppercase">{editForm.fiscal_code || '—'}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Data di Nascita</div>
-                          <div className="text-sm font-semibold text-gray-900">
-                            {editForm.date_of_birth ? new Date(editForm.date_of_birth).toLocaleDateString('it-IT') : '—'}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Relazione</div>
-                          <div className="text-sm font-semibold text-gray-900">{editForm.relationship || '—'}</div>
+              {/* FORM PRIVATO */}
+              {viewingUser.user_type === 'customer' && (
+                <div className="space-y-6">
+                  {/* Dati Personali */}
+                  <div className="bg-green-50 rounded-xl p-6 border-2 border-green-200">
+                    <h3 className="text-lg font-bold text-green-900 mb-4">Dati Personali</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Nome e Cognome</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.full_name || '—'}
                         </div>
                       </div>
-                    </div>
-
-                    <div className="bg-white rounded-lg p-4 border-l-4 border-blue-500">
-                      <h4 className="text-sm font-bold text-gray-900 mb-3 uppercase">Indirizzo di Fatturazione</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="md:col-span-2">
-                          <div className="text-xs text-gray-500 mb-1">Via e Numero Civico</div>
-                          <div className="text-sm font-semibold text-gray-900">{editForm.billing_address || '—'}</div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Nickname</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.nickname || '—'}
                         </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">CAP</div>
-                          <div className="text-sm font-semibold text-gray-900">{editForm.billing_postal_code || '—'}</div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.email}
                         </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Città</div>
-                          <div className="text-sm font-semibold text-gray-900">{editForm.billing_city || '—'}</div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Telefono</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.phone || '—'}
                         </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Provincia</div>
-                          <div className="text-sm font-semibold text-gray-900 uppercase">{editForm.billing_province || '—'}</div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Data di Nascita</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.date_of_birth ? new Date(viewingUser.date_of_birth).toLocaleDateString('it-IT') : '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Codice Fiscale</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 uppercase">
+                          {viewingUser.fiscal_code || '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Relazione</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.relationship || '—'}
                         </div>
                       </div>
                     </div>
                   </div>
-                )}
 
-                {/* DATI ATTIVITÀ */}
-                {editForm.user_type === 'business' && (
-                  <div className="space-y-4">
-                    <div className="bg-white rounded-lg p-4 border-l-4 border-orange-500">
-                      <h4 className="text-sm font-bold text-gray-900 mb-3 uppercase">Dati Aziendali</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Ragione Sociale</div>
-                          <div className="text-sm font-semibold text-gray-900">{editForm.company_name || '—'}</div>
+                  {/* Indirizzo di Fatturazione */}
+                  <div className="bg-blue-50 rounded-xl p-6 border-2 border-blue-200">
+                    <h3 className="text-lg font-bold text-blue-900 mb-4">Indirizzo di Fatturazione</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Via e Numero Civico</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.billing_address || '—'}
                         </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Partita IVA</div>
-                          <div className="text-sm font-semibold text-gray-900">{editForm.vat_number || '—'}</div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">CAP</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.billing_postal_code || '—'}
                         </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Codice Univoco SDI</div>
-                          <div className="text-sm font-semibold text-gray-900 uppercase">{editForm.unique_code || '—'}</div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Città</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.billing_city || '—'}
                         </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Codice ATECO</div>
-                          <div className="text-sm font-semibold text-gray-900">{editForm.ateco_code || '—'}</div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Provincia</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 uppercase">
+                          {viewingUser.billing_province || '—'}
                         </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Email PEC</div>
-                          <div className="text-sm font-semibold text-gray-900">{editForm.pec_email || '—'}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Telefono</div>
-                          <div className="text-sm font-semibold text-gray-900">{editForm.phone || '—'}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Sito Web</div>
-                          <div className="text-sm font-semibold text-gray-900">{editForm.website || '—'}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Email</div>
-                          <div className="text-sm font-semibold text-gray-900">{editForm.email || '—'}</div>
-                        </div>
-                        {editForm.description && (
-                          <div className="md:col-span-2">
-                            <div className="text-xs text-gray-500 mb-1">Descrizione</div>
-                            <div className="text-sm font-semibold text-gray-900">{editForm.description}</div>
-                          </div>
-                        )}
                       </div>
                     </div>
+                  </div>
 
-                    <div className="bg-white rounded-lg p-4 border-l-4 border-blue-500">
-                      <h4 className="text-sm font-bold text-gray-900 mb-3 uppercase">Sede Legale / Fatturazione</h4>
+                  {/* Piano Abbonamento */}
+                  {subscriptionPlan && (
+                    <div className="bg-yellow-50 rounded-xl p-6 border-2 border-yellow-200">
+                      <h3 className="text-lg font-bold text-yellow-900 mb-4">Piano Selezionato</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Piano</label>
+                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                            {subscriptionPlan.name}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Fatturazione</label>
+                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                            {subscriptionPlan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* FORM BUSINESS */}
+              {viewingUser.user_type === 'business' && (
+                <div className="space-y-6">
+                  {/* Dati Aziendali */}
+                  <div className="bg-orange-50 rounded-xl p-6 border-2 border-orange-200">
+                    <h3 className="text-lg font-bold text-orange-900 mb-4">Dati Aziendali</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Ragione Sociale</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.company_name || '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Partita IVA</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.vat_number || '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Codice Univoco SDI</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 uppercase">
+                          {viewingUser.unique_code || '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Codice ATECO</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.ateco_code || '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Email PEC</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.pec_email || '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.email}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Telefono</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.phone || '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Sito Web</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.website || '—'}
+                        </div>
+                      </div>
+                      {viewingUser.description && (
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Descrizione</label>
+                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                            {viewingUser.description}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Sede Legale / Fatturazione */}
+                  <div className="bg-blue-50 rounded-xl p-6 border-2 border-blue-200">
+                    <h3 className="text-lg font-bold text-blue-900 mb-4">Sede Legale / Fatturazione</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Via e Numero Civico</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.billing_address || '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">CAP</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.billing_postal_code || '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Città</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          {viewingUser.billing_city || '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Provincia</label>
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 uppercase">
+                          {viewingUser.billing_province || '—'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sede Operativa */}
+                  {(viewingUser.office_address || viewingUser.office_city) && (
+                    <div className="bg-purple-50 rounded-xl p-6 border-2 border-purple-200">
+                      <h3 className="text-lg font-bold text-purple-900 mb-4">Sede Operativa</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="md:col-span-2">
-                          <div className="text-xs text-gray-500 mb-1">Via e Numero Civico</div>
-                          <div className="text-sm font-semibold text-gray-900">{editForm.billing_address || '—'}</div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Via e Numero Civico</label>
+                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                            {viewingUser.office_address || '—'}
+                          </div>
                         </div>
                         <div>
-                          <div className="text-xs text-gray-500 mb-1">CAP</div>
-                          <div className="text-sm font-semibold text-gray-900">{editForm.billing_postal_code || '—'}</div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">CAP</label>
+                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                            {viewingUser.office_postal_code || '—'}
+                          </div>
                         </div>
                         <div>
-                          <div className="text-xs text-gray-500 mb-1">Città</div>
-                          <div className="text-sm font-semibold text-gray-900">{editForm.billing_city || '—'}</div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Città</label>
+                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                            {viewingUser.office_city || '—'}
+                          </div>
                         </div>
                         <div>
-                          <div className="text-xs text-gray-500 mb-1">Provincia</div>
-                          <div className="text-sm font-semibold text-gray-900 uppercase">{editForm.billing_province || '—'}</div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Provincia</label>
+                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 uppercase">
+                            {viewingUser.office_province || '—'}
+                          </div>
                         </div>
                       </div>
                     </div>
+                  )}
 
-                    {(editForm.office_address || editForm.office_city) && (
-                      <div className="bg-white rounded-lg p-4 border-l-4 border-purple-500">
-                        <h4 className="text-sm font-bold text-gray-900 mb-3 uppercase">Sede Operativa</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="md:col-span-2">
-                            <div className="text-xs text-gray-500 mb-1">Via e Numero Civico</div>
-                            <div className="text-sm font-semibold text-gray-900">{editForm.office_address || '—'}</div>
+                  {/* Piano Abbonamento */}
+                  {subscriptionPlan && (
+                    <div className="bg-yellow-50 rounded-xl p-6 border-2 border-yellow-200">
+                      <h3 className="text-lg font-bold text-yellow-900 mb-4">Piano Selezionato</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Piano</label>
+                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                            {subscriptionPlan.name}
                           </div>
-                          <div>
-                            <div className="text-xs text-gray-500 mb-1">CAP</div>
-                            <div className="text-sm font-semibold text-gray-900">{editForm.office_postal_code || '—'}</div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-gray-500 mb-1">Città</div>
-                            <div className="text-sm font-semibold text-gray-900">{editForm.office_city || '—'}</div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-gray-500 mb-1">Provincia</div>
-                            <div className="text-sm font-semibold text-gray-900 uppercase">{editForm.office_province || '—'}</div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Fatturazione</label>
+                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                            {subscriptionPlan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'}
                           </div>
                         </div>
                       </div>
-                    )}
-                  </div>
-                )}
-
-                {/* INFO ACCOUNT */}
-                <div className="bg-white rounded-lg p-4 border-l-4 border-gray-500 mt-4">
-                  <h4 className="text-sm font-bold text-gray-900 mb-3 uppercase">Informazioni Account</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Tipo Utente</div>
-                      <div className="text-sm font-semibold text-gray-900 capitalize">
-                        {editForm.user_type === 'customer' ? 'Privato' : editForm.user_type === 'business' ? 'Attività' : editForm.user_type}
-                      </div>
                     </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Stato Abbonamento</div>
-                      <div className={`text-sm font-bold capitalize ${
-                        editForm.subscription_status === 'trial'
-                          ? 'text-yellow-700'
-                          : editForm.subscription_status === 'active'
+                  )}
+                </div>
+              )}
+
+              {/* Info Registrazione */}
+              <div className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Informazioni Registrazione</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Stato Abbonamento</label>
+                    <div className="bg-white border border-gray-300 rounded-lg px-4 py-2">
+                      <span className={`text-sm font-bold ${
+                        viewingUser.subscription_status === 'active'
                           ? 'text-green-700'
-                          : 'text-red-700'
+                          : viewingUser.subscription_status === 'trial'
+                          ? 'text-yellow-700'
+                          : 'text-gray-700'
                       }`}>
-                        {editForm.subscription_status === 'trial'
-                          ? 'In Prova'
-                          : editForm.subscription_status === 'active'
+                        {viewingUser.subscription_status === 'active'
                           ? 'Attivo'
-                          : editForm.subscription_status || '—'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Admin</div>
-                      <div className={`text-sm font-bold ${editForm.is_admin ? 'text-red-600' : 'text-gray-500'}`}>
-                        {editForm.is_admin ? 'SÌ' : 'NO'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Registrato il</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {new Date(editForm.created_at).toLocaleDateString('it-IT', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Form di Modifica */}
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Modifica Dati</h3>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Nome Completo *
-                  </label>
-                  <input
-                    type="text"
-                    value={editForm.full_name}
-                    onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Nickname
-                  </label>
-                  <input
-                    type="text"
-                    value={editForm.nickname || ''}
-                    onChange={(e) => setEditForm({ ...editForm, nickname: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email (sola lettura)
-                </label>
-                <input
-                  type="email"
-                  value={editForm.email}
-                  disabled
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100 text-gray-500 cursor-not-allowed"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Telefono
-                  </label>
-                  <input
-                    type="tel"
-                    value={editForm.phone || ''}
-                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Codice Fiscale
-                  </label>
-                  <input
-                    type="text"
-                    value={editForm.fiscal_code || ''}
-                    onChange={(e) => setEditForm({ ...editForm, fiscal_code: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Indirizzo
-                </label>
-                <input
-                  type="text"
-                  value={editForm.billing_address || ''}
-                  onChange={(e) => setEditForm({ ...editForm, billing_address: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Città
-                  </label>
-                  <input
-                    type="text"
-                    value={editForm.billing_city || ''}
-                    onChange={(e) => setEditForm({ ...editForm, billing_city: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Provincia
-                  </label>
-                  <input
-                    type="text"
-                    value={editForm.billing_province || ''}
-                    onChange={(e) => setEditForm({ ...editForm, billing_province: e.target.value })}
-                    maxLength={2}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    CAP
-                  </label>
-                  <input
-                    type="text"
-                    value={editForm.billing_postal_code || ''}
-                    onChange={(e) => setEditForm({ ...editForm, billing_postal_code: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              {/* Membri della Famiglia */}
-              {editForm.user_type === 'customer' && userData.get(editForm.id)?.familyMembers && (
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <Users className="w-5 h-5 text-green-600" />
-                    Membri della Famiglia ({userData.get(editForm.id)?.familyMembers?.length || 0})
-                  </h3>
-
-                  {userData.get(editForm.id)?.familyMembers && userData.get(editForm.id)!.familyMembers!.length > 0 ? (
-                    <div className="space-y-3">
-                      {userData.get(editForm.id)!.familyMembers!.map((member) => (
-                        <div
-                          key={member.id}
-                          className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-lg">
-                                {member.first_name.charAt(0)}
-                              </div>
-                              <div>
-                                <div className="text-sm font-bold text-gray-900">
-                                  {member.first_name} {member.last_name}
-                                  {member.nickname && (
-                                    <span className="ml-2 text-gray-500 text-xs font-normal">({member.nickname})</span>
-                                  )}
-                                </div>
-                                <div className="text-xs text-gray-600 mt-1">
-                                  <span className="font-semibold">{member.relationship}</span>
-                                  <span className="mx-2">•</span>
-                                  <span>Nato il {new Date(member.date_of_birth).toLocaleDateString('it-IT')}</span>
-                                </div>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => deleteFamilyMember(member.id, editForm.id)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                              title="Elimina membro"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      Nessun membro della famiglia registrato
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Sedi Attività */}
-              {editForm.user_type === 'business' && userData.get(editForm.id)?.businessLocations && (
-                <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-6 border border-orange-200">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <Building2 className="w-5 h-5 text-orange-600" />
-                    Sedi Attività ({userData.get(editForm.id)?.businessLocations?.length || 0})
-                  </h3>
-
-                  {userData.get(editForm.id)?.businessLocations && userData.get(editForm.id)!.businessLocations!.length > 0 ? (
-                    <div className="space-y-3">
-                      {userData.get(editForm.id)!.businessLocations!.map((location) => (
-                        <div
-                          key={location.id}
-                          className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
-                        >
-                          <div className="font-bold text-gray-900 text-sm mb-1">{location.name}</div>
-                          {location.internal_name && (
-                            <div className="text-xs text-gray-500 mb-2">
-                              Nome interno: <span className="font-semibold">{location.internal_name}</span>
-                            </div>
-                          )}
-                          <div className="text-xs text-gray-600">
-                            <span className="font-medium">{location.address}</span>
-                            <span className="mx-1">—</span>
-                            <span>{location.city}</span>
-                            <span className="mx-1">({location.province.toUpperCase()})</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      Nessuna sede registrata
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Abbonamento Dettagliato */}
-              {userData.get(editForm.id)?.subscription && (
-                <div className={`rounded-xl p-6 border-2 ${
-                  userData.get(editForm.id)?.subscription?.status === 'trial'
-                    ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-300'
-                    : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
-                }`}>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <UserIcon className="w-5 h-5 text-blue-600" />
-                    Dettagli Abbonamento
-                    {userData.get(editForm.id)?.subscription?.status === 'trial' && (
-                      <span className="px-3 py-1 bg-yellow-200 text-yellow-800 text-xs font-bold rounded-full">
-                        PROVA GRATUITA
+                          : viewingUser.subscription_status === 'trial'
+                          ? 'In Prova'
+                          : viewingUser.subscription_status || 'N/A'}
                       </span>
-                    )}
-                  </h3>
-
-                  <div className="bg-white rounded-lg p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <div className="text-xs text-gray-500 mb-1">Piano</div>
-                        <div className="font-bold text-gray-900">{userData.get(editForm.id)?.subscription?.plan_name}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500 mb-1">Stato</div>
-                        <div className={`font-bold capitalize ${
-                          userData.get(editForm.id)?.subscription?.status === 'trial'
-                            ? 'text-yellow-700'
-                            : userData.get(editForm.id)?.subscription?.status === 'active'
-                            ? 'text-green-700'
-                            : 'text-red-700'
-                        }`}>
-                          {userData.get(editForm.id)?.subscription?.status === 'trial'
-                            ? 'In Prova'
-                            : userData.get(editForm.id)?.subscription?.status === 'active'
-                            ? 'Attivo'
-                            : userData.get(editForm.id)?.subscription?.status}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500 mb-1">
-                          {userData.get(editForm.id)?.subscription?.status === 'trial' ? 'Scade il' : 'Scadenza'}
-                        </div>
-                        <div className={`font-bold ${
-                          userData.get(editForm.id)?.subscription?.status === 'trial' ? 'text-yellow-800' : 'text-gray-900'
-                        }`}>
-                          {new Date(userData.get(editForm.id)!.subscription!.end_date).toLocaleDateString('it-IT', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric'
-                          })}
-                        </div>
-                      </div>
                     </div>
-
-                    {userData.get(editForm.id)?.subscription?.status === 'trial' && (
-                      <div className="mt-4 pt-4 border-t border-yellow-200">
-                        <div className="text-xs font-bold text-yellow-800">
-                          Giorni rimanenti: {Math.ceil((new Date(userData.get(editForm.id)!.subscription!.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} giorni
-                        </div>
-                      </div>
-                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Admin</label>
+                    <div className="bg-white border border-gray-300 rounded-lg px-4 py-2">
+                      <span className={`text-sm font-bold ${viewingUser.is_admin ? 'text-red-600' : 'text-gray-600'}`}>
+                        {viewingUser.is_admin ? 'SÌ' : 'NO'}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Data Registrazione</label>
+                    <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                      {new Date(viewingUser.created_at).toLocaleDateString('it-IT', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
                   </div>
                 </div>
-              )}
-
+              </div>
             </div>
 
             <div className="sticky bottom-0 bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
               <button
-                onClick={cancelEdit}
+                onClick={closeUserDetails}
                 className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium"
               >
-                Annulla
+                Chiudi
               </button>
               <button
-                onClick={saveUserEdit}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+                onClick={() => deleteUser(viewingUser.id)}
+                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2"
               >
-                <Save className="w-4 h-4" />
-                Salva Modifiche
+                <Trash2 className="w-4 h-4" />
+                Elimina Utente
               </button>
             </div>
           </div>
