@@ -482,6 +482,36 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
       return;
     }
 
+    if (!customerForm.fiscalCode || customerForm.fiscalCode.trim() === '') {
+      setError('Il Codice Fiscale è obbligatorio');
+      return;
+    }
+
+    if (customerForm.fiscalCode.length !== 16) {
+      setError('Il Codice Fiscale deve essere di 16 caratteri');
+      return;
+    }
+
+    for (let i = 0; i < familyMembers.length; i++) {
+      const member = familyMembers[i];
+      if (!member.firstName || member.firstName.trim() === '') {
+        setError(`Nome del familiare ${i + 1} è obbligatorio`);
+        return;
+      }
+      if (!member.lastName || member.lastName.trim() === '') {
+        setError(`Cognome del familiare ${i + 1} è obbligatorio`);
+        return;
+      }
+      if (!member.fiscalCode || member.fiscalCode.trim() === '') {
+        setError(`Codice Fiscale del familiare ${i + 1} è obbligatorio`);
+        return;
+      }
+      if (member.fiscalCode.length !== 16) {
+        setError(`Codice Fiscale del familiare ${i + 1} deve essere di 16 caratteri`);
+        return;
+      }
+    }
+
     const passwordValidation = validatePassword(customerForm.password);
     if (passwordValidation) {
       setPasswordError(passwordValidation);
@@ -595,6 +625,36 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     if (!acceptTerms || !acceptPrivacy || !acceptCookies) {
       setError('Devi accettare i Termini e Condizioni, la Privacy Policy e la Cookie Policy per procedere');
       return;
+    }
+
+    if (!businessForm.vatNumber || businessForm.vatNumber.trim() === '') {
+      setError('La Partita IVA è obbligatoria');
+      return;
+    }
+
+    if (businessForm.vatNumber.length < 11) {
+      setError('La Partita IVA deve essere di almeno 11 caratteri');
+      return;
+    }
+
+    for (let i = 0; i < businessLocations.length; i++) {
+      const loc = businessLocations[i];
+      if (!loc.name || loc.name.trim() === '') {
+        setError(`Nome sede ${i + 1} è obbligatorio`);
+        return;
+      }
+      if (!loc.address || loc.address.trim() === '') {
+        setError(`Indirizzo sede ${i + 1} è obbligatorio`);
+        return;
+      }
+      if (!loc.city || loc.city.trim() === '') {
+        setError(`Città sede ${i + 1} è obbligatoria`);
+        return;
+      }
+      if (!loc.province || loc.province.trim() === '') {
+        setError(`Provincia sede ${i + 1} è obbligatoria`);
+        return;
+      }
     }
 
     const passwordValidation = validatePassword(businessForm.password);
