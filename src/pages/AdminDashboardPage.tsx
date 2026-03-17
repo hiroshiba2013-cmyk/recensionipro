@@ -10,7 +10,7 @@ import { ProductsSection } from '../components/admin/ProductsSection';
 import { ReviewsSection } from '../components/admin/ReviewsSection';
 import { ClassifiedAdsSection } from '../components/admin/ClassifiedAdsSection';
 import { AdminProfileDashboard } from '../components/admin/AdminProfileDashboard';
-import { UsersManagementSection } from '../components/admin/UsersManagementSection';
+import UsersManagementSection from '../components/admin/UsersManagementSection';
 import { SolidaritySection } from '../components/admin/SolidaritySection';
 import { LeaderboardSection } from '../components/admin/LeaderboardSection';
 import { BusinessTrackingSection } from '../components/admin/BusinessTrackingSection';
