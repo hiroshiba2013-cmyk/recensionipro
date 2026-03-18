@@ -40,10 +40,12 @@ interface SubscriptionPlan {
 
 interface FamilyMember {
   id: string;
-  full_name: string;
-  nickname?: string;
-  date_of_birth?: string;
-  relationship?: string;
+  first_name: string;
+  last_name: string;
+  nickname: string;
+  date_of_birth: string;
+  relationship: string;
+  fiscal_code: string;
 }
 
 interface BusinessLocation {
@@ -146,9 +148,9 @@ export default function UsersManagementSection() {
     try {
       const { data, error } = await supabase
         .from('customer_family_members')
-        .select('id, full_name, nickname, date_of_birth, relationship')
+        .select('id, first_name, last_name, nickname, date_of_birth, relationship, fiscal_code')
         .eq('customer_id', userId)
-        .order('full_name');
+        .order('first_name');
 
       if (error) throw error;
 
@@ -229,10 +231,12 @@ export default function UsersManagementSection() {
       const { error } = await supabase
         .from('customer_family_members')
         .update({
-          full_name: editedMember.full_name,
+          first_name: editedMember.first_name,
+          last_name: editedMember.last_name,
           nickname: editedMember.nickname,
           date_of_birth: editedMember.date_of_birth,
           relationship: editedMember.relationship,
+          fiscal_code: editedMember.fiscal_code,
         })
         .eq('id', editedMember.id);
 
@@ -810,19 +814,34 @@ export default function UsersManagementSection() {
                             <div key={member.id} className="bg-white rounded-lg p-4 border border-purple-200">
                               <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1 space-y-3">
-                                  {/* Nome Completo */}
-                                  <div>
-                                    <label className="block text-xs font-semibold text-gray-600 mb-1">Nome Completo</label>
-                                    {isEditingThisMember ? (
-                                      <input
-                                        type="text"
-                                        value={displayMember.full_name}
-                                        onChange={(e) => setEditedMember({ ...displayMember, full_name: e.target.value })}
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                      />
-                                    ) : (
-                                      <p className="font-semibold text-gray-900">{displayMember.full_name}</p>
-                                    )}
+                                  {/* Nome e Cognome */}
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-600 mb-1">Nome</label>
+                                      {isEditingThisMember ? (
+                                        <input
+                                          type="text"
+                                          value={displayMember.first_name}
+                                          onChange={(e) => setEditedMember({ ...displayMember, first_name: e.target.value })}
+                                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        />
+                                      ) : (
+                                        <p className="font-semibold text-gray-900">{displayMember.first_name}</p>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-600 mb-1">Cognome</label>
+                                      {isEditingThisMember ? (
+                                        <input
+                                          type="text"
+                                          value={displayMember.last_name}
+                                          onChange={(e) => setEditedMember({ ...displayMember, last_name: e.target.value })}
+                                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        />
+                                      ) : (
+                                        <p className="font-semibold text-gray-900">{displayMember.last_name}</p>
+                                      )}
+                                    </div>
                                   </div>
 
                                   {/* Nickname */}
@@ -831,12 +850,28 @@ export default function UsersManagementSection() {
                                     {isEditingThisMember ? (
                                       <input
                                         type="text"
-                                        value={displayMember.nickname || ''}
+                                        value={displayMember.nickname}
                                         onChange={(e) => setEditedMember({ ...displayMember, nickname: e.target.value })}
                                         className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                       />
                                     ) : (
-                                      <p className="text-sm text-gray-700">{displayMember.nickname || '—'}</p>
+                                      <p className="text-sm text-gray-700">{displayMember.nickname}</p>
+                                    )}
+                                  </div>
+
+                                  {/* Codice Fiscale */}
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-600 mb-1">Codice Fiscale</label>
+                                    {isEditingThisMember ? (
+                                      <input
+                                        type="text"
+                                        value={displayMember.fiscal_code}
+                                        onChange={(e) => setEditedMember({ ...displayMember, fiscal_code: e.target.value.toUpperCase() })}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent uppercase"
+                                        maxLength={16}
+                                      />
+                                    ) : (
+                                      <p className="text-sm text-gray-700 uppercase">{displayMember.fiscal_code}</p>
                                     )}
                                   </div>
 
@@ -847,15 +882,13 @@ export default function UsersManagementSection() {
                                       {isEditingThisMember ? (
                                         <input
                                           type="date"
-                                          value={displayMember.date_of_birth || ''}
+                                          value={displayMember.date_of_birth}
                                           onChange={(e) => setEditedMember({ ...displayMember, date_of_birth: e.target.value })}
                                           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                         />
                                       ) : (
                                         <p className="text-sm text-gray-700">
-                                          {displayMember.date_of_birth
-                                            ? new Date(displayMember.date_of_birth).toLocaleDateString('it-IT')
-                                            : '—'}
+                                          {new Date(displayMember.date_of_birth).toLocaleDateString('it-IT')}
                                         </p>
                                       )}
                                     </div>
@@ -863,11 +896,10 @@ export default function UsersManagementSection() {
                                       <label className="block text-xs font-semibold text-gray-600 mb-1">Relazione</label>
                                       {isEditingThisMember ? (
                                         <select
-                                          value={displayMember.relationship || ''}
+                                          value={displayMember.relationship}
                                           onChange={(e) => setEditedMember({ ...displayMember, relationship: e.target.value })}
                                           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                         >
-                                          <option value="">Seleziona...</option>
                                           <option value="spouse">Coniuge</option>
                                           <option value="child">Figlio/a</option>
                                           <option value="parent">Genitore</option>
@@ -876,7 +908,11 @@ export default function UsersManagementSection() {
                                         </select>
                                       ) : (
                                         <p className="text-sm text-gray-700">
-                                          {displayMember.relationship || '—'}
+                                          {displayMember.relationship === 'spouse' ? 'Coniuge' :
+                                           displayMember.relationship === 'child' ? 'Figlio/a' :
+                                           displayMember.relationship === 'parent' ? 'Genitore' :
+                                           displayMember.relationship === 'sibling' ? 'Fratello/Sorella' :
+                                           'Altro'}
                                         </p>
                                       )}
                                     </div>
