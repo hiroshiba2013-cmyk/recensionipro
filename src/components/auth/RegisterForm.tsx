@@ -611,7 +611,27 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
 
       setRegistrationSuccess(true);
     } catch (err: any) {
-      setError(err.message || 'Errore durante la registrazione');
+      console.error('Errore registrazione:', err);
+
+      let errorMessage = 'Errore durante la registrazione';
+
+      if (err.message) {
+        if (err.message.includes('User already registered') || err.message.includes('already registered')) {
+          errorMessage = 'Questa email è già registrata. Prova ad effettuare il login.';
+        } else if (err.message.includes('Invalid email')) {
+          errorMessage = 'Email non valida';
+        } else if (err.message.includes('Password')) {
+          errorMessage = 'La password non soddisfa i requisiti minimi';
+        } else if (err.message.includes('duplicate key') && err.message.includes('fiscal_code')) {
+          errorMessage = 'Questo Codice Fiscale è già registrato';
+        } else if (err.message.includes('duplicate key') && err.message.includes('nickname')) {
+          errorMessage = 'Questo nickname è già in uso';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -872,7 +892,27 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
 
       setRegistrationSuccess(true);
     } catch (err: any) {
-      setError(err.message || 'Errore durante la registrazione');
+      console.error('Errore registrazione:', err);
+
+      let errorMessage = 'Errore durante la registrazione';
+
+      if (err.message) {
+        if (err.message.includes('User already registered') || err.message.includes('already registered')) {
+          errorMessage = 'Questa email è già registrata. Prova ad effettuare il login.';
+        } else if (err.message.includes('Invalid email')) {
+          errorMessage = 'Email non valida';
+        } else if (err.message.includes('Password')) {
+          errorMessage = 'La password non soddisfa i requisiti minimi';
+        } else if (err.message.includes('duplicate key') && err.message.includes('fiscal_code')) {
+          errorMessage = 'Questo Codice Fiscale è già registrato';
+        } else if (err.message.includes('duplicate key') && err.message.includes('nickname')) {
+          errorMessage = 'Questo nickname è già in uso';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
