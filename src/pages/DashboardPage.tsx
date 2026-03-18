@@ -443,12 +443,28 @@ export function DashboardPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8 bg-gradient-to-r from-blue-100 to-purple-100 rounded-2xl p-8 shadow-lg border-4 border-blue-200">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Dashboard {profile.user_type === 'business' ? 'Attività' : 'Cliente'}
-          </h1>
-          <p className="text-gray-700 text-lg font-medium">
-            Benvenuto, {activeProfile ? (activeProfile.nickname || activeProfile.name) : profile.full_name}!
-          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                Dashboard {profile.user_type === 'business' ? 'Attività' : 'Cliente'}
+              </h1>
+              <p className="text-gray-700 text-lg font-medium">
+                Benvenuto, {activeProfile ? (activeProfile.nickname || activeProfile.name) : profile.full_name}!
+              </p>
+            </div>
+            {currentSubscription && (
+              <div className="bg-white rounded-xl p-4 shadow-md border-2 border-blue-300">
+                <p className="text-xs text-gray-600 mb-1">Piano Attivo</p>
+                <p className="text-lg font-bold text-gray-900">{currentSubscription.plan.name}</p>
+                <p className="text-sm font-semibold text-blue-600">
+                  {currentSubscription.plan.billing_period === 'monthly' ? 'Abbonamento Mensile' : 'Abbonamento Annuale'}
+                </p>
+                {currentSubscription.status === 'trial' && (
+                  <p className="text-xs text-purple-600 font-semibold mt-1">Periodo di prova</p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {profile.user_type === 'business' && (
