@@ -110,7 +110,7 @@ export function DashboardPage() {
       loadDashboardData();
       loadSubscriptionData();
     }
-  }, [profile, selectedBusinessLocationId]);
+  }, [profile, selectedBusinessLocationId, activeProfile]);
 
   const loadDashboardData = async () => {
     if (!profile) return;

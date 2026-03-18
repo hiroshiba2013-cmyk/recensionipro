@@ -189,6 +189,7 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
         setFamilyMembers(familyMembers.filter(m => m.id !== id));
         const newTotal = familyMembers.filter(m => m.id !== id).length + 1;
         await updateSubscription(newTotal);
+        await loadSubscriptionData(); // Ricarica la subscription aggiornata
         onUpdate();
       }
     }
@@ -242,6 +243,7 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
 
       setIsEditing(false);
       await loadFamilyMembers();
+      await loadSubscriptionData(); // Ricarica la subscription aggiornata
       onUpdate();
     } catch (error) {
       console.error('Error updating family members:', error);
