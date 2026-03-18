@@ -288,7 +288,7 @@ function LandingPage() {
               Sezione Solidarietà
             </h2>
             <p className="text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
-              Il 10% del fatturato di Trovafacile viene devoluto in beneficenza per aiutare persone in difficoltà economica.
+              Il 10% del fatturato di Trovafacile viene devoluto in beneficenza ad associazioni e enti no profit che gli utenti sceglieranno attraverso un form dedicato.
             </p>
           </div>
 
@@ -299,19 +299,7 @@ function LandingPage() {
                 <div className="bg-pink-100 rounded-full p-2 flex-shrink-0">
                   <Award className="w-5 h-5 text-pink-600" />
                 </div>
-                <p>Parte dei profitti viene destinata a famiglie e individui che necessitano di supporto economico</p>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="bg-pink-100 rounded-full p-2 flex-shrink-0">
-                  <Award className="w-5 h-5 text-pink-600" />
-                </div>
                 <p>Tutti i documenti contabili e le donazioni effettuate sono pubblicamente consultabili</p>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="bg-pink-100 rounded-full p-2 flex-shrink-0">
-                  <Award className="w-5 h-5 text-pink-600" />
-                </div>
-                <p>Gli utenti possono candidarsi per ricevere aiuto economico attraverso la piattaforma</p>
               </li>
             </ul>
 
