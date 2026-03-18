@@ -392,7 +392,7 @@ function LandingPage() {
 }
 
 function AuthenticatedHomePage() {
-  const { user, profile } = useAuth();
+  const { user, profile, activeProfile } = useAuth();
   const navigate = useNavigate();
   const [jobSeekers, setJobSeekers] = useState<any[]>([]);
   const [featuredSellAds, setFeaturedSellAds] = useState<any[]>([]);
@@ -401,6 +401,11 @@ function AuthenticatedHomePage() {
   const [loading, setLoading] = useState(true);
 
   const isBusiness = profile?.user_type === 'business';
+
+  // Determina il nome da mostrare nel benvenuto
+  const displayName = activeProfile
+    ? (activeProfile.nickname || activeProfile.name)
+    : (profile?.full_name || 'Utente');
 
   useEffect(() => {
     loadHomeData();
@@ -485,8 +490,10 @@ function AuthenticatedHomePage() {
     }
   };
 
-  const displayName = profile?.nickname || profile?.full_name || 'Utente';
-  const firstName = isBusiness && profile?.business_name ? profile.business_name : displayName.split(' ')[0];
+  // Determina il nome per il benvenuto nella hero section
+  const heroDisplayName = activeProfile
+    ? (activeProfile.nickname || activeProfile.name.split(' ')[0])
+    : (profile?.nickname || profile?.full_name?.split(' ')[0] || 'Utente');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -503,7 +510,7 @@ function AuthenticatedHomePage() {
             </div>
 
             <h1 className="text-4xl md:text-6xl font-bold mb-3 text-white drop-shadow-lg">
-              Ciao, {firstName}!
+              Ciao, {heroDisplayName}!
             </h1>
             <p className="text-blue-100 text-lg md:text-xl max-w-2xl mx-auto mb-8">
               Esplora attività locali, trova candidati, vendi e compra oggetti

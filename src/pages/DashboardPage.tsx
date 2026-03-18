@@ -81,7 +81,7 @@ interface SolidarityStats {
 }
 
 export function DashboardPage() {
-  const { profile, selectedBusinessLocationId } = useAuth();
+  const { profile, selectedBusinessLocationId, activeProfile } = useAuth();
   const navigate = useNavigate();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -447,7 +447,7 @@ export function DashboardPage() {
             Dashboard {profile.user_type === 'business' ? 'Attività' : 'Cliente'}
           </h1>
           <p className="text-gray-700 text-lg font-medium">
-            Benvenuto, {profile.full_name}!
+            Benvenuto, {activeProfile ? (activeProfile.nickname || activeProfile.name) : profile.full_name}!
           </p>
         </div>
 
