@@ -272,6 +272,22 @@ export function SubscriptionPage() {
 
       if (profileError) throw profileError;
 
+      // Conferma il referral reward se l'utente è stato referito
+      try {
+        const { data: referralData, error: referralError } = await supabase
+          .rpc('confirm_referral_reward', {
+            p_referred_user_id: profile.id
+          });
+
+        if (referralError) {
+          console.error('Errore assegnazione punti referral:', referralError);
+        } else if (referralData?.success) {
+          console.log('Punti referral assegnati con successo:', referralData);
+        }
+      } catch (referralErr) {
+        console.error('Errore chiamata confirm_referral_reward:', referralErr);
+      }
+
       setMessage('Abbonamento attivato con successo! In un ambiente di produzione, qui si integrerebbe un sistema di pagamento come Stripe.');
 
       setTimeout(() => {
