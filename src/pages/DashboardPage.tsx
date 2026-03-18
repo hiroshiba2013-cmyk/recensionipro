@@ -904,7 +904,10 @@ export function DashboardPage() {
                             <h3 className="text-xl font-bold text-gray-900 mb-2">
                               {plan.name}
                             </h3>
-                            <p className="text-xs text-gray-500 mb-4">Fino a {plan.max_persons} {plan.max_persons === 1 ? 'sede' : 'sedi'}</p>
+                            <p className="text-xs text-gray-500 mb-1">Fino a {plan.max_persons} {plan.max_persons === 1 ? 'sede' : 'sedi'}</p>
+                            <p className="text-xs font-semibold text-gray-700 mb-4">
+                              Abbonamento {plan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'}
+                            </p>
                             <div className="mb-6">
                               <div className="flex items-baseline gap-2">
                                 <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
@@ -1125,7 +1128,10 @@ export function DashboardPage() {
                             <h3 className="text-xl font-bold text-gray-900 mb-2">
                               {plan.name}
                             </h3>
-                            <p className="text-xs text-gray-500 mb-4">Fino a {plan.max_persons} {plan.max_persons === 1 ? 'persona' : 'persone'}</p>
+                            <p className="text-xs text-gray-500 mb-1">Fino a {plan.max_persons} {plan.max_persons === 1 ? 'persona' : 'persone'}</p>
+                            <p className="text-xs font-semibold text-gray-700 mb-4">
+                              Abbonamento {plan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'}
+                            </p>
                             <div className="mb-6">
                               <div className="flex items-baseline gap-2">
                                 <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
