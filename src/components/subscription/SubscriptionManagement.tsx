@@ -82,6 +82,18 @@ export function SubscriptionManagement({
     setMessage('');
 
     try {
+      // Verifica se l'utente è in trial
+      if (currentSubscription?.status === 'trial') {
+        const trialEndDate = new Date(currentSubscription.trial_end_date || currentSubscription.end_date);
+        const today = new Date();
+
+        if (trialEndDate > today) {
+          setMessage('Non puoi cambiare piano durante il periodo di prova. Se cambi piano perdi il diritto alla prova gratuita di 30 giorni. Attendi la scadenza del trial per selezionare un piano.');
+          setLoading(false);
+          return;
+        }
+      }
+
       const selectedPlan = availablePlans.find(p => p.id === planId);
       if (!selectedPlan) throw new Error('Piano non trovato');
 
@@ -252,6 +264,17 @@ export function SubscriptionManagement({
             </div>
           </div>
 
+          {currentSubscription.status === 'trial' && (
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm font-semibold text-yellow-800 mb-1">
+                Attenzione: Piano Bloccato Durante Trial
+              </p>
+              <p className="text-xs text-yellow-700">
+                Durante il periodo di prova non puoi cambiare piano. Se cambi piano perdi il diritto alla prova gratuita di 30 giorni. Potrai scegliere un piano diverso dopo la scadenza del trial.
+              </p>
+            </div>
+          )}
+
           <div className="mt-4 space-y-2">
             <h3 className="font-semibold text-gray-900">Incluso:</h3>
             <ul className="space-y-1 text-sm text-gray-700">
@@ -416,10 +439,15 @@ export function SubscriptionManagement({
                       ) : (
                         <button
                           onClick={() => handleSelectPlan(plan.id)}
-                          disabled={loading}
-                          className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400"
+                          disabled={loading || (currentSubscription?.status === 'trial' && new Date(currentSubscription.trial_end_date || currentSubscription.end_date) > new Date())}
+                          className={`w-full py-3 px-4 rounded-lg transition-colors font-semibold ${
+                            currentSubscription?.status === 'trial' && new Date(currentSubscription.trial_end_date || currentSubscription.end_date) > new Date()
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              : 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400'
+                          }`}
+                          title={currentSubscription?.status === 'trial' && new Date(currentSubscription.trial_end_date || currentSubscription.end_date) > new Date() ? 'Non puoi cambiare piano durante il periodo di prova' : ''}
                         >
-                          {loading ? 'Attivazione...' : 'Seleziona Piano'}
+                          {loading ? 'Attivazione...' : currentSubscription?.status === 'trial' ? 'Bloccato (Trial)' : 'Seleziona Piano'}
                         </button>
                       )}
                     </div>
@@ -511,10 +539,15 @@ export function SubscriptionManagement({
                       ) : (
                         <button
                           onClick={() => handleSelectPlan(plan.id)}
-                          disabled={loading}
-                          className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400"
+                          disabled={loading || (currentSubscription?.status === 'trial' && new Date(currentSubscription.trial_end_date || currentSubscription.end_date) > new Date())}
+                          className={`w-full py-3 px-4 rounded-lg transition-colors font-semibold ${
+                            currentSubscription?.status === 'trial' && new Date(currentSubscription.trial_end_date || currentSubscription.end_date) > new Date()
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              : 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400'
+                          }`}
+                          title={currentSubscription?.status === 'trial' && new Date(currentSubscription.trial_end_date || currentSubscription.end_date) > new Date() ? 'Non puoi cambiare piano durante il periodo di prova' : ''}
                         >
-                          {loading ? 'Attivazione...' : 'Seleziona Piano'}
+                          {loading ? 'Attivazione...' : currentSubscription?.status === 'trial' ? 'Bloccato (Trial)' : 'Seleziona Piano'}
                         </button>
                       )}
                     </div>
