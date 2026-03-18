@@ -69,6 +69,10 @@ export default function UsersManagementSection() {
   const [filterType, setFilterType] = useState<'all' | 'customer' | 'business' | 'admin'>('all');
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [editedMember, setEditedMember] = useState<FamilyMember | null>(null);
+  const [editingLocationId, setEditingLocationId] = useState<string | null>(null);
+  const [editedLocation, setEditedLocation] = useState<BusinessLocation | null>(null);
 
   useEffect(() => {
     loadUsers();
@@ -191,6 +195,10 @@ export default function UsersManagementSection() {
     setViewingUser(user);
     setEditedUser(user);
     setIsEditing(false);
+    setEditingMemberId(null);
+    setEditedMember(null);
+    setEditingLocationId(null);
+    setEditedLocation(null);
     await loadSubscriptionPlan(user.id, user.subscription_type);
 
     // Carica membri della famiglia se è un customer
@@ -201,6 +209,82 @@ export default function UsersManagementSection() {
     // Carica sedi se è un business
     if (user.user_type === 'business') {
       await loadBusinessLocations(user.id);
+    }
+  };
+
+  const handleEditMember = (member: FamilyMember) => {
+    setEditingMemberId(member.id);
+    setEditedMember({ ...member });
+  };
+
+  const handleCancelEditMember = () => {
+    setEditingMemberId(null);
+    setEditedMember(null);
+  };
+
+  const handleSaveMember = async () => {
+    if (!editedMember || !viewingUser) return;
+
+    try {
+      const { error } = await supabase
+        .from('customer_family_members')
+        .update({
+          full_name: editedMember.full_name,
+          nickname: editedMember.nickname,
+          date_of_birth: editedMember.date_of_birth,
+          relationship: editedMember.relationship,
+        })
+        .eq('id', editedMember.id);
+
+      if (error) throw error;
+
+      alert('Membro della famiglia aggiornato con successo!');
+      setEditingMemberId(null);
+      setEditedMember(null);
+      await loadFamilyMembers(viewingUser.id);
+    } catch (error) {
+      console.error('[UsersManagement] Error updating family member:', error);
+      alert('Errore durante l\'aggiornamento del membro della famiglia');
+    }
+  };
+
+  const handleEditLocation = (location: BusinessLocation) => {
+    setEditingLocationId(location.id);
+    setEditedLocation({ ...location });
+  };
+
+  const handleCancelEditLocation = () => {
+    setEditingLocationId(null);
+    setEditedLocation(null);
+  };
+
+  const handleSaveLocation = async () => {
+    if (!editedLocation || !viewingUser) return;
+
+    try {
+      const { error } = await supabase
+        .from('business_locations')
+        .update({
+          name: editedLocation.name,
+          internal_name: editedLocation.internal_name,
+          address: editedLocation.address,
+          city: editedLocation.city,
+          province: editedLocation.province,
+          postal_code: editedLocation.postal_code,
+          phone: editedLocation.phone,
+          email: editedLocation.email,
+        })
+        .eq('id', editedLocation.id);
+
+      if (error) throw error;
+
+      alert('Sede aggiornata con successo!');
+      setEditingLocationId(null);
+      setEditedLocation(null);
+      await loadBusinessLocations(viewingUser.id);
+    } catch (error) {
+      console.error('[UsersManagement] Error updating location:', error);
+      alert('Errore durante l\'aggiornamento della sede');
     }
   };
 
@@ -711,67 +795,126 @@ export default function UsersManagementSection() {
                       <UserCircle className="w-6 h-6 text-purple-600" />
                       <h3 className="text-lg font-bold text-purple-900">Membri della Famiglia</h3>
                       <span className="ml-auto bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full">
-                        {familyMembers.length + 1}
+                        {familyMembers.length}
                       </span>
                     </div>
                     <div className="space-y-3">
-                      {/* Utente principale */}
-                      <div className="bg-white rounded-lg p-4 border-2 border-purple-300">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="font-semibold text-gray-900">{viewingUser.full_name}</p>
-                              <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded font-semibold">
-                                TITOLARE
-                              </span>
-                            </div>
-                            {viewingUser.nickname && (
-                              <p className="text-sm text-gray-600">@{viewingUser.nickname}</p>
-                            )}
-                            <div className="flex items-center gap-3 mt-1">
-                              {viewingUser.date_of_birth && (
-                                <p className="text-xs text-gray-500">
-                                  Nato il {new Date(viewingUser.date_of_birth).toLocaleDateString('it-IT')}
-                                </p>
-                              )}
-                              {viewingUser.relationship && (
-                                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
-                                  {viewingUser.relationship}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Membri della famiglia */}
                       {familyMembers.length === 0 ? (
-                        <p className="text-gray-600 text-sm text-center py-2">Nessun altro membro della famiglia</p>
+                        <p className="text-gray-600 text-sm text-center py-4">Nessun membro della famiglia aggiunto</p>
                       ) : (
-                        familyMembers.map((member) => (
-                          <div key={member.id} className="bg-white rounded-lg p-4 border border-purple-200">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-semibold text-gray-900">{member.full_name}</p>
-                                {member.nickname && (
-                                  <p className="text-sm text-gray-600">@{member.nickname}</p>
-                                )}
-                                <div className="flex items-center gap-3 mt-1">
-                                  {member.date_of_birth && (
-                                    <p className="text-xs text-gray-500">
-                                      Nato il {new Date(member.date_of_birth).toLocaleDateString('it-IT')}
-                                    </p>
-                                  )}
-                                  {member.relationship && (
-                                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
-                                      {member.relationship}
-                                    </span>
+                        familyMembers.map((member) => {
+                          const isEditingThisMember = editingMemberId === member.id;
+                          const displayMember = isEditingThisMember ? editedMember! : member;
+
+                          return (
+                            <div key={member.id} className="bg-white rounded-lg p-4 border border-purple-200">
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 space-y-3">
+                                  {/* Nome Completo */}
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-600 mb-1">Nome Completo</label>
+                                    {isEditingThisMember ? (
+                                      <input
+                                        type="text"
+                                        value={displayMember.full_name}
+                                        onChange={(e) => setEditedMember({ ...displayMember, full_name: e.target.value })}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                      />
+                                    ) : (
+                                      <p className="font-semibold text-gray-900">{displayMember.full_name}</p>
+                                    )}
+                                  </div>
+
+                                  {/* Nickname */}
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-600 mb-1">Nickname</label>
+                                    {isEditingThisMember ? (
+                                      <input
+                                        type="text"
+                                        value={displayMember.nickname || ''}
+                                        onChange={(e) => setEditedMember({ ...displayMember, nickname: e.target.value })}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                      />
+                                    ) : (
+                                      <p className="text-sm text-gray-700">{displayMember.nickname || '—'}</p>
+                                    )}
+                                  </div>
+
+                                  {/* Data di Nascita e Relazione */}
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-600 mb-1">Data di Nascita</label>
+                                      {isEditingThisMember ? (
+                                        <input
+                                          type="date"
+                                          value={displayMember.date_of_birth || ''}
+                                          onChange={(e) => setEditedMember({ ...displayMember, date_of_birth: e.target.value })}
+                                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        />
+                                      ) : (
+                                        <p className="text-sm text-gray-700">
+                                          {displayMember.date_of_birth
+                                            ? new Date(displayMember.date_of_birth).toLocaleDateString('it-IT')
+                                            : '—'}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-600 mb-1">Relazione</label>
+                                      {isEditingThisMember ? (
+                                        <select
+                                          value={displayMember.relationship || ''}
+                                          onChange={(e) => setEditedMember({ ...displayMember, relationship: e.target.value })}
+                                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        >
+                                          <option value="">Seleziona...</option>
+                                          <option value="spouse">Coniuge</option>
+                                          <option value="child">Figlio/a</option>
+                                          <option value="parent">Genitore</option>
+                                          <option value="sibling">Fratello/Sorella</option>
+                                          <option value="other">Altro</option>
+                                        </select>
+                                      ) : (
+                                        <p className="text-sm text-gray-700">
+                                          {displayMember.relationship || '—'}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Pulsanti Azione */}
+                                <div className="flex flex-col gap-2">
+                                  {isEditingThisMember ? (
+                                    <>
+                                      <button
+                                        onClick={handleSaveMember}
+                                        className="px-3 py-1.5 bg-green-500 text-white rounded-lg text-sm font-semibold hover:bg-green-600 transition-colors flex items-center gap-1"
+                                      >
+                                        <Save className="w-4 h-4" />
+                                        Salva
+                                      </button>
+                                      <button
+                                        onClick={handleCancelEditMember}
+                                        className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors"
+                                      >
+                                        Annulla
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <button
+                                      onClick={() => handleEditMember(member)}
+                                      className="px-3 py-1.5 bg-blue-500 text-white rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors flex items-center gap-1"
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                      Modifica
+                                    </button>
                                   )}
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        ))
+                          );
+                        })
                       )}
                     </div>
                   </div>
@@ -1110,42 +1253,175 @@ export default function UsersManagementSection() {
                     <div className="flex items-center gap-2 mb-4">
                       <MapPin className="w-6 h-6 text-indigo-600" />
                       <h3 className="text-lg font-bold text-indigo-900">Sedi / Punti Vendita</h3>
+                      <span className="ml-auto bg-indigo-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        {businessLocations.length}
+                      </span>
                     </div>
                     {businessLocations.length === 0 ? (
-                      <p className="text-gray-600 text-sm">Nessuna sede registrata</p>
+                      <p className="text-gray-600 text-sm text-center py-4">Nessuna sede registrata</p>
                     ) : (
                       <div className="space-y-3">
-                        {businessLocations.map((location) => (
-                          <div key={location.id} className="bg-white rounded-lg p-4 border border-indigo-200">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <p className="font-semibold text-gray-900">{location.name}</p>
-                                {location.internal_name && (
-                                  <p className="text-sm text-gray-500 italic">({location.internal_name})</p>
-                                )}
-                                <div className="mt-2 space-y-1">
-                                  <p className="text-sm text-gray-700">
-                                    {location.address}
-                                  </p>
-                                  <p className="text-sm text-gray-700">
-                                    {location.postal_code && `${location.postal_code} - `}
-                                    {location.city} ({location.province})
-                                  </p>
-                                  {location.phone && (
-                                    <p className="text-sm text-gray-600">
-                                      Tel: {location.phone}
-                                    </p>
-                                  )}
-                                  {location.email && (
-                                    <p className="text-sm text-gray-600">
-                                      Email: {location.email}
-                                    </p>
+                        {businessLocations.map((location) => {
+                          const isEditingThisLocation = editingLocationId === location.id;
+                          const displayLocation = isEditingThisLocation ? editedLocation! : location;
+
+                          return (
+                            <div key={location.id} className="bg-white rounded-lg p-4 border border-indigo-200">
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 space-y-3">
+                                  {/* Nome Sede */}
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-600 mb-1">Nome Sede</label>
+                                    {isEditingThisLocation ? (
+                                      <input
+                                        type="text"
+                                        value={displayLocation.name}
+                                        onChange={(e) => setEditedLocation({ ...displayLocation, name: e.target.value })}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                      />
+                                    ) : (
+                                      <p className="font-semibold text-gray-900">{displayLocation.name}</p>
+                                    )}
+                                  </div>
+
+                                  {/* Nome Interno */}
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-600 mb-1">Nome Interno (opzionale)</label>
+                                    {isEditingThisLocation ? (
+                                      <input
+                                        type="text"
+                                        value={displayLocation.internal_name || ''}
+                                        onChange={(e) => setEditedLocation({ ...displayLocation, internal_name: e.target.value })}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                      />
+                                    ) : (
+                                      <p className="text-sm text-gray-700 italic">{displayLocation.internal_name || '—'}</p>
+                                    )}
+                                  </div>
+
+                                  {/* Indirizzo */}
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-600 mb-1">Indirizzo</label>
+                                    {isEditingThisLocation ? (
+                                      <input
+                                        type="text"
+                                        value={displayLocation.address}
+                                        onChange={(e) => setEditedLocation({ ...displayLocation, address: e.target.value })}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                      />
+                                    ) : (
+                                      <p className="text-sm text-gray-700">{displayLocation.address}</p>
+                                    )}
+                                  </div>
+
+                                  {/* CAP, Città, Provincia */}
+                                  <div className="grid grid-cols-3 gap-3">
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-600 mb-1">CAP</label>
+                                      {isEditingThisLocation ? (
+                                        <input
+                                          type="text"
+                                          value={displayLocation.postal_code || ''}
+                                          onChange={(e) => setEditedLocation({ ...displayLocation, postal_code: e.target.value })}
+                                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                          maxLength={5}
+                                        />
+                                      ) : (
+                                        <p className="text-sm text-gray-700">{displayLocation.postal_code || '—'}</p>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-600 mb-1">Città</label>
+                                      {isEditingThisLocation ? (
+                                        <input
+                                          type="text"
+                                          value={displayLocation.city}
+                                          onChange={(e) => setEditedLocation({ ...displayLocation, city: e.target.value })}
+                                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                        />
+                                      ) : (
+                                        <p className="text-sm text-gray-700">{displayLocation.city}</p>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-600 mb-1">Provincia</label>
+                                      {isEditingThisLocation ? (
+                                        <input
+                                          type="text"
+                                          value={displayLocation.province}
+                                          onChange={(e) => setEditedLocation({ ...displayLocation, province: e.target.value.toUpperCase() })}
+                                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent uppercase"
+                                          maxLength={2}
+                                        />
+                                      ) : (
+                                        <p className="text-sm text-gray-700 uppercase">{displayLocation.province}</p>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Telefono ed Email */}
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-600 mb-1">Telefono</label>
+                                      {isEditingThisLocation ? (
+                                        <input
+                                          type="tel"
+                                          value={displayLocation.phone || ''}
+                                          onChange={(e) => setEditedLocation({ ...displayLocation, phone: e.target.value })}
+                                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                        />
+                                      ) : (
+                                        <p className="text-sm text-gray-700">{displayLocation.phone || '—'}</p>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-600 mb-1">Email</label>
+                                      {isEditingThisLocation ? (
+                                        <input
+                                          type="email"
+                                          value={displayLocation.email || ''}
+                                          onChange={(e) => setEditedLocation({ ...displayLocation, email: e.target.value })}
+                                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                        />
+                                      ) : (
+                                        <p className="text-sm text-gray-700">{displayLocation.email || '—'}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Pulsanti Azione */}
+                                <div className="flex flex-col gap-2">
+                                  {isEditingThisLocation ? (
+                                    <>
+                                      <button
+                                        onClick={handleSaveLocation}
+                                        className="px-3 py-1.5 bg-green-500 text-white rounded-lg text-sm font-semibold hover:bg-green-600 transition-colors flex items-center gap-1"
+                                      >
+                                        <Save className="w-4 h-4" />
+                                        Salva
+                                      </button>
+                                      <button
+                                        onClick={handleCancelEditLocation}
+                                        className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors"
+                                      >
+                                        Annulla
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <button
+                                      onClick={() => handleEditLocation(location)}
+                                      className="px-3 py-1.5 bg-blue-500 text-white rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors flex items-center gap-1"
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                      Modifica
+                                    </button>
                                   )}
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
