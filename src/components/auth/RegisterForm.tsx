@@ -561,12 +561,17 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
       }
 
       if (user) {
+        console.log('Creazione abbonamento con:', { numberOfPeople, billingPeriod });
+
         const { data: plan } = await supabase
           .from('subscription_plans')
           .select('id, name, price, billing_period, max_persons')
           .eq('max_persons', parseInt(numberOfPeople))
           .eq('billing_period', billingPeriod)
+          .not('name', 'like', '%Business%')
           .single();
+
+        console.log('Piano trovato:', plan);
 
         if (plan) {
           const startDate = new Date();
