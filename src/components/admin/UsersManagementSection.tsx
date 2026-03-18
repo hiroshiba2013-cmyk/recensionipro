@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Trash2, Eye, X as CloseIcon, FilterX, Save, FileEdit as Edit } from 'lucide-react';
+import { Users, Trash2, Eye, X as CloseIcon, FilterX, Save, FileEdit as Edit, CircleUser as UserCircle, MapPin } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface User {
@@ -38,6 +38,26 @@ interface SubscriptionPlan {
   billing_period: string;
 }
 
+interface FamilyMember {
+  id: string;
+  full_name: string;
+  nickname?: string;
+  date_of_birth?: string;
+  relationship?: string;
+}
+
+interface BusinessLocation {
+  id: string;
+  name: string;
+  internal_name?: string;
+  address: string;
+  city: string;
+  province: string;
+  postal_code?: string;
+  phone?: string;
+  email?: string;
+}
+
 export default function UsersManagementSection() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +67,8 @@ export default function UsersManagementSection() {
   const [saving, setSaving] = useState(false);
   const [subscriptionPlan, setSubscriptionPlan] = useState<SubscriptionPlan | null>(null);
   const [filterType, setFilterType] = useState<'all' | 'customer' | 'business' | 'admin'>('all');
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
 
   useEffect(() => {
     loadUsers();
@@ -116,11 +138,70 @@ export default function UsersManagementSection() {
     }
   };
 
+  const loadFamilyMembers = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('customer_family_members')
+        .select('id, full_name, nickname, date_of_birth, relationship')
+        .eq('customer_id', userId)
+        .order('full_name');
+
+      if (error) throw error;
+
+      setFamilyMembers(data || []);
+    } catch (error) {
+      console.error('[UsersManagement] Error loading family members:', error);
+      setFamilyMembers([]);
+    }
+  };
+
+  const loadBusinessLocations = async (userId: string) => {
+    try {
+      // Prima troviamo il business collegato all'utente
+      const { data: business, error: businessError } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('owner_id', userId)
+        .maybeSingle();
+
+      if (businessError) throw businessError;
+
+      if (!business) {
+        setBusinessLocations([]);
+        return;
+      }
+
+      // Poi carichiamo le location collegate al business
+      const { data, error } = await supabase
+        .from('business_locations')
+        .select('id, name, internal_name, address, city, province, postal_code, phone, email')
+        .eq('business_id', business.id)
+        .order('name');
+
+      if (error) throw error;
+
+      setBusinessLocations(data || []);
+    } catch (error) {
+      console.error('[UsersManagement] Error loading business locations:', error);
+      setBusinessLocations([]);
+    }
+  };
+
   const handleViewUser = async (user: User) => {
     setViewingUser(user);
     setEditedUser(user);
     setIsEditing(false);
     await loadSubscriptionPlan(user.id, user.subscription_type);
+
+    // Carica membri della famiglia se è un customer
+    if (user.user_type === 'customer') {
+      await loadFamilyMembers(user.id);
+    }
+
+    // Carica sedi se è un business
+    if (user.user_type === 'business') {
+      await loadBusinessLocations(user.id);
+    }
   };
 
   const handleSaveUser = async () => {
@@ -624,6 +705,77 @@ export default function UsersManagementSection() {
                     </div>
                   </div>
 
+                  {/* Membri della Famiglia */}
+                  <div className="bg-purple-50 rounded-xl p-6 border-2 border-purple-200">
+                    <div className="flex items-center gap-2 mb-4">
+                      <UserCircle className="w-6 h-6 text-purple-600" />
+                      <h3 className="text-lg font-bold text-purple-900">Membri della Famiglia</h3>
+                      <span className="ml-auto bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        {familyMembers.length + 1}
+                      </span>
+                    </div>
+                    <div className="space-y-3">
+                      {/* Utente principale */}
+                      <div className="bg-white rounded-lg p-4 border-2 border-purple-300">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-semibold text-gray-900">{viewingUser.full_name}</p>
+                              <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded font-semibold">
+                                TITOLARE
+                              </span>
+                            </div>
+                            {viewingUser.nickname && (
+                              <p className="text-sm text-gray-600">@{viewingUser.nickname}</p>
+                            )}
+                            <div className="flex items-center gap-3 mt-1">
+                              {viewingUser.date_of_birth && (
+                                <p className="text-xs text-gray-500">
+                                  Nato il {new Date(viewingUser.date_of_birth).toLocaleDateString('it-IT')}
+                                </p>
+                              )}
+                              {viewingUser.relationship && (
+                                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                                  {viewingUser.relationship}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Membri della famiglia */}
+                      {familyMembers.length === 0 ? (
+                        <p className="text-gray-600 text-sm text-center py-2">Nessun altro membro della famiglia</p>
+                      ) : (
+                        familyMembers.map((member) => (
+                          <div key={member.id} className="bg-white rounded-lg p-4 border border-purple-200">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-semibold text-gray-900">{member.full_name}</p>
+                                {member.nickname && (
+                                  <p className="text-sm text-gray-600">@{member.nickname}</p>
+                                )}
+                                <div className="flex items-center gap-3 mt-1">
+                                  {member.date_of_birth && (
+                                    <p className="text-xs text-gray-500">
+                                      Nato il {new Date(member.date_of_birth).toLocaleDateString('it-IT')}
+                                    </p>
+                                  )}
+                                  {member.relationship && (
+                                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                                      {member.relationship}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
                   {/* Piano Abbonamento */}
                   {subscriptionPlan && (
                     <div className="bg-yellow-50 rounded-xl p-6 border-2 border-yellow-200">
@@ -952,6 +1104,51 @@ export default function UsersManagementSection() {
                       </div>
                     </div>
                   )}
+
+                  {/* Sedi Business */}
+                  <div className="bg-indigo-50 rounded-xl p-6 border-2 border-indigo-200">
+                    <div className="flex items-center gap-2 mb-4">
+                      <MapPin className="w-6 h-6 text-indigo-600" />
+                      <h3 className="text-lg font-bold text-indigo-900">Sedi / Punti Vendita</h3>
+                    </div>
+                    {businessLocations.length === 0 ? (
+                      <p className="text-gray-600 text-sm">Nessuna sede registrata</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {businessLocations.map((location) => (
+                          <div key={location.id} className="bg-white rounded-lg p-4 border border-indigo-200">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <p className="font-semibold text-gray-900">{location.name}</p>
+                                {location.internal_name && (
+                                  <p className="text-sm text-gray-500 italic">({location.internal_name})</p>
+                                )}
+                                <div className="mt-2 space-y-1">
+                                  <p className="text-sm text-gray-700">
+                                    {location.address}
+                                  </p>
+                                  <p className="text-sm text-gray-700">
+                                    {location.postal_code && `${location.postal_code} - `}
+                                    {location.city} ({location.province})
+                                  </p>
+                                  {location.phone && (
+                                    <p className="text-sm text-gray-600">
+                                      Tel: {location.phone}
+                                    </p>
+                                  )}
+                                  {location.email && (
+                                    <p className="text-sm text-gray-600">
+                                      Email: {location.email}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
