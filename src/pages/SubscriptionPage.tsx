@@ -633,14 +633,22 @@ export function SubscriptionPage() {
                     <p className="text-gray-600">
                       Per {familyMembersCount} {familyMembersCount === 1 ? 'persona' : 'persone'}
                     </p>
+                    <p className="text-sm font-medium text-gray-700 mt-1">
+                      Abbonamento {currentSubscription.plan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'}
+                    </p>
                   </div>
                   <div className="text-right">
                     <div className="text-3xl font-bold text-blue-600">
-                      {currentSubscription.status === 'trial' ? 'GRATIS' : `${currentSubscription.plan.price.toFixed(2)}€`}
+                      {currentSubscription.status === 'trial' ? 'GRATIS' : `€${currentSubscription.plan.price.toFixed(2)}`}
                     </div>
                     <div className="text-sm text-gray-600">
                       {currentSubscription.status === 'trial' ? 'per 1 mese' : currentSubscription.plan.billing_period === 'monthly' ? 'al mese' : 'all\'anno'}
                     </div>
+                    {currentSubscription.status === 'trial' && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Poi €{currentSubscription.plan.price.toFixed(2)}/{currentSubscription.plan.billing_period === 'monthly' ? 'mese' : 'anno'}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -1047,14 +1055,22 @@ export function SubscriptionPage() {
                   <p className="text-gray-600">
                     Per {businessLocationsCount} {businessLocationsCount === 1 ? 'punto vendita' : 'punti vendita'}
                   </p>
+                  <p className="text-sm font-medium text-gray-700 mt-1">
+                    Abbonamento {currentSubscription.plan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'}
+                  </p>
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold text-blue-600">
-                    {currentSubscription.status === 'trial' ? 'GRATIS' : `${Number(currentSubscription.plan.price).toFixed(2)}€`}
+                    {currentSubscription.status === 'trial' ? 'GRATIS' : `€${Number(currentSubscription.plan.price).toFixed(2)}`}
                   </div>
                   <div className="text-sm text-gray-600">
                     {currentSubscription.status === 'trial' ? 'per 1 mese' : `${currentSubscription.plan.billing_period === 'monthly' ? 'al mese' : 'all\'anno'} + IVA`}
                   </div>
+                  {currentSubscription.status === 'trial' && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Poi €{Number(currentSubscription.plan.price).toFixed(2)}/{currentSubscription.plan.billing_period === 'monthly' ? 'mese' : 'anno'} + IVA
+                    </p>
+                  )}
                 </div>
               </div>
 

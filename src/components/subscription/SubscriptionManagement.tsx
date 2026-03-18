@@ -191,15 +191,21 @@ export function SubscriptionManagement({
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-sm text-gray-600 mb-1">
-                {currentSubscription.status === 'trial' ? 'Abbonamento Gratuito per 1 Mese' : 'Piano Attuale'}
+                {currentSubscription.status === 'trial' ? 'Prova Gratuita 1 Mese' : 'Piano Attuale'}
               </p>
               <p className="text-2xl font-bold text-gray-900">{currentSubscription.plan.name}</p>
+              <p className="text-sm font-medium text-gray-700 mt-1">
+                Abbonamento {currentSubscription.plan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'}
+              </p>
             </div>
             <div className="text-right">
               {currentSubscription.status === 'trial' ? (
                 <>
                   <p className="text-3xl font-bold text-purple-600">GRATIS</p>
                   <p className="text-sm text-gray-600">Primo mese gratuito</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Poi €{Number(currentSubscription.plan.price).toFixed(2)}/{currentSubscription.plan.billing_period === 'monthly' ? 'mese' : 'anno'}
+                  </p>
                 </>
               ) : (
                 <>
