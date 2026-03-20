@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Edit, Save, X, Plus, Trash2, Building2 } from 'lucide-react';
+import { MapPin, FileEdit as Edit, Save, X, Plus, Trash2, Building2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
 import { CITIES_BY_PROVINCE, PROVINCE_TO_CODE } from '../../lib/cities';
@@ -621,21 +621,21 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     Servizi Disponibili
                   </label>
                   <textarea
-                    value={(location.services || []).join('\n')}
+                    value={(location.services || []).join(', ')}
                     onChange={(e) => {
                       const servicesArray = e.target.value
-                        .split('\n')
+                        .split(',')
                         .map(s => s.trim())
                         .filter(s => s.length > 0);
                       setLocations(locations.map(loc =>
                         loc.id === location.id ? { ...loc, services: servicesArray } : loc
                       ));
                     }}
-                    placeholder="Inserisci un servizio per riga, es:&#10;WiFi gratuito&#10;Parcheggio disponibile&#10;Consegna a domicilio&#10;Pagamenti contactless"
-                    rows={4}
+                    placeholder="Vendita farmaci, Misurazione pressione, Servizio a domicilio, Pagamenti contactless"
+                    rows={3}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Inserisci un servizio per riga. Questi verranno mostrati ai clienti come badge.</p>
+                  <p className="text-xs text-gray-500 mt-1">Separa i servizi con la virgola. Puoi usare spazi nelle parole (es. "WiFi gratuito, Consegna a domicilio")</p>
                 </div>
 
                 <div className="md:col-span-2">
