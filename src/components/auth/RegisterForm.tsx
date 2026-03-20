@@ -2018,8 +2018,16 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                     updated[index] = { ...updated[index], services };
                     setBusinessLocations(updated);
                   }}
+                  onKeyDown={(e) => {
+                    // Permetti esplicitamente la barra spaziatrice
+                    if (e.key === ' ' || e.keyCode === 32) {
+                      e.stopPropagation();
+                    }
+                  }}
                   placeholder="Vendita farmaci, Misurazione pressione, Servizio a domicilio"
                   rows={2}
+                  autoComplete="off"
+                  spellCheck="false"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />
                 <p className="text-xs text-gray-500 mt-1">Separa i servizi con la virgola. Puoi usare spazi nelle parole (es. "Vendita farmaci, Test rapidi")</p>
