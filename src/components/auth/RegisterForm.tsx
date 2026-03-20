@@ -2010,8 +2010,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Servizi Offerti
                 </label>
-                <input
-                  type="text"
+                <textarea
                   value={location.services.join(', ')}
                   onChange={(e) => {
                     const services = e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
@@ -2020,8 +2019,8 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                     setBusinessLocations(updated);
                   }}
                   placeholder="Vendita farmaci, Misurazione pressione, Servizio a domicilio"
-                  autoComplete="off"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
                 />
                 <p className="text-xs text-gray-500 mt-1">Separa i servizi con la virgola. Puoi usare spazi nelle parole (es. "Vendita farmaci, Test rapidi")</p>
               </div>
