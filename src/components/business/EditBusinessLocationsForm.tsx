@@ -39,7 +39,7 @@ interface BusinessLocation {
   business_hours: BusinessHours | null;
   is_primary: boolean;
   description?: string | null;
-  services?: string[] | string | null;
+  services?: string | null;
 }
 
 interface EditBusinessLocationsFormProps {
@@ -135,7 +135,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
         email: '',
         avatar_url: null,
         description: '',
-        services: [],
+        services: '',
         business_hours: {
           monday: defaultHours,
           tuesday: defaultHours,
@@ -446,13 +446,13 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     {location.description && (
                       <p className="text-sm text-gray-600 mb-4 italic">{location.description}</p>
                     )}
-                    {location.services && location.services.length > 0 && (
+                    {location.services && location.services.trim().length > 0 && (
                       <div className="mb-4">
                         <p className="text-sm text-gray-600 mb-2 font-semibold">Servizi disponibili:</p>
                         <div className="flex flex-wrap gap-2">
-                          {location.services.map((service, idx) => (
+                          {location.services.split(',').map((service, idx) => (
                             <span key={idx} className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-1 rounded-full">
-                              {service}
+                              {service.trim()}
                             </span>
                           ))}
                         </div>
@@ -643,13 +643,8 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     Servizi Disponibili
                   </label>
                   <textarea
-                    value={(typeof location.services === 'string' ? location.services : location.services?.join(', ')) || ''}
-                    onChange={(e) => {
-                      const newValue = e.target.value;
-                      setLocations(prev => prev.map(loc =>
-                        loc.id === location.id ? { ...loc, services: newValue } : loc
-                      ));
-                    }}
+                    value={location.services || ''}
+                    onChange={(e) => handleChange(location.id, 'services', e.target.value)}
                     placeholder="Vendita farmaci, Misurazione pressione, Servizio a domicilio, Pagamenti contactless"
                     rows={3}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
