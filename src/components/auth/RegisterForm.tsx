@@ -2019,7 +2019,11 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                     setBusinessLocations(updated);
                   }}
                   placeholder="Vendita farmaci, Misurazione pressione, Servizio a domicilio"
-                  rows={2}
+                  rows={3}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck="false"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
                 />
                 <p className="text-xs text-gray-500 mt-1">Separa i servizi con la virgola. Puoi usare spazi nelle parole (es. "Vendita farmaci, Test rapidi")</p>
