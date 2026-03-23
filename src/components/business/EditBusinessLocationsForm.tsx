@@ -39,7 +39,7 @@ interface BusinessLocation {
   business_hours: BusinessHours | null;
   is_primary: boolean;
   description?: string | null;
-  services?: string | null;
+  services?: string;
 }
 
 interface EditBusinessLocationsFormProps {
@@ -69,9 +69,9 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
       if (data) {
         const normalizedData = data.map(loc => ({
           ...loc,
-          services: Array.isArray(loc.services)
+          services: Array.isArray(loc.services) && loc.services.length > 0
             ? loc.services.join(', ')
-            : (loc.services || '')
+            : ''
         }));
         setLocations(normalizedData);
       }
@@ -276,7 +276,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
           return;
         }
 
-        const servicesString = location.services?.trim() || '';
+        const servicesString = (location.services || '').trim();
         const servicesArray = servicesString.length > 0
           ? servicesString.split(',').map(s => s.trim()).filter(s => s.length > 0)
           : null;
@@ -644,9 +644,9 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     Servizi Disponibili
                   </label>
                   <textarea
-                    value={location.services || ''}
+                    value={location.services ?? ''}
                     onChange={(e) => handleChange(location.id, 'services', e.target.value)}
-                    placeholder="Vendita farmaci, Misurazione pressione, Servizio a domicilio, Pagamenti contactless"
+                    placeholder="WiFi gratuito, Parcheggio, Servizio a domicilio, Pagamenti contactless"
                     rows={3}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   />
