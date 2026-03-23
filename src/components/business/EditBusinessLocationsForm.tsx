@@ -276,9 +276,10 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
           return;
         }
 
-        const servicesArray = typeof location.services === 'string'
-          ? location.services.split(',').map(s => s.trim()).filter(s => s.length > 0)
-          : (location.services || []);
+        const servicesString = location.services?.trim() || '';
+        const servicesArray = servicesString.length > 0
+          ? servicesString.split(',').map(s => s.trim()).filter(s => s.length > 0)
+          : null;
 
         if (location.id.startsWith('new-')) {
           const { error } = await supabase
