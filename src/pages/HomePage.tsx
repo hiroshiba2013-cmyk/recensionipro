@@ -232,7 +232,7 @@ function LandingPage() {
                     <h3 className="text-3xl font-bold text-gray-900 mb-2">{plan.name}</h3>
                     <div className="flex items-baseline justify-center gap-2">
                       <span className="text-5xl font-extrabold text-green-600">
-                        {plan.monthly_price.toFixed(2)}€
+                        {plan.price?.toFixed(2) || '0.00'}€
                       </span>
                       <span className="text-gray-600">/mese</span>
                     </div>
