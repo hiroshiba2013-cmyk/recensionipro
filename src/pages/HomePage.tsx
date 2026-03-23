@@ -43,7 +43,7 @@ function LandingPage() {
       const { data: plansResult } = await supabase
         .from('subscription_plans')
         .select('*')
-        .in('name', ['Base', 'Standard'])
+        .in('name', ['Famiglia', 'Solidale'])
         .order('monthly_price', { ascending: true });
 
       if (plansResult) {
