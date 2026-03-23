@@ -911,10 +911,15 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
                 value={formData.location_services}
                 onChange={(e) => setFormData({ ...formData, location_services: e.target.value })}
                 rows={4}
-                placeholder="WiFi gratuito, Parcheggio disponibile, Consegna a domicilio, Pagamenti contactless"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                placeholder="Es. vendita farmaci, tamponi, misurazione pressione, consulenze farmaceutiche"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-500 mt-1">Separa i servizi con la virgola. Puoi usare spazi nelle parole (es. WiFi gratuito, Consegna a domicilio)</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Inserisci i servizi offerti separandoli con la virgola. Puoi usare spazi normalmente.
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                Esempio: vendita farmaci, tamponi, misurazione pressione, consulenze farmaceutiche
+              </p>
             </div>
           </div>
         </div>
