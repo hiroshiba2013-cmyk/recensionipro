@@ -39,7 +39,7 @@ interface BusinessLocation {
   business_hours: BusinessHours | null;
   is_primary: boolean;
   description?: string | null;
-  services?: string[] | null;
+  services?: string[] | string | null;
 }
 
 interface EditBusinessLocationsFormProps {
@@ -67,7 +67,13 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
         .order('is_primary', { ascending: false });
 
       if (data) {
-        setLocations(data);
+        const normalizedData = data.map(loc => ({
+          ...loc,
+          services: Array.isArray(loc.services)
+            ? loc.services.join(', ')
+            : (loc.services || '')
+        }));
+        setLocations(normalizedData);
       }
 
       const { data: businessData } = await supabase
@@ -326,7 +332,13 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
         .order('is_primary', { ascending: false });
 
       if (updatedData) {
-        setLocations(updatedData);
+        const normalizedData = updatedData.map(loc => ({
+          ...loc,
+          services: Array.isArray(loc.services)
+            ? loc.services.join(', ')
+            : (loc.services || '')
+        }));
+        setLocations(normalizedData);
       }
 
       onUpdate();
@@ -348,7 +360,13 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
       .order('is_primary', { ascending: false });
 
     if (data) {
-      setLocations(data);
+      const normalizedData = data.map(loc => ({
+        ...loc,
+        services: Array.isArray(loc.services)
+          ? loc.services.join(', ')
+          : (loc.services || '')
+      }));
+      setLocations(normalizedData);
     }
     setLoading(false);
     setIsEditing(false);
@@ -625,10 +643,11 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     Servizi Disponibili
                   </label>
                   <textarea
-                    value={Array.isArray(location.services) ? (location.services as string[]).join(', ') : (location.services as string || '')}
+                    value={(typeof location.services === 'string' ? location.services : location.services?.join(', ')) || ''}
                     onChange={(e) => {
-                      setLocations(locations.map(loc =>
-                        loc.id === location.id ? { ...loc, services: e.target.value as any } : loc
+                      const newValue = e.target.value;
+                      setLocations(prev => prev.map(loc =>
+                        loc.id === location.id ? { ...loc, services: newValue } : loc
                       ));
                     }}
                     placeholder="Vendita farmaci, Misurazione pressione, Servizio a domicilio, Pagamenti contactless"
