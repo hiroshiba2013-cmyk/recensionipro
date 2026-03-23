@@ -55,8 +55,40 @@ export default function InteractiveMap({
       }
     `;
     document.head.appendChild(style);
+
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
+        const maps = document.querySelectorAll('.leaflet-container');
+        maps.forEach(mapEl => {
+          const mapInstance = (mapEl as any)._leaflet_map;
+          if (mapInstance && mapInstance.keyboard) {
+            mapInstance.keyboard.disable();
+          }
+        });
+      }
+    };
+
+    const handleFocusOut = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
+        const maps = document.querySelectorAll('.leaflet-container');
+        maps.forEach(mapEl => {
+          const mapInstance = (mapEl as any)._leaflet_map;
+          if (mapInstance && mapInstance.keyboard) {
+            mapInstance.keyboard.enable();
+          }
+        });
+      }
+    };
+
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', handleFocusOut);
+
     return () => {
       document.head.removeChild(style);
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('focusout', handleFocusOut);
     };
   }, []);
 
@@ -67,6 +99,7 @@ export default function InteractiveMap({
         zoom={zoom}
         style={{ height: '100%', width: '100%', borderRadius: '0.5rem' }}
         scrollWheelZoom={true}
+        keyboard={false}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
