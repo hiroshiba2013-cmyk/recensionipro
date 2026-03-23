@@ -270,6 +270,10 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
           return;
         }
 
+        const servicesArray = typeof location.services === 'string'
+          ? location.services.split(',').map(s => s.trim()).filter(s => s.length > 0)
+          : (location.services || []);
+
         if (location.id.startsWith('new-')) {
           const { error } = await supabase
             .from('business_locations')
@@ -286,7 +290,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
               business_hours: location.business_hours,
               is_primary: location.is_primary,
               description: location.description?.trim() || null,
-              services: location.services || [],
+              services: servicesArray,
             });
 
           if (error) throw error;
@@ -305,7 +309,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
               business_hours: location.business_hours,
               is_primary: location.is_primary,
               description: location.description?.trim() || null,
-              services: location.services || [],
+              services: servicesArray,
             })
             .eq('id', location.id);
 
@@ -621,14 +625,10 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     Servizi Disponibili
                   </label>
                   <textarea
-                    value={(location.services || []).join(', ')}
+                    value={Array.isArray(location.services) ? (location.services as string[]).join(', ') : (location.services as string || '')}
                     onChange={(e) => {
-                      const servicesArray = e.target.value
-                        .split(',')
-                        .map(s => s.trim())
-                        .filter(s => s.length > 0);
                       setLocations(locations.map(loc =>
-                        loc.id === location.id ? { ...loc, services: servicesArray } : loc
+                        loc.id === location.id ? { ...loc, services: e.target.value as any } : loc
                       ));
                     }}
                     placeholder="Vendita farmaci, Misurazione pressione, Servizio a domicilio, Pagamenti contactless"
