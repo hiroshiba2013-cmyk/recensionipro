@@ -909,7 +909,16 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
               </label>
               <textarea
                 value={formData.location_services}
-                onChange={(e) => setFormData({ ...formData, location_services: e.target.value })}
+                onChange={(e) => {
+                  console.log('onChange fired:', e.target.value);
+                  setFormData({ ...formData, location_services: e.target.value });
+                }}
+                onKeyDown={(e) => {
+                  console.log('onKeyDown:', e.key, e.keyCode);
+                }}
+                onInput={(e) => {
+                  console.log('onInput fired:', (e.target as HTMLTextAreaElement).value);
+                }}
                 rows={4}
                 placeholder="Es. vendita farmaci, tamponi, misurazione pressione, consulenze farmaceutiche"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
