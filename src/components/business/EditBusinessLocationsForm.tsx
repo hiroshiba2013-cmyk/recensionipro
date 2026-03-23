@@ -179,6 +179,8 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
   };
 
   const handleChange = (id: string, field: keyof BusinessLocation, value: string | boolean) => {
+    console.log('handleChange called:', { id, field, value, valueType: typeof value });
+
     if (field === 'is_primary' && value === true) {
       setLocations(locations.map(location => ({
         ...location,
@@ -198,9 +200,18 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
         return location;
       }));
     } else {
-      setLocations(locations.map(location =>
-        location.id === id ? { ...location, [field]: value } : location
-      ));
+      console.log('Setting field', field, 'to value:', value);
+      setLocations(prev => {
+        const updated = prev.map(location => {
+          if (location.id === id) {
+            console.log('Updating location', id, 'old value:', location[field], 'new value:', value);
+            return { ...location, [field]: value };
+          }
+          return location;
+        });
+        console.log('Updated locations:', updated);
+        return updated;
+      });
     }
   };
 
@@ -645,7 +656,16 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                   </label>
                   <textarea
                     value={location.services ?? ''}
-                    onChange={(e) => handleChange(location.id, 'services', e.target.value)}
+                    onChange={(e) => {
+                      console.log('=== SERVICES TEXTAREA (EditBusinessLocationsForm) ===');
+                      console.log('Location ID:', location.id);
+                      console.log('Current services:', location.services);
+                      console.log('New value:', e.target.value);
+                      handleChange(location.id, 'services', e.target.value);
+                    }}
+                    onKeyDown={(e) => {
+                      console.log('KEY DOWN:', e.key, 'Current:', location.services);
+                    }}
                     placeholder="WiFi gratuito, Parcheggio, Servizio a domicilio, Pagamenti contactless"
                     rows={3}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
