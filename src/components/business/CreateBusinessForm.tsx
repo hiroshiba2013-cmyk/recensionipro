@@ -910,25 +910,11 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
               <textarea
                 value={formData.location_services}
                 onChange={(e) => setFormData({ ...formData, location_services: e.target.value })}
-                onKeyDown={(e) => {
-                  e.stopPropagation();
-                }}
-                onKeyPress={(e) => {
-                  e.stopPropagation();
-                }}
-                onKeyUp={(e) => {
-                  e.stopPropagation();
-                }}
                 rows={4}
                 placeholder="Es. vendita farmaci, tamponi, misurazione pressione, consulenze farmaceutiche"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Inserisci i servizi offerti separandoli con la virgola. Puoi usare spazi normalmente.
-              </p>
-              <p className="text-xs text-blue-600 mt-1">
-                Esempio: vendita farmaci, tamponi, misurazione pressione, consulenze farmaceutiche
-              </p>
+              <p className="text-xs text-gray-500 mt-1">Inserisci i servizi offerti separandoli con la virgola</p>
             </div>
           </div>
         </div>
