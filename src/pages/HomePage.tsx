@@ -40,13 +40,15 @@ function LandingPage() {
     try {
       setLoadingData(true);
 
-      const { data: plansResult } = await supabase
+      const { data: plansResult, error } = await supabase
         .from('subscription_plans')
         .select('*')
-        .in('name', ['Famiglia', 'Solidale'])
-        .order('monthly_price', { ascending: true });
+        .eq('billing_period', 'monthly')
+        .order('price', { ascending: true });
 
-      if (plansResult) {
+      if (error) {
+        console.error('Error loading subscription plans:', error);
+      } else if (plansResult) {
         setSubscriptionPlans(plansResult);
       }
     } catch (error) {
