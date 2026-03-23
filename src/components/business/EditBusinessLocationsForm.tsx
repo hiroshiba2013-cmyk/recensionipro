@@ -631,12 +631,13 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                         loc.id === location.id ? { ...loc, services: e.target.value as any } : loc
                       ));
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === ' ') {
+                        e.stopPropagation();
+                      }
+                    }}
                     placeholder="Vendita farmaci, Misurazione pressione, Servizio a domicilio, Pagamenti contactless"
                     rows={3}
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck="false"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   />
                   <p className="text-xs text-gray-500 mt-1">Separa i servizi con la virgola. Puoi usare spazi nelle parole (es. "WiFi gratuito, Consegna a domicilio")</p>
