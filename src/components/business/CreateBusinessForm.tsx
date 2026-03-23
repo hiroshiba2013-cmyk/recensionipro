@@ -264,7 +264,7 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
           country: 'Italia',
           is_primary: claimedLocations[0].id === location.id,
           description: index === 0 && formData.location_description ? formData.location_description : null,
-          services: index === 0 && formData.location_services ? formData.location_services.split('\n').map(s => s.trim()).filter(s => s.length > 0) : [],
+          services: index === 0 && formData.location_services ? formData.location_services.split(',').map(s => s.trim()).filter(s => s.length > 0) : [],
         }));
 
         const { error: locationsError } = await supabase
@@ -345,7 +345,7 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
 
         // Crea una nuova business_location per l'attività creata da zero
         const servicesArray = formData.location_services
-          ? formData.location_services.split('\n').map(s => s.trim()).filter(s => s.length > 0)
+          ? formData.location_services.split(',').map(s => s.trim()).filter(s => s.length > 0)
           : [];
 
         const { error: locationError } = await supabase
@@ -884,7 +884,7 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
-                placeholder="Descrivi brevemente la tua attività... (es. 'Ristorante di cucina tradizionale italiana con oltre 20 anni di esperienza')"
+                placeholder="Descrivi brevemente la tua attività (es. Ristorante di cucina tradizionale italiana con oltre 20 anni di esperienza)"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
             </div>
@@ -897,7 +897,7 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
                 value={formData.location_description}
                 onChange={(e) => setFormData({ ...formData, location_description: e.target.value })}
                 rows={2}
-                placeholder="Breve descrizione della sede (es. 'Negozio nel centro storico con ampio parcheggio')"
+                placeholder="Breve descrizione della sede (es. Negozio nel centro storico con ampio parcheggio)"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
               <p className="text-xs text-gray-500 mt-1">Questa descrizione aiuta i clienti a trovare e riconoscere la sede</p>
@@ -911,10 +911,10 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
                 value={formData.location_services}
                 onChange={(e) => setFormData({ ...formData, location_services: e.target.value })}
                 rows={4}
-                placeholder="Inserisci un servizio per riga, es:&#10;WiFi gratuito&#10;Parcheggio disponibile&#10;Consegna a domicilio&#10;Pagamenti contactless"
+                placeholder="WiFi gratuito, Parcheggio disponibile, Consegna a domicilio, Pagamenti contactless"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
-              <p className="text-xs text-gray-500 mt-1">Inserisci un servizio per riga. Questi verranno mostrati ai clienti come badge.</p>
+              <p className="text-xs text-gray-500 mt-1">Separa i servizi con la virgola. Puoi usare spazi nelle parole (es. WiFi gratuito, Consegna a domicilio)</p>
             </div>
           </div>
         </div>
