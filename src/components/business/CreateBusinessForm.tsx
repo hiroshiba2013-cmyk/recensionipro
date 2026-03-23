@@ -911,16 +911,17 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
                 value={formData.location_services}
                 onChange={(e) => setFormData({ ...formData, location_services: e.target.value })}
                 onKeyDown={(e) => {
-                  // Permetti esplicitamente spazio, virgola e tutti i caratteri normali
-                  if (e.key === ' ' || e.key === ',' || e.key === 'Spacebar') {
-                    e.stopPropagation();
-                  }
+                  e.stopPropagation();
+                }}
+                onKeyPress={(e) => {
+                  e.stopPropagation();
+                }}
+                onKeyUp={(e) => {
+                  e.stopPropagation();
                 }}
                 rows={4}
                 placeholder="Es. vendita farmaci, tamponi, misurazione pressione, consulenze farmaceutiche"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                spellCheck="true"
-                autoComplete="off"
               />
               <p className="text-xs text-gray-500 mt-1">
                 Inserisci i servizi offerti separandoli con la virgola. Puoi usare spazi normalmente.
