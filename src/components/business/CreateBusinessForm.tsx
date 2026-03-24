@@ -98,8 +98,6 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
     billing_province: '',
   });
 
-  console.log('CreateBusinessForm RENDER - location_services:', formData.location_services);
-
   const handleCityChange = (city: string) => {
     const selectedCity = italianCities.find(c => c.city === city);
     const provinceCode = selectedCity?.province ? PROVINCE_TO_CODE[selectedCity.province] : '';
@@ -911,22 +909,7 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
               </label>
               <textarea
                 value={formData.location_services}
-                onChange={(e) => {
-                  const newValue = e.target.value;
-                  console.log('=== SERVICES TEXTAREA ===');
-                  console.log('Current formData.location_services:', formData.location_services);
-                  console.log('New value from event:', newValue);
-                  console.log('About to call setFormData');
-                  setFormData(prev => {
-                    console.log('Inside setFormData, prev.location_services:', prev.location_services);
-                    const updated = { ...prev, location_services: newValue };
-                    console.log('Updated state will be:', updated.location_services);
-                    return updated;
-                  });
-                }}
-                onKeyPress={(e) => {
-                  console.log('KEY PRESSED:', e.key, 'Current value:', formData.location_services);
-                }}
+                onChange={(e) => setFormData({ ...formData, location_services: e.target.value })}
                 rows={4}
                 placeholder="Es. vendita farmaci, tamponi, misurazione pressione, consulenze farmaceutiche"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
