@@ -35,11 +35,15 @@ interface BusinessLocation {
 }
 
 export function SearchResultsPage() {
+  console.log('🔵 SearchResultsPage montata');
   const [locations, setLocations] = useState<BusinessLocation[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [initialFilters, setInitialFilters] = useState<SearchFilters | null>(null);
   const [currentSearch, setCurrentSearch] = useState(window.location.search);
+
+  console.log('📍 URL corrente:', window.location.href);
+  console.log('🔍 Query string:', currentSearch);
 
   useEffect(() => {
     const handleLocationChange = () => {
@@ -60,6 +64,7 @@ export function SearchResultsPage() {
   }, []);
 
   useEffect(() => {
+    console.log('🎯 useEffect chiamato con currentSearch:', currentSearch);
     const params = new URLSearchParams(currentSearch);
     const filters: SearchFilters = {
       category: params.get('category') || '',
@@ -71,7 +76,9 @@ export function SearchResultsPage() {
       verifiedOnly: params.get('verified') === 'true',
     };
 
+    console.log('🔎 Filtri estratti dai parametri URL:', filters);
     setInitialFilters(filters);
+    console.log('⚡ Chiamando applyFilters...');
     applyFilters(filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSearch]);
