@@ -859,15 +859,15 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
           </div>
         </div>
 
-        {/* Sezione Descrizione e Servizi - Sempre Visibile */}
+        {/* Sezione Descrizione - Sempre Visibile */}
         <div className="border-t pt-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">
-            Descrizione e Servizi {claimedLocations.length > 0 && '(Sede Primaria)'}
+            Descrizione {claimedLocations.length > 0 && '(Sede Primaria)'}
           </h3>
           <p className="text-sm text-gray-600 mb-4">
             {claimedLocations.length > 0
               ? 'Questi dati verranno applicati alla sede primaria (la prima selezionata).'
-              : 'Descrivi la tua attività e i servizi che offri ai clienti.'}
+              : 'Descrivi la tua attività.'}
           </p>
           <div className="space-y-4 bg-blue-50 p-6 rounded-lg border border-blue-200">
             <div>
