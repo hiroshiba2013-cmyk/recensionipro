@@ -458,18 +458,6 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     {location.description && (
                       <p className="text-sm text-gray-600 mb-4 italic">{location.description}</p>
                     )}
-                    {location.services && location.services.trim().length > 0 && (
-                      <div className="mb-4">
-                        <p className="text-sm text-gray-600 mb-2 font-semibold">Servizi disponibili:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {location.services.split(',').map((service, idx) => (
-                            <span key={idx} className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-1 rounded-full">
-                              {service.trim()}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm text-gray-600 mb-1">Indirizzo</p>
@@ -648,29 +636,6 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   />
                   <p className="text-xs text-gray-500 mt-1">Questa descrizione aiuta i clienti a trovare e riconoscere la sede</p>
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Servizi Disponibili
-                  </label>
-                  <textarea
-                    value={location.services ?? ''}
-                    onChange={(e) => {
-                      console.log('=== SERVICES TEXTAREA (EditBusinessLocationsForm) ===');
-                      console.log('Location ID:', location.id);
-                      console.log('Current services:', location.services);
-                      console.log('New value:', e.target.value);
-                      handleChange(location.id, 'services', e.target.value);
-                    }}
-                    onKeyDown={(e) => {
-                      console.log('KEY DOWN:', e.key, 'Current:', location.services);
-                    }}
-                    placeholder="WiFi gratuito, Parcheggio, Servizio a domicilio, Pagamenti contactless"
-                    rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Separa i servizi con la virgola. Puoi usare spazi nelle parole (es. "WiFi gratuito, Consegna a domicilio")</p>
                 </div>
 
                 <div className="md:col-span-2">
