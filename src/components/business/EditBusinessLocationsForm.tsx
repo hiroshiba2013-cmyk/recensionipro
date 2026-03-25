@@ -640,20 +640,6 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Servizi Offerti
-                  </label>
-                  <textarea
-                    value={location.services || ''}
-                    onChange={(e) => handleChange(location.id, 'services', e.target.value)}
-                    placeholder="Elenca i servizi offerti in questa sede, separati da virgola"
-                    rows={2}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Inserisci i servizi separati da virgola (es. Vendita farmaci, Misurazione pressione)</p>
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Indirizzo *
                   </label>
                   <input
