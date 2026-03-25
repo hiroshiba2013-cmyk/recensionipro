@@ -264,7 +264,6 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
           country: 'Italia',
           is_primary: claimedLocations[0].id === location.id,
           description: index === 0 && formData.location_description ? formData.location_description : null,
-          services: index === 0 && formData.location_services ? formData.location_services.split(',').map(s => s.trim()).filter(s => s.length > 0) : [],
         }));
 
         const { error: locationsError } = await supabase
@@ -344,10 +343,6 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
         }
 
         // Crea una nuova business_location per l'attività creata da zero
-        const servicesArray = formData.location_services
-          ? formData.location_services.split(',').map(s => s.trim()).filter(s => s.length > 0)
-          : [];
-
         const { error: locationError } = await supabase
           .from('business_locations')
           .insert({
@@ -364,7 +359,6 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
             country: 'Italia',
             is_primary: true,
             description: formData.location_description || null,
-            services: servicesArray,
           });
 
         if (locationError) throw locationError;
@@ -901,20 +895,6 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
               <p className="text-xs text-gray-500 mt-1">Questa descrizione aiuta i clienti a trovare e riconoscere la sede</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Servizi Disponibili
-              </label>
-              <textarea
-                value={formData.location_services}
-                onChange={(e) => setFormData({ ...formData, location_services: e.target.value })}
-                rows={4}
-                placeholder="Es. vendita farmaci, tamponi, misurazione pressione, consulenze farmaceutiche"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              />
-              <p className="text-xs text-gray-500 mt-1">Inserisci i servizi offerti separandoli con la virgola</p>
             </div>
           </div>
         </div>
