@@ -2006,24 +2006,6 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 />
               </div>
 
-              <div className="mb-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Servizi Offerti
-                </label>
-                <textarea
-                  value={location.services.join(', ')}
-                  onChange={(e) => {
-                    const services = e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
-                    const updated = [...businessLocations];
-                    updated[index] = { ...updated[index], services };
-                    setBusinessLocations(updated);
-                  }}
-                  placeholder="Elenca i servizi offerti in questa sede, separati da virgola"
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                />
-              </div>
-
               <div className="grid grid-cols-3 gap-3 mb-3">
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
