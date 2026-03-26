@@ -85,7 +85,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
 
       setIsRegisteredBusiness(usesRegisteredTable);
 
-      if (data) {
+      if (data && data.length > 0) {
         const normalizedData = data.map(loc => ({
           ...loc,
           // Normalizza address/street per compatibilità
@@ -95,6 +95,35 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
             : ''
         }));
         setLocations(normalizedData);
+      } else {
+        // Se non ci sono sedi, aggiungi una sede di default e apri in modalità editing
+        const defaultHours: DayHours = { open: '09:00', close: '18:00', closed: false };
+        setLocations([{
+          id: `new-${Date.now()}`,
+          name: '',
+          internal_name: 'Sede 1',
+          address: '',
+          city: '',
+          province: '',
+          postal_code: '',
+          phone: '',
+          email: '',
+          avatar_url: null,
+          description: '',
+          services: '',
+          services_description: '',
+          business_hours: {
+            monday: defaultHours,
+            tuesday: defaultHours,
+            wednesday: defaultHours,
+            thursday: defaultHours,
+            friday: defaultHours,
+            saturday: { ...defaultHours, closed: true },
+            sunday: { ...defaultHours, closed: true },
+          },
+          is_primary: true,
+        }]);
+        setIsEditing(true);
       }
 
       // Cerca il business owner prima in registered_businesses

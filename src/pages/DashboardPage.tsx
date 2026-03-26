@@ -176,10 +176,20 @@ export function DashboardPage() {
             charity_amount: charityAmount,
           });
         }
-        const { data: businessesData } = await supabase
-          .from('businesses')
+        // Cerca prima in registered_businesses (nuovo sistema)
+        let { data: businessesData } = await supabase
+          .from('registered_businesses')
           .select('*')
           .eq('owner_id', profile.id);
+
+        // Fallback a businesses (vecchio sistema)
+        if (!businessesData || businessesData.length === 0) {
+          const result = await supabase
+            .from('businesses')
+            .select('*')
+            .eq('owner_id', profile.id);
+          businessesData = result.data;
+        }
 
         if (businessesData) {
           setBusinesses(businessesData);
