@@ -33,6 +33,7 @@ interface BusinessLocation {
   name: string;
   description: string;
   services: string[];
+  servicesDescription?: string;
   address: string;
   streetNumber: string;
   city: string;
@@ -714,6 +715,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             name: location.name,
             description: location.description || null,
             services: location.services || [],
+            services_description: location.servicesDescription || null,
             address: location.address,
             street_number: location.streetNumber,
             city: location.city,
@@ -2001,6 +2003,19 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                   value={location.description}
                   onChange={(e) => updateBusinessLocation(index, 'description', e.target.value)}
                   placeholder="Descrivi questa sede: cosa offre, caratteristiche particolari, ecc."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Servizi Disponibili
+                </label>
+                <textarea
+                  value={location.servicesDescription || ''}
+                  onChange={(e) => updateBusinessLocation(index, 'servicesDescription', e.target.value)}
+                  placeholder="Descrivi i servizi offerti in questa sede (es. WiFi gratuito, parcheggio, consegna a domicilio, ecc.)"
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />

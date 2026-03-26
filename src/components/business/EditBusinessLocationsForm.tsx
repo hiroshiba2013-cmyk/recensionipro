@@ -40,6 +40,7 @@ interface BusinessLocation {
   is_primary: boolean;
   description?: string | null;
   services?: string;
+  services_description?: string | null;
 }
 
 interface EditBusinessLocationsFormProps {
@@ -136,6 +137,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
         avatar_url: null,
         description: '',
         services: '',
+        services_description: '',
         business_hours: {
           monday: defaultHours,
           tuesday: defaultHours,
@@ -309,6 +311,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
               is_primary: location.is_primary,
               description: location.description?.trim() || null,
               services: servicesArray,
+              services_description: location.services_description?.trim() || null,
             });
 
           if (error) throw error;
@@ -328,6 +331,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
               is_primary: location.is_primary,
               description: location.description?.trim() || null,
               services: servicesArray,
+              services_description: location.services_description?.trim() || null,
             })
             .eq('id', location.id);
 
@@ -457,6 +461,12 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     </div>
                     {location.description && (
                       <p className="text-sm text-gray-600 mb-4 italic">{location.description}</p>
+                    )}
+                    {location.services_description && (
+                      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm font-semibold text-blue-900 mb-1">Servizi Disponibili</p>
+                        <p className="text-sm text-blue-800">{location.services_description}</p>
+                      </div>
                     )}
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
@@ -636,6 +646,19 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   />
                   <p className="text-xs text-gray-500 mt-1">Questa descrizione aiuta i clienti a trovare e riconoscere la sede</p>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Servizi Disponibili
+                  </label>
+                  <textarea
+                    value={location.services_description || ''}
+                    onChange={(e) => handleChange(location.id, 'services_description', e.target.value)}
+                    placeholder="Descrivi i servizi offerti in questa sede (es. WiFi gratuito, parcheggio, consegna a domicilio, ecc.)"
+                    rows={3}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  />
                 </div>
 
                 <div className="md:col-span-2">

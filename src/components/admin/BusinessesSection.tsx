@@ -23,6 +23,7 @@ interface BusinessLocation {
   description?: string | null;
   business_hours?: any;
   services?: string[] | null;
+  services_description?: string | null;
   category: {
     name: string;
   } | null;
@@ -154,6 +155,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           description: business.description,
           business_hours: business.business_hours,
           services: business.services,
+          services_description: business.services_description,
           category: business.category,
           source: activeTab
         }));
@@ -312,6 +314,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
             description: primaryLocation.description,
             business_hours: primaryLocation.business_hours,
             services: primaryLocation.services,
+            services_description: primaryLocation.services_description,
             category: business.category,
             business: business.owner ? {
               owner_id: business.owner_id,
@@ -380,6 +383,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
         description: editingBusiness.description,
         business_hours: editingBusiness.business_hours,
         services: editingBusiness.services,
+        services_description: editingBusiness.services_description,
       };
 
       if (tableName === 'unclaimed_business_locations') {
@@ -473,6 +477,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
         description: loc.description,
         business_hours: loc.business_hours,
         services: loc.services,
+        services_description: loc.services_description,
         category: loc.category,
         business: loc.business,
         source: activeTab
@@ -1033,6 +1038,12 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                   <p className="text-gray-900 whitespace-pre-wrap">{selectedBusiness.description}</p>
                 </div>
               )}
+              {selectedBusiness.services_description && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Servizi Disponibili</label>
+                  <p className="text-gray-900 whitespace-pre-wrap">{selectedBusiness.services_description}</p>
+                </div>
+              )}
               {selectedBusiness.business_hours && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Orari di Apertura</label>
@@ -1132,6 +1143,22 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                     onChange={(e) => setEditingBusiness({ ...editingBusiness, description: e.target.value })}
                     rows={4}
                     placeholder="Inserisci una descrizione dell'attività..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <span className="flex items-center gap-2">
+                      <Briefcase className="w-4 h-4" />
+                      Servizi Disponibili
+                    </span>
+                  </label>
+                  <textarea
+                    value={editingBusiness.services_description || ''}
+                    onChange={(e) => setEditingBusiness({ ...editingBusiness, services_description: e.target.value })}
+                    rows={4}
+                    placeholder="Descrivi i servizi offerti (es. WiFi gratuito, parcheggio, consegna a domicilio, ecc.)"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
