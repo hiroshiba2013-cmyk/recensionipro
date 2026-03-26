@@ -801,7 +801,6 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             postal_code: location.postalCode,
             phone: location.phone || null,
             email: location.email || null,
-            vat_number: location.vatNumber || null,
             business_hours: location.businessHours,
           }));
 
