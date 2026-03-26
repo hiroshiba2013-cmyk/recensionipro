@@ -597,19 +597,9 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             throw subscriptionError;
           }
 
-          const { error: profileUpdateError } = await supabase
-            .from('profiles')
-            .update({
-              subscription_status: 'trial',
-              subscription_type: billingPeriod === 'monthly' ? 'monthly' : 'annual',
-              subscription_expires_at: trialEndDate.toISOString()
-            })
-            .eq('id', user.id);
-
-          if (profileUpdateError) {
-            console.error('Errore aggiornamento profile:', profileUpdateError);
-            throw profileUpdateError;
-          }
+          // Il trigger sync_subscription_type_from_plan aggiornerà automaticamente
+          // subscription_type e subscription_status quando l'abbonamento viene creato
+          console.log('Abbonamento creato con successo, il trigger aggiornerà il profilo automaticamente');
         } else {
           console.error('Piano non trovato per:', { numberOfPeople, billingPeriod });
         }
@@ -830,19 +820,9 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             throw subscriptionError;
           }
 
-          const { error: profileUpdateError } = await supabase
-            .from('profiles')
-            .update({
-              subscription_status: 'trial',
-              subscription_type: businessBillingPeriod === 'monthly' ? 'monthly' : 'annual',
-              subscription_expires_at: trialEndDate.toISOString()
-            })
-            .eq('id', user.id);
-
-          if (profileUpdateError) {
-            console.error('Errore aggiornamento profile business:', profileUpdateError);
-            throw profileUpdateError;
-          }
+          // Il trigger sync_subscription_type_from_plan aggiornerà automaticamente
+          // subscription_type e subscription_status quando l'abbonamento viene creato
+          console.log('Abbonamento business creato con successo, il trigger aggiornerà il profilo automaticamente');
         } else {
           console.error('Piano business non trovato per:', { numberOfLocations, maxPersonsValue, businessBillingPeriod });
         }
