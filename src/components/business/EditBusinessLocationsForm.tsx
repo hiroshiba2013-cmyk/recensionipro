@@ -56,20 +56,40 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
   const [loading, setLoading] = useState(true);
   const [maxLocations, setMaxLocations] = useState<number>(1);
   const [subscriptionPlan, setSubscriptionPlan] = useState<string>('');
+  const [isRegisteredBusiness, setIsRegisteredBusiness] = useState(false);
 
   useEffect(() => {
     const loadLocations = async () => {
       setLoading(true);
 
-      const { data } = await supabase
-        .from('business_locations')
+      // Prova prima in registered_business_locations
+      let { data } = await supabase
+        .from('registered_business_locations')
         .select('*')
         .eq('business_id', businessId)
         .order('is_primary', { ascending: false });
 
+      let usesRegisteredTable = false;
+      // Fallback a business_locations
+      if (!data || data.length === 0) {
+        const result = await supabase
+          .from('business_locations')
+          .select('*')
+          .eq('business_id', businessId)
+          .order('is_primary', { ascending: false });
+        data = result.data;
+        usesRegisteredTable = false;
+      } else {
+        usesRegisteredTable = true;
+      }
+
+      setIsRegisteredBusiness(usesRegisteredTable);
+
       if (data) {
         const normalizedData = data.map(loc => ({
           ...loc,
+          // Normalizza address/street per compatibilità
+          address: loc.address || loc.street,
           services: Array.isArray(loc.services) && loc.services.length > 0
             ? loc.services.join(', ')
             : ''
@@ -77,11 +97,22 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
         setLocations(normalizedData);
       }
 
-      const { data: businessData } = await supabase
-        .from('businesses')
+      // Cerca il business owner prima in registered_businesses
+      let { data: businessData } = await supabase
+        .from('registered_businesses')
         .select('owner_id')
         .eq('id', businessId)
         .maybeSingle();
+
+      // Fallback a businesses
+      if (!businessData) {
+        const result = await supabase
+          .from('businesses')
+          .select('owner_id')
+          .eq('id', businessId)
+          .maybeSingle();
+        businessData = result.data;
+      }
 
       if (businessData) {
         const { data: subscriptionData, error: subError } = await supabase
@@ -165,10 +196,20 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
     } else {
       if (!confirm('Sei sicuro di voler rimuovere questa sede?')) return;
 
-      const { error } = await supabase
-        .from('business_locations')
+      // Prova prima in registered_business_locations
+      let { error } = await supabase
+        .from('registered_business_locations')
         .delete()
         .eq('id', id);
+
+      // Fallback a business_locations
+      if (error?.code === 'PGRST116') {
+        const result = await supabase
+          .from('business_locations')
+          .delete()
+          .eq('id', id);
+        error = result.error;
+      }
 
       if (error) {
         console.error('Error deleting location:', error);
@@ -294,14 +335,17 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
           ? servicesString.split(',').map(s => s.trim()).filter(s => s.length > 0)
           : null;
 
+        const tableName = isRegisteredBusiness ? 'registered_business_locations' : 'business_locations';
+
         if (location.id.startsWith('new-')) {
           const { error } = await supabase
-            .from('business_locations')
+            .from(tableName)
             .insert({
               business_id: businessId,
               name: name.trim() || 'Sede',
               internal_name: location.internal_name?.trim() || null,
-              address: address.trim(),
+              street: address.trim(),  // registered_business_locations usa 'street'
+              address: address.trim(), // business_locations usa 'address'
               city: city.trim(),
               province: province.trim(),
               postal_code: postalCode.trim(),
@@ -317,11 +361,12 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
           if (error) throw error;
         } else {
           const { error } = await supabase
-            .from('business_locations')
+            .from(tableName)
             .update({
               name: name.trim() || 'Sede',
               internal_name: location.internal_name?.trim() || null,
-              address: address.trim(),
+              street: address.trim(),  // registered_business_locations usa 'street'
+              address: address.trim(), // business_locations usa 'address'
               city: city.trim(),
               province: province.trim(),
               postal_code: postalCode.trim(),
@@ -341,8 +386,9 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
 
       setIsEditing(false);
 
+      const tableName = isRegisteredBusiness ? 'registered_business_locations' : 'business_locations';
       const { data: updatedData } = await supabase
-        .from('business_locations')
+        .from(tableName)
         .select('*')
         .eq('business_id', businessId)
         .order('is_primary', { ascending: false });
@@ -350,6 +396,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
       if (updatedData) {
         const normalizedData = updatedData.map(loc => ({
           ...loc,
+          address: loc.address || loc.street,
           services: Array.isArray(loc.services)
             ? loc.services.join(', ')
             : (loc.services || '')
@@ -369,8 +416,9 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
 
   const handleCancel = async () => {
     setLoading(true);
+    const tableName = isRegisteredBusiness ? 'registered_business_locations' : 'business_locations';
     const { data } = await supabase
-      .from('business_locations')
+      .from(tableName)
       .select('*')
       .eq('business_id', businessId)
       .order('is_primary', { ascending: false });
@@ -378,6 +426,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
     if (data) {
       const normalizedData = data.map(loc => ({
         ...loc,
+        address: loc.address || loc.street,
         services: Array.isArray(loc.services)
           ? loc.services.join(', ')
           : (loc.services || '')

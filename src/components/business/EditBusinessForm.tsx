@@ -96,11 +96,23 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
   useEffect(() => {
     const loadBusiness = async () => {
       setLoading(true);
-      const { data } = await supabase
-        .from('businesses')
+
+      // Cerca prima in registered_businesses (nuovo sistema)
+      let { data } = await supabase
+        .from('registered_businesses')
         .select('*')
         .eq('id', businessId)
         .maybeSingle();
+
+      // Fallback a businesses (vecchio sistema)
+      if (!data) {
+        const result = await supabase
+          .from('businesses')
+          .select('*')
+          .eq('id', businessId)
+          .maybeSingle();
+        data = result.data;
+      }
 
       if (data) {
         setBusiness(data);
@@ -196,8 +208,9 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
         if (ownerError) throw ownerError;
       }
 
-      const { error } = await supabase
-        .from('businesses')
+      // Prova prima ad aggiornare in registered_businesses
+      const { error: regError } = await supabase
+        .from('registered_businesses')
         .update({
           name: formData.name,
           description: formData.description,
@@ -222,13 +235,54 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
         })
         .eq('id', businessId);
 
-      if (error) throw error;
+      // Se non esiste in registered_businesses, prova con businesses
+      if (regError?.code === 'PGRST116') {
+        const { error } = await supabase
+          .from('businesses')
+          .update({
+            name: formData.name,
+            description: formData.description,
+            vat_number: formData.vat_number,
+            unique_code: formData.unique_code,
+            ateco_code: formData.ateco_code,
+            pec_email: formData.pec_email,
+            phone: formData.phone,
+            billing_street: formData.billing_street,
+            billing_street_number: formData.billing_street_number,
+            billing_postal_code: formData.billing_postal_code,
+            billing_city: formData.billing_city,
+            billing_province: formData.billing_province.toUpperCase(),
+            billing_address: billingAddress,
+            office_street: formData.office_street || null,
+            office_street_number: formData.office_street_number || null,
+            office_postal_code: formData.office_postal_code || null,
+            office_city: formData.office_city || null,
+            office_province: formData.office_province ? formData.office_province.toUpperCase() : null,
+            office_address: officeAddress,
+            website_url: formData.website_url,
+          })
+          .eq('id', businessId);
 
-      const { data: updatedData } = await supabase
-        .from('businesses')
+        if (error) throw error;
+      } else if (regError) {
+        throw regError;
+      }
+
+      // Ricarica i dati aggiornati
+      let { data: updatedData } = await supabase
+        .from('registered_businesses')
         .select('*')
         .eq('id', businessId)
         .maybeSingle();
+
+      if (!updatedData) {
+        const result = await supabase
+          .from('businesses')
+          .select('*')
+          .eq('id', businessId)
+          .maybeSingle();
+        updatedData = result.data;
+      }
 
       if (updatedData) {
         setBusiness(updatedData);
