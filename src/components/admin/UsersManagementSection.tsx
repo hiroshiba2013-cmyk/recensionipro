@@ -130,10 +130,10 @@ export default function UsersManagementSection() {
 
     try {
       const { data, error } = await supabase
-        .from('business_subscription_plans')
+        .from('subscription_plans')
         .select('name, billing_period')
         .eq('name', subscriptionType)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 

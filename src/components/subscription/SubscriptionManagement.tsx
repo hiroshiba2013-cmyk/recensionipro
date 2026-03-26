@@ -133,7 +133,7 @@ export function SubscriptionManagement({
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          subscription_type: selectedPlan.billing_period === 'monthly' ? 'monthly' : 'annual',
+          subscription_type: selectedPlan.name,
           subscription_status: 'active',
           subscription_expires_at: endDate.toISOString(),
         })
