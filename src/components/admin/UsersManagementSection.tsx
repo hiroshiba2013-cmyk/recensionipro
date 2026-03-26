@@ -194,8 +194,40 @@ export default function UsersManagementSection() {
   };
 
   const handleViewUser = async (user: User) => {
-    setViewingUser(user);
-    setEditedUser(user);
+    let enrichedUser = { ...user };
+
+    // Carica i dati business dalla tabella registered_businesses
+    if (user.user_type === 'business') {
+      try {
+        const { data: businessData, error } = await supabase
+          .from('registered_businesses')
+          .select('*')
+          .eq('owner_id', user.id)
+          .maybeSingle();
+
+        if (!error && businessData) {
+          enrichedUser = {
+            ...enrichedUser,
+            company_name: businessData.name || user.company_name,
+            vat_number: businessData.vat_number || user.vat_number,
+            unique_code: businessData.unique_code || user.unique_code,
+            ateco_code: businessData.ateco_code || user.ateco_code,
+            pec_email: businessData.pec_email || user.pec_email,
+            website_url: businessData.website || user.website_url,
+            description: businessData.description || user.description,
+            billing_address: businessData.billing_street || user.billing_address,
+            billing_city: businessData.billing_city || user.billing_city,
+            billing_province: businessData.billing_province || user.billing_province,
+            billing_postal_code: businessData.billing_postal_code || user.billing_postal_code,
+          };
+        }
+      } catch (error) {
+        console.error('[UsersManagement] Error loading business data:', error);
+      }
+    }
+
+    setViewingUser(enrichedUser);
+    setEditedUser(enrichedUser);
     setIsEditing(false);
     setEditingMemberId(null);
     setEditedMember(null);
@@ -345,7 +377,7 @@ export default function UsersManagementSection() {
     }
 
     try {
-      const { error } = await supabase.rpc('delete_user_account', {
+      const { error } = await supabase.rpc('admin_delete_user_account', {
         user_id_to_delete: userId
       });
 
