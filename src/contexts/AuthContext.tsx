@@ -343,6 +343,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: authData, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          user_type: 'business',
+          full_name: data.companyName,
+        }
+      }
     });
 
     if (error) throw error;
@@ -353,63 +359,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .update({
           full_name: data.companyName,
           user_type: 'business',
-          subscription_status: 'trial',
         })
         .eq('id', authData.user.id);
 
       if (profileError) throw profileError;
-
-      const billingAddress = `${data.billingStreet} ${data.billingStreetNumber}, ${data.billingPostalCode} ${data.billingCity}, ${data.billingProvince}`;
-      const officeAddress = data.officeStreet && data.officeStreetNumber && data.officePostalCode && data.officeCity && data.officeProvince
-        ? `${data.officeStreet} ${data.officeStreetNumber}, ${data.officePostalCode} ${data.officeCity}, ${data.officeProvince}`
-        : '';
-
-      const { error: businessError } = await supabase
-        .from('businesses')
-        .insert({
-          owner_id: authData.user.id,
-          category_id: null,
-          name: data.companyName,
-          vat_number: data.vatNumber,
-          unique_code: data.uniqueCode,
-          ateco_code: data.atecoCode,
-          pec_email: data.pecEmail,
-          phone: data.phone,
-          website_url: data.website || null,
-          description: data.description || null,
-          billing_street: data.billingStreet,
-          billing_street_number: data.billingStreetNumber,
-          billing_postal_code: data.billingPostalCode,
-          billing_city: data.billingCity,
-          billing_province: data.billingProvince.toUpperCase(),
-          billing_address: billingAddress,
-          office_street: data.officeStreet || null,
-          office_street_number: data.officeStreetNumber || null,
-          office_postal_code: data.officePostalCode || null,
-          office_city: data.officeCity || null,
-          office_province: data.officeProvince ? data.officeProvince.toUpperCase() : null,
-          office_address: officeAddress,
-        });
-
-      if (businessError) throw businessError;
-
-      const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 30);
-
-      const { error: subscriptionError } = await supabase
-        .from('subscriptions')
-        .insert({
-          customer_id: authData.user.id,
-          plan_id: 'c55c8f6f-9b9f-4163-861f-cbb7862458fc',
-          status: 'trial',
-          start_date: new Date().toISOString(),
-          end_date: trialEndDate.toISOString(),
-          trial_end_date: trialEndDate.toISOString(),
-          payment_method_added: false,
-          reminder_sent: false,
-        });
-
-      if (subscriptionError) throw subscriptionError;
     }
   };
 

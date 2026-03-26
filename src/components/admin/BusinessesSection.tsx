@@ -177,7 +177,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           query = query.eq('source_type', 'claimed');
         } else {
           // Self-registered: businesses registered directly by the owner
-          query = query.eq('source_type', 'self_registered');
+          query = query.eq('source_type', 'direct_registration');
         }
 
         // Apply advanced filters

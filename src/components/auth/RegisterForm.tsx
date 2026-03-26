@@ -693,90 +693,62 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user && businessLocations.length > 0) {
-        const { data: businesses } = await supabase
-          .from('businesses')
+        // Crea record in registered_businesses con i dati aziendali principali
+        const { data: registeredBusiness, error: registeredError } = await supabase
+          .from('registered_businesses')
+          .insert({
+            owner_id: user.id,
+            name: businessForm.companyName,
+            description: businessForm.description || '',
+            vat_number: businessForm.vatNumber,
+            unique_code: businessForm.uniqueCode,
+            pec_email: businessForm.pecEmail,
+            ateco_code: businessForm.atecoCode,
+            website: businessForm.website || null,
+            billing_street: businessForm.billingStreet,
+            billing_street_number: businessForm.billingStreetNumber,
+            billing_postal_code: businessForm.billingPostalCode,
+            billing_city: businessForm.billingCity,
+            billing_province: businessForm.billingProvince,
+            verified: false,
+            source_type: 'direct_registration',
+          })
           .select('id')
-          .eq('owner_id', user.id)
           .single();
 
-        if (businesses) {
-          const locationsToInsert = businessLocations.map((location, index) => ({
-            business_id: businesses.id,
+        if (registeredError) {
+          console.error('Error inserting registered business:', registeredError);
+          throw registeredError;
+        }
+
+        if (registeredBusiness) {
+          // Crea le sedi in registered_business_locations
+          const registeredLocationsToInsert = businessLocations.map((location) => ({
+            business_id: registeredBusiness.id,
             name: location.name,
+            internal_name: location.name,
             description: location.description || null,
             services: location.services || [],
             services_description: location.servicesDescription || null,
-            address: location.address,
+            street: location.address,
             street_number: location.streetNumber,
             city: location.city,
             province: location.province.toUpperCase(),
             region: getRegionFromProvince(location.province),
             postal_code: location.postalCode,
-            phone: location.phone,
-            email: location.email,
+            phone: location.phone || null,
+            email: location.email || null,
             vat_number: location.vatNumber || null,
             business_hours: location.businessHours,
-            is_primary: index === 0,
           }));
 
-          const { error: locationsError } = await supabase
-            .from('business_locations')
-            .insert(locationsToInsert);
+          const { error: registeredLocationsError } = await supabase
+            .from('registered_business_locations')
+            .insert(registeredLocationsToInsert);
 
-          if (locationsError) throw locationsError;
-
-          // Crea record in registered_businesses con i dati aziendali principali
-          const { data: registeredBusiness, error: registeredError } = await supabase
-            .from('registered_businesses')
-            .insert({
-              owner_id: user.id,
-              name: businessForm.companyName,
-              description: businessForm.description || '',
-              vat_number: businessForm.vatNumber,
-              unique_code: businessForm.uniqueCode,
-              pec_email: businessForm.pecEmail,
-              ateco_code: businessForm.atecoCode,
-              website: businessForm.website || null,
-              billing_street: businessForm.billingStreet,
-              billing_street_number: businessForm.billingStreetNumber,
-              billing_postal_code: businessForm.billingPostalCode,
-              billing_city: businessForm.billingCity,
-              billing_province: businessForm.billingProvince,
-              verified: false,
-              source_type: 'direct_registration',
-            })
-            .select('id')
-            .single();
-
-          if (registeredError) {
-            console.error('Error inserting registered business:', registeredError);
-          } else if (registeredBusiness) {
-            // Crea le sedi in registered_business_locations
-            const registeredLocationsToInsert = businessLocations.map((location) => ({
-              business_id: registeredBusiness.id,
-              name: location.name,
-              internal_name: location.name,
-              description: location.description || null,
-              street: location.address,
-              street_number: location.streetNumber,
-              city: location.city,
-              province: location.province.toUpperCase(),
-              region: getRegionFromProvince(location.province),
-              postal_code: location.postalCode,
-              phone: location.phone || null,
-              email: location.email || null,
-              vat_number: location.vatNumber || null,
-              business_hours: location.businessHours,
-              services: location.services || [],
-            }));
-
-            const { error: registeredLocationsError } = await supabase
-              .from('registered_business_locations')
-              .insert(registeredLocationsToInsert);
-
-            if (registeredLocationsError) {
-              console.error('Error inserting registered business locations:', registeredLocationsError);
-            }
+          if (registeredLocationsError) {
+            console.error('Error inserting registered business locations:', registeredLocationsError);
+            throw registeredLocationsError;
           }
         }
       }
