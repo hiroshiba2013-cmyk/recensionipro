@@ -155,34 +155,32 @@ export function PlansSection({ adminId }: PlansSectionProps) {
         console.log('Customers data:', customers);
       }
 
-      // Combina i dati
+      // Combina i dati e filtra solo gli abbonamenti con customer esistenti
       console.log('6. Combinazione dati...');
-      const enrichedSubscriptions = allSubscriptions.map(sub => {
-        const customer = customers?.find(c => c.id === sub.customer_id);
-        const plan = allPlans?.find(p => p.id === sub.plan_id);
+      const enrichedSubscriptions = allSubscriptions
+        .map(sub => {
+          const customer = customers?.find(c => c.id === sub.customer_id);
+          const plan = allPlans?.find(p => p.id === sub.plan_id);
 
-        if (!customer) {
-          console.warn('⚠️ Customer non trovato per subscription:', sub.id, 'customer_id:', sub.customer_id);
-        }
-        if (!plan) {
-          console.warn('⚠️ Plan non trovato per subscription:', sub.id, 'plan_id:', sub.plan_id);
-        }
-
-        return {
-          ...sub,
-          customer: customer || {
-            full_name: 'Utente sconosciuto',
-            nickname: null,
-            email: 'N/A',
-            subscription_status: 'unknown'
-          },
-          plan: plan || {
-            name: 'Piano sconosciuto',
-            price: 0,
-            billing_period: 'monthly'
+          if (!customer) {
+            console.warn('⚠️ Customer non trovato per subscription:', sub.id, 'customer_id:', sub.customer_id);
+            return null; // Non includere abbonamenti senza customer
           }
-        };
-      });
+          if (!plan) {
+            console.warn('⚠️ Plan non trovato per subscription:', sub.id, 'plan_id:', sub.plan_id);
+          }
+
+          return {
+            ...sub,
+            customer: customer,
+            plan: plan || {
+              name: 'Piano sconosciuto',
+              price: 0,
+              billing_period: 'monthly'
+            }
+          };
+        })
+        .filter(sub => sub !== null); // Rimuovi gli abbonamenti nulli (customer eliminati)
 
       console.log('✓ Total subscriptions enriched:', enrichedSubscriptions.length);
       console.log('Final enriched data:', enrichedSubscriptions);
