@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapPin, FileEdit as Edit, Save, X, Plus, Trash2, Building2 } from 'lucide-react';
+import { MapPin, FileEdit as Edit, Save, X, Building2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
 import { CITIES_BY_PROVINCE, PROVINCE_TO_CODE } from '../../lib/cities';
@@ -175,42 +175,6 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
     loadLocations();
   }, [businessId]);
 
-  const handleAddLocation = () => {
-    if (locations.length >= maxLocations) {
-      alert(`Hai raggiunto il limite massimo di ${maxLocations} ${maxLocations === 1 ? 'sede' : 'sedi'} per il tuo piano "${subscriptionPlan}". Per aggiungere più sedi, aggiorna il tuo abbonamento.`);
-      return;
-    }
-
-    const defaultHours: DayHours = { open: '09:00', close: '18:00', closed: false };
-    setLocations([
-      ...locations,
-      {
-        id: `new-${Date.now()}`,
-        name: '',
-        internal_name: `Sede ${locations.length + 1}`,
-        address: '',
-        city: '',
-        province: '',
-        postal_code: '',
-        phone: '',
-        email: '',
-        avatar_url: null,
-        description: '',
-        services: '',
-        services_description: '',
-        business_hours: {
-          monday: defaultHours,
-          tuesday: defaultHours,
-          wednesday: defaultHours,
-          thursday: defaultHours,
-          friday: defaultHours,
-          saturday: { ...defaultHours, closed: true },
-          sunday: { ...defaultHours, closed: true },
-        },
-        is_primary: locations.length === 0,
-      },
-    ]);
-  };
 
   const handleRemoveLocation = async (id: string) => {
     const location = locations.find(l => l.id === id);
@@ -680,16 +644,6 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     )}
                   </div>
                 </div>
-                {!selectedLocationId && (
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveLocation(location.id)}
-                    className="text-red-600 hover:text-red-700 flex items-center gap-1 ml-2"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Rimuovi
-                  </button>
-                )}
               </div>
 
               <div className="grid md:grid-cols-2 gap-4 mb-4">
@@ -885,27 +839,11 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
           ))}
         </div>
 
-        {!selectedLocationId && (
-          <div className="mb-6">
-            <button
-              type="button"
-              onClick={handleAddLocation}
-              disabled={locations.length >= maxLocations}
-              className="flex items-center gap-2 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold w-full disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Plus className="w-5 h-5" />
-              Aggiungi Sede
-            </button>
-            <p className="text-sm text-gray-600 mt-2 text-center">
-              {locations.length >= maxLocations ? (
-                <span className="text-red-600 font-semibold">
-                  Limite raggiunto: {locations.length}/{maxLocations} {maxLocations === 1 ? 'sede' : 'sedi'}. Aggiorna l'abbonamento per aggiungere più sedi.
-                </span>
-              ) : (
-                <span>
-                  Sedi utilizzate: {locations.length}/{maxLocations} - Piano: {subscriptionPlan}
-                </span>
-              )}
+        {!selectedLocationId && locations.length > 0 && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-gray-700 text-center">
+              <span className="font-semibold">Nota:</span> Le sedi possono essere aggiunte solo durante la registrazione dell'attività.
+              Da questa sezione puoi modificare le informazioni delle sedi esistenti.
             </p>
           </div>
         )}

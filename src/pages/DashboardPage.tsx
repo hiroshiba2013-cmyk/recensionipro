@@ -3,6 +3,7 @@ import { Plus, Star, Building, MessageSquare, User, Check, Shield, TrendingUp, H
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Business, Review, FamilyMember } from '../lib/supabase';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
+import { EditBusinessLocationsForm } from '../components/business/EditBusinessLocationsForm';
 import { EditBusinessForm } from '../components/business/EditBusinessForm';
 import { CreateBusinessForm } from '../components/business/CreateBusinessForm';
 import { ReviewResponseForm } from '../components/reviews/ReviewResponseForm';
@@ -601,7 +602,14 @@ export function DashboardPage() {
                     </div>
 
                     {selectedBusinessId && (
-                      <EditBusinessForm businessId={selectedBusinessId} onUpdate={loadDashboardData} />
+                      <>
+                        <EditBusinessForm businessId={selectedBusinessId} onUpdate={loadDashboardData} />
+                        <EditBusinessLocationsForm
+                          businessId={selectedBusinessId}
+                          selectedLocationId={selectedBusinessLocationId}
+                          onUpdate={loadDashboardData}
+                        />
+                      </>
                     )}
                   </>
                 ) : null}
