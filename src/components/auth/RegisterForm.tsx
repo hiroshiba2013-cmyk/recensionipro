@@ -692,8 +692,70 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
 
       const { data: { user } } = await supabase.auth.getUser();
 
-      if (user && businessLocations.length > 0) {
-        // Crea record in registered_businesses con i dati aziendali principali
+      if (!user) {
+        throw new Error('Errore durante la creazione dell\'utente');
+      }
+
+      console.log('✅ Utente creato:', user.id);
+
+      // 1. Prima crea la subscription con il piano corretto
+      let maxPersonsValue = parseInt(numberOfLocations);
+      if (numberOfLocations === '6-10') {
+        maxPersonsValue = 10;
+      } else if (numberOfLocations === '10+') {
+        maxPersonsValue = 999;
+      }
+
+      console.log('🔍 Ricerca piano business:', { maxPersonsValue, businessBillingPeriod });
+
+      const { data: plan, error: planError } = await supabase
+        .from('subscription_plans')
+        .select('id, name, price, billing_period, max_persons')
+        .eq('max_persons', maxPersonsValue)
+        .eq('billing_period', businessBillingPeriod)
+        .like('name', 'Piano Business%')
+        .maybeSingle();
+
+      if (planError) {
+        console.error('❌ Errore ricerca piano:', planError);
+        throw planError;
+      }
+
+      if (!plan) {
+        console.error('❌ Piano business non trovato per:', { numberOfLocations, maxPersonsValue, businessBillingPeriod });
+        throw new Error('Piano di abbonamento non trovato. Contatta il supporto.');
+      }
+
+      console.log('✅ Piano trovato:', plan.name);
+
+      const startDate = new Date();
+      const trialEndDate = new Date();
+      trialEndDate.setMonth(trialEndDate.getMonth() + 1);
+
+      const { error: subscriptionError } = await supabase
+        .from('subscriptions')
+        .insert({
+          customer_id: user.id,
+          plan_id: plan.id,
+          status: 'trial',
+          start_date: startDate.toISOString(),
+          end_date: trialEndDate.toISOString(),
+          trial_end_date: trialEndDate.toISOString(),
+          payment_method_added: false,
+          reminder_sent: false,
+        });
+
+      if (subscriptionError) {
+        console.error('❌ Errore inserimento subscription:', subscriptionError);
+        throw subscriptionError;
+      }
+
+      console.log('✅ Subscription creata con successo');
+
+      // 2. Poi crea il business e le sedi
+      if (businessLocations.length > 0) {
+        console.log('📝 Creazione business e sedi...');
+
         const { data: registeredBusiness, error: registeredError } = await supabase
           .from('registered_businesses')
           .insert({
@@ -717,12 +779,13 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
           .single();
 
         if (registeredError) {
-          console.error('Error inserting registered business:', registeredError);
+          console.error('❌ Errore inserimento business:', registeredError);
           throw registeredError;
         }
 
+        console.log('✅ Business creato:', registeredBusiness.id);
+
         if (registeredBusiness) {
-          // Crea le sedi in registered_business_locations
           const registeredLocationsToInsert = businessLocations.map((location) => ({
             business_id: registeredBusiness.id,
             name: location.name,
@@ -747,56 +810,11 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             .insert(registeredLocationsToInsert);
 
           if (registeredLocationsError) {
-            console.error('Error inserting registered business locations:', registeredLocationsError);
+            console.error('❌ Errore inserimento sedi:', registeredLocationsError);
             throw registeredLocationsError;
           }
-        }
-      }
 
-      if (user) {
-        let maxPersonsValue = parseInt(numberOfLocations);
-        if (numberOfLocations === '6-10') {
-          maxPersonsValue = 10;
-        } else if (numberOfLocations === '10+') {
-          maxPersonsValue = 999;
-        }
-
-        const { data: plan } = await supabase
-          .from('subscription_plans')
-          .select('id, name, price, billing_period, max_persons')
-          .eq('max_persons', maxPersonsValue)
-          .eq('billing_period', businessBillingPeriod)
-          .like('name', 'Piano Business%')
-          .single();
-
-        if (plan) {
-          const startDate = new Date();
-          const trialEndDate = new Date();
-          trialEndDate.setMonth(trialEndDate.getMonth() + 1);
-
-          const { error: subscriptionError } = await supabase
-            .from('subscriptions')
-            .insert({
-              customer_id: user.id,
-              plan_id: plan.id,
-              status: 'trial',
-              start_date: startDate.toISOString(),
-              end_date: trialEndDate.toISOString(),
-              trial_end_date: trialEndDate.toISOString(),
-              payment_method_added: false,
-              reminder_sent: false,
-            });
-
-          if (subscriptionError) {
-            console.error('Errore inserimento subscription business:', subscriptionError);
-            throw subscriptionError;
-          }
-
-          // Il trigger sync_subscription_type_from_plan aggiornerà automaticamente
-          // subscription_type e subscription_status quando l'abbonamento viene creato
-          console.log('Abbonamento business creato con successo, il trigger aggiornerà il profilo automaticamente');
-        } else {
-          console.error('Piano business non trovato per:', { numberOfLocations, maxPersonsValue, businessBillingPeriod });
+          console.log('✅ Sedi create:', registeredLocationsToInsert.length);
         }
       }
 
