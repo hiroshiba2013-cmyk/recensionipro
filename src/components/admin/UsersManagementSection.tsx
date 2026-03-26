@@ -196,11 +196,11 @@ export default function UsersManagementSection() {
   const handleViewUser = async (user: User) => {
     let enrichedUser = { ...user };
 
-    // Carica i dati business dalla tabella registered_businesses
+    // Carica i dati business dalla tabella businesses (non registered_businesses)
     if (user.user_type === 'business') {
       try {
         const { data: businessData, error } = await supabase
-          .from('registered_businesses')
+          .from('businesses')
           .select('*')
           .eq('owner_id', user.id)
           .maybeSingle();
@@ -213,12 +213,16 @@ export default function UsersManagementSection() {
             unique_code: businessData.unique_code || user.unique_code,
             ateco_code: businessData.ateco_code || user.ateco_code,
             pec_email: businessData.pec_email || user.pec_email,
-            website_url: businessData.website || user.website_url,
+            website_url: businessData.website_url || businessData.website || user.website_url,
             description: businessData.description || user.description,
             billing_address: businessData.billing_street || user.billing_address,
             billing_city: businessData.billing_city || user.billing_city,
             billing_province: businessData.billing_province || user.billing_province,
             billing_postal_code: businessData.billing_postal_code || user.billing_postal_code,
+            office_address: businessData.office_street || user.office_address,
+            office_city: businessData.office_city || user.office_city,
+            office_province: businessData.office_province || user.office_province,
+            office_postal_code: businessData.office_postal_code || user.office_postal_code,
           };
         }
       } catch (error) {
