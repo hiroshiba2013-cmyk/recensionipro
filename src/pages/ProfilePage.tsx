@@ -908,6 +908,59 @@ export function ProfilePage() {
   };
 
   const loadBusinessData = async () => {
+    // Cerca prima nei business registrati (nuovo sistema)
+    const { data: registeredBusinessData } = await supabase
+      .from('registered_businesses')
+      .select('*')
+      .eq('owner_id', user?.id)
+      .maybeSingle();
+
+    if (registeredBusinessData) {
+      setBusiness(registeredBusinessData);
+
+      const { data: locationsData } = await supabase
+        .from('registered_business_locations')
+        .select('id, name, internal_name, street, city, province')
+        .eq('business_id', registeredBusinessData.id)
+        .order('created_at', { ascending: true });
+
+      if (locationsData) {
+        console.log('Loading registered business locations:', JSON.parse(JSON.stringify(locationsData)));
+        // Trasforma i dati per compatibilità con il formato esistente
+        const transformedLocations = locationsData.map(loc => ({
+          ...loc,
+          address: loc.street
+        }));
+        setBusinessLocations(transformedLocations);
+      }
+
+      const { data: reviewsData } = await supabase
+        .from('reviews')
+        .select(`
+          *,
+          customer:profiles!customer_id(full_name),
+          family_member:customer_family_members(nickname)
+        `)
+        .eq('business_id', registeredBusinessData.id)
+        .order('created_at', { ascending: false });
+
+      if (reviewsData) {
+        setReviews(reviewsData);
+      }
+
+      const { data: jobPostingsData } = await supabase
+        .from('job_postings')
+        .select('id, title, description, position_type, location, experience_level, education_level, status, created_at, business_location_id')
+        .eq('business_id', registeredBusinessData.id)
+        .order('created_at', { ascending: false });
+
+      if (jobPostingsData) {
+        setJobPostings(jobPostingsData);
+      }
+      return;
+    }
+
+    // Fallback: cerca nei business vecchi (per compatibilità)
     const { data: businessData } = await supabase
       .from('businesses')
       .select('*')
