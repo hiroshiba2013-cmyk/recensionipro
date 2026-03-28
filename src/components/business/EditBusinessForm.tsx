@@ -372,53 +372,94 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
           </button>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 mb-6">
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Ragione Sociale</p>
-            <p className="text-lg font-semibold text-gray-900">{owner?.company_name || business.name || '-'}</p>
+        <div className="mb-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <User className="w-5 h-5 text-gray-600" />
+            Dati Titolare
+          </h3>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Nome e Cognome</p>
+              <p className="text-lg font-semibold text-gray-900">{owner?.full_name || '-'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Email</p>
+              <p className="text-lg font-semibold text-gray-900">{owner?.email || '-'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Telefono</p>
+              <p className="text-lg font-semibold text-gray-900">{owner?.phone || '-'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Codice Fiscale</p>
+              <p className="text-lg font-semibold text-gray-900">{owner?.fiscal_code || '-'}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Partita IVA</p>
-            <p className="text-lg font-semibold text-gray-900">{owner?.vat_number || business.vat_number || '-'}</p>
+        </div>
+
+        <div className="mb-6 border-t pt-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-gray-600" />
+            Dati Azienda
+          </h3>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Ragione Sociale</p>
+              <p className="text-lg font-semibold text-gray-900">{owner?.company_name || business.name || '-'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Partita IVA</p>
+              <p className="text-lg font-semibold text-gray-900">{owner?.vat_number || business.vat_number || '-'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Codice Univoco</p>
+              <p className="text-lg font-semibold text-gray-900">{owner?.unique_code || business.unique_code || '-'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Codice ATECO</p>
+              <p className="text-lg font-semibold text-gray-900">{owner?.ateco_code || business.ateco_code || '-'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">PEC</p>
+              <p className="text-lg font-semibold text-gray-900">{owner?.pec_email || business.pec_email || '-'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Telefono Azienda</p>
+              <p className="text-lg font-semibold text-gray-900">{business.phone || owner?.phone || '-'}</p>
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-sm text-gray-600 mb-1">Sito Web</p>
+              {(owner?.website_url || business.website_url) ? (
+                <a
+                  href={owner?.website_url || business.website_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-lg font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+                >
+                  {owner?.website_url || business.website_url}
+                </a>
+              ) : (
+                <p className="text-lg font-semibold text-gray-900">-</p>
+              )}
+            </div>
           </div>
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Codice Univoco</p>
-            <p className="text-lg font-semibold text-gray-900">{owner?.unique_code || business.unique_code || '-'}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Codice ATECO</p>
-            <p className="text-lg font-semibold text-gray-900">{owner?.ateco_code || business.ateco_code || '-'}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600 mb-1">PEC</p>
-            <p className="text-lg font-semibold text-gray-900">{owner?.pec_email || business.pec_email || '-'}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Telefono Azienda</p>
-            <p className="text-lg font-semibold text-gray-900">{business.phone || owner?.phone || '-'}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Sito Web</p>
-            {(owner?.website_url || business.website_url) ? (
-              <a
-                href={owner?.website_url || business.website_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-lg font-semibold text-blue-600 hover:text-blue-700 hover:underline"
-              >
-                {owner?.website_url || business.website_url}
-              </a>
-            ) : (
-              <p className="text-lg font-semibold text-gray-900">-</p>
-            )}
-          </div>
-          <div className="md:col-span-2">
-            <p className="text-sm text-gray-600 mb-1">Indirizzo di Fatturazione</p>
-            <p className="text-lg font-semibold text-gray-900">{owner?.billing_address || business.billing_address || '-'}</p>
-          </div>
-          <div className="md:col-span-2">
-            <p className="text-sm text-gray-600 mb-1">Indirizzo Sede Operativa</p>
-            <p className="text-lg font-semibold text-gray-900">{owner?.office_address || business.office_address || '-'}</p>
+        </div>
+
+        <div className="border-t pt-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Indirizzi</h3>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Indirizzo di Fatturazione</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {owner?.billing_address || business.billing_address || '-'}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Indirizzo Sede Operativa</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {owner?.office_address || business.office_address || '-'}
+              </p>
+            </div>
           </div>
         </div>
 

@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { Building2, ChevronDown, Check } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 
 export function LocationSelectorDropdown() {
-  const { businessLocations, activeProfile, setActiveProfile } = useAuth();
+  const { businessLocations, activeProfile, setActiveProfile, profile } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -27,8 +28,10 @@ export function LocationSelectorDropdown() {
   }
 
   const handleSelectLocation = (locationId: string | null, isOwner: boolean) => {
+    if (!profile?.id) return;
+
     if (isOwner) {
-      setActiveProfile(null, true);
+      setActiveProfile(profile.id, true);
     } else {
       const location = businessLocations.find(l => l.id === locationId);
       if (location) {
