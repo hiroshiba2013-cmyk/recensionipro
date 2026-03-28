@@ -604,7 +604,11 @@ export function DashboardPage() {
 
                     {selectedBusinessId && (
                       <>
-                        <EditBusinessForm businessId={selectedBusinessId} onUpdate={loadDashboardData} />
+                        <EditBusinessForm
+                          businessId={selectedBusinessId}
+                          selectedLocationId={selectedBusinessLocationId}
+                          onUpdate={loadDashboardData}
+                        />
                         <EditBusinessLocationsForm
                           businessId={selectedBusinessId}
                           selectedLocationId={selectedBusinessLocationId}
