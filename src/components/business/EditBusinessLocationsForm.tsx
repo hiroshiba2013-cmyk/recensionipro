@@ -61,6 +61,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
   useEffect(() => {
     const loadLocations = async () => {
       setLoading(true);
+      console.log('🔍 Loading locations for business:', businessId, 'selectedLocationId:', selectedLocationId);
 
       // Prova prima in registered_business_locations
       let { data } = await supabase
@@ -94,7 +95,13 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
             ? loc.services.join(', ')
             : ''
         }));
-        setLocations(normalizedData);
+
+        // Se c'è un selectedLocationId, filtra per mostrare solo quella sede
+        const filteredData = selectedLocationId
+          ? normalizedData.filter(loc => loc.id === selectedLocationId)
+          : normalizedData;
+
+        setLocations(filteredData);
       } else {
         // Se non ci sono sedi, aggiungi una sede di default e apri in modalità editing
         const defaultHours: DayHours = { open: '09:00', close: '18:00', closed: false };
@@ -173,7 +180,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
     };
 
     loadLocations();
-  }, [businessId]);
+  }, [businessId, selectedLocationId]);
 
 
   const handleRemoveLocation = async (id: string) => {

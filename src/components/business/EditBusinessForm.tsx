@@ -217,6 +217,7 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
       }
 
       // Prova prima ad aggiornare in registered_businesses
+      console.log('🔄 Tentativo UPDATE registered_businesses:', businessId);
       const { error: regError } = await supabase
         .from('registered_businesses')
         .update({
@@ -242,6 +243,17 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
           website_url: formData.website_url,
         })
         .eq('id', businessId);
+
+      if (regError) {
+        console.error('❌ Errore UPDATE registered_businesses:', regError);
+      } else {
+        console.log('✅ UPDATE registered_businesses riuscito');
+      }
+
+      // Se c'è un errore di permessi RLS, mostra messaggio specifico
+      if (regError?.code === '42501' || regError?.message?.includes('row-level security')) {
+        throw new Error('Non hai i permessi per modificare questa attività. Verifica di essere il proprietario.');
+      }
 
       // Se non esiste in registered_businesses, prova con businesses
       if (regError?.code === 'PGRST116') {
@@ -373,31 +385,6 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
         </div>
 
         <div className="mb-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <User className="w-5 h-5 text-gray-600" />
-            Dati Titolare
-          </h3>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Nome e Cognome</p>
-              <p className="text-lg font-semibold text-gray-900">{owner?.full_name || '-'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Email</p>
-              <p className="text-lg font-semibold text-gray-900">{owner?.email || '-'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Telefono</p>
-              <p className="text-lg font-semibold text-gray-900">{owner?.phone || '-'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Codice Fiscale</p>
-              <p className="text-lg font-semibold text-gray-900">{owner?.fiscal_code || '-'}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-6 border-t pt-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
             <Building2 className="w-5 h-5 text-gray-600" />
             Dati Azienda

@@ -208,14 +208,15 @@ export function DashboardPage() {
                 *,
                 customer:profiles!customer_id(full_name),
                 responses:review_responses(*),
-                business_location:business_locations(internal_name, address)
+                business_location:business_locations(internal_name, address),
+                registered_location:registered_business_locations(internal_name, street, city)
               `)
               .in('business_id', businessIds)
               .eq('review_status', 'approved')
               .order('created_at', { ascending: false });
 
             if (selectedBusinessLocationId) {
-              reviewsQuery = reviewsQuery.eq('business_location_id', selectedBusinessLocationId);
+              reviewsQuery = reviewsQuery.or(`business_location_id.eq.${selectedBusinessLocationId},registered_location_id.eq.${selectedBusinessLocationId}`);
             }
 
             const { data: reviewsData } = await reviewsQuery;
