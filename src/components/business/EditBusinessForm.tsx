@@ -68,11 +68,6 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
   const [business, setBusiness] = useState<BusinessData | null>(null);
   const [owner, setOwner] = useState<OwnerData | null>(null);
   const [formData, setFormData] = useState({
-    owner_first_name: '',
-    owner_last_name: '',
-    owner_email: '',
-    owner_phone: '',
-    owner_fiscal_code: '',
     name: '',
     vat_number: '',
     unique_code: '',
@@ -128,29 +123,24 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
         }
 
         setFormData({
-          owner_first_name: ownerData?.first_name || '',
-          owner_last_name: ownerData?.last_name || '',
-          owner_email: ownerData?.email || '',
-          owner_phone: ownerData?.phone || '',
-          owner_fiscal_code: ownerData?.fiscal_code || '',
-          name: ownerData?.company_name || data.name || '',
-          vat_number: ownerData?.vat_number || data.vat_number || '',
-          unique_code: ownerData?.unique_code || data.unique_code || '',
-          ateco_code: ownerData?.ateco_code || data.ateco_code || '',
-          pec_email: ownerData?.pec_email || data.pec_email || '',
-          phone: ownerData?.phone || data.phone || '',
-          billing_street: ownerData?.billing_street || data.billing_street || '',
-          billing_street_number: ownerData?.billing_street_number || data.billing_street_number || '',
-          billing_postal_code: ownerData?.billing_postal_code || data.billing_postal_code || '',
-          billing_city: ownerData?.billing_city || data.billing_city || '',
-          billing_province: ownerData?.billing_province || data.billing_province || '',
-          office_street: ownerData?.office_street || data.office_street || '',
-          office_street_number: ownerData?.office_street_number || data.office_street_number || '',
-          office_postal_code: ownerData?.office_postal_code || data.office_postal_code || '',
-          office_city: ownerData?.office_city || data.office_city || '',
-          office_province: ownerData?.office_province || data.office_province || '',
-          website_url: ownerData?.website_url || data.website_url || '',
-          description: data.description || ownerData?.description || '',
+          name: data.name || '',
+          vat_number: data.vat_number || '',
+          unique_code: data.unique_code || '',
+          ateco_code: data.ateco_code || '',
+          pec_email: data.pec_email || '',
+          phone: data.phone || '',
+          billing_street: data.billing_street || '',
+          billing_street_number: data.billing_street_number || '',
+          billing_postal_code: data.billing_postal_code || '',
+          billing_city: data.billing_city || '',
+          billing_province: data.billing_province || '',
+          office_street: data.office_street || '',
+          office_street_number: data.office_street_number || '',
+          office_postal_code: data.office_postal_code || '',
+          office_city: data.office_city || '',
+          office_province: data.office_province || '',
+          website_url: data.website || '',
+          description: data.description || '',
         });
       }
       setLoading(false);
@@ -319,31 +309,26 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
   };
 
   const handleCancel = () => {
-    if (business && owner) {
+    if (business) {
       setFormData({
-        owner_first_name: owner.first_name || '',
-        owner_last_name: owner.last_name || '',
-        owner_email: owner.email || '',
-        owner_phone: owner.phone || '',
-        owner_fiscal_code: owner.fiscal_code || '',
-        name: owner.company_name || business.name || '',
-        vat_number: owner.vat_number || business.vat_number || '',
-        unique_code: owner.unique_code || business.unique_code || '',
-        ateco_code: owner.ateco_code || business.ateco_code || '',
-        pec_email: owner.pec_email || business.pec_email || '',
-        phone: owner.phone || business.phone || '',
-        billing_street: owner.billing_street || business.billing_street || '',
-        billing_street_number: owner.billing_street_number || business.billing_street_number || '',
-        billing_postal_code: owner.billing_postal_code || business.billing_postal_code || '',
-        billing_city: owner.billing_city || business.billing_city || '',
-        billing_province: owner.billing_province || business.billing_province || '',
-        office_street: owner.office_street || business.office_street || '',
-        office_street_number: owner.office_street_number || business.office_street_number || '',
-        office_postal_code: owner.office_postal_code || business.office_postal_code || '',
-        office_city: owner.office_city || business.office_city || '',
-        office_province: owner.office_province || business.office_province || '',
-        website_url: owner.website_url || business.website_url || '',
-        description: business.description || owner.description || '',
+        name: business.name || '',
+        vat_number: business.vat_number || '',
+        unique_code: business.unique_code || '',
+        ateco_code: business.ateco_code || '',
+        pec_email: business.pec_email || '',
+        phone: business.phone || '',
+        billing_street: business.billing_street || '',
+        billing_street_number: business.billing_street_number || '',
+        billing_postal_code: business.billing_postal_code || '',
+        billing_city: business.billing_city || '',
+        billing_province: business.billing_province || '',
+        office_street: business.office_street || '',
+        office_street_number: business.office_street_number || '',
+        office_postal_code: business.office_postal_code || '',
+        office_city: business.office_city || '',
+        office_province: business.office_province || '',
+        website_url: business.website_url || '',
+        description: business.description || '',
       });
     }
     setIsEditing(false);
@@ -392,38 +377,38 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <p className="text-sm text-gray-600 mb-1">Ragione Sociale</p>
-              <p className="text-lg font-semibold text-gray-900">{owner?.company_name || business.name || '-'}</p>
+              <p className="text-lg font-semibold text-gray-900">{business.name || '-'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600 mb-1">Partita IVA</p>
-              <p className="text-lg font-semibold text-gray-900">{owner?.vat_number || business.vat_number || '-'}</p>
+              <p className="text-lg font-semibold text-gray-900">{business.vat_number || '-'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600 mb-1">Codice Univoco</p>
-              <p className="text-lg font-semibold text-gray-900">{owner?.unique_code || business.unique_code || '-'}</p>
+              <p className="text-lg font-semibold text-gray-900">{business.unique_code || '-'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600 mb-1">Codice ATECO</p>
-              <p className="text-lg font-semibold text-gray-900">{owner?.ateco_code || business.ateco_code || '-'}</p>
+              <p className="text-lg font-semibold text-gray-900">{business.ateco_code || '-'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600 mb-1">PEC</p>
-              <p className="text-lg font-semibold text-gray-900">{owner?.pec_email || business.pec_email || '-'}</p>
+              <p className="text-lg font-semibold text-gray-900">{business.pec_email || '-'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600 mb-1">Telefono Azienda</p>
-              <p className="text-lg font-semibold text-gray-900">{business.phone || owner?.phone || '-'}</p>
+              <p className="text-lg font-semibold text-gray-900">{business.phone || '-'}</p>
             </div>
             <div className="md:col-span-2">
               <p className="text-sm text-gray-600 mb-1">Sito Web</p>
-              {(owner?.website_url || business.website_url) ? (
+              {business.website_url ? (
                 <a
-                  href={owner?.website_url || business.website_url}
+                  href={business.website_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-lg font-semibold text-blue-600 hover:text-blue-700 hover:underline"
                 >
-                  {owner?.website_url || business.website_url}
+                  {business.website_url}
                 </a>
               ) : (
                 <p className="text-lg font-semibold text-gray-900">-</p>
@@ -438,23 +423,25 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
             <div>
               <p className="text-sm text-gray-600 mb-1">Indirizzo di Fatturazione</p>
               <p className="text-lg font-semibold text-gray-900">
-                {owner?.billing_address || business.billing_address || '-'}
+                {business.billing_address || '-'}
               </p>
             </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Indirizzo Sede Operativa</p>
-              <p className="text-lg font-semibold text-gray-900">
-                {owner?.office_address || business.office_address || '-'}
-              </p>
-            </div>
+            {business.office_address && (
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Indirizzo Sede Operativa</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {business.office_address}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
-        {(business.description || owner?.description) && (
+        {business.description && (
           <div className="border-t pt-6">
             <p className="text-sm text-gray-600 mb-2">Descrizione Azienda</p>
             <p className="text-base text-gray-900 leading-relaxed whitespace-pre-line">
-              {business.description || owner?.description}
+              {business.description}
             </p>
           </div>
         )}
@@ -478,85 +465,6 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="flex items-center gap-2 mb-4 border-b pb-2">
-          <User className="w-5 h-5 text-gray-600" />
-          <h3 className="text-lg font-bold text-gray-900">Dati Titolare</h3>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6 mb-6">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Nome
-            </label>
-            <input
-              type="text"
-              name="owner_first_name"
-              value={formData.owner_first_name}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Cognome
-            </label>
-            <input
-              type="text"
-              name="owner_last_name"
-              value={formData.owner_last_name}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              name="owner_email"
-              value={formData.owner_email}
-              onChange={handleChange}
-              required
-              disabled
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Telefono
-            </label>
-            <input
-              type="tel"
-              name="owner_phone"
-              value={formData.owner_phone}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Codice Fiscale
-            </label>
-            <input
-              type="text"
-              name="owner_fiscal_code"
-              value={formData.owner_fiscal_code}
-              onChange={handleChange}
-              required
-              maxLength={16}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
-            />
-          </div>
-        </div>
-
         <div className="flex items-center gap-2 mb-4 border-b pb-2">
           <Building2 className="w-5 h-5 text-gray-600" />
           <h3 className="text-lg font-bold text-gray-900">Dati Azienda</h3>
