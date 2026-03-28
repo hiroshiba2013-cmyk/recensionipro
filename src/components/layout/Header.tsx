@@ -7,6 +7,7 @@ import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
 import NotificationBell from '../notifications/NotificationBell';
 import { ActiveProfileIndicator } from '../profile/ActiveProfileIndicator';
+import { LocationSelectorDropdown } from '../profile/LocationSelectorDropdown';
 import { useNavigate } from '../Router';
 
 export function Header() {
@@ -126,12 +127,7 @@ export function Header() {
 
                 <nav className="hidden lg:flex items-center gap-2">
                   <ActiveProfileIndicator />
-                  {selectedLocation && (
-                    <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-lg text-xs font-medium border border-blue-300">
-                      <span className="font-semibold">{t('header.location')}:</span>
-                      <span>{selectedLocation.internal_name || selectedLocation.city}</span>
-                    </div>
-                  )}
+                  {profile.user_type === 'business' && <LocationSelectorDropdown />}
                   <a
                     href="/profile"
                     className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium px-4 py-2 rounded-lg"

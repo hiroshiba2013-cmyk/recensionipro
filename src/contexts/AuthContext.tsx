@@ -239,10 +239,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const { data: locations } = await supabase
-        .from('business_locations')
+      let { data: locations } = await supabase
+        .from('registered_business_locations')
         .select('id, name, internal_name, address, city, province, avatar_url, description')
         .eq('business_id', business.id);
+
+      if (!locations || locations.length === 0) {
+        const result = await supabase
+          .from('business_locations')
+          .select('id, name, internal_name, address, city, province, avatar_url, description')
+          .eq('business_id', business.id);
+        locations = result.data;
+      }
 
       setBusinessLocations(locations || []);
 

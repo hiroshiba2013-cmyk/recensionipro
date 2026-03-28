@@ -169,6 +169,14 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
     setSaving(true);
 
     try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+      if (!currentUser || !business || business.owner_id !== currentUser.id) {
+        alert('Non hai i permessi per modificare questa attività');
+        setSaving(false);
+        return;
+      }
+
       const billingAddress = `${formData.billing_street} ${formData.billing_street_number}, ${formData.billing_postal_code} ${formData.billing_city}, ${formData.billing_province}`;
       const officeAddress = formData.office_street && formData.office_street_number && formData.office_postal_code && formData.office_city && formData.office_province
         ? `${formData.office_street} ${formData.office_street_number}, ${formData.office_postal_code} ${formData.office_city}, ${formData.office_province}`
