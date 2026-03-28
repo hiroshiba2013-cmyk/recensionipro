@@ -252,7 +252,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       let { data: locations } = await supabase
         .from('registered_business_locations')
-        .select('id, name, internal_name, address, city, province, avatar_url, description')
+        .select('id, name, internal_name, street, city, province, avatar_url, description')
         .eq('business_id', business.id);
 
       if (!locations || locations.length === 0) {

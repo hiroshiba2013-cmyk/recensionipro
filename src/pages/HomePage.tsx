@@ -424,7 +424,7 @@ function AuthenticatedHomePage() {
             .select(`
               *,
               profiles:user_id(id, nickname, full_name, avatar_url),
-              category:category_id(id, name)
+              category:category_id(name)
             `)
             .eq('status', 'active')
             .order('created_at', { ascending: false });

@@ -135,7 +135,7 @@ export function DashboardPage() {
             *,
             profiles!inner(full_name, nickname, avatar_url)
           `)
-          .eq('is_active', true)
+          .eq('status', 'active')
           .order('created_at', { ascending: false })
           .limit(10);
 
