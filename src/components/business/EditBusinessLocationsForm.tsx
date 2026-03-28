@@ -89,8 +89,8 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
       if (data && data.length > 0) {
         const normalizedData = data.map(loc => ({
           ...loc,
-          // Normalizza address/street per compatibilità
-          address: loc.address || loc.street,
+          // Normalizza address per compatibilità - concatena street + street_number
+          address: loc.address || (loc.street && loc.street_number ? `${loc.street}, ${loc.street_number}` : loc.street || ''),
           services: Array.isArray(loc.services) && loc.services.length > 0
             ? loc.services.join(', ')
             : ''
@@ -426,7 +426,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
     if (data) {
       const normalizedData = data.map(loc => ({
         ...loc,
-        address: loc.address || loc.street,
+        address: loc.address || (loc.street && loc.street_number ? `${loc.street}, ${loc.street_number}` : loc.street || ''),
         services: Array.isArray(loc.services)
           ? loc.services.join(', ')
           : (loc.services || '')

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { UserCircle2, Building2, Lock, X } from 'lucide-react';
+import { CircleUser as UserCircle2, Building2, Lock, X } from 'lucide-react';
 import { FamilyMember } from '../../lib/supabase';
 import { BusinessLocation } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -68,17 +68,41 @@ export function ProfileSelector({ ownerProfile, familyMembers = [], businessLoca
           return;
         }
       } else {
-        const tableName = userType === 'customer' ? 'customer_family_members' : 'business_locations';
-        const { data } = await supabase
-          .from(tableName)
-          .select('pin_enabled, pin_code')
-          .eq('id', profile.id)
-          .maybeSingle();
+        // Per business, prova prima registered_business_locations poi business_locations
+        if (userType === 'business') {
+          let { data } = await supabase
+            .from('registered_business_locations')
+            .select('pin_enabled, pin_code')
+            .eq('id', profile.id)
+            .maybeSingle();
 
-        if (data?.pin_enabled && data?.pin_code) {
-          setSelectedProfile(profile);
-          setShowPinModal(true);
-          return;
+          // Fallback a business_locations
+          if (!data) {
+            const result = await supabase
+              .from('business_locations')
+              .select('pin_enabled, pin_code')
+              .eq('id', profile.id)
+              .maybeSingle();
+            data = result.data;
+          }
+
+          if (data?.pin_enabled && data?.pin_code) {
+            setSelectedProfile(profile);
+            setShowPinModal(true);
+            return;
+          }
+        } else {
+          const { data } = await supabase
+            .from('customer_family_members')
+            .select('pin_enabled, pin_code')
+            .eq('id', profile.id)
+            .maybeSingle();
+
+          if (data?.pin_enabled && data?.pin_code) {
+            setSelectedProfile(profile);
+            setShowPinModal(true);
+            return;
+          }
         }
       }
 
@@ -113,18 +137,43 @@ export function ProfileSelector({ ownerProfile, familyMembers = [], businessLoca
           setPinError('PIN non corretto');
         }
       } else {
-        const tableName = userType === 'customer' ? 'customer_family_members' : 'business_locations';
-        const { data } = await supabase
-          .from(tableName)
-          .select('pin_code')
-          .eq('id', selectedProfile.id)
-          .maybeSingle();
+        // Per business, prova prima registered_business_locations poi business_locations
+        if (userType === 'business') {
+          let { data } = await supabase
+            .from('registered_business_locations')
+            .select('pin_code')
+            .eq('id', selectedProfile.id)
+            .maybeSingle();
 
-        if (data?.pin_code === hashedInput) {
-          onSelectProfile(selectedProfile.id, selectedProfile.isOwner);
-          setShowPinModal(false);
+          // Fallback a business_locations
+          if (!data) {
+            const result = await supabase
+              .from('business_locations')
+              .select('pin_code')
+              .eq('id', selectedProfile.id)
+              .maybeSingle();
+            data = result.data;
+          }
+
+          if (data?.pin_code === hashedInput) {
+            onSelectProfile(selectedProfile.id, selectedProfile.isOwner);
+            setShowPinModal(false);
+          } else {
+            setPinError('PIN non corretto');
+          }
         } else {
-          setPinError('PIN non corretto');
+          const { data } = await supabase
+            .from('customer_family_members')
+            .select('pin_code')
+            .eq('id', selectedProfile.id)
+            .maybeSingle();
+
+          if (data?.pin_code === hashedInput) {
+            onSelectProfile(selectedProfile.id, selectedProfile.isOwner);
+            setShowPinModal(false);
+          } else {
+            setPinError('PIN non corretto');
+          }
         }
       }
     } catch (error) {

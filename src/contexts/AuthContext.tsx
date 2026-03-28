@@ -220,11 +220,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadBusinessLocationsInternal = async (userId: string, profileData: Profile) => {
     try {
-      const { data: business } = await supabase
-        .from('businesses')
+      // Prova prima registered_businesses
+      let { data: business } = await supabase
+        .from('registered_businesses')
         .select('id')
         .eq('owner_id', userId)
         .maybeSingle();
+
+      // Fallback a businesses
+      if (!business) {
+        const result = await supabase
+          .from('businesses')
+          .select('id')
+          .eq('owner_id', userId)
+          .maybeSingle();
+        business = result.data;
+      }
 
       if (!business) {
         const ownerProfile: ActiveProfile = {
