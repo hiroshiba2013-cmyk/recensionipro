@@ -380,49 +380,102 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('business_locations')
-        .select(`
-          *,
-          category:business_category_id(name),
-          business:business_id(
-            owner_id,
-            owner:owner_id(full_name, email)
-          )
-        `)
-        .eq('business_id', business.business_id)
-        .order('is_main', { ascending: false })
-        .order('created_at', { ascending: true });
+      // For claimed and self-registered businesses, load from registered_business_locations
+      if (activeTab === 'claimed' || activeTab === 'self_registered') {
+        const { data: businessData, error: businessError } = await supabase
+          .from('registered_businesses')
+          .select(`
+            *,
+            category:category_id(name),
+            owner:owner_id(full_name, email),
+            locations:registered_business_locations(*)
+          `)
+          .eq('id', business.business_id)
+          .maybeSingle();
 
-      if (error) throw error;
+        if (businessError) throw businessError;
 
-      const locations = (data || []).map(loc => ({
-        id: loc.id,
-        business_id: loc.business_id,
-        unclaimed_business_id: null,
-        name: loc.name,
-        address: loc.address,
-        city: loc.city,
-        province: loc.province,
-        region: loc.region,
-        postal_code: loc.postal_code,
-        phone: loc.phone,
-        email: loc.email,
-        website: loc.website,
-        vat_number: loc.vat_number,
-        is_verified: loc.is_verified,
-        is_main: loc.is_main,
-        created_at: loc.created_at,
-        description: loc.description,
-        business_hours: loc.business_hours,
-        services: loc.services,
-        services_description: loc.services_description,
-        category: loc.category,
-        business: loc.business,
-        source: activeTab
-      }));
+        if (!businessData) {
+          setAllLocations([business]);
+          return;
+        }
 
-      setAllLocations(locations);
+        const locations = (businessData.locations || []).map((loc: any) => ({
+          id: loc.id,
+          business_id: businessData.id,
+          unclaimed_business_id: null,
+          name: loc.name || businessData.name,
+          address: loc.street || '',
+          city: loc.city,
+          province: loc.province,
+          region: loc.region,
+          postal_code: loc.postal_code,
+          phone: loc.phone,
+          email: loc.email,
+          website: loc.website || businessData.website,
+          vat_number: businessData.vat_number,
+          is_verified: businessData.verified,
+          is_main: loc.is_primary || false,
+          created_at: businessData.created_at,
+          description: loc.description,
+          business_hours: loc.business_hours,
+          services: loc.services,
+          services_description: loc.services_description,
+          category: businessData.category,
+          business: businessData.owner ? {
+            owner_id: businessData.owner_id,
+            owner: businessData.owner
+          } : undefined,
+          source: activeTab
+        }));
+
+        setAllLocations(locations.length > 0 ? locations : [business]);
+      } else {
+        // For old system (if needed)
+        const { data, error } = await supabase
+          .from('business_locations')
+          .select(`
+            *,
+            category:business_category_id(name),
+            business:business_id(
+              owner_id,
+              owner:owner_id(full_name, email)
+            )
+          `)
+          .eq('business_id', business.business_id)
+          .order('is_main', { ascending: false })
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        const locations = (data || []).map(loc => ({
+          id: loc.id,
+          business_id: loc.business_id,
+          unclaimed_business_id: null,
+          name: loc.name,
+          address: loc.address,
+          city: loc.city,
+          province: loc.province,
+          region: loc.region,
+          postal_code: loc.postal_code,
+          phone: loc.phone,
+          email: loc.email,
+          website: loc.website,
+          vat_number: loc.vat_number,
+          is_verified: loc.is_verified,
+          is_main: loc.is_main,
+          created_at: loc.created_at,
+          description: loc.description,
+          business_hours: loc.business_hours,
+          services: loc.services,
+          services_description: loc.services_description,
+          category: loc.category,
+          business: loc.business,
+          source: activeTab
+        }));
+
+        setAllLocations(locations);
+      }
     } catch (error: any) {
       console.error('Error loading locations:', error);
       setAllLocations([business]);
