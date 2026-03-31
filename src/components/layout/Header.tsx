@@ -7,7 +7,6 @@ import { LoginForm } from '../auth/LoginForm';
 import { RegisterForm } from '../auth/RegisterForm';
 import NotificationBell from '../notifications/NotificationBell';
 import { ActiveProfileIndicator } from '../profile/ActiveProfileIndicator';
-import { LocationSelectorDropdown } from '../profile/LocationSelectorDropdown';
 import { useNavigate } from '../Router';
 
 export function Header() {
@@ -127,7 +126,6 @@ export function Header() {
 
                 <nav className="hidden lg:flex items-center gap-2">
                   <ActiveProfileIndicator />
-                  {profile.user_type === 'business' && <LocationSelectorDropdown />}
                   <a
                     href="/profile"
                     className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium px-4 py-2 rounded-lg"
