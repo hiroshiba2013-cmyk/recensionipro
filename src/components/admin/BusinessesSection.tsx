@@ -8,6 +8,7 @@ interface BusinessLocation {
   business_id: string | null;
   unclaimed_business_id: string | null;
   name: string;
+  business_name?: string;
   address: string;
   city: string;
   province: string;
@@ -480,8 +481,8 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     }
 
     try {
-      // For claimed and self-registered businesses, load from registered_business_locations
-      if (activeTab === 'claimed' || activeTab === 'self_registered') {
+      // For claimed, self-registered, or "all" tab with business_id, load from registered_business_locations
+      if (business.business_id && (activeTab === 'claimed' || activeTab === 'self_registered' || activeTab === 'all')) {
         const { data: businessData, error: businessError } = await supabase
           .from('registered_businesses')
           .select(`
@@ -505,6 +506,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           business_id: businessData.id,
           unclaimed_business_id: null,
           name: loc.name || businessData.name,
+          business_name: businessData.name,
           address: loc.street || '',
           city: loc.city,
           province: loc.province,
@@ -526,7 +528,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
             owner_id: businessData.owner_id,
             owner: businessData.owner
           } : undefined,
-          source: activeTab
+          source: (business.source || (businessData.source_type === 'claimed' ? 'claimed' : 'self_registered')) as 'claimed' | 'self_registered'
         }));
 
         setAllLocations(locations.length > 0 ? locations : [business]);
@@ -994,6 +996,17 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
             <div className="p-6 space-y-6">
               {allLocations.length > 1 ? (
                 <>
+                  {/* Business Name */}
+                  {allLocations[0]?.business_name && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <h4 className="text-sm font-semibold text-gray-900 mb-2">Ragione Sociale</h4>
+                      <p className="text-lg font-bold text-gray-900">{allLocations[0].business_name}</p>
+                      {allLocations[0]?.vat_number && (
+                        <p className="text-sm text-gray-600 mt-1">P.IVA: {allLocations[0].vat_number}</p>
+                      )}
+                    </div>
+                  )}
+
                   {/* Business Owner Info */}
                   {allLocations[0]?.business?.owner && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
