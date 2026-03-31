@@ -3,6 +3,44 @@ import { Building2, CheckCircle, MapPin, Mail, Phone, FileEdit as Edit2, Search,
 import { supabase } from '../../lib/supabase';
 import { ITALIAN_REGIONS, PROVINCES_BY_REGION, CITIES_BY_PROVINCE } from '../../lib/cities';
 
+const DAYS_IT: { [key: string]: string } = {
+  monday: 'Lunedì',
+  tuesday: 'Martedì',
+  wednesday: 'Mercoledì',
+  thursday: 'Giovedì',
+  friday: 'Venerdì',
+  saturday: 'Sabato',
+  sunday: 'Domenica'
+};
+
+const formatBusinessHours = (hours: any) => {
+  if (!hours || typeof hours !== 'object') return null;
+
+  const daysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+  return (
+    <div className="space-y-2">
+      {daysOrder.map(day => {
+        const dayHours = hours[day];
+        if (!dayHours) return null;
+
+        return (
+          <div key={day} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+            <span className="font-medium text-gray-700 w-28">{DAYS_IT[day]}</span>
+            {dayHours.closed ? (
+              <span className="text-red-600 font-medium">Chiuso</span>
+            ) : (
+              <span className="text-gray-900">
+                {dayHours.open || '--:--'} - {dayHours.close || '--:--'}
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 interface BusinessLocation {
   id: string;
   business_id: string | null;
@@ -1088,12 +1126,13 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                     )}
                     {location.business_hours && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Orari di Apertura</label>
-                        <p className="text-gray-900 whitespace-pre-wrap">
-                          {typeof location.business_hours === 'object'
-                            ? JSON.stringify(location.business_hours, null, 2)
-                            : location.business_hours}
-                        </p>
+                        <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
+                          Orari di Apertura
+                        </label>
+                        <div className="bg-gray-50 rounded-lg p-4">
+                          {formatBusinessHours(location.business_hours)}
+                        </div>
                       </div>
                     )}
                     {location.services && (
@@ -1155,12 +1194,13 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
               )}
               {selectedBusiness.business_hours && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Orari di Apertura</label>
-                  <p className="text-gray-900 whitespace-pre-wrap">
-                    {typeof selectedBusiness.business_hours === 'object'
-                      ? JSON.stringify(selectedBusiness.business_hours, null, 2)
-                      : selectedBusiness.business_hours}
-                  </p>
+                  <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Orari di Apertura
+                  </label>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    {formatBusinessHours(selectedBusiness.business_hours)}
+                  </div>
                 </div>
               )}
               {selectedBusiness.services && (
