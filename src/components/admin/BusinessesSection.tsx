@@ -48,10 +48,10 @@ interface BusinessesSectionProps {
   onReload: () => Promise<void>;
 }
 
-type TabType = 'imported' | 'user_added' | 'claimed' | 'self_registered';
+type TabType = 'all' | 'imported' | 'user_added' | 'claimed' | 'self_registered';
 
 export function BusinessesSection({ onReload }: BusinessesSectionProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('imported');
+  const [activeTab, setActiveTab] = useState<TabType>('all');
   const [businesses, setBusinesses] = useState<BusinessLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -91,7 +91,116 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
       const from = (currentPage - 1) * itemsPerPage;
       const to = from + itemsPerPage - 1;
 
-      if (activeTab === 'imported' || activeTab === 'user_added') {
+      if (activeTab === 'all') {
+        // Load all businesses from both tables
+        const [unclaimedResult, claimedResult] = await Promise.all([
+          // Get unclaimed businesses (imported + user added)
+          supabase
+            .from('unclaimed_business_locations')
+            .select(`
+              *,
+              category:category_id(name)
+            `, { count: 'exact' })
+            .order('created_at', { ascending: false })
+            .range(from, Math.floor(to / 2)),
+
+          // Get registered businesses (claimed + self-registered)
+          supabase
+            .from('registered_businesses')
+            .select(`
+              *,
+              category:category_id(name),
+              owner:owner_id(full_name, email),
+              locations:registered_business_locations(*)
+            `, { count: 'exact' })
+            .order('created_at', { ascending: false })
+            .range(from, Math.floor(to / 2))
+        ]);
+
+        const unclaimedBusinesses = (unclaimedResult.data || []).map(business => ({
+          id: business.id,
+          business_id: null,
+          unclaimed_business_id: business.id,
+          name: business.name,
+          address: business.street || '',
+          city: business.city,
+          province: business.province,
+          region: business.region,
+          postal_code: business.postal_code,
+          phone: business.phone,
+          email: business.email,
+          website: business.website,
+          vat_number: null,
+          is_verified: business.verification_badge === 'verified',
+          is_main: false,
+          created_at: business.created_at,
+          description: business.description,
+          business_hours: business.business_hours,
+          services: business.services,
+          services_description: business.services_description,
+          category: business.category,
+          source: (business.added_by ? 'user_added' : 'imported') as 'user_added' | 'imported'
+        }));
+
+        const registeredBusinesses = (claimedResult.data || []).flatMap(business => {
+          const primaryLocation = business.locations?.find((l: any) => l.is_primary) || business.locations?.[0];
+
+          // Use business name as the main name for self-registered businesses
+          const displayName = business.source_type === 'direct_registration' ? business.name : (primaryLocation?.name || business.name);
+
+          const displayLocation = primaryLocation || {
+            name: business.name,
+            street: business.billing_street || '',
+            city: business.billing_city || '',
+            province: business.billing_province || '',
+            region: '',
+            postal_code: business.billing_postal_code,
+            phone: null,
+            email: null,
+            website: business.website,
+            description: business.description,
+            business_hours: null,
+            services: null,
+            services_description: null,
+            is_primary: true
+          };
+
+          return [{
+            id: primaryLocation?.id || business.id,
+            business_id: business.id,
+            unclaimed_business_id: null,
+            name: displayName,
+            address: displayLocation.street || '',
+            city: displayLocation.city || '',
+            province: displayLocation.province || '',
+            region: displayLocation.region || '',
+            postal_code: displayLocation.postal_code,
+            phone: displayLocation.phone,
+            email: displayLocation.email,
+            website: displayLocation.website || business.website,
+            vat_number: business.vat_number,
+            is_verified: business.verified,
+            is_main: displayLocation.is_primary || true,
+            created_at: business.created_at,
+            description: displayLocation.description,
+            business_hours: displayLocation.business_hours,
+            services: displayLocation.services,
+            services_description: displayLocation.services_description,
+            category: business.category,
+            business: business.owner ? {
+              owner_id: business.owner_id,
+              owner: business.owner
+            } : undefined,
+            source: business.source_type === 'claimed' ? 'claimed' as const : 'self_registered' as const
+          }];
+        });
+
+        allBusinesses = [...unclaimedBusinesses, ...registeredBusinesses]
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+        count = (unclaimedResult.count || 0) + (claimedResult.count || 0);
+
+      } else if (activeTab === 'imported' || activeTab === 'user_added') {
         // Build query for unclaimed_business_locations
         let query = supabase
           .from('unclaimed_business_locations')
@@ -203,6 +312,9 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
         allBusinesses = (claimedData || []).flatMap(business => {
           const primaryLocation = business.locations?.find((l: any) => l.is_primary) || business.locations?.[0];
 
+          // Use business name as the main name for self-registered businesses
+          const displayName = activeTab === 'self_registered' ? business.name : (primaryLocation?.name || business.name);
+
           // Always use the business ID for proper location loading
           const displayLocation = primaryLocation || {
             name: business.name,
@@ -225,7 +337,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
             id: primaryLocation?.id || business.id,
             business_id: business.id,
             unclaimed_business_id: null,
-            name: displayLocation.name || business.name,
+            name: displayName,
             address: displayLocation.street || '',
             city: displayLocation.city || '',
             province: displayLocation.province || '',
@@ -473,10 +585,11 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   const tabs = [
+    { id: 'all' as TabType, label: 'Tutte le Attività', icon: Building2 },
     { id: 'imported' as TabType, label: 'Importate', icon: Download },
     { id: 'user_added' as TabType, label: 'Aggiunte da Utenti', icon: UserPlus },
     { id: 'claimed' as TabType, label: 'Rivendicate', icon: CheckCircle },
-    { id: 'self_registered' as TabType, label: 'Iscritte da Sole', icon: Building2 },
+    { id: 'self_registered' as TabType, label: 'Iscritte da Sole', icon: Briefcase },
   ];
 
   return (
@@ -625,6 +738,11 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                       Categoria
                     </th>
+                    {activeTab === 'all' && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Fonte
+                      </th>
+                    )}
                     {(activeTab === 'user_added' || activeTab === 'claimed' || activeTab === 'self_registered') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                         {activeTab === 'self_registered' ? 'Proprietario' : 'Aggiunto da'}
@@ -682,6 +800,21 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900">{business.category?.name || 'N/A'}</div>
                       </td>
+                      {activeTab === 'all' && (
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            business.source === 'imported' ? 'bg-purple-100 text-purple-800' :
+                            business.source === 'user_added' ? 'bg-blue-100 text-blue-800' :
+                            business.source === 'claimed' ? 'bg-green-100 text-green-800' :
+                            'bg-orange-100 text-orange-800'
+                          }`}>
+                            {business.source === 'imported' ? 'Importata' :
+                             business.source === 'user_added' ? 'Aggiunta da Utente' :
+                             business.source === 'claimed' ? 'Rivendicata' :
+                             'Iscritta da Sola'}
+                          </span>
+                        </td>
+                      )}
                       {(activeTab === 'user_added' || activeTab === 'claimed' || activeTab === 'self_registered') && (
                         <td className="px-6 py-4">
                           {activeTab === 'self_registered' && business.business?.owner ? (
