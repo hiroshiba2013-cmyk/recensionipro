@@ -14,23 +14,25 @@ const DAYS_IT: { [key: string]: string } = {
 };
 
 const formatBusinessHours = (hours: any) => {
-  if (!hours || typeof hours !== 'object') return null;
+  if (!hours || typeof hours !== 'object') {
+    return <p className="text-gray-500 italic">Orari non disponibili</p>;
+  }
 
   const daysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       {daysOrder.map(day => {
         const dayHours = hours[day];
-        if (!dayHours) return null;
+        if (!dayHours || typeof dayHours !== 'object') return null;
 
         return (
           <div key={day} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-            <span className="font-medium text-gray-700 w-28">{DAYS_IT[day]}</span>
-            {dayHours.closed ? (
+            <span className="font-medium text-gray-700 w-32">{DAYS_IT[day]}</span>
+            {dayHours.closed === true ? (
               <span className="text-red-600 font-medium">Chiuso</span>
             ) : (
-              <span className="text-gray-900">
+              <span className="text-gray-900 font-mono">
                 {dayHours.open || '--:--'} - {dayHours.close || '--:--'}
               </span>
             )}
