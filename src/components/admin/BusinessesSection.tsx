@@ -203,57 +203,45 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
         allBusinesses = (claimedData || []).flatMap(business => {
           const primaryLocation = business.locations?.find((l: any) => l.is_primary) || business.locations?.[0];
 
-          if (!primaryLocation) {
-            return [{
-              id: business.id,
-              business_id: business.id,
-              unclaimed_business_id: null,
-              name: business.name,
-              address: business.billing_street || '',
-              city: business.billing_city || '',
-              province: business.billing_province || '',
-              region: '',
-              postal_code: business.billing_postal_code,
-              phone: null,
-              email: null,
-              website: business.website,
-              vat_number: business.vat_number,
-              is_verified: business.verified,
-              is_main: true,
-              created_at: business.created_at,
-              description: business.description,
-              business_hours: null,
-              services: null,
-              category: business.category,
-              business: business.owner ? {
-                owner_id: business.owner_id,
-                owner: business.owner
-              } : undefined,
-              source: activeTab
-            }];
-          }
+          // Always use the business ID for proper location loading
+          const displayLocation = primaryLocation || {
+            name: business.name,
+            street: business.billing_street || '',
+            city: business.billing_city || '',
+            province: business.billing_province || '',
+            region: '',
+            postal_code: business.billing_postal_code,
+            phone: null,
+            email: null,
+            website: business.website,
+            description: business.description,
+            business_hours: null,
+            services: null,
+            services_description: null,
+            is_primary: true
+          };
 
           return [{
-            id: primaryLocation.id,
+            id: primaryLocation?.id || business.id,
             business_id: business.id,
             unclaimed_business_id: null,
-            name: primaryLocation.name || business.name,
-            address: primaryLocation.street || '',
-            city: primaryLocation.city,
-            province: primaryLocation.province,
-            region: primaryLocation.region,
-            postal_code: primaryLocation.postal_code,
-            phone: primaryLocation.phone,
-            email: primaryLocation.email,
-            website: primaryLocation.website || business.website,
+            name: displayLocation.name || business.name,
+            address: displayLocation.street || '',
+            city: displayLocation.city || '',
+            province: displayLocation.province || '',
+            region: displayLocation.region || '',
+            postal_code: displayLocation.postal_code,
+            phone: displayLocation.phone,
+            email: displayLocation.email,
+            website: displayLocation.website || business.website,
             vat_number: business.vat_number,
             is_verified: business.verified,
-            is_main: primaryLocation.is_primary || false,
+            is_main: displayLocation.is_primary || true,
             created_at: business.created_at,
-            description: primaryLocation.description,
-            business_hours: primaryLocation.business_hours,
-            services: primaryLocation.services,
-            services_description: primaryLocation.services_description,
+            description: displayLocation.description,
+            business_hours: displayLocation.business_hours,
+            services: displayLocation.services,
+            services_description: displayLocation.services_description,
             category: business.category,
             business: business.owner ? {
               owner_id: business.owner_id,
