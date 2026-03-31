@@ -83,6 +83,11 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     loadBusinesses();
   }, [currentPage]);
 
+  useEffect(() => {
+    console.log('selectedBusiness changed:', selectedBusiness);
+    console.log('allLocations changed:', allLocations);
+  }, [selectedBusiness, allLocations]);
+
   const loadBusinesses = async () => {
     setLoading(true);
     try {
@@ -477,7 +482,12 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
   };
 
   const loadAllLocations = async (business: BusinessLocation) => {
+    console.log('loadAllLocations called with:', business);
+    console.log('business.business_id:', business.business_id);
+    console.log('activeTab:', activeTab);
+
     if (!business.business_id) {
+      console.log('No business_id, setting single location');
       setAllLocations([business]);
       return;
     }
@@ -485,6 +495,8 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     try {
       // For claimed, self-registered, or "all" tab with business_id, load from registered_business_locations
       if (business.business_id && (activeTab === 'claimed' || activeTab === 'self_registered' || activeTab === 'all')) {
+        console.log('Loading from registered_businesses with id:', business.business_id);
+
         const { data: businessData, error: businessError } = await supabase
           .from('registered_businesses')
           .select(`
@@ -496,12 +508,18 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           .eq('id', business.business_id)
           .maybeSingle();
 
+        console.log('Business data loaded:', businessData);
+        console.log('Business error:', businessError);
+
         if (businessError) throw businessError;
 
         if (!businessData) {
+          console.log('No business data found, using single business');
           setAllLocations([business]);
           return;
         }
+
+        console.log('Number of locations:', businessData.locations?.length);
 
         const locations = (businessData.locations || []).map((loc: any) => ({
           id: loc.id,
@@ -533,6 +551,8 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           source: (business.source || (businessData.source_type === 'claimed' ? 'claimed' : 'self_registered')) as 'claimed' | 'self_registered'
         }));
 
+        console.log('Mapped locations:', locations);
+        console.log('Setting allLocations with length:', locations.length);
         setAllLocations(locations.length > 0 ? locations : [business]);
       } else {
         // For old system (if needed)
@@ -582,6 +602,8 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
       }
     } catch (error: any) {
       console.error('Error loading locations:', error);
+      console.error('Error details:', error.message);
+      console.log('Falling back to single business:', business);
       setAllLocations([business]);
     }
   };
