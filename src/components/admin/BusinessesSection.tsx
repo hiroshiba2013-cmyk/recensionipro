@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building2, CheckCircle, MapPin, Mail, Phone, FileEdit as Edit2, Search, Filter, Download, Upload, UserPlus, X, FileText, Briefcase, Clock } from 'lucide-react';
+import { Building2, CheckCircle, MapPin, Mail, Phone, FileEdit as Edit2, Search, Filter, Download, Upload, UserPlus, X, FileText, Briefcase, Clock, ShieldCheck, ShieldX } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { ITALIAN_REGIONS, PROVINCES_BY_REGION, CITIES_BY_PROVINCE } from '../../lib/cities';
 
@@ -417,7 +417,11 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
   };
 
   const handleToggleVerification = async (businessId: string, currentStatus: boolean) => {
-    if (!confirm(`Sei sicuro di voler ${currentStatus ? 'rimuovere la verifica da' : 'verificare'} questa attività?`)) return;
+    const action = currentStatus
+      ? 'rimuovere il badge di verifica (badge blu) da'
+      : 'aggiungere il badge di verifica (badge blu) a';
+
+    if (!confirm(`Sei sicuro di voler ${action} questa attività?\n\nIl badge di verifica indica che l'attività è stata controllata e approvata dalla piattaforma.`)) return;
 
     try {
       const tableName = activeTab === 'imported' || activeTab === 'user_added'
@@ -438,11 +442,11 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
 
       if (error) throw error;
 
-      alert(`Verifica ${!currentStatus ? 'attivata' : 'rimossa'} con successo`);
+      alert(`Badge di verifica ${!currentStatus ? 'aggiunto' : 'rimosso'} con successo!`);
       await loadBusinesses();
     } catch (error: any) {
       console.error('Error updating verification:', error);
-      alert(`Errore: ${error.message}`);
+      alert(`Errore nell'aggiornamento del badge: ${error.message}`);
     }
   };
 
@@ -724,15 +728,15 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Stato Verifica</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Badge di Verifica</label>
               <select
                 value={filters.verified}
                 onChange={(e) => setFilters({ ...filters, verified: e.target.value as any })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               >
                 <option value="all">Tutte</option>
-                <option value="verified">Solo Verificate</option>
-                <option value="unverified">Solo Non Verificate</option>
+                <option value="verified">Con Badge Blu</option>
+                <option value="unverified">Senza Badge</option>
               </select>
             </div>
           </div>
@@ -793,7 +797,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                       </th>
                     )}
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Stato
+                      Badge
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                       Azioni
@@ -895,13 +899,23 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                       )}
                       <td className="px-6 py-4">
                         <span
-                          className={`px-2 py-1 text-xs rounded-full ${
+                          className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
                             business.is_verified
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-600'
                           }`}
                         >
-                          {business.is_verified ? 'Verificata' : 'Non verificata'}
+                          {business.is_verified ? (
+                            <>
+                              <ShieldCheck className="w-3 h-3" />
+                              Badge Blu
+                            </>
+                          ) : (
+                            <>
+                              <ShieldX className="w-3 h-3" />
+                              Nessun Badge
+                            </>
+                          )}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -925,13 +939,24 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                           </button>
                           <button
                             onClick={() => handleToggleVerification(business.id, business.is_verified)}
-                            className={`px-2 py-1 text-xs rounded ${
+                            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                               business.is_verified
-                                ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                                : 'bg-green-100 text-green-800 hover:bg-green-200'
+                                ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                             }`}
+                            title={business.is_verified ? 'Rimuovi badge di verifica' : 'Aggiungi badge di verifica (badge blu)'}
                           >
-                            {business.is_verified ? 'Rimuovi' : 'Verifica'}
+                            {business.is_verified ? (
+                              <>
+                                <ShieldX className="w-3.5 h-3.5" />
+                                Rimuovi Badge
+                              </>
+                            ) : (
+                              <>
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                Verifica
+                              </>
+                            )}
                           </button>
                         </div>
                       </td>
@@ -1212,15 +1237,25 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Stato</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Badge di Verifica</label>
                 <span
-                  className={`inline-block px-2 py-1 text-xs rounded-full ${
+                  className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
                     selectedBusiness.is_verified
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-gray-100 text-gray-600'
                   }`}
                 >
-                  {selectedBusiness.is_verified ? 'Verificata' : 'Non verificata'}
+                  {selectedBusiness.is_verified ? (
+                    <>
+                      <ShieldCheck className="w-3 h-3" />
+                      Badge Blu Attivo
+                    </>
+                  ) : (
+                    <>
+                      <ShieldX className="w-3 h-3" />
+                      Nessun Badge
+                    </>
+                  )}
                 </span>
               </div>
               <div>
