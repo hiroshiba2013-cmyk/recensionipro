@@ -1,21 +1,47 @@
-import { CheckCircle2, UserPlus } from 'lucide-react';
+import { CheckCircle2, UserPlus, Download, Building2 } from 'lucide-react';
 
 interface VerificationBadgeProps {
   isClaimed: boolean;
   isUserAdded?: boolean;
+  isImported?: boolean;
+  isSelfRegistered?: boolean;
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
 }
 
-export function VerificationBadge({ isClaimed, isUserAdded = false, size = 'md', showText = true }: VerificationBadgeProps) {
-  if (!isClaimed && !isUserAdded) return null;
+export function VerificationBadge({
+  isClaimed,
+  isUserAdded = false,
+  isImported = false,
+  isSelfRegistered = false,
+  size = 'md',
+  showText = true
+}: VerificationBadgeProps) {
+  // Se non c'è nessun badge, non mostrare nulla
+  if (!isClaimed && !isUserAdded && !isImported && !isSelfRegistered) return null;
 
-  const Icon = isClaimed ? CheckCircle2 : UserPlus;
-  const text = isClaimed ? 'Rivendicata' : 'Attività aggiunta da utente';
-  const bgColor = isClaimed
-    ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-300 text-green-700'
-    : 'bg-gradient-to-r from-blue-50 to-sky-50 border-blue-300 text-blue-700';
-  const iconColor = isClaimed ? 'text-green-600 fill-green-100' : 'text-blue-600 fill-blue-100';
+  // Determina l'icona, il testo e i colori in base al tipo
+  let Icon, text, bgColor, iconColor;
+
+  if (isSelfRegistered || isClaimed) {
+    // Attività iscritte da sole o rivendicate (stesso badge)
+    Icon = CheckCircle2;
+    text = isClaimed ? 'Attività Verificata' : 'Attività Iscritta';
+    bgColor = 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-300 text-green-700';
+    iconColor = 'text-green-600 fill-green-100';
+  } else if (isImported) {
+    // Attività importate
+    Icon = Download;
+    text = 'Importata';
+    bgColor = 'bg-gradient-to-r from-purple-50 to-violet-50 border-purple-300 text-purple-700';
+    iconColor = 'text-purple-600 fill-purple-100';
+  } else if (isUserAdded) {
+    // Attività aggiunta da utenti (solo se approvata)
+    Icon = UserPlus;
+    text = 'Aggiunta da Utente';
+    bgColor = 'bg-gradient-to-r from-blue-50 to-sky-50 border-blue-300 text-blue-700';
+    iconColor = 'text-blue-600 fill-blue-100';
+  }
 
   const sizeClasses = {
     sm: {

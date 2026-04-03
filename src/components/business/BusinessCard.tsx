@@ -19,6 +19,8 @@ interface BusinessCardProps {
       city?: string;
     };
     added_by?: string | null;
+    source?: string | null;
+    owner_id?: string | null;
   };
 }
 
@@ -70,7 +72,9 @@ export function BusinessCard({ business }: BusinessCardProps) {
           <h3 className="text-xl font-semibold text-gray-900 flex-1">{business.name}</h3>
           <VerificationBadge
             isClaimed={!!business.is_claimed}
-            isUserAdded={!!business.added_by && !business.is_claimed}
+            isUserAdded={!!business.added_by && !business.is_claimed && !business.source}
+            isImported={business.source === 'imported'}
+            isSelfRegistered={!!business.owner_id && !business.is_claimed}
             size="sm"
           />
         </div>

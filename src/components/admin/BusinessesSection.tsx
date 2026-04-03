@@ -418,10 +418,10 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
 
   const handleToggleVerification = async (businessId: string, currentStatus: boolean) => {
     const action = currentStatus
-      ? 'rimuovere il badge di verifica (badge blu) da'
-      : 'aggiungere il badge di verifica (badge blu) a';
+      ? 'nascondere dalla ricerca pubblica'
+      : 'approvare e rendere visibile nella ricerca';
 
-    if (!confirm(`Sei sicuro di voler ${action} questa attività?\n\nIl badge di verifica indica che l'attività è stata controllata e approvata dalla piattaforma.`)) return;
+    if (!confirm(`Sei sicuro di voler ${action} questa attività aggiunta da un utente?\n\n${currentStatus ? 'L\'attività non sarà più visibile nelle ricerche pubbliche.' : 'L\'attività sarà visibile a tutti gli utenti nella ricerca.'}`)) return;
 
     try {
       const tableName = activeTab === 'imported' || activeTab === 'user_added'
@@ -442,11 +442,11 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
 
       if (error) throw error;
 
-      alert(`Badge di verifica ${!currentStatus ? 'aggiunto' : 'rimosso'} con successo!`);
+      alert(`Attività ${!currentStatus ? 'approvata e ora visibile' : 'nascosta dalla ricerca'}!`);
       await loadBusinesses();
     } catch (error: any) {
       console.error('Error updating verification:', error);
-      alert(`Errore nell'aggiornamento del badge: ${error.message}`);
+      alert(`Errore nell'aggiornamento: ${error.message}`);
     }
   };
 
@@ -727,18 +727,20 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Badge di Verifica</label>
-              <select
-                value={filters.verified}
-                onChange={(e) => setFilters({ ...filters, verified: e.target.value as any })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              >
-                <option value="all">Tutte</option>
-                <option value="verified">Con Badge Blu</option>
-                <option value="unverified">Senza Badge</option>
-              </select>
-            </div>
+            {activeTab === 'user_added' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Stato Approvazione</label>
+                <select
+                  value={filters.verified}
+                  onChange={(e) => setFilters({ ...filters, verified: e.target.value as any })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                >
+                  <option value="all">Tutte</option>
+                  <option value="verified">Approvate</option>
+                  <option value="unverified">In Attesa</option>
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Stats and Reset */}
@@ -900,20 +902,34 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                       <td className="px-6 py-4">
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
-                            business.is_verified
+                            activeTab === 'self_registered' || activeTab === 'claimed'
+                              ? 'bg-green-100 text-green-800'
+                              : activeTab === 'imported'
+                              ? 'bg-purple-100 text-purple-800'
+                              : business.is_verified
                               ? 'bg-blue-100 text-blue-800'
                               : 'bg-gray-100 text-gray-600'
                           }`}
                         >
-                          {business.is_verified ? (
+                          {activeTab === 'self_registered' || activeTab === 'claimed' ? (
+                            <>
+                              <CheckCircle className="w-3 h-3" />
+                              Verificata
+                            </>
+                          ) : activeTab === 'imported' ? (
+                            <>
+                              <Download className="w-3 h-3" />
+                              Importata
+                            </>
+                          ) : business.is_verified ? (
                             <>
                               <ShieldCheck className="w-3 h-3" />
-                              Badge Blu
+                              Approvata
                             </>
                           ) : (
                             <>
-                              <ShieldX className="w-3 h-3" />
-                              Nessun Badge
+                              <Clock className="w-3 h-3" />
+                              In Attesa
                             </>
                           )}
                         </span>
@@ -937,27 +953,30 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => handleToggleVerification(business.id, business.is_verified)}
-                            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                              business.is_verified
-                                ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                                : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                            }`}
-                            title={business.is_verified ? 'Rimuovi badge di verifica' : 'Aggiungi badge di verifica (badge blu)'}
-                          >
-                            {business.is_verified ? (
-                              <>
-                                <ShieldX className="w-3.5 h-3.5" />
-                                Rimuovi Badge
-                              </>
-                            ) : (
-                              <>
-                                <ShieldCheck className="w-3.5 h-3.5" />
-                                Verifica
-                              </>
-                            )}
-                          </button>
+                          {/* Mostra tasto verifica SOLO per attività aggiunte da utenti */}
+                          {activeTab === 'user_added' && (
+                            <button
+                              onClick={() => handleToggleVerification(business.id, business.is_verified)}
+                              className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                                business.is_verified
+                                  ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                              }`}
+                              title={business.is_verified ? 'Nascondi dalla ricerca pubblica' : 'Approva e rendi visibile nella ricerca'}
+                            >
+                              {business.is_verified ? (
+                                <>
+                                  <ShieldX className="w-3.5 h-3.5" />
+                                  Nascondi
+                                </>
+                              ) : (
+                                <>
+                                  <ShieldCheck className="w-3.5 h-3.5" />
+                                  Approva
+                                </>
+                              )}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1237,23 +1256,37 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Badge di Verifica</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Stato Attività</label>
                 <span
                   className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
-                    selectedBusiness.is_verified
+                    activeTab === 'self_registered' || activeTab === 'claimed'
+                      ? 'bg-green-100 text-green-800'
+                      : activeTab === 'imported'
+                      ? 'bg-purple-100 text-purple-800'
+                      : selectedBusiness.is_verified
                       ? 'bg-blue-100 text-blue-800'
                       : 'bg-gray-100 text-gray-600'
                   }`}
                 >
-                  {selectedBusiness.is_verified ? (
+                  {activeTab === 'self_registered' || activeTab === 'claimed' ? (
+                    <>
+                      <CheckCircle className="w-3 h-3" />
+                      Verificata (Iscritta)
+                    </>
+                  ) : activeTab === 'imported' ? (
+                    <>
+                      <Download className="w-3 h-3" />
+                      Importata
+                    </>
+                  ) : selectedBusiness.is_verified ? (
                     <>
                       <ShieldCheck className="w-3 h-3" />
-                      Badge Blu Attivo
+                      Approvata (Aggiunta da Utente)
                     </>
                   ) : (
                     <>
-                      <ShieldX className="w-3 h-3" />
-                      Nessun Badge
+                      <Clock className="w-3 h-3" />
+                      In Attesa di Approvazione
                     </>
                   )}
                 </span>
