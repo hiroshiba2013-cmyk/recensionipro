@@ -174,7 +174,7 @@ export default function AuctionsSection() {
       auction.user?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       auction.user?.nickname?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesCategory = categoryFilter === 'all' || auction.category === categoryFilter;
+    const matchesCategory = categoryFilter === 'all' || (auction.category && auction.category === categoryFilter);
 
     const matchesPriceRange = priceRangeFilter === 'all' || (() => {
       const price = auction.current_price > 0 ? auction.current_price : auction.base_price;
@@ -188,9 +188,9 @@ export default function AuctionsSection() {
       }
     })();
 
-    const matchesRegion = regionFilter === 'all' || auction.region === regionFilter;
-    const matchesProvince = provinceFilter === 'all' || auction.province === provinceFilter;
-    const matchesCity = cityFilter === 'all' || auction.city === cityFilter;
+    const matchesRegion = regionFilter === 'all' || (auction.region && auction.region === regionFilter);
+    const matchesProvince = provinceFilter === 'all' || (auction.province && auction.province === provinceFilter);
+    const matchesCity = cityFilter === 'all' || (auction.city && auction.city === cityFilter);
 
     return matchesSearch && matchesCategory && matchesPriceRange && matchesRegion && matchesProvince && matchesCity;
   });
