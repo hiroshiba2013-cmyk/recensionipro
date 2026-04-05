@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle, Heart, Building2, Shield, Tag, Briefcase, Award, UserCog } from 'lucide-react';
+import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle, Heart, Building2, Shield, Tag, Briefcase, Award, UserCog, Gavel } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { supabase } from '../../lib/supabase';
@@ -447,6 +447,16 @@ export function Header() {
                   <Tag className="w-4 h-4 text-green-600" />
                 </div>
                 <span className="text-sm font-semibold">Annunci</span>
+              </a>
+              <a
+                href="/auctions"
+                className="group flex items-center gap-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 transition-all font-medium px-4 py-2.5 rounded-xl hover:shadow-md"
+                title="Aste"
+              >
+                <div className="bg-orange-100 p-1.5 rounded-lg group-hover:bg-orange-200 transition-colors">
+                  <Gavel className="w-4 h-4 text-orange-600" />
+                </div>
+                <span className="text-sm font-semibold">Aste</span>
               </a>
               <a
                 href="/solidarity"

@@ -20,6 +20,8 @@ import { AdminDashboardPage } from '../pages/AdminDashboardPage';
 import { AdminProfilePage } from '../pages/AdminProfilePage';
 import { AdminRegisterPage } from '../pages/AdminRegisterPage';
 import { AdminLoginPage } from '../pages/AdminLoginPage';
+import AuctionsPage from '../pages/AuctionsPage';
+import AuctionDetailPage from '../pages/AuctionDetailPage';
 import { useAuth } from '../contexts/AuthContext';
 
 const RouterContext = createContext<{ params: Record<string, string> }>({ params: {} });
@@ -101,6 +103,14 @@ export function Router() {
 
   if (currentPath === '/classified' || currentPath === '/classified-ads') {
     return <ClassifiedAdsPage />;
+  }
+
+  if (currentPath === '/auctions') {
+    return <AuctionsPage />;
+  }
+
+  if (currentPath.startsWith('/auctions/')) {
+    return <AuctionDetailPage />;
   }
 
   if (currentPath.startsWith('/classified/') || currentPath.startsWith('/classified-ads/')) {

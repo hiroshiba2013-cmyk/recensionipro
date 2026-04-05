@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Star, Search, Award, Tag, Briefcase, Heart, Users, MapPin, Euro, ArrowRight, Check, Building2 } from 'lucide-react';
+import { Star, Search, Award, Tag, Briefcase, Heart, Users, MapPin, Euro, ArrowRight, Check, Building2, Gavel } from 'lucide-react';
 import { AdvancedSearch } from '../components/search/AdvancedSearch';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from '../components/Router';
 import TopBusinessesBanner from '../components/business/TopBusinessesBanner';
+import AuctionCard from '../components/auctions/AuctionCard';
 
 export function HomePage() {
   const { user, profile, loading } = useAuth();
@@ -30,6 +31,7 @@ export function HomePage() {
 function LandingPage() {
   const navigate = useNavigate();
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
+  const [featuredAuctions, setFeaturedAuctions] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
@@ -50,6 +52,25 @@ function LandingPage() {
         console.error('Error loading subscription plans:', error);
       } else if (plansResult) {
         setSubscriptionPlans(plansResult);
+      }
+
+      const { data: auctionsData } = await supabase
+        .from('auctions')
+        .select(`
+          *,
+          user:user_id(full_name, nickname),
+          bid_count:auction_bids(count)
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(6);
+
+      if (auctionsData) {
+        const auctionsWithBidCount = auctionsData.map(auction => ({
+          ...auction,
+          bid_count: auction.bid_count?.[0]?.count || 0
+        }));
+        setFeaturedAuctions(auctionsWithBidCount);
       }
     } catch (error) {
       console.error('Error loading landing data:', error);
@@ -280,6 +301,37 @@ function LandingPage() {
             </button>
           </div>
         </section>
+
+        {featuredAuctions.length > 0 && (
+          <section className="mb-16">
+            <div className="text-center mb-12">
+              <div className="inline-block bg-gradient-to-br from-orange-500 to-red-500 p-4 rounded-full mb-4">
+                <Gavel className="w-12 h-12 text-white" />
+              </div>
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                Aste Online
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Partecipa alle aste e trova occasioni uniche. Compra e vendi in tutta sicurezza.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {featuredAuctions.map(auction => (
+                <AuctionCard key={auction.id} auction={auction} />
+              ))}
+            </div>
+
+            <div className="text-center">
+              <button
+                onClick={() => navigate('/auctions')}
+                className="bg-orange-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-orange-700 transition-all shadow-lg hover:shadow-xl inline-flex items-center gap-2"
+              >
+                Vedi Tutte le Aste <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
+          </section>
+        )}
 
         <section className="mb-16 bg-gradient-to-r from-pink-50 to-red-50 rounded-2xl p-12 border-2 border-pink-200">
           <div className="text-center mb-8">
