@@ -786,7 +786,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                       Contatti
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Categoria
+                      Sedi
                     </th>
                     {activeTab === 'all' && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -848,7 +848,24 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{business.category?.name || 'N/A'}</div>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm font-medium text-gray-900">
+                            {business.business_id ? (
+                              <button
+                                onClick={() => {
+                                  setSelectedBusiness(business);
+                                  loadAllLocations(business);
+                                }}
+                                className="text-blue-600 hover:text-blue-800 underline"
+                              >
+                                Vedi sedi
+                              </button>
+                            ) : (
+                              '1 sede'
+                            )}
+                          </span>
+                        </div>
                       </td>
                       {activeTab === 'all' && (
                         <td className="px-6 py-4">
