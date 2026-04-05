@@ -38,6 +38,8 @@ export default function AuctionsSection() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [priceRangeFilter, setPriceRangeFilter] = useState<string>('all');
   const [regionFilter, setRegionFilter] = useState<string>('all');
+  const [provinceFilter, setProvinceFilter] = useState<string>('all');
+  const [cityFilter, setCityFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [stats, setStats] = useState({
     total: 0,
@@ -52,6 +54,15 @@ export default function AuctionsSection() {
     loadAuctions();
     loadStats();
   }, [statusFilter]);
+
+  useEffect(() => {
+    setProvinceFilter('all');
+    setCityFilter('all');
+  }, [regionFilter]);
+
+  useEffect(() => {
+    setCityFilter('all');
+  }, [provinceFilter]);
 
   const loadAuctions = async () => {
     setLoading(true);
@@ -178,12 +189,29 @@ export default function AuctionsSection() {
     })();
 
     const matchesRegion = regionFilter === 'all' || auction.region === regionFilter;
+    const matchesProvince = provinceFilter === 'all' || auction.province === provinceFilter;
+    const matchesCity = cityFilter === 'all' || auction.city === cityFilter;
 
-    return matchesSearch && matchesCategory && matchesPriceRange && matchesRegion;
+    return matchesSearch && matchesCategory && matchesPriceRange && matchesRegion && matchesProvince && matchesCity;
   });
 
-  const categories = Array.from(new Set(auctions.map(a => a.category))).sort();
-  const regions = Array.from(new Set(auctions.map(a => a.region))).sort();
+  const categories = Array.from(new Set(auctions.map(a => a.category).filter(Boolean))).sort();
+  const regions = Array.from(new Set(auctions.map(a => a.region).filter(Boolean))).sort();
+  const provinces = Array.from(new Set(
+    auctions
+      .filter(a => regionFilter === 'all' || a.region === regionFilter)
+      .map(a => a.province)
+      .filter(Boolean)
+  )).sort();
+  const cities = Array.from(new Set(
+    auctions
+      .filter(a =>
+        (regionFilter === 'all' || a.region === regionFilter) &&
+        (provinceFilter === 'all' || a.province === provinceFilter)
+      )
+      .map(a => a.city)
+      .filter(Boolean)
+  )).sort();
 
   const getTimeRemaining = (endsAt: string) => {
     const now = new Date();
@@ -326,7 +354,7 @@ export default function AuctionsSection() {
           </div>
 
           {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Categoria
@@ -377,14 +405,50 @@ export default function AuctionsSection() {
                 </select>
               </div>
 
-              <div className="md:col-span-3 flex justify-end">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Provincia
+                </label>
+                <select
+                  value={provinceFilter}
+                  onChange={(e) => setProvinceFilter(e.target.value)}
+                  disabled={regionFilter === 'all'}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="all">Tutte le province</option>
+                  {provinces.map(prov => (
+                    <option key={prov} value={prov}>{prov}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Città
+                </label>
+                <select
+                  value={cityFilter}
+                  onChange={(e) => setCityFilter(e.target.value)}
+                  disabled={provinceFilter === 'all'}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="all">Tutte le città</option>
+                  {cities.map(city => (
+                    <option key={city} value={city}>{city}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-end">
                 <button
                   onClick={() => {
                     setCategoryFilter('all');
                     setPriceRangeFilter('all');
                     setRegionFilter('all');
+                    setProvinceFilter('all');
+                    setCityFilter('all');
                   }}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                  className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
                 >
                   Cancella Filtri
                 </button>
@@ -396,7 +460,7 @@ export default function AuctionsSection() {
             <span>
               Risultati: <strong className="text-gray-900">{filteredAuctions.length}</strong> di <strong className="text-gray-900">{auctions.length}</strong> aste
             </span>
-            {(categoryFilter !== 'all' || priceRangeFilter !== 'all' || regionFilter !== 'all') && (
+            {(categoryFilter !== 'all' || priceRangeFilter !== 'all' || regionFilter !== 'all' || provinceFilter !== 'all' || cityFilter !== 'all') && (
               <span className="text-orange-600 font-medium">
                 Filtri attivi
               </span>
