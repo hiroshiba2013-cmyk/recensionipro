@@ -35,6 +35,10 @@ export default function AuctionsSection() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [priceRangeFilter, setPriceRangeFilter] = useState<string>('all');
+  const [regionFilter, setRegionFilter] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
@@ -151,11 +155,35 @@ export default function AuctionsSection() {
     }
   };
 
-  const filteredAuctions = auctions.filter(auction =>
-    auction.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    auction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    auction.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredAuctions = auctions.filter(auction => {
+    const matchesSearch =
+      auction.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      auction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      auction.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      auction.user?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      auction.user?.nickname?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesCategory = categoryFilter === 'all' || auction.category === categoryFilter;
+
+    const matchesPriceRange = priceRangeFilter === 'all' || (() => {
+      const price = auction.current_price > 0 ? auction.current_price : auction.base_price;
+      switch (priceRangeFilter) {
+        case '0-100': return price <= 100;
+        case '100-500': return price > 100 && price <= 500;
+        case '500-1000': return price > 500 && price <= 1000;
+        case '1000-5000': return price > 1000 && price <= 5000;
+        case '5000+': return price > 5000;
+        default: return true;
+      }
+    })();
+
+    const matchesRegion = regionFilter === 'all' || auction.region === regionFilter;
+
+    return matchesSearch && matchesCategory && matchesPriceRange && matchesRegion;
+  });
+
+  const categories = Array.from(new Set(auctions.map(a => a.category))).sort();
+  const regions = Array.from(new Set(auctions.map(a => a.region))).sort();
 
   const getTimeRemaining = (endsAt: string) => {
     const now = new Date();
@@ -239,21 +267,35 @@ export default function AuctionsSection() {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Cerca per titolo, descrizione o utente..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            />
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Cerca per titolo, descrizione, utente..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              />
+            </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                showFilters
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              Filtri Avanzati
+            </button>
           </div>
-          <div className="flex gap-2">
+
+          <div className="flex gap-2 overflow-x-auto pb-2">
             <button
               onClick={() => setStatusFilter('all')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
                 statusFilter === 'all'
                   ? 'bg-orange-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -263,7 +305,7 @@ export default function AuctionsSection() {
             </button>
             <button
               onClick={() => setStatusFilter('active')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
                 statusFilter === 'active'
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -273,7 +315,7 @@ export default function AuctionsSection() {
             </button>
             <button
               onClick={() => setStatusFilter('completed')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
                 statusFilter === 'completed'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -281,6 +323,84 @@ export default function AuctionsSection() {
             >
               Concluse
             </button>
+          </div>
+
+          {showFilters && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Categoria
+                </label>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                >
+                  <option value="all">Tutte le categorie</option>
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Fascia di Prezzo
+                </label>
+                <select
+                  value={priceRangeFilter}
+                  onChange={(e) => setPriceRangeFilter(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                >
+                  <option value="all">Tutti i prezzi</option>
+                  <option value="0-100">0 - 100 €</option>
+                  <option value="100-500">100 - 500 €</option>
+                  <option value="500-1000">500 - 1.000 €</option>
+                  <option value="1000-5000">1.000 - 5.000 €</option>
+                  <option value="5000+">Oltre 5.000 €</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Regione
+                </label>
+                <select
+                  value={regionFilter}
+                  onChange={(e) => setRegionFilter(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                >
+                  <option value="all">Tutte le regioni</option>
+                  {regions.map(reg => (
+                    <option key={reg} value={reg}>{reg}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="md:col-span-3 flex justify-end">
+                <button
+                  onClick={() => {
+                    setCategoryFilter('all');
+                    setPriceRangeFilter('all');
+                    setRegionFilter('all');
+                  }}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                >
+                  Cancella Filtri
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <span>
+              Risultati: <strong className="text-gray-900">{filteredAuctions.length}</strong> di <strong className="text-gray-900">{auctions.length}</strong> aste
+            </span>
+            {(categoryFilter !== 'all' || priceRangeFilter !== 'all' || regionFilter !== 'all') && (
+              <span className="text-orange-600 font-medium">
+                Filtri attivi
+              </span>
+            )}
           </div>
         </div>
 
