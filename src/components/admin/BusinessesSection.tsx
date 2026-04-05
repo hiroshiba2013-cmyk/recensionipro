@@ -233,7 +233,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
               owner_id: business.owner_id,
               owner: business.owner
             } : undefined,
-            source: business.source_type === 'claimed' ? 'claimed' as const : 'self_registered' as const
+            source: (business.source_type === 'claimed_imported' || business.source_type === 'claimed_user_added') ? 'claimed' as const : 'self_registered' as const
           }];
         });
 
@@ -325,7 +325,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
         // Filter by source_type
         if (activeTab === 'claimed') {
           // Claimed: businesses that were originally unclaimed and then claimed
-          query = query.eq('source_type', 'claimed');
+          query = query.or('source_type.eq.claimed_imported,source_type.eq.claimed_user_added');
         } else {
           // Self-registered: businesses registered directly by the owner
           query = query.eq('source_type', 'direct_registration');
@@ -402,7 +402,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
               owner_id: business.owner_id,
               owner: business.owner
             } : undefined,
-            source: activeTab
+            source: (business.source_type === 'claimed_imported' || business.source_type === 'claimed_user_added') ? 'claimed' as const : 'self_registered' as const
           }];
         });
       }
@@ -574,7 +574,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
             owner_id: businessData.owner_id,
             owner: businessData.owner
           } : undefined,
-          source: (business.source || (businessData.source_type === 'claimed' ? 'claimed' : 'self_registered')) as 'claimed' | 'self_registered'
+          source: (business.source || ((businessData.source_type === 'claimed_imported' || businessData.source_type === 'claimed_user_added') ? 'claimed' : 'self_registered')) as 'claimed' | 'self_registered'
         }));
 
         setAllLocations(locations.length > 0 ? locations : [business]);
