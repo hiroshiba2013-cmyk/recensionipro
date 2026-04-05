@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, Users, FileText, ShoppingBag, Activity, CheckCircle, XCircle, Clock, Eye, Trash2, LogOut, Building2, AlertTriangle, Briefcase, Package, MapPin, UserCheck, Heart, Award, TrendingUp, MessageSquare, Mail, CreditCard, BookOpen } from 'lucide-react';
+import { Shield, Users, FileText, ShoppingBag, Activity, CheckCircle, XCircle, Clock, Eye, Trash2, LogOut, Building2, AlertTriangle, Briefcase, Package, MapPin, UserCheck, Heart, Award, TrendingUp, MessageSquare, Mail, CreditCard, BookOpen, Gavel } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { AdminStats } from '../components/admin/AdminStats';
@@ -18,6 +18,7 @@ import { MessagingSection } from '../components/admin/MessagingSection';
 import { ContactSection } from '../components/admin/ContactSection';
 import { PlansSection } from '../components/admin/PlansSection';
 import { RulesSection } from '../components/admin/RulesSection';
+import AuctionsSection from '../components/admin/AuctionsSection';
 
 interface DashboardStats {
   totalUsers: number;
@@ -973,6 +974,17 @@ export function AdminDashboardPage() {
                 Annunci
               </button>
               <button
+                onClick={() => setActiveTab('auctions')}
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'auctions'
+                    ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <Gavel className="w-4 h-4" />
+                Aste
+              </button>
+              <button
                 onClick={() => setActiveTab('reports')}
                 className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'reports'
@@ -1547,6 +1559,8 @@ export function AdminDashboardPage() {
             {activeTab === 'ads' && (
               <ClassifiedAdsSection ads={classifiedAds} onReload={loadClassifiedAds} />
             )}
+
+            {activeTab === 'auctions' && <AuctionsSection />}
 
             {activeTab === 'reports' && <ReportsSection reports={reports} onReload={loadReports} />}
 
