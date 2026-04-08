@@ -1,4 +1,4 @@
-import { Star, Clock, CheckCircle, MapPin } from 'lucide-react';
+import { Star, Clock, CheckCircle, MapPin, FileText } from 'lucide-react';
 import { Review } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import ReportButton from '../moderation/ReportButton';
@@ -6,6 +6,14 @@ import ReportButton from '../moderation/ReportButton';
 interface ReviewCardProps {
   review: Review;
 }
+
+const reviewTypeLabels: Record<string, string> = {
+  service_used: 'Servizio Fruito',
+  booking_not_completed: 'Prenotazione Non Completata',
+  quote_request: 'Richiesta Preventivo',
+  customer_service: 'Assistenza Clienti',
+  problem_before_service: 'Problema Pre-Servizio'
+};
 
 export function ReviewCard({ review }: ReviewCardProps) {
   const { user } = useAuth();
@@ -91,24 +99,56 @@ export function ReviewCard({ review }: ReviewCardProps) {
         </div>
       </div>
 
-      <h4 className="font-semibold text-gray-900 mb-3">{review.title}</h4>
+      {review.title && <h4 className="font-semibold text-gray-900 mb-3">{review.title}</h4>}
 
-      {review.price_rating && review.service_rating && review.quality_rating && (
-        <div className="grid grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+      {(review as any).review_type && (
+        <div className="mb-3">
+          <span className={`inline-flex items-center gap-1 text-xs font-medium px-3 py-1 rounded-full ${
+            (review as any).review_type === 'service_used'
+              ? 'bg-green-100 text-green-800'
+              : 'bg-blue-100 text-blue-800'
+          }`}>
+            {reviewTypeLabels[(review as any).review_type] || (review as any).review_type}
+          </span>
+        </div>
+      )}
+
+      {(review as any).review_type === 'service_used' && (review as any).booking_management_rating && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
           <div>
-            <p className="text-xs font-medium text-gray-600 mb-1">Qualità</p>
-            {renderStars(review.quality_rating)}
-            <p className="text-xs text-gray-500 mt-1">{getRatingLabel(review.quality_rating)}</p>
+            <p className="text-xs font-medium text-gray-700 mb-1">Gestione Prenotazione</p>
+            {renderStars((review as any).booking_management_rating)}
+            <p className="text-xs text-gray-600 mt-1">{getRatingLabel((review as any).booking_management_rating)}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-600 mb-1">Prezzo</p>
-            {renderStars(review.price_rating)}
-            <p className="text-xs text-gray-500 mt-1">{getRatingLabel(review.price_rating)}</p>
+            <p className="text-xs font-medium text-gray-700 mb-1">Affidabilità</p>
+            {renderStars((review as any).reliability_rating)}
+            <p className="text-xs text-gray-600 mt-1">{getRatingLabel((review as any).reliability_rating)}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-600 mb-1">Esperienza / Servizio</p>
-            {renderStars(review.service_rating)}
-            <p className="text-xs text-gray-500 mt-1">{getRatingLabel(review.service_rating)}</p>
+            <p className="text-xs font-medium text-gray-700 mb-1">Organizzazione</p>
+            {renderStars((review as any).organization_rating)}
+            <p className="text-xs text-gray-600 mt-1">{getRatingLabel((review as any).organization_rating)}</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-gray-700 mb-1">Esperienza</p>
+            {renderStars((review as any).experience_rating)}
+            <p className="text-xs text-gray-600 mt-1">{getRatingLabel((review as any).experience_rating)}</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-gray-700 mb-1">Prezzo</p>
+            {renderStars((review as any).price_rating)}
+            <p className="text-xs text-gray-600 mt-1">{getRatingLabel((review as any).price_rating)}</p>
+          </div>
+        </div>
+      )}
+
+      {(review as any).proof_documents && (review as any).proof_documents.length > 0 && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center gap-2 text-sm text-blue-900">
+            <FileText className="w-4 h-4" />
+            <span className="font-medium">Documentazione fornita</span>
+            <span className="text-blue-700">({(review as any).proof_documents.length} documento{(review as any).proof_documents.length > 1 ? 'i' : ''})</span>
           </div>
         </div>
       )}

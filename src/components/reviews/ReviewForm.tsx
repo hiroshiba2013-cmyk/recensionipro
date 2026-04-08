@@ -1,749 +1,513 @@
-import { useState, useEffect } from 'react';
-import { Star, X, Upload, Image as ImageIcon, Award } from 'lucide-react';
+import { useState } from 'react';
+import { Star, X, Upload, FileText, ChevronRight, ChevronLeft } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
-interface ReviewToEdit {
-  id: string;
-  rating: number;
-  price_rating?: number | null;
-  service_rating?: number | null;
-  quality_rating?: number | null;
-  overall_rating?: number;
-  title: string;
-  content: string;
-  business_location_id?: string | null;
-  proof_image_url?: string | null;
-}
-
 interface ReviewFormProps {
-  businessId: string;
+  businessId?: string;
   businessName?: string;
   businessLocationId?: string;
-  reviewToEdit?: ReviewToEdit;
+  unclaimedBusinessLocationId?: string;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-const provinceMap: { [key: string]: string } = {
-  'agrigento': 'AG', 'alessandria': 'AL', 'ancona': 'AN', 'aosta': 'AO', 'arezzo': 'AR',
-  'ascoli piceno': 'AP', 'asti': 'AT', 'avellino': 'AV', 'bari': 'BA', 'barletta-andria-trani': 'BT',
-  'belluno': 'BL', 'benevento': 'BN', 'bergamo': 'BG', 'biella': 'BI', 'bologna': 'BO',
-  'bolzano': 'BZ', 'brescia': 'BS', 'brindisi': 'BR', 'cagliari': 'CA', 'caltanissetta': 'CL',
-  'campobasso': 'CB', 'caserta': 'CE', 'catania': 'CT', 'catanzaro': 'CZ', 'chieti': 'CH',
-  'como': 'CO', 'cosenza': 'CS', 'cremona': 'CR', 'crotone': 'KR', 'cuneo': 'CN',
-  'enna': 'EN', 'fermo': 'FM', 'ferrara': 'FE', 'firenze': 'FI', 'foggia': 'FG',
-  'forlì-cesena': 'FC', 'frosinone': 'FR', 'genova': 'GE', 'gorizia': 'GO', 'grosseto': 'GR',
-  'imperia': 'IM', 'isernia': 'IS', 'la spezia': 'SP', 'l\'aquila': 'AQ', 'latina': 'LT',
-  'lecce': 'LE', 'lecco': 'LC', 'livorno': 'LI', 'lodi': 'LO', 'lucca': 'LU',
-  'macerata': 'MC', 'mantova': 'MN', 'massa-carrara': 'MS', 'matera': 'MT', 'messina': 'ME',
-  'milano': 'MI', 'modena': 'MO', 'monza e brianza': 'MB', 'napoli': 'NA', 'novara': 'NO',
-  'nuoro': 'NU', 'oristano': 'OR', 'padova': 'PD', 'palermo': 'PA', 'parma': 'PR',
-  'pavia': 'PV', 'perugia': 'PG', 'pesaro e urbino': 'PU', 'pescara': 'PE', 'piacenza': 'PC',
-  'pisa': 'PI', 'pistoia': 'PT', 'pordenone': 'PN', 'potenza': 'PZ', 'prato': 'PO',
-  'ragusa': 'RG', 'ravenna': 'RA', 'reggio calabria': 'RC', 'reggio emilia': 'RE', 'rieti': 'RI',
-  'rimini': 'RN', 'roma': 'RM', 'rovigo': 'RO', 'salerno': 'SA', 'sassari': 'SS',
-  'savona': 'SV', 'siena': 'SI', 'siracusa': 'SR', 'sondrio': 'SO', 'taranto': 'TA',
-  'teramo': 'TE', 'terni': 'TR', 'torino': 'TO', 'trapani': 'TP', 'trento': 'TN',
-  'treviso': 'TV', 'trieste': 'TS', 'udine': 'UD', 'varese': 'VA', 'venezia': 'VE',
-  'verbano-cusio-ossola': 'VB', 'vercelli': 'VC', 'verona': 'VR', 'vibo valentia': 'VV',
-  'vicenza': 'VI', 'viterbo': 'VT', 'sud sardegna': 'SU',
-};
+type ReviewType = 'service_used' | 'booking_not_completed' | 'quote_request' | 'customer_service' | 'problem_before_service';
 
-function normalizeProvince(province: string): string {
-  if (!province || province.trim() === '') {
-    return 'RM';
-  }
-
-  const normalized = province.toLowerCase().trim();
-
-  if (normalized.length === 2 && /^[a-z]{2}$/i.test(province)) {
-    return province.toUpperCase();
-  }
-
-  return provinceMap[normalized] || 'RM';
-}
-
-export function ReviewForm({ businessId, businessName, businessLocationId, reviewToEdit, onClose, onSuccess }: ReviewFormProps) {
+export function ReviewForm({
+  businessId,
+  businessName,
+  businessLocationId,
+  unclaimedBusinessLocationId,
+  onClose,
+  onSuccess
+}: ReviewFormProps) {
   const { profile, activeProfile } = useAuth();
-  const isEditMode = !!reviewToEdit;
 
-  const [priceRating, setPriceRating] = useState(reviewToEdit?.price_rating || 0);
-  const [serviceRating, setServiceRating] = useState(reviewToEdit?.service_rating || 0);
-  const [qualityRating, setQualityRating] = useState(reviewToEdit?.quality_rating || 0);
-  const [overallRating, setOverallRating] = useState(reviewToEdit?.overall_rating || reviewToEdit?.rating || 0);
-  const [hoveredPriceRating, setHoveredPriceRating] = useState(0);
-  const [hoveredServiceRating, setHoveredServiceRating] = useState(0);
-  const [hoveredQualityRating, setHoveredQualityRating] = useState(0);
-  const [hoveredOverallRating, setHoveredOverallRating] = useState(0);
-  const [title, setTitle] = useState(reviewToEdit?.title || '');
-  const [content, setContent] = useState(reviewToEdit?.content || '');
-  const [proofImage, setProofImage] = useState<File | null>(null);
-  const [proofImagePreview, setProofImagePreview] = useState<string | null>(reviewToEdit?.proof_image_url || null);
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [step, setStep] = useState(1);
+  const [reviewType, setReviewType] = useState<ReviewType | null>(null);
+
+  const [bookingManagementRating, setBookingManagementRating] = useState(0);
+  const [reliabilityRating, setReliabilityRating] = useState(0);
+  const [organizationRating, setOrganizationRating] = useState(0);
+  const [experienceRating, setExperienceRating] = useState(0);
+  const [priceRating, setPriceRating] = useState(0);
+  const [overallRating, setOverallRating] = useState(0);
+
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [proofDocuments, setProofDocuments] = useState<File[]>([]);
+  const [proofDocumentPreviews, setProofDocumentPreviews] = useState<string[]>([]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const hasDetailedRatings = priceRating > 0 && serviceRating > 0 && qualityRating > 0;
-  const estimatedPoints = proofImage ? 50 : 25;
+  const reviewTypeOptions = [
+    { value: 'service_used', label: 'Ho usufruito del servizio', icon: '✓' },
+    { value: 'booking_not_completed', label: 'Ho prenotato ma il servizio non si è svolto', icon: '✗' },
+    { value: 'quote_request', label: 'Ho richiesto preventivo/informazioni', icon: '?' },
+    { value: 'customer_service', label: 'Ho avuto un contatto con l\'assistenza', icon: '☎' },
+    { value: 'problem_before_service', label: 'Ho avuto un problema prima dell\'erogazione', icon: '⚠' }
+  ];
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError('L\'immagine deve essere massimo 5MB');
-        return;
+  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+
+    const validFiles = files.filter(file => {
+      if (file.size > 10 * 1024 * 1024) {
+        setError('Ogni file deve essere massimo 10MB');
+        return false;
       }
-      if (!file.type.startsWith('image/')) {
-        setError('Seleziona un\'immagine valida');
-        return;
-      }
-      setProofImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProofImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-      setError('');
+      return true;
+    });
+
+    if (validFiles.length > 0) {
+      setProofDocuments(prev => [...prev, ...validFiles]);
+
+      validFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setProofDocumentPreviews(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
-  const removeImage = () => {
-    setProofImage(null);
-    setProofImagePreview(null);
+  const removeDocument = (index: number) => {
+    setProofDocuments(prev => prev.filter((_, i) => i !== index));
+    setProofDocumentPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadDocuments = async (): Promise<string[]> => {
+    if (proofDocuments.length === 0) return [];
+
+    const uploadedUrls: string[] = [];
+
+    for (const file of proofDocuments) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${profile?.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('review-proof-documents')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('review-proof-documents')
+        .getPublicUrl(fileName);
+
+      uploadedUrls.push(publicUrl);
+    }
+
+    return uploadedUrls;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
 
-    if (!profile) {
-      setError('Devi essere autenticato per lasciare una recensione');
+    if (!reviewType) {
+      setError('Seleziona il tipo di esperienza');
       return;
     }
 
-    if (profile.user_type !== 'customer') {
-      setError('Solo i clienti possono lasciare recensioni');
+    if (content.length < 100) {
+      setError('La descrizione deve essere di almeno 100 caratteri');
       return;
     }
 
-    if (profile.subscription_status !== 'active' && profile.subscription_status !== 'trial') {
-      setError('È necessario un abbonamento attivo per lasciare recensioni');
-      return;
-    }
-
-    if (overallRating === 0) {
-      setError('Inserisci almeno il voto finale');
-      return;
-    }
-
-    if (!title.trim() || !content.trim()) {
-      setError('Compila tutti i campi');
-      return;
-    }
-
-    if (content.trim().length < 100) {
-      setError('La descrizione deve contenere almeno 100 caratteri per garantire una recensione completa e credibile');
-      return;
+    if (reviewType === 'service_used') {
+      if (!bookingManagementRating || !reliabilityRating || !organizationRating ||
+          !experienceRating || !priceRating) {
+        setError('Completa tutte le valutazioni');
+        return;
+      }
+    } else {
+      if (!overallRating) {
+        setError('Inserisci una valutazione');
+        return;
+      }
+      if (proofDocuments.length === 0) {
+        setError('Carica almeno un documento di prova');
+        return;
+      }
     }
 
     setLoading(true);
-    setError('');
 
     try {
-      // Se è in modalità edit, aggiorna la recensione esistente
-      if (isEditMode && reviewToEdit) {
-        let proofImageUrl = reviewToEdit.proof_image_url;
-
-        // Upload dell'immagine di prova se presente e nuova
-        if (proofImage) {
-          setUploadingImage(true);
-          const fileExt = proofImage.name.split('.').pop();
-          const fileName = `${profile.id}-${Date.now()}.${fileExt}`;
-          const filePath = `review-proofs/${fileName}`;
-
-          const { error: uploadError } = await supabase.storage
-            .from('review-proofs')
-            .upload(filePath, proofImage);
-
-          if (uploadError) {
-            console.error('Error uploading proof:', uploadError);
-            setError('Errore durante il caricamento dell\'immagine');
-            setLoading(false);
-            setUploadingImage(false);
-            return;
-          }
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('review-proofs')
-            .getPublicUrl(filePath);
-
-          proofImageUrl = publicUrl;
-          setUploadingImage(false);
-        }
-
-        const avgRating = hasDetailedRatings
-          ? Math.round((priceRating + serviceRating + qualityRating + overallRating) / 4)
-          : overallRating;
-
-        const { error: updateError } = await supabase
-          .from('reviews')
-          .update({
-            rating: avgRating,
-            price_rating: priceRating || null,
-            service_rating: serviceRating || null,
-            quality_rating: qualityRating || null,
-            overall_rating: overallRating,
-            title: title.trim(),
-            content: content.trim(),
-            proof_image_url: proofImageUrl,
-            business_location_id: businessLocationId || null,
-          })
-          .eq('id', reviewToEdit.id);
-
-        if (updateError) throw updateError;
-
-        alert('Recensione aggiornata con successo!');
-        onSuccess();
-        onClose();
-        return;
-      }
-
-      // Modalità creazione: determina il tipo di business
-      let businessType: 'imported' | 'user_added' | 'registered' | 'unclaimed' | null = null;
-
-      // Cerca in businesses (attività rivendicate)
-      const { data: claimedData } = await supabase
-        .from('businesses')
-        .select('id')
-        .eq('id', businessId)
-        .maybeSingle();
-
-      if (claimedData) {
-        businessType = 'registered';
-      } else {
-        // Cerca in unclaimed_business_locations
-        const { data: unclaimedData } = await supabase
-          .from('unclaimed_business_locations')
-          .select('id')
-          .eq('id', businessId)
-          .maybeSingle();
-
-        if (unclaimedData) {
-          businessType = 'unclaimed';
-        } else {
-          // Cerca in imported_businesses
-          const { data: importedData } = await supabase
-            .from('imported_businesses')
-            .select('id')
-            .eq('id', businessId)
-            .maybeSingle();
-
-          if (importedData) {
-            businessType = 'imported';
-          } else {
-            // Cerca in user_added_businesses
-            const { data: userAddedData } = await supabase
-              .from('user_added_businesses')
-              .select('id')
-              .eq('id', businessId)
-              .maybeSingle();
-
-            if (userAddedData) {
-              businessType = 'user_added';
-            }
-          }
-        }
-      }
-
-      if (!businessType) {
-        setError('Attività non trovata');
-        setLoading(false);
-        return;
-      }
-
-      // Verifica se questo specifico profilo ha già recensito questa attività negli ultimi 365 giorni
-      // Il titolare e i family members sono considerati separati
-      let existingReview;
-      let reviewQuery = supabase
-        .from('reviews')
-        .select('id, created_at')
-        .eq('customer_id', profile.id);
-
-      // Controlla in base al profilo attivo
-      if (activeProfile?.isOwner === false) {
-        // Se sto recensendo come family member, controlla solo per questo family member
-        reviewQuery = reviewQuery.eq('family_member_id', activeProfile.id);
-      } else {
-        // Se sto recensendo come titolare, controlla solo per il titolare (family_member_id IS NULL)
-        reviewQuery = reviewQuery.is('family_member_id', null);
-      }
-
-      if (businessType === 'registered') {
-        reviewQuery = reviewQuery.eq('business_id', businessId);
-      } else if (businessType === 'unclaimed') {
-        reviewQuery = reviewQuery.eq('unclaimed_business_location_id', businessId);
-      } else if (businessType === 'imported') {
-        reviewQuery = reviewQuery.eq('imported_business_id', businessId);
-      } else if (businessType === 'user_added') {
-        reviewQuery = reviewQuery.eq('user_added_business_id', businessId);
-      }
-
-      const { data } = await reviewQuery.maybeSingle();
-      existingReview = data;
-
-      if (existingReview) {
-        // Calcola se sono passati 365 giorni dalla recensione precedente
-        const reviewDate = new Date(existingReview.created_at);
-        const today = new Date();
-        const daysSinceReview = Math.floor((today.getTime() - reviewDate.getTime()) / (1000 * 60 * 60 * 24));
-
-        if (daysSinceReview < 365) {
-          const daysRemaining = 365 - daysSinceReview;
-          const profileName = activeProfile?.isOwner === false
-            ? activeProfile.nickname || activeProfile.name
-            : 'tu (titolare)';
-          setError(
-            `${profileName} ha già recensito questa attività. Potrai recensire di nuovo tra ${daysRemaining} giorni (dopo 365 giorni dalla prima recensione).`
-          );
-          setLoading(false);
-          return;
-        }
-        // Se sono passati 365+ giorni, l'utente può recensire di nuovo
-        // La nuova recensione sostituirà la vecchia (cancellare quella vecchia)
-        await supabase
-          .from('reviews')
-          .delete()
-          .eq('id', existingReview.id);
-      }
-
-      let proofImageUrl = null;
-
-      // Upload dell'immagine di prova se presente
-      if (proofImage) {
-        setUploadingImage(true);
-        const fileExt = proofImage.name.split('.').pop();
-        const fileName = `${profile.id}-${Date.now()}.${fileExt}`;
-        const filePath = `review-proofs/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('review-proofs')
-          .upload(filePath, proofImage);
-
-        if (uploadError) {
-          console.error('Error uploading proof:', uploadError);
-          setError('Errore durante il caricamento dell\'immagine');
-          setLoading(false);
-          setUploadingImage(false);
-          return;
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('review-proofs')
-          .getPublicUrl(filePath);
-
-        proofImageUrl = publicUrl;
-        setUploadingImage(false);
-      }
-
-      const avgRating = hasDetailedRatings
-        ? Math.round((priceRating + serviceRating + qualityRating + overallRating) / 4)
-        : overallRating;
-
-      // Tutte le recensioni iniziano come pending e devono essere approvate dallo staff
-      const reviewStatus = 'pending';
-      const pointsAwarded = 0; // I punti vengono assegnati dopo l'approvazione
+      const documentUrls = await uploadDocuments();
 
       const reviewData: any = {
-        customer_id: profile.id,
-        family_member_id: activeProfile?.isOwner === false ? activeProfile.id : null,
-        business_type: businessType === 'unclaimed' ? 'imported' : businessType,
-        rating: avgRating,
-        price_rating: priceRating || null,
-        service_rating: serviceRating || null,
-        quality_rating: qualityRating || null,
-        overall_rating: overallRating,
-        title: title.trim(),
-        content: content.trim(),
-        proof_image_url: proofImageUrl,
-        review_status: reviewStatus,
-        points_awarded: pointsAwarded,
-        business_location_id: null,
-        business_id: null,
-        imported_business_id: null,
-        user_added_business_id: null,
-        unclaimed_business_location_id: null,
+        user_id: profile?.id,
+        family_member_id: activeProfile?.type === 'family_member' ? activeProfile.id : null,
+        business_id: businessId || null,
+        business_location_id: businessLocationId || null,
+        unclaimed_business_location_id: unclaimedBusinessLocationId || null,
+        review_type: reviewType,
+        title,
+        content,
+        proof_documents: documentUrls.length > 0 ? documentUrls : null,
+        status: 'pending'
       };
 
-      // Imposta il business_id corretto a seconda del tipo
-      if (businessType === 'registered') {
-        reviewData.business_id = businessId;
-        // business_location_id può essere impostato solo per business rivendicati
-        if (businessLocationId) {
-          reviewData.business_location_id = businessLocationId;
-        }
-      } else if (businessType === 'unclaimed') {
-        reviewData.unclaimed_business_location_id = businessId;
-      } else if (businessType === 'imported') {
-        reviewData.imported_business_id = businessId;
-      } else if (businessType === 'user_added') {
-        reviewData.user_added_business_id = businessId;
+      if (reviewType === 'service_used') {
+        reviewData.booking_management_rating = bookingManagementRating;
+        reviewData.reliability_rating = reliabilityRating;
+        reviewData.organization_rating = organizationRating;
+        reviewData.experience_rating = experienceRating;
+        reviewData.price_rating = priceRating;
+      } else {
+        reviewData.overall_rating = overallRating;
       }
 
       const { error: insertError } = await supabase
         .from('reviews')
-        .insert(reviewData);
+        .insert([reviewData]);
 
       if (insertError) throw insertError;
 
-      // Mostra messaggio appropriato
-      const pointsMessage = proofImage ? '50 punti' : '25 punti';
-      alert(`✅ Recensione inviata con successo!\n\nLa tua recensione è in attesa di approvazione. Riceverai ${pointsMessage} dopo che lo staff l'avrà verificata.`);
-
       onSuccess();
-      onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error submitting review:', err);
-      setError('Errore durante l\'invio della recensione');
+      setError(err.message || 'Errore durante l\'invio della recensione');
     } finally {
       setLoading(false);
     }
   };
 
+  const renderStarRating = (rating: number, setRating: (r: number) => void, label: string) => (
+    <div className="mb-4">
+      <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+      <div className="flex gap-2">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => setRating(star)}
+            className="focus:outline-none transition-transform hover:scale-110"
+          >
+            <Star
+              className={`w-8 h-8 ${
+                star <= rating
+                  ? 'fill-yellow-400 text-yellow-400'
+                  : 'text-gray-300'
+              }`}
+            />
+          </button>
+        ))}
+        <span className="ml-2 text-sm text-gray-600 self-center">
+          {rating > 0 ? `${rating}/5` : 'Nessuna valutazione'}
+        </span>
+      </div>
+    </div>
+  );
+
+  const estimatedPoints = reviewType === 'service_used'
+    ? (proofDocuments.length > 0 ? 50 : 25)
+    : 25;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">{isEditMode ? 'Modifica recensione' : 'Scrivi una recensione'}</h2>
-            <p className="text-gray-600 mt-1">{businessName}</p>
+            <h2 className="text-xl font-bold text-gray-900">Scrivi una recensione</h2>
+            {businessName && <p className="text-sm text-gray-600">{businessName}</p>}
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
-          >
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-700">{error}</p>
-            </div>
-          )}
-
-          {!isEditMode && activeProfile && (
-            <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg">
-              <div className="flex items-center gap-3">
-                {activeProfile.avatarUrl ? (
-                  <img
-                    src={activeProfile.avatarUrl}
-                    alt={activeProfile.name}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-purple-300"
-                  />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-purple-300 flex items-center justify-center">
-                    <span className="text-white text-lg font-bold">
-                      {activeProfile.name.charAt(0).toUpperCase()}
-                    </span>
+        <div className="px-6 py-4">
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              {[1, 2, 3].map((s) => (
+                <div key={s} className="flex items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                    step >= s ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-500'
+                  }`}>
+                    {s}
                   </div>
-                )}
-                <div className="flex-1">
-                  <p className="text-sm text-purple-700 font-medium">Stai recensendo come:</p>
-                  <p className="text-lg font-bold text-purple-900">
-                    {activeProfile.nickname || activeProfile.name}
+                  {s < 3 && <div className={`w-20 h-1 mx-2 ${step > s ? 'bg-orange-600' : 'bg-gray-200'}`} />}
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between text-xs text-gray-600">
+              <span>Tipo esperienza</span>
+              <span>Valutazione</span>
+              <span>Descrizione</span>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            {step === 1 && (
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg mb-4">Che tipo di esperienza hai avuto?</h3>
+                {reviewTypeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      setReviewType(option.value as ReviewType);
+                      setStep(2);
+                    }}
+                    className={`w-full p-4 border-2 rounded-lg text-left transition-all hover:border-orange-500 hover:bg-orange-50 ${
+                      reviewType === option.value
+                        ? 'border-orange-600 bg-orange-50'
+                        : 'border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{option.icon}</span>
+                      <span className="font-medium">{option.label}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {step === 2 && reviewType === 'service_used' && (
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg mb-4">Valuta il servizio ricevuto</h3>
+                {renderStarRating(bookingManagementRating, setBookingManagementRating, 'Gestione Prenotazione')}
+                {renderStarRating(reliabilityRating, setReliabilityRating, 'Affidabilità')}
+                {renderStarRating(organizationRating, setOrganizationRating, 'Organizzazione')}
+                {renderStarRating(experienceRating, setExperienceRating, 'Esperienza/Servizio')}
+                {renderStarRating(priceRating, setPriceRating, 'Prezzo')}
+
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-900">
+                    <strong>Valutazione media:</strong>{' '}
+                    {bookingManagementRating && reliabilityRating && organizationRating && experienceRating && priceRating
+                      ? ((bookingManagementRating + reliabilityRating + organizationRating + experienceRating + priceRating) / 5).toFixed(1)
+                      : '0.0'}{' '}
+                    / 5.0
                   </p>
-                  {activeProfile.nickname && !activeProfile.isOwner && (
-                    <p className="text-xs text-purple-600">{activeProfile.name}</p>
+                </div>
+
+                <div className="mt-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Carica fattura o scontrino (facoltativo)
+                  </label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      multiple
+                      onChange={handleDocumentChange}
+                      className="hidden"
+                      id="proof-documents"
+                    />
+                    <label htmlFor="proof-documents" className="cursor-pointer flex flex-col items-center">
+                      <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                      <span className="text-sm text-gray-600">Clicca per caricare documenti</span>
+                      <span className="text-xs text-gray-500 mt-1">PDF, JPG, PNG (max 10MB ciascuno)</span>
+                    </label>
+                  </div>
+
+                  {proofDocumentPreviews.length > 0 && (
+                    <div className="mt-4 grid grid-cols-3 gap-2">
+                      {proofDocumentPreviews.map((preview, index) => (
+                        <div key={index} className="relative">
+                          {proofDocuments[index].type.includes('image') ? (
+                            <img src={preview} alt="Documento" className="w-full h-24 object-cover rounded" />
+                          ) : (
+                            <div className="w-full h-24 bg-gray-100 rounded flex items-center justify-center">
+                              <FileText className="w-8 h-8 text-gray-400" />
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeDocument(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
-              </div>
-            </div>
-          )}
 
-          {!isEditMode && (
-            <div className="mb-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Award className="w-5 h-5 text-blue-600" />
-                  <p className="font-semibold text-blue-900">Punti Stimati: {estimatedPoints} punti</p>
-                </div>
-                <p className="text-sm text-blue-700">
-                  {proofImage
-                    ? "Recensione con prova d'acquisto: 50 punti dopo l'approvazione"
-                    : "Recensione base: 25 punti (pubblicata immediatamente)"}
-                </p>
-              </div>
-            </div>
-          )}
-
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">
-              Valutazioni Dettagliate (Opzionale)
-            </h3>
-            <p className="text-xs text-gray-500 mb-4">
-              Completa tutte e tre le valutazioni per fornire una recensione più dettagliata
-            </p>
-          </div>
-
-          <div className="mb-6 space-y-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                1. Qualità
-              </label>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
+                <div className="flex gap-3 mt-6">
                   <button
-                    key={star}
                     type="button"
-                    onClick={() => setQualityRating(star)}
-                    onMouseEnter={() => setHoveredQualityRating(star)}
-                    onMouseLeave={() => setHoveredQualityRating(0)}
-                    className="focus:outline-none transition-transform hover:scale-110"
+                    onClick={() => setStep(1)}
+                    className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                   >
-                    <Star
-                      className={`w-10 h-10 transition-colors ${
-                        star <= (hoveredQualityRating || qualityRating)
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-gray-300'
-                      }`}
-                    />
+                    <ChevronLeft className="w-4 h-4" />
+                    Indietro
                   </button>
-                ))}
-              </div>
-              {qualityRating > 0 && (
-                <p className="text-sm text-gray-600 mt-2">
-                  {qualityRating === 1 && 'Pessimo'}
-                  {qualityRating === 2 && 'Discreto'}
-                  {qualityRating === 3 && 'Buono'}
-                  {qualityRating === 4 && 'Eccellente'}
-                  {qualityRating === 5 && 'Ottimo'}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                2. Prezzo
-              </label>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
                   <button
-                    key={star}
                     type="button"
-                    onClick={() => setPriceRating(star)}
-                    onMouseEnter={() => setHoveredPriceRating(star)}
-                    onMouseLeave={() => setHoveredPriceRating(0)}
-                    className="focus:outline-none transition-transform hover:scale-110"
+                    onClick={() => setStep(3)}
+                    disabled={!bookingManagementRating || !reliabilityRating || !organizationRating || !experienceRating || !priceRating}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
-                    <Star
-                      className={`w-10 h-10 transition-colors ${
-                        star <= (hoveredPriceRating || priceRating)
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-gray-300'
-                      }`}
-                    />
+                    Avanti
+                    <ChevronRight className="w-4 h-4" />
                   </button>
-                ))}
-              </div>
-              {priceRating > 0 && (
-                <p className="text-sm text-gray-600 mt-2">
-                  {priceRating === 1 && 'Pessimo'}
-                  {priceRating === 2 && 'Discreto'}
-                  {priceRating === 3 && 'Buono'}
-                  {priceRating === 4 && 'Eccellente'}
-                  {priceRating === 5 && 'Ottimo'}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                3. Esperienza / Servizio
-              </label>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setServiceRating(star)}
-                    onMouseEnter={() => setHoveredServiceRating(star)}
-                    onMouseLeave={() => setHoveredServiceRating(0)}
-                    className="focus:outline-none transition-transform hover:scale-110"
-                  >
-                    <Star
-                      className={`w-10 h-10 transition-colors ${
-                        star <= (hoveredServiceRating || serviceRating)
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  </button>
-                ))}
-              </div>
-              {serviceRating > 0 && (
-                <p className="text-sm text-gray-600 mt-2">
-                  {serviceRating === 1 && 'Pessimo'}
-                  {serviceRating === 2 && 'Discreto'}
-                  {serviceRating === 3 && 'Buono'}
-                  {serviceRating === 4 && 'Eccellente'}
-                  {serviceRating === 5 && 'Ottimo'}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                4. Voto Generale *
-              </label>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setOverallRating(star)}
-                    onMouseEnter={() => setHoveredOverallRating(star)}
-                    onMouseLeave={() => setHoveredOverallRating(0)}
-                    className="focus:outline-none transition-transform hover:scale-110"
-                  >
-                    <Star
-                      className={`w-10 h-10 transition-colors ${
-                        star <= (hoveredOverallRating || overallRating)
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  </button>
-                ))}
-              </div>
-              {overallRating > 0 && (
-                <p className="text-sm text-gray-600 mt-2">
-                  {overallRating === 1 && 'Pessimo'}
-                  {overallRating === 2 && 'Discreto'}
-                  {overallRating === 3 && 'Buono'}
-                  {overallRating === 4 && 'Eccellente'}
-                  {overallRating === 5 && 'Ottimo'}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Titolo della recensione *
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Riassumi la tua esperienza"
-              maxLength={100}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <p className="text-xs text-gray-500 mt-1">{title.length}/100 caratteri</p>
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Prova di Acquisto (Opzionale - 50 punti)
-            </label>
-            <p className="text-xs text-gray-500 mb-3">
-              Carica uno scontrino o fattura per ottenere 50 punti invece di 25. L'immagine sarà visibile solo allo staff e verrà cancellata dopo l'approvazione.
-            </p>
-
-            {!proofImagePreview ? (
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-500">
-                    Clicca per caricare uno scontrino o fattura
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">PNG, JPG, JPEG (max 5MB)</p>
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-              </label>
-            ) : (
-              <div className="relative">
-                <img
-                  src={proofImagePreview}
-                  alt="Preview"
-                  className="w-full h-48 object-cover rounded-lg"
-                />
-                <button
-                  type="button"
-                  onClick={removeImage}
-                  className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-                <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
-                  <ImageIcon className="w-4 h-4" />
-                  <span>Immagine caricata</span>
                 </div>
               </div>
             )}
-          </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Descrizione della tua esperienza * (minimo 100 caratteri)
-            </label>
-            <div className="mb-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800">
-                <strong>Requisito importante:</strong> Per garantire recensioni credibili e complete, la descrizione deve contenere <strong>almeno 100 caratteri</strong>.
-                Racconta nel dettaglio la tua esperienza: cosa ti è piaciuto, cosa potrebbe essere migliorato, consiglieresti questa attività ad altri?
-              </p>
-            </div>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Racconta la tua esperienza in dettaglio: cosa ti è piaciuto, cosa potrebbe essere migliorato, consiglieresti questa attività ad altri..."
-              rows={6}
-              maxLength={1000}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-            />
-            <div className="flex items-center justify-between mt-1">
-              <p className={`text-xs font-medium ${content.length < 100 ? 'text-red-600' : 'text-green-600'}`}>
-                {content.length < 100
-                  ? `Ancora ${100 - content.length} caratteri necessari (minimo 100)`
-                  : `✓ Requisito minimo soddisfatto`
-                }
-              </p>
-              <p className="text-xs text-gray-500">{content.length}/1000 caratteri</p>
-            </div>
-          </div>
+            {step === 2 && reviewType !== 'service_used' && reviewType && (
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg mb-4">Valuta la tua esperienza</h3>
+                {renderStarRating(overallRating, setOverallRating, 'Valutazione Complessiva')}
 
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              disabled={loading || uploadingImage || overallRating === 0}
-              className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              {uploadingImage
-                ? 'Caricamento immagine...'
-                : loading
-                  ? (isEditMode ? 'Salvataggio...' : 'Invio in corso...')
-                  : isEditMode
-                    ? 'Salva Modifiche'
-                    : (proofImage ? 'Invia per approvazione' : 'Pubblica recensione')
-              }
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
-            >
-              Annulla
-            </button>
-          </div>
-        </form>
+                <div className="mt-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Carica documenti di prova <span className="text-red-500">*</span>
+                  </label>
+                  <p className="text-xs text-gray-600 mb-2">
+                    Carica documenti che certificano la prenotazione, il preventivo o la comunicazione con l'attività
+                  </p>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      multiple
+                      onChange={handleDocumentChange}
+                      className="hidden"
+                      id="proof-documents-required"
+                    />
+                    <label htmlFor="proof-documents-required" className="cursor-pointer flex flex-col items-center">
+                      <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                      <span className="text-sm text-gray-600">Clicca per caricare documenti</span>
+                      <span className="text-xs text-gray-500 mt-1">PDF, JPG, PNG (max 10MB ciascuno)</span>
+                    </label>
+                  </div>
+
+                  {proofDocumentPreviews.length > 0 && (
+                    <div className="mt-4 grid grid-cols-3 gap-2">
+                      {proofDocumentPreviews.map((preview, index) => (
+                        <div key={index} className="relative">
+                          {proofDocuments[index].type.includes('image') ? (
+                            <img src={preview} alt="Documento" className="w-full h-24 object-cover rounded" />
+                          ) : (
+                            <div className="w-full h-24 bg-gray-100 rounded flex items-center justify-center">
+                              <FileText className="w-8 h-8 text-gray-400" />
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeDocument(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Indietro
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStep(3)}
+                    disabled={!overallRating || proofDocuments.length === 0}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  >
+                    Avanti
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {step === 3 && (
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg mb-4">Descrivi la tua esperienza</h3>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Titolo (facoltativo)
+                  </label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Es: Ottima esperienza"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    maxLength={100}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Descrizione <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="Racconta la tua esperienza... (minimo 100 caratteri)"
+                    rows={6}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    required
+                    minLength={100}
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>{content.length} / 100 caratteri minimi</span>
+                    <span className={content.length >= 100 ? 'text-green-600 font-medium' : ''}>
+                      {content.length >= 100 ? '✓ Requisito soddisfatto' : ''}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                    <span className="font-semibold text-gray-900">Punti stimati da questa recensione</span>
+                  </div>
+                  <div className="text-2xl font-bold text-green-600">{estimatedPoints} punti</div>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {reviewType === 'service_used' && proofDocuments.length > 0
+                      ? 'Riceverai 50 punti con prova documentale'
+                      : 'Riceverai 25 punti'}
+                  </p>
+                </div>
+
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                    {error}
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
+                    className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Indietro
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading || content.length < 100}
+                    className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Invio in corso...' : 'Invia Recensione'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </form>
+        </div>
       </div>
     </div>
   );

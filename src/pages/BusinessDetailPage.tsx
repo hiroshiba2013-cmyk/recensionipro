@@ -1017,6 +1017,71 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                     )}
                   </div>
 
+                  {reviews.length > 0 && (() => {
+                    const serviceUsedReviews = reviews.filter(r => r.review_type === 'service_used');
+                    const otherReviews = reviews.filter(r => r.review_type !== 'service_used');
+
+                    const serviceUsedAvg = serviceUsedReviews.length > 0
+                      ? serviceUsedReviews.reduce((sum, r) => sum + r.overall_rating, 0) / serviceUsedReviews.length
+                      : 0;
+
+                    const otherAvg = otherReviews.length > 0
+                      ? otherReviews.reduce((sum, r) => sum + r.overall_rating, 0) / otherReviews.length
+                      : 0;
+
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        {serviceUsedReviews.length > 0 && (
+                          <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 rounded-lg p-6">
+                            <h3 className="font-semibold text-gray-900 mb-2">Servizio Fruito</h3>
+                            <div className="flex items-center gap-3">
+                              <div className="flex">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`w-6 h-6 ${
+                                      i < Math.round(serviceUsedAvg)
+                                        ? 'fill-yellow-400 text-yellow-400'
+                                        : 'text-gray-300'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-2xl font-bold text-green-900">{serviceUsedAvg.toFixed(1)}</span>
+                            </div>
+                            <p className="text-sm text-green-800 mt-2">
+                              {serviceUsedReviews.length} {serviceUsedReviews.length === 1 ? 'recensione' : 'recensioni'}
+                            </p>
+                          </div>
+                        )}
+
+                        {otherReviews.length > 0 && (
+                          <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-lg p-6">
+                            <h3 className="font-semibold text-gray-900 mb-2">Altre Esperienze</h3>
+                            <div className="flex items-center gap-3">
+                              <div className="flex">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`w-6 h-6 ${
+                                      i < Math.round(otherAvg)
+                                        ? 'fill-yellow-400 text-yellow-400'
+                                        : 'text-gray-300'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-2xl font-bold text-blue-900">{otherAvg.toFixed(1)}</span>
+                            </div>
+                            <p className="text-sm text-blue-800 mt-2">
+                              {otherReviews.length} {otherReviews.length === 1 ? 'recensione' : 'recensioni'}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   {reviews.length === 0 ? (
                     <p className="text-gray-600 text-center py-8 bg-gray-50 rounded-lg">
                       {profile?.user_type === 'business'
