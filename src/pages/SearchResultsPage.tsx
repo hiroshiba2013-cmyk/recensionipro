@@ -33,6 +33,10 @@ interface BusinessLocation {
   };
   avg_rating?: number;
   review_count?: number;
+  service_avg_rating?: number;
+  service_review_count?: number;
+  management_avg_rating?: number;
+  management_review_count?: number;
 }
 
 export function SearchResultsPage() {
@@ -193,15 +197,32 @@ export function SearchResultsPage() {
         ratingMap[id].byType[rt].count += 1;
       });
 
+      const MANAGEMENT_TYPES = ['booking_not_completed', 'quote_request', 'customer_service', 'problem_before_service'];
+
       console.log('Preparazione risultati finali...');
       let locationsWithRatings = allLocations.map(loc => {
         const rid = loc.business_id || loc.id;
         const r = ratingMap[rid];
+        const byType = r?.byType || {};
+
+        const serviceData = byType['service_used'];
+        const service_avg = serviceData && serviceData.count > 0 ? Math.round((serviceData.sum / serviceData.count) * 10) / 10 : 0;
+
+        let mgmtSum = 0, mgmtCount = 0;
+        MANAGEMENT_TYPES.forEach(t => {
+          if (byType[t]) { mgmtSum += byType[t].sum; mgmtCount += byType[t].count; }
+        });
+        const management_avg = mgmtCount > 0 ? Math.round((mgmtSum / mgmtCount) * 10) / 10 : 0;
+
         return {
           ...loc,
           avg_rating: r && r.count > 0 ? Math.round((r.sum / r.count) * 10) / 10 : 0,
           review_count: r?.count || 0,
-          _byTypeRating: r?.byType || {},
+          service_avg_rating: service_avg,
+          service_review_count: serviceData?.count || 0,
+          management_avg_rating: management_avg,
+          management_review_count: mgmtCount,
+          _byTypeRating: byType,
         };
       });
 

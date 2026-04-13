@@ -1067,19 +1067,26 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                   </div>
 
                   {reviews.length > 0 && (() => {
-                    const reviewTypes = [
-                      { key: 'service_used', label: 'Servizio Fruito', bg: 'from-green-50 to-green-100 border-green-200', text: 'text-green-900', sub: 'text-green-700' },
-                      { key: 'booking_not_completed', label: 'Prenotazione Non Completata', bg: 'from-red-50 to-red-100 border-red-200', text: 'text-red-900', sub: 'text-red-700' },
-                      { key: 'quote_request', label: 'Preventivo / Info', bg: 'from-blue-50 to-blue-100 border-blue-200', text: 'text-blue-900', sub: 'text-blue-700' },
-                      { key: 'customer_service', label: 'Assistenza Clienti', bg: 'from-teal-50 to-teal-100 border-teal-200', text: 'text-teal-900', sub: 'text-teal-700' },
-                      { key: 'problem_before_service', label: 'Problema Pre-Servizio', bg: 'from-amber-50 to-amber-100 border-amber-200', text: 'text-amber-900', sub: 'text-amber-700' },
-                    ];
+                    const MANAGEMENT_TYPES = ['booking_not_completed', 'quote_request', 'customer_service', 'problem_before_service'];
 
-                    const totalAvg = reviews.length > 0
-                      ? reviews.reduce((sum, r) => sum + r.overall_rating, 0) / reviews.length
+                    const serviceReviews = reviews.filter(r => (r as any).review_type === 'service_used');
+                    const managementReviews = reviews.filter(r => MANAGEMENT_TYPES.includes((r as any).review_type));
+
+                    const serviceAvg = serviceReviews.length > 0
+                      ? serviceReviews.reduce((sum, r) => sum + r.overall_rating, 0) / serviceReviews.length
+                      : 0;
+                    const managementAvg = managementReviews.length > 0
+                      ? managementReviews.reduce((sum, r) => sum + r.overall_rating, 0) / managementReviews.length
                       : 0;
 
-                    const typeData = reviewTypes.map(rt => {
+                    const detailTypes = [
+                      { key: 'booking_not_completed', label: 'Prenotazione non completata', bg: 'from-red-50 to-red-100 border-red-200', text: 'text-red-900', sub: 'text-red-700' },
+                      { key: 'quote_request', label: 'Preventivo / Informazioni', bg: 'from-blue-50 to-blue-100 border-blue-200', text: 'text-blue-900', sub: 'text-blue-700' },
+                      { key: 'customer_service', label: 'Assistenza Clienti', bg: 'from-teal-50 to-teal-100 border-teal-200', text: 'text-teal-900', sub: 'text-teal-700' },
+                      { key: 'problem_before_service', label: 'Problema pre-servizio', bg: 'from-amber-50 to-amber-100 border-amber-200', text: 'text-amber-900', sub: 'text-amber-700' },
+                    ];
+
+                    const detailData = detailTypes.map(rt => {
                       const typeReviews = reviews.filter(r => (r as any).review_type === rt.key);
                       const avg = typeReviews.length > 0
                         ? typeReviews.reduce((sum, r) => sum + r.overall_rating, 0) / typeReviews.length
@@ -1089,39 +1096,64 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
 
                     return (
                       <div className="mb-6 space-y-4">
-                        <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-5 flex items-center gap-4">
-                          <div className="flex">
-                            {[...Array(5)].map((_, i) => (
-                              <Star key={i} className={`w-7 h-7 ${i < Math.round(totalAvg) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-600'}`} />
-                            ))}
-                          </div>
-                          <div>
-                            <span className="text-3xl font-bold text-white">{totalAvg.toFixed(1)}</span>
-                            <span className="text-gray-400 text-sm ml-2">/ 5.0</span>
-                            <p className="text-gray-300 text-sm mt-0.5">
-                              Valutazione Totale &mdash; {reviews.length} {reviews.length === 1 ? 'recensione' : 'recensioni'}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {typeData.map(d => (
-                            <div key={d.key} className={`bg-gradient-to-br ${d.bg} border-2 rounded-lg p-4`}>
-                              <p className={`text-xs font-semibold ${d.sub} mb-2`}>{d.label}</p>
-                              <div className="flex items-center gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {serviceReviews.length > 0 && (
+                            <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-5">
+                              <p className="text-green-100 text-xs font-semibold uppercase tracking-wide mb-3">Servizio</p>
+                              <div className="flex items-center gap-3">
                                 <div className="flex">
                                   {[...Array(5)].map((_, i) => (
-                                    <Star key={i} className={`w-4 h-4 ${i < Math.round(d.avg) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+                                    <Star key={i} className={`w-6 h-6 ${i < Math.round(serviceAvg) ? 'fill-yellow-300 text-yellow-300' : 'text-green-400'}`} />
                                   ))}
                                 </div>
-                                <span className={`text-lg font-bold ${d.text}`}>{d.avg.toFixed(1)}</span>
+                                <span className="text-3xl font-bold text-white">{serviceAvg.toFixed(1)}</span>
                               </div>
-                              <p className={`text-xs ${d.sub} mt-1`}>
-                                {d.reviews.length} {d.reviews.length === 1 ? 'recensione' : 'recensioni'}
+                              <p className="text-green-100 text-sm mt-2">
+                                {serviceReviews.length} {serviceReviews.length === 1 ? 'recensione' : 'recensioni'} &mdash; Ho usufruito del servizio
                               </p>
                             </div>
-                          ))}
+                          )}
+                          {managementReviews.length > 0 && (
+                            <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-5">
+                              <p className="text-blue-100 text-xs font-semibold uppercase tracking-wide mb-3">Gestione e Affidabilita'</p>
+                              <div className="flex items-center gap-3">
+                                <div className="flex">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star key={i} className={`w-6 h-6 ${i < Math.round(managementAvg) ? 'fill-yellow-300 text-yellow-300' : 'text-blue-400'}`} />
+                                  ))}
+                                </div>
+                                <span className="text-3xl font-bold text-white">{managementAvg.toFixed(1)}</span>
+                              </div>
+                              <p className="text-blue-100 text-sm mt-2">
+                                {managementReviews.length} {managementReviews.length === 1 ? 'recensione' : 'recensioni'} &mdash; Prenotazione, preventivo, assistenza
+                              </p>
+                            </div>
+                          )}
                         </div>
+
+                        {detailData.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Dettaglio Gestione e Affidabilita'</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {detailData.map(d => (
+                                <div key={d.key} className={`bg-gradient-to-br ${d.bg} border rounded-lg p-4`}>
+                                  <p className={`text-xs font-semibold ${d.sub} mb-2`}>{d.label}</p>
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex">
+                                      {[...Array(5)].map((_, i) => (
+                                        <Star key={i} className={`w-4 h-4 ${i < Math.round(d.avg) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+                                      ))}
+                                    </div>
+                                    <span className={`text-lg font-bold ${d.text}`}>{d.avg.toFixed(1)}</span>
+                                  </div>
+                                  <p className={`text-xs ${d.sub} mt-1`}>
+                                    {d.reviews.length} {d.reviews.length === 1 ? 'recensione' : 'recensioni'}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })()}
