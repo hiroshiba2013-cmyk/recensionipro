@@ -1,6 +1,20 @@
 import { useState, useEffect } from 'react';
 import { Gavel, Search, Filter, Eye, Trash2, CheckCircle, XCircle, Clock, TrendingUp, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { ITALIAN_REGIONS, PROVINCES_BY_REGION } from '../../lib/cities';
+
+const AUCTION_CATEGORIES = [
+  'Elettronica',
+  'Abbigliamento',
+  'Casa e Giardino',
+  'Sport',
+  'Collezionismo',
+  'Auto e Moto',
+  'Libri',
+  'Giocattoli',
+  'Arte',
+  'Altro'
+];
 
 interface Auction {
   id: string;
@@ -191,10 +205,18 @@ export default function AuctionsSection() {
     return matchesSearch && matchesCategory && matchesPriceRange && matchesRegion && matchesProvince && matchesCity;
   });
 
-  const categories = Array.from(new Set(auctions.map(a => a.category).filter(Boolean))).sort();
-  const regions = Array.from(new Set(auctions.map(a => a.region).filter(Boolean))).sort();
-  const provinces = Array.from(new Set(auctions.map(a => a.province).filter(Boolean))).sort();
-  const cities = Array.from(new Set(auctions.map(a => a.city).filter(Boolean))).sort();
+  const provinces = regionFilter === 'all'
+    ? Object.values(PROVINCES_BY_REGION).flat().sort()
+    : (PROVINCES_BY_REGION[regionFilter] || []).sort();
+  const cities = Array.from(new Set(
+    auctions
+      .filter(a =>
+        (regionFilter === 'all' || a.region === regionFilter) &&
+        (provinceFilter === 'all' || a.province === provinceFilter)
+      )
+      .map(a => a.city)
+      .filter(Boolean)
+  )).sort();
 
   const getTimeRemaining = (endsAt: string) => {
     const now = new Date();
@@ -348,7 +370,7 @@ export default function AuctionsSection() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 >
                   <option value="all">Tutte le categorie</option>
-                  {categories.map(cat => (
+                  {AUCTION_CATEGORIES.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
@@ -378,11 +400,11 @@ export default function AuctionsSection() {
                 </label>
                 <select
                   value={regionFilter}
-                  onChange={(e) => setRegionFilter(e.target.value)}
+                  onChange={(e) => { setRegionFilter(e.target.value); setProvinceFilter('all'); setCityFilter('all'); }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 >
                   <option value="all">Tutte le regioni</option>
-                  {regions.map(reg => (
+                  {ITALIAN_REGIONS.map(reg => (
                     <option key={reg} value={reg}>{reg}</option>
                   ))}
                 </select>
@@ -394,7 +416,7 @@ export default function AuctionsSection() {
                 </label>
                 <select
                   value={provinceFilter}
-                  onChange={(e) => setProvinceFilter(e.target.value)}
+                  onChange={(e) => { setProvinceFilter(e.target.value); setCityFilter('all'); }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 >
                   <option value="all">Tutte le province</option>
