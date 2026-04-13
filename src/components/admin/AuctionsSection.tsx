@@ -55,15 +55,6 @@ export default function AuctionsSection() {
     loadStats();
   }, [statusFilter]);
 
-  useEffect(() => {
-    setProvinceFilter('all');
-    setCityFilter('all');
-  }, [regionFilter]);
-
-  useEffect(() => {
-    setCityFilter('all');
-  }, [provinceFilter]);
-
   const loadAuctions = async () => {
     setLoading(true);
     try {
@@ -202,21 +193,8 @@ export default function AuctionsSection() {
 
   const categories = Array.from(new Set(auctions.map(a => a.category).filter(Boolean))).sort();
   const regions = Array.from(new Set(auctions.map(a => a.region).filter(Boolean))).sort();
-  const provinces = Array.from(new Set(
-    auctions
-      .filter(a => regionFilter === 'all' || a.region === regionFilter)
-      .map(a => a.province)
-      .filter(Boolean)
-  )).sort();
-  const cities = Array.from(new Set(
-    auctions
-      .filter(a =>
-        (regionFilter === 'all' || a.region === regionFilter) &&
-        (provinceFilter === 'all' || a.province === provinceFilter)
-      )
-      .map(a => a.city)
-      .filter(Boolean)
-  )).sort();
+  const provinces = Array.from(new Set(auctions.map(a => a.province).filter(Boolean))).sort();
+  const cities = Array.from(new Set(auctions.map(a => a.city).filter(Boolean))).sort();
 
   const getTimeRemaining = (endsAt: string) => {
     const now = new Date();
@@ -417,8 +395,7 @@ export default function AuctionsSection() {
                 <select
                   value={provinceFilter}
                   onChange={(e) => setProvinceFilter(e.target.value)}
-                  disabled={regionFilter === 'all'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 >
                   <option value="all">Tutte le province</option>
                   {provinces.map(prov => (
@@ -434,8 +411,7 @@ export default function AuctionsSection() {
                 <select
                   value={cityFilter}
                   onChange={(e) => setCityFilter(e.target.value)}
-                  disabled={provinceFilter === 'all'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 >
                   <option value="all">Tutte le città</option>
                   {cities.map(city => (
