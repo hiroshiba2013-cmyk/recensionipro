@@ -184,6 +184,55 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
         }
       }
 
+      // Cerca in registered_businesses (attività registrate tramite form)
+      if (!businessData) {
+        const { data: registeredData } = await supabase
+          .from('registered_businesses')
+          .select(`
+            *,
+            category:business_categories(*),
+            locations:registered_business_locations(*)
+          `)
+          .eq('id', businessId)
+          .maybeSingle();
+
+        if (registeredData) {
+          businessData = {
+            id: registeredData.id,
+            name: registeredData.name,
+            category_id: registeredData.category_id,
+            category: registeredData.category,
+            description: registeredData.description,
+            is_claimed: true,
+            owner_id: registeredData.owner_id,
+            verified: true,
+            verification_badge: registeredData.verification_badge,
+            created_at: registeredData.created_at,
+            address: registeredData.office_address || registeredData.office_street || '',
+            city: registeredData.office_city || registeredData.billing_city || '',
+            phone: registeredData.phone,
+            email: registeredData.pec_email,
+            website: registeredData.website,
+          };
+          businessType = 'registered';
+
+          if (registeredData.locations) {
+            let allLocations = registeredData.locations.map((loc: any) => ({
+              ...loc,
+              address: loc.street ? `${loc.street}${loc.street_number ? ' ' + loc.street_number : ''}` : '',
+              name: loc.internal_name || loc.name,
+              business_name: registeredData.name,
+            }));
+
+            if (locationId) {
+              allLocations = allLocations.filter((loc: any) => loc.id === locationId);
+            }
+
+            setLocations(allLocations);
+          }
+        }
+      }
+
       // Se non trovata, cerca nella vecchia tabella businesses (per attività rivendicate prima della migrazione)
       if (!businessData) {
         const { data: oldBusinessData } = await supabase
