@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Gavel, Search, Filter, Eye, Trash2, CheckCircle, XCircle, Clock, TrendingUp, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { ITALIAN_REGIONS, PROVINCES_BY_REGION } from '../../lib/cities';
+import { ITALIAN_REGIONS, PROVINCES_BY_REGION, CITIES_BY_PROVINCE } from '../../lib/cities';
 
 const AUCTION_CATEGORIES = [
   'Elettronica',
@@ -208,15 +208,12 @@ export default function AuctionsSection() {
   const provinces = regionFilter === 'all'
     ? Object.values(PROVINCES_BY_REGION).flat().sort()
     : (PROVINCES_BY_REGION[regionFilter] || []).sort();
-  const cities = Array.from(new Set(
-    auctions
-      .filter(a =>
-        (regionFilter === 'all' || a.region === regionFilter) &&
-        (provinceFilter === 'all' || a.province === provinceFilter)
+  const cities = provinceFilter === 'all'
+    ? (regionFilter === 'all'
+        ? Object.values(CITIES_BY_PROVINCE).flat().sort()
+        : (PROVINCES_BY_REGION[regionFilter] || []).flatMap(p => CITIES_BY_PROVINCE[p] || []).sort()
       )
-      .map(a => a.city)
-      .filter(Boolean)
-  )).sort();
+    : (CITIES_BY_PROVINCE[provinceFilter] || []).sort();
 
   const getTimeRemaining = (endsAt: string) => {
     const now = new Date();
