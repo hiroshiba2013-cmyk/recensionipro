@@ -75,6 +75,11 @@ export function SearchResultsPage() {
       businessName: params.get('name') || '',
       minRating: Number(params.get('rating')) || 0,
       verifiedOnly: params.get('verified') === 'true',
+      minServiceUsedRating: Number(params.get('r_service')) || 0,
+      minBookingRating: Number(params.get('r_booking')) || 0,
+      minQuoteRating: Number(params.get('r_quote')) || 0,
+      minCustomerServiceRating: Number(params.get('r_cs')) || 0,
+      minProblemRating: Number(params.get('r_problem')) || 0,
     };
 
     console.log('🔎 Filtri estratti dai parametri URL:', filters);
@@ -166,14 +171,74 @@ export function SearchResultsPage() {
         return;
       }
 
-      // Per ora non calcoliamo i rating (troppo pesante)
-      // I rating verranno calcolati in modo ottimizzato in futuro
+      // Fetch ratings in bulk for all locations
+      console.log('Caricamento valutazioni...');
+      const allIds = allLocations.map(loc => loc.id);
+      const { data: ratingsData } = await supabase
+        .from('reviews')
+        .select('business_id, unclaimed_business_location_id, overall_rating, review_type')
+        .eq('review_status', 'approved')
+        .or(`business_id.in.(${allIds.join(',')}),unclaimed_business_location_id.in.(${allIds.join(',')})`);
+
+      const ratingMap: Record<string, { sum: number; count: number; byType: Record<string, { sum: number; count: number }> }> = {};
+      (ratingsData || []).forEach((r: any) => {
+        const id = r.business_id || r.unclaimed_business_location_id;
+        if (!id) return;
+        if (!ratingMap[id]) ratingMap[id] = { sum: 0, count: 0, byType: {} };
+        ratingMap[id].sum += r.overall_rating || 0;
+        ratingMap[id].count += 1;
+        const rt = r.review_type || 'unknown';
+        if (!ratingMap[id].byType[rt]) ratingMap[id].byType[rt] = { sum: 0, count: 0 };
+        ratingMap[id].byType[rt].sum += r.overall_rating || 0;
+        ratingMap[id].byType[rt].count += 1;
+      });
+
       console.log('Preparazione risultati finali...');
-      const locationsWithRatings = allLocations.map(loc => ({
-        ...loc,
-        avg_rating: 0,
-        review_count: 0,
-      }));
+      let locationsWithRatings = allLocations.map(loc => {
+        const rid = loc.business_id || loc.id;
+        const r = ratingMap[rid];
+        return {
+          ...loc,
+          avg_rating: r && r.count > 0 ? Math.round((r.sum / r.count) * 10) / 10 : 0,
+          review_count: r?.count || 0,
+          _byTypeRating: r?.byType || {},
+        };
+      });
+
+      // Apply client-side rating filters
+      if (filters.minRating > 0) {
+        locationsWithRatings = locationsWithRatings.filter(loc => (loc.avg_rating || 0) >= filters.minRating);
+      }
+      if ((filters.minServiceUsedRating || 0) > 0) {
+        locationsWithRatings = locationsWithRatings.filter(loc => {
+          const t = (loc as any)._byTypeRating['service_used'];
+          return t && t.count > 0 && (t.sum / t.count) >= (filters.minServiceUsedRating || 0);
+        });
+      }
+      if ((filters.minBookingRating || 0) > 0) {
+        locationsWithRatings = locationsWithRatings.filter(loc => {
+          const t = (loc as any)._byTypeRating['booking_not_completed'];
+          return t && t.count > 0 && (t.sum / t.count) >= (filters.minBookingRating || 0);
+        });
+      }
+      if ((filters.minQuoteRating || 0) > 0) {
+        locationsWithRatings = locationsWithRatings.filter(loc => {
+          const t = (loc as any)._byTypeRating['quote_request'];
+          return t && t.count > 0 && (t.sum / t.count) >= (filters.minQuoteRating || 0);
+        });
+      }
+      if ((filters.minCustomerServiceRating || 0) > 0) {
+        locationsWithRatings = locationsWithRatings.filter(loc => {
+          const t = (loc as any)._byTypeRating['customer_service'];
+          return t && t.count > 0 && (t.sum / t.count) >= (filters.minCustomerServiceRating || 0);
+        });
+      }
+      if ((filters.minProblemRating || 0) > 0) {
+        locationsWithRatings = locationsWithRatings.filter(loc => {
+          const t = (loc as any)._byTypeRating['problem_before_service'];
+          return t && t.count > 0 && (t.sum / t.count) >= (filters.minProblemRating || 0);
+        });
+      }
 
       console.log('Ordinamento...');
 

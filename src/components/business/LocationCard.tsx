@@ -161,10 +161,11 @@ export function LocationCard({ location }: LocationCardProps) {
             </span>
           )}
           {location.avg_rating !== undefined && location.review_count !== undefined && location.review_count > 0 && (
-            <div className="flex items-center gap-1 px-3 py-1 bg-yellow-50 rounded-full">
+            <div className="flex items-center gap-1 px-3 py-1 bg-yellow-50 rounded-full border border-yellow-200">
               <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
               <span className="font-semibold text-sm text-gray-900">{location.avg_rating.toFixed(1)}</span>
-              <span className="text-xs text-gray-600">({location.review_count})</span>
+              <span className="text-xs text-gray-500">({location.review_count} rec.)</span>
+              <span className="text-xs text-gray-400 ml-0.5">val. totale</span>
             </div>
           )}
         </div>

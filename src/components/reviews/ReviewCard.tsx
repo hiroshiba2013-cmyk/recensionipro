@@ -7,12 +7,54 @@ interface ReviewCardProps {
   review: Review;
 }
 
-const reviewTypeLabels: Record<string, string> = {
-  service_used: 'Servizio Fruito',
-  booking_not_completed: 'Prenotazione Non Completata',
-  quote_request: 'Richiesta Preventivo',
-  customer_service: 'Assistenza Clienti',
-  problem_before_service: 'Problema Pre-Servizio'
+const reviewTypeLabels: Record<string, { label: string; color: string }> = {
+  service_used: { label: 'Servizio Fruito', color: 'bg-green-100 text-green-800' },
+  booking_not_completed: { label: 'Prenotazione Non Completata', color: 'bg-red-100 text-red-800' },
+  quote_request: { label: 'Richiesta Preventivo', color: 'bg-blue-100 text-blue-800' },
+  customer_service: { label: 'Assistenza Clienti', color: 'bg-teal-100 text-teal-800' },
+  problem_before_service: { label: 'Problema Pre-Servizio', color: 'bg-amber-100 text-amber-800' },
+};
+
+const TYPE_CRITERIA: Record<string, { label: string; field: string }[]> = {
+  service_used: [
+    { label: 'Gestione Prenotazione', field: 'booking_management_rating' },
+    { label: 'Affidabilità', field: 'reliability_rating' },
+    { label: 'Organizzazione', field: 'organization_rating' },
+    { label: 'Esperienza/Servizio', field: 'experience_rating' },
+    { label: 'Prezzo', field: 'price_rating' },
+  ],
+  booking_not_completed: [
+    { label: 'Gestione Prenotazione', field: 'booking_gestione_prenotazione' },
+    { label: 'Affidabilità', field: 'booking_affidabilita' },
+    { label: 'Organizzazione', field: 'booking_organizzazione' },
+    { label: 'Comunicazione', field: 'booking_comunicazione' },
+  ],
+  quote_request: [
+    { label: 'Chiarezza', field: 'quote_chiarezza' },
+    { label: 'Trasparenza', field: 'quote_trasparenza' },
+    { label: 'Tempistiche Risposta', field: 'quote_tempistiche_risposta' },
+    { label: 'Disponibilità', field: 'quote_disponibilita' },
+  ],
+  customer_service: [
+    { label: 'Cortesia', field: 'cs_cortesia' },
+    { label: 'Competenza', field: 'cs_competenza' },
+    { label: 'Rapidità', field: 'cs_rapidita' },
+    { label: 'Risoluzione Problema', field: 'cs_risoluzione_problema' },
+  ],
+  problem_before_service: [
+    { label: 'Affidabilità', field: 'problem_affidabilita' },
+    { label: 'Organizzazione', field: 'problem_organizzazione' },
+    { label: 'Gestione Problema', field: 'problem_gestione_problema' },
+    { label: 'Comunicazione', field: 'problem_comunicazione' },
+  ],
+};
+
+const TYPE_BG: Record<string, string> = {
+  service_used: 'from-green-50 to-emerald-50 border-green-200',
+  booking_not_completed: 'from-red-50 to-rose-50 border-red-200',
+  quote_request: 'from-blue-50 to-sky-50 border-blue-200',
+  customer_service: 'from-teal-50 to-cyan-50 border-teal-200',
+  problem_before_service: 'from-amber-50 to-yellow-50 border-amber-200',
 };
 
 export function ReviewCard({ review }: ReviewCardProps) {
@@ -28,7 +70,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
   };
 
   const getRatingLabel = (rating: number) => {
-    switch (rating) {
+    switch (Math.round(rating)) {
       case 1: return 'Pessimo';
       case 2: return 'Discreto';
       case 3: return 'Buono';
@@ -45,24 +87,28 @@ export function ReviewCard({ review }: ReviewCardProps) {
         {[...Array(5)].map((_, i) => (
           <Star
             key={i}
-            className={`${sizeClass} ${
-              i < rating
-                ? 'fill-yellow-400 text-yellow-400'
-                : 'text-gray-300'
-            }`}
+            className={`${sizeClass} ${i < rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
           />
         ))}
       </div>
     );
   };
 
+  const reviewType = (review as any).review_type as string | undefined;
+  const criteria = reviewType ? TYPE_CRITERIA[reviewType] : null;
+  const bgClass = reviewType ? (TYPE_BG[reviewType] || 'from-gray-50 to-gray-50 border-gray-200') : '';
+  const typeInfo = reviewType ? reviewTypeLabels[reviewType] : null;
+
+  const hasCriteriaRatings = criteria && criteria.some(c => (review as any)[c.field] != null && (review as any)[c.field] > 0);
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
             {renderStars(review.overall_rating, 'md')}
             <span className="text-sm font-medium text-gray-700">{getRatingLabel(review.overall_rating)}</span>
+            <span className="text-sm font-bold text-gray-900">{(review.overall_rating || 0).toFixed(1)}/5</span>
             {isOwnReview && review.review_status === 'pending' && (
               <span className="flex items-center gap-1 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
                 <Clock className="w-3 h-3" />
@@ -77,17 +123,14 @@ export function ReviewCard({ review }: ReviewCardProps) {
             )}
           </div>
           {(review as any).business?.name && (
-            <p className="text-base font-semibold text-gray-900 mb-1">
-              {(review as any).business.name}
-            </p>
+            <p className="text-base font-semibold text-gray-900 mb-1">{(review as any).business.name}</p>
           )}
           {(review as any).location_info && (
             <p className="text-sm text-gray-600 flex items-center gap-1 mb-1">
               <MapPin className="w-3 h-3" />
-              {(review as any).location_info.name ?
-                `${(review as any).location_info.name} - ${(review as any).location_info.city}` :
-                (review as any).location_info.city
-              }
+              {(review as any).location_info.name
+                ? `${(review as any).location_info.name} - ${(review as any).location_info.city}`
+                : (review as any).location_info.city}
             </p>
           )}
           {review.family_member ? (
@@ -101,45 +144,27 @@ export function ReviewCard({ review }: ReviewCardProps) {
 
       {review.title && <h4 className="font-semibold text-gray-900 mb-3">{review.title}</h4>}
 
-      {(review as any).review_type && (
+      {typeInfo && (
         <div className="mb-3">
-          <span className={`inline-flex items-center gap-1 text-xs font-medium px-3 py-1 rounded-full ${
-            (review as any).review_type === 'service_used'
-              ? 'bg-green-100 text-green-800'
-              : 'bg-blue-100 text-blue-800'
-          }`}>
-            {reviewTypeLabels[(review as any).review_type] || (review as any).review_type}
+          <span className={`inline-flex items-center gap-1 text-xs font-medium px-3 py-1 rounded-full ${typeInfo.color}`}>
+            {typeInfo.label}
           </span>
         </div>
       )}
 
-      {(review as any).review_type === 'service_used' && (review as any).booking_management_rating && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
-          <div>
-            <p className="text-xs font-medium text-gray-700 mb-1">Gestione Prenotazione</p>
-            {renderStars((review as any).booking_management_rating)}
-            <p className="text-xs text-gray-600 mt-1">{getRatingLabel((review as any).booking_management_rating)}</p>
-          </div>
-          <div>
-            <p className="text-xs font-medium text-gray-700 mb-1">Affidabilità</p>
-            {renderStars((review as any).reliability_rating)}
-            <p className="text-xs text-gray-600 mt-1">{getRatingLabel((review as any).reliability_rating)}</p>
-          </div>
-          <div>
-            <p className="text-xs font-medium text-gray-700 mb-1">Organizzazione</p>
-            {renderStars((review as any).organization_rating)}
-            <p className="text-xs text-gray-600 mt-1">{getRatingLabel((review as any).organization_rating)}</p>
-          </div>
-          <div>
-            <p className="text-xs font-medium text-gray-700 mb-1">Esperienza</p>
-            {renderStars((review as any).experience_rating)}
-            <p className="text-xs text-gray-600 mt-1">{getRatingLabel((review as any).experience_rating)}</p>
-          </div>
-          <div>
-            <p className="text-xs font-medium text-gray-700 mb-1">Prezzo</p>
-            {renderStars((review as any).price_rating)}
-            <p className="text-xs text-gray-600 mt-1">{getRatingLabel((review as any).price_rating)}</p>
-          </div>
+      {hasCriteriaRatings && criteria && (
+        <div className={`grid grid-cols-2 md:grid-cols-${Math.min(criteria.length, 5)} gap-3 mb-4 p-4 bg-gradient-to-r ${bgClass} rounded-lg border`}>
+          {criteria.map((c) => {
+            const val = (review as any)[c.field];
+            if (!val || val === 0) return null;
+            return (
+              <div key={c.field}>
+                <p className="text-xs font-medium text-gray-700 mb-1">{c.label}</p>
+                {renderStars(val)}
+                <p className="text-xs text-gray-600 mt-1">{getRatingLabel(val)}</p>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -159,9 +184,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
         <div className="mt-4 pl-4 border-l-2 border-blue-200">
           <p className="text-sm font-medium text-blue-700 mb-1">Risposta dell'attività</p>
           <p className="text-sm text-gray-700">{review.responses[0].content}</p>
-          <p className="text-xs text-gray-500 mt-1">
-            {formatDate(review.responses[0].created_at)}
-          </p>
+          <p className="text-xs text-gray-500 mt-1">{formatDate(review.responses[0].created_at)}</p>
         </div>
       )}
 

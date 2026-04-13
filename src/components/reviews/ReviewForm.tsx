@@ -199,11 +199,6 @@ export function ReviewForm({
       return;
     }
 
-    if (reviewType !== 'service_used' && proofDocuments.length === 0) {
-      setError('Carica almeno un documento di prova');
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -305,7 +300,7 @@ export function ReviewForm({
     }
   };
 
-  const requiresProof = reviewType !== null && reviewType !== 'service_used';
+  const requiresProof = false;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -448,7 +443,7 @@ export function ReviewForm({
                   <button
                     type="button"
                     onClick={() => setStep(3)}
-                    disabled={!allRatingsFilledForType(reviewType) || (requiresProof && proofDocuments.length === 0)}
+                    disabled={!allRatingsFilledForType(reviewType)}
                     className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
                     Avanti

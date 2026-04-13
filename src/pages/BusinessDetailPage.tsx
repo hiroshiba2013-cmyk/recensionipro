@@ -1067,66 +1067,61 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                   </div>
 
                   {reviews.length > 0 && (() => {
-                    const serviceUsedReviews = reviews.filter(r => r.review_type === 'service_used');
-                    const otherReviews = reviews.filter(r => r.review_type !== 'service_used');
+                    const reviewTypes = [
+                      { key: 'service_used', label: 'Servizio Fruito', bg: 'from-green-50 to-green-100 border-green-200', text: 'text-green-900', sub: 'text-green-700' },
+                      { key: 'booking_not_completed', label: 'Prenotazione Non Completata', bg: 'from-red-50 to-red-100 border-red-200', text: 'text-red-900', sub: 'text-red-700' },
+                      { key: 'quote_request', label: 'Preventivo / Info', bg: 'from-blue-50 to-blue-100 border-blue-200', text: 'text-blue-900', sub: 'text-blue-700' },
+                      { key: 'customer_service', label: 'Assistenza Clienti', bg: 'from-teal-50 to-teal-100 border-teal-200', text: 'text-teal-900', sub: 'text-teal-700' },
+                      { key: 'problem_before_service', label: 'Problema Pre-Servizio', bg: 'from-amber-50 to-amber-100 border-amber-200', text: 'text-amber-900', sub: 'text-amber-700' },
+                    ];
 
-                    const serviceUsedAvg = serviceUsedReviews.length > 0
-                      ? serviceUsedReviews.reduce((sum, r) => sum + r.overall_rating, 0) / serviceUsedReviews.length
+                    const totalAvg = reviews.length > 0
+                      ? reviews.reduce((sum, r) => sum + r.overall_rating, 0) / reviews.length
                       : 0;
 
-                    const otherAvg = otherReviews.length > 0
-                      ? otherReviews.reduce((sum, r) => sum + r.overall_rating, 0) / otherReviews.length
-                      : 0;
+                    const typeData = reviewTypes.map(rt => {
+                      const typeReviews = reviews.filter(r => (r as any).review_type === rt.key);
+                      const avg = typeReviews.length > 0
+                        ? typeReviews.reduce((sum, r) => sum + r.overall_rating, 0) / typeReviews.length
+                        : 0;
+                      return { ...rt, reviews: typeReviews, avg };
+                    }).filter(d => d.reviews.length > 0);
 
                     return (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        {serviceUsedReviews.length > 0 && (
-                          <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 rounded-lg p-6">
-                            <h3 className="font-semibold text-gray-900 mb-2">Servizio Fruito</h3>
-                            <div className="flex items-center gap-3">
-                              <div className="flex">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`w-6 h-6 ${
-                                      i < Math.round(serviceUsedAvg)
-                                        ? 'fill-yellow-400 text-yellow-400'
-                                        : 'text-gray-300'
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                              <span className="text-2xl font-bold text-green-900">{serviceUsedAvg.toFixed(1)}</span>
-                            </div>
-                            <p className="text-sm text-green-800 mt-2">
-                              {serviceUsedReviews.length} {serviceUsedReviews.length === 1 ? 'recensione' : 'recensioni'}
+                      <div className="mb-6 space-y-4">
+                        <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-5 flex items-center gap-4">
+                          <div className="flex">
+                            {[...Array(5)].map((_, i) => (
+                              <Star key={i} className={`w-7 h-7 ${i < Math.round(totalAvg) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-600'}`} />
+                            ))}
+                          </div>
+                          <div>
+                            <span className="text-3xl font-bold text-white">{totalAvg.toFixed(1)}</span>
+                            <span className="text-gray-400 text-sm ml-2">/ 5.0</span>
+                            <p className="text-gray-300 text-sm mt-0.5">
+                              Valutazione Totale &mdash; {reviews.length} {reviews.length === 1 ? 'recensione' : 'recensioni'}
                             </p>
                           </div>
-                        )}
+                        </div>
 
-                        {otherReviews.length > 0 && (
-                          <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-lg p-6">
-                            <h3 className="font-semibold text-gray-900 mb-2">Altre Esperienze</h3>
-                            <div className="flex items-center gap-3">
-                              <div className="flex">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`w-6 h-6 ${
-                                      i < Math.round(otherAvg)
-                                        ? 'fill-yellow-400 text-yellow-400'
-                                        : 'text-gray-300'
-                                    }`}
-                                  />
-                                ))}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {typeData.map(d => (
+                            <div key={d.key} className={`bg-gradient-to-br ${d.bg} border-2 rounded-lg p-4`}>
+                              <p className={`text-xs font-semibold ${d.sub} mb-2`}>{d.label}</p>
+                              <div className="flex items-center gap-2">
+                                <div className="flex">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star key={i} className={`w-4 h-4 ${i < Math.round(d.avg) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+                                  ))}
+                                </div>
+                                <span className={`text-lg font-bold ${d.text}`}>{d.avg.toFixed(1)}</span>
                               </div>
-                              <span className="text-2xl font-bold text-blue-900">{otherAvg.toFixed(1)}</span>
+                              <p className={`text-xs ${d.sub} mt-1`}>
+                                {d.reviews.length} {d.reviews.length === 1 ? 'recensione' : 'recensioni'}
+                              </p>
                             </div>
-                            <p className="text-sm text-blue-800 mt-2">
-                              {otherReviews.length} {otherReviews.length === 1 ? 'recensione' : 'recensioni'}
-                            </p>
-                          </div>
-                        )}
+                          ))}
+                        </div>
                       </div>
                     );
                   })()}

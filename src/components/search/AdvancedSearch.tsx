@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, X, CheckCircle } from 'lucide-react';
+import { Search, Filter, X, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase, BusinessCategory } from '../../lib/supabase';
 import { ITALIAN_REGIONS, PROVINCES_BY_REGION, ITALIAN_PROVINCES, CITIES_BY_PROVINCE } from '../../lib/cities';
 import { SearchableSelect } from '../common/SearchableSelect';
@@ -13,6 +13,11 @@ export interface SearchFilters {
   businessName: string;
   minRating: number;
   verifiedOnly?: boolean;
+  minServiceUsedRating?: number;
+  minBookingRating?: number;
+  minQuoteRating?: number;
+  minCustomerServiceRating?: number;
+  minProblemRating?: number;
 }
 
 interface AdvancedSearchProps {
@@ -22,8 +27,18 @@ interface AdvancedSearchProps {
   initialFilters?: SearchFilters;
 }
 
+const RATING_OPTIONS = [
+  { value: '0', label: 'Qualsiasi' },
+  { value: '1', label: '1 stella e più' },
+  { value: '2', label: '2 stelle e più' },
+  { value: '3', label: '3 stelle e più' },
+  { value: '4', label: '4 stelle e più' },
+  { value: '5', label: '5 stelle' },
+];
+
 export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPage = false, initialFilters }: AdvancedSearchProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showRatingFilters, setShowRatingFilters] = useState(false);
   const [categories, setCategories] = useState<BusinessCategory[]>([]);
   const [availableProvinces, setAvailableProvinces] = useState<string[]>(ITALIAN_PROVINCES);
   const [availableCities, setAvailableCities] = useState<string[]>([]);
@@ -36,20 +51,27 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
     businessName: '',
     minRating: 0,
     verifiedOnly: false,
+    minServiceUsedRating: 0,
+    minBookingRating: 0,
+    minQuoteRating: 0,
+    minCustomerServiceRating: 0,
+    minProblemRating: 0,
   });
 
   useEffect(() => {
     if (initialFilters) {
-      setFilters(initialFilters);
+      setFilters({ ...initialFilters });
       if (initialFilters.region) {
         setAvailableProvinces(PROVINCES_BY_REGION[initialFilters.region] || ITALIAN_PROVINCES);
       }
       if (initialFilters.province) {
         setAvailableCities(CITIES_BY_PROVINCE[initialFilters.province] || []);
       }
-      if (initialFilters.category || initialFilters.region || initialFilters.province || initialFilters.city || initialFilters.minRating > 0) {
-        setShowAdvanced(true);
-      }
+      const hasAdvanced = initialFilters.category || initialFilters.region || initialFilters.province || initialFilters.city || (initialFilters.minRating || 0) > 0;
+      if (hasAdvanced) setShowAdvanced(true);
+      const hasRating = (initialFilters.minServiceUsedRating || 0) > 0 || (initialFilters.minBookingRating || 0) > 0 ||
+        (initialFilters.minQuoteRating || 0) > 0 || (initialFilters.minCustomerServiceRating || 0) > 0 || (initialFilters.minProblemRating || 0) > 0;
+      if (hasRating) { setShowAdvanced(true); setShowRatingFilters(true); }
     }
   }, [initialFilters]);
 
@@ -88,9 +110,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
         .from('business_categories')
         .select('*')
         .order('name');
-      if (data) {
-        setCategories(data);
-      }
+      if (data) setCategories(data);
     } catch (error) {
       console.error('Error loading categories:', error);
     }
@@ -105,6 +125,11 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
     if (filters.businessName) params.set('name', filters.businessName);
     if (filters.minRating > 0) params.set('rating', String(filters.minRating));
     if (filters.verifiedOnly) params.set('verified', 'true');
+    if ((filters.minServiceUsedRating || 0) > 0) params.set('r_service', String(filters.minServiceUsedRating));
+    if ((filters.minBookingRating || 0) > 0) params.set('r_booking', String(filters.minBookingRating));
+    if ((filters.minQuoteRating || 0) > 0) params.set('r_quote', String(filters.minQuoteRating));
+    if ((filters.minCustomerServiceRating || 0) > 0) params.set('r_cs', String(filters.minCustomerServiceRating));
+    if ((filters.minProblemRating || 0) > 0) params.set('r_problem', String(filters.minProblemRating));
 
     const queryString = params.toString();
     const url = queryString ? `/search?${queryString}` : '/search';
@@ -118,27 +143,30 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
   };
 
   const handleReset = () => {
-    setFilters({
-      category: '',
-      region: '',
-      province: '',
-      city: '',
-      businessName: '',
-      minRating: 0,
-      verifiedOnly: false,
-    });
-    onSearch({
-      category: '',
-      region: '',
-      province: '',
-      city: '',
-      businessName: '',
-      minRating: 0,
-      verifiedOnly: false,
-    });
+    const empty: SearchFilters = {
+      category: '', region: '', province: '', city: '',
+      businessName: '', minRating: 0, verifiedOnly: false,
+      minServiceUsedRating: 0, minBookingRating: 0,
+      minQuoteRating: 0, minCustomerServiceRating: 0, minProblemRating: 0,
+    };
+    setFilters(empty);
+    onSearch(empty);
   };
 
-  const hasActiveFilters = filters.category || filters.region || filters.province || filters.city || filters.businessName || filters.minRating > 0;
+  const hasActiveFilters = filters.category || filters.region || filters.province || filters.city ||
+    filters.businessName || filters.minRating > 0 ||
+    (filters.minServiceUsedRating || 0) > 0 || (filters.minBookingRating || 0) > 0 ||
+    (filters.minQuoteRating || 0) > 0 || (filters.minCustomerServiceRating || 0) > 0 || (filters.minProblemRating || 0) > 0;
+
+  const activeFilterCount = [
+    filters.category, filters.region, filters.province, filters.city,
+    filters.minRating > 0 ? 'rating' : '',
+    (filters.minServiceUsedRating || 0) > 0 ? 'service' : '',
+    (filters.minBookingRating || 0) > 0 ? 'booking' : '',
+    (filters.minQuoteRating || 0) > 0 ? 'quote' : '',
+    (filters.minCustomerServiceRating || 0) > 0 ? 'cs' : '',
+    (filters.minProblemRating || 0) > 0 ? 'problem' : '',
+  ].filter(Boolean).length;
 
   return (
     <div className="space-y-3">
@@ -156,18 +184,13 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
           <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Categoria
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
                 <SearchableSelect
                   value={filters.category}
                   onChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
                   options={[
                     { value: '', label: 'Tutte le categorie' },
-                    ...categories.map((cat) => ({
-                      value: cat.id,
-                      label: cat.name,
-                    }))
+                    ...categories.map((cat) => ({ value: cat.id, label: cat.name }))
                   ]}
                   placeholder="Tutte le categorie"
                   className="text-sm"
@@ -175,29 +198,19 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Regione
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Regione</label>
                 <SearchableSelect
                   value={filters.region}
                   onChange={(value) => {
                     setFilters(prev => {
                       const newProvinces = value ? PROVINCES_BY_REGION[value] || [] : ITALIAN_PROVINCES;
                       const shouldResetProvince = prev.province && value && !newProvinces.includes(prev.province);
-                      return {
-                        ...prev,
-                        region: value,
-                        province: shouldResetProvince ? '' : prev.province,
-                        city: shouldResetProvince ? '' : prev.city
-                      };
+                      return { ...prev, region: value, province: shouldResetProvince ? '' : prev.province, city: shouldResetProvince ? '' : prev.city };
                     });
                   }}
                   options={[
                     { value: '', label: 'Tutte le regioni' },
-                    ...ITALIAN_REGIONS.map((region) => ({
-                      value: region,
-                      label: region,
-                    }))
+                    ...ITALIAN_REGIONS.map((region) => ({ value: region, label: region }))
                   ]}
                   placeholder="Tutte le regioni"
                   className="text-sm"
@@ -205,18 +218,13 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Provincia
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Provincia</label>
                 <SearchableSelect
                   value={filters.province}
                   onChange={(value) => setFilters(prev => ({ ...prev, province: value, city: value ? prev.city : '' }))}
                   options={[
                     { value: '', label: 'Tutte le province' },
-                    ...availableProvinces.map((province) => ({
-                      value: province,
-                      label: province,
-                    }))
+                    ...availableProvinces.map((province) => ({ value: province, label: province }))
                   ]}
                   placeholder="Tutte le province"
                   className="text-sm"
@@ -224,19 +232,14 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Città
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Città</label>
                 <SearchableSelect
                   value={filters.city}
                   onChange={(value) => setFilters(prev => ({ ...prev, city: value }))}
                   disabled={!filters.province}
                   options={[
                     { value: '', label: filters.province ? 'Tutte le città' : 'Seleziona prima provincia' },
-                    ...availableCities.map((city) => ({
-                      value: city,
-                      label: city,
-                    }))
+                    ...availableCities.map((city) => ({ value: city, label: city }))
                   ]}
                   placeholder={filters.province ? 'Tutte le città' : 'Seleziona prima provincia'}
                   className="text-sm"
@@ -244,29 +247,18 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Valutazione Minima
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Valutazione Totale Min.</label>
                 <SearchableSelect
                   value={String(filters.minRating)}
                   onChange={(value) => setFilters(prev => ({ ...prev, minRating: Number(value) }))}
-                  options={[
-                    { value: '0', label: 'Tutte le valutazioni' },
-                    { value: '1', label: '1 stella e più' },
-                    { value: '2', label: '2 stelle e più' },
-                    { value: '3', label: '3 stelle e più' },
-                    { value: '4', label: '4 stelle e più' },
-                    { value: '5', label: '5 stelle' },
-                  ]}
-                  placeholder="Tutte le valutazioni"
+                  options={RATING_OPTIONS}
+                  placeholder="Qualsiasi"
                   className="text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  &nbsp;
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">&nbsp;</label>
                 <button
                   onClick={handleReset}
                   className="w-full px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium flex items-center justify-center gap-2"
@@ -277,7 +269,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3 mt-4">
+            <div className="flex flex-wrap gap-3">
               <label className="flex items-center gap-2 cursor-pointer group">
                 <input
                   type="checkbox"
@@ -286,10 +278,87 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
                 <CheckCircle className="w-4 h-4 text-gray-500 group-hover:text-green-600 transition-colors" />
-                <span className="text-sm text-gray-700 group-hover:text-gray-900 font-medium">
-                  Solo rivendicate
-                </span>
+                <span className="text-sm text-gray-700 group-hover:text-gray-900 font-medium">Solo rivendicate</span>
               </label>
+            </div>
+
+            <div className="border-t border-gray-100 pt-3">
+              <button
+                type="button"
+                onClick={() => setShowRatingFilters(!showRatingFilters)}
+                className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
+              >
+                {showRatingFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                Filtri valutazione per tipo di esperienza
+                {((filters.minServiceUsedRating || 0) > 0 || (filters.minBookingRating || 0) > 0 ||
+                  (filters.minQuoteRating || 0) > 0 || (filters.minCustomerServiceRating || 0) > 0 || (filters.minProblemRating || 0) > 0) && (
+                  <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded-full font-semibold">attivi</span>
+                )}
+              </button>
+
+              {showRatingFilters && (
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-green-800 mb-2">Servizio Fruito</p>
+                    <p className="text-xs text-green-700 mb-2 leading-tight">Gestione, Affidabilità, Organizzazione, Esperienza, Prezzo</p>
+                    <SearchableSelect
+                      value={String(filters.minServiceUsedRating || 0)}
+                      onChange={(v) => setFilters(prev => ({ ...prev, minServiceUsedRating: Number(v) }))}
+                      options={RATING_OPTIONS}
+                      placeholder="Qualsiasi"
+                      className="text-xs"
+                    />
+                  </div>
+
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-red-800 mb-2">Prenotazione Non Completata</p>
+                    <p className="text-xs text-red-700 mb-2 leading-tight">Gestione, Affidabilità, Organizzazione, Comunicazione</p>
+                    <SearchableSelect
+                      value={String(filters.minBookingRating || 0)}
+                      onChange={(v) => setFilters(prev => ({ ...prev, minBookingRating: Number(v) }))}
+                      options={RATING_OPTIONS}
+                      placeholder="Qualsiasi"
+                      className="text-xs"
+                    />
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-blue-800 mb-2">Preventivo / Informazioni</p>
+                    <p className="text-xs text-blue-700 mb-2 leading-tight">Chiarezza, Trasparenza, Tempistiche, Disponibilità</p>
+                    <SearchableSelect
+                      value={String(filters.minQuoteRating || 0)}
+                      onChange={(v) => setFilters(prev => ({ ...prev, minQuoteRating: Number(v) }))}
+                      options={RATING_OPTIONS}
+                      placeholder="Qualsiasi"
+                      className="text-xs"
+                    />
+                  </div>
+
+                  <div className="bg-teal-50 border border-teal-200 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-teal-800 mb-2">Assistenza Clienti</p>
+                    <p className="text-xs text-teal-700 mb-2 leading-tight">Cortesia, Competenza, Rapidità, Risoluzione</p>
+                    <SearchableSelect
+                      value={String(filters.minCustomerServiceRating || 0)}
+                      onChange={(v) => setFilters(prev => ({ ...prev, minCustomerServiceRating: Number(v) }))}
+                      options={RATING_OPTIONS}
+                      placeholder="Qualsiasi"
+                      className="text-xs"
+                    />
+                  </div>
+
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-amber-800 mb-2">Problema Pre-Servizio</p>
+                    <p className="text-xs text-amber-700 mb-2 leading-tight">Affidabilità, Organizzazione, Gestione, Comunicazione</p>
+                    <SearchableSelect
+                      value={String(filters.minProblemRating || 0)}
+                      onChange={(v) => setFilters(prev => ({ ...prev, minProblemRating: Number(v) }))}
+                      options={RATING_OPTIONS}
+                      placeholder="Qualsiasi"
+                      className="text-xs"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -302,13 +371,12 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
                 ? 'text-blue-600 bg-blue-50'
                 : 'text-gray-600 hover:bg-gray-50 border border-gray-300'
             }`}
-            title="Filtri avanzati"
           >
             <Filter className="w-5 h-5" />
             <span className="text-sm font-medium">Filtri</span>
-            {hasActiveFilters && (
+            {activeFilterCount > 0 && (
               <span className="ml-1 px-2 py-0.5 bg-blue-600 text-white text-xs rounded-full">
-                {[filters.category, filters.region, filters.province, filters.city, filters.minRating > 0 ? 'rating' : ''].filter(Boolean).length}
+                {activeFilterCount}
               </span>
             )}
           </button>
@@ -316,8 +384,9 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
           <button
             onClick={handleSearchClick}
             disabled={isLoading}
-            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 font-medium"
+            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 font-medium flex items-center gap-2"
           >
+            <Search className="w-4 h-4" />
             Cerca
           </button>
         </div>
