@@ -8,6 +8,7 @@ interface BusinessLocation {
   id: string;
   business_id: string;
   name: string | null;
+  location_label?: string | null;
   address: string;
   city: string;
   province: string;
@@ -120,7 +121,7 @@ export function LocationCard({ location }: LocationCardProps) {
   };
 
   const displayName = location.name || location.business?.name || 'Attività';
-  const businessName = location.business?.name || '';
+  const locationLabel = location.location_label || '';
   const hoursText = formatBusinessHours(location.business_hours);
 
   return (
@@ -142,8 +143,8 @@ export function LocationCard({ location }: LocationCardProps) {
         <div className="flex items-start justify-between mb-2 gap-2">
           <div className="flex-1">
             <h3 className="text-xl font-semibold text-gray-900">{displayName}</h3>
-            {location.name && businessName && (
-              <p className="text-sm text-gray-600 mt-1">{businessName}</p>
+            {locationLabel && (
+              <p className="text-sm text-gray-500 mt-0.5">{locationLabel}</p>
             )}
           </div>
           <VerificationBadge

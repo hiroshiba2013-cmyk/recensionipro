@@ -9,6 +9,7 @@ interface BusinessLocation {
   id: string;
   business_id: string;
   name: string | null;
+  location_label?: string | null;
   address: string;
   city: string;
   province: string;
@@ -129,7 +130,8 @@ export function SearchResultsPage() {
       let allLocations: BusinessLocation[] = (businessesData || []).map((location: any) => ({
         id: location.id,
         business_id: location.business_id || location.id,
-        name: location.name,
+        name: location.business_name || location.name,
+        location_label: location.business_name ? location.name : null,
         address: location.address || '',
         city: location.city || '',
         province: location.province || '',
