@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Star, Building, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase, Users, DollarSign, Trophy } from 'lucide-react';
+import { Plus, Star, Building, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase, Users, DollarSign, Trophy, Activity } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Business, Review, FamilyMember } from '../lib/supabase';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
@@ -11,6 +11,7 @@ import { ImportBusinessesForm } from '../components/business/ImportBusinessesFor
 import { FavoritesSection } from '../components/favorites/FavoritesSection';
 import TrialStatusBanner from '../components/subscription/TrialStatusBanner';
 import TrialExpirationModal from '../components/subscription/TrialExpirationModal';
+import { ActivityFeed } from '../components/activity/ActivityFeed';
 import { useNavigate } from '../components/Router';
 
 interface SubscriptionPlan {
@@ -104,6 +105,7 @@ export function DashboardPage() {
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
   const [availablePlans, setAvailablePlans] = useState<SubscriptionPlan[]>([]);
   const [upgradeMessage, setUpgradeMessage] = useState('');
+  const [leaderboardTab, setLeaderboardTab] = useState<'leaderboard' | 'my_activities'>('leaderboard');
 
   useEffect(() => {
     if (profile) {
@@ -1003,6 +1005,54 @@ export function DashboardPage() {
             ) : (
               <div className="space-y-6">
                 <FavoritesSection />
+
+                {/* Sezione Classifica / Le Mie Attivita' */}
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-gray-100">
+                  <div className="flex border-b border-gray-200">
+                    <button
+                      onClick={() => setLeaderboardTab('leaderboard')}
+                      className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 font-semibold text-sm transition-all ${
+                        leaderboardTab === 'leaderboard'
+                          ? 'bg-yellow-50 text-yellow-700 border-b-2 border-yellow-500'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Trophy className="w-5 h-5" />
+                      Classifica
+                    </button>
+                    <button
+                      onClick={() => setLeaderboardTab('my_activities')}
+                      className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 font-semibold text-sm transition-all ${
+                        leaderboardTab === 'my_activities'
+                          ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Activity className="w-5 h-5" />
+                      Le Mie Attivita'
+                    </button>
+                  </div>
+
+                  <div className="p-6">
+                    {leaderboardTab === 'leaderboard' ? (
+                      <div>
+                        <p className="text-gray-600 text-center mb-4">
+                          Scopri la classifica completa degli utenti piu' attivi sulla piattaforma.
+                        </p>
+                        <div className="text-center">
+                          <button
+                            onClick={() => navigate('/leaderboard')}
+                            className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-3 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all font-bold shadow-lg"
+                          >
+                            Vai alla Classifica Completa
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <ActivityFeed />
+                    )}
+                  </div>
+                </div>
 
                 <div className="bg-white rounded-lg shadow-sm p-6">
                   <h2 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
