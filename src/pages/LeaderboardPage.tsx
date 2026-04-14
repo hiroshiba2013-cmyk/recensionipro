@@ -31,7 +31,7 @@ export function LeaderboardPage() {
   const [topUsers, setTopUsers] = useState<LeaderboardUser[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'leaderboard' | 'rewards' | 'activity' | 'my_activities'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'leaderboard' | 'rewards' | 'my_activities'>('leaderboard');
   const [userTypeFilter, setUserTypeFilter] = useState<'all' | 'customer' | 'business'>('all');
 
   useEffect(() => {
@@ -240,16 +240,6 @@ export function LeaderboardPage() {
               Le Mie Attivita'
             </button>
             <button
-              onClick={() => setActiveTab('activity')}
-              className={`px-5 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                activeTab === 'activity'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              {t('leaderboard.tab.activity')}
-            </button>
-            <button
               onClick={() => setActiveTab('rewards')}
               className={`px-5 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
                 activeTab === 'rewards'
@@ -263,10 +253,6 @@ export function LeaderboardPage() {
         </div>
 
         {activeTab === 'my_activities' ? (
-          <div className="max-w-6xl mx-auto">
-            <ActivityFeed />
-          </div>
-        ) : activeTab === 'activity' ? (
           <div className="max-w-6xl mx-auto">
             <ActivityFeed />
           </div>
