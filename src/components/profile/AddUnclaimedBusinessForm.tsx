@@ -231,7 +231,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
         p_user_id: customerId,
         p_points: points,
         p_activity_type: 'business_submission',
-        p_description: `Aggiunta attività: ${formData.name}${isComplete ? ' (completa)' : ''}`
+        p_description: `Aggiunta attività: ${formData.name}${hasExtraInfo ? ' (completa)' : ''}`
       });
 
       setFormData({
