@@ -61,23 +61,25 @@ export function ActivityFeed() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'week' | 'month'>('all');
 
+  const effectiveUserId = activeProfile?.id ?? profile?.id ?? null;
+
   useEffect(() => {
-    if (profile && activeProfile) {
+    if (profile && effectiveUserId) {
       loadActivities();
       loadSummary();
       loadUserStats();
     }
-  }, [profile, activeProfile, filter]);
+  }, [profile, effectiveUserId, filter]);
 
   const loadActivities = async () => {
-    if (!profile || !activeProfile) return;
+    if (!profile || !effectiveUserId) return;
 
     try {
       setLoading(true);
       let query = supabase
         .from('activity_log')
         .select('*')
-        .eq('user_id', activeProfile.id)
+        .eq('user_id', effectiveUserId)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -104,11 +106,11 @@ export function ActivityFeed() {
   };
 
   const loadSummary = async () => {
-    if (!profile || !activeProfile) return;
+    if (!profile || !effectiveUserId) return;
 
     try {
       const { data, error } = await supabase.rpc('get_user_activity_summary', {
-        p_user_id: activeProfile.id
+        p_user_id: effectiveUserId
       });
 
       if (error) throw error;
@@ -122,13 +124,13 @@ export function ActivityFeed() {
   };
 
   const loadUserStats = async () => {
-    if (!profile || !activeProfile) return;
+    if (!profile || !effectiveUserId) return;
 
     try {
       const { data, error } = await supabase
         .from('user_activity')
         .select('total_points, reviews_count, businesses_added_count, ads_posted_count')
-        .eq('user_id', activeProfile.id)
+        .eq('user_id', effectiveUserId)
         .maybeSingle();
 
       if (error) throw error;
@@ -174,7 +176,7 @@ export function ActivityFeed() {
     return IconComponent;
   };
 
-  if (!profile) {
+  if (!profile || !effectiveUserId) {
     return null;
   }
 
@@ -276,8 +278,8 @@ export function ActivityFeed() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold text-white">La Tua Attività</h2>
-              {activeProfile && (
-                <p className="text-blue-100 text-sm mt-1">{activeProfile.name}</p>
+              {(activeProfile || profile) && (
+                <p className="text-blue-100 text-sm mt-1">{activeProfile?.name ?? profile?.full_name}</p>
               )}
             </div>
             <div className="inline-flex rounded-lg border border-blue-400 bg-blue-500/20 p-1">
