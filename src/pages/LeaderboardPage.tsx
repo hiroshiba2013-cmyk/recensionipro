@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Trophy, Medal, Award, Star, Gift } from 'lucide-react';
+import { Trophy, Medal, Award, Star, Gift, Activity } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -31,7 +31,7 @@ export function LeaderboardPage() {
   const [topUsers, setTopUsers] = useState<LeaderboardUser[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'leaderboard' | 'rewards' | 'activity'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'leaderboard' | 'rewards' | 'activity' | 'my_activities'>('leaderboard');
   const [userTypeFilter, setUserTypeFilter] = useState<'all' | 'customer' | 'business'>('all');
 
   useEffect(() => {
@@ -216,20 +216,32 @@ export function LeaderboardPage() {
         </div>
 
         <div className="flex flex-col items-center gap-4 mb-8">
-          <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1">
+          <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1 flex-wrap gap-1">
             <button
               onClick={() => setActiveTab('leaderboard')}
-              className={`px-6 py-2 rounded-lg font-medium transition-all ${
+              className={`px-5 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
                 activeTab === 'leaderboard'
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
+              <Trophy className="w-4 h-4" />
               {t('leaderboard.tab.leaderboard')}
             </button>
             <button
+              onClick={() => setActiveTab('my_activities')}
+              className={`px-5 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                activeTab === 'my_activities'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Activity className="w-4 h-4" />
+              Le Mie Attivita'
+            </button>
+            <button
               onClick={() => setActiveTab('activity')}
-              className={`px-6 py-2 rounded-lg font-medium transition-all ${
+              className={`px-5 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
                 activeTab === 'activity'
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-600 hover:text-gray-900'
@@ -239,7 +251,7 @@ export function LeaderboardPage() {
             </button>
             <button
               onClick={() => setActiveTab('rewards')}
-              className={`px-6 py-2 rounded-lg font-medium transition-all ${
+              className={`px-5 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
                 activeTab === 'rewards'
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-600 hover:text-gray-900'
@@ -250,7 +262,11 @@ export function LeaderboardPage() {
           </div>
         </div>
 
-        {activeTab === 'activity' ? (
+        {activeTab === 'my_activities' ? (
+          <div className="max-w-6xl mx-auto">
+            <ActivityFeed />
+          </div>
+        ) : activeTab === 'activity' ? (
           <div className="max-w-6xl mx-auto">
             <ActivityFeed />
           </div>

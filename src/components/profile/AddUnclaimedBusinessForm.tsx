@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, X, Award, MapPin, Phone, Mail, Globe, User, FileEdit as Edit2, Trash2, CheckCircle } from 'lucide-react';
+import { Plus, X, Award, MapPin, Phone, Mail, Globe, User, FileEdit as Edit2, Trash2, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { supabase, BusinessCategory } from '../../lib/supabase';
 import { CITIES_BY_PROVINCE, PROVINCE_TO_CODE, PROVINCES_BY_REGION } from '../../lib/cities';
 
@@ -21,6 +21,8 @@ interface UserAddedBusiness {
   website: string | null;
   created_at: string;
   source: 'unclaimed' | 'user_added';
+  approval_status: 'pending' | 'approved' | 'rejected' | null;
+  rejection_reason: string | null;
 }
 
 const ALL_CITIES = Object.entries(CITIES_BY_PROVINCE).flatMap(([province, cities]) =>
@@ -88,6 +90,8 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
           email,
           website,
           created_at,
+          approval_status,
+          rejection_reason,
           business_categories(name)
         `)
         .eq('added_by', customerId);
@@ -115,6 +119,8 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
             website: business.website,
             created_at: business.created_at,
             source: 'unclaimed',
+            approval_status: business.approval_status,
+            rejection_reason: business.rejection_reason,
           });
         });
       }
@@ -151,6 +157,8 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
             website: business.website,
             created_at: business.created_at,
             source: 'user_added',
+            approval_status: 'approved',
+            rejection_reason: null,
           });
         });
       }
@@ -199,6 +207,11 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
         return;
       }
 
+      const hasEmail = formData.email && formData.email.trim() !== '';
+      const hasPhone = formData.phone && formData.phone.trim() !== '';
+      const hasExtraInfo = hasEmail || hasPhone;
+      const pendingPoints = hasExtraInfo ? 25 : 10;
+
       const { data: business, error: businessError } = await supabase
         .from('unclaimed_business_locations')
         .insert({
@@ -215,24 +228,13 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
           country: 'Italia',
           added_by: customerId,
           added_by_family_member_id: activeFamilyMemberId || null,
+          approval_status: 'pending',
+          points_awarded: false,
         })
         .select()
         .single();
 
       if (businessError) throw businessError;
-
-      // Calcola i punti in base ai campi compilati
-      const hasEmail = formData.email && formData.email.trim() !== '';
-      const hasPhone = formData.phone && formData.phone.trim() !== '';
-      const hasExtraInfo = hasEmail || hasPhone;
-      const points = hasExtraInfo ? 25 : 10;
-
-      await supabase.rpc('award_points', {
-        p_user_id: customerId,
-        p_points: points,
-        p_activity_type: 'business_submission',
-        p_description: `Aggiunta attività: ${formData.name}${hasExtraInfo ? ' (completa)' : ''}`
-      });
 
       setFormData({
         name: '',
@@ -248,8 +250,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
       });
       setShowForm(false);
 
-      // Mostra messaggio di successo
-      const message = `Attività "${formData.name}" aggiunta con successo! Hai guadagnato ${points} punti!${hasExtraInfo ? ' (Con informazioni extra)' : ''}`;
+      const message = `Attività "${formData.name}" inviata! Riceverai ${pendingPoints} punti dopo l'approvazione dello staff.`;
       setSuccessMessage(message);
 
       // Nascondi il messaggio dopo 5 secondi
@@ -616,7 +617,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
                     </li>
                   </ul>
                   <p className="text-xs text-gray-600 mt-3">
-                    L'attività verrà aggiunta al database e potrà essere rivendicata dal proprietario in futuro.
+                    L'attività verra' inviata allo staff per l'approvazione. I punti vengono assegnati solo dopo l'approvazione.
                   </p>
                 </div>
               </div>
@@ -655,15 +656,15 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">2.</span>
-              <span>L'attività viene aggiunta al nostro database</span>
+              <span>L'attività viene inviata allo staff per l'approvazione</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-orange-600 font-bold">3.</span>
-              <span>Guadagni <strong>10 punti</strong> (inserimento base) o <strong>25 punti</strong> (se aggiungi anche email o telefono)</span>
+              <span>Dopo l'approvazione guadagni <strong>10 punti</strong> (base) o <strong>25 punti</strong> (con email o telefono)</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">4.</span>
-              <span>Il proprietario dell'attività potrà rivendicarla in futuro</span>
+              <span>Il proprietario dell'attività potra' rivendicarla in futuro</span>
             </li>
           </ul>
         </div>
@@ -709,7 +710,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center flex-wrap gap-2 mb-2">
                         <h4 className="font-bold text-gray-900 text-xl">
                           {business.name}
                         </h4>
@@ -717,7 +718,35 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
                           <User className="w-3 h-3" />
                           Da te
                         </span>
+                        {business.approval_status === 'pending' && (
+                          <span className="bg-yellow-100 text-yellow-700 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 border border-yellow-300">
+                            <Clock className="w-3 h-3" />
+                            In attesa di approvazione
+                          </span>
+                        )}
+                        {business.approval_status === 'approved' && (
+                          <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 border border-green-300">
+                            <CheckCircle className="w-3 h-3" />
+                            Approvata
+                          </span>
+                        )}
+                        {business.approval_status === 'rejected' && (
+                          <span className="bg-red-100 text-red-700 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 border border-red-300">
+                            <XCircle className="w-3 h-3" />
+                            Rifiutata
+                          </span>
+                        )}
                       </div>
+                      {business.approval_status === 'rejected' && business.rejection_reason && (
+                        <p className="text-xs text-red-600 mb-2 bg-red-50 px-3 py-2 rounded-lg border border-red-200">
+                          Motivo: {business.rejection_reason}
+                        </p>
+                      )}
+                      {business.approval_status === 'pending' && (
+                        <p className="text-xs text-yellow-700 mb-2 bg-yellow-50 px-3 py-2 rounded-lg border border-yellow-200">
+                          I punti verranno assegnati dopo l'approvazione dello staff.
+                        </p>
+                      )}
                       {business.category && (
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -727,15 +756,17 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
                         </div>
                       )}
                     </div>
-                    {business.source === 'unclaimed' && (
+                    {business.source === 'unclaimed' && business.approval_status !== 'approved' && (
                       <div className="flex gap-2 ml-4">
-                        <button
-                          onClick={() => handleEdit(business)}
-                          className="p-3 text-blue-600 hover:bg-blue-50 rounded-xl transition-all shadow-sm hover:shadow-md"
-                          title="Modifica attività"
-                        >
-                          <Edit2 className="w-5 h-5" />
-                        </button>
+                        {business.approval_status === 'pending' && (
+                          <button
+                            onClick={() => handleEdit(business)}
+                            className="p-3 text-blue-600 hover:bg-blue-50 rounded-xl transition-all shadow-sm hover:shadow-md"
+                            title="Modifica attività"
+                          >
+                            <Edit2 className="w-5 h-5" />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleDelete(business.id, business.name)}
                           className="p-3 text-red-600 hover:bg-red-50 rounded-xl transition-all shadow-sm hover:shadow-md"

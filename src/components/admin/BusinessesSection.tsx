@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building2, CheckCircle, MapPin, Mail, Phone, FileEdit as Edit2, Search, Filter, Download, Upload, UserPlus, X, FileText, Briefcase, Clock, ShieldCheck, ShieldX } from 'lucide-react';
+import { Building2, CheckCircle, MapPin, Mail, Phone, FileEdit as Edit2, Search, Filter, Download, Upload, UserPlus, X, FileText, Briefcase, Clock, ShieldCheck, ShieldX, XCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { ITALIAN_REGIONS, PROVINCES_BY_REGION, CITIES_BY_PROVINCE } from '../../lib/cities';
 
@@ -83,6 +83,9 @@ interface BusinessLocation {
     };
   };
   source: 'imported' | 'user_added' | 'claimed' | 'self_registered';
+  approval_status?: 'pending' | 'approved' | 'rejected' | null;
+  points_awarded?: boolean;
+  added_by?: string | null;
 }
 
 interface BusinessesSectionProps {
@@ -111,7 +114,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     province: '',
     region: '',
     category: '',
-    verified: 'all' as 'all' | 'verified' | 'unverified'
+    verified: 'all' as 'all' | 'verified' | 'unverified' | 'rejected'
   });
 
   useEffect(() => {
@@ -269,9 +272,11 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           query = query.ilike('region', `%${filters.region}%`);
         }
         if (filters.verified === 'verified') {
-          query = query.eq('verification_badge', 'verified');
+          query = query.eq('approval_status', 'approved');
         } else if (filters.verified === 'unverified') {
-          query = query.is('verification_badge', null);
+          query = query.eq('approval_status', 'pending');
+        } else if (filters.verified === 'rejected') {
+          query = query.eq('approval_status', 'rejected');
         }
 
         // Apply search
@@ -308,7 +313,10 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           services: business.services,
           services_description: business.services_description,
           category: business.category,
-          source: activeTab
+          source: activeTab,
+          approval_status: business.approval_status,
+          points_awarded: business.points_awarded,
+          added_by: business.added_by,
         }));
 
       } else if (activeTab === 'claimed' || activeTab === 'self_registered') {
@@ -416,12 +424,77 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     }
   };
 
+  const handleApproveUserBusiness = async (business: BusinessLocation) => {
+    if (!confirm(`Approva l'attività "${business.name}"?\n\nL'attivita' sara' visibile nella ricerca e l'utente ricevera' i punti.`)) return;
+
+    try {
+      const hasPhone = !!business.phone;
+      const hasEmail = !!business.email;
+      const hasExtraInfo = hasPhone || hasEmail;
+      const points = hasExtraInfo ? 25 : 10;
+
+      const { error } = await supabase
+        .from('unclaimed_business_locations')
+        .update({
+          verification_badge: 'verified',
+          approval_status: 'approved',
+        })
+        .eq('id', business.id);
+
+      if (error) throw error;
+
+      if (business.added_by && !business.points_awarded) {
+        await supabase.rpc('award_points', {
+          p_user_id: business.added_by,
+          p_points: points,
+          p_activity_type: 'business_added',
+          p_description: `Attivita' approvata: "${business.name}"${hasExtraInfo ? ' (con contatti)' : ''}`,
+        });
+
+        await supabase
+          .from('unclaimed_business_locations')
+          .update({ points_awarded: true })
+          .eq('id', business.id);
+      }
+
+      alert(`Attivita' approvata! ${business.added_by && !business.points_awarded ? `+${points} punti assegnati all'utente.` : ''}`);
+      await loadBusinesses();
+    } catch (error: any) {
+      console.error('Error approving business:', error);
+      alert(`Errore: ${error.message}`);
+    }
+  };
+
+  const handleRejectUserBusiness = async (business: BusinessLocation) => {
+    const reason = prompt(`Motivo del rifiuto per "${business.name}" (opzionale):`);
+    if (reason === null) return;
+
+    try {
+      const { error } = await supabase
+        .from('unclaimed_business_locations')
+        .update({
+          verification_badge: null,
+          approval_status: 'rejected',
+          rejection_reason: reason || null,
+        })
+        .eq('id', business.id);
+
+      if (error) throw error;
+
+      alert(`Attivita' rifiutata.`);
+      await loadBusinesses();
+    } catch (error: any) {
+      console.error('Error rejecting business:', error);
+      alert(`Errore: ${error.message}`);
+    }
+  };
+
   const handleToggleVerification = async (businessId: string, currentStatus: boolean) => {
     const action = currentStatus
       ? 'nascondere dalla ricerca pubblica'
       : 'approvare e rendere visibile nella ricerca';
 
-    if (!confirm(`Sei sicuro di voler ${action} questa attività aggiunta da un utente?\n\n${currentStatus ? 'L\'attività non sarà più visibile nelle ricerche pubbliche.' : 'L\'attività sarà visibile a tutti gli utenti nella ricerca.'}`)) return;
+    if (!confirm(`Sei sicuro di voler ${action} questa attività?\n\n${currentStatus ? 'L\'attività non sarà più visibile nelle ricerche pubbliche.' : 'L\'attività sarà visibile a tutti gli utenti nella ricerca.'}`)) return;
 
     try {
       const tableName = activeTab === 'imported' || activeTab === 'user_added'
@@ -736,8 +809,9 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 >
                   <option value="all">Tutte</option>
-                  <option value="verified">Approvate</option>
                   <option value="unverified">In Attesa</option>
+                  <option value="verified">Approvate</option>
+                  <option value="rejected">Rifiutate</option>
                 </select>
               </div>
             )}
@@ -922,10 +996,12 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                             activeTab === 'self_registered' || activeTab === 'claimed'
                               ? 'bg-green-100 text-green-800'
                               : activeTab === 'imported'
-                              ? 'bg-purple-100 text-purple-800'
-                              : business.is_verified
                               ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-600'
+                              : business.approval_status === 'approved'
+                              ? 'bg-green-100 text-green-800'
+                              : business.approval_status === 'rejected'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-yellow-100 text-yellow-700'
                           }`}
                         >
                           {activeTab === 'self_registered' || activeTab === 'claimed' ? (
@@ -938,10 +1014,15 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                               <Download className="w-3 h-3" />
                               Importata
                             </>
-                          ) : business.is_verified ? (
+                          ) : business.approval_status === 'approved' ? (
                             <>
                               <ShieldCheck className="w-3 h-3" />
                               Approvata
+                            </>
+                          ) : business.approval_status === 'rejected' ? (
+                            <>
+                              <XCircle className="w-3 h-3" />
+                              Rifiutata
                             </>
                           ) : (
                             <>
@@ -970,29 +1051,44 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
-                          {/* Mostra tasto verifica SOLO per attività aggiunte da utenti */}
+                          {/* Approval buttons for user-added businesses */}
                           {activeTab === 'user_added' && (
-                            <button
-                              onClick={() => handleToggleVerification(business.id, business.is_verified)}
-                              className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                                business.is_verified
-                                  ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                              }`}
-                              title={business.is_verified ? 'Nascondi dalla ricerca pubblica' : 'Approva e rendi visibile nella ricerca'}
-                            >
-                              {business.is_verified ? (
+                            <>
+                              {business.approval_status === 'pending' || !business.approval_status ? (
                                 <>
-                                  <ShieldX className="w-3.5 h-3.5" />
-                                  Nascondi
+                                  <button
+                                    onClick={() => handleApproveUserBusiness(business)}
+                                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors bg-green-100 text-green-700 hover:bg-green-200"
+                                    title="Approva attivita' e assegna punti"
+                                  >
+                                    <ShieldCheck className="w-3.5 h-3.5" />
+                                    Approva
+                                  </button>
+                                  <button
+                                    onClick={() => handleRejectUserBusiness(business)}
+                                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors bg-red-100 text-red-700 hover:bg-red-200"
+                                    title="Rifiuta attivita'"
+                                  >
+                                    <XCircle className="w-3.5 h-3.5" />
+                                    Rifiuta
+                                  </button>
                                 </>
-                              ) : (
-                                <>
+                              ) : business.approval_status === 'approved' ? (
+                                <span className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-green-50 text-green-700 border border-green-200">
+                                  <ShieldCheck className="w-3.5 h-3.5" />
+                                  Approvata
+                                </span>
+                              ) : business.approval_status === 'rejected' ? (
+                                <button
+                                  onClick={() => handleApproveUserBusiness(business)}
+                                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                  title="Approva comunque"
+                                >
                                   <ShieldCheck className="w-3.5 h-3.5" />
                                   Approva
-                                </>
-                              )}
-                            </button>
+                                </button>
+                              ) : null}
+                            </>
                           )}
                         </div>
                       </td>
