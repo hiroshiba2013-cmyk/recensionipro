@@ -48,41 +48,38 @@ export function LeaderboardPage() {
       // Carica i top 20 utenti basati sul filtro
       await loadTopUsers();
 
-      // Se è un membro della famiglia, carica solo i suoi dati
+      // Se è un membro della famiglia, carica i suoi dati da user_activity
       if (activeProfile?.isOwner === false && activeProfile?.id) {
-        const { data: reviews } = await supabase
-          .from('reviews')
-          .select('id, points_awarded, review_status')
+        const { data: activityData } = await supabase
+          .from('user_activity')
+          .select('total_points, reviews_count')
           .eq('family_member_id', activeProfile.id)
-          .eq('review_status', 'approved');
+          .maybeSingle();
 
-        if (reviews) {
-          const reviewsCount = reviews.length;
-          const totalPoints = reviews.reduce((sum, r) => sum + (r.points_awarded || 0), 0);
+        const totalPoints = activityData?.total_points || 0;
+        const reviewsCount = activityData?.reviews_count || 0;
 
-          // Calcola il rank globale
-          const { count } = await supabase
-            .from('user_activity')
-            .select('user_id', { count: 'exact', head: true })
-            .gt('total_points', totalPoints);
+        const { count } = await supabase
+          .from('user_activity')
+          .select('user_id', { count: 'exact', head: true })
+          .gt('total_points', totalPoints);
 
-          const { data: memberData } = await supabase
-            .from('customer_family_members')
-            .select('first_name, last_name, nickname, avatar_url')
-            .eq('id', activeProfile.id)
-            .maybeSingle();
+        const { data: memberData } = await supabase
+          .from('customer_family_members')
+          .select('first_name, last_name, nickname, avatar_url')
+          .eq('id', activeProfile.id)
+          .maybeSingle();
 
-          if (memberData) {
-            setUserRank({
-              id: activeProfile.id,
-              full_name: memberData.nickname || `${memberData.first_name} ${memberData.last_name}`,
-              avatar_url: memberData.avatar_url,
-              points: totalPoints,
-              reviews_count: reviewsCount,
-              rank: (count || 0) + 1,
-              is_family_member: true,
-            });
-          }
+        if (memberData) {
+          setUserRank({
+            id: activeProfile.id,
+            full_name: memberData.nickname || `${memberData.first_name} ${memberData.last_name}`,
+            avatar_url: memberData.avatar_url,
+            points: totalPoints,
+            reviews_count: reviewsCount,
+            rank: (count || 0) + 1,
+            is_family_member: true,
+          });
         }
       } else {
         // Carica i dati dalla tabella user_activity
@@ -141,6 +138,7 @@ export function LeaderboardPage() {
         .from('user_activity')
         .select(`
           user_id,
+          family_member_id,
           total_points,
           reviews_count,
           profiles(
@@ -148,28 +146,57 @@ export function LeaderboardPage() {
             nickname,
             avatar_url,
             user_type
+          ),
+          customer_family_members(
+            first_name,
+            last_name,
+            nickname,
+            avatar_url
           )
         `)
         .order('total_points', { ascending: false })
-        .limit(100);
+        .limit(200);
 
       if (error) throw error;
 
-      const filtered = (data || []).filter((item: any) => {
-        if (!item.profiles) return false;
-        if (item.profiles.user_type === 'admin') return false;
-        if (userTypeFilter !== 'all' && item.profiles.user_type !== userTypeFilter) return false;
-        return true;
-      });
+      const entries: LeaderboardUser[] = [];
 
-      const leaderboard: LeaderboardUser[] = filtered.slice(0, 20).map((item: any, index: number) => ({
-        id: item.user_id,
-        full_name: item.profiles.nickname || item.profiles.full_name,
-        avatar_url: item.profiles.avatar_url,
-        points: item.total_points,
-        reviews_count: item.reviews_count,
+      for (const item of (data || []) as any[]) {
+        if (item.family_member_id) {
+          const member = item.customer_family_members;
+          if (!member) continue;
+          if (userTypeFilter === 'business') continue;
+          const displayName = member.nickname || `${member.first_name} ${member.last_name}`;
+          entries.push({
+            id: item.family_member_id,
+            full_name: displayName,
+            avatar_url: member.avatar_url,
+            points: item.total_points || 0,
+            reviews_count: item.reviews_count || 0,
+            rank: 0,
+            is_family_member: true,
+          });
+        } else {
+          if (!item.profiles) continue;
+          if (item.profiles.user_type === 'admin') continue;
+          if (userTypeFilter !== 'all' && item.profiles.user_type !== userTypeFilter) continue;
+          entries.push({
+            id: item.user_id,
+            full_name: item.profiles.nickname || item.profiles.full_name,
+            avatar_url: item.profiles.avatar_url,
+            points: item.total_points || 0,
+            reviews_count: item.reviews_count || 0,
+            rank: 0,
+            is_family_member: false,
+          });
+        }
+      }
+
+      entries.sort((a, b) => b.points - a.points);
+
+      const leaderboard = entries.slice(0, 20).map((item, index) => ({
+        ...item,
         rank: index + 1,
-        is_family_member: false,
       }));
 
       setTopUsers(leaderboard);
@@ -383,7 +410,14 @@ export function LeaderboardPage() {
                           </div>
                         )}
                         <div className="flex-1">
-                          <p className="font-bold text-gray-900">{user.full_name}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-bold text-gray-900">{user.full_name}</p>
+                            {user.is_family_member && (
+                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                                Membro Famiglia
+                              </span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-4 text-sm text-gray-600">
                             {userTypeFilter !== 'business' && (
                               <span>{user.points} {t('leaderboard.points')}</span>
