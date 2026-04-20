@@ -15,10 +15,12 @@ interface Review {
   review_status: string;
   created_at: string;
   customer: {
+    id: string;
     full_name: string;
     nickname: string | null;
     email: string;
   };
+  customer_id: string;
   family_member?: {
     nickname: string | null;
     full_name: string;
@@ -191,9 +193,12 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
   const approveReview = async (reviewId: string) => {
     try {
       const review = reviews.find(r => r.id === reviewId);
+      if (!review) return;
+
+      const pointsAwarded = review.proof_image_url ? 50 : 25;
 
       // Elimina l'immagine se presente
-      if (review?.proof_image_url) {
+      if (review.proof_image_url) {
         const filePath = review.proof_image_url.split('/').pop();
         if (filePath) {
           await supabase.storage.from('review-proofs').remove([filePath]);
@@ -213,6 +218,25 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
         .update({ proof_image_url: null })
         .eq('id', reviewId);
 
+      const userId = review.customer_id || review.customer?.id;
+      if (userId) {
+        const businessName = review.business_location?.name || review.unclaimed_business_location?.name || 'l\'attività';
+        await supabase.from('notifications').insert([
+          {
+            user_id: userId,
+            type: 'review_approved',
+            title: 'Recensione approvata',
+            message: `La tua recensione per "${businessName}" è stata approvata dall'amministratore.`,
+          },
+          {
+            user_id: userId,
+            type: 'points_earned',
+            title: `+${pointsAwarded} punti guadagnati`,
+            message: `Hai guadagnato ${pointsAwarded} punti per la recensione approvata di "${businessName}". Controlla la tua posizione in classifica!`,
+          },
+        ]);
+      }
+
       alert('Recensione approvata con successo! L\'immagine di prova è stata eliminata.');
       onReload();
       setSelectedReview(null);
@@ -225,9 +249,12 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
   const approveReviewWithoutProof = async (reviewId: string) => {
     try {
       const review = reviews.find(r => r.id === reviewId);
+      if (!review) return;
+
+      const pointsAwarded = 25;
 
       // Elimina l'immagine
-      if (review?.proof_image_url) {
+      if (review.proof_image_url) {
         const filePath = review.proof_image_url.split('/').pop();
         if (filePath) {
           await supabase.storage.from('review-proofs').remove([filePath]);
@@ -247,6 +274,25 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
       });
 
       if (error) throw error;
+
+      const userId = review.customer_id || review.customer?.id;
+      if (userId) {
+        const businessName = review.business_location?.name || review.unclaimed_business_location?.name || 'l\'attività';
+        await supabase.from('notifications').insert([
+          {
+            user_id: userId,
+            type: 'review_approved',
+            title: 'Recensione approvata',
+            message: `La tua recensione per "${businessName}" è stata approvata dall'amministratore.`,
+          },
+          {
+            user_id: userId,
+            type: 'points_earned',
+            title: `+${pointsAwarded} punti guadagnati`,
+            message: `Hai guadagnato ${pointsAwarded} punti per la recensione approvata di "${businessName}". Controlla la tua posizione in classifica!`,
+          },
+        ]);
+      }
 
       alert('Recensione approvata con 25 punti (prova rifiutata). L\'immagine è stata eliminata.');
       onReload();
