@@ -133,9 +133,9 @@ export function ActivityFeed() {
         .select('total_points, reviews_count, businesses_added_count, ads_posted_count');
 
       if (isFamilyMember) {
-        query = (query as any).eq('family_member_id', effectiveUserId).is('user_id', null);
+        query = (query as any).eq('family_member_id', effectiveUserId);
       } else {
-        query = (query as any).eq('user_id', effectiveUserId).is('family_member_id', null);
+        query = (query as any).eq('user_id', profile.id).is('family_member_id', null);
       }
 
       const { data, error } = await (query as any).maybeSingle();

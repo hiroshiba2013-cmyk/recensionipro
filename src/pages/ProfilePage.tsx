@@ -543,7 +543,6 @@ export function ProfilePage() {
       .from('user_activity')
       .select('total_points, reviews_count')
       .eq('family_member_id', familyMemberId)
-      .is('user_id', null)
       .maybeSingle();
 
     const total_points = memberActivity?.total_points || 0;
@@ -604,7 +603,6 @@ export function ProfilePage() {
             .from('user_activity')
             .select('total_points, reviews_count')
             .eq('family_member_id', member.id)
-            .is('user_id', null)
             .maybeSingle();
 
           const total_points = activityData?.total_points || 0;
