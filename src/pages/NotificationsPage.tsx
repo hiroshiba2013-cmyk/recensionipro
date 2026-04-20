@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, Check, CheckCheck, Trash2, ArrowLeft, Heart, Briefcase, CreditCard, Store, ShoppingBag } from 'lucide-react';
+import { Bell, Check, CheckCheck, Trash2, ArrowLeft, Heart, Briefcase, CreditCard, Store, ShoppingBag, CheckCircle, XCircle, Star } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -147,6 +147,14 @@ export function NotificationsPage() {
         return { icon: Store, color: 'text-green-600', bg: 'bg-green-100' };
       case 'subscription_expiring':
         return { icon: CreditCard, color: 'text-orange-600', bg: 'bg-orange-100' };
+      case 'business_approved':
+      case 'review_approved':
+        return { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100' };
+      case 'business_rejected':
+      case 'review_rejected':
+        return { icon: XCircle, color: 'text-red-600', bg: 'bg-red-100' };
+      case 'points_earned':
+        return { icon: Star, color: 'text-yellow-600', bg: 'bg-yellow-100' };
       default:
         return { icon: Bell, color: 'text-blue-600', bg: 'bg-blue-100' };
     }

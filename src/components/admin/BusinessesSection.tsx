@@ -455,6 +455,30 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           .from('unclaimed_business_locations')
           .update({ points_awarded: true })
           .eq('id', business.id);
+
+        await supabase.rpc('send_notification', {
+          target_user_id: business.added_by,
+          notif_type: 'business_approved',
+          notif_title: 'Attivita\' approvata',
+          notif_message: `La tua attivita\' "${business.name}" e\' stata approvata dallo staff. Hai guadagnato ${points} punti!`,
+          notif_data: { business_id: business.id },
+        });
+
+        await supabase.rpc('send_notification', {
+          target_user_id: business.added_by,
+          notif_type: 'points_earned',
+          notif_title: `+${points} punti guadagnati`,
+          notif_message: `Hai guadagnato ${points} punti per l\'aggiunta dell\'attivita\' "${business.name}" approvata dallo staff.`,
+          notif_data: { points, business_id: business.id },
+        });
+      } else if (business.added_by && business.points_awarded) {
+        await supabase.rpc('send_notification', {
+          target_user_id: business.added_by,
+          notif_type: 'business_approved',
+          notif_title: 'Attivita\' approvata',
+          notif_message: `La tua attivita\' "${business.name}" e\' stata approvata dallo staff.`,
+          notif_data: { business_id: business.id },
+        });
       }
 
       alert(`Attivita' approvata! ${business.added_by && !business.points_awarded ? `+${points} punti assegnati all'utente.` : ''}`);
@@ -480,6 +504,19 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
         .eq('id', business.id);
 
       if (error) throw error;
+
+      if (business.added_by) {
+        const rejectMsg = reason
+          ? `La tua attivita\' "${business.name}" e\' stata rifiutata dallo staff. Motivazione: ${reason}`
+          : `La tua attivita\' "${business.name}" e\' stata rifiutata dallo staff.`;
+        await supabase.rpc('send_notification', {
+          target_user_id: business.added_by,
+          notif_type: 'business_rejected',
+          notif_title: 'Attivita\' non approvata',
+          notif_message: rejectMsg,
+          notif_data: { business_id: business.id, reason: reason || null },
+        });
+      }
 
       alert(`Attivita' rifiutata.`);
       await loadBusinesses();
