@@ -539,20 +539,19 @@ export function ProfilePage() {
       setClassifiedAds(formattedAds);
     }
 
-    const { data: memberReviewsData } = await supabase
-      .from('reviews')
-      .select('id, proof_image_url, review_status')
+    const { data: memberActivity } = await supabase
+      .from('user_activity')
+      .select('total_points, reviews_count')
       .eq('family_member_id', familyMemberId)
-      .eq('review_status', 'approved');
+      .is('user_id', null)
+      .maybeSingle();
 
-    const reviews_count = memberReviewsData?.length || 0;
-    const total_points = (memberReviewsData || []).reduce((sum, review) => {
-      return sum + (review.proof_image_url ? 50 : 25);
-    }, 0);
+    const total_points = memberActivity?.total_points || 0;
+    const reviews_count = memberActivity?.reviews_count || 0;
 
     const { count: betterUsersCount } = await supabase
       .from('user_activity')
-      .select('user_id', { count: 'exact', head: true })
+      .select('*', { count: 'exact', head: true })
       .gt('total_points', total_points);
 
     const rank = (betterUsersCount || 0) + 1;
@@ -601,19 +600,19 @@ export function ProfilePage() {
     if (membersData) {
       const membersWithStats = await Promise.all(
         membersData.map(async (member) => {
-          const { data: reviewsData } = await supabase
-            .from('reviews')
-            .select('id, proof_image_url')
-            .eq('family_member_id', member.id);
+          const { data: activityData } = await supabase
+            .from('user_activity')
+            .select('total_points, reviews_count')
+            .eq('family_member_id', member.id)
+            .is('user_id', null)
+            .maybeSingle();
 
-          const reviews_count = reviewsData?.length || 0;
-          const total_points = (reviewsData || []).reduce((sum, review) => {
-            return sum + (review.proof_image_url ? 50 : 15);
-          }, 0);
+          const total_points = activityData?.total_points || 0;
+          const reviews_count = activityData?.reviews_count || 0;
 
           const { count: betterUsersCount } = await supabase
             .from('user_activity')
-            .select('user_id', { count: 'exact', head: true })
+            .select('*', { count: 'exact', head: true })
             .gt('total_points', total_points);
 
           const rank = (betterUsersCount || 0) + 1;

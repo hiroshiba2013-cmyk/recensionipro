@@ -62,6 +62,7 @@ export function ActivityFeed() {
   const [filter, setFilter] = useState<'all' | 'week' | 'month'>('all');
 
   const effectiveUserId = activeProfile?.id ?? profile?.id ?? null;
+  const isFamilyMember = activeProfile?.isOwner === false;
 
   useEffect(() => {
     if (profile && effectiveUserId) {
@@ -127,11 +128,17 @@ export function ActivityFeed() {
     if (!profile || !effectiveUserId) return;
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('user_activity')
-        .select('total_points, reviews_count, businesses_added_count, ads_posted_count')
-        .eq('user_id', effectiveUserId)
-        .maybeSingle();
+        .select('total_points, reviews_count, businesses_added_count, ads_posted_count');
+
+      if (isFamilyMember) {
+        query = (query as any).eq('family_member_id', effectiveUserId).is('user_id', null);
+      } else {
+        query = (query as any).eq('user_id', effectiveUserId).is('family_member_id', null);
+      }
+
+      const { data, error } = await (query as any).maybeSingle();
 
       if (error) throw error;
 
