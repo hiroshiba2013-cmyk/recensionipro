@@ -48,6 +48,15 @@ export function LeaderboardPage() {
       // Carica i top 20 utenti basati sul filtro
       await loadTopUsers();
 
+      // Funzione comune per calcolare il rank dato un punteggio
+      const calcRank = async (points: number): Promise<number> => {
+        const { count } = await supabase
+          .from('user_activity')
+          .select('*', { count: 'exact', head: true })
+          .gt('total_points', points);
+        return (count || 0) + 1;
+      };
+
       // Se è un membro della famiglia, carica i suoi dati da user_activity
       if (activeProfile?.isOwner === false && activeProfile?.id) {
         const { data: activityData } = await supabase
@@ -58,11 +67,7 @@ export function LeaderboardPage() {
 
         const totalPoints = activityData?.total_points || 0;
         const reviewsCount = activityData?.reviews_count || 0;
-
-        const { count } = await supabase
-          .from('user_activity')
-          .select('user_id', { count: 'exact', head: true })
-          .gt('total_points', totalPoints);
+        const rank = await calcRank(totalPoints);
 
         const { data: memberData } = await supabase
           .from('customer_family_members')
@@ -70,19 +75,19 @@ export function LeaderboardPage() {
           .eq('id', activeProfile.id)
           .maybeSingle();
 
-        if (memberData) {
-          setUserRank({
-            id: activeProfile.id,
-            full_name: memberData.nickname || `${memberData.first_name} ${memberData.last_name}`,
-            avatar_url: memberData.avatar_url,
-            points: totalPoints,
-            reviews_count: reviewsCount,
-            rank: (count || 0) + 1,
-            is_family_member: true,
-          });
-        }
+        setUserRank({
+          id: activeProfile.id,
+          full_name: memberData
+            ? (memberData.nickname || `${memberData.first_name} ${memberData.last_name}`)
+            : activeProfile.name || 'Membro Famiglia',
+          avatar_url: memberData?.avatar_url || null,
+          points: totalPoints,
+          reviews_count: reviewsCount,
+          rank,
+          is_family_member: true,
+        });
       } else {
-        // Carica i dati dalla tabella user_activity (solo riga utente principale)
+        // Utente principale
         const { data: activityData } = await supabase
           .from('user_activity')
           .select('total_points, reviews_count')
@@ -90,41 +95,19 @@ export function LeaderboardPage() {
           .is('family_member_id', null)
           .maybeSingle();
 
-        if (activityData) {
-          const totalPoints = activityData.total_points || 0;
-          const reviewsCount = activityData.reviews_count || 0;
+        const totalPoints = activityData?.total_points || 0;
+        const reviewsCount = activityData?.reviews_count || 0;
+        const rank = await calcRank(totalPoints);
 
-          // Calcola il rank globale (esclude admin)
-          const { data: rankData } = await supabase
-            .from('user_activity')
-            .select('user_id, profiles(user_type)')
-            .gt('total_points', totalPoints);
-
-          const count = rankData
-            ? rankData.filter((r: any) => r.profiles && r.profiles.user_type !== 'admin').length
-            : 0;
-
-          setUserRank({
-            id: profile.id,
-            full_name: profile.full_name,
-            avatar_url: profile.avatar_url,
-            points: totalPoints,
-            reviews_count: reviewsCount,
-            rank: count + 1,
-            is_family_member: false,
-          });
-        } else {
-          // Se non ci sono dati in user_activity, mostra 0
-          setUserRank({
-            id: profile.id,
-            full_name: profile.full_name,
-            avatar_url: profile.avatar_url,
-            points: 0,
-            reviews_count: 0,
-            rank: 0,
-            is_family_member: false,
-          });
-        }
+        setUserRank({
+          id: profile.id,
+          full_name: profile.nickname || profile.full_name,
+          avatar_url: profile.avatar_url,
+          points: totalPoints,
+          reviews_count: reviewsCount,
+          rank,
+          is_family_member: false,
+        });
       }
     } catch (error) {
       console.error('Error loading leaderboard:', error);
@@ -135,52 +118,76 @@ export function LeaderboardPage() {
 
   const loadTopUsers = async () => {
     try {
-      const { data, error } = await supabase
-        .from('user_activity')
-        .select(`
-          user_id,
-          family_member_id,
-          total_points,
-          reviews_count,
-          profiles(
-            full_name,
-            nickname,
-            avatar_url,
-            user_type
-          ),
-          customer_family_members(
-            first_name,
-            last_name,
-            nickname,
-            avatar_url
-          )
-        `)
-        .order('total_points', { ascending: false })
-        .limit(200);
-
-      if (error) throw error;
-
       const entries: LeaderboardUser[] = [];
 
-      for (const item of (data || []) as any[]) {
-        if (item.family_member_id) {
-          const member = item.customer_family_members;
-          if (!member) continue;
-          if (userTypeFilter === 'business') continue;
-          const displayName = member.nickname || `${member.first_name} ${member.last_name}`;
-          entries.push({
-            id: item.family_member_id,
-            full_name: displayName,
-            avatar_url: member.avatar_url,
-            points: item.total_points || 0,
-            reviews_count: item.reviews_count || 0,
-            rank: 0,
-            is_family_member: true,
-          });
-        } else {
+      if (userTypeFilter !== 'business') {
+        // Query 1: utenti principali (family_member_id IS NULL)
+        const { data: usersData } = await supabase
+          .from('user_activity')
+          .select('user_id, total_points, reviews_count, profiles(full_name, nickname, avatar_url, user_type)')
+          .is('family_member_id', null)
+          .order('total_points', { ascending: false })
+          .limit(200);
+
+        for (const item of (usersData || []) as any[]) {
           if (!item.profiles) continue;
           if (item.profiles.user_type === 'admin') continue;
           if (userTypeFilter !== 'all' && item.profiles.user_type !== userTypeFilter) continue;
+          entries.push({
+            id: item.user_id,
+            full_name: item.profiles.nickname || item.profiles.full_name,
+            avatar_url: item.profiles.avatar_url,
+            points: item.total_points || 0,
+            reviews_count: item.reviews_count || 0,
+            rank: 0,
+            is_family_member: false,
+          });
+        }
+
+        // Query 2: membri della famiglia (family_member_id IS NOT NULL) - solo per filtri non-business
+        const { data: familyData } = await supabase
+          .from('user_activity')
+          .select('family_member_id, total_points, reviews_count')
+          .not('family_member_id', 'is', null)
+          .order('total_points', { ascending: false })
+          .limit(200);
+
+        if (familyData && familyData.length > 0) {
+          const familyIds = familyData.map((r: any) => r.family_member_id);
+          const { data: membersData } = await supabase
+            .from('customer_family_members')
+            .select('id, first_name, last_name, nickname, avatar_url')
+            .in('id', familyIds);
+
+          const membersMap = new Map((membersData || []).map((m: any) => [m.id, m]));
+
+          for (const item of familyData as any[]) {
+            const member = membersMap.get(item.family_member_id);
+            if (!member) continue;
+            const displayName = member.nickname || `${member.first_name} ${member.last_name}`;
+            entries.push({
+              id: item.family_member_id,
+              full_name: displayName,
+              avatar_url: member.avatar_url,
+              points: item.total_points || 0,
+              reviews_count: item.reviews_count || 0,
+              rank: 0,
+              is_family_member: true,
+            });
+          }
+        }
+      } else {
+        // Solo business
+        const { data: usersData } = await supabase
+          .from('user_activity')
+          .select('user_id, total_points, reviews_count, profiles(full_name, nickname, avatar_url, user_type)')
+          .is('family_member_id', null)
+          .order('total_points', { ascending: false })
+          .limit(200);
+
+        for (const item of (usersData || []) as any[]) {
+          if (!item.profiles) continue;
+          if (item.profiles.user_type !== 'business') continue;
           entries.push({
             id: item.user_id,
             full_name: item.profiles.nickname || item.profiles.full_name,
