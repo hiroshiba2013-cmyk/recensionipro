@@ -82,11 +82,12 @@ export function LeaderboardPage() {
           });
         }
       } else {
-        // Carica i dati dalla tabella user_activity
+        // Carica i dati dalla tabella user_activity (solo riga utente principale)
         const { data: activityData } = await supabase
           .from('user_activity')
           .select('total_points, reviews_count')
           .eq('user_id', profile.id)
+          .is('family_member_id', null)
           .maybeSingle();
 
         if (activityData) {
