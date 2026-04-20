@@ -96,11 +96,15 @@ export function LeaderboardPage() {
           const totalPoints = activityData.total_points || 0;
           const reviewsCount = activityData.reviews_count || 0;
 
-          // Calcola il rank globale
-          const { count } = await supabase
+          // Calcola il rank globale (esclude admin)
+          const { data: rankData } = await supabase
             .from('user_activity')
-            .select('user_id', { count: 'exact', head: true })
+            .select('user_id, profiles(user_type)')
             .gt('total_points', totalPoints);
+
+          const count = rankData
+            ? rankData.filter((r: any) => r.profiles && r.profiles.user_type !== 'admin').length
+            : 0;
 
           setUserRank({
             id: profile.id,
@@ -108,7 +112,7 @@ export function LeaderboardPage() {
             avatar_url: profile.avatar_url,
             points: totalPoints,
             reviews_count: reviewsCount,
-            rank: (count || 0) + 1,
+            rank: count + 1,
             is_family_member: false,
           });
         } else {
@@ -133,13 +137,13 @@ export function LeaderboardPage() {
 
   const loadTopUsers = async () => {
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('user_activity')
         .select(`
           user_id,
           total_points,
           reviews_count,
-          profiles!inner(
+          profiles(
             full_name,
             nickname,
             avatar_url,
@@ -147,18 +151,18 @@ export function LeaderboardPage() {
           )
         `)
         .order('total_points', { ascending: false })
-        .limit(20);
-
-      // Applica il filtro per tipo utente
-      if (userTypeFilter !== 'all') {
-        query = query.eq('profiles.user_type', userTypeFilter);
-      }
-
-      const { data, error } = await query;
+        .limit(100);
 
       if (error) throw error;
 
-      const leaderboard: LeaderboardUser[] = data.map((item: any, index: number) => ({
+      const filtered = (data || []).filter((item: any) => {
+        if (!item.profiles) return false;
+        if (item.profiles.user_type === 'admin') return false;
+        if (userTypeFilter !== 'all' && item.profiles.user_type !== userTypeFilter) return false;
+        return true;
+      });
+
+      const leaderboard: LeaderboardUser[] = filtered.slice(0, 20).map((item: any, index: number) => ({
         id: item.user_id,
         full_name: item.profiles.nickname || item.profiles.full_name,
         avatar_url: item.profiles.avatar_url,
