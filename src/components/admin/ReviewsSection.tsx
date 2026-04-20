@@ -221,20 +221,20 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
       const userId = review.customer_id || review.customer?.id;
       if (userId) {
         const businessName = review.business_location?.name || review.unclaimed_business_location?.name || 'l\'attività';
-        await supabase.from('notifications').insert([
-          {
-            user_id: userId,
-            type: 'review_approved',
-            title: 'Recensione approvata',
-            message: `La tua recensione per "${businessName}" è stata approvata dall'amministratore.`,
-          },
-          {
-            user_id: userId,
-            type: 'points_earned',
-            title: `+${pointsAwarded} punti guadagnati`,
-            message: `Hai guadagnato ${pointsAwarded} punti per la recensione approvata di "${businessName}". Controlla la tua posizione in classifica!`,
-          },
-        ]);
+        await supabase.rpc('send_notification', {
+          target_user_id: userId,
+          notif_type: 'review_approved',
+          notif_title: 'Recensione approvata',
+          notif_message: `La tua recensione per "${businessName}" è stata approvata dall'amministratore.`,
+          notif_data: {},
+        });
+        await supabase.rpc('send_notification', {
+          target_user_id: userId,
+          notif_type: 'points_earned',
+          notif_title: `+${pointsAwarded} punti guadagnati`,
+          notif_message: `Hai guadagnato ${pointsAwarded} punti per la recensione approvata di "${businessName}". Controlla la tua posizione in classifica!`,
+          notif_data: {},
+        });
       }
 
       alert('Recensione approvata con successo! L\'immagine di prova è stata eliminata.');
@@ -278,20 +278,20 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
       const userId = review.customer_id || review.customer?.id;
       if (userId) {
         const businessName = review.business_location?.name || review.unclaimed_business_location?.name || 'l\'attività';
-        await supabase.from('notifications').insert([
-          {
-            user_id: userId,
-            type: 'review_approved',
-            title: 'Recensione approvata',
-            message: `La tua recensione per "${businessName}" è stata approvata dall'amministratore.`,
-          },
-          {
-            user_id: userId,
-            type: 'points_earned',
-            title: `+${pointsAwarded} punti guadagnati`,
-            message: `Hai guadagnato ${pointsAwarded} punti per la recensione approvata di "${businessName}". Controlla la tua posizione in classifica!`,
-          },
-        ]);
+        await supabase.rpc('send_notification', {
+          target_user_id: userId,
+          notif_type: 'review_approved',
+          notif_title: 'Recensione approvata',
+          notif_message: `La tua recensione per "${businessName}" è stata approvata dall'amministratore.`,
+          notif_data: {},
+        });
+        await supabase.rpc('send_notification', {
+          target_user_id: userId,
+          notif_type: 'points_earned',
+          notif_title: `+${pointsAwarded} punti guadagnati`,
+          notif_message: `Hai guadagnato ${pointsAwarded} punti per la recensione approvata di "${businessName}". Controlla la tua posizione in classifica!`,
+          notif_data: {},
+        });
       }
 
       alert('Recensione approvata con 25 punti (prova rifiutata). L\'immagine è stata eliminata.');
@@ -391,12 +391,16 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
 
       // Invia notifica all'utente con la motivazione
       if (review) {
-        await supabase.from('notifications').insert({
-          user_id: review.customer.email,
-          title: 'Recensione rifiutata',
-          message: `La tua recensione "${review.title}" è stata rifiutata. Motivazione: ${rejectReason}`,
-          type: 'review_rejected',
-        });
+        const rejectUserId = review.customer_id || review.customer?.id;
+        if (rejectUserId) {
+          await supabase.rpc('send_notification', {
+            target_user_id: rejectUserId,
+            notif_type: 'review_rejected',
+            notif_title: 'Recensione rifiutata',
+            notif_message: `La tua recensione "${review.title}" è stata rifiutata. Motivazione: ${rejectReason}`,
+            notif_data: {},
+          });
+        }
       }
 
       alert('Recensione rifiutata. L\'immagine di prova è stata eliminata.');
