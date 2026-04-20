@@ -11,13 +11,18 @@ interface Notification {
   data: any;
   read: boolean;
   created_at: string;
+  family_member_id: string | null;
 }
 
 export function NotificationsPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, activeProfile, loading: authLoading } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
+
+  const activeFamilyMemberId = activeProfile && !activeProfile.isOwner && profile?.user_type === 'customer'
+    ? activeProfile.id
+    : null;
 
   useEffect(() => {
     if (authLoading) return;
@@ -48,18 +53,25 @@ export function NotificationsPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, authLoading]);
+  }, [user, authLoading, activeFamilyMemberId]);
 
   async function loadNotifications() {
     if (!user) return;
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .eq('user_id', user.id);
+
+      if (activeFamilyMemberId) {
+        query = query.eq('family_member_id', activeFamilyMemberId);
+      } else {
+        query = query.is('family_member_id', null);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       setNotifications(data || []);
@@ -87,7 +99,9 @@ export function NotificationsPage() {
 
   async function markAllAsRead() {
     try {
-      const { error } = await supabase.rpc('mark_all_notifications_read');
+      const { error } = await supabase.rpc('mark_all_notifications_read', {
+        p_family_member_id: activeFamilyMemberId,
+      });
 
       if (error) throw error;
 

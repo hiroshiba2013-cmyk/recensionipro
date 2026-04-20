@@ -86,6 +86,7 @@ interface BusinessLocation {
   approval_status?: 'pending' | 'approved' | 'rejected' | null;
   points_awarded?: boolean;
   added_by?: string | null;
+  added_by_family_member_id?: string | null;
 }
 
 interface BusinessesSectionProps {
@@ -317,6 +318,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           approval_status: business.approval_status,
           points_awarded: business.points_awarded,
           added_by: business.added_by,
+          added_by_family_member_id: business.added_by_family_member_id,
         }));
 
       } else if (activeTab === 'claimed' || activeTab === 'self_registered') {
@@ -444,12 +446,15 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
       if (error) throw error;
 
       if (business.added_by) {
+        const familyMemberId = business.added_by_family_member_id || null;
+
         await supabase.rpc('send_notification', {
           target_user_id: business.added_by,
           notif_type: 'business_approved',
           notif_title: 'Attivita\' approvata',
           notif_message: `La tua attivita\' "${business.name}" e\' stata approvata dallo staff. Hai guadagnato ${points} punti!`,
           notif_data: { business_id: business.id },
+          target_family_member_id: familyMemberId,
         });
 
         await supabase.rpc('send_notification', {
@@ -458,6 +463,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           notif_title: `+${points} punti guadagnati`,
           notif_message: `Hai guadagnato ${points} punti per l\'aggiunta dell\'attivita\' "${business.name}" approvata dallo staff.`,
           notif_data: { points, business_id: business.id },
+          target_family_member_id: familyMemberId,
         });
       }
 
@@ -495,6 +501,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           notif_title: 'Attivita\' non approvata',
           notif_message: rejectMsg,
           notif_data: { business_id: business.id, reason: reason || null },
+          target_family_member_id: business.added_by_family_member_id || null,
         });
       }
 

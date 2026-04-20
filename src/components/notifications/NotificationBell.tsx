@@ -4,8 +4,12 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function NotificationBell() {
-  const { user } = useAuth();
+  const { user, profile, activeProfile } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+
+  const activeFamilyMemberId = activeProfile && !activeProfile.isOwner && profile?.user_type === 'customer'
+    ? activeProfile.id
+    : null;
 
   useEffect(() => {
     if (!user) return;
@@ -31,14 +35,16 @@ export default function NotificationBell() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, activeFamilyMemberId]);
 
   async function loadUnreadCount() {
     if (!user) return;
 
     try {
       const { data, error } = await supabase
-        .rpc('get_unread_notification_count');
+        .rpc('get_unread_notification_count', {
+          p_family_member_id: activeFamilyMemberId,
+        });
 
       if (error) throw error;
       setUnreadCount(data || 0);

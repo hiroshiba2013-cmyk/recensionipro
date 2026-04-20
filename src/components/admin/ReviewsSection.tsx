@@ -21,6 +21,7 @@ interface Review {
     email: string;
   };
   customer_id: string;
+  family_member_id?: string | null;
   family_member?: {
     nickname: string | null;
     full_name: string;
@@ -221,12 +222,14 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
       const userId = review.customer_id || review.customer?.id;
       if (userId) {
         const businessName = review.business_location?.name || review.unclaimed_business_location?.name || 'l\'attività';
+        const familyMemberId = review.family_member_id || null;
         await supabase.rpc('send_notification', {
           target_user_id: userId,
           notif_type: 'review_approved',
           notif_title: 'Recensione approvata',
           notif_message: `La tua recensione per "${businessName}" è stata approvata dall'amministratore.`,
           notif_data: {},
+          target_family_member_id: familyMemberId,
         });
         await supabase.rpc('send_notification', {
           target_user_id: userId,
@@ -234,6 +237,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
           notif_title: `+${pointsAwarded} punti guadagnati`,
           notif_message: `Hai guadagnato ${pointsAwarded} punti per la recensione approvata di "${businessName}". Controlla la tua posizione in classifica!`,
           notif_data: {},
+          target_family_member_id: familyMemberId,
         });
       }
 
@@ -278,12 +282,14 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
       const userId = review.customer_id || review.customer?.id;
       if (userId) {
         const businessName = review.business_location?.name || review.unclaimed_business_location?.name || 'l\'attività';
+        const familyMemberId = review.family_member_id || null;
         await supabase.rpc('send_notification', {
           target_user_id: userId,
           notif_type: 'review_approved',
           notif_title: 'Recensione approvata',
           notif_message: `La tua recensione per "${businessName}" è stata approvata dall'amministratore.`,
           notif_data: {},
+          target_family_member_id: familyMemberId,
         });
         await supabase.rpc('send_notification', {
           target_user_id: userId,
@@ -291,6 +297,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
           notif_title: `+${pointsAwarded} punti guadagnati`,
           notif_message: `Hai guadagnato ${pointsAwarded} punti per la recensione approvata di "${businessName}". Controlla la tua posizione in classifica!`,
           notif_data: {},
+          target_family_member_id: familyMemberId,
         });
       }
 
@@ -399,6 +406,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
             notif_title: 'Recensione rifiutata',
             notif_message: `La tua recensione "${review.title}" è stata rifiutata. Motivazione: ${rejectReason}`,
             notif_data: {},
+            target_family_member_id: review.family_member_id || null,
           });
         }
       }
