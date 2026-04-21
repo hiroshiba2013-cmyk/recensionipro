@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Gavel, Clock, TrendingUp, Eye, Plus, AlertCircle, Trophy, MapPin } from 'lucide-react';
+import { Gavel, Clock, TrendingUp, Eye, Plus, AlertCircle, Trophy, MapPin, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import AuctionForm from './AuctionForm';
 
 interface Auction {
   id: string;
@@ -29,6 +30,7 @@ export function UserAuctionsSection() {
   const [participatingAuctions, setParticipatingAuctions] = useState<ParticipatingAuction[]>([]);
   const [activeTab, setActiveTab] = useState<'my' | 'participating'>('my');
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
 
   const familyMemberId = activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
 
@@ -183,15 +185,27 @@ export function UserAuctionsSection() {
             <Gavel className="w-6 h-6" />
             Le Mie Aste
           </h2>
-          <a
-            href="/auctions"
+          <button
+            onClick={() => setShowForm(!showForm)}
             className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2"
           >
-            <Plus className="w-4 h-4" />
-            Crea Asta
-          </a>
+            {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            {showForm ? 'Chiudi' : 'Crea Asta'}
+          </button>
         </div>
       </div>
+
+      {showForm && (
+        <div className="p-6 border-b border-gray-200 bg-orange-50/50">
+          <AuctionForm
+            onSuccess={() => {
+              setShowForm(false);
+              loadAuctions();
+            }}
+            onCancel={() => setShowForm(false)}
+          />
+        </div>
+      )}
 
       <div className="flex border-b border-gray-200">
         <button
@@ -243,13 +257,13 @@ export function UserAuctionsSection() {
               <Gavel className="w-14 h-14 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-700 mb-2">Nessuna asta creata</h3>
               <p className="text-gray-500 text-sm mb-6">Non hai ancora messo all'asta nessun oggetto.</p>
-              <a
-                href="/auctions"
+              <button
+                onClick={() => setShowForm(true)}
                 className="inline-flex items-center gap-2 bg-orange-600 text-white px-6 py-3 rounded-xl hover:bg-orange-700 transition-colors font-semibold"
               >
                 <Plus className="w-5 h-5" />
                 Crea la tua prima asta
-              </a>
+              </button>
             </div>
           ) : (
             <div className="space-y-3">
@@ -424,3 +438,6 @@ export function UserAuctionsSection() {
     </div>
   );
 }
+
+
+export { UserAuctionsSection }
