@@ -505,10 +505,13 @@ function AuthenticatedHomePage() {
               .from('user_activity')
               .select(`
                 user_id,
+                family_member_id,
                 total_points,
                 reviews_count,
-                profiles:user_id(id, nickname, full_name, avatar_url)
+                profiles:user_id(id, nickname, full_name, avatar_url),
+                family_member:family_member_id(id, first_name, last_name, nickname, avatar_url)
               `)
+              .gt('total_points', 0)
               .order('total_points', { ascending: false })
               .limit(20)
       ]);
@@ -766,7 +769,11 @@ function AuthenticatedHomePage() {
 }
 
 function TopUserCard({ userActivity, rank }: { userActivity: any; rank: number }) {
-  const displayName = userActivity.profiles?.nickname || userActivity.profiles?.full_name || 'Utente';
+  const fm = userActivity.family_member;
+  const displayName = fm
+    ? (fm.nickname || `${fm.first_name} ${fm.last_name}`)
+    : (userActivity.profiles?.nickname || userActivity.profiles?.full_name || 'Utente');
+  const avatarUrl = fm?.avatar_url || userActivity.profiles?.avatar_url;
   const isTopThree = rank <= 3;
 
   return (
@@ -789,9 +796,9 @@ function TopUserCard({ userActivity, rank }: { userActivity: any; rank: number }
           <span className="text-lg">{rank}</span>
         </div>
 
-        {userActivity.profiles?.avatar_url ? (
+        {avatarUrl ? (
           <img
-            src={userActivity.profiles.avatar_url}
+            src={avatarUrl}
             alt={displayName}
             className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-md"
           />
