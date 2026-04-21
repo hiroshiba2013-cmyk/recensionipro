@@ -67,7 +67,6 @@ export function ActivityFeed() {
   useEffect(() => {
     if (profile && effectiveUserId) {
       loadActivities();
-      loadSummary();
       loadUserStats();
     }
   }, [profile, effectiveUserId, filter]);
@@ -80,9 +79,15 @@ export function ActivityFeed() {
       let query = supabase
         .from('activity_log')
         .select('*')
-        .eq('user_id', effectiveUserId)
+        .eq('user_id', profile.id)
         .order('created_at', { ascending: false })
         .limit(50);
+
+      if (isFamilyMember) {
+        query = query.eq('family_member_id', effectiveUserId);
+      } else {
+        query = query.is('family_member_id', null);
+      }
 
       if (filter === 'week') {
         const weekAgo = new Date();
@@ -106,23 +111,21 @@ export function ActivityFeed() {
     }
   };
 
-  const loadSummary = async () => {
-    if (!profile || !effectiveUserId) return;
-
-    try {
-      const { data, error } = await supabase.rpc('get_user_activity_summary', {
-        p_user_id: effectiveUserId
+  useEffect(() => {
+    if (activities.length > 0) {
+      const now = new Date();
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      setSummary({
+        total_activities: activities.length,
+        total_points_earned: activities.reduce((sum, a) => sum + (a.points_earned || 0), 0),
+        activities_this_week: activities.filter(a => new Date(a.created_at) >= weekAgo).length,
+        activities_this_month: activities.filter(a => new Date(a.created_at) >= monthAgo).length,
       });
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        setSummary(data[0]);
-      }
-    } catch (error) {
-      console.error('Error loading summary:', error);
+    } else {
+      setSummary(null);
     }
-  };
+  }, [activities]);
 
   const loadUserStats = async () => {
     if (!profile || !effectiveUserId) return;
