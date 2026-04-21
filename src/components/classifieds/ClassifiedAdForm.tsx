@@ -509,9 +509,14 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
             disabled={loading}
             className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
-            {loading ? 'Salvataggio...' : adId ? 'Salva Modifiche' : 'Pubblica Annuncio'}
+            {loading ? 'Salvataggio...' : adId ? 'Salva Modifiche' : 'Invia Annuncio'}
           </button>
         </div>
+        {!adId && (
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4 text-center">
+            Il tuo annuncio sara' verificato e approvato da un amministratore prima di essere pubblicato. Riceverai 5 punti in classifica dopo l'approvazione.
+          </p>
+        )}
       </form>
     </div>
   );

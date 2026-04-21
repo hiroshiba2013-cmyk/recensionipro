@@ -477,6 +477,7 @@ export function AdminDashboardPage() {
         description,
         price,
         status,
+        approval_status,
         ad_type,
         city,
         province,

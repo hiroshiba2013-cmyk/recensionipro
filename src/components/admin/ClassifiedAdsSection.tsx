@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Trash2, Eye, Filter, Tag, Calendar, User, MapPin, Euro, Search, FileEdit as Edit, Save, X as CloseIcon } from 'lucide-react';
+import { Trash2, Eye, Filter, Tag, Calendar, User, MapPin, Euro, Search, FileEdit as Edit, Save, X as CloseIcon, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ClassifiedAd {
   id: string;
@@ -8,6 +9,7 @@ interface ClassifiedAd {
   description: string;
   price: number | null;
   status: string;
+  approval_status: string;
   ad_type: string;
   category: string;
   city: string;
@@ -31,24 +33,71 @@ interface ClassifiedAdsSectionProps {
 }
 
 export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProps) {
+  const { user } = useAuth();
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterApproval, setFilterApproval] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterNickname, setFilterNickname] = useState<string>('');
   const [selectedAd, setSelectedAd] = useState<ClassifiedAd | null>(null);
   const [editingAd, setEditingAd] = useState<ClassifiedAd | null>(null);
   const [editForm, setEditForm] = useState<Partial<ClassifiedAd> | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   const getUserNickname = (ad: ClassifiedAd) => {
     return ad.user.nickname || ad.user.full_name;
   };
 
+  const pendingCount = ads.filter(a => a.approval_status === 'pending').length;
+  const approvedCount = ads.filter(a => a.approval_status === 'approved').length;
+  const rejectedCount = ads.filter(a => a.approval_status === 'rejected').length;
+
   const filteredAds = ads.filter(ad => {
     const statusMatch = filterStatus === 'all' || ad.status === filterStatus;
+    const approvalMatch = filterApproval === 'all' || ad.approval_status === filterApproval;
     const typeMatch = filterType === 'all' || ad.ad_type === filterType;
     const nicknameMatch = !filterNickname.trim() ||
       getUserNickname(ad).toLowerCase().includes(filterNickname.toLowerCase());
-    return statusMatch && typeMatch && nicknameMatch;
+    return statusMatch && approvalMatch && typeMatch && nicknameMatch;
   });
+
+  const approveAd = async (adId: string) => {
+    if (!user) return;
+    setProcessingId(adId);
+    try {
+      const { error } = await supabase.rpc('approve_classified_ad', {
+        ad_id_param: adId,
+        staff_id_param: user.id,
+      });
+      if (error) throw error;
+      alert('Annuncio approvato e punti assegnati!');
+      onReload();
+    } catch (error: any) {
+      console.error('Error approving ad:', error);
+      alert(`Errore: ${error.message}`);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const rejectAd = async (adId: string) => {
+    if (!user) return;
+    if (!confirm('Sei sicuro di voler rifiutare questo annuncio?')) return;
+    setProcessingId(adId);
+    try {
+      const { error } = await supabase.rpc('reject_classified_ad', {
+        ad_id_param: adId,
+        staff_id_param: user.id,
+      });
+      if (error) throw error;
+      alert('Annuncio rifiutato.');
+      onReload();
+    } catch (error: any) {
+      console.error('Error rejecting ad:', error);
+      alert(`Errore: ${error.message}`);
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   const updateAdStatus = async (adId: string, newStatus: string) => {
     try {
@@ -56,9 +105,7 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
         .from('classified_ads')
         .update({ status: newStatus })
         .eq('id', adId);
-
       if (error) throw error;
-
       alert('Stato annuncio aggiornato con successo');
       onReload();
     } catch (error: any) {
@@ -68,18 +115,15 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
   };
 
   const deleteAd = async (adId: string) => {
-    if (!confirm('Sei sicuro di voler eliminare definitivamente questo annuncio? Questa azione è irreversibile.')) {
+    if (!confirm('Sei sicuro di voler eliminare definitivamente questo annuncio? Questa azione e\' irreversibile.')) {
       return;
     }
-
     try {
       const { error } = await supabase
         .from('classified_ads')
         .delete()
         .eq('id', adId);
-
       if (error) throw error;
-
       alert('Annuncio eliminato con successo');
       onReload();
     } catch (error: any) {
@@ -110,12 +154,10 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
 
   const saveAdEdit = async () => {
     if (!editingAd || !editForm) return;
-
     if (!editForm.title || !editForm.description || !editForm.category || !editForm.city) {
       alert('Compila tutti i campi obbligatori');
       return;
     }
-
     try {
       const { error } = await supabase
         .from('classified_ads')
@@ -131,9 +173,7 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
           status: editForm.status,
         })
         .eq('id', editingAd.id);
-
       if (error) throw error;
-
       alert('Annuncio aggiornato con successo');
       setEditingAd(null);
       setEditForm(null);
@@ -159,6 +199,7 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
 
   const getStatusColor = (status: string) => {
     switch(status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'active': return 'bg-green-100 text-green-800';
       case 'sold': return 'bg-blue-100 text-blue-800';
       case 'expired': return 'bg-gray-100 text-gray-800';
@@ -167,12 +208,30 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
     }
   };
 
+  const getApprovalColor = (status: string) => {
+    switch(status) {
+      case 'pending': return 'bg-amber-100 text-amber-800 border border-amber-300';
+      case 'approved': return 'bg-green-100 text-green-800 border border-green-300';
+      case 'rejected': return 'bg-red-100 text-red-800 border border-red-300';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getApprovalLabel = (status: string) => {
+    switch(status) {
+      case 'pending': return 'In attesa';
+      case 'approved': return 'Approvato';
+      case 'rejected': return 'Rifiutato';
+      default: return status;
+    }
+  };
+
   const getTypeColor = (type: string) => {
     switch(type) {
       case 'sell': return 'bg-blue-100 text-blue-800';
       case 'buy': return 'bg-orange-100 text-orange-800';
       case 'gift': return 'bg-pink-100 text-pink-800';
-      case 'exchange': return 'bg-purple-100 text-purple-800';
+      case 'exchange': return 'bg-teal-100 text-teal-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -182,9 +241,29 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
       <div className="space-y-4 mb-4">
         <div className="flex justify-between items-center flex-wrap gap-4">
           <h2 className="text-2xl font-bold text-gray-900">Gestione Annunci Classificati</h2>
+          {pendingCount > 0 && (
+            <div className="flex items-center gap-2 bg-amber-100 border-2 border-amber-400 text-amber-800 px-4 py-2 rounded-xl font-bold animate-pulse">
+              <Clock className="w-5 h-5" />
+              {pendingCount} annunci da approvare
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-5 h-5 text-gray-500" />
+            <select
+              value={filterApproval}
+              onChange={(e) => setFilterApproval(e.target.value)}
+              className="border border-gray-300 rounded-lg px-4 py-2"
+            >
+              <option value="all">Tutte le approvazioni</option>
+              <option value="pending">In attesa ({pendingCount})</option>
+              <option value="approved">Approvati ({approvedCount})</option>
+              <option value="rejected">Rifiutati ({rejectedCount})</option>
+            </select>
+          </div>
+
           <div className="flex items-center gap-2">
             <Filter className="w-5 h-5 text-gray-500" />
             <select
@@ -193,6 +272,7 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
               className="border border-gray-300 rounded-lg px-4 py-2"
             >
               <option value="all">Tutti gli stati</option>
+              <option value="pending">In attesa</option>
               <option value="active">Attivi</option>
               <option value="sold">Venduti</option>
               <option value="expired">Scaduti</option>
@@ -229,22 +309,26 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
       </div>
 
       <div className="bg-white rounded-lg shadow p-4 mb-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+          <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+            <p className="text-2xl font-bold text-amber-700">{pendingCount}</p>
+            <p className="text-sm text-amber-600 font-medium">Da Approvare</p>
+          </div>
+          <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+            <p className="text-2xl font-bold text-green-700">{approvedCount}</p>
+            <p className="text-sm text-green-600 font-medium">Approvati</p>
+          </div>
+          <div className="bg-red-50 rounded-lg p-3 border border-red-200">
+            <p className="text-2xl font-bold text-red-700">{rejectedCount}</p>
+            <p className="text-sm text-red-600 font-medium">Rifiutati</p>
+          </div>
           <div>
             <p className="text-2xl font-bold text-gray-900">{ads.filter(a => a.status === 'active').length}</p>
             <p className="text-sm text-gray-600">Attivi</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-900">{ads.filter(a => a.status === 'sold').length}</p>
-            <p className="text-sm text-gray-600">Venduti</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-gray-900">{ads.filter(a => a.status === 'expired').length}</p>
-            <p className="text-sm text-gray-600">Scaduti</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-gray-900">{ads.filter(a => a.status === 'deleted').length}</p>
-            <p className="text-sm text-gray-600">Eliminati</p>
+            <p className="text-2xl font-bold text-gray-900">{ads.length}</p>
+            <p className="text-sm text-gray-600">Totali</p>
           </div>
         </div>
       </div>
@@ -257,12 +341,17 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
       ) : (
         <div className="grid md:grid-cols-2 gap-4">
           {filteredAds.map((ad) => (
-            <div key={ad.id} className="bg-white rounded-lg shadow p-6">
+            <div key={ad.id} className={`bg-white rounded-lg shadow p-6 ${
+              ad.approval_status === 'pending' ? 'ring-2 ring-amber-400' : ''
+            }`}>
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <span className={`px-2 py-1 text-xs rounded-full font-medium ${getTypeColor(ad.ad_type)}`}>
                       {getAdTypeLabel(ad.ad_type)}
+                    </span>
+                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${getApprovalColor(ad.approval_status)}`}>
+                      {getApprovalLabel(ad.approval_status)}
                     </span>
                     <span className={`px-2 py-1 text-xs rounded-full font-medium ${getStatusColor(ad.status)}`}>
                       {ad.status}
@@ -270,7 +359,7 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                   </div>
                   <h3 className="font-bold text-lg text-gray-900 mb-1">{ad.title}</h3>
                   {ad.price !== null && ad.price > 0 && (
-                    <p className="text-xl font-bold text-green-600 mb-2">€{ad.price.toFixed(2)}</p>
+                    <p className="text-xl font-bold text-green-600 mb-2">{'\u20AC'}{ad.price.toFixed(2)}</p>
                   )}
                 </div>
                 {ad.images && ad.images.length > 0 && (
@@ -288,7 +377,7 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <User className="w-4 h-4" />
                   <span className="font-bold text-gray-900">{ad.user.nickname || ad.user.full_name}</span>
-                  <span className="text-gray-400">•</span>
+                  <span className="text-gray-400">-</span>
                   <span>{ad.user.email}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -303,17 +392,33 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                   <Calendar className="w-4 h-4" />
                   <span>Creato: {new Date(ad.created_at).toLocaleDateString('it-IT')}</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Calendar className="w-4 h-4" />
-                  <span>Scade: {new Date(ad.expires_at).toLocaleDateString('it-IT')}</span>
-                </div>
               </div>
+
+              {ad.approval_status === 'pending' && (
+                <div className="flex gap-2 mb-3">
+                  <button
+                    onClick={() => approveAd(ad.id)}
+                    disabled={processingId === ad.id}
+                    className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-bold disabled:opacity-50"
+                  >
+                    <CheckCircle className="w-5 h-5" />
+                    Approva (+5 punti)
+                  </button>
+                  <button
+                    onClick={() => rejectAd(ad.id)}
+                    disabled={processingId === ad.id}
+                    className="flex-1 bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 font-bold disabled:opacity-50"
+                  >
+                    <XCircle className="w-5 h-5" />
+                    Rifiuta
+                  </button>
+                </div>
+              )}
 
               <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={() => startEditAd(ad)}
                   className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-2"
-                  title="Modifica annuncio"
                 >
                   <Edit className="w-4 h-4" />
                   Modifica
@@ -327,16 +432,19 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                     Vedi
                   </button>
                 )}
-                <select
-                  value={ad.status}
-                  onChange={(e) => updateAdStatus(ad.id, e.target.value)}
-                  className="flex-1 min-w-[120px] border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                >
-                  <option value="active">Attivo</option>
-                  <option value="sold">Venduto</option>
-                  <option value="expired">Scaduto</option>
-                  <option value="deleted">Eliminato</option>
-                </select>
+                {ad.approval_status === 'approved' && (
+                  <select
+                    value={ad.status}
+                    onChange={(e) => updateAdStatus(ad.id, e.target.value)}
+                    className="flex-1 min-w-[120px] border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  >
+                    <option value="pending">In attesa</option>
+                    <option value="active">Attivo</option>
+                    <option value="sold">Venduto</option>
+                    <option value="expired">Scaduto</option>
+                    <option value="deleted">Eliminato</option>
+                  </select>
+                )}
                 <button
                   onClick={() => deleteAd(ad.id)}
                   className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
@@ -360,19 +468,22 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                     <span className={`px-2 py-1 text-xs rounded-full font-medium ${getTypeColor(selectedAd.ad_type)}`}>
                       {getAdTypeLabel(selectedAd.ad_type)}
                     </span>
+                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${getApprovalColor(selectedAd.approval_status)}`}>
+                      {getApprovalLabel(selectedAd.approval_status)}
+                    </span>
                     <span className={`px-2 py-1 text-xs rounded-full font-medium ${getStatusColor(selectedAd.status)}`}>
                       {selectedAd.status}
                     </span>
                   </div>
                   {selectedAd.price !== null && selectedAd.price > 0 && (
-                    <p className="text-2xl font-bold text-green-600">€{selectedAd.price.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-green-600">{'\u20AC'}{selectedAd.price.toFixed(2)}</p>
                   )}
                 </div>
                 <button
                   onClick={() => setSelectedAd(null)}
                   className="text-gray-500 hover:text-gray-700 text-3xl"
                 >
-                  ×
+                  {'\u00D7'}
                 </button>
               </div>
 
@@ -394,7 +505,7 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                       <p className="font-medium">{selectedAd.user.email}</p>
                     </div>
                     <div>
-                      <span className="text-gray-600">Località:</span>
+                      <span className="text-gray-600">Localita:</span>
                       <p className="font-medium">{selectedAd.city}, {selectedAd.province}</p>
                     </div>
                     <div>
@@ -407,10 +518,29 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                     </div>
                     <div>
                       <span className="text-gray-600">Scade il:</span>
-                      <p className="font-medium">{new Date(selectedAd.expires_at).toLocaleDateString('it-IT')}</p>
+                      <p className="font-medium">{selectedAd.expires_at ? new Date(selectedAd.expires_at).toLocaleDateString('it-IT') : 'N/A'}</p>
                     </div>
                   </div>
                 </div>
+
+                {selectedAd.approval_status === 'pending' && (
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={() => { approveAd(selectedAd.id); setSelectedAd(null); }}
+                      className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-bold"
+                    >
+                      <CheckCircle className="w-5 h-5" />
+                      Approva (+5 punti)
+                    </button>
+                    <button
+                      onClick={() => { rejectAd(selectedAd.id); setSelectedAd(null); }}
+                      className="flex-1 bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 font-bold"
+                    >
+                      <XCircle className="w-5 h-5" />
+                      Rifiuta
+                    </button>
+                  </div>
+                )}
 
                 {selectedAd.images && selectedAd.images.length > 0 && (
                   <div>
@@ -433,7 +563,6 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
         </div>
       )}
 
-      {/* Modal Modifica Annuncio */}
       {editingAd && editForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[70]">
           <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
@@ -448,7 +577,6 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
             </div>
 
             <div className="p-6 space-y-4">
-              {/* Info Utente (sola lettura) */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="font-semibold text-gray-900 mb-2">Informazioni Inserzionista</h4>
                 <div className="text-sm space-y-1">
@@ -464,18 +592,11 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                     <span className="text-gray-600">Data creazione:</span>
                     <span className="ml-2 font-medium">{new Date(editingAd.created_at).toLocaleDateString('it-IT')}</span>
                   </p>
-                  <p>
-                    <span className="text-gray-600">Scadenza:</span>
-                    <span className="ml-2 font-medium">{new Date(editingAd.expires_at).toLocaleDateString('it-IT')}</span>
-                  </p>
                 </div>
               </div>
 
-              {/* Tipo Annuncio */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Tipo Annuncio *
-                </label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Tipo Annuncio *</label>
                 <select
                   value={editForm.ad_type || ''}
                   onChange={(e) => setEditForm({ ...editForm, ad_type: e.target.value })}
@@ -488,11 +609,8 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                 </select>
               </div>
 
-              {/* Titolo */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Titolo *
-                </label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Titolo *</label>
                 <input
                   type="text"
                   value={editForm.title || ''}
@@ -502,11 +620,8 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                 />
               </div>
 
-              {/* Descrizione */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Descrizione *
-                </label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Descrizione *</label>
                 <textarea
                   value={editForm.description || ''}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
@@ -515,12 +630,9 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                 />
               </div>
 
-              {/* Categoria e Prezzo */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Categoria *
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Categoria *</label>
                   <input
                     type="text"
                     value={editForm.category || ''}
@@ -528,11 +640,8 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                     className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Prezzo (€)
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Prezzo</label>
                   <input
                     type="number"
                     value={editForm.price || ''}
@@ -544,12 +653,9 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                 </div>
               </div>
 
-              {/* Località */}
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Città *
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Citta *</label>
                   <input
                     type="text"
                     value={editForm.city || ''}
@@ -557,11 +663,8 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                     className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Provincia *
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Provincia *</label>
                   <input
                     type="text"
                     value={editForm.province || ''}
@@ -570,11 +673,8 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                     className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent uppercase"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Regione
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Regione</label>
                   <input
                     type="text"
                     value={editForm.region || ''}
@@ -584,16 +684,14 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                 </div>
               </div>
 
-              {/* Stato */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Stato Annuncio *
-                </label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Stato Annuncio *</label>
                 <select
                   value={editForm.status || ''}
                   onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                 >
+                  <option value="pending">In attesa</option>
                   <option value="active">Attivo</option>
                   <option value="sold">Venduto</option>
                   <option value="expired">Scaduto</option>
@@ -601,20 +699,12 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                 </select>
               </div>
 
-              {/* Immagini (sola lettura) */}
               {editingAd.images && editingAd.images.length > 0 && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Immagini (sola lettura)
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Immagini (sola lettura)</label>
                   <div className="grid grid-cols-3 gap-2">
                     {editingAd.images.map((image, index) => (
-                      <img
-                        key={index}
-                        src={image}
-                        alt={`Immagine ${index + 1}`}
-                        className="w-full h-24 object-cover rounded-lg"
-                      />
+                      <img key={index} src={image} alt={`Immagine ${index + 1}`} className="w-full h-24 object-cover rounded-lg" />
                     ))}
                   </div>
                 </div>

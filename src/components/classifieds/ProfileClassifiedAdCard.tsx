@@ -1,4 +1,4 @@
-import { MapPin, Eye, Calendar, Edit2, Trash2, Clock } from 'lucide-react';
+import { MapPin, Eye, Calendar, FileEdit as Edit2, Trash2, Clock } from 'lucide-react';
 import { useState } from 'react';
 
 interface ClassifiedAd {
@@ -15,6 +15,7 @@ interface ClassifiedAd {
   created_at: string;
   expires_at: string | null;
   status: string;
+  approval_status?: string;
   profiles: {
     full_name: string;
     avatar_url: string | null;
@@ -83,7 +84,22 @@ export function ProfileClassifiedAdCard({ ad, onEdit, onDelete }: ProfileClassif
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
+    <div className={`bg-white rounded-lg shadow-sm overflow-hidden border ${
+      ad.approval_status === 'pending' ? 'border-amber-400 ring-2 ring-amber-200' :
+      ad.approval_status === 'rejected' ? 'border-red-400 ring-2 ring-red-200' :
+      'border-gray-200'
+    }`}>
+      {ad.approval_status === 'pending' && (
+        <div className="bg-amber-50 border-b border-amber-200 px-3 py-2 flex items-center gap-2">
+          <Clock className="w-4 h-4 text-amber-600" />
+          <span className="text-xs font-semibold text-amber-700">In attesa di approvazione</span>
+        </div>
+      )}
+      {ad.approval_status === 'rejected' && (
+        <div className="bg-red-50 border-b border-red-200 px-3 py-2 flex items-center gap-2">
+          <span className="text-xs font-semibold text-red-700">Annuncio rifiutato</span>
+        </div>
+      )}
       {/* Image */}
       <div className="relative h-40 bg-gray-200">
         {firstImage ? (

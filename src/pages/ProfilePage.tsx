@@ -1627,7 +1627,7 @@ export function ProfilePage() {
                   <div className="flex items-center gap-3">
                     <TrendingUp className="w-6 h-6 text-green-600" />
                     <p className="text-gray-800 font-semibold">
-                      Guadagna <span className="text-green-600 font-bold">5 punti</span> in classifica per ogni annuncio pubblicato!
+                      Guadagna <span className="text-green-600 font-bold">5 punti</span> in classifica per ogni annuncio approvato!
                     </p>
                   </div>
                 </div>
