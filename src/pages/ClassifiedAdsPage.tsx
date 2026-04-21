@@ -49,10 +49,11 @@ export function ClassifiedAdsPage() {
   const [ads, setAds] = useState<ClassifiedAd[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-
   // Filters
   const urlParams = new URLSearchParams(window.location.search);
+  const actionParam = urlParams.get('action');
+  const [showCreateForm, setShowCreateForm] = useState(actionParam === 'create');
+
   const typeParam = urlParams.get('type') as 'sell' | 'buy' | 'gift' | null;
   const [adType, setAdType] = useState<'all' | 'sell' | 'buy' | 'gift'>(typeParam || 'all');
   const [selectedCategory, setSelectedCategory] = useState<string>('');

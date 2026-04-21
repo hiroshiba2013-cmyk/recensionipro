@@ -1612,7 +1612,7 @@ export function ProfilePage() {
                   </div>
                 </div>
                 <a
-                  href="/classified"
+                  href="/classified?action=create"
                   className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-8 py-4 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all font-bold shadow-lg transform hover:scale-105"
                 >
                   <Plus className="w-5 h-5" />
@@ -1638,7 +1638,7 @@ export function ProfilePage() {
                     {isFamilyMember ? 'Nessun annuncio pubblicato da questo membro' : 'Non hai ancora pubblicato annunci'}
                   </p>
                   <a
-                    href="/classified"
+                    href="/classified?action=create"
                     className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Pubblica il tuo primo annuncio
