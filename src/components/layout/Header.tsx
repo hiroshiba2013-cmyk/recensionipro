@@ -17,6 +17,7 @@ export function Header() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [adminData, setAdminData] = useState<{ avatar_url: string | null; nickname: string | null } | null>(null);
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   const selectedLocation = selectedBusinessLocationId
     ? businessLocations.find(loc => loc.id === selectedBusinessLocationId)
@@ -49,6 +50,23 @@ export function Header() {
     }
   }, [user, profile]);
 
+  useEffect(() => {
+    if (!user || !profile || profile.user_type === 'admin') return;
+
+    loadUnreadMessages();
+
+    const channel = supabase
+      .channel('header_messages_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages' },
+        () => { loadUnreadMessages(); }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user, profile]);
+
   const loadAdminData = async () => {
     if (!user?.id) return;
 
@@ -60,6 +78,33 @@ export function Header() {
 
     if (data) {
       setAdminData(data);
+    }
+  };
+
+  const loadUnreadMessages = async () => {
+    if (!user?.id) return;
+    try {
+      const { data: convIds } = await supabase
+        .from('conversations')
+        .select('id')
+        .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`);
+
+      if (!convIds || convIds.length === 0) {
+        setUnreadMessages(0);
+        return;
+      }
+
+      const ids = convIds.map(c => c.id);
+      const { count } = await supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .in('conversation_id', ids)
+        .neq('sender_id', user.id)
+        .eq('is_read', false);
+
+      setUnreadMessages(count || 0);
+    } catch (error) {
+      console.error('Error loading unread messages:', error);
     }
   };
 
@@ -89,11 +134,16 @@ export function Header() {
                   </a>
                   <a
                     href="/messages"
-                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
+                    className="relative flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
                     title={t('header.messages')}
                   >
                     <MessageCircle className="w-4 h-4" />
                     <span className="text-sm">{t('header.messages')}</span>
+                    {unreadMessages > 0 && (
+                      <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] flex items-center justify-center px-1 bg-red-600 text-white text-[10px] font-bold rounded-full shadow-lg ring-2 ring-white">
+                        {unreadMessages > 99 ? '99+' : unreadMessages}
+                      </span>
+                    )}
                   </a>
                   <NotificationBell />
                   <a
@@ -302,11 +352,16 @@ export function Header() {
                     </a>
                     <a
                       href="/messages"
-                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                      className="relative flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
                       onClick={() => setShowMobileMenu(false)}
                     >
                       <MessageCircle className="w-5 h-5" />
                       <span>{t('header.messages')}</span>
+                      {unreadMessages > 0 && (
+                        <span className="min-w-[20px] h-[20px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full">
+                          {unreadMessages > 99 ? '99+' : unreadMessages}
+                        </span>
+                      )}
                     </a>
                     <a
                       href="/contact"
