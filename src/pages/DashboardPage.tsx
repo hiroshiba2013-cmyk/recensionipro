@@ -106,6 +106,7 @@ export function DashboardPage() {
   const [availablePlans, setAvailablePlans] = useState<SubscriptionPlan[]>([]);
   const [upgradeMessage, setUpgradeMessage] = useState('');
   const [leaderboardTab, setLeaderboardTab] = useState<'leaderboard' | 'my_activities'>('leaderboard');
+  const [userRank, setUserRank] = useState<{ points: number; rank: number; reviews_count: number } | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -292,6 +293,33 @@ export function DashboardPage() {
         if (reviewsData) {
           setReviews(reviewsData);
         }
+
+        // Load user ranking
+        const familyMemberId = activeProfile?.isOwner === false ? activeProfile.id : null;
+        const activityQuery = supabase
+          .from('user_activity')
+          .select('total_points, reviews_count')
+          .eq('user_id', profile.id);
+
+        if (familyMemberId) {
+          activityQuery.eq('family_member_id', familyMemberId);
+        } else {
+          activityQuery.is('family_member_id', null);
+        }
+
+        const { data: activityData } = await activityQuery.maybeSingle();
+        const totalPoints = activityData?.total_points || 0;
+
+        const { count: higherCount } = await supabase
+          .from('user_activity')
+          .select('*', { count: 'exact', head: true })
+          .gt('total_points', totalPoints);
+
+        setUserRank({
+          points: totalPoints,
+          rank: (higherCount || 0) + 1,
+          reviews_count: activityData?.reviews_count || 0,
+        });
       }
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -1069,15 +1097,45 @@ export function DashboardPage() {
                   <div className="p-6">
                     {leaderboardTab === 'leaderboard' ? (
                       <div>
-                        <p className="text-gray-600 text-center mb-4">
-                          Scopri la classifica completa degli utenti piu' attivi sulla piattaforma.
-                        </p>
+                        {userRank && (
+                          <div className="bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-6 mb-6">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className={`w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl shadow-lg ${
+                                  userRank.rank === 1 ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-white' :
+                                  userRank.rank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-white' :
+                                  userRank.rank === 3 ? 'bg-gradient-to-br from-orange-400 to-amber-600 text-white' :
+                                  'bg-gradient-to-br from-blue-400 to-blue-500 text-white'
+                                }`}>
+                                  #{userRank.rank}
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-500 font-medium">La tua posizione</p>
+                                  <p className="text-2xl font-bold text-gray-900">
+                                    {activeProfile?.isOwner === false
+                                      ? activeProfile.name
+                                      : profile?.nickname || profile?.full_name}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="flex items-center gap-2 justify-end">
+                                  <Trophy className="w-6 h-6 text-yellow-500" />
+                                  <span className="text-3xl font-bold text-gray-900">{userRank.points}</span>
+                                </div>
+                                <p className="text-sm text-gray-500">punti totali</p>
+                                <p className="text-xs text-gray-400 mt-1">{userRank.reviews_count} recensioni</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         <div className="text-center">
                           <button
                             onClick={() => navigate('/leaderboard')}
                             className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-3 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all font-bold shadow-lg"
                           >
-                            Vai alla Classifica Completa
+                            Vedi Classifica Completa
                           </button>
                         </div>
                       </div>
