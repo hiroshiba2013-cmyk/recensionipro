@@ -654,9 +654,9 @@ export function DashboardPage() {
                   <ImportBusinessesForm onImportComplete={loadDashboardData} />
                 )}
 
-                <FavoritesSection />
-
                 <UserAuctionsSection />
+
+                <FavoritesSection />
 
                 {/* Sezione Cerco Lavoro */}
                 <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-lg p-8 border-4 border-blue-200">
@@ -1068,9 +1068,9 @@ export function DashboardPage() {
               </>
             ) : (
               <div className="space-y-6">
-                <FavoritesSection />
-
                 <UserAuctionsSection />
+
+                <FavoritesSection />
 
                 {/* Sezione Classifica */}
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-gray-100">

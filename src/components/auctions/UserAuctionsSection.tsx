@@ -35,6 +35,8 @@ export function UserAuctionsSection() {
   useEffect(() => {
     if (user) {
       loadAuctions();
+    } else {
+      setLoading(false);
     }
   }, [user, activeProfile]);
 
