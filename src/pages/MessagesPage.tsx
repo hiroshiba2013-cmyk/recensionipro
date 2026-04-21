@@ -418,60 +418,78 @@ export function MessagesPage() {
               </p>
             </div>
           ) : (
-            conversations.map((conv) => (
-              <button
-                key={conv.id}
-                onClick={() => setSelectedConversation(conv.id)}
-                className={`w-full p-4 flex items-start gap-3 hover:bg-gray-50 transition-colors border-b border-gray-100 ${
-                  selectedConversation === conv.id ? 'bg-blue-50' : ''
-                }`}
-              >
-                {conv.profiles?.avatar_url ? (
-                  <img
-                    src={conv.profiles.avatar_url}
-                    alt={conv.profiles.full_name}
-                    className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-                  />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-                    <span className="text-lg font-medium text-gray-600">
-                      {conv.profiles?.full_name.charAt(0) || '?'}
-                    </span>
-                  </div>
-                )}
+            conversations.map((conv) => {
+              const hasUnread = (conv.unread_count || 0) > 0;
+              const isSelected = selectedConversation === conv.id;
 
-                <div className="flex-1 min-w-0 text-left">
-                  <div className="flex items-start justify-between mb-1">
-                    <span className="font-semibold text-gray-900 truncate">
-                      {conv.profiles?.full_name || 'Utente'}
-                    </span>
-                    {conv.unread_count! > 0 && (
-                      <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">
-                        {conv.unread_count}
-                      </span>
+              return (
+                <button
+                  key={conv.id}
+                  onClick={() => setSelectedConversation(conv.id)}
+                  className={`w-full p-4 flex items-start gap-3 transition-colors border-b border-gray-100 relative ${
+                    isSelected
+                      ? 'bg-blue-50'
+                      : hasUnread
+                      ? 'bg-blue-50/60 hover:bg-blue-100/60'
+                      : 'hover:bg-gray-50'
+                  }`}
+                >
+                  {hasUnread && !isSelected && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-r" />
+                  )}
+
+                  <div className="relative flex-shrink-0">
+                    {conv.profiles?.avatar_url ? (
+                      <img
+                        src={conv.profiles.avatar_url}
+                        alt={conv.profiles.full_name}
+                        className={`w-12 h-12 rounded-full object-cover ${hasUnread ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
+                      />
+                    ) : (
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${hasUnread ? 'bg-blue-100 ring-2 ring-blue-500 ring-offset-1' : 'bg-gray-200'}`}>
+                        <span className={`text-lg font-medium ${hasUnread ? 'text-blue-700' : 'text-gray-600'}`}>
+                          {conv.profiles?.full_name.charAt(0) || '?'}
+                        </span>
+                      </div>
+                    )}
+                    {hasUnread && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-600 rounded-full ring-2 ring-white" />
                     )}
                   </div>
-                  {conv.classified_ads && (
-                    <div className="text-sm text-gray-600 truncate">
-                      📦 {conv.classified_ads.title}
+
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={`truncate ${hasUnread ? 'font-bold text-gray-900' : 'font-semibold text-gray-700'}`}>
+                        {conv.profiles?.full_name || 'Utente'}
+                      </span>
+                      {hasUnread && (
+                        <span className="ml-2 flex-shrink-0 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-sm">
+                          {conv.unread_count}
+                        </span>
+                      )}
                     </div>
-                  )}
-                  {conv.job_seekers && (
-                    <div className="text-sm text-gray-600 truncate">
-                      💼 {conv.job_seekers.title}
+                    {conv.classified_ads && (
+                      <div className={`text-sm truncate ${hasUnread ? 'text-gray-800 font-medium' : 'text-gray-600'}`}>
+                        {conv.classified_ads.title}
+                      </div>
+                    )}
+                    {conv.job_seekers && (
+                      <div className={`text-sm truncate ${hasUnread ? 'text-gray-800 font-medium' : 'text-gray-600'}`}>
+                        {conv.job_seekers.title}
+                      </div>
+                    )}
+                    {conv.job_postings && (
+                      <div className={`text-sm truncate ${hasUnread ? 'text-gray-800 font-medium' : 'text-gray-600'}`}>
+                        {conv.job_postings.title}
+                      </div>
+                    )}
+                    <div className={`text-xs mt-1 ${hasUnread ? 'text-blue-600 font-semibold' : 'text-gray-500'}`}>
+                      {formatMessageTime(conv.last_message_at)}
                     </div>
-                  )}
-                  {conv.job_postings && (
-                    <div className="text-sm text-gray-600 truncate">
-                      🏢 {conv.job_postings.title}
-                    </div>
-                  )}
-                  <div className="text-xs text-gray-500 mt-1">
-                    {formatMessageTime(conv.last_message_at)}
                   </div>
-                </div>
-              </button>
-            ))
+                </button>
+              );
+            })
           )}
         </div>
       </div>
