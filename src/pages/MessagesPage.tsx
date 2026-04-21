@@ -57,13 +57,14 @@ export function MessagesPage() {
       return;
     }
 
-    loadConversations();
-
     const urlParams = new URLSearchParams(window.location.search);
     const conversationId = urlParams.get('conversation');
-    if (conversationId) {
-      setSelectedConversation(conversationId);
-    }
+
+    loadConversations().then(() => {
+      if (conversationId) {
+        setSelectedConversation(conversationId);
+      }
+    });
 
     const channel = supabase
       .channel('messages-changes')
@@ -75,9 +76,6 @@ export function MessagesPage() {
           table: 'messages',
         },
         () => {
-          if (selectedConversation) {
-            loadMessages(selectedConversation);
-          }
           loadConversations();
         }
       )
@@ -89,10 +87,31 @@ export function MessagesPage() {
   }, [user, authLoading, activeProfile, selectedBusinessLocationId]);
 
   useEffect(() => {
-    if (selectedConversation) {
-      loadMessages(selectedConversation);
-      markMessagesAsRead(selectedConversation);
-    }
+    if (!selectedConversation) return;
+
+    loadMessages(selectedConversation);
+    markMessagesAsRead(selectedConversation);
+
+    const channel = supabase
+      .channel(`conv-messages-${selectedConversation}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${selectedConversation}`,
+        },
+        () => {
+          loadMessages(selectedConversation);
+          markMessagesAsRead(selectedConversation);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [selectedConversation]);
 
   useEffect(() => {
@@ -292,7 +311,80 @@ export function MessagesPage() {
     }
   };
 
-  const selectedConv = conversations.find((c) => c.id === selectedConversation);
+  const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
+
+  useEffect(() => {
+    if (!selectedConversation) {
+      setSelectedConv(null);
+      return;
+    }
+
+    const found = conversations.find((c) => c.id === selectedConversation);
+    if (found) {
+      setSelectedConv(found);
+      return;
+    }
+
+    if (!user || loading) return;
+
+    (async () => {
+      try {
+        const { data: conv, error } = await supabase
+          .from('conversations')
+          .select('*')
+          .eq('id', selectedConversation)
+          .maybeSingle();
+
+        if (error || !conv) return;
+
+        const otherUserId = conv.participant1_id === user.id ? conv.participant2_id : conv.participant1_id;
+
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('full_name, nickname, avatar_url')
+          .eq('id', otherUserId)
+          .single();
+
+        let referenceData: any = null;
+        if (conv.conversation_type === 'classified_ad') {
+          const { data: adData } = await supabase
+            .from('classified_ads')
+            .select('title, images')
+            .eq('id', conv.reference_id)
+            .maybeSingle();
+          referenceData = { classified_ads: adData };
+        } else if (conv.conversation_type === 'job_seeker') {
+          const { data: jsData } = await supabase
+            .from('job_seekers')
+            .select('title')
+            .eq('id', conv.reference_id)
+            .maybeSingle();
+          referenceData = { job_seekers: jsData };
+        } else if (conv.conversation_type === 'job_posting') {
+          const { data: jpData } = await supabase
+            .from('job_postings')
+            .select('title, company_name')
+            .eq('id', conv.reference_id)
+            .maybeSingle();
+          referenceData = { job_postings: jpData };
+        }
+
+        const displayName = profileData?.nickname || profileData?.full_name || 'Utente';
+
+        const enriched: Conversation = {
+          ...conv,
+          ...referenceData,
+          profiles: profileData ? { ...profileData, full_name: displayName } : undefined,
+          unread_count: 0,
+        };
+
+        setSelectedConv(enriched);
+        setConversations(prev => [enriched, ...prev]);
+      } catch (err) {
+        console.error('Error loading conversation details:', err);
+      }
+    })();
+  }, [selectedConversation, conversations, user, loading]);
 
   if (authLoading || loading) {
     return (
