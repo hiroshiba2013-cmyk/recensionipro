@@ -572,20 +572,22 @@ export function ProfilePage() {
       .from('user_activity')
       .select('total_points, reviews_count')
       .eq('user_id', user.id)
+      .is('family_member_id', null)
       .maybeSingle();
 
-    if (userActivity) {
-      const { count } = await supabase
-        .from('user_activity')
-        .select('user_id', { count: 'exact', head: true })
-        .gt('total_points', userActivity.total_points || 0);
+    const totalPoints = userActivity?.total_points || 0;
+    const reviewsCount = userActivity?.reviews_count || 0;
 
-      setUserRank({
-        rank: (count || 0) + 1,
-        total_points: userActivity.total_points || 0,
-        reviews_count: userActivity.reviews_count || 0,
-      });
-    }
+    const { count } = await supabase
+      .from('user_activity')
+      .select('*', { count: 'exact', head: true })
+      .gt('total_points', totalPoints);
+
+    setUserRank({
+      rank: (count || 0) + 1,
+      total_points: totalPoints,
+      reviews_count: reviewsCount,
+    });
   };
 
   const loadFamilyMembersData = async () => {
