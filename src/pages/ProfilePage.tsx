@@ -20,6 +20,7 @@ import TrialStatusBanner from '../components/subscription/TrialStatusBanner';
 import { DeleteAccountButton } from '../components/profile/DeleteAccountButton';
 import { PinSetup } from '../components/profile/PinSetup';
 import { ReviewForm } from '../components/reviews/ReviewForm';
+import { UserAuctionsSection } from '../components/auctions/UserAuctionsSection';
 
 interface Profile {
   id: string;
@@ -1676,6 +1677,8 @@ export function ProfilePage() {
                 </>
               )}
             </div>
+
+            <UserAuctionsSection />
 
             <div className="bg-white rounded-xl shadow-md p-8 mb-8">
               <div className="flex items-center justify-between mb-6">
