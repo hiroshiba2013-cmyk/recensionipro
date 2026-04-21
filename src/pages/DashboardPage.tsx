@@ -12,7 +12,6 @@ import { FavoritesSection } from '../components/favorites/FavoritesSection';
 import TrialStatusBanner from '../components/subscription/TrialStatusBanner';
 import TrialExpirationModal from '../components/subscription/TrialExpirationModal';
 import { ActivityFeed } from '../components/activity/ActivityFeed';
-import { UserAuctionsSection } from '../components/auctions/UserAuctionsSection';
 import { useNavigate } from '../components/Router';
 
 interface SubscriptionPlan {
@@ -654,8 +653,6 @@ export function DashboardPage() {
                   <ImportBusinessesForm onImportComplete={loadDashboardData} />
                 )}
 
-                <UserAuctionsSection />
-
                 <FavoritesSection />
 
                 {/* Sezione Cerco Lavoro */}
@@ -1068,8 +1065,6 @@ export function DashboardPage() {
               </>
             ) : (
               <div className="space-y-6">
-                <UserAuctionsSection />
-
                 <FavoritesSection />
 
                 {/* Sezione Classifica */}
