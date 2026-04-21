@@ -176,9 +176,14 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
         imageUrls = [...imageUrls, ...newUrls];
       }
 
-      const adData = {
+      if (!formData.category_id) {
+        alert('Seleziona una categoria');
+        setLoading(false);
+        return;
+      }
+
+      const adData: Record<string, any> = {
         user_id: user.id,
-        family_member_id: activeProfile?.isOwner === false ? activeProfile.id : null,
         ad_type: formData.ad_type,
         category_id: formData.category_id,
         title: formData.title,
@@ -193,6 +198,10 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
         images: imageUrls.length > 0 ? imageUrls : null,
         status: 'active',
       };
+
+      if (activeProfile && !activeProfile.isOwner) {
+        adData.family_member_id = activeProfile.id;
+      }
 
       if (adId) {
         const { error } = await supabase
