@@ -12,6 +12,7 @@ import { FavoritesSection } from '../components/favorites/FavoritesSection';
 import TrialStatusBanner from '../components/subscription/TrialStatusBanner';
 import TrialExpirationModal from '../components/subscription/TrialExpirationModal';
 import { ActivityFeed } from '../components/activity/ActivityFeed';
+import { UserAuctionsSection } from '../components/auctions/UserAuctionsSection';
 import { useNavigate } from '../components/Router';
 
 interface SubscriptionPlan {
@@ -655,6 +656,8 @@ export function DashboardPage() {
 
                 <FavoritesSection />
 
+                <UserAuctionsSection />
+
                 {/* Sezione Cerco Lavoro */}
                 <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-lg p-8 border-4 border-blue-200">
                   <div className="flex items-center gap-3 mb-6">
@@ -1066,6 +1069,8 @@ export function DashboardPage() {
             ) : (
               <div className="space-y-6">
                 <FavoritesSection />
+
+                <UserAuctionsSection />
 
                 {/* Sezione Classifica */}
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-gray-100">
