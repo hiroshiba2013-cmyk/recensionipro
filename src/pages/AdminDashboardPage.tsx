@@ -38,6 +38,13 @@ interface DashboardStats {
   totalFamilyMembers: number;
 }
 
+interface PendingCounts {
+  reviews: number;
+  ads: number;
+  businesses: number;
+  reports: number;
+}
+
 interface PendingReview {
   id: string;
   title: string;
@@ -225,6 +232,7 @@ export function AdminDashboardPage() {
   const [businesses, setBusinesses] = useState<RegisteredBusiness[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingCounts, setPendingCounts] = useState<PendingCounts>({ reviews: 0, ads: 0, businesses: 0, reports: 0 });
   const [selectedReview, setSelectedReview] = useState<PendingReview | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
@@ -279,10 +287,30 @@ export function AdminDashboardPage() {
 
   useEffect(() => {
     if (!checkingAdmin && isAdmin) {
+      loadPendingCounts();
       loadData();
       loadSubscriptionPlans();
     }
   }, [checkingAdmin, isAdmin, activeTab]);
+
+  const loadPendingCounts = async () => {
+    try {
+      const [reviewsRes, adsRes, businessesRes, reportsRes] = await Promise.all([
+        supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('review_status', 'pending'),
+        supabase.from('classified_ads').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
+        supabase.from('unclaimed_business_locations').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
+        supabase.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+      ]);
+      setPendingCounts({
+        reviews: reviewsRes.count || 0,
+        ads: adsRes.count || 0,
+        businesses: businessesRes.count || 0,
+        reports: reportsRes.count || 0,
+      });
+    } catch (error) {
+      console.error('Error loading pending counts:', error);
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -691,6 +719,7 @@ export function AdminDashboardPage() {
 
       alert('Recensione approvata con successo!');
       await loadPendingReviews();
+      await loadPendingCounts();
       setSelectedReview(null);
     } catch (error: any) {
       console.error('Error approving review:', error);
@@ -709,6 +738,7 @@ export function AdminDashboardPage() {
 
       alert('Recensione rifiutata');
       await loadPendingReviews();
+      await loadPendingCounts();
       setSelectedReview(null);
     } catch (error: any) {
       console.error('Error rejecting review:', error);
@@ -927,7 +957,7 @@ export function AdminDashboardPage() {
               </button>
               <button
                 onClick={() => setActiveTab('reviews')}
-                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'reviews'
                     ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md'
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
@@ -935,9 +965,9 @@ export function AdminDashboardPage() {
               >
                 <FileText className="w-4 h-4" />
                 Recensioni
-                {stats.pendingReviews > 0 && (
-                  <span className="ml-1 px-2 py-0.5 bg-white/20 rounded-full text-xs font-bold">
-                    {stats.pendingReviews}
+                {pendingCounts.reviews > 0 && (
+                  <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
+                    {pendingCounts.reviews}
                   </span>
                 )}
               </button>
@@ -965,7 +995,7 @@ export function AdminDashboardPage() {
               </button>
               <button
                 onClick={() => setActiveTab('ads')}
-                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'ads'
                     ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-md'
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
@@ -973,6 +1003,11 @@ export function AdminDashboardPage() {
               >
                 <ShoppingBag className="w-4 h-4" />
                 Annunci
+                {pendingCounts.ads > 0 && (
+                  <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
+                    {pendingCounts.ads}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setActiveTab('auctions')}
@@ -987,7 +1022,7 @@ export function AdminDashboardPage() {
               </button>
               <button
                 onClick={() => setActiveTab('reports')}
-                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'reports'
                     ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md'
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
@@ -995,15 +1030,15 @@ export function AdminDashboardPage() {
               >
                 <AlertTriangle className="w-4 h-4" />
                 Segnalazioni
-                {stats.pendingReports > 0 && (
-                  <span className="ml-1 px-2 py-0.5 bg-white/20 rounded-full text-xs font-bold">
-                    {stats.pendingReports}
+                {pendingCounts.reports > 0 && (
+                  <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
+                    {pendingCounts.reports}
                   </span>
                 )}
               </button>
               <button
                 onClick={() => setActiveTab('businesses')}
-                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'businesses'
                     ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md'
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
@@ -1011,6 +1046,11 @@ export function AdminDashboardPage() {
               >
                 <Building2 className="w-4 h-4" />
                 Attività
+                {pendingCounts.businesses > 0 && (
+                  <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
+                    {pendingCounts.businesses}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setActiveTab('jobs')}
@@ -1115,7 +1155,7 @@ export function AdminDashboardPage() {
             {activeTab === 'dashboard' && <AdminStats stats={stats} />}
 
             {activeTab === 'reviews' && (
-              <ReviewsSection reviews={pendingReviews} onReload={loadPendingReviews} adminId={profile!.id} />
+              <ReviewsSection reviews={pendingReviews} onReload={async () => { await loadPendingReviews(); await loadPendingCounts(); }} adminId={profile!.id} />
             )}
 
             {activeTab === 'users' && (
@@ -1558,14 +1598,14 @@ export function AdminDashboardPage() {
             )}
 
             {activeTab === 'ads' && (
-              <ClassifiedAdsSection ads={classifiedAds} onReload={loadClassifiedAds} />
+              <ClassifiedAdsSection ads={classifiedAds} onReload={async () => { await loadClassifiedAds(); await loadPendingCounts(); }} />
             )}
 
             {activeTab === 'auctions' && <AuctionsSection />}
 
-            {activeTab === 'reports' && <ReportsSection reports={reports} onReload={loadReports} />}
+            {activeTab === 'reports' && <ReportsSection reports={reports} onReload={async () => { await loadReports(); await loadPendingCounts(); }} />}
 
-            {activeTab === 'businesses' && <BusinessesSection onReload={loadBusinesses} />}
+            {activeTab === 'businesses' && <BusinessesSection onReload={async () => { await loadBusinesses(); await loadPendingCounts(); }} />}
 
             {activeTab === 'jobs' && <JobPostingsSection jobPostings={jobPostings} onReload={loadJobPostings} />}
 
