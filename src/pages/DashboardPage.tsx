@@ -1067,83 +1067,77 @@ export function DashboardPage() {
               <div className="space-y-6">
                 <FavoritesSection />
 
-                {/* Sezione Classifica / Le Mie Attivita' */}
+                {/* Sezione Classifica */}
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-gray-100">
-                  <div className="flex border-b border-gray-200">
-                    <button
-                      onClick={() => setLeaderboardTab('leaderboard')}
-                      className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 font-semibold text-sm transition-all ${
-                        leaderboardTab === 'leaderboard'
-                          ? 'bg-yellow-50 text-yellow-700 border-b-2 border-yellow-500'
-                          : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Trophy className="w-5 h-5" />
-                      Classifica
-                    </button>
-                    <button
-                      onClick={() => setLeaderboardTab('my_activities')}
-                      className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 font-semibold text-sm transition-all ${
-                        leaderboardTab === 'my_activities'
-                          ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
-                          : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Activity className="w-5 h-5" />
-                      Le Mie Attivita'
-                    </button>
+                  <div className="bg-gradient-to-r from-yellow-500 to-orange-500 px-6 py-4">
+                    <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                      <Trophy className="w-6 h-6" />
+                      La Mia Classifica
+                    </h2>
                   </div>
 
                   <div className="p-6">
-                    {leaderboardTab === 'leaderboard' ? (
-                      <div>
-                        {userRank && (
-                          <div className="bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-6 mb-6">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-4">
-                                <div className={`w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl shadow-lg ${
-                                  userRank.rank === 1 ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-white' :
-                                  userRank.rank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-white' :
-                                  userRank.rank === 3 ? 'bg-gradient-to-br from-orange-400 to-amber-600 text-white' :
-                                  'bg-gradient-to-br from-blue-400 to-blue-500 text-white'
-                                }`}>
-                                  #{userRank.rank}
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-500 font-medium">La tua posizione</p>
-                                  <p className="text-2xl font-bold text-gray-900">
-                                    {activeProfile?.isOwner === false
-                                      ? activeProfile.name
-                                      : profile?.nickname || profile?.full_name}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className="flex items-center gap-2 justify-end">
-                                  <Trophy className="w-6 h-6 text-yellow-500" />
-                                  <span className="text-3xl font-bold text-gray-900">{userRank.points}</span>
-                                </div>
-                                <p className="text-sm text-gray-500">punti totali</p>
-                                <p className="text-xs text-gray-400 mt-1">{userRank.reviews_count} recensioni</p>
-                              </div>
+                    {userRank && (
+                      <div className="bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-6 mb-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className={`w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl shadow-lg ${
+                              userRank.rank === 1 ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-white' :
+                              userRank.rank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-white' :
+                              userRank.rank === 3 ? 'bg-gradient-to-br from-orange-400 to-amber-600 text-white' :
+                              'bg-gradient-to-br from-blue-400 to-blue-500 text-white'
+                            }`}>
+                              #{userRank.rank}
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-500 font-medium">La tua posizione</p>
+                              <p className="text-2xl font-bold text-gray-900">
+                                {activeProfile?.isOwner === false
+                                  ? activeProfile.name
+                                  : profile?.nickname || profile?.full_name}
+                              </p>
                             </div>
                           </div>
-                        )}
-
-                        <div className="text-center">
-                          <button
-                            onClick={() => navigate('/leaderboard')}
-                            className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-3 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all font-bold shadow-lg"
-                          >
-                            Vedi Classifica Completa
-                          </button>
+                          <div className="text-right">
+                            <div className="flex items-center gap-2 justify-end">
+                              <Trophy className="w-6 h-6 text-yellow-500" />
+                              <span className="text-3xl font-bold text-gray-900">{userRank.points}</span>
+                            </div>
+                            <p className="text-sm text-gray-500">punti totali</p>
+                            <p className="text-xs text-gray-400 mt-1">{userRank.reviews_count} recensioni</p>
+                          </div>
                         </div>
                       </div>
-                    ) : (
-                      <ActivityFeed />
                     )}
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => navigate('/leaderboard')}
+                        className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-3 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all font-bold shadow-lg text-center"
+                      >
+                        Vedi Classifica Completa
+                      </button>
+                      <button
+                        onClick={() => setLeaderboardTab(leaderboardTab === 'my_activities' ? 'leaderboard' : 'my_activities')}
+                        className={`flex-1 px-6 py-3 rounded-xl font-bold shadow-lg transition-all text-center flex items-center justify-center gap-2 ${
+                          leaderboardTab === 'my_activities'
+                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                            : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700'
+                        }`}
+                      >
+                        <Activity className="w-5 h-5" />
+                        Le Mie Attivita'
+                      </button>
+                    </div>
                   </div>
                 </div>
+
+                {/* Sezione Le Mie Attivita' (espandibile) */}
+                {leaderboardTab === 'my_activities' && (
+                  <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-blue-200">
+                    <ActivityFeed />
+                  </div>
+                )}
 
                 <div className="bg-white rounded-lg shadow-sm p-6">
                   <h2 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
