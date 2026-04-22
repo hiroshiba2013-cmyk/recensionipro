@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Briefcase, Plus, X, Edit, Trash2, Users } from 'lucide-react';
+import { Briefcase, Plus, X, FileEdit as Edit, Trash2, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
 
@@ -17,6 +17,7 @@ interface JobPosting {
   education_level: string | null;
   expires_at: string;
   status: string;
+  approval_status?: string;
   created_at: string;
   business_location_id?: string | null;
 }
@@ -137,6 +138,8 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId }: Busin
           .insert({
             business_id: businessId,
             ...postingData,
+            status: 'pending',
+            approval_status: 'pending',
           });
 
         if (error) throw error;
@@ -497,7 +500,9 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId }: Busin
             <div
               key={posting.id}
               className={`border-2 rounded-lg p-6 transition-colors ${
-                posting.status === 'active'
+                posting.approval_status === 'pending' || posting.status === 'pending'
+                  ? 'border-yellow-200 bg-yellow-50'
+                  : posting.status === 'active'
                   ? 'border-green-200 bg-green-50'
                   : 'border-gray-200 bg-gray-50'
               }`}
@@ -508,12 +513,20 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId }: Busin
                     <h3 className="font-bold text-xl text-gray-900">{posting.title}</h3>
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                        posting.status === 'active'
+                        posting.approval_status === 'pending' || posting.status === 'pending'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : posting.approval_status === 'rejected'
+                          ? 'bg-red-100 text-red-700'
+                          : posting.status === 'active'
                           ? 'bg-green-100 text-green-700'
                           : 'bg-gray-200 text-gray-600'
                       }`}
                     >
-                      {posting.status === 'active' ? 'Attivo' : 'Chiuso'}
+                      {posting.approval_status === 'pending' || posting.status === 'pending'
+                        ? 'In attesa di approvazione'
+                        : posting.approval_status === 'rejected'
+                        ? 'Non approvato'
+                        : posting.status === 'active' ? 'Attivo' : 'Chiuso'}
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-2 text-sm text-gray-600 mb-2">

@@ -52,6 +52,7 @@ export default function AuctionsPage() {
           bid_count:auction_bids(count)
         `)
         .eq('status', filters.status)
+        .eq('approval_status', 'approved')
         .order('created_at', { ascending: false });
 
       if (selectedCategory !== 'Tutte') {

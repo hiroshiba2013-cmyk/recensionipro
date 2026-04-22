@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Gavel, Search, Filter, Eye, Trash2, CheckCircle, XCircle, Clock, TrendingUp, Users } from 'lucide-react';
+import { Gavel, Search, Filter, Eye, Trash2, CheckCircle, XCircle, Clock, TrendingUp, Users, ShieldCheck, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 import { ITALIAN_REGIONS, PROVINCES_BY_REGION, CITIES_BY_PROVINCE } from '../../lib/cities';
 
 const AUCTION_CATEGORIES = [
@@ -29,6 +30,7 @@ interface Auction {
   province: string;
   region: string;
   status: string;
+  approval_status: string;
   ends_at: string;
   created_at: string;
   images: string[];
@@ -45,21 +47,25 @@ interface Auction {
 }
 
 export default function AuctionsSection() {
+  const { user } = useAuth();
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [approvalFilter, setApprovalFilter] = useState<string>('pending');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [priceRangeFilter, setPriceRangeFilter] = useState<string>('all');
   const [regionFilter, setRegionFilter] = useState<string>('all');
   const [provinceFilter, setProvinceFilter] = useState<string>('all');
   const [cityFilter, setCityFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [processing, setProcessing] = useState<string | null>(null);
   const [stats, setStats] = useState({
     total: 0,
-    active: 0,
-    completed: 0,
-    expired: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0,
     totalBids: 0,
     totalDeposits: 0
   });
@@ -67,7 +73,7 @@ export default function AuctionsSection() {
   useEffect(() => {
     loadAuctions();
     loadStats();
-  }, [statusFilter]);
+  }, [approvalFilter]);
 
   const loadAuctions = async () => {
     setLoading(true);
@@ -82,12 +88,11 @@ export default function AuctionsSection() {
         `)
         .order('created_at', { ascending: false });
 
-      if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
+      if (approvalFilter !== 'all') {
+        query = query.eq('approval_status', approvalFilter);
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
 
       const auctionsWithBidCount = (data || []).map(auction => ({
@@ -107,7 +112,7 @@ export default function AuctionsSection() {
     try {
       const { data: allAuctions } = await supabase
         .from('auctions')
-        .select('status');
+        .select('status, approval_status');
 
       const { data: allBids } = await supabase
         .from('auction_bids')
@@ -117,16 +122,16 @@ export default function AuctionsSection() {
         .from('auction_deposits')
         .select('amount');
 
-      const active = allAuctions?.filter(a => a.status === 'active').length || 0;
-      const completed = allAuctions?.filter(a => a.status === 'completed').length || 0;
-      const expired = allAuctions?.filter(a => a.status === 'expired').length || 0;
+      const pending = allAuctions?.filter(a => a.approval_status === 'pending').length || 0;
+      const approved = allAuctions?.filter(a => a.approval_status === 'approved').length || 0;
+      const rejected = allAuctions?.filter(a => a.approval_status === 'rejected').length || 0;
       const totalDeposits = allDeposits?.reduce((sum, d) => sum + Number(d.amount), 0) || 0;
 
       setStats({
         total: allAuctions?.length || 0,
-        active,
-        completed,
-        expired,
+        pending,
+        approved,
+        rejected,
         totalBids: allBids?.length || 0,
         totalDeposits
       });
@@ -135,19 +140,50 @@ export default function AuctionsSection() {
     }
   };
 
-  const handleDeleteAuction = async (auctionId: string) => {
-    if (!confirm('Sei sicuro di voler eliminare questa asta? Questa azione è irreversibile.')) {
-      return;
-    }
-
+  const handleApprove = async (auctionId: string) => {
+    if (!user) return;
+    setProcessing(auctionId);
     try {
-      const { error } = await supabase
-        .from('auctions')
-        .delete()
-        .eq('id', auctionId);
-
+      const { error } = await supabase.rpc('approve_auction', {
+        p_auction_id: auctionId,
+        p_admin_id: user.id
+      });
       if (error) throw error;
+      loadAuctions();
+      loadStats();
+    } catch (err: any) {
+      alert('Errore durante l\'approvazione: ' + err.message);
+    } finally {
+      setProcessing(null);
+    }
+  };
 
+  const handleReject = async () => {
+    if (!rejectingId || !user) return;
+    setProcessing(rejectingId);
+    try {
+      const { error } = await supabase.rpc('reject_auction', {
+        p_auction_id: rejectingId,
+        p_admin_id: user.id,
+        p_reason: rejectReason
+      });
+      if (error) throw error;
+      setRejectingId(null);
+      setRejectReason('');
+      loadAuctions();
+      loadStats();
+    } catch (err: any) {
+      alert('Errore durante il rifiuto: ' + err.message);
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const handleDeleteAuction = async (auctionId: string) => {
+    if (!confirm('Sei sicuro di voler eliminare questa asta? Questa azione è irreversibile.')) return;
+    try {
+      const { error } = await supabase.from('auctions').delete().eq('id', auctionId);
+      if (error) throw error;
       loadAuctions();
       loadStats();
     } catch (err: any) {
@@ -155,28 +191,7 @@ export default function AuctionsSection() {
     }
   };
 
-  const handleChangeStatus = async (auctionId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from('auctions')
-        .update({ status: newStatus })
-        .eq('id', auctionId);
-
-      if (error) throw error;
-
-      loadAuctions();
-      loadStats();
-    } catch (err: any) {
-      alert('Errore durante l\'aggiornamento: ' + err.message);
-    }
-  };
-
   const filteredAuctions = auctions.filter(auction => {
-    if (!searchTerm && categoryFilter === 'all' && priceRangeFilter === 'all' &&
-        regionFilter === 'all' && provinceFilter === 'all' && cityFilter === 'all') {
-      return true;
-    }
-
     const matchesSearch = !searchTerm ||
       auction.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       auction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -219,24 +234,20 @@ export default function AuctionsSection() {
     const now = new Date();
     const endDate = new Date(endsAt);
     const diff = endDate.getTime() - now.getTime();
-
     if (diff <= 0) return 'Terminata';
-
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-
     if (days > 0) return `${days}g ${hours}h`;
     return `${hours}h`;
   };
 
-  const getStatusBadge = (status: string) => {
-    const badges = {
-      active: { bg: 'bg-green-100', text: 'text-green-800', label: 'Attiva' },
-      completed: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Conclusa' },
-      expired: { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Scaduta' },
-      cancelled: { bg: 'bg-red-100', text: 'text-red-800', label: 'Annullata' }
+  const getApprovalBadge = (approvalStatus: string) => {
+    const badges: Record<string, { bg: string; text: string; label: string }> = {
+      pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'In attesa' },
+      approved: { bg: 'bg-green-100', text: 'text-green-800', label: 'Approvata' },
+      rejected: { bg: 'bg-red-100', text: 'text-red-800', label: 'Rifiutata' }
     };
-    const badge = badges[status as keyof typeof badges] || badges.expired;
+    const badge = badges[approvalStatus] || badges.pending;
     return (
       <span className={`px-3 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text}`}>
         {badge.label}
@@ -251,32 +262,32 @@ export default function AuctionsSection() {
           <Gavel className="w-7 h-7 text-orange-600" />
           Gestione Aste
         </h2>
-        <p className="text-gray-600">Monitora e gestisci tutte le aste della piattaforma</p>
+        <p className="text-gray-600">Approva, monitora e gestisci tutte le aste della piattaforma</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-blue-900">Aste Totali</span>
+            <span className="text-sm font-medium text-blue-900">Totali</span>
             <Gavel className="w-5 h-5 text-blue-600" />
           </div>
           <div className="text-3xl font-bold text-blue-900">{stats.total}</div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-4 border border-yellow-200">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-green-900">Attive</span>
-            <Clock className="w-5 h-5 text-green-600" />
+            <span className="text-sm font-medium text-yellow-900">Da Approvare</span>
+            <AlertCircle className="w-5 h-5 text-yellow-600" />
           </div>
-          <div className="text-3xl font-bold text-green-900">{stats.active}</div>
+          <div className="text-3xl font-bold text-yellow-900">{stats.pending}</div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-purple-900">Concluse</span>
-            <CheckCircle className="w-5 h-5 text-purple-600" />
+            <span className="text-sm font-medium text-green-900">Approvate</span>
+            <ShieldCheck className="w-5 h-5 text-green-600" />
           </div>
-          <div className="text-3xl font-bold text-purple-900">{stats.completed}</div>
+          <div className="text-3xl font-bold text-green-900">{stats.approved}</div>
         </div>
 
         <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
@@ -312,9 +323,7 @@ export default function AuctionsSection() {
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
-                showFilters
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                showFilters ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
               <Filter className="w-4 h-4" />
@@ -323,44 +332,38 @@ export default function AuctionsSection() {
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-2">
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
-                statusFilter === 'all'
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Tutte
-            </button>
-            <button
-              onClick={() => setStatusFilter('active')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
-                statusFilter === 'active'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Attive
-            </button>
-            <button
-              onClick={() => setStatusFilter('completed')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
-                statusFilter === 'completed'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Concluse
-            </button>
+            {[
+              { key: 'pending', label: 'Da Approvare', color: 'yellow', count: stats.pending },
+              { key: 'approved', label: 'Approvate', color: 'green', count: stats.approved },
+              { key: 'rejected', label: 'Rifiutate', color: 'red', count: stats.rejected },
+              { key: 'all', label: 'Tutte', color: 'gray', count: stats.total },
+            ].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setApprovalFilter(tab.key)}
+                className={`relative px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                  approvalFilter === tab.key
+                    ? tab.key === 'pending' ? 'bg-yellow-600 text-white'
+                    : tab.key === 'approved' ? 'bg-green-600 text-white'
+                    : tab.key === 'rejected' ? 'bg-red-600 text-white'
+                    : 'bg-orange-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {tab.label}
+                {tab.key === 'pending' && tab.count > 0 && approvalFilter !== 'pending' && (
+                  <span className="absolute -top-2 -right-2 min-w-[20px] h-[20px] flex items-center justify-center px-1 bg-red-600 text-white text-xs font-bold rounded-full">
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
 
           {showFilters && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Categoria
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
@@ -372,29 +375,23 @@ export default function AuctionsSection() {
                   ))}
                 </select>
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fascia di Prezzo
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Fascia di Prezzo</label>
                 <select
                   value={priceRangeFilter}
                   onChange={(e) => setPriceRangeFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 >
                   <option value="all">Tutti i prezzi</option>
-                  <option value="0-100">0 - 100 €</option>
-                  <option value="100-500">100 - 500 €</option>
-                  <option value="500-1000">500 - 1.000 €</option>
-                  <option value="1000-5000">1.000 - 5.000 €</option>
-                  <option value="5000+">Oltre 5.000 €</option>
+                  <option value="0-100">0 - 100 EUR</option>
+                  <option value="100-500">100 - 500 EUR</option>
+                  <option value="500-1000">500 - 1.000 EUR</option>
+                  <option value="1000-5000">1.000 - 5.000 EUR</option>
+                  <option value="5000+">Oltre 5.000 EUR</option>
                 </select>
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Regione
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Regione</label>
                 <select
                   value={regionFilter}
                   onChange={(e) => { setRegionFilter(e.target.value); setProvinceFilter('all'); setCityFilter('all'); }}
@@ -406,11 +403,8 @@ export default function AuctionsSection() {
                   ))}
                 </select>
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Provincia
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Provincia</label>
                 <select
                   value={provinceFilter}
                   onChange={(e) => { setProvinceFilter(e.target.value); setCityFilter('all'); }}
@@ -422,23 +416,19 @@ export default function AuctionsSection() {
                   ))}
                 </select>
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Città
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Citta</label>
                 <select
                   value={cityFilter}
                   onChange={(e) => setCityFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 >
-                  <option value="all">Tutte le città</option>
+                  <option value="all">Tutte le citta</option>
                   {cities.map(city => (
                     <option key={city} value={city}>{city}</option>
                   ))}
                 </select>
               </div>
-
               <div className="flex items-end">
                 <button
                   onClick={() => {
@@ -460,11 +450,6 @@ export default function AuctionsSection() {
             <span>
               Risultati: <strong className="text-gray-900">{filteredAuctions.length}</strong> di <strong className="text-gray-900">{auctions.length}</strong> aste
             </span>
-            {(categoryFilter !== 'all' || priceRangeFilter !== 'all' || regionFilter !== 'all' || provinceFilter !== 'all' || cityFilter !== 'all') && (
-              <span className="text-orange-600 font-medium">
-                Filtri attivi
-              </span>
-            )}
           </div>
         </div>
 
@@ -474,18 +459,20 @@ export default function AuctionsSection() {
           </div>
         ) : filteredAuctions.length === 0 ? (
           <div className="text-center py-12 text-gray-600">
-            Nessuna asta trovata
+            {approvalFilter === 'pending' ? 'Nessuna asta da approvare' : 'Nessuna asta trovata'}
           </div>
         ) : (
           <div className="space-y-4">
             {filteredAuctions.map(auction => (
               <div
                 key={auction.id}
-                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${
+                  auction.approval_status === 'pending' ? 'border-yellow-300 bg-yellow-50/30' : 'border-gray-200'
+                }`}
               >
                 <div className="flex gap-4">
                   <img
-                    src={auction.images[0] || 'https://via.placeholder.com/150'}
+                    src={auction.images?.[0] || 'https://images.pexels.com/photos/5632388/pexels-photo-5632388.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'}
                     alt={auction.title}
                     className="w-32 h-32 object-cover rounded-lg flex-shrink-0"
                   />
@@ -500,7 +487,9 @@ export default function AuctionsSection() {
                           {auction.description}
                         </p>
                       </div>
-                      {getStatusBadge(auction.status)}
+                      <div className="flex gap-2 flex-shrink-0">
+                        {getApprovalBadge(auction.approval_status)}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
@@ -513,13 +502,13 @@ export default function AuctionsSection() {
                       <div>
                         <div className="text-xs text-gray-500">Base d'Asta</div>
                         <div className="text-sm font-medium text-gray-900">
-                          {auction.base_price.toFixed(2)} €
+                          {auction.base_price.toFixed(2)} EUR
                         </div>
                       </div>
                       <div>
                         <div className="text-xs text-gray-500">Offerta Attuale</div>
                         <div className="text-sm font-medium text-orange-600">
-                          {auction.current_price > 0 ? `${auction.current_price.toFixed(2)} €` : 'Nessuna'}
+                          {auction.current_price > 0 ? `${auction.current_price.toFixed(2)} EUR` : 'Nessuna'}
                         </div>
                       </div>
                       <div>
@@ -536,13 +525,13 @@ export default function AuctionsSection() {
                         <div className="text-sm font-medium text-gray-900">{auction.category}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-500">Località</div>
+                        <div className="text-xs text-gray-500">Localita</div>
                         <div className="text-sm font-medium text-gray-900">
                           {auction.city}, {auction.province}
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-500">Tempo Rimanente</div>
+                        <div className="text-xs text-gray-500">Scadenza</div>
                         <div className="text-sm font-medium text-gray-900">
                           {getTimeRemaining(auction.ends_at)}
                         </div>
@@ -550,7 +539,7 @@ export default function AuctionsSection() {
                       <div>
                         <div className="text-xs text-gray-500">Deposito</div>
                         <div className="text-sm font-medium text-gray-900">
-                          {auction.deposit_amount} €
+                          {auction.deposit_amount} EUR
                         </div>
                       </div>
                     </div>
@@ -564,6 +553,27 @@ export default function AuctionsSection() {
                     )}
 
                     <div className="flex flex-wrap gap-2">
+                      {auction.approval_status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(auction.id)}
+                            disabled={processing === auction.id}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
+                          >
+                            <ShieldCheck className="w-4 h-4" />
+                            {processing === auction.id ? 'Approvando...' : 'Approva'}
+                          </button>
+                          <button
+                            onClick={() => setRejectingId(auction.id)}
+                            disabled={processing === auction.id}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 font-medium"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            Rifiuta
+                          </button>
+                        </>
+                      )}
+
                       <a
                         href={`/auctions/${auction.id}`}
                         target="_blank"
@@ -574,28 +584,9 @@ export default function AuctionsSection() {
                         Visualizza
                       </a>
 
-                      {auction.status === 'active' && (
-                        <>
-                          <button
-                            onClick={() => handleChangeStatus(auction.id, 'completed')}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                            Completa
-                          </button>
-                          <button
-                            onClick={() => handleChangeStatus(auction.id, 'cancelled')}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
-                          >
-                            <XCircle className="w-4 h-4" />
-                            Annulla
-                          </button>
-                        </>
-                      )}
-
                       <button
                         onClick={() => handleDeleteAuction(auction.id)}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors ml-auto"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors ml-auto"
                       >
                         <Trash2 className="w-4 h-4" />
                         Elimina
@@ -608,6 +599,39 @@ export default function AuctionsSection() {
           </div>
         )}
       </div>
+
+      {rejectingId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Rifiuta Asta</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Inserisci il motivo del rifiuto (opzionale). L'utente ricevera una notifica.
+            </p>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Motivo del rifiuto..."
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+              rows={3}
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={handleReject}
+                disabled={processing !== null}
+                className="flex-1 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50"
+              >
+                {processing ? 'Rifiutando...' : 'Conferma Rifiuto'}
+              </button>
+              <button
+                onClick={() => { setRejectingId(null); setRejectReason(''); }}
+                className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              >
+                Annulla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -43,6 +43,11 @@ interface PendingCounts {
   ads: number;
   businesses: number;
   reports: number;
+  auctions: number;
+  jobs: number;
+  newUsers: number;
+  newSubscriptions: number;
+  newMessages: number;
 }
 
 interface PendingReview {
@@ -232,7 +237,7 @@ export function AdminDashboardPage() {
   const [businesses, setBusinesses] = useState<RegisteredBusiness[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pendingCounts, setPendingCounts] = useState<PendingCounts>({ reviews: 0, ads: 0, businesses: 0, reports: 0 });
+  const [pendingCounts, setPendingCounts] = useState<PendingCounts>({ reviews: 0, ads: 0, businesses: 0, reports: 0, auctions: 0, jobs: 0, newUsers: 0, newSubscriptions: 0, newMessages: 0 });
   const [selectedReview, setSelectedReview] = useState<PendingReview | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
@@ -295,17 +300,28 @@ export function AdminDashboardPage() {
 
   const loadPendingCounts = async () => {
     try {
-      const [reviewsRes, adsRes, businessesRes, reportsRes] = await Promise.all([
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const [reviewsRes, adsRes, businessesRes, reportsRes, auctionsRes, jobsRes, newUsersRes, newSubsRes, newMsgsRes] = await Promise.all([
         supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('review_status', 'pending'),
         supabase.from('classified_ads').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
         supabase.from('unclaimed_business_locations').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
         supabase.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('auctions').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
+        supabase.from('job_postings').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', oneDayAgo),
+        supabase.from('subscriptions').select('id', { count: 'exact', head: true }).gte('created_at', oneDayAgo),
+        supabase.from('conversations').select('id', { count: 'exact', head: true }).gte('updated_at', oneDayAgo),
       ]);
       setPendingCounts({
         reviews: reviewsRes.count || 0,
         ads: adsRes.count || 0,
         businesses: businessesRes.count || 0,
         reports: reportsRes.count || 0,
+        auctions: auctionsRes.count || 0,
+        jobs: jobsRes.count || 0,
+        newUsers: newUsersRes.count || 0,
+        newSubscriptions: newSubsRes.count || 0,
+        newMessages: newMsgsRes.count || 0,
       });
     } catch (error) {
       console.error('Error loading pending counts:', error);
@@ -973,7 +989,7 @@ export function AdminDashboardPage() {
               </button>
               <button
                 onClick={() => setActiveTab('users')}
-                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'users'
                     ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
@@ -981,10 +997,15 @@ export function AdminDashboardPage() {
               >
                 <Users className="w-4 h-4" />
                 Utenti
+                {pendingCounts.newUsers > 0 && (
+                  <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
+                    {pendingCounts.newUsers}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setActiveTab('subscriptions')}
-                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'subscriptions'
                     ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-md'
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
@@ -992,6 +1013,11 @@ export function AdminDashboardPage() {
               >
                 <Activity className="w-4 h-4" />
                 Abbonamenti
+                {pendingCounts.newSubscriptions > 0 && (
+                  <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
+                    {pendingCounts.newSubscriptions}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setActiveTab('ads')}
@@ -1011,7 +1037,7 @@ export function AdminDashboardPage() {
               </button>
               <button
                 onClick={() => setActiveTab('auctions')}
-                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'auctions'
                     ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md'
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
@@ -1019,6 +1045,11 @@ export function AdminDashboardPage() {
               >
                 <Gavel className="w-4 h-4" />
                 Aste
+                {pendingCounts.auctions > 0 && (
+                  <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
+                    {pendingCounts.auctions}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setActiveTab('reports')}
@@ -1054,7 +1085,7 @@ export function AdminDashboardPage() {
               </button>
               <button
                 onClick={() => setActiveTab('jobs')}
-                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'jobs'
                     ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-md'
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
@@ -1062,6 +1093,11 @@ export function AdminDashboardPage() {
               >
                 <Briefcase className="w-4 h-4" />
                 Lavoro
+                {pendingCounts.jobs > 0 && (
+                  <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
+                    {pendingCounts.jobs}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setActiveTab('solidarity')}
@@ -1098,14 +1134,19 @@ export function AdminDashboardPage() {
               </button>
               <button
                 onClick={() => setActiveTab('messaging')}
-                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'messaging'
-                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md'
+                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                 }`}
               >
                 <MessageSquare className="w-4 h-4" />
                 Messaggi
+                {pendingCounts.newMessages > 0 && (
+                  <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
+                    {pendingCounts.newMessages}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setActiveTab('contact')}

@@ -163,13 +163,22 @@ export function UserAuctionsSection() {
     return `${minutes}m`;
   };
 
-  const getStatusBadge = (status: string, endsAt: string) => {
+  const getStatusBadge = (status: string, endsAt: string, approvalStatus?: string) => {
+    if (approvalStatus === 'pending' || status === 'pending') {
+      return <span className="px-2.5 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full">In attesa di approvazione</span>;
+    }
+    if (approvalStatus === 'rejected') {
+      return <span className="px-2.5 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full">Non approvata</span>;
+    }
     const isExpired = new Date(endsAt) < new Date();
     if (status === 'active' && !isExpired) {
       return <span className="px-2.5 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">Attiva</span>;
     }
     if (status === 'completed' || isExpired) {
       return <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full">Conclusa</span>;
+    }
+    if (status === 'cancelled') {
+      return <span className="px-2.5 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full">Annullata</span>;
     }
     return <span className="px-2.5 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full">{status}</span>;
   };
@@ -292,7 +301,7 @@ export function UserAuctionsSection() {
                       <h3 className="font-semibold text-gray-900 truncate group-hover:text-orange-700 transition-colors">
                         {auction.title}
                       </h3>
-                      {getStatusBadge(auction.status, auction.ends_at)}
+                      {getStatusBadge(auction.status, auction.ends_at, auction.approval_status)}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
                       <span className="flex items-center gap-1">
@@ -393,7 +402,7 @@ export function UserAuctionsSection() {
                               Superato
                             </span>
                           )}
-                          {getStatusBadge(auction.status, auction.ends_at)}
+                          {getStatusBadge(auction.status, auction.ends_at, auction.approval_status)}
                         </div>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">

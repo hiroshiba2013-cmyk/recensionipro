@@ -147,6 +147,7 @@ export function JobsPage() {
           business:businesses(id, name, owner_id)
         `)
         .eq('status', 'active')
+        .eq('approval_status', 'approved')
         .gt('expires_at', new Date().toISOString());
 
       if (selectedBusinessLocationId) {

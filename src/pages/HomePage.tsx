@@ -62,6 +62,7 @@ function LandingPage() {
           bid_count:auction_bids(count)
         `)
         .eq('status', 'active')
+        .eq('approval_status', 'approved')
         .order('created_at', { ascending: false })
         .limit(6);
 
@@ -524,6 +525,7 @@ function AuthenticatedHomePage() {
             bid_count:auction_bids(count)
           `)
           .eq('status', 'active')
+          .eq('approval_status', 'approved')
           .gt('ends_at', new Date().toISOString())
           .order('ends_at', { ascending: true })
           .limit(6)
