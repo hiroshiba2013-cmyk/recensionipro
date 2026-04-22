@@ -136,6 +136,16 @@ export function SearchResultsPage() {
 
       console.log('Risultati trovati:', businessesData?.length || 0);
 
+      const categoryIds = [...new Set((businessesData || []).map((l: any) => l.category_id).filter(Boolean))];
+      const categoryMap: Record<string, { id: string; name: string; icon: string }> = {};
+      if (categoryIds.length > 0) {
+        const { data: categoriesData } = await supabase
+          .from('business_categories')
+          .select('id, name, icon')
+          .in('id', categoryIds);
+        (categoriesData || []).forEach((c: any) => { categoryMap[c.id] = c; });
+      }
+
       let allLocations: BusinessLocation[] = (businessesData || []).map((location: any) => ({
         id: location.id,
         business_id: location.business_id || location.id,
@@ -160,7 +170,8 @@ export function SearchResultsPage() {
           id: location.business_id || location.id,
           name: location.name,
           category_id: location.category_id,
-          verified: location.is_verified || false
+          verified: location.is_verified || false,
+          category: location.category_id ? categoryMap[location.category_id] || null : null
         },
         added_by: location.added_by || null,
         avg_rating: 0,
