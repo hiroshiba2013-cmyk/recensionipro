@@ -116,8 +116,8 @@ export default function AuctionForm({ onSuccess, onCancel }: AuctionFormProps) {
 
       const imageUrls = await uploadImages();
 
-      const endsAt = new Date();
-      endsAt.setDate(endsAt.getDate() + formData.duration);
+      const placeholderEndsAt = new Date();
+      placeholderEndsAt.setFullYear(placeholderEndsAt.getFullYear() + 1);
 
       const { error: insertError } = await supabase
         .from('auctions')
@@ -132,7 +132,8 @@ export default function AuctionForm({ onSuccess, onCancel }: AuctionFormProps) {
           city: formData.city,
           province: formData.province,
           region: formData.region,
-          ends_at: endsAt.toISOString(),
+          duration_days: formData.duration,
+          ends_at: placeholderEndsAt.toISOString(),
           status: 'active',
           approval_status: 'pending'
         });
