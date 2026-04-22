@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { CheckCircle, XCircle, Eye, Star, Filter, MapPin, Building2, Calendar, Clock, User, Search, X, FileEdit as Edit, Save, X as CloseIcon, ChevronDown, ChevronUp, Image as ImageIcon, Award, FileText } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { CheckCircle, XCircle, Eye, Star, Filter, MapPin, Building2, Calendar, Clock, User, Search, X, FileEdit as Edit, Save, X as CloseIcon, ChevronDown, ChevronUp, Image as ImageIcon, Award, FileText, Loader2, ExternalLink } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Review {
@@ -146,6 +146,53 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
   const [showFilters, setShowFilters] = useState(false);
   const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [editForm, setEditForm] = useState<Partial<Review> | null>(null);
+  const [signedDocUrls, setSignedDocUrls] = useState<Record<string, string>>({});
+  const [loadingDocs, setLoadingDocs] = useState(false);
+
+  const extractStoragePath = (url: string, bucket: string): string => {
+    const marker = `/${bucket}/`;
+    const idx = url.indexOf(marker);
+    if (idx !== -1) return url.substring(idx + marker.length);
+    return url.split('/').slice(-2).join('/');
+  };
+
+  const loadSignedUrls = useCallback(async (review: Review) => {
+    setSignedDocUrls({});
+    setLoadingDocs(true);
+    const urls: Record<string, string> = {};
+
+    try {
+      if (review.proof_image_url) {
+        const path = extractStoragePath(review.proof_image_url, 'review-proofs');
+        const { data } = await supabase.storage
+          .from('review-proofs')
+          .createSignedUrl(path, 3600);
+        if (data?.signedUrl) urls['proof_image'] = data.signedUrl;
+      }
+
+      if (review.proof_documents && review.proof_documents.length > 0) {
+        for (let i = 0; i < review.proof_documents.length; i++) {
+          const docUrl = review.proof_documents[i];
+          const path = extractStoragePath(docUrl, 'review-proof-documents');
+          const { data } = await supabase.storage
+            .from('review-proof-documents')
+            .createSignedUrl(path, 3600);
+          if (data?.signedUrl) urls[`doc_${i}`] = data.signedUrl;
+        }
+      }
+    } catch (err) {
+      console.error('Error creating signed URLs:', err);
+    }
+
+    setSignedDocUrls(urls);
+    setLoadingDocs(false);
+  }, []);
+
+  useEffect(() => {
+    if (selectedReview && hasProof(selectedReview)) {
+      loadSignedUrls(selectedReview);
+    }
+  }, [selectedReview, loadSignedUrls]);
 
   const getReviewerName = (review: Review) => {
     if (review.family_member) {
@@ -821,39 +868,62 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                     </h4>
                     <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full">50 PUNTI</span>
                   </div>
-                  <div className="grid gap-3">
-                    {selectedReview.proof_documents.map((docUrl, idx) => {
-                      const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(docUrl);
-                      return (
-                        <div key={idx} className="bg-white rounded-lg p-2 border border-blue-200">
-                          {isImage ? (
-                            <img
-                              src={docUrl}
-                              alt={`Documento ${idx + 1}`}
-                              className="w-full rounded-lg max-h-96 object-contain"
-                            />
-                          ) : (
-                            <a
-                              href={docUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 text-blue-700 hover:text-blue-900 font-medium p-3"
-                            >
-                              <FileText className="w-5 h-5" />
-                              Documento {idx + 1} - Clicca per visualizzare
-                            </a>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                  {loadingDocs ? (
+                    <div className="flex items-center justify-center gap-2 py-8 text-blue-700">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span className="font-medium">Caricamento documenti...</span>
+                    </div>
+                  ) : (
+                    <div className="grid gap-3">
+                      {selectedReview.proof_documents.map((docUrl, idx) => {
+                        const signedUrl = signedDocUrls[`doc_${idx}`];
+                        const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(docUrl);
+                        const displayUrl = signedUrl || docUrl;
+                        return (
+                          <div key={idx} className="bg-white rounded-lg border border-blue-200 overflow-hidden">
+                            {isImage ? (
+                              <div className="p-2">
+                                <img
+                                  src={displayUrl}
+                                  alt={`Documento ${idx + 1}`}
+                                  className="w-full rounded-lg max-h-[500px] object-contain"
+                                />
+                                <div className="mt-2 flex justify-end">
+                                  <a
+                                    href={displayUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 text-sm text-blue-700 hover:text-blue-900 font-medium"
+                                  >
+                                    <ExternalLink className="w-4 h-4" />
+                                    Apri in nuova scheda
+                                  </a>
+                                </div>
+                              </div>
+                            ) : (
+                              <a
+                                href={displayUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-blue-700 hover:text-blue-900 hover:bg-blue-50 font-medium p-4 transition-colors"
+                              >
+                                <FileText className="w-5 h-5" />
+                                Documento {idx + 1} - Clicca per visualizzare
+                                <ExternalLink className="w-4 h-4 ml-auto" />
+                              </a>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                   <p className="text-xs text-blue-700 mt-2 italic">
                     Questi documenti NON sono visibili pubblicamente. Verranno eliminati dopo l'approvazione o il rifiuto.
                   </p>
                 </div>
               )}
 
-              {/* Proof image */}
+              {/* Proof image (legacy) */}
               {selectedReview.proof_image_url && (
                 <div className="bg-gradient-to-br from-blue-50 to-green-50 border-2 border-blue-300 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-3">
@@ -863,13 +933,31 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                     </h4>
                     <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full">50 PUNTI</span>
                   </div>
-                  <div className="bg-white rounded-lg p-2 border border-blue-200">
-                    <img
-                      src={selectedReview.proof_image_url}
-                      alt="Prova di acquisto"
-                      className="w-full rounded-lg"
-                    />
-                  </div>
+                  {loadingDocs ? (
+                    <div className="flex items-center justify-center gap-2 py-8 text-blue-700">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span className="font-medium">Caricamento immagine...</span>
+                    </div>
+                  ) : (
+                    <div className="bg-white rounded-lg p-2 border border-blue-200">
+                      <img
+                        src={signedDocUrls['proof_image'] || selectedReview.proof_image_url}
+                        alt="Prova di acquisto"
+                        className="w-full rounded-lg max-h-[500px] object-contain"
+                      />
+                      <div className="mt-2 flex justify-end">
+                        <a
+                          href={signedDocUrls['proof_image'] || selectedReview.proof_image_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-sm text-blue-700 hover:text-blue-900 font-medium"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          Apri in nuova scheda
+                        </a>
+                      </div>
+                    </div>
+                  )}
                   <p className="text-xs text-blue-700 mt-2 italic">
                     Questa immagine NON e' visibile pubblicamente. Viene eliminata dopo l'approvazione o il rifiuto.
                   </p>
