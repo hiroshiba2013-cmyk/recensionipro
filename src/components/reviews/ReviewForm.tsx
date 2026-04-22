@@ -206,7 +206,7 @@ export function ReviewForm({
       const avg = getAverageRatingForType(reviewType);
 
       const reviewData: any = {
-        user_id: profile?.id,
+        customer_id: profile?.id,
         family_member_id: activeProfile?.type === 'family_member' ? activeProfile.id : null,
         business_id: businessId || null,
         business_location_id: businessLocationId || null,
@@ -216,7 +216,7 @@ export function ReviewForm({
         content,
         overall_rating: Math.round(avg * 10) / 10,
         proof_documents: documentUrls.length > 0 ? documentUrls : null,
-        status: 'pending'
+        review_status: 'pending'
       };
 
       if (reviewType === 'service_used') {
