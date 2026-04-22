@@ -182,9 +182,16 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
         return;
       }
 
+      const adTypeMap: Record<string, string> = {
+        'vendita': 'sell', 'vendo': 'sell', 'sell': 'sell',
+        'acquisto': 'buy', 'cerco': 'buy', 'buy': 'buy',
+        'regalo': 'gift', 'gift': 'gift',
+      };
+      const normalizedAdType = adTypeMap[formData.ad_type.toLowerCase()] || 'sell';
+
       const adData: Record<string, any> = {
         user_id: user.id,
-        ad_type: formData.ad_type,
+        ad_type: normalizedAdType,
         category_id: formData.category_id,
         title: formData.title,
         description: formData.description,
