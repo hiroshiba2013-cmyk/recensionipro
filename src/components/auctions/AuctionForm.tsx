@@ -139,6 +139,7 @@ export default function AuctionForm({ onSuccess, onCancel }: AuctionFormProps) {
 
       if (insertError) throw insertError;
 
+      alert('Asta creata con successo! Sarà visibile dopo l\'approvazione da parte dell\'amministratore.');
       onSuccess?.();
     } catch (err: any) {
       setError(err.message);

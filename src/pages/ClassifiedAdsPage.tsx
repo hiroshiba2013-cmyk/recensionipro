@@ -93,6 +93,7 @@ export function ClassifiedAdsPage() {
           classified_categories!category_id(name, icon)
         `)
         .eq('status', 'active')
+        .eq('approval_status', 'approved')
         .order('created_at', { ascending: false });
 
       if (adType !== 'all') {

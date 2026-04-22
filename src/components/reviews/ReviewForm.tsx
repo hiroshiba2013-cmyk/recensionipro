@@ -253,6 +253,7 @@ export function ReviewForm({
 
       if (insertError) throw insertError;
 
+      alert('Recensione inviata con successo! Sarà visibile dopo l\'approvazione da parte dell\'amministratore.');
       onSuccess();
     } catch (err: any) {
       console.error('Error submitting review:', err);

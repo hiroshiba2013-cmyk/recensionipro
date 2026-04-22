@@ -143,6 +143,7 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId }: Busin
           });
 
         if (error) throw error;
+        alert('Annuncio di lavoro inviato con successo! Sarà visibile dopo l\'approvazione da parte dell\'amministratore.');
       }
 
       resetForm();

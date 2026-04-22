@@ -210,15 +210,15 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
           .eq('id', adId);
 
         if (error) throw error;
+        alert('Annuncio aggiornato con successo!');
       } else {
         const { error } = await supabase
           .from('classified_ads')
           .insert([adData]);
 
         if (error) throw error;
+        alert('Annuncio inviato con successo! Sarà visibile dopo l\'approvazione da parte dell\'amministratore.');
       }
-
-      alert('Annuncio salvato con successo!');
       onSuccess();
     } catch (error) {
       console.error('Error saving ad:', error);
