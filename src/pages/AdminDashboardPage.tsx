@@ -60,6 +60,7 @@ interface PendingReview {
   service_rating: number | null;
   quality_rating: number | null;
   proof_image_url: string | null;
+  proof_documents: string[] | null;
   review_status: string;
   created_at: string;
   customer: {
