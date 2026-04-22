@@ -450,6 +450,7 @@ function AuthenticatedHomePage() {
   const navigate = useNavigate();
   const [jobSeekers, setJobSeekers] = useState<any[]>([]);
   const [featuredSellAds, setFeaturedSellAds] = useState<any[]>([]);
+  const [expiringAuctions, setExpiringAuctions] = useState<any[]>([]);
   const [topUsers, setTopUsers] = useState<any[]>([]);
   const [topBusinesses, setTopBusinesses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -469,7 +470,7 @@ function AuthenticatedHomePage() {
     try {
       setLoading(true);
 
-      const [jobSeekersResult, sellAdsResult, topDataResult] = await Promise.all([
+      const [jobSeekersResult, sellAdsResult, topDataResult, auctionsResult] = await Promise.all([
         (async () => {
           let query = supabase
             .from('job_seekers')
@@ -513,7 +514,19 @@ function AuthenticatedHomePage() {
               `)
               .gt('total_points', 0)
               .order('total_points', { ascending: false })
-              .limit(20)
+              .limit(20),
+
+        supabase
+          .from('auctions')
+          .select(`
+            *,
+            user:user_id(full_name, nickname),
+            bid_count:auction_bids(count)
+          `)
+          .eq('status', 'active')
+          .gt('ends_at', new Date().toISOString())
+          .order('ends_at', { ascending: true })
+          .limit(6)
       ]);
 
       if (jobSeekersResult) {
@@ -539,6 +552,13 @@ function AuthenticatedHomePage() {
         setTopBusinesses(topDataResult.data);
       } else if (!isBusiness && topDataResult.data) {
         setTopUsers(topDataResult.data);
+      }
+
+      if (auctionsResult.data) {
+        setExpiringAuctions(auctionsResult.data.map((a: any) => ({
+          ...a,
+          bid_count: a.bid_count?.[0]?.count || 0
+        })));
       }
     } catch (error) {
       console.error('Error loading home data:', error);
@@ -761,6 +781,54 @@ function AuthenticatedHomePage() {
                 </div>
               )}
             </section>
+
+            {!isBusiness && expiringAuctions.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-br from-orange-500 to-red-500 p-3 rounded-xl shadow-lg relative">
+                      <Gavel className="w-6 h-6 text-white" />
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping"></span>
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+                    </div>
+                    <div>
+                      <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Aste in Scadenza</h2>
+                      <p className="text-sm text-gray-600">Non perdere queste occasioni, stanno per terminare!</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => navigate('/auctions')}
+                    className="group flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-5 py-2.5 rounded-xl hover:shadow-lg font-semibold transition-all hover:scale-105"
+                  >
+                    Tutte le Aste
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </div>
+
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {expiringAuctions.map((auction) => {
+                    const now = new Date();
+                    const endDate = new Date(auction.ends_at);
+                    const diff = endDate.getTime() - now.getTime();
+                    const hoursLeft = diff / (1000 * 60 * 60);
+                    const isUrgent = hoursLeft <= 24;
+
+                    return (
+                      <div key={auction.id} className="relative group">
+                        {isUrgent && (
+                          <div className="absolute -top-2 -left-2 z-10 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
+                            ULTIME ORE!
+                          </div>
+                        )}
+                        <div className={`rounded-2xl overflow-hidden transition-all duration-300 group-hover:shadow-xl ${isUrgent ? 'ring-2 ring-red-400 ring-offset-2' : 'ring-1 ring-gray-200'}`}>
+                          <AuctionCard auction={auction} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
           </div>
         )}
       </div>
