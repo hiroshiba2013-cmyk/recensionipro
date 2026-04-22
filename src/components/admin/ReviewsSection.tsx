@@ -177,9 +177,13 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
     return '';
   };
 
+  const hasProof = (review: Review) => {
+    return !!(review.proof_image_url) || !!(review.proof_documents && review.proof_documents.length > 0);
+  };
+
   const getExpectedPoints = (review: Review) => {
     if (review.review_status === 'approved' && review.points_awarded) return review.points_awarded;
-    return review.proof_image_url ? 50 : 25;
+    return hasProof(review) ? 50 : 25;
   };
 
   const getRatingLabel = (rating: number) => {
@@ -256,17 +260,28 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
     setMinOverallRating('');
   };
 
+  const deleteProofFiles = async (review: Review) => {
+    if (review.proof_image_url) {
+      const filePath = review.proof_image_url.split('/').pop();
+      if (filePath) {
+        await supabase.storage.from('review-proofs').remove([filePath]);
+      }
+    }
+    if (review.proof_documents && review.proof_documents.length > 0) {
+      const docPaths = review.proof_documents.map(url => {
+        const parts = url.split('/review-proof-documents/');
+        return parts.length > 1 ? parts[1] : url.split('/').pop() || '';
+      }).filter(Boolean);
+      if (docPaths.length > 0) {
+        await supabase.storage.from('review-proof-documents').remove(docPaths);
+      }
+    }
+  };
+
   const approveReview = async (reviewId: string) => {
     try {
       const review = reviews.find(r => r.id === reviewId);
       if (!review) return;
-
-      if (review.proof_image_url) {
-        const filePath = review.proof_image_url.split('/').pop();
-        if (filePath) {
-          await supabase.storage.from('review-proofs').remove([filePath]);
-        }
-      }
 
       const { error } = await supabase.rpc('approve_review', {
         review_id_param: reviewId,
@@ -275,10 +290,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
 
       if (error) throw error;
 
-      await supabase
-        .from('reviews')
-        .update({ proof_image_url: null })
-        .eq('id', reviewId);
+      await deleteProofFiles(review);
 
       alert('Recensione approvata con successo!');
       onReload();
@@ -294,16 +306,11 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
       const review = reviews.find(r => r.id === reviewId);
       if (!review) return;
 
-      if (review.proof_image_url) {
-        const filePath = review.proof_image_url.split('/').pop();
-        if (filePath) {
-          await supabase.storage.from('review-proofs').remove([filePath]);
-        }
-      }
+      await deleteProofFiles(review);
 
       await supabase
         .from('reviews')
-        .update({ proof_image_url: null })
+        .update({ proof_image_url: null, proof_documents: null })
         .eq('id', reviewId);
 
       const { error } = await supabase.rpc('approve_review', {
@@ -338,11 +345,8 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
     try {
       const review = reviews.find(r => r.id === reviewToReject);
 
-      if (review?.proof_image_url) {
-        const filePath = review.proof_image_url.split('/').pop();
-        if (filePath) {
-          await supabase.storage.from('review-proofs').remove([filePath]);
-        }
+      if (review) {
+        await deleteProofFiles(review);
       }
 
       const { error } = await supabase.rpc('reject_review', {
@@ -354,7 +358,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
 
       await supabase
         .from('reviews')
-        .update({ proof_image_url: null })
+        .update({ proof_image_url: null, proof_documents: null })
         .eq('id', reviewToReject);
 
       alert('Recensione rifiutata.');
@@ -449,16 +453,12 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                 }`}>
                   {review.review_status === 'approved' ? 'Approvata' : review.review_status === 'pending' ? 'In attesa' : 'Rifiutata'}
                 </span>
-                {review.proof_image_url && (
+                {hasProof(review) && (
                   <span className="flex items-center gap-1 px-2.5 py-0.5 text-xs rounded-full font-semibold bg-blue-100 text-blue-800">
-                    <ImageIcon className="w-3 h-3" />
-                    Con prova
-                  </span>
-                )}
-                {review.proof_documents && review.proof_documents.length > 0 && (
-                  <span className="flex items-center gap-1 px-2.5 py-0.5 text-xs rounded-full font-semibold bg-blue-100 text-blue-800">
-                    <FileText className="w-3 h-3" />
-                    {review.proof_documents.length} doc
+                    {review.proof_image_url ? <ImageIcon className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
+                    {review.proof_documents && review.proof_documents.length > 0
+                      ? `${review.proof_documents.length} documento/i`
+                      : 'Con prova'}
                   </span>
                 )}
                 <span className={`flex items-center gap-1 px-2.5 py-0.5 text-xs rounded-full font-bold ${
@@ -560,7 +560,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                 <CheckCircle className="w-4 h-4" />
                 Approva ({getExpectedPoints(review)} pt)
               </button>
-              {review.proof_image_url && (
+              {hasProof(review) && (
                 <button
                   onClick={() => approveReviewWithoutProof(review.id)}
                   className="flex items-center gap-1.5 bg-yellow-600 text-white px-3 py-2 rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium"
@@ -735,9 +735,9 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
 
               {/* Points info */}
               <div className={`rounded-lg p-4 flex items-center gap-3 ${
-                selectedReview.proof_image_url ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50 border border-gray-200'
+                hasProof(selectedReview) ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50 border border-gray-200'
               }`}>
-                <Award className={`w-6 h-6 ${selectedReview.proof_image_url ? 'text-yellow-600' : 'text-gray-600'}`} />
+                <Award className={`w-6 h-6 ${hasProof(selectedReview) ? 'text-yellow-600' : 'text-gray-600'}`} />
                 <div>
                   <p className="font-bold text-gray-900">
                     {selectedReview.review_status === 'approved'
@@ -746,7 +746,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                     }
                   </p>
                   <p className="text-sm text-gray-600">
-                    {selectedReview.proof_image_url
+                    {hasProof(selectedReview)
                       ? 'Recensione con prova di acquisto (50 punti)'
                       : 'Recensione senza prova (25 punti)'
                     }
@@ -813,13 +813,43 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
 
               {/* Proof documents */}
               {selectedReview.proof_documents && selectedReview.proof_documents.length > 0 && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="bg-gradient-to-br from-blue-50 to-green-50 border-2 border-blue-300 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-3">
                     <FileText className="w-5 h-5 text-blue-600" />
-                    <h4 className="font-semibold text-blue-900">
-                      Documentazione fornita ({selectedReview.proof_documents.length} documento{selectedReview.proof_documents.length > 1 ? 'i' : ''})
+                    <h4 className="text-base font-bold text-blue-900">
+                      Prova di Acquisto - Documentazione (Visibile SOLO in Admin)
                     </h4>
+                    <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full">50 PUNTI</span>
                   </div>
+                  <div className="grid gap-3">
+                    {selectedReview.proof_documents.map((docUrl, idx) => {
+                      const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(docUrl);
+                      return (
+                        <div key={idx} className="bg-white rounded-lg p-2 border border-blue-200">
+                          {isImage ? (
+                            <img
+                              src={docUrl}
+                              alt={`Documento ${idx + 1}`}
+                              className="w-full rounded-lg max-h-96 object-contain"
+                            />
+                          ) : (
+                            <a
+                              href={docUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 text-blue-700 hover:text-blue-900 font-medium p-3"
+                            >
+                              <FileText className="w-5 h-5" />
+                              Documento {idx + 1} - Clicca per visualizzare
+                            </a>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-blue-700 mt-2 italic">
+                    Questi documenti NON sono visibili pubblicamente. Verranno eliminati dopo l'approvazione o il rifiuto.
+                  </p>
                 </div>
               )}
 
@@ -866,10 +896,10 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                     </button>
                   </div>
 
-                  {selectedReview.proof_image_url && (
+                  {hasProof(selectedReview) && (
                     <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
                       <p className="text-sm text-yellow-800 font-medium mb-3">
-                        Se l'immagine non e' valida ma la recensione e' corretta, puoi approvarla con 25 punti:
+                        Se la documentazione non e' valida ma la recensione e' corretta, puoi approvarla con 25 punti:
                       </p>
                       <button
                         onClick={() => approveReviewWithoutProof(selectedReview.id)}
