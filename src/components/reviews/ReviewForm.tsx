@@ -20,7 +20,6 @@ interface RatingGroup {
   label: string;
   value: number;
   setter: (v: number) => void;
-  optional?: boolean;
 }
 
 export function ReviewForm({
@@ -88,7 +87,7 @@ export function ReviewForm({
     switch (type) {
       case 'service_used':
         return [
-          { key: 'service_gestione', label: 'Gestione Prenotazione', value: serviceGestionePrenotazione, setter: setServiceGestionePrenotazione, optional: true },
+          { key: 'service_gestione', label: 'Gestione Prenotazione', value: serviceGestionePrenotazione, setter: setServiceGestionePrenotazione },
           { key: 'service_affidabilita', label: 'Affidabilità', value: serviceAffidabilita, setter: setServiceAffidabilita },
           { key: 'service_organizzazione', label: 'Organizzazione', value: serviceOrganizzazione, setter: setServiceOrganizzazione },
           { key: 'service_esperienza', label: 'Esperienza/Servizio', value: serviceEsperienza, setter: setServiceEsperienza },
@@ -129,14 +128,13 @@ export function ReviewForm({
 
   const allRatingsFilledForType = (type: ReviewType): boolean => {
     const groups = getRatingGroupsForType(type);
-    return groups.filter(g => !g.optional).every(g => g.value > 0);
+    return groups.every(g => g.value > 0);
   };
 
   const getAverageRatingForType = (type: ReviewType): number => {
     const groups = getRatingGroupsForType(type);
-    const filledGroups = groups.filter(g => g.value > 0);
-    if (filledGroups.length === 0 || !allRatingsFilledForType(type)) return 0;
-    return filledGroups.reduce((sum, g) => sum + g.value, 0) / filledGroups.length;
+    if (groups.length === 0 || !allRatingsFilledForType(type)) return 0;
+    return groups.reduce((sum, g) => sum + g.value, 0) / groups.length;
   };
 
   const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -230,7 +228,7 @@ export function ReviewForm({
       };
 
       if (reviewType === 'service_used') {
-        reviewData.booking_management_rating = serviceGestionePrenotazione > 0 ? serviceGestionePrenotazione : null;
+        reviewData.booking_management_rating = serviceGestionePrenotazione;
         reviewData.reliability_rating = serviceAffidabilita;
         reviewData.organization_rating = serviceOrganizzazione;
         reviewData.experience_rating = serviceEsperienza;
@@ -382,11 +380,7 @@ export function ReviewForm({
 
                 {getRatingGroupsForType(reviewType).map((group) => (
                   <div key={group.key}>
-                    {renderStarRating(
-                      group.value,
-                      group.setter,
-                      group.optional ? `${group.label} (facoltativo)` : group.label
-                    )}
+                    {renderStarRating(group.value, group.setter, group.label)}
                   </div>
                 ))}
 
