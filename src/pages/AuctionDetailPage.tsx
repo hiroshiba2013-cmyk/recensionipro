@@ -87,7 +87,7 @@ export default function AuctionDetailPage() {
         .eq('auction_id', id)
         .eq('user_id', user.id)
         .eq('refunded', false)
-        .single();
+        .maybeSingle();
 
       setHasDeposit(!!data);
     } catch (err) {
@@ -103,7 +103,7 @@ export default function AuctionDetailPage() {
         .from('auction_completions')
         .select('*')
         .eq('auction_id', id)
-        .single();
+        .maybeSingle();
 
       setCompletion(data);
     } catch (err) {
