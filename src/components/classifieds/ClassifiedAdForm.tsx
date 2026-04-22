@@ -220,9 +220,10 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
         alert('Annuncio inviato con successo! Sarà visibile dopo l\'approvazione da parte dell\'amministratore.');
       }
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving ad:', error);
-      alert('Errore nel salvataggio dell\'annuncio');
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      alert('Errore nel salvataggio: ' + (error?.message || error?.details || JSON.stringify(error)));
     } finally {
       setLoading(false);
     }
