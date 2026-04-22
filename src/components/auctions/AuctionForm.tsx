@@ -133,7 +133,7 @@ export default function AuctionForm({ onSuccess, onCancel }: AuctionFormProps) {
           province: formData.province,
           region: formData.region,
           ends_at: endsAt.toISOString(),
-          status: 'pending',
+          status: 'active',
           approval_status: 'pending'
         });
 
