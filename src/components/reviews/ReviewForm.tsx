@@ -378,9 +378,11 @@ export function ReviewForm({
               <div className="space-y-1">
                 <h3 className="font-semibold text-lg mb-5 text-gray-900">{getStepTitle(reviewType)}</h3>
 
-                {getRatingGroupsForType(reviewType).map((group) =>
-                  renderStarRating(group.value, group.setter, group.label)
-                )}
+                {getRatingGroupsForType(reviewType).map((group) => (
+                  <div key={group.key}>
+                    {renderStarRating(group.value, group.setter, group.label)}
+                  </div>
+                ))}
 
                 {allRatingsFilledForType(reviewType) && (
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-2">
