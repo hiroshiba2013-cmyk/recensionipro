@@ -207,6 +207,8 @@ export function ReviewForm({
       const documentUrls = await uploadDocuments();
       const avg = getAverageRatingForType(reviewType);
 
+      const roundedRating = Math.max(1, Math.min(5, Math.round(avg)));
+
       const reviewData: any = {
         customer_id: profile?.id,
         family_member_id: activeProfile?.type === 'family_member' ? activeProfile.id : null,
@@ -219,7 +221,8 @@ export function ReviewForm({
         review_type: reviewType,
         title,
         content,
-        overall_rating: Math.round(avg * 10) / 10,
+        rating: roundedRating,
+        overall_rating: roundedRating,
         proof_documents: documentUrls.length > 0 ? documentUrls : null,
         review_status: 'pending'
       };
