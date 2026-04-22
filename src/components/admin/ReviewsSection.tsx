@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle, XCircle, Eye, Star, Filter, MapPin, Building2, Calendar, Clock, User, Search, X, FileEdit as Edit, Save, X as CloseIcon, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Star, Filter, MapPin, Building2, Calendar, Clock, User, Search, X, FileEdit as Edit, Save, X as CloseIcon, ChevronDown, ChevronUp, Image as ImageIcon, Award, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Review {
@@ -12,6 +12,8 @@ interface Review {
   quality_rating: number | null;
   review_type: string | null;
   proof_image_url: string | null;
+  proof_documents: string[] | null;
+  points_awarded: number | null;
   review_status: string;
   created_at: string;
   customer: {
@@ -43,16 +45,69 @@ interface Review {
   businesses?: {
     name: string;
   } | null;
+  booking_management_rating?: number | null;
+  reliability_rating?: number | null;
+  organization_rating?: number | null;
+  experience_rating?: number | null;
+  booking_gestione_prenotazione?: number | null;
+  booking_affidabilita?: number | null;
+  booking_organizzazione?: number | null;
+  booking_comunicazione?: number | null;
+  quote_chiarezza?: number | null;
+  quote_trasparenza?: number | null;
+  quote_tempistiche_risposta?: number | null;
+  quote_disponibilita?: number | null;
+  cs_cortesia?: number | null;
+  cs_competenza?: number | null;
+  cs_rapidita?: number | null;
+  cs_risoluzione_problema?: number | null;
+  problem_affidabilita?: number | null;
+  problem_organizzazione?: number | null;
+  problem_gestione_problema?: number | null;
+  problem_comunicazione?: number | null;
 }
 
-const RATING_OPTIONS = [
-  { value: '', label: 'Qualsiasi' },
-  { value: '1', label: '1 stella e piu' },
-  { value: '2', label: '2 stelle e piu' },
-  { value: '3', label: '3 stelle e piu' },
-  { value: '4', label: '4 stelle e piu' },
-  { value: '5', label: '5 stelle' },
-];
+const reviewTypeLabels: Record<string, { label: string; color: string; bg: string }> = {
+  service_used: { label: 'Servizio Fruito', color: 'bg-green-100 text-green-800', bg: 'from-green-50 to-emerald-50 border-green-200' },
+  booking_not_completed: { label: 'Prenotazione Non Completata', color: 'bg-red-100 text-red-800', bg: 'from-red-50 to-rose-50 border-red-200' },
+  quote_request: { label: 'Richiesta Preventivo', color: 'bg-blue-100 text-blue-800', bg: 'from-blue-50 to-sky-50 border-blue-200' },
+  customer_service: { label: 'Assistenza Clienti', color: 'bg-teal-100 text-teal-800', bg: 'from-teal-50 to-cyan-50 border-teal-200' },
+  problem_before_service: { label: 'Problema Pre-Servizio', color: 'bg-amber-100 text-amber-800', bg: 'from-amber-50 to-yellow-50 border-amber-200' },
+};
+
+const TYPE_CRITERIA: Record<string, { label: string; field: string }[]> = {
+  service_used: [
+    { label: 'Gestione Prenotazione', field: 'booking_management_rating' },
+    { label: 'Affidabilita\'', field: 'reliability_rating' },
+    { label: 'Organizzazione', field: 'organization_rating' },
+    { label: 'Esperienza/Servizio', field: 'experience_rating' },
+    { label: 'Prezzo', field: 'price_rating' },
+  ],
+  booking_not_completed: [
+    { label: 'Gestione Prenotazione', field: 'booking_gestione_prenotazione' },
+    { label: 'Affidabilita\'', field: 'booking_affidabilita' },
+    { label: 'Organizzazione', field: 'booking_organizzazione' },
+    { label: 'Comunicazione', field: 'booking_comunicazione' },
+  ],
+  quote_request: [
+    { label: 'Chiarezza', field: 'quote_chiarezza' },
+    { label: 'Trasparenza', field: 'quote_trasparenza' },
+    { label: 'Tempistiche Risposta', field: 'quote_tempistiche_risposta' },
+    { label: 'Disponibilita\'', field: 'quote_disponibilita' },
+  ],
+  customer_service: [
+    { label: 'Cortesia', field: 'cs_cortesia' },
+    { label: 'Competenza', field: 'cs_competenza' },
+    { label: 'Rapidita\'', field: 'cs_rapidita' },
+    { label: 'Risoluzione Problema', field: 'cs_risoluzione_problema' },
+  ],
+  problem_before_service: [
+    { label: 'Affidabilita\'', field: 'problem_affidabilita' },
+    { label: 'Organizzazione', field: 'problem_organizzazione' },
+    { label: 'Gestione Problema', field: 'problem_gestione_problema' },
+    { label: 'Comunicazione', field: 'problem_comunicazione' },
+  ],
+};
 
 const REVIEW_TYPE_OPTIONS = [
   { value: '', label: 'Tutti i tipi' },
@@ -61,6 +116,15 @@ const REVIEW_TYPE_OPTIONS = [
   { value: 'quote_request', label: 'Preventivo / Informazioni' },
   { value: 'customer_service', label: 'Assistenza Clienti' },
   { value: 'problem_before_service', label: 'Problema pre-servizio' },
+];
+
+const RATING_OPTIONS = [
+  { value: '', label: 'Qualsiasi' },
+  { value: '1', label: '1 stella e piu' },
+  { value: '2', label: '2 stelle e piu' },
+  { value: '3', label: '3 stelle e piu' },
+  { value: '4', label: '4 stelle e piu' },
+  { value: '5', label: '5 stelle' },
 ];
 
 interface ReviewsSectionProps {
@@ -76,12 +140,6 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
   const [searchNickname, setSearchNickname] = useState('');
   const [searchBusinessName, setSearchBusinessName] = useState('');
   const [minOverallRating, setMinOverallRating] = useState<string>('');
-  const [minServiceRating, setMinServiceRating] = useState<string>('');
-  const [minBookingRating, setMinBookingRating] = useState<string>('');
-  const [minQuoteRating, setMinQuoteRating] = useState<string>('');
-  const [minCustomerServiceRating, setMinCustomerServiceRating] = useState<string>('');
-  const [minProblemRating, setMinProblemRating] = useState<string>('');
-  const [showRatingFilters, setShowRatingFilters] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [reviewToReject, setReviewToReject] = useState<string | null>(null);
@@ -93,84 +151,12 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
     if (review.family_member) {
       return review.family_member.nickname || review.family_member.full_name;
     }
-    return review.customer.nickname || review.customer.full_name;
-  };
-
-  const filteredReviews = reviews.filter(review => {
-    if (filterStatus !== 'all' && review.review_status !== filterStatus) return false;
-    if (filterReviewType && review.review_type !== filterReviewType) return false;
-
-    if (searchNickname.trim()) {
-      const reviewerName = getReviewerName(review).toLowerCase();
-      if (!reviewerName.includes(searchNickname.toLowerCase())) return false;
-    }
-
-    if (searchBusinessName.trim()) {
-      const businessName = getBusinessName(review).toLowerCase();
-      if (!businessName.includes(searchBusinessName.toLowerCase())) return false;
-    }
-
-    if (minOverallRating && review.overall_rating < Number(minOverallRating)) return false;
-
-    if (minServiceRating) {
-      if (review.review_type !== 'service_used') return false;
-      if (review.overall_rating < Number(minServiceRating)) return false;
-    }
-    if (minBookingRating) {
-      if (review.review_type !== 'booking_not_completed') return false;
-      if (review.overall_rating < Number(minBookingRating)) return false;
-    }
-    if (minQuoteRating) {
-      if (review.review_type !== 'quote_request') return false;
-      if (review.overall_rating < Number(minQuoteRating)) return false;
-    }
-    if (minCustomerServiceRating) {
-      if (review.review_type !== 'customer_service') return false;
-      if (review.overall_rating < Number(minCustomerServiceRating)) return false;
-    }
-    if (minProblemRating) {
-      if (review.review_type !== 'problem_before_service') return false;
-      if (review.overall_rating < Number(minProblemRating)) return false;
-    }
-
-    return true;
-  });
-
-  const hasActiveRatingFilters = minServiceRating || minBookingRating || minQuoteRating || minCustomerServiceRating || minProblemRating;
-
-  const clearFilters = () => {
-    setFilterStatus('all');
-    setFilterReviewType('');
-    setSearchNickname('');
-    setSearchBusinessName('');
-    setMinOverallRating('');
-    setMinServiceRating('');
-    setMinBookingRating('');
-    setMinQuoteRating('');
-    setMinCustomerServiceRating('');
-    setMinProblemRating('');
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('it-IT', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('it-IT', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return review.customer?.nickname || review.customer?.full_name || 'Utente';
   };
 
   const getBusinessName = (review: Review) => {
     if (review.business_location) {
-      return review.business_location.internal_name || review.business_location.name || review.businesses?.name || 'Attività';
+      return review.business_location.internal_name || review.business_location.name || review.businesses?.name || 'Attivita\'';
     }
     if (review.unclaimed_business_location) {
       return review.unclaimed_business_location.name;
@@ -178,7 +164,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
     if (review.businesses) {
       return review.businesses.name;
     }
-    return 'Attività non specificata';
+    return 'Attivita\' non specificata';
   };
 
   const getLocationInfo = (review: Review) => {
@@ -188,7 +174,86 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
     if (review.unclaimed_business_location) {
       return `${review.unclaimed_business_location.street}, ${review.unclaimed_business_location.city}`;
     }
-    return 'Sede non specificata';
+    return '';
+  };
+
+  const getExpectedPoints = (review: Review) => {
+    if (review.review_status === 'approved' && review.points_awarded) return review.points_awarded;
+    return review.proof_image_url ? 50 : 25;
+  };
+
+  const getRatingLabel = (rating: number) => {
+    switch (Math.round(rating)) {
+      case 1: return 'Pessimo';
+      case 2: return 'Discreto';
+      case 3: return 'Buono';
+      case 4: return 'Eccellente';
+      case 5: return 'Ottimo';
+      default: return '';
+    }
+  };
+
+  const renderStars = (rating: number, size: 'sm' | 'md' | 'lg' = 'sm') => {
+    const sizeClass = size === 'lg' ? 'w-7 h-7' : size === 'md' ? 'w-5 h-5' : 'w-4 h-4';
+    return (
+      <div className="flex gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`${sizeClass} ${star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  const getCriteriaForReview = (review: Review) => {
+    if (!review.review_type) return null;
+    const criteria = TYPE_CRITERIA[review.review_type];
+    if (!criteria) return null;
+    const hasValues = criteria.some(c => {
+      const val = (review as any)[c.field];
+      return val != null && val > 0;
+    });
+    return hasValues ? criteria : null;
+  };
+
+  const filteredReviews = reviews.filter(review => {
+    if (filterStatus !== 'all' && review.review_status !== filterStatus) return false;
+    if (filterReviewType && review.review_type !== filterReviewType) return false;
+    if (searchNickname.trim()) {
+      const reviewerName = getReviewerName(review).toLowerCase();
+      if (!reviewerName.includes(searchNickname.toLowerCase())) return false;
+    }
+    if (searchBusinessName.trim()) {
+      const businessName = getBusinessName(review).toLowerCase();
+      if (!businessName.includes(searchBusinessName.toLowerCase())) return false;
+    }
+    if (minOverallRating && review.overall_rating < Number(minOverallRating)) return false;
+    return true;
+  });
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('it-IT', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('it-IT', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const clearFilters = () => {
+    setFilterStatus('all');
+    setFilterReviewType('');
+    setSearchNickname('');
+    setSearchBusinessName('');
+    setMinOverallRating('');
   };
 
   const approveReview = async (reviewId: string) => {
@@ -196,9 +261,6 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
       const review = reviews.find(r => r.id === reviewId);
       if (!review) return;
 
-      const pointsAwarded = review.proof_image_url ? 50 : 25;
-
-      // Elimina l'immagine se presente
       if (review.proof_image_url) {
         const filePath = review.proof_image_url.split('/').pop();
         if (filePath) {
@@ -213,35 +275,12 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
 
       if (error) throw error;
 
-      // Rimuovi il riferimento all'immagine dal database
       await supabase
         .from('reviews')
         .update({ proof_image_url: null })
         .eq('id', reviewId);
 
-      const userId = review.customer_id || review.customer?.id;
-      if (userId) {
-        const businessName = review.business_location?.name || review.unclaimed_business_location?.name || 'l\'attività';
-        const familyMemberId = review.family_member_id || null;
-        await supabase.rpc('send_notification', {
-          target_user_id: userId,
-          notif_type: 'review_approved',
-          notif_title: 'Recensione approvata',
-          notif_message: `La tua recensione per "${businessName}" è stata approvata dall'amministratore.`,
-          notif_data: {},
-          target_family_member_id: familyMemberId,
-        });
-        await supabase.rpc('send_notification', {
-          target_user_id: userId,
-          notif_type: 'points_earned',
-          notif_title: `+${pointsAwarded} punti guadagnati`,
-          notif_message: `Hai guadagnato ${pointsAwarded} punti per la recensione approvata di "${businessName}". Controlla la tua posizione in classifica!`,
-          notif_data: {},
-          target_family_member_id: familyMemberId,
-        });
-      }
-
-      alert('Recensione approvata con successo! L\'immagine di prova è stata eliminata.');
+      alert('Recensione approvata con successo!');
       onReload();
       setSelectedReview(null);
     } catch (error: any) {
@@ -255,9 +294,6 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
       const review = reviews.find(r => r.id === reviewId);
       if (!review) return;
 
-      const pointsAwarded = 25;
-
-      // Elimina l'immagine
       if (review.proof_image_url) {
         const filePath = review.proof_image_url.split('/').pop();
         if (filePath) {
@@ -265,13 +301,11 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
         }
       }
 
-      // Rimuovi il riferimento all'immagine PRIMA dell'approvazione
       await supabase
         .from('reviews')
         .update({ proof_image_url: null })
         .eq('id', reviewId);
 
-      // Approva la recensione (assegnerà 25 punti perché proof_image_url è ora null)
       const { error } = await supabase.rpc('approve_review', {
         review_id_param: reviewId,
         staff_id_param: adminId,
@@ -279,29 +313,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
 
       if (error) throw error;
 
-      const userId = review.customer_id || review.customer?.id;
-      if (userId) {
-        const businessName = review.business_location?.name || review.unclaimed_business_location?.name || 'l\'attività';
-        const familyMemberId = review.family_member_id || null;
-        await supabase.rpc('send_notification', {
-          target_user_id: userId,
-          notif_type: 'review_approved',
-          notif_title: 'Recensione approvata',
-          notif_message: `La tua recensione per "${businessName}" è stata approvata dall'amministratore.`,
-          notif_data: {},
-          target_family_member_id: familyMemberId,
-        });
-        await supabase.rpc('send_notification', {
-          target_user_id: userId,
-          notif_type: 'points_earned',
-          notif_title: `+${pointsAwarded} punti guadagnati`,
-          notif_message: `Hai guadagnato ${pointsAwarded} punti per la recensione approvata di "${businessName}". Controlla la tua posizione in classifica!`,
-          notif_data: {},
-          target_family_member_id: familyMemberId,
-        });
-      }
-
-      alert('Recensione approvata con 25 punti (prova rifiutata). L\'immagine è stata eliminata.');
+      alert('Recensione approvata con 25 punti (prova rifiutata).');
       onReload();
       setSelectedReview(null);
     } catch (error: any) {
@@ -314,6 +326,47 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
     setReviewToReject(reviewId);
     setRejectReason('');
     setShowRejectModal(true);
+  };
+
+  const confirmReject = async () => {
+    if (!reviewToReject) return;
+    if (!rejectReason.trim()) {
+      alert('Inserisci la motivazione del rifiuto');
+      return;
+    }
+
+    try {
+      const review = reviews.find(r => r.id === reviewToReject);
+
+      if (review?.proof_image_url) {
+        const filePath = review.proof_image_url.split('/').pop();
+        if (filePath) {
+          await supabase.storage.from('review-proofs').remove([filePath]);
+        }
+      }
+
+      const { error } = await supabase.rpc('reject_review', {
+        review_id_param: reviewToReject,
+        staff_id_param: adminId,
+      });
+
+      if (error) throw error;
+
+      await supabase
+        .from('reviews')
+        .update({ proof_image_url: null })
+        .eq('id', reviewToReject);
+
+      alert('Recensione rifiutata.');
+      setShowRejectModal(false);
+      setRejectReason('');
+      setReviewToReject(null);
+      onReload();
+      setSelectedReview(null);
+    } catch (error: any) {
+      console.error('Error rejecting review:', error);
+      alert(`Errore: ${error.message}`);
+    }
   };
 
   const startEditReview = (review: Review) => {
@@ -335,7 +388,6 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
 
   const saveReviewEdit = async () => {
     if (!editingReview || !editForm) return;
-
     try {
       const { error } = await supabase
         .from('reviews')
@@ -364,63 +416,170 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
     }
   };
 
-  const confirmReject = async () => {
-    if (!reviewToReject) return;
+  const renderReviewCard = (review: Review) => {
+    const typeInfo = review.review_type ? reviewTypeLabels[review.review_type] : null;
+    const criteria = getCriteriaForReview(review);
+    const points = getExpectedPoints(review);
+    const locationInfo = getLocationInfo(review);
 
-    if (!rejectReason.trim()) {
-      alert('Inserisci la motivazione del rifiuto');
-      return;
-    }
+    return (
+      <div
+        key={review.id}
+        className={`bg-white rounded-xl shadow-sm border-2 transition-all hover:shadow-md ${
+          review.review_status === 'pending'
+            ? 'border-yellow-300 bg-yellow-50/20'
+            : review.review_status === 'approved'
+            ? 'border-green-200'
+            : 'border-red-200'
+        }`}
+      >
+        <div className="p-5">
+          {/* Header: reviewer + status + actions */}
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <User className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                <span className="font-bold text-gray-900">{getReviewerName(review)}</span>
+                <span className={`px-2.5 py-0.5 text-xs rounded-full font-semibold ${
+                  review.review_status === 'approved'
+                    ? 'bg-green-100 text-green-800'
+                    : review.review_status === 'pending'
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {review.review_status === 'approved' ? 'Approvata' : review.review_status === 'pending' ? 'In attesa' : 'Rifiutata'}
+                </span>
+                {review.proof_image_url && (
+                  <span className="flex items-center gap-1 px-2.5 py-0.5 text-xs rounded-full font-semibold bg-blue-100 text-blue-800">
+                    <ImageIcon className="w-3 h-3" />
+                    Con prova
+                  </span>
+                )}
+                {review.proof_documents && review.proof_documents.length > 0 && (
+                  <span className="flex items-center gap-1 px-2.5 py-0.5 text-xs rounded-full font-semibold bg-blue-100 text-blue-800">
+                    <FileText className="w-3 h-3" />
+                    {review.proof_documents.length} doc
+                  </span>
+                )}
+                <span className={`flex items-center gap-1 px-2.5 py-0.5 text-xs rounded-full font-bold ${
+                  points === 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-700'
+                }`}>
+                  <Award className="w-3 h-3" />
+                  {review.review_status === 'approved' ? `${review.points_awarded || points} punti` : `${points} punti`}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-gray-500">
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  {formatDate(review.created_at)}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {formatTime(review.created_at)}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={() => startEditReview(review)}
+                className="p-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition-colors"
+                title="Modifica"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setSelectedReview(review)}
+                className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                title="Dettaglio"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
 
-    try {
-      const review = reviews.find(r => r.id === reviewToReject);
+          {/* Business info */}
+          <div className="flex items-start gap-2 mb-3">
+            <Building2 className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div className="min-w-0">
+              <p className="font-semibold text-blue-900 text-sm">{getBusinessName(review)}</p>
+              {locationInfo && (
+                <p className="text-xs text-gray-500 flex items-center gap-1">
+                  <MapPin className="w-3 h-3" />
+                  {locationInfo}
+                </p>
+              )}
+            </div>
+          </div>
 
-      // Elimina l'immagine se presente
-      if (review?.proof_image_url) {
-        const filePath = review.proof_image_url.split('/').pop();
-        if (filePath) {
-          await supabase.storage.from('review-proofs').remove([filePath]);
-        }
-      }
+          {/* Type badge */}
+          {typeInfo && (
+            <div className="mb-3">
+              <span className={`inline-flex text-xs font-medium px-2.5 py-1 rounded-full ${typeInfo.color}`}>
+                {typeInfo.label}
+              </span>
+            </div>
+          )}
 
-      const { error } = await supabase.rpc('reject_review', {
-        review_id_param: reviewToReject,
-        staff_id_param: adminId,
-      });
+          {/* Overall rating */}
+          <div className="flex items-center gap-2 mb-3">
+            {renderStars(review.overall_rating, 'md')}
+            <span className="text-sm font-bold text-gray-900">{review.overall_rating}/5</span>
+            <span className="text-sm text-gray-600">{getRatingLabel(review.overall_rating)}</span>
+          </div>
 
-      if (error) throw error;
+          {/* Type-specific criteria ratings */}
+          {criteria && (
+            <div className={`grid grid-cols-2 sm:grid-cols-${Math.min(criteria.length, 5)} gap-2 mb-3 p-3 bg-gradient-to-r ${typeInfo?.bg || 'from-gray-50 to-gray-50 border-gray-200'} rounded-lg border`}>
+              {criteria.map((c) => {
+                const val = (review as any)[c.field];
+                if (!val || val === 0) return null;
+                return (
+                  <div key={c.field}>
+                    <p className="text-xs font-medium text-gray-700 mb-0.5">{c.label}</p>
+                    {renderStars(val)}
+                    <p className="text-xs text-gray-500 mt-0.5">{getRatingLabel(val)}</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
-      // Rimuovi il riferimento all'immagine dal database
-      await supabase
-        .from('reviews')
-        .update({ proof_image_url: null })
-        .eq('id', reviewToReject);
+          {/* Title + content preview */}
+          {review.title && (
+            <h4 className="font-semibold text-gray-900 text-sm mb-1">{review.title}</h4>
+          )}
+          <p className="text-sm text-gray-700 line-clamp-2">{review.content}</p>
 
-      // Invia notifica all'utente con la motivazione
-      if (review) {
-        const rejectUserId = review.customer_id || review.customer?.id;
-        if (rejectUserId) {
-          await supabase.rpc('send_notification', {
-            target_user_id: rejectUserId,
-            notif_type: 'review_rejected',
-            notif_title: 'Recensione rifiutata',
-            notif_message: `La tua recensione "${review.title}" è stata rifiutata. Motivazione: ${rejectReason}`,
-            notif_data: {},
-            target_family_member_id: review.family_member_id || null,
-          });
-        }
-      }
-
-      alert('Recensione rifiutata. L\'immagine di prova è stata eliminata.');
-      setShowRejectModal(false);
-      setRejectReason('');
-      setReviewToReject(null);
-      onReload();
-      setSelectedReview(null);
-    } catch (error: any) {
-      console.error('Error rejecting review:', error);
-      alert(`Errore: ${error.message}`);
-    }
+          {/* Quick approve/reject for pending */}
+          {review.review_status === 'pending' && (
+            <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-100">
+              <button
+                onClick={() => approveReview(review.id)}
+                className="flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-semibold"
+              >
+                <CheckCircle className="w-4 h-4" />
+                Approva ({getExpectedPoints(review)} pt)
+              </button>
+              {review.proof_image_url && (
+                <button
+                  onClick={() => approveReviewWithoutProof(review.id)}
+                  className="flex items-center gap-1.5 bg-yellow-600 text-white px-3 py-2 rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium"
+                >
+                  Approva senza prova (25 pt)
+                </button>
+              )}
+              <button
+                onClick={() => openRejectModal(review.id)}
+                className="flex items-center gap-1.5 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm font-semibold"
+              >
+                <XCircle className="w-4 h-4" />
+                Rifiuta
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -448,7 +607,6 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
               Pulisci tutti
             </button>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -463,7 +621,6 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                 className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 <Building2 className="w-4 h-4 inline mr-1" />
@@ -477,7 +634,6 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                 className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Stato Recensione</label>
               <select
@@ -491,7 +647,6 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                 <option value="rejected">Rifiutate ({reviews.filter(r => r.review_status === 'rejected').length})</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Tipo di Esperienza</label>
               <select
@@ -504,7 +659,6 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                 ))}
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Voto Generale Minimo</label>
               <select
@@ -518,85 +672,6 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
               </select>
             </div>
           </div>
-
-          <div className="mt-5 border-t border-gray-100 pt-4">
-            <button
-              type="button"
-              onClick={() => setShowRatingFilters(!showRatingFilters)}
-              className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors"
-            >
-              {showRatingFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              Filtri per tipo di valutazione
-              {hasActiveRatingFilters && (
-                <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded-full font-semibold">attivi</span>
-              )}
-            </button>
-
-            {showRatingFilters && (
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                  <p className="text-xs font-semibold text-green-800 mb-1">Servizio Fruito</p>
-                  <p className="text-xs text-green-600 mb-2 leading-tight">Voto minimo per "Ho usufruito del servizio"</p>
-                  <select
-                    value={minServiceRating}
-                    onChange={(e) => setMinServiceRating(e.target.value)}
-                    className="w-full border border-green-300 rounded px-2 py-1.5 text-xs focus:ring-2 focus:ring-green-400 focus:border-transparent bg-white"
-                  >
-                    {RATING_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                  </select>
-                </div>
-
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <p className="text-xs font-semibold text-red-800 mb-1">Prenotazione Non Completata</p>
-                  <p className="text-xs text-red-600 mb-2 leading-tight">Voto minimo per prenotazione</p>
-                  <select
-                    value={minBookingRating}
-                    onChange={(e) => setMinBookingRating(e.target.value)}
-                    className="w-full border border-red-300 rounded px-2 py-1.5 text-xs focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
-                  >
-                    {RATING_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                  </select>
-                </div>
-
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-xs font-semibold text-blue-800 mb-1">Preventivo / Info</p>
-                  <p className="text-xs text-blue-600 mb-2 leading-tight">Voto minimo per preventivo</p>
-                  <select
-                    value={minQuoteRating}
-                    onChange={(e) => setMinQuoteRating(e.target.value)}
-                    className="w-full border border-blue-300 rounded px-2 py-1.5 text-xs focus:ring-2 focus:ring-blue-400 focus:border-transparent bg-white"
-                  >
-                    {RATING_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                  </select>
-                </div>
-
-                <div className="bg-teal-50 border border-teal-200 rounded-lg p-3">
-                  <p className="text-xs font-semibold text-teal-800 mb-1">Assistenza Clienti</p>
-                  <p className="text-xs text-teal-600 mb-2 leading-tight">Voto minimo per assistenza</p>
-                  <select
-                    value={minCustomerServiceRating}
-                    onChange={(e) => setMinCustomerServiceRating(e.target.value)}
-                    className="w-full border border-teal-300 rounded px-2 py-1.5 text-xs focus:ring-2 focus:ring-teal-400 focus:border-transparent bg-white"
-                  >
-                    {RATING_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                  </select>
-                </div>
-
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <p className="text-xs font-semibold text-amber-800 mb-1">Problema Pre-Servizio</p>
-                  <p className="text-xs text-amber-600 mb-2 leading-tight">Voto minimo per problema</p>
-                  <select
-                    value={minProblemRating}
-                    onChange={(e) => setMinProblemRating(e.target.value)}
-                    className="w-full border border-amber-300 rounded px-2 py-1.5 text-xs focus:ring-2 focus:ring-amber-400 focus:border-transparent bg-white"
-                  >
-                    {RATING_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                  </select>
-                </div>
-              </div>
-            )}
-          </div>
-
           <div className="mt-4 pt-4 border-t border-gray-200">
             <p className="text-sm text-gray-600">
               <strong className="text-gray-900">{filteredReviews.length}</strong> recensioni trovate su <strong className="text-gray-900">{reviews.length}</strong> totali
@@ -612,69 +687,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
         </div>
       ) : (
         <div className="grid gap-4">
-          {filteredReviews.map((review) => (
-            <div key={review.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <User className="w-5 h-5 text-gray-500" />
-                    <h3 className="font-bold text-lg text-gray-900">{getReviewerName(review)}</h3>
-                    <span
-                      className={`px-3 py-1 text-xs rounded-full font-medium ${
-                        review.review_status === 'approved'
-                          ? 'bg-green-100 text-green-800'
-                          : review.review_status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {review.review_status === 'approved' ? 'Approvata' : review.review_status === 'pending' ? 'In attesa' : 'Rifiutata'}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>{formatDate(review.created_at)}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      <span>{formatTime(review.created_at)}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-2 mb-2">
-                    <Building2 className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-blue-900">{getBusinessName(review)}</p>
-                      <div className="flex items-center gap-1 text-sm text-gray-600">
-                        <MapPin className="w-3 h-3" />
-                        <span>{getLocationInfo(review)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => startEditReview(review)}
-                    className="flex items-center gap-2 bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors"
-                    title="Modifica recensione"
-                  >
-                    <Edit className="w-4 h-4" />
-                    Modifica
-                  </button>
-                  <button
-                    onClick={() => setSelectedReview(review)}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <Eye className="w-4 h-4" />
-                    Visualizza
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+          {filteredReviews.map(renderReviewCard)}
         </div>
       )}
 
@@ -682,7 +695,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
       {selectedReview && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between z-10">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900">Dettaglio Recensione</h3>
                 <p className="text-sm text-gray-600 mt-1">
@@ -698,166 +711,127 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
             </div>
 
             <div className="p-6 space-y-6">
-              {/* Info Recensore */}
+              {/* Reviewer info */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="font-semibold text-gray-900 mb-2">Recensore</h4>
-                <p className="text-gray-700">{getReviewerName(selectedReview)}</p>
-                <p className="text-sm text-gray-500">{selectedReview.customer.email}</p>
+                <p className="text-gray-700 font-medium">{getReviewerName(selectedReview)}</p>
+                <p className="text-sm text-gray-500">{selectedReview.customer?.email}</p>
               </div>
 
-              {/* Info Attività */}
+              {/* Business info */}
               <div className="bg-blue-50 rounded-lg p-4">
                 <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                   <Building2 className="w-5 h-5 text-blue-600" />
-                  Attività Recensita
+                  Attivita' Recensita
                 </h4>
                 <p className="font-semibold text-blue-900">{getBusinessName(selectedReview)}</p>
-                <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-                  <MapPin className="w-4 h-4" />
-                  {getLocationInfo(selectedReview)}
-                </p>
+                {getLocationInfo(selectedReview) && (
+                  <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                    <MapPin className="w-4 h-4" />
+                    {getLocationInfo(selectedReview)}
+                  </p>
+                )}
               </div>
 
-              {/* Form Recensione (stessi campi del form utente) */}
-              <div className="border-t pt-6">
-                <h4 className="font-semibold text-gray-900 mb-4">Valutazioni</h4>
-
-                <div className="space-y-4">
-                  {/* Qualità */}
-                  {selectedReview.quality_rating && (
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        1. Qualità
-                      </label>
-                      <div className="flex gap-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`w-8 h-8 ${
-                              star <= selectedReview.quality_rating!
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <p className="text-sm text-gray-600 mt-2">
-                        {selectedReview.quality_rating === 1 && 'Pessimo'}
-                        {selectedReview.quality_rating === 2 && 'Discreto'}
-                        {selectedReview.quality_rating === 3 && 'Buono'}
-                        {selectedReview.quality_rating === 4 && 'Eccellente'}
-                        {selectedReview.quality_rating === 5 && 'Ottimo'}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Prezzo */}
-                  {selectedReview.price_rating && (
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        2. Prezzo
-                      </label>
-                      <div className="flex gap-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`w-8 h-8 ${
-                              star <= selectedReview.price_rating!
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <p className="text-sm text-gray-600 mt-2">
-                        {selectedReview.price_rating === 1 && 'Pessimo'}
-                        {selectedReview.price_rating === 2 && 'Discreto'}
-                        {selectedReview.price_rating === 3 && 'Buono'}
-                        {selectedReview.price_rating === 4 && 'Eccellente'}
-                        {selectedReview.price_rating === 5 && 'Ottimo'}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Servizio */}
-                  {selectedReview.service_rating && (
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        3. Esperienza / Servizio
-                      </label>
-                      <div className="flex gap-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`w-8 h-8 ${
-                              star <= selectedReview.service_rating!
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <p className="text-sm text-gray-600 mt-2">
-                        {selectedReview.service_rating === 1 && 'Pessimo'}
-                        {selectedReview.service_rating === 2 && 'Discreto'}
-                        {selectedReview.service_rating === 3 && 'Buono'}
-                        {selectedReview.service_rating === 4 && 'Eccellente'}
-                        {selectedReview.service_rating === 5 && 'Ottimo'}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Voto Generale */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      4. Voto Generale
-                    </label>
-                    <div className="flex gap-2">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`w-8 h-8 ${
-                            star <= selectedReview.overall_rating
-                              ? 'fill-yellow-400 text-yellow-400'
-                              : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <p className="text-sm text-gray-600 mt-2">
-                      {selectedReview.overall_rating === 1 && 'Pessimo'}
-                      {selectedReview.overall_rating === 2 && 'Discreto'}
-                      {selectedReview.overall_rating === 3 && 'Buono'}
-                      {selectedReview.overall_rating === 4 && 'Eccellente'}
-                      {selectedReview.overall_rating === 5 && 'Ottimo'}
-                    </p>
-                  </div>
+              {/* Points info */}
+              <div className={`rounded-lg p-4 flex items-center gap-3 ${
+                selectedReview.proof_image_url ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50 border border-gray-200'
+              }`}>
+                <Award className={`w-6 h-6 ${selectedReview.proof_image_url ? 'text-yellow-600' : 'text-gray-600'}`} />
+                <div>
+                  <p className="font-bold text-gray-900">
+                    {selectedReview.review_status === 'approved'
+                      ? `${selectedReview.points_awarded || 0} punti assegnati`
+                      : `${getExpectedPoints(selectedReview)} punti previsti`
+                    }
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {selectedReview.proof_image_url
+                      ? 'Recensione con prova di acquisto (50 punti)'
+                      : 'Recensione senza prova (25 punti)'
+                    }
+                  </p>
                 </div>
               </div>
 
-              {/* Titolo e Contenuto */}
+              {/* Review type badge */}
+              {selectedReview.review_type && reviewTypeLabels[selectedReview.review_type] && (
+                <div>
+                  <span className={`inline-flex text-sm font-medium px-3 py-1.5 rounded-full ${reviewTypeLabels[selectedReview.review_type].color}`}>
+                    {reviewTypeLabels[selectedReview.review_type].label}
+                  </span>
+                </div>
+              )}
+
+              {/* Overall rating */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Titolo della recensione
-                </label>
-                <p className="text-gray-900 font-medium">{selectedReview.title}</p>
+                <h4 className="font-semibold text-gray-900 mb-2">Voto Generale</h4>
+                <div className="flex items-center gap-3">
+                  {renderStars(selectedReview.overall_rating, 'lg')}
+                  <span className="text-lg font-bold text-gray-900">{selectedReview.overall_rating}/5</span>
+                  <span className="text-gray-600">{getRatingLabel(selectedReview.overall_rating)}</span>
+                </div>
               </div>
 
+              {/* Type-specific criteria */}
+              {(() => {
+                const criteria = getCriteriaForReview(selectedReview);
+                const typeInfo = selectedReview.review_type ? reviewTypeLabels[selectedReview.review_type] : null;
+                if (!criteria) return null;
+                return (
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-3">Valutazioni Dettagliate</h4>
+                    <div className={`grid grid-cols-2 md:grid-cols-${Math.min(criteria.length, 5)} gap-4 p-4 bg-gradient-to-r ${typeInfo?.bg || 'from-gray-50 to-gray-50 border-gray-200'} rounded-lg border`}>
+                      {criteria.map((c) => {
+                        const val = (review: any) => (selectedReview as any)[c.field];
+                        const rating = (selectedReview as any)[c.field];
+                        if (!rating || rating === 0) return null;
+                        return (
+                          <div key={c.field}>
+                            <p className="text-xs font-semibold text-gray-700 mb-1">{c.label}</p>
+                            {renderStars(rating, 'md')}
+                            <p className="text-sm text-gray-600 mt-1">{getRatingLabel(rating)}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Title + content */}
+              {selectedReview.title && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Titolo</h4>
+                  <p className="text-gray-900 font-medium text-lg">{selectedReview.title}</p>
+                </div>
+              )}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Descrizione dell'esperienza
-                </label>
-                <p className="text-gray-700 whitespace-pre-wrap">{selectedReview.content}</p>
+                <h4 className="font-semibold text-gray-900 mb-1">Descrizione dell'esperienza</h4>
+                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{selectedReview.content}</p>
               </div>
 
-              {/* Prova di Acquisto - VISIBILE SOLO IN ADMIN */}
+              {/* Proof documents */}
+              {selectedReview.proof_documents && selectedReview.proof_documents.length > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    <h4 className="font-semibold text-blue-900">
+                      Documentazione fornita ({selectedReview.proof_documents.length} documento{selectedReview.proof_documents.length > 1 ? 'i' : ''})
+                    </h4>
+                  </div>
+                </div>
+              )}
+
+              {/* Proof image */}
               {selectedReview.proof_image_url && (
-                <div className="bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-300 rounded-lg p-4">
+                <div className="bg-gradient-to-br from-blue-50 to-green-50 border-2 border-blue-300 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <CheckCircle className="w-5 h-5 text-blue-600" />
-                    <label className="text-base font-bold text-blue-900">
+                    <ImageIcon className="w-5 h-5 text-blue-600" />
+                    <h4 className="text-base font-bold text-blue-900">
                       Prova di Acquisto (Visibile SOLO in Admin)
-                    </label>
+                    </h4>
+                    <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full">50 PUNTI</span>
                   </div>
                   <div className="bg-white rounded-lg p-2 border border-blue-200">
                     <img
@@ -867,12 +841,12 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                     />
                   </div>
                   <p className="text-xs text-blue-700 mt-2 italic">
-                    Questa immagine NON è visibile pubblicamente. Verrà eliminata automaticamente dopo l'approvazione o il rifiuto della recensione.
+                    Questa immagine NON e' visibile pubblicamente. Viene eliminata dopo l'approvazione o il rifiuto.
                   </p>
                 </div>
               )}
 
-              {/* Azioni */}
+              {/* Actions */}
               {selectedReview.review_status === 'pending' && (
                 <div className="space-y-3 pt-6 border-t">
                   <div className="flex gap-3">
@@ -881,21 +855,21 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                       className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-semibold"
                     >
                       <CheckCircle className="w-5 h-5" />
-                      Approva {selectedReview.proof_image_url ? '(50 punti)' : '(25 punti)'}
+                      Approva ({getExpectedPoints(selectedReview)} punti)
                     </button>
                     <button
                       onClick={() => openRejectModal(selectedReview.id)}
                       className="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 font-semibold"
                     >
                       <XCircle className="w-5 h-5" />
-                      Rifiuta Completamente
+                      Rifiuta
                     </button>
                   </div>
 
                   {selectedReview.proof_image_url && (
                     <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
                       <p className="text-sm text-yellow-800 font-medium mb-3">
-                        Se l'immagine non è valida ma la recensione è corretta, puoi approvarla comunque con 25 punti:
+                        Se l'immagine non e' valida ma la recensione e' corretta, puoi approvarla con 25 punti:
                       </p>
                       <button
                         onClick={() => approveReviewWithoutProof(selectedReview.id)}
@@ -920,7 +894,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
             <div className="p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Rifiuta Recensione</h3>
               <p className="text-gray-600 mb-4">
-                Inserisci la motivazione del rifiuto. L'utente riceverà una notifica con questa spiegazione.
+                Inserisci la motivazione del rifiuto. L'utente ricevera' una notifica con questa spiegazione.
               </p>
               <textarea
                 value={rejectReason}
@@ -957,7 +931,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
       {editingReview && editForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[70]">
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-amber-600 to-amber-700 px-6 py-4 flex items-center justify-between">
+            <div className="sticky top-0 bg-gradient-to-r from-amber-600 to-amber-700 px-6 py-4 flex items-center justify-between z-10">
               <h3 className="text-xl font-bold text-white">Modifica Recensione</h3>
               <button
                 onClick={cancelEditReview}
@@ -968,7 +942,6 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
             </div>
 
             <div className="p-6 space-y-4">
-              {/* Info Recensore (sola lettura) */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="font-semibold text-gray-900 mb-2">Informazioni Recensore</h4>
                 <div className="text-sm space-y-1">
@@ -978,10 +951,10 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                   </p>
                   <p>
                     <span className="text-gray-600">Email:</span>
-                    <span className="ml-2 font-medium">{editingReview.customer.email}</span>
+                    <span className="ml-2 font-medium">{editingReview.customer?.email}</span>
                   </p>
                   <p>
-                    <span className="text-gray-600">Attività:</span>
+                    <span className="text-gray-600">Attivita':</span>
                     <span className="ml-2 font-medium">{getBusinessName(editingReview)}</span>
                   </p>
                   <p>
@@ -993,11 +966,8 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                 </div>
               </div>
 
-              {/* Titolo */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Titolo Recensione *
-                </label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Titolo Recensione *</label>
                 <input
                   type="text"
                   value={editForm.title || ''}
@@ -1007,11 +977,8 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                 />
               </div>
 
-              {/* Contenuto */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Contenuto Recensione *
-                </label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Contenuto Recensione *</label>
                 <textarea
                   value={editForm.content || ''}
                   onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
@@ -1020,95 +987,40 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                 />
               </div>
 
-              {/* Valutazioni */}
-              <div className="space-y-3">
-                <h4 className="font-semibold text-gray-900">Valutazioni</h4>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    1. Qualità *
-                  </label>
-                  <select
-                    value={editForm.quality_rating || ''}
-                    onChange={(e) => setEditForm({ ...editForm, quality_rating: Number(e.target.value) })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  >
-                    <option value="">Seleziona...</option>
-                    <option value="1">⭐ Pessimo (1)</option>
-                    <option value="2">⭐⭐ Discreto (2)</option>
-                    <option value="3">⭐⭐⭐ Buono (3)</option>
-                    <option value="4">⭐⭐⭐⭐ Eccellente (4)</option>
-                    <option value="5">⭐⭐⭐⭐⭐ Ottimo (5)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    2. Prezzo *
-                  </label>
-                  <select
-                    value={editForm.price_rating || ''}
-                    onChange={(e) => setEditForm({ ...editForm, price_rating: Number(e.target.value) })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  >
-                    <option value="">Seleziona...</option>
-                    <option value="1">⭐ Pessimo (1)</option>
-                    <option value="2">⭐⭐ Discreto (2)</option>
-                    <option value="3">⭐⭐⭐ Buono (3)</option>
-                    <option value="4">⭐⭐⭐⭐ Eccellente (4)</option>
-                    <option value="5">⭐⭐⭐⭐⭐ Ottimo (5)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    3. Esperienza / Servizio *
-                  </label>
-                  <select
-                    value={editForm.service_rating || ''}
-                    onChange={(e) => setEditForm({ ...editForm, service_rating: Number(e.target.value) })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  >
-                    <option value="">Seleziona...</option>
-                    <option value="1">⭐ Pessimo (1)</option>
-                    <option value="2">⭐⭐ Discreto (2)</option>
-                    <option value="3">⭐⭐⭐ Buono (3)</option>
-                    <option value="4">⭐⭐⭐⭐ Eccellente (4)</option>
-                    <option value="5">⭐⭐⭐⭐⭐ Ottimo (5)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    4. Voto Generale *
-                  </label>
-                  <select
-                    value={editForm.overall_rating || ''}
-                    onChange={(e) => setEditForm({ ...editForm, overall_rating: Number(e.target.value) })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  >
-                    <option value="">Seleziona...</option>
-                    <option value="1">⭐ Pessimo (1)</option>
-                    <option value="2">⭐⭐ Discreto (2)</option>
-                    <option value="3">⭐⭐⭐ Buono (3)</option>
-                    <option value="4">⭐⭐⭐⭐ Eccellente (4)</option>
-                    <option value="5">⭐⭐⭐⭐⭐ Ottimo (5)</option>
-                  </select>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Voto Generale *</label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setEditForm({ ...editForm, overall_rating: star })}
+                      className="p-1"
+                    >
+                      <Star
+                        className={`w-8 h-8 transition-colors ${
+                          star <= (editForm.overall_rating || 0)
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-gray-300 hover:text-yellow-300'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                  <span className="self-center text-sm text-gray-600 ml-2">
+                    {editForm.overall_rating ? getRatingLabel(editForm.overall_rating) : ''}
+                  </span>
                 </div>
               </div>
 
-              {/* Stato Recensione (sola lettura) */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="font-semibold text-gray-900 mb-2">Stato</h4>
-                <span
-                  className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                    editingReview.review_status === 'approved'
-                      ? 'bg-green-100 text-green-700'
-                      : editingReview.review_status === 'rejected'
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-yellow-100 text-yellow-700'
-                  }`}
-                >
+                <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                  editingReview.review_status === 'approved'
+                    ? 'bg-green-100 text-green-700'
+                    : editingReview.review_status === 'rejected'
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-yellow-100 text-yellow-700'
+                }`}>
                   {editingReview.review_status === 'approved'
                     ? 'Approvata'
                     : editingReview.review_status === 'rejected'
