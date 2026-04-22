@@ -1276,6 +1276,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
         <ReviewForm
           businessId={businessId}
           businessName={business.name}
+          businessType={(business as any).business_type}
           onClose={() => setShowReviewForm(false)}
           onSuccess={() => {
             setShowReviewForm(false);

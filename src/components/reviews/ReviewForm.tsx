@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 interface ReviewFormProps {
   businessId?: string;
   businessName?: string;
+  businessType?: 'imported' | 'user_added' | 'registered';
   businessLocationId?: string;
   unclaimedBusinessLocationId?: string;
   onClose: () => void;
@@ -24,6 +25,7 @@ interface RatingGroup {
 export function ReviewForm({
   businessId,
   businessName,
+  businessType,
   businessLocationId,
   unclaimedBusinessLocationId,
   onClose,
@@ -208,9 +210,12 @@ export function ReviewForm({
       const reviewData: any = {
         customer_id: profile?.id,
         family_member_id: activeProfile?.type === 'family_member' ? activeProfile.id : null,
-        business_id: businessId || null,
+        business_type: businessType || null,
+        business_id: businessType === 'registered' ? businessId : null,
         business_location_id: businessLocationId || null,
-        unclaimed_business_location_id: unclaimedBusinessLocationId || null,
+        imported_business_id: businessType === 'imported' ? businessId : null,
+        user_added_business_id: businessType === 'user_added' ? businessId : null,
+        unclaimed_business_location_id: unclaimedBusinessLocationId || (businessType === 'imported' ? businessId : null),
         review_type: reviewType,
         title,
         content,
