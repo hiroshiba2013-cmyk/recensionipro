@@ -1,4 +1,4 @@
-import { Clock, MapPin, Tag, TrendingUp } from 'lucide-react';
+import { Clock, MapPin, Tag, TrendingUp, User } from 'lucide-react';
 import { useNavigate } from '../Router';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -18,6 +18,7 @@ interface AuctionCardProps {
     status: string;
     ends_at: string;
     created_at: string;
+    current_bidder_nickname?: string;
     user?: {
       full_name?: string;
       nickname?: string;
@@ -108,16 +109,24 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
           </div>
           <div className="text-right">
             <div className="text-xs text-gray-500 mb-1">{t('current_bid')}</div>
-            <div className="text-lg font-bold text-blue-600 flex items-center gap-1">
-              {auction.current_price > 0 ? (
-                <>
+            {auction.current_price > 0 ? (
+              <>
+                <div className="text-lg font-bold text-blue-600 flex items-center justify-end gap-1">
                   <TrendingUp className="w-4 h-4" />
                   {auction.current_price.toFixed(2)} €
-                </>
-              ) : (
-                <span className="text-gray-400">{t('no_bids')}</span>
-              )}
-            </div>
+                </div>
+                {auction.current_bidder_nickname && (
+                  <div className="flex items-center justify-end gap-1 mt-0.5">
+                    <User className="w-3 h-3 text-blue-500" />
+                    <span className="text-xs font-medium text-blue-600 truncate max-w-[120px]">
+                      {auction.current_bidder_nickname}
+                    </span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-lg font-bold text-gray-400">{t('no_bids')}</div>
+            )}
           </div>
         </div>
 

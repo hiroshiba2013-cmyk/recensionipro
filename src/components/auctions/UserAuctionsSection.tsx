@@ -319,6 +319,9 @@ export function UserAuctionsSection() {
                         <div className="text-sm">
                           <span className="text-gray-500">Attuale: </span>
                           <span className="font-bold text-orange-600">{Number(auction.current_price).toFixed(2)} EUR</span>
+                          {auction.current_bidder_nickname && (
+                            <span className="text-xs text-gray-500 ml-1">di <span className="font-semibold text-gray-700">{auction.current_bidder_nickname}</span></span>
+                          )}
                         </div>
                       )}
                       {(auction.bid_count || 0) > 0 && (
@@ -421,6 +424,9 @@ export function UserAuctionsSection() {
                           <div className="text-sm">
                             <span className="text-gray-500">Miglior offerta: </span>
                             <span className="font-bold text-gray-800">{Number(auction.current_price).toFixed(2)} EUR</span>
+                            {auction.current_bidder_nickname && (
+                              <span className="text-xs text-gray-500 ml-1">di <span className="font-semibold text-gray-700">{auction.current_bidder_nickname}</span></span>
+                            )}
                           </div>
                         )}
                         {(auction.bid_count || 0) > 0 && (

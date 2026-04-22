@@ -336,16 +336,24 @@ export default function AuctionDetailPage() {
                 </div>
                 <div>
                   <div className="text-sm text-gray-600 mb-1">Offerta Attuale</div>
-                  <div className="text-2xl font-bold text-blue-600 flex items-center gap-2">
-                    {auction.current_price > 0 ? (
-                      <>
+                  {auction.current_price > 0 ? (
+                    <>
+                      <div className="text-2xl font-bold text-blue-600 flex items-center gap-2">
                         <TrendingUp className="w-6 h-6" />
                         {auction.current_price.toFixed(2)} €
-                      </>
-                    ) : (
-                      <span className="text-gray-400">Nessuna offerta</span>
-                    )}
-                  </div>
+                      </div>
+                      {(auction.current_bidder_nickname || highestBid) && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <User className="w-4 h-4 text-blue-500" />
+                          <span className="text-sm font-semibold text-blue-700">
+                            {auction.current_bidder_nickname || highestBid?.user?.nickname || highestBid?.user?.full_name || 'Utente'}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-2xl font-bold text-gray-400">Nessuna offerta</div>
+                  )}
                 </div>
               </div>
 

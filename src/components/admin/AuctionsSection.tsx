@@ -31,6 +31,7 @@ interface Auction {
   region: string;
   status: string;
   approval_status: string;
+  current_bidder_nickname?: string;
   ends_at: string;
   created_at: string;
   images: string[];
@@ -510,6 +511,11 @@ export default function AuctionsSection() {
                         <div className="text-sm font-medium text-orange-600">
                           {auction.current_price > 0 ? `${auction.current_price.toFixed(2)} EUR` : 'Nessuna'}
                         </div>
+                        {auction.current_bidder_nickname && (
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            di <span className="font-semibold text-gray-700">{auction.current_bidder_nickname}</span>
+                          </div>
+                        )}
                       </div>
                       <div>
                         <div className="text-xs text-gray-500">Offerte</div>
