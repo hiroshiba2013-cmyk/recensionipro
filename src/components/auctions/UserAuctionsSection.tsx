@@ -438,6 +438,3 @@ export function UserAuctionsSection() {
     </div>
   );
 }
-
-
-export { UserAuctionsSection }
