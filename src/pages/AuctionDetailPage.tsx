@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from '../components/Router';
 import { Clock, MapPin, Tag, TrendingUp, User, AlertCircle, CheckCircle, Euro } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,8 +17,8 @@ interface Bid {
 }
 
 export default function AuctionDetailPage() {
-  const { id } = useParams();
   const navigate = useNavigate();
+  const id = window.location.pathname.split('/auctions/')[1];
   const { user } = useAuth();
   const { t } = useLanguage();
   const [auction, setAuction] = useState<any>(null);
