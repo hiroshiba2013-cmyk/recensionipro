@@ -211,7 +211,7 @@ export function ReviewForm({
 
       const reviewData: any = {
         customer_id: profile?.id,
-        family_member_id: activeProfile?.type === 'family_member' ? activeProfile.id : null,
+        family_member_id: activeProfile && !activeProfile.isOwner ? activeProfile.id : null,
         business_type: businessType || null,
         business_id: businessType === 'registered' ? businessId : null,
         business_location_id: businessLocationId || null,
