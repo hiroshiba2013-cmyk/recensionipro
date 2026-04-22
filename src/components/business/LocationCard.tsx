@@ -164,25 +164,25 @@ export function LocationCard({ location }: LocationCardProps) {
               {location.business.category.name}
             </span>
           )}
+          {(location.review_count || 0) > 0 && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-yellow-50 rounded-full border border-yellow-200">
+              <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+              <span className="font-bold text-xs text-gray-900">{location.avg_rating!.toFixed(1)}</span>
+              <span className="text-xs text-gray-500">({location.review_count} {location.review_count === 1 ? 'recensione' : 'recensioni'})</span>
+            </div>
+          )}
           {(location.service_review_count || 0) > 0 && (
             <div className="flex items-center gap-1 px-2.5 py-1 bg-green-50 rounded-full border border-green-200">
               <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
               <span className="font-semibold text-xs text-green-900">{location.service_avg_rating!.toFixed(1)}</span>
-              <span className="text-xs text-green-700 font-medium">Servizio</span>
+              <span className="text-xs text-green-700 font-medium">Servizio ({location.service_review_count})</span>
             </div>
           )}
           {(location.management_review_count || 0) > 0 && (
             <div className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 rounded-full border border-blue-200">
               <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
               <span className="font-semibold text-xs text-blue-900">{location.management_avg_rating!.toFixed(1)}</span>
-              <span className="text-xs text-blue-700 font-medium">Gestione</span>
-            </div>
-          )}
-          {(location.service_review_count || 0) === 0 && (location.management_review_count || 0) === 0 && location.review_count !== undefined && location.review_count > 0 && (
-            <div className="flex items-center gap-1 px-2.5 py-1 bg-yellow-50 rounded-full border border-yellow-200">
-              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-              <span className="font-semibold text-xs text-gray-900">{location.avg_rating!.toFixed(1)}</span>
-              <span className="text-xs text-gray-500">({location.review_count})</span>
+              <span className="text-xs text-blue-700 font-medium">Gestione ({location.management_review_count})</span>
             </div>
           )}
         </div>
