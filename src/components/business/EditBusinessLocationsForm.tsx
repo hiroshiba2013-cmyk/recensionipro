@@ -290,11 +290,20 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    const { data: businessCheck } = await supabase
-      .from('businesses')
+    let { data: businessCheck } = await supabase
+      .from('registered_businesses')
       .select('id, owner_id')
       .eq('id', businessId)
       .maybeSingle();
+
+    if (!businessCheck) {
+      const result = await supabase
+        .from('businesses')
+        .select('id, owner_id')
+        .eq('id', businessId)
+        .maybeSingle();
+      businessCheck = result.data;
+    }
 
     if (!businessCheck || businessCheck.owner_id !== user?.id) {
       alert('Non hai i permessi per modificare questa attività');
