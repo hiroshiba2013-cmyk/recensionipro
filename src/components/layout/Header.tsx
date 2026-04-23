@@ -10,7 +10,7 @@ import { ActiveProfileIndicator } from '../profile/ActiveProfileIndicator';
 import { useNavigate } from '../Router';
 
 export function Header() {
-  const { user, profile, activeProfile, selectedBusinessLocationId, businessLocations } = useAuth();
+  const { user, profile, selectedBusinessLocationId, businessLocations } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -50,10 +50,6 @@ export function Header() {
     }
   }, [user, profile]);
 
-  const activeFamilyMemberId = activeProfile && !activeProfile.isOwner && profile?.user_type === 'customer'
-    ? activeProfile.id
-    : null;
-
   useEffect(() => {
     if (!user || !profile || profile.user_type === 'admin') return;
 
@@ -69,7 +65,7 @@ export function Header() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user, profile, activeFamilyMemberId, selectedBusinessLocationId]);
+  }, [user, profile]);
 
   const loadAdminData = async () => {
     if (!user?.id) return;
@@ -88,30 +84,10 @@ export function Header() {
   const loadUnreadMessages = async () => {
     if (!user?.id) return;
     try {
-      let convQuery = supabase.from('conversations').select('id');
-
-      if (profile?.user_type === 'customer') {
-        if (activeFamilyMemberId) {
-          convQuery = convQuery.or(
-            `and(participant1_id.eq.${user.id},participant1_family_member_id.eq.${activeFamilyMemberId}),` +
-            `and(participant2_id.eq.${user.id},participant2_family_member_id.eq.${activeFamilyMemberId})`
-          );
-        } else {
-          convQuery = convQuery.or(
-            `and(participant1_id.eq.${user.id},participant1_family_member_id.is.null),` +
-            `and(participant2_id.eq.${user.id},participant2_family_member_id.is.null)`
-          );
-        }
-      } else if (profile?.user_type === 'business' && selectedBusinessLocationId) {
-        convQuery = convQuery.or(
-          `and(participant1_id.eq.${user.id},participant1_location_id.eq.${selectedBusinessLocationId}),` +
-          `and(participant2_id.eq.${user.id},participant2_location_id.eq.${selectedBusinessLocationId})`
-        );
-      } else {
-        convQuery = convQuery.or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`);
-      }
-
-      const { data: convIds } = await convQuery;
+      const { data: convIds } = await supabase
+        .from('conversations')
+        .select('id')
+        .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`);
 
       if (!convIds || convIds.length === 0) {
         setUnreadMessages(0);

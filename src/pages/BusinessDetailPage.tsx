@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   MapPin, Phone, Mail, Globe, Star, Briefcase,
-  Building2, Clock, AlertCircle, CheckCircle, ArrowLeft, Flag,
-  Filter, Search, X as XIcon, MessageSquare, FileText, ShieldAlert
+  Building2, Clock, AlertCircle, CheckCircle, ArrowLeft, Flag
 } from 'lucide-react';
 import { supabase, Business, Review, JobPosting, BusinessLocation } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -34,8 +33,6 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
   const [claimingBusiness, setClaimingBusiness] = useState(false);
   const [filterLocationId, setFilterLocationId] = useState<string | null>(null);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [reviewTypeFilter, setReviewTypeFilter] = useState<string>('all');
-  const [reviewSearchTerm, setReviewSearchTerm] = useState('');
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -1101,7 +1098,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                       <div className="mb-6 space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {serviceReviews.length > 0 && (
-                            <button onClick={() => setReviewTypeFilter(reviewTypeFilter === 'service_used' ? 'all' : 'service_used')} className={`text-left bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-5 transition-all ${reviewTypeFilter === 'service_used' ? 'ring-4 ring-green-400 ring-offset-2 scale-[1.02]' : 'hover:scale-[1.01]'}`}>
+                            <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-5">
                               <p className="text-green-100 text-xs font-semibold uppercase tracking-wide mb-3">Servizio</p>
                               <div className="flex items-center gap-3">
                                 <div className="flex">
@@ -1114,11 +1111,11 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                               <p className="text-green-100 text-sm mt-2">
                                 {serviceReviews.length} {serviceReviews.length === 1 ? 'recensione' : 'recensioni'} &mdash; Ho usufruito del servizio
                               </p>
-                            </button>
+                            </div>
                           )}
                           {managementReviews.length > 0 && (
-                            <button onClick={() => setReviewTypeFilter(reviewTypeFilter === 'management' ? 'all' : 'management')} className={`text-left bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-5 transition-all ${reviewTypeFilter === 'management' ? 'ring-4 ring-blue-400 ring-offset-2 scale-[1.02]' : 'hover:scale-[1.01]'}`}>
-                              <p className="text-blue-100 text-xs font-semibold uppercase tracking-wide mb-3">Gestione e Affidabilita</p>
+                            <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-5">
+                              <p className="text-blue-100 text-xs font-semibold uppercase tracking-wide mb-3">Gestione e Affidabilita'</p>
                               <div className="flex items-center gap-3">
                                 <div className="flex">
                                   {[...Array(5)].map((_, i) => (
@@ -1130,16 +1127,16 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                               <p className="text-blue-100 text-sm mt-2">
                                 {managementReviews.length} {managementReviews.length === 1 ? 'recensione' : 'recensioni'} &mdash; Prenotazione, preventivo, assistenza
                               </p>
-                            </button>
+                            </div>
                           )}
                         </div>
 
                         {detailData.length > 0 && (
                           <div>
-                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Dettaglio Gestione e Affidabilita</p>
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Dettaglio Gestione e Affidabilita'</p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               {detailData.map(d => (
-                                <button key={d.key} onClick={() => setReviewTypeFilter(reviewTypeFilter === d.key ? 'all' : d.key)} className={`text-left bg-gradient-to-br ${d.bg} border rounded-lg p-4 transition-all ${reviewTypeFilter === d.key ? 'ring-2 ring-offset-1 ring-gray-400 scale-[1.02]' : 'hover:scale-[1.01]'}`}>
+                                <div key={d.key} className={`bg-gradient-to-br ${d.bg} border rounded-lg p-4`}>
                                   <p className={`text-xs font-semibold ${d.sub} mb-2`}>{d.label}</p>
                                   <div className="flex items-center gap-2">
                                     <div className="flex">
@@ -1152,7 +1149,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                                   <p className={`text-xs ${d.sub} mt-1`}>
                                     {d.reviews.length} {d.reviews.length === 1 ? 'recensione' : 'recensioni'}
                                   </p>
-                                </button>
+                                </div>
                               ))}
                             </div>
                           </div>
@@ -1161,115 +1158,19 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                     );
                   })()}
 
-                  {reviews.length > 0 && (
-                    <div className="mb-5 space-y-3">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                          type="text"
-                          value={reviewSearchTerm}
-                          onChange={(e) => setReviewSearchTerm(e.target.value)}
-                          placeholder="Cerca nelle recensioni..."
-                          className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
-                        />
-                        {reviewSearchTerm && (
-                          <button onClick={() => setReviewSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                            <XIcon className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        {[
-                          { key: 'all', label: 'Tutte', icon: Star, activeBg: 'bg-gray-800 text-white', inactiveBg: 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400', count: reviews.length },
-                          { key: 'service_used', label: 'Servizio', icon: CheckCircle, activeBg: 'bg-green-600 text-white', inactiveBg: 'bg-white border border-green-200 text-green-700 hover:border-green-400', count: reviews.filter(r => (r as any).review_type === 'service_used').length },
-                          { key: 'booking_not_completed', label: 'Prenotazione', icon: AlertCircle, activeBg: 'bg-red-600 text-white', inactiveBg: 'bg-white border border-red-200 text-red-700 hover:border-red-400', count: reviews.filter(r => (r as any).review_type === 'booking_not_completed').length },
-                          { key: 'quote_request', label: 'Preventivo', icon: FileText, activeBg: 'bg-blue-600 text-white', inactiveBg: 'bg-white border border-blue-200 text-blue-700 hover:border-blue-400', count: reviews.filter(r => (r as any).review_type === 'quote_request').length },
-                          { key: 'customer_service', label: 'Assistenza', icon: MessageSquare, activeBg: 'bg-teal-600 text-white', inactiveBg: 'bg-white border border-teal-200 text-teal-700 hover:border-teal-400', count: reviews.filter(r => (r as any).review_type === 'customer_service').length },
-                          { key: 'problem_before_service', label: 'Problema', icon: ShieldAlert, activeBg: 'bg-amber-500 text-white', inactiveBg: 'bg-white border border-amber-200 text-amber-700 hover:border-amber-400', count: reviews.filter(r => (r as any).review_type === 'problem_before_service').length },
-                        ].filter(f => f.key === 'all' || f.count > 0).map(f => {
-                          const Icon = f.icon;
-                          const isActive = reviewTypeFilter === f.key;
-                          return (
-                            <button
-                              key={f.key}
-                              onClick={() => setReviewTypeFilter(f.key)}
-                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${isActive ? f.activeBg : f.inactiveBg}`}
-                            >
-                              <Icon className="w-3.5 h-3.5" />
-                              {f.label}
-                              <span className={`ml-0.5 ${isActive ? 'opacity-80' : 'opacity-60'}`}>({f.count})</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {(reviewTypeFilter !== 'all' || reviewSearchTerm) && (
-                        <div className="flex items-center justify-between text-xs text-gray-500">
-                          <span>
-                            {(() => {
-                              const MGMT = ['booking_not_completed', 'quote_request', 'customer_service', 'problem_before_service'];
-                              const filtered = reviews.filter(r => {
-                                const rt = (r as any).review_type;
-                                if (reviewTypeFilter === 'management') { if (!MGMT.includes(rt)) return false; }
-                                else if (reviewTypeFilter !== 'all') { if (rt !== reviewTypeFilter) return false; }
-                                if (reviewSearchTerm.trim()) {
-                                  const term = reviewSearchTerm.toLowerCase();
-                                  if (!r.content?.toLowerCase().includes(term) && !r.title?.toLowerCase().includes(term)) return false;
-                                }
-                                return true;
-                              });
-                              return `${filtered.length} di ${reviews.length} recensioni`;
-                            })()}
-                          </span>
-                          <button onClick={() => { setReviewTypeFilter('all'); setReviewSearchTerm(''); }} className="text-blue-600 hover:text-blue-800 font-medium">
-                            Resetta filtri
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
                   {reviews.length === 0 ? (
                     <p className="text-gray-600 text-center py-8 bg-gray-50 rounded-lg">
                       {profile?.user_type === 'business'
                         ? 'Nessuna recensione ancora.'
                         : 'Nessuna recensione ancora. Sii il primo a recensire!'}
                     </p>
-                  ) : (() => {
-                    const MGMT = ['booking_not_completed', 'quote_request', 'customer_service', 'problem_before_service'];
-                    const filteredReviews = reviews.filter(r => {
-                      const rt = (r as any).review_type;
-                      if (reviewTypeFilter === 'management') { if (!MGMT.includes(rt)) return false; }
-                      else if (reviewTypeFilter !== 'all') { if (rt !== reviewTypeFilter) return false; }
-                      if (reviewSearchTerm.trim()) {
-                        const term = reviewSearchTerm.toLowerCase();
-                        if (!r.content?.toLowerCase().includes(term) && !r.title?.toLowerCase().includes(term)) return false;
-                      }
-                      return true;
-                    });
-
-                    if (filteredReviews.length === 0) {
-                      return (
-                        <div className="text-center py-8 bg-gray-50 rounded-lg">
-                          <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                          <p className="text-gray-600 font-medium">Nessuna recensione trovata</p>
-                          <p className="text-gray-400 text-sm mt-1">Prova a modificare i filtri</p>
-                          <button onClick={() => { setReviewTypeFilter('all'); setReviewSearchTerm(''); }} className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium">
-                            Resetta filtri
-                          </button>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div className="space-y-4">
-                        {filteredReviews.map((review) => (
-                          <ReviewCard key={review.id} review={review} />
-                        ))}
-                      </div>
-                    );
-                  })()}
+                  ) : (
+                    <div className="space-y-4">
+                      {reviews.map((review) => (
+                        <ReviewCard key={review.id} review={review} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
