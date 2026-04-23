@@ -57,6 +57,14 @@ const TYPE_BG: Record<string, string> = {
   problem_before_service: 'from-amber-50 to-yellow-50 border-amber-200',
 };
 
+const TYPE_CARD_ACCENT: Record<string, { border: string; stripe: string; bg: string }> = {
+  service_used: { border: 'border-green-300', stripe: 'bg-green-500', bg: 'bg-green-50/40' },
+  booking_not_completed: { border: 'border-red-300', stripe: 'bg-red-500', bg: 'bg-red-50/40' },
+  quote_request: { border: 'border-blue-300', stripe: 'bg-blue-500', bg: 'bg-blue-50/40' },
+  customer_service: { border: 'border-teal-300', stripe: 'bg-teal-500', bg: 'bg-teal-50/40' },
+  problem_before_service: { border: 'border-amber-300', stripe: 'bg-amber-500', bg: 'bg-amber-50/40' },
+};
+
 export function ReviewCard({ review }: ReviewCardProps) {
   const { user } = useAuth();
   const isOwnReview = user?.id === review.customer_id;
@@ -102,8 +110,12 @@ export function ReviewCard({ review }: ReviewCardProps) {
   const hasBookingRating = (review as any)[BOOKING_CRITERION.field] != null && (review as any)[BOOKING_CRITERION.field] > 0;
   const hasCriteriaRatings = (criteria && criteria.some(c => (review as any)[c.field] != null && (review as any)[c.field] > 0)) || hasBookingRating;
 
+  const cardAccent = reviewType ? TYPE_CARD_ACCENT[reviewType] : null;
+
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+    <div className={`rounded-lg shadow-sm border overflow-hidden ${cardAccent ? `${cardAccent.border} ${cardAccent.bg}` : 'border-gray-100 bg-white'}`}>
+      {cardAccent && <div className={`h-1 ${cardAccent.stripe}`} />}
+      <div className="p-6">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -201,6 +213,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
           <ReportButton entityType="review" entityId={review.id} />
         </div>
       )}
+      </div>
     </div>
   );
 }
