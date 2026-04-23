@@ -465,7 +465,7 @@ function AuthenticatedHomePage() {
 
   useEffect(() => {
     loadHomeData();
-  }, [user, profile?.user_type, profile?.business_id]);
+  }, [user, profile?.user_type, profile?.business_id, activeProfile?.id]);
 
   const loadHomeData = async () => {
     try {
