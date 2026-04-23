@@ -20,6 +20,7 @@ interface RatingGroup {
   label: string;
   value: number;
   setter: (v: number) => void;
+  optional?: boolean;
 }
 
 export function ReviewForm({
@@ -36,15 +37,16 @@ export function ReviewForm({
   const [step, setStep] = useState(1);
   const [reviewType, setReviewType] = useState<ReviewType | null>(null);
 
+  // Shared optional rating (available for all types)
+  const [gestionePrenotazione, setGestionePrenotazione] = useState(0);
+
   // service_used ratings
-  const [serviceGestionePrenotazione, setServiceGestionePrenotazione] = useState(0);
   const [serviceAffidabilita, setServiceAffidabilita] = useState(0);
   const [serviceOrganizzazione, setServiceOrganizzazione] = useState(0);
   const [serviceEsperienza, setServiceEsperienza] = useState(0);
   const [servicePrezzo, setServicePrezzo] = useState(0);
 
   // booking_not_completed ratings
-  const [bookingGestionePrenotazione, setBookingGestionePrenotazione] = useState(0);
   const [bookingAffidabilita, setBookingAffidabilita] = useState(0);
   const [bookingOrganizzazione, setBookingOrganizzazione] = useState(0);
   const [bookingComunicazione, setBookingComunicazione] = useState(0);
@@ -83,43 +85,50 @@ export function ReviewForm({
     { value: 'problem_before_service', label: 'Ho avuto un problema prima dell\'erogazione', icon: '⚠', color: 'amber' }
   ];
 
+  const bookingOptionalRating: RatingGroup = {
+    key: 'gestione_prenotazione', label: 'Gestione Prenotazione (facoltativo)', value: gestionePrenotazione, setter: setGestionePrenotazione, optional: true,
+  };
+
   const getRatingGroupsForType = (type: ReviewType): RatingGroup[] => {
     switch (type) {
       case 'service_used':
         return [
-          { key: 'service_gestione', label: 'Gestione Prenotazione', value: serviceGestionePrenotazione, setter: setServiceGestionePrenotazione },
-          { key: 'service_affidabilita', label: 'Affidabilità', value: serviceAffidabilita, setter: setServiceAffidabilita },
+          { key: 'service_affidabilita', label: 'Affidabilita', value: serviceAffidabilita, setter: setServiceAffidabilita },
           { key: 'service_organizzazione', label: 'Organizzazione', value: serviceOrganizzazione, setter: setServiceOrganizzazione },
           { key: 'service_esperienza', label: 'Esperienza/Servizio', value: serviceEsperienza, setter: setServiceEsperienza },
           { key: 'service_prezzo', label: 'Prezzo', value: servicePrezzo, setter: setServicePrezzo },
+          bookingOptionalRating,
         ];
       case 'booking_not_completed':
         return [
-          { key: 'booking_gestione', label: 'Gestione Prenotazione', value: bookingGestionePrenotazione, setter: setBookingGestionePrenotazione },
-          { key: 'booking_affidabilita', label: 'Affidabilità', value: bookingAffidabilita, setter: setBookingAffidabilita },
+          { key: 'booking_affidabilita', label: 'Affidabilita', value: bookingAffidabilita, setter: setBookingAffidabilita },
           { key: 'booking_organizzazione', label: 'Organizzazione', value: bookingOrganizzazione, setter: setBookingOrganizzazione },
           { key: 'booking_comunicazione', label: 'Comunicazione', value: bookingComunicazione, setter: setBookingComunicazione },
+          bookingOptionalRating,
         ];
       case 'quote_request':
         return [
           { key: 'quote_chiarezza', label: 'Chiarezza', value: quoteChiarezza, setter: setQuoteChiarezza },
           { key: 'quote_trasparenza', label: 'Trasparenza', value: quoteTrasparenza, setter: setQuoteTrasparenza },
           { key: 'quote_tempistiche', label: 'Tempistiche Risposta', value: quoteTempisticheRisposta, setter: setQuoteTempisticheRisposta },
-          { key: 'quote_disponibilita', label: 'Disponibilità', value: quoteDisponibilita, setter: setQuoteDisponibilita },
+          { key: 'quote_disponibilita', label: 'Disponibilita', value: quoteDisponibilita, setter: setQuoteDisponibilita },
+          bookingOptionalRating,
         ];
       case 'customer_service':
         return [
           { key: 'cs_cortesia', label: 'Cortesia', value: csCortesia, setter: setCsCortesia },
           { key: 'cs_competenza', label: 'Competenza', value: csCompetenza, setter: setCsCompetenza },
-          { key: 'cs_rapidita', label: 'Rapidità', value: csRapidita, setter: setCsRapidita },
+          { key: 'cs_rapidita', label: 'Rapidita', value: csRapidita, setter: setCsRapidita },
           { key: 'cs_risoluzione', label: 'Risoluzione Problema', value: csRisoluzioneProblem, setter: setCsRisoluzioneProblem },
+          bookingOptionalRating,
         ];
       case 'problem_before_service':
         return [
-          { key: 'problem_affidabilita', label: 'Affidabilità', value: problemAffidabilita, setter: setProblemAffidabilita },
+          { key: 'problem_affidabilita', label: 'Affidabilita', value: problemAffidabilita, setter: setProblemAffidabilita },
           { key: 'problem_organizzazione', label: 'Organizzazione', value: problemOrganizzazione, setter: setProblemOrganizzazione },
           { key: 'problem_gestione', label: 'Gestione Problema', value: problemGestioneProblema, setter: setProblemGestioneProblema },
           { key: 'problem_comunicazione', label: 'Comunicazione', value: problemComunicazione, setter: setProblemComunicazione },
+          bookingOptionalRating,
         ];
       default:
         return [];
@@ -128,13 +137,14 @@ export function ReviewForm({
 
   const allRatingsFilledForType = (type: ReviewType): boolean => {
     const groups = getRatingGroupsForType(type);
-    return groups.every(g => g.value > 0);
+    return groups.filter(g => !g.optional).every(g => g.value > 0);
   };
 
   const getAverageRatingForType = (type: ReviewType): number => {
     const groups = getRatingGroupsForType(type);
-    if (groups.length === 0 || !allRatingsFilledForType(type)) return 0;
-    return groups.reduce((sum, g) => sum + g.value, 0) / groups.length;
+    const filled = groups.filter(g => g.value > 0);
+    if (filled.length === 0 || !allRatingsFilledForType(type)) return 0;
+    return filled.reduce((sum, g) => sum + g.value, 0) / filled.length;
   };
 
   const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -227,14 +237,16 @@ export function ReviewForm({
         review_status: 'pending'
       };
 
+      if (gestionePrenotazione > 0) {
+        reviewData.booking_management_rating = gestionePrenotazione;
+      }
+
       if (reviewType === 'service_used') {
-        reviewData.booking_management_rating = serviceGestionePrenotazione;
         reviewData.reliability_rating = serviceAffidabilita;
         reviewData.organization_rating = serviceOrganizzazione;
         reviewData.experience_rating = serviceEsperienza;
         reviewData.price_rating = servicePrezzo;
       } else if (reviewType === 'booking_not_completed') {
-        reviewData.booking_gestione_prenotazione = bookingGestionePrenotazione;
         reviewData.booking_affidabilita = bookingAffidabilita;
         reviewData.booking_organizzazione = bookingOrganizzazione;
         reviewData.booking_comunicazione = bookingComunicazione;
@@ -378,11 +390,24 @@ export function ReviewForm({
               <div className="space-y-1">
                 <h3 className="font-semibold text-lg mb-5 text-gray-900">{getStepTitle(reviewType)}</h3>
 
-                {getRatingGroupsForType(reviewType).map((group) => (
+                {getRatingGroupsForType(reviewType).filter(g => !g.optional).map((group) => (
                   <div key={group.key}>
                     {renderStarRating(group.value, group.setter, group.label)}
                   </div>
                 ))}
+
+                {/* Optional booking rating separator */}
+                <div className="border-t border-dashed border-gray-200 pt-4 mt-4">
+                  <p className="text-xs text-gray-500 mb-3 uppercase tracking-wide font-semibold">Valutazione facoltativa</p>
+                  {getRatingGroupsForType(reviewType).filter(g => g.optional).map((group) => (
+                    <div key={group.key} className="bg-gray-50 rounded-lg p-3 -mx-1">
+                      {renderStarRating(group.value, group.setter, group.label)}
+                      {group.value === 0 && (
+                        <p className="text-xs text-gray-400 -mt-3 ml-1">Non tutte le attivita richiedono prenotazione. Valuta solo se applicabile.</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
 
                 {allRatingsFilledForType(reviewType) && (
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-2">

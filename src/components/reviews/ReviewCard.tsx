@@ -15,17 +15,17 @@ const reviewTypeLabels: Record<string, { label: string; color: string }> = {
   problem_before_service: { label: 'Problema Pre-Servizio', color: 'bg-amber-100 text-amber-800' },
 };
 
+const BOOKING_CRITERION = { label: 'Gestione Prenotazione', field: 'booking_management_rating' };
+
 const TYPE_CRITERIA: Record<string, { label: string; field: string }[]> = {
   service_used: [
-    { label: 'Gestione Prenotazione', field: 'booking_management_rating' },
-    { label: 'Affidabilità', field: 'reliability_rating' },
+    { label: 'Affidabilita', field: 'reliability_rating' },
     { label: 'Organizzazione', field: 'organization_rating' },
     { label: 'Esperienza/Servizio', field: 'experience_rating' },
     { label: 'Prezzo', field: 'price_rating' },
   ],
   booking_not_completed: [
-    { label: 'Gestione Prenotazione', field: 'booking_gestione_prenotazione' },
-    { label: 'Affidabilità', field: 'booking_affidabilita' },
+    { label: 'Affidabilita', field: 'booking_affidabilita' },
     { label: 'Organizzazione', field: 'booking_organizzazione' },
     { label: 'Comunicazione', field: 'booking_comunicazione' },
   ],
@@ -33,16 +33,16 @@ const TYPE_CRITERIA: Record<string, { label: string; field: string }[]> = {
     { label: 'Chiarezza', field: 'quote_chiarezza' },
     { label: 'Trasparenza', field: 'quote_trasparenza' },
     { label: 'Tempistiche Risposta', field: 'quote_tempistiche_risposta' },
-    { label: 'Disponibilità', field: 'quote_disponibilita' },
+    { label: 'Disponibilita', field: 'quote_disponibilita' },
   ],
   customer_service: [
     { label: 'Cortesia', field: 'cs_cortesia' },
     { label: 'Competenza', field: 'cs_competenza' },
-    { label: 'Rapidità', field: 'cs_rapidita' },
+    { label: 'Rapidita', field: 'cs_rapidita' },
     { label: 'Risoluzione Problema', field: 'cs_risoluzione_problema' },
   ],
   problem_before_service: [
-    { label: 'Affidabilità', field: 'problem_affidabilita' },
+    { label: 'Affidabilita', field: 'problem_affidabilita' },
     { label: 'Organizzazione', field: 'problem_organizzazione' },
     { label: 'Gestione Problema', field: 'problem_gestione_problema' },
     { label: 'Comunicazione', field: 'problem_comunicazione' },
@@ -99,7 +99,8 @@ export function ReviewCard({ review }: ReviewCardProps) {
   const bgClass = reviewType ? (TYPE_BG[reviewType] || 'from-gray-50 to-gray-50 border-gray-200') : '';
   const typeInfo = reviewType ? reviewTypeLabels[reviewType] : null;
 
-  const hasCriteriaRatings = criteria && criteria.some(c => (review as any)[c.field] != null && (review as any)[c.field] > 0);
+  const hasBookingRating = (review as any)[BOOKING_CRITERION.field] != null && (review as any)[BOOKING_CRITERION.field] > 0;
+  const hasCriteriaRatings = (criteria && criteria.some(c => (review as any)[c.field] != null && (review as any)[c.field] > 0)) || hasBookingRating;
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
@@ -152,9 +153,9 @@ export function ReviewCard({ review }: ReviewCardProps) {
         </div>
       )}
 
-      {hasCriteriaRatings && criteria && (
-        <div className={`grid grid-cols-2 md:grid-cols-${Math.min(criteria.length, 5)} gap-3 mb-4 p-4 bg-gradient-to-r ${bgClass} rounded-lg border`}>
-          {criteria.map((c) => {
+      {hasCriteriaRatings && (
+        <div className={`grid grid-cols-2 md:grid-cols-${Math.min((criteria?.length || 0) + (hasBookingRating ? 1 : 0), 5)} gap-3 mb-4 p-4 bg-gradient-to-r ${bgClass} rounded-lg border`}>
+          {criteria?.map((c) => {
             const val = (review as any)[c.field];
             if (!val || val === 0) return null;
             return (
@@ -165,6 +166,13 @@ export function ReviewCard({ review }: ReviewCardProps) {
               </div>
             );
           })}
+          {hasBookingRating && (
+            <div>
+              <p className="text-xs font-medium text-gray-700 mb-1">{BOOKING_CRITERION.label}</p>
+              {renderStars((review as any)[BOOKING_CRITERION.field])}
+              <p className="text-xs text-gray-600 mt-1">{getRatingLabel((review as any)[BOOKING_CRITERION.field])}</p>
+            </div>
+          )}
         </div>
       )}
 
