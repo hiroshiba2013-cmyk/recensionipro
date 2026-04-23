@@ -1870,7 +1870,7 @@ export function ProfilePage() {
 
             {business && (
               <>
-                {businessLocations.length > 0 && (
+                {businessLocations.length > 1 && (
                   <div className="bg-gradient-to-r from-blue-50 to-slate-50 rounded-xl shadow-lg p-6 mb-8 border-2 border-blue-300">
                     <div className="flex items-center gap-3 mb-4">
                       <MapPin className="w-6 h-6 text-blue-600" />

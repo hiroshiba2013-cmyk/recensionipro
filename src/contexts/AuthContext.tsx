@@ -294,16 +294,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
       } else if (locations && locations.length === 1) {
-        const singleLocation = locations[0];
         setActiveProfileState({
-          id: singleLocation.id,
-          name: singleLocation.name,
-          nickname: `${singleLocation.city}, ${singleLocation.province}`,
-          avatarUrl: singleLocation.avatar_url,
-          isOwner: false,
+          id: userId,
+          name: profileData.full_name,
+          nickname: (profileData as any)?.nickname,
+          avatarUrl: (profileData as any)?.avatar_url,
+          isOwner: true,
         });
-        localStorage.setItem(`activeLocation_${userId}`, singleLocation.id);
-        localStorage.setItem(`activeLocationIsOwner_${userId}`, 'false');
+        localStorage.setItem(`activeLocation_${userId}`, userId);
+        localStorage.setItem(`activeLocationIsOwner_${userId}`, 'true');
         setNeedsProfileSelection(false);
       } else {
         if ((locations?.length || 0) > 0) {
