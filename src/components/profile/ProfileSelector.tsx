@@ -68,30 +68,7 @@ export function ProfileSelector({ ownerProfile, familyMembers = [], businessLoca
           return;
         }
       } else {
-        // Per business, prova prima registered_business_locations poi business_locations
-        if (userType === 'business') {
-          let { data } = await supabase
-            .from('registered_business_locations')
-            .select('pin_enabled, pin_code')
-            .eq('id', profile.id)
-            .maybeSingle();
-
-          // Fallback a business_locations
-          if (!data) {
-            const result = await supabase
-              .from('business_locations')
-              .select('pin_enabled, pin_code')
-              .eq('id', profile.id)
-              .maybeSingle();
-            data = result.data;
-          }
-
-          if (data?.pin_enabled && data?.pin_code) {
-            setSelectedProfile(profile);
-            setShowPinModal(true);
-            return;
-          }
-        } else {
+        if (userType !== 'business') {
           const { data } = await supabase
             .from('customer_family_members')
             .select('pin_enabled, pin_code')
@@ -137,31 +114,7 @@ export function ProfileSelector({ ownerProfile, familyMembers = [], businessLoca
           setPinError('PIN non corretto');
         }
       } else {
-        // Per business, prova prima registered_business_locations poi business_locations
-        if (userType === 'business') {
-          let { data } = await supabase
-            .from('registered_business_locations')
-            .select('pin_code')
-            .eq('id', selectedProfile.id)
-            .maybeSingle();
-
-          // Fallback a business_locations
-          if (!data) {
-            const result = await supabase
-              .from('business_locations')
-              .select('pin_code')
-              .eq('id', selectedProfile.id)
-              .maybeSingle();
-            data = result.data;
-          }
-
-          if (data?.pin_code === hashedInput) {
-            onSelectProfile(selectedProfile.id, selectedProfile.isOwner);
-            setShowPinModal(false);
-          } else {
-            setPinError('PIN non corretto');
-          }
-        } else {
+        if (userType !== 'business') {
           const { data } = await supabase
             .from('customer_family_members')
             .select('pin_code')

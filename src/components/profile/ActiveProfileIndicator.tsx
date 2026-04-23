@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { UserCircle2, ChevronDown, Building2, Lock, X } from 'lucide-react';
+import { CircleUser as UserCircle2, ChevronDown, Building2, Lock, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 
@@ -148,7 +148,7 @@ export function ActiveProfileIndicator() {
     return null;
   }
 
-  if (isBusiness && businessLocations.length === 0) {
+  if (isBusiness && businessLocations.length <= 1) {
     return null;
   }
 

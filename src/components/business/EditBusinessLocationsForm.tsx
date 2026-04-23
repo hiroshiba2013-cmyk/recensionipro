@@ -354,47 +354,37 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
 
         const tableName = isRegisteredBusiness ? 'registered_business_locations' : 'business_locations';
 
+        const locationFields: Record<string, any> = {
+          name: name.trim() || 'Sede',
+          internal_name: location.internal_name?.trim() || null,
+          city: city.trim(),
+          province: province.trim(),
+          postal_code: postalCode.trim(),
+          phone: phone.trim() || null,
+          email: email.trim() || null,
+          business_hours: location.business_hours,
+          is_primary: location.is_primary,
+          description: location.description?.trim() || null,
+          services: servicesArray,
+          services_description: location.services_description?.trim() || null,
+        };
+
+        if (isRegisteredBusiness) {
+          locationFields.street = address.trim();
+        } else {
+          locationFields.address = address.trim();
+        }
+
         if (location.id.startsWith('new-')) {
           const { error } = await supabase
             .from(tableName)
-            .insert({
-              business_id: businessId,
-              name: name.trim() || 'Sede',
-              internal_name: location.internal_name?.trim() || null,
-              street: address.trim(),  // registered_business_locations usa 'street'
-              address: address.trim(), // business_locations usa 'address'
-              city: city.trim(),
-              province: province.trim(),
-              postal_code: postalCode.trim(),
-              phone: phone.trim() || null,
-              email: email.trim() || null,
-              business_hours: location.business_hours,
-              is_primary: location.is_primary,
-              description: location.description?.trim() || null,
-              services: servicesArray,
-              services_description: location.services_description?.trim() || null,
-            });
+            .insert({ business_id: businessId, ...locationFields });
 
           if (error) throw error;
         } else {
           const { error } = await supabase
             .from(tableName)
-            .update({
-              name: name.trim() || 'Sede',
-              internal_name: location.internal_name?.trim() || null,
-              street: address.trim(),  // registered_business_locations usa 'street'
-              address: address.trim(), // business_locations usa 'address'
-              city: city.trim(),
-              province: province.trim(),
-              postal_code: postalCode.trim(),
-              phone: phone.trim() || null,
-              email: email.trim() || null,
-              business_hours: location.business_hours,
-              is_primary: location.is_primary,
-              description: location.description?.trim() || null,
-              services: servicesArray,
-              services_description: location.services_description?.trim() || null,
-            })
+            .update(locationFields)
             .eq('id', location.id);
 
           if (error) throw error;
