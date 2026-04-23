@@ -565,7 +565,9 @@ export function AdminDashboardPage() {
         created_at,
         reported_entity_type,
         reported_entity_id,
-        reporter:profiles!reports_reporter_id_fkey(full_name, email, nickname)
+        family_member_id,
+        reporter:profiles!reports_reporter_id_fkey(full_name, email, nickname),
+        family_member:customer_family_members!reports_family_member_id_fkey(first_name, last_name, nickname)
       `)
       .order('created_at', { ascending: false })
       .limit(100);

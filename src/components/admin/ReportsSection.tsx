@@ -10,11 +10,17 @@ interface Report {
   created_at: string;
   reported_entity_type: string;
   reported_entity_id: string;
+  family_member_id: string | null;
   reporter: {
     full_name: string;
     nickname: string | null;
     email: string;
   };
+  family_member?: {
+    first_name: string;
+    last_name: string;
+    nickname: string | null;
+  } | null;
   entity_name?: string;
 }
 
@@ -185,7 +191,7 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
   const filteredReports = reports.filter(report => {
     const matchesType = filterType === 'all' || report.reported_entity_type === filterType;
     const matchesSearch = searchTerm === '' ||
-      (report.reporter.nickname || report.reporter.full_name).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      getReporterName(report).toLowerCase().includes(searchTerm.toLowerCase()) ||
       report.reporter.email.toLowerCase().includes(searchTerm.toLowerCase());
 
     return matchesType && matchesSearch;
@@ -218,6 +224,13 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
       default:
         return type;
     }
+  };
+
+  const getReporterName = (report: Report) => {
+    if (report.family_member) {
+      return report.family_member.nickname || `${report.family_member.first_name} ${report.family_member.last_name}`;
+    }
+    return report.reporter.nickname || report.reporter.full_name;
   };
 
   const getReasonLabel = (reason: string) => {
@@ -330,7 +343,10 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
                       </p>
                     )}
                     <p className="text-sm font-semibold text-gray-900">
-                      Segnalato da: {report.reporter.nickname || report.reporter.full_name}
+                      Segnalato da: {getReporterName(report)}
+                      {report.family_member && (
+                        <span className="ml-2 text-xs font-normal text-gray-500">(membro famiglia di {report.reporter.nickname || report.reporter.full_name})</span>
+                      )}
                     </p>
                     <p className="text-sm text-gray-600">
                       {report.reporter.email}
@@ -415,7 +431,10 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
                       </p>
                     )}
                     <p className="text-sm font-medium text-gray-900">
-                      Segnalato da: {report.reporter.nickname || report.reporter.full_name}
+                      Segnalato da: {getReporterName(report)}
+                      {report.family_member && (
+                        <span className="ml-1 text-xs font-normal text-gray-500">(membro famiglia)</span>
+                      )}
                     </p>
                     <p className="text-sm text-gray-600 mt-1">{report.description || 'Nessuna descrizione'}</p>
                     <p className="text-xs text-gray-500 mt-2">
@@ -458,7 +477,12 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="text-gray-600">Segnalato da:</span>
-                    <p className="font-medium">{selectedReport.reporter.nickname || selectedReport.reporter.full_name}</p>
+                    <p className="font-medium">
+                      {getReporterName(selectedReport)}
+                      {selectedReport.family_member && (
+                        <span className="ml-1 text-sm font-normal text-gray-500">(membro famiglia di {selectedReport.reporter.nickname || selectedReport.reporter.full_name})</span>
+                      )}
+                    </p>
                   </div>
                   <div>
                     <span className="text-gray-600">Email:</span>

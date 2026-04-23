@@ -60,7 +60,10 @@ const REPORT_REASONS: Record<string, Array<{ value: string; label: string }>> = 
 };
 
 export default function ReportModal({ entityType, entityId, onClose }: ReportModalProps) {
-  const { user } = useAuth();
+  const { user, profile, activeProfile } = useAuth();
+  const activeFamilyMemberId = activeProfile && !activeProfile.isOwner && profile?.user_type === 'customer'
+    ? activeProfile.id
+    : null;
   const [reason, setReason] = useState('');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -77,6 +80,7 @@ export default function ReportModal({ entityType, entityId, onClose }: ReportMod
 
       const { error } = await supabase.from('reports').insert({
         reporter_id: user.id,
+        family_member_id: activeFamilyMemberId,
         reported_entity_type: entityType,
         reported_entity_id: entityId,
         reason,
