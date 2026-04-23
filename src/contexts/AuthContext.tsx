@@ -293,6 +293,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setNeedsProfileSelection((locations?.length || 0) > 0);
           }
         }
+      } else if (locations && locations.length === 1) {
+        const singleLocation = locations[0];
+        setActiveProfileState({
+          id: singleLocation.id,
+          name: singleLocation.name,
+          nickname: `${singleLocation.city}, ${singleLocation.province}`,
+          avatarUrl: singleLocation.avatar_url,
+          isOwner: false,
+        });
+        localStorage.setItem(`activeLocation_${userId}`, singleLocation.id);
+        localStorage.setItem(`activeLocationIsOwner_${userId}`, 'false');
+        setNeedsProfileSelection(false);
       } else {
         if ((locations?.length || 0) > 0) {
           setNeedsProfileSelection(true);

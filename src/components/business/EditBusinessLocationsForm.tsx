@@ -133,10 +133,10 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
         setIsEditing(true);
       }
 
-      // Cerca il business owner prima in registered_businesses
+      // Cerca il business owner e nome prima in registered_businesses
       let { data: businessData } = await supabase
         .from('registered_businesses')
-        .select('owner_id')
+        .select('owner_id, name')
         .eq('id', businessId)
         .maybeSingle();
 
@@ -144,10 +144,18 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
       if (!businessData) {
         const result = await supabase
           .from('businesses')
-          .select('owner_id')
+          .select('owner_id, name')
           .eq('id', businessId)
           .maybeSingle();
         businessData = result.data;
+      }
+
+      // Pre-compila "Nome Ufficiale Attività" con la ragione sociale se vuoto
+      if (businessData?.name) {
+        setLocations(prev => prev.map(loc => ({
+          ...loc,
+          name: loc.name || businessData!.name,
+        })));
       }
 
       if (businessData) {
