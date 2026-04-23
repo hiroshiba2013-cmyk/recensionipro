@@ -265,35 +265,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setBusinessLocations(locations || []);
 
-      const savedLocationId = localStorage.getItem(`activeLocation_${userId}`);
-      const savedIsOwner = localStorage.getItem(`activeLocationIsOwner_${userId}`) === 'true';
-
-      if (savedLocationId) {
-        if (savedIsOwner) {
-          setActiveProfileState({
-            id: userId,
-            name: profileData.full_name,
-            nickname: (profileData as any)?.nickname,
-            avatarUrl: (profileData as any)?.avatar_url,
-            isOwner: true,
-          });
-          setNeedsProfileSelection(false);
-        } else {
-          const location = locations?.find(l => l.id === savedLocationId);
-          if (location) {
-            setActiveProfileState({
-              id: location.id,
-              name: location.name,
-              nickname: `${location.city}, ${location.province}`,
-              avatarUrl: location.avatar_url,
-              isOwner: false,
-            });
-            setNeedsProfileSelection(false);
-          } else {
-            setNeedsProfileSelection((locations?.length || 0) > 0);
-          }
-        }
-      } else if (locations && locations.length === 1) {
+      if (locations && locations.length === 1) {
         setActiveProfileState({
           id: userId,
           name: profileData.full_name,
@@ -304,18 +276,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(`activeLocation_${userId}`, userId);
         localStorage.setItem(`activeLocationIsOwner_${userId}`, 'true');
         setNeedsProfileSelection(false);
-      } else {
-        if ((locations?.length || 0) > 0) {
-          setNeedsProfileSelection(true);
+      } else if ((locations?.length || 0) > 1) {
+        const savedLocationId = localStorage.getItem(`activeLocation_${userId}`);
+        const savedIsOwner = localStorage.getItem(`activeLocationIsOwner_${userId}`) === 'true';
+
+        if (savedLocationId) {
+          if (savedIsOwner) {
+            setActiveProfileState({
+              id: userId,
+              name: profileData.full_name,
+              nickname: (profileData as any)?.nickname,
+              avatarUrl: (profileData as any)?.avatar_url,
+              isOwner: true,
+            });
+            setNeedsProfileSelection(false);
+          } else {
+            const location = locations?.find(l => l.id === savedLocationId);
+            if (location) {
+              setActiveProfileState({
+                id: location.id,
+                name: location.name,
+                nickname: `${location.city}, ${location.province}`,
+                avatarUrl: location.avatar_url,
+                isOwner: false,
+              });
+              setNeedsProfileSelection(false);
+            } else {
+              setNeedsProfileSelection(true);
+            }
+          }
         } else {
-          setActiveProfileState({
-            id: userId,
-            name: profileData.full_name,
-            nickname: (profileData as any)?.nickname,
-            avatarUrl: (profileData as any)?.avatar_url,
-            isOwner: true,
-          });
+          setNeedsProfileSelection(true);
         }
+      } else {
+        setActiveProfileState({
+          id: userId,
+          name: profileData.full_name,
+          nickname: (profileData as any)?.nickname,
+          avatarUrl: (profileData as any)?.avatar_url,
+          isOwner: true,
+        });
       }
     } catch (error) {
       console.error('Error loading business locations:', error);
