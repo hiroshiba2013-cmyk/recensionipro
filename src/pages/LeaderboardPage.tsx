@@ -32,12 +32,27 @@ export function LeaderboardPage() {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'leaderboard' | 'rewards' | 'my_activities'>('leaderboard');
-  const [userTypeFilter, setUserTypeFilter] = useState<'all' | 'customer' | 'business'>('all');
+
+  // Business users don't have access to the leaderboard
+  if (profile?.user_type === 'business') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-4">
+          <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Classifica non disponibile</h2>
+          <p className="text-gray-600 mb-6">La classifica è riservata agli utenti privati. Come attività, puoi migliorare la tua visibilità ricevendo recensioni dai clienti.</p>
+          <a href="/" className="inline-block bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors">
+            Torna alla home
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     loadLeaderboard();
     loadRewards();
-  }, [profile, activeProfile, userTypeFilter]);
+  }, [profile, activeProfile]);
 
   const loadLeaderboard = async () => {
     if (!profile) return;
@@ -120,82 +135,58 @@ export function LeaderboardPage() {
     try {
       const entries: LeaderboardUser[] = [];
 
-      if (userTypeFilter !== 'business') {
-        // Query 1: utenti principali (family_member_id IS NULL)
-        const { data: usersData } = await supabase
-          .from('user_activity')
-          .select('user_id, total_points, reviews_count, profiles(full_name, nickname, avatar_url, user_type)')
-          .is('family_member_id', null)
-          .order('total_points', { ascending: false })
-          .limit(200);
+      // Query 1: utenti privati principali (family_member_id IS NULL, solo customer)
+      const { data: usersData } = await supabase
+        .from('user_activity')
+        .select('user_id, total_points, reviews_count, profiles(full_name, nickname, avatar_url, user_type)')
+        .is('family_member_id', null)
+        .order('total_points', { ascending: false })
+        .limit(200);
 
-        for (const item of (usersData || []) as any[]) {
-          if (!item.profiles) continue;
-          if (item.profiles.user_type === 'admin') continue;
-          if (userTypeFilter !== 'all' && item.profiles.user_type !== userTypeFilter) continue;
+      for (const item of (usersData || []) as any[]) {
+        if (!item.profiles) continue;
+        if (item.profiles.user_type === 'admin') continue;
+        if (item.profiles.user_type === 'business') continue;
+        entries.push({
+          id: item.user_id,
+          full_name: item.profiles.nickname || item.profiles.full_name,
+          avatar_url: item.profiles.avatar_url,
+          points: item.total_points || 0,
+          reviews_count: item.reviews_count || 0,
+          rank: 0,
+          is_family_member: false,
+        });
+      }
+
+      // Query 2: membri della famiglia
+      const { data: familyData } = await supabase
+        .from('user_activity')
+        .select('family_member_id, total_points, reviews_count')
+        .not('family_member_id', 'is', null)
+        .order('total_points', { ascending: false })
+        .limit(200);
+
+      if (familyData && familyData.length > 0) {
+        const familyIds = familyData.map((r: any) => r.family_member_id);
+        const { data: membersData } = await supabase
+          .from('customer_family_members')
+          .select('id, first_name, last_name, nickname, avatar_url')
+          .in('id', familyIds);
+
+        const membersMap = new Map((membersData || []).map((m: any) => [m.id, m]));
+
+        for (const item of familyData as any[]) {
+          const member = membersMap.get(item.family_member_id);
+          if (!member) continue;
+          const displayName = member.nickname || `${member.first_name} ${member.last_name}`;
           entries.push({
-            id: item.user_id,
-            full_name: item.profiles.nickname || item.profiles.full_name,
-            avatar_url: item.profiles.avatar_url,
+            id: item.family_member_id,
+            full_name: displayName,
+            avatar_url: member.avatar_url,
             points: item.total_points || 0,
             reviews_count: item.reviews_count || 0,
             rank: 0,
-            is_family_member: false,
-          });
-        }
-
-        // Query 2: membri della famiglia (family_member_id IS NOT NULL) - solo per filtri non-business
-        const { data: familyData } = await supabase
-          .from('user_activity')
-          .select('family_member_id, total_points, reviews_count')
-          .not('family_member_id', 'is', null)
-          .order('total_points', { ascending: false })
-          .limit(200);
-
-        if (familyData && familyData.length > 0) {
-          const familyIds = familyData.map((r: any) => r.family_member_id);
-          const { data: membersData } = await supabase
-            .from('customer_family_members')
-            .select('id, first_name, last_name, nickname, avatar_url')
-            .in('id', familyIds);
-
-          const membersMap = new Map((membersData || []).map((m: any) => [m.id, m]));
-
-          for (const item of familyData as any[]) {
-            const member = membersMap.get(item.family_member_id);
-            if (!member) continue;
-            const displayName = member.nickname || `${member.first_name} ${member.last_name}`;
-            entries.push({
-              id: item.family_member_id,
-              full_name: displayName,
-              avatar_url: member.avatar_url,
-              points: item.total_points || 0,
-              reviews_count: item.reviews_count || 0,
-              rank: 0,
-              is_family_member: true,
-            });
-          }
-        }
-      } else {
-        // Solo business
-        const { data: usersData } = await supabase
-          .from('user_activity')
-          .select('user_id, total_points, reviews_count, profiles(full_name, nickname, avatar_url, user_type)')
-          .is('family_member_id', null)
-          .order('total_points', { ascending: false })
-          .limit(200);
-
-        for (const item of (usersData || []) as any[]) {
-          if (!item.profiles) continue;
-          if (item.profiles.user_type !== 'business') continue;
-          entries.push({
-            id: item.user_id,
-            full_name: item.profiles.nickname || item.profiles.full_name,
-            avatar_url: item.profiles.avatar_url,
-            points: item.total_points || 0,
-            reviews_count: item.reviews_count || 0,
-            rank: 0,
-            is_family_member: false,
+            is_family_member: true,
           });
         }
       }
@@ -318,9 +309,7 @@ export function LeaderboardPage() {
                         <p className="text-2xl font-bold">{userRank.full_name}</p>
                         <div className="flex items-center gap-4 mt-1">
                           <span className="text-sm">#{userRank.rank}</span>
-                          {profile?.user_type !== 'business' && (
-                            <span className="text-sm">{userRank.points} {t('leaderboard.points')}</span>
-                          )}
+                          <span className="text-sm">{userRank.points} {t('leaderboard.points')}</span>
                           <span className="text-sm">{userRank.reviews_count} {t('leaderboard.reviews')}</span>
                         </div>
                       </div>
@@ -347,38 +336,6 @@ export function LeaderboardPage() {
             <div className="max-w-4xl mx-auto mb-8">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">{t('leaderboard.top20')}</h2>
-                <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1">
-                  <button
-                    onClick={() => setUserTypeFilter('all')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      userTypeFilter === 'all'
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    {t('leaderboard.filter.all')}
-                  </button>
-                  <button
-                    onClick={() => setUserTypeFilter('customer')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      userTypeFilter === 'customer'
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    {t('leaderboard.filter.private')}
-                  </button>
-                  <button
-                    onClick={() => setUserTypeFilter('business')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      userTypeFilter === 'business'
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    {t('leaderboard.filter.business')}
-                  </button>
-                </div>
               </div>
 
               <div className="space-y-3">
@@ -427,9 +384,7 @@ export function LeaderboardPage() {
                             )}
                           </div>
                           <div className="flex items-center gap-4 text-sm text-gray-600">
-                            {userTypeFilter !== 'business' && (
-                              <span>{user.points} {t('leaderboard.points')}</span>
-                            )}
+                            <span>{user.points} {t('leaderboard.points')}</span>
                             <span>{user.reviews_count} {t('leaderboard.reviews')}</span>
                           </div>
                         </div>
@@ -493,47 +448,6 @@ export function LeaderboardPage() {
                 </div>
               )}
 
-              {profile?.user_type === 'business' && (
-                <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">Come Guadagnare Punti - Professionisti</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    I professionisti guadagnano punti in base alle recensioni ricevute dai clienti e alle attività pubblicate.
-                  </p>
-                  <ul className="space-y-2 text-gray-700">
-                    <li className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-red-600" />
-                      <span><strong>2 punti</strong> per recensione a 1 stella ricevuta</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-orange-600" />
-                      <span><strong>4 punti</strong> per recensione a 2 stelle ricevuta</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-yellow-600" />
-                      <span><strong>10 punti</strong> per recensione a 3 stelle ricevuta</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-blue-600" />
-                      <span><strong>25 punti</strong> per recensione a 4 stelle ricevuta</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-green-600" />
-                      <span><strong>50 punti</strong> per recensione a 5 stelle ricevuta</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Award className="w-5 h-5 text-blue-600" />
-                      <span><strong>30 punti</strong> per ogni annuncio di lavoro pubblicato</span>
-                    </li>
-                  </ul>
-
-                  <div className="mt-4 bg-amber-50 border border-amber-300 rounded-lg p-4">
-                    <p className="text-sm text-gray-700">
-                      <strong>Nota:</strong> I punti delle recensioni vengono assegnati solo dopo l'approvazione dello staff.
-                      Maggiore è la qualità del servizio, maggiori saranno i punti guadagnati.
-                    </p>
-                  </div>
-                </div>
-              )}
 
               {rewards.length > 0 && (
                 <div className="mt-8">
@@ -633,37 +547,6 @@ export function LeaderboardPage() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 rounded-xl p-12">
-              <div className="flex items-center justify-center gap-3 mb-6">
-                <Trophy className="w-16 h-16 text-green-600" />
-                <h3 className="text-3xl font-bold text-gray-900">
-                  Premi per Professionisti
-                </h3>
-              </div>
-              <p className="text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed mb-6 text-center">
-                I migliori 20 professionisti dell'anno riceveranno riconoscimenti speciali per la loro eccellenza nel servizio clienti.
-              </p>
-              <p className="text-gray-600 max-w-2xl mx-auto text-center mb-8">
-                Ricevi recensioni positive e scala la classifica per ottenere visibilità e premi esclusivi!
-              </p>
-              <div className="grid md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-                <div className="bg-white rounded-lg p-6 shadow-md">
-                  <Trophy className="w-12 h-12 mx-auto mb-3 text-yellow-500" />
-                  <p className="font-bold text-gray-900 text-lg">1° Posto</p>
-                  <p className="text-sm text-gray-600 mt-2">Certificato Eccellenza + Visibilità Premium</p>
-                </div>
-                <div className="bg-white rounded-lg p-6 shadow-md">
-                  <Medal className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p className="font-bold text-gray-900 text-lg">2° - 5° Posto</p>
-                  <p className="text-sm text-gray-600 mt-2">Badge Qualità + Promozione Premium</p>
-                </div>
-                <div className="bg-white rounded-lg p-6 shadow-md">
-                  <Award className="w-12 h-12 mx-auto mb-3 text-amber-700" />
-                  <p className="font-bold text-gray-900 text-lg">6° - 20° Posto</p>
-                  <p className="text-sm text-gray-600 mt-2">Badge Riconoscimento + Visibilità Extra</p>
-                </div>
-              </div>
-            </div>
           </div>
         )}
       </div>
