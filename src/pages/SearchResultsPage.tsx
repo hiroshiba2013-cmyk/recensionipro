@@ -189,11 +189,13 @@ export function SearchResultsPage() {
       // Fetch ratings in bulk for all locations
       console.log('Caricamento valutazioni...');
       const allIds = allLocations.map(loc => loc.id);
+      const allBusinessIds = [...new Set(allLocations.map(loc => loc.business_id).filter(Boolean))];
+      const allSearchIds = [...new Set([...allIds, ...allBusinessIds])];
       const { data: ratingsData } = await supabase
         .from('reviews')
         .select('business_id, unclaimed_business_location_id, overall_rating, review_type')
         .eq('review_status', 'approved')
-        .or(`business_id.in.(${allIds.join(',')}),unclaimed_business_location_id.in.(${allIds.join(',')})`);
+        .or(`business_id.in.(${allSearchIds.join(',')}),unclaimed_business_location_id.in.(${allSearchIds.join(',')})`);
 
       const ratingMap: Record<string, { sum: number; count: number; byType: Record<string, { sum: number; count: number }> }> = {};
       (ratingsData || []).forEach((r: any) => {
