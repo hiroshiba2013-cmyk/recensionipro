@@ -16,7 +16,7 @@ interface ClassifiedAdFormProps {
 }
 
 export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdFormProps) {
-  const { user, activeProfile } = useAuth();
+  const { user, activeProfile, selectedBusinessLocationId } = useAuth();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -208,6 +208,10 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
 
       if (activeProfile && !activeProfile.isOwner) {
         adData.family_member_id = activeProfile.id;
+      }
+
+      if (selectedBusinessLocationId) {
+        adData.registered_business_location_id = selectedBusinessLocationId;
       }
 
       if (adId) {
