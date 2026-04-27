@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle, Heart, Building2, Shield, Tag, Briefcase, Award, UserCog, Gavel } from 'lucide-react';
+import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle, Heart, Building2, Shield, Tag, Briefcase, UserCog, Gavel } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { supabase } from '../../lib/supabase';
@@ -546,16 +546,6 @@ export function Header() {
                   <Heart className="w-4 h-4 text-pink-600" />
                 </div>
                 <span className="text-sm font-semibold">Solidarietà</span>
-              </a>
-              <a
-                href="/leaderboard"
-                className="group flex items-center gap-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 transition-all font-medium px-4 py-2.5 rounded-xl hover:shadow-md"
-                title="Classifica"
-              >
-                <div className="bg-yellow-100 p-1.5 rounded-lg group-hover:bg-yellow-200 transition-colors">
-                  <Award className="w-4 h-4 text-yellow-600" />
-                </div>
-                <span className="text-sm font-semibold">Classifica</span>
               </a>
             </nav>
           </div>
