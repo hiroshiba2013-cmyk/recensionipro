@@ -92,17 +92,57 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
           id, title, description, salary_range, gross_annual_salary,
           location, status, approval_status, position_type, experience_level,
           created_at, expires_at, published_at,
-          business_location:business_locations!job_postings_business_location_id_fkey(
-            name,
-            business:businesses(
-              profile:profiles(full_name, nickname, email)
-            )
-          )
+          business_location_id, registered_business_location_id,
+          business_id, registered_business_id
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setJobPostings(data || []);
+
+      const enriched = await Promise.all((data || []).map(async (job) => {
+        let business_location: JobPosting['business_location'] = null;
+
+        if (job.business_location_id) {
+          const { data: locData } = await supabase
+            .from('business_locations')
+            .select('name, business:businesses(profile:profiles(full_name, nickname, email))')
+            .eq('id', job.business_location_id)
+            .maybeSingle();
+          if (locData) business_location = locData as any;
+        } else if (job.registered_business_location_id) {
+          const { data: locData } = await supabase
+            .from('registered_business_locations')
+            .select('name, internal_name')
+            .eq('id', job.registered_business_location_id)
+            .maybeSingle();
+          if (locData) {
+            let profile = null;
+            if (job.registered_business_id) {
+              const { data: rbData } = await supabase
+                .from('registered_businesses')
+                .select('owner_id')
+                .eq('id', job.registered_business_id)
+                .maybeSingle();
+              if (rbData?.owner_id) {
+                const { data: pData } = await supabase
+                  .from('profiles')
+                  .select('full_name, nickname, email')
+                  .eq('id', rbData.owner_id)
+                  .maybeSingle();
+                profile = pData;
+              }
+            }
+            business_location = {
+              name: locData.internal_name || locData.name || 'Sede',
+              business: profile ? { profile } : null,
+            };
+          }
+        }
+
+        return { ...job, business_location };
+      }));
+
+      setJobPostings(enriched as any);
     } catch (error: any) {
       console.error('Error loading job postings:', error);
     }
