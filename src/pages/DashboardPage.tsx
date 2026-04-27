@@ -271,18 +271,31 @@ export function DashboardPage() {
               setProducts(productsData);
             }
 
-            // Filtra offerte di lavoro per sede se una sede è selezionata
-            let jobPostingsQuery = supabase
-              .from('job_postings')
-              .select('*')
-              .or(`business_id.in.(${businessIds.join(',')}),registered_business_id.in.(${businessIds.join(',')})`)
-              .order('created_at', { ascending: false });
+            // Filtra offerte di lavoro per sede - due query separate (vecchio e nuovo sistema)
+            const [jpOld, jpNew] = await Promise.all([
+              supabase
+                .from('job_postings')
+                .select('*')
+                .in('business_id', businessIds)
+                .is('registered_business_id', null)
+                .then(r => r.data || []),
+              supabase
+                .from('job_postings')
+                .select('*')
+                .in('registered_business_id', businessIds)
+                .then(r => r.data || []),
+            ]);
+            let allJobPostings = [...jpOld, ...jpNew];
 
             if (selectedBusinessLocationId) {
-              jobPostingsQuery = jobPostingsQuery.or(`business_location_id.eq.${selectedBusinessLocationId},registered_business_location_id.eq.${selectedBusinessLocationId}`);
+              allJobPostings = allJobPostings.filter(jp =>
+                jp.business_location_id === selectedBusinessLocationId ||
+                jp.registered_business_location_id === selectedBusinessLocationId
+              );
             }
 
-            const { data: jobPostingsData } = await jobPostingsQuery;
+            allJobPostings.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            const jobPostingsData = allJobPostings;
 
             console.log('💼 Offerte lavoro caricate:', jobPostingsData?.length || 0, 'per sede:', selectedBusinessLocationId || 'TUTTE');
 
@@ -666,9 +679,9 @@ export function DashboardPage() {
                 </div>
 
                 {/* Offerte di lavoro */}
-                {selectedBusinessId && (
+                {(selectedBusinessId || businesses.length > 0) && (
                   <BusinessJobPostingForm
-                    businessId={selectedBusinessId}
+                    businessId={selectedBusinessId || businesses[0]?.id}
                     isRegisteredBusiness={isRegisteredBusiness}
                     selectedLocationId={selectedBusinessLocationId || undefined}
                   />
