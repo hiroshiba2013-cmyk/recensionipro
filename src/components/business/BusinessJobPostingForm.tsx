@@ -20,6 +20,7 @@ interface JobPosting {
   approval_status?: string;
   created_at: string;
   business_location_id?: string | null;
+  registered_business_location_id?: string | null;
 }
 
 interface BusinessLocation {
@@ -269,6 +270,7 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegis
 
   const filteredJobPostings = jobPostings.filter((job) => {
     if (!selectedLocationId) return true;
+    if (isRegisteredBusiness) return job.registered_business_location_id === selectedLocationId;
     return job.business_location_id === selectedLocationId;
   });
 
