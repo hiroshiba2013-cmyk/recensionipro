@@ -219,7 +219,7 @@ export function DashboardPage() {
         if (businessesData) {
           setBusinesses(businessesData);
 
-          if (businessesData.length > 0 && !selectedBusinessId) {
+          if (businessesData.length > 0) {
             setSelectedBusinessId(businessesData[0].id);
           }
 
@@ -970,7 +970,7 @@ export function DashboardPage() {
                   )}
                 </div>
 
-                {selectedBusinessId && <BusinessJobPostingForm businessId={selectedBusinessId} isRegisteredBusiness={isRegisteredBusiness} />}
+                {selectedBusinessId && <BusinessJobPostingForm businessId={selectedBusinessId} isRegisteredBusiness={isRegisteredBusiness} selectedLocationId={selectedBusinessLocationId || undefined} />}
 
                 {/* Sezione Annunci Classificati per utenti Business */}
                 <div className="mt-12">

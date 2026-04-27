@@ -75,7 +75,7 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegis
       await loadBusinessLocationsFor(isReg);
     };
     detectAndLoad();
-  }, [businessId]);
+  }, [businessId, selectedLocationId]);
 
   useEffect(() => {
     if (selectedLocationId && !editingId) {
@@ -86,12 +86,18 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegis
   const loadJobPostingsFor = async (isReg: boolean) => {
     try {
       const businessIdColumn = isReg ? 'registered_business_id' : 'business_id';
-      const { data, error } = await supabase
+      let query = supabase
         .from('job_postings')
         .select('*')
         .eq(businessIdColumn, businessId)
         .order('created_at', { ascending: false });
 
+      if (selectedLocationId) {
+        const locationCol = isReg ? 'registered_business_location_id' : 'business_location_id';
+        query = query.eq(locationCol, selectedLocationId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       setJobPostings(data || []);
     } catch (error) {
