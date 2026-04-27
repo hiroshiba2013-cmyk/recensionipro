@@ -88,8 +88,6 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegis
       const businessIdColumn = isReg ? 'registered_business_id' : 'business_id';
       const locationCol = isReg ? 'registered_business_location_id' : 'business_location_id';
 
-      console.log('[JobPostings] loading isReg=' + isReg + ' businessId=' + businessId + ' selectedLocationId=' + selectedLocationId + ' col=' + businessIdColumn + ' locCol=' + locationCol);
-
       let query = supabase
         .from('job_postings')
         .select('*')
@@ -101,7 +99,6 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegis
       }
 
       const { data, error } = await query;
-      console.log('[JobPostings] result count=' + (data?.length ?? 'null') + ' error=' + JSON.stringify(error) + ' ids=' + JSON.stringify((data||[]).map(d=>d.id)));
       if (error) throw error;
       setJobPostings(data || []);
     } catch (error) {

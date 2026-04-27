@@ -679,7 +679,7 @@ export function DashboardPage() {
                 </div>
 
                 {/* Offerte di lavoro */}
-                {(selectedBusinessId || businesses[0]?.id) && (
+                {!loading && (selectedBusinessId || businesses[0]?.id) && (
                   <BusinessJobPostingForm
                     key={`${selectedBusinessId || businesses[0]?.id}-${selectedBusinessLocationId || 'all'}`}
                     businessId={(selectedBusinessId || businesses[0]?.id)!}
