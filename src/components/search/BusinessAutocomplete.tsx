@@ -5,7 +5,6 @@ import { supabase } from '../../lib/supabase';
 interface Business {
   id: string;
   name: string;
-  displayName?: string;
   city?: string;
   category?: {
     name: string;
@@ -70,78 +69,50 @@ export default function BusinessAutocomplete({
     try {
       setLoading(true);
 
-      const [registeredRes, claimedRes, unclaimedRes] = await Promise.all([
-        supabase
-          .from('registered_business_locations')
-          .select(`
+      const { data: claimedLocations } = await supabase
+        .from('business_locations')
+        .select(`
+          id,
+          business_id,
+          name,
+          city,
+          business:businesses(
             id,
             name,
-            internal_name,
-            city,
-            business:registered_businesses(
-              id,
-              name,
-              category:business_categories(name)
-            )
-          `)
-          .or(`name.ilike.%${query}%,internal_name.ilike.%${query}%,business.name.ilike.%${query}%`)
-          .limit(10),
-        supabase
-          .from('business_locations')
-          .select(`
-            id,
-            business_id,
-            name,
-            city,
-            business:businesses(
-              id,
-              name,
-              category:business_categories(name)
-            )
-          `)
-          .or(`name.ilike.%${query}%,business.name.ilike.%${query}%`)
-          .limit(10),
-        supabase
-          .from('unclaimed_business_locations')
-          .select(`
-            id,
-            name,
-            city,
             category:business_categories(name)
-          `)
-          .ilike('name', `%${query}%`)
-          .limit(10),
-      ]);
+          )
+        `)
+        .or(`name.ilike.%${query}%,business.name.ilike.%${query}%`)
+        .limit(10);
 
-      const registered = (registeredRes.data || [])
+      const { data: unclaimedData } = await supabase
+        .from('unclaimed_business_locations')
+        .select(`
+          id,
+          name,
+          city,
+          category:business_categories(name)
+        `)
+        .ilike('name', `%${query}%`)
+        .limit(10);
+
+      const claimed = (claimedLocations || [])
         .filter(loc => loc.business)
         .map(loc => ({
           id: loc.id,
-          name: loc.internal_name || loc.name || (loc.business as any)?.name || 'Nome non disponibile',
+          name: loc.name || loc.business?.name || 'Nome non disponibile',
           city: loc.city,
-          category: (loc.business as any)?.category,
-          displayName: (loc.business as any)?.name,
+          category: loc.business?.category,
         }));
 
-      const claimed = (claimedRes.data || [])
-        .filter(loc => loc.business)
-        .map(loc => ({
-          id: loc.id,
-          name: loc.name || (loc.business as any)?.name || 'Nome non disponibile',
-          city: loc.city,
-          category: (loc.business as any)?.category,
-          displayName: undefined as string | undefined,
-        }));
-
-      const unclaimed = (unclaimedRes.data || []).map(b => ({
+      const unclaimed = (unclaimedData || []).map(b => ({
         id: b.id,
         name: b.name,
         city: b.city,
         category: b.category,
-        displayName: undefined as string | undefined,
       }));
 
-      const combined = [...registered, ...claimed, ...unclaimed];
+      const combined = [...claimed, ...unclaimed];
       setTotalCount(combined.length);
 
       const uniqueByName = combined.reduce((acc: Business[], current) => {
@@ -217,9 +188,6 @@ export default function BusinessAutocomplete({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 truncate">{business.name}</p>
-                  {business.displayName && business.displayName !== business.name && (
-                    <p className="text-xs text-blue-600 font-medium truncate">{business.displayName}</p>
-                  )}
                   <div className="flex items-center gap-2 mt-1">
                     {business.category && (
                       <span className="text-xs text-gray-500">{business.category.name}</span>
