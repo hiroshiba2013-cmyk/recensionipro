@@ -638,32 +638,7 @@ export function AdminDashboardPage() {
   };
 
   const loadJobPostings = async () => {
-    const { data, error } = await supabase
-      .from('job_postings')
-      .select(`
-        id,
-        title,
-        description,
-        salary_range,
-        gross_annual_salary,
-        location,
-        status,
-        position_type,
-        experience_level,
-        created_at,
-        expires_at,
-        published_at,
-        business_location:business_locations(name)
-      `)
-      .order('created_at', { ascending: false })
-      .limit(200);
-
-    if (error) {
-      console.error('Error loading job postings:', error);
-      return;
-    }
-
-    setJobPostings(data || []);
+    // Job postings are loaded directly by JobPostingsSection
   };
 
   const loadBusinesses = async () => {
