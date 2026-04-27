@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { User, Star, Plus, X, Package, LogOut, Trophy, TrendingUp, Briefcase, MapPin, FileEdit as Edit2, Trash2 } from 'lucide-react';
+import { User, Star, Plus, X, Package, LogOut, Trophy, TrendingUp, Briefcase, MapPin, FileEdit as Edit2, Trash2, Tag } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -1962,23 +1962,63 @@ export function ProfilePage() {
               </>
             )}
 
-            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl shadow-md p-6 mb-8 border-2 border-yellow-200">
-              <div className="flex items-center gap-3 mb-4">
-                <Trophy className="w-7 h-7 text-yellow-600" />
-                <h2 className="text-2xl font-bold text-gray-900">Premi e Riconoscimenti</h2>
-              </div>
-              <div className="bg-white rounded-lg p-6">
-                <p className="text-lg text-gray-700 leading-relaxed mb-4">
-                  Ricevi recensioni positive e scala la classifica per vincere premi
-                </p>
-                <a
-                  href="/leaderboard"
-                  className="inline-flex items-center gap-2 bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors font-semibold shadow-md"
+            <UserAuctionsSection />
+
+            <div className="bg-white rounded-xl shadow-md p-8 mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <Tag className="w-6 h-6 text-green-600" />
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">I Miei Annunci</h2>
+                    <p className="text-sm text-gray-600 mt-1">Gestisci i tuoi annunci personali</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setEditingAdId(null); setShowEditAdForm(true); }}
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-semibold transition-colors"
                 >
-                  <Trophy className="w-5 h-5" />
-                  Vedi Classifica
-                </a>
+                  <Plus className="w-4 h-4" />
+                  Nuovo Annuncio
+                </button>
               </div>
+
+              {showEditAdForm && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                  <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <ClassifiedAdForm
+                      adId={editingAdId || undefined}
+                      onSuccess={() => { setShowEditAdForm(false); loadClassifiedAds(); }}
+                      onCancel={() => setShowEditAdForm(false)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {classifiedAds.length === 0 ? (
+                <div className="text-center py-10">
+                  <Tag className="w-14 h-14 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Nessun annuncio</h3>
+                  <p className="text-gray-500 text-sm mb-6">Pubblica annunci di vendita, acquisto o regalo.</p>
+                  <button
+                    onClick={() => { setEditingAdId(null); setShowEditAdForm(true); }}
+                    className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-colors font-semibold"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Crea il primo annuncio
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {classifiedAds.map((ad) => (
+                    <ProfileClassifiedAdCard
+                      key={ad.id}
+                      ad={ad}
+                      onEdit={handleEditAd}
+                      onDelete={handleDeleteAd}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="bg-white rounded-xl shadow-md p-8 mb-8">
