@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Star, Building, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase, Users, DollarSign, Trophy, Activity } from 'lucide-react';
+import { Plus, Star, Building, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase, Users, DollarSign, Trophy, Activity, Tag } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Business, Review, FamilyMember } from '../lib/supabase';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
@@ -13,6 +13,8 @@ import TrialStatusBanner from '../components/subscription/TrialStatusBanner';
 import TrialExpirationModal from '../components/subscription/TrialExpirationModal';
 import { ActivityFeed } from '../components/activity/ActivityFeed';
 import { UserAuctionsSection } from '../components/auctions/UserAuctionsSection';
+import { ProfileClassifiedAdCard } from '../components/classifieds/ProfileClassifiedAdCard';
+import { ClassifiedAdForm } from '../components/classifieds/ClassifiedAdForm';
 import { useNavigate } from '../components/Router';
 
 interface SubscriptionPlan {
@@ -102,6 +104,9 @@ export function DashboardPage() {
   });
   const [showCreateBusinessForm, setShowCreateBusinessForm] = useState(false);
   const [showResponseForm, setShowResponseForm] = useState<string | null>(null);
+  const [businessClassifiedAds, setBusinessClassifiedAds] = useState<any[]>([]);
+  const [showClassifiedAdForm, setShowClassifiedAdForm] = useState(false);
+  const [editingClassifiedAdId, setEditingClassifiedAdId] = useState<string | undefined>(undefined);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
   const [isRegisteredBusiness, setIsRegisteredBusiness] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
@@ -114,6 +119,9 @@ export function DashboardPage() {
     if (profile) {
       loadDashboardData();
       loadSubscriptionData();
+      if (profile.user_type === 'business') {
+        loadBusinessClassifiedAds();
+      }
     }
   }, [profile, selectedBusinessLocationId, activeProfile]);
 
@@ -385,6 +393,16 @@ export function DashboardPage() {
     } catch (error) {
       console.error('Error loading subscription data:', error);
     }
+  };
+
+  const loadBusinessClassifiedAds = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('classified_ads')
+      .select('*, classified_categories(name, icon)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    if (data) setBusinessClassifiedAds(data);
   };
 
   const calculateSavings = (plan: SubscriptionPlan) => {
@@ -931,6 +949,73 @@ export function DashboardPage() {
                 </div>
 
                 {selectedBusinessId && <BusinessJobPostingForm businessId={selectedBusinessId} isRegisteredBusiness={isRegisteredBusiness} />}
+
+                {/* Sezione Annunci Classificati per utenti Business */}
+                <div className="mt-12">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                        <Tag className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900">I Miei Annunci</h2>
+                        <p className="text-sm text-gray-500">Gestisci i tuoi annunci personali</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => { setEditingClassifiedAdId(undefined); setShowClassifiedAdForm(true); }}
+                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-medium transition-colors shadow-sm"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Nuovo Annuncio
+                    </button>
+                  </div>
+
+                  {showClassifiedAdForm && (
+                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <ClassifiedAdForm
+                          adId={editingClassifiedAdId}
+                          onSuccess={() => { setShowClassifiedAdForm(false); loadBusinessClassifiedAds(); }}
+                          onCancel={() => setShowClassifiedAdForm(false)}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {businessClassifiedAds.length === 0 ? (
+                    <div className="bg-white rounded-2xl border border-dashed border-gray-300 p-12 text-center">
+                      <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Tag className="w-7 h-7 text-green-500" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">Nessun annuncio</h3>
+                      <p className="text-gray-500 text-sm mb-4">Pubblica annunci di vendita, acquisto o regalo</p>
+                      <button
+                        onClick={() => { setEditingClassifiedAdId(undefined); setShowClassifiedAdForm(true); }}
+                        className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Crea il primo annuncio
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {businessClassifiedAds.map(ad => (
+                        <ProfileClassifiedAdCard
+                          key={ad.id}
+                          ad={{
+                            ...ad,
+                            price: ad.price ? parseFloat(ad.price) : null,
+                            classified_categories: ad.classified_categories,
+                            profiles: { full_name: profile?.nickname || profile?.full_name || 'Utente', avatar_url: null },
+                          }}
+                          onEdit={(id) => { setEditingClassifiedAdId(id); setShowClassifiedAdForm(true); }}
+                          onDelete={loadBusinessClassifiedAds}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 {currentSubscription && availablePlans.length > 0 && (
                   <div className="mt-12">
