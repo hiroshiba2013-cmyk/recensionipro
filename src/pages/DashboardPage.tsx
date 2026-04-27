@@ -275,11 +275,11 @@ export function DashboardPage() {
             let jobPostingsQuery = supabase
               .from('job_postings')
               .select('*')
-              .in('business_id', businessIds)
+              .or(`business_id.in.(${businessIds.join(',')}),registered_business_id.in.(${businessIds.join(',')})`)
               .order('created_at', { ascending: false });
 
             if (selectedBusinessLocationId) {
-              jobPostingsQuery = jobPostingsQuery.eq('location_id', selectedBusinessLocationId);
+              jobPostingsQuery = jobPostingsQuery.or(`business_location_id.eq.${selectedBusinessLocationId},registered_business_location_id.eq.${selectedBusinessLocationId}`);
             }
 
             const { data: jobPostingsData } = await jobPostingsQuery;
