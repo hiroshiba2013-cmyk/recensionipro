@@ -622,6 +622,14 @@ function AuthenticatedHomePage() {
             </button>
 
             <button
+              onClick={() => navigate('/leaderboard')}
+              className="group bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-xl p-4 transition-all hover:scale-105"
+            >
+              <Award className="w-6 h-6 text-white mx-auto mb-2 group-hover:scale-110 transition-transform" />
+              <span className="text-white text-sm font-medium block">Classifica</span>
+            </button>
+
+            <button
               onClick={() => navigate('/solidarity')}
               className="group bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-xl p-4 transition-all hover:scale-105"
             >
