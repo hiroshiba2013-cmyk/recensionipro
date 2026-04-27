@@ -570,8 +570,9 @@ function AuthenticatedHomePage() {
   };
 
   // Determina il nome per il benvenuto nella hero section
+  // Per i profili sede usa l'etichetta privata (internal_name) se disponibile
   const heroDisplayName = activeProfile
-    ? (activeProfile.nickname || activeProfile.name.split(' ')[0])
+    ? (activeProfile.internal_name || activeProfile.nickname || activeProfile.name.split(' ')[0])
     : (profile?.nickname || profile?.full_name?.split(' ')[0] || 'Utente');
 
   return (
