@@ -98,6 +98,11 @@ export function Router() {
   }
 
   if (currentPath === '/leaderboard') {
+    if (!loading && profile?.user_type === 'business') {
+      window.history.pushState({}, '', '/');
+      setCurrentPath('/');
+      return <HomePage />;
+    }
     return <LeaderboardPage />;
   }
 
