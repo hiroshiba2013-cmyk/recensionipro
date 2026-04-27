@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
 import { CITIES_BY_PROVINCE, PROVINCE_TO_CODE } from '../../lib/cities';
 import { BusinessLocationAvatarUpload } from './BusinessLocationAvatarUpload';
+import { useAuth } from '../../contexts/AuthContext';
 
 const italianCities = Object.entries(CITIES_BY_PROVINCE).flatMap(([province, cities]) =>
   cities.map(city => ({ city, province }))
@@ -50,6 +51,7 @@ interface EditBusinessLocationsFormProps {
 }
 
 export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUpdate }: EditBusinessLocationsFormProps) {
+  const { refreshBusinessLocations } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [locations, setLocations] = useState<BusinessLocation[]>([]);
@@ -412,6 +414,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
       }
 
       onUpdate();
+      await refreshBusinessLocations();
     } catch (error: any) {
       console.error('Error updating locations:', error);
       const errorMessage = error?.message || 'Errore durante il salvataggio';

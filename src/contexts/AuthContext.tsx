@@ -52,6 +52,7 @@ export interface BusinessLocation {
 export interface ActiveProfile {
   id: string;
   name: string;
+  internal_name?: string | null;
   nickname?: string;
   avatarUrl?: string | null;
   isOwner: boolean;
@@ -72,6 +73,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   setActiveProfile: (profileId: string, isOwner: boolean) => void;
   loadFamilyMembers: () => Promise<void>;
+  refreshBusinessLocations: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -296,6 +298,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setActiveProfileState({
                 id: location.id,
                 name: location.name,
+                internal_name: location.internal_name,
                 nickname: `${location.city}, ${location.province}`,
                 avatarUrl: location.avatar_url,
                 isOwner: false,
@@ -416,6 +419,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshBusinessLocations = async () => {
+    if (!user?.id || !profile) return;
+    await loadBusinessLocationsInternal(user.id, profile);
+  };
+
   const setActiveProfile = (profileId: string, isOwner: boolean) => {
     if (!user?.id || !profile) return;
 
@@ -457,6 +465,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const locationProfile: ActiveProfile = {
             id: location.id,
             name: location.name,
+            internal_name: location.internal_name,
             nickname: `${location.city}, ${location.province}`,
             avatarUrl: location.avatar_url,
             isOwner: false,
@@ -491,6 +500,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     setActiveProfile,
     loadFamilyMembers,
+    refreshBusinessLocations,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
