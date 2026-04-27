@@ -107,6 +107,9 @@ export function DashboardPage() {
   const [businessClassifiedAds, setBusinessClassifiedAds] = useState<any[]>([]);
   const [showClassifiedAdForm, setShowClassifiedAdForm] = useState(false);
   const [editingClassifiedAdId, setEditingClassifiedAdId] = useState<string | undefined>(undefined);
+  const [customerClassifiedAds, setCustomerClassifiedAds] = useState<any[]>([]);
+  const [showCustomerAdForm, setShowCustomerAdForm] = useState(false);
+  const [editingCustomerAdId, setEditingCustomerAdId] = useState<string | undefined>(undefined);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
   const [isRegisteredBusiness, setIsRegisteredBusiness] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
@@ -121,6 +124,8 @@ export function DashboardPage() {
       loadSubscriptionData();
       if (profile.user_type === 'business') {
         loadBusinessClassifiedAds();
+      } else {
+        loadCustomerClassifiedAds();
       }
     }
   }, [profile, selectedBusinessLocationId, activeProfile]);
@@ -403,6 +408,23 @@ export function DashboardPage() {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
     if (data) setBusinessClassifiedAds(data);
+  };
+
+  const loadCustomerClassifiedAds = async () => {
+    if (!user) return;
+    const familyMemberId = activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
+    let query = supabase
+      .from('classified_ads')
+      .select('*, classified_categories(name, icon)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    if (familyMemberId) {
+      query = query.eq('family_member_id', familyMemberId);
+    } else {
+      query = query.is('family_member_id', null);
+    }
+    const { data } = await query;
+    if (data) setCustomerClassifiedAds(data);
   };
 
   const calculateSavings = (plan: SubscriptionPlan) => {
@@ -1162,6 +1184,70 @@ export function DashboardPage() {
             ) : (
               <div className="space-y-6">
                 <UserAuctionsSection />
+
+                {/* Sezione Annunci Classificati per utenti privati */}
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-green-100">
+                  <div className="bg-gradient-to-r from-green-500 to-teal-500 px-6 py-4">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                        <Tag className="w-6 h-6" />
+                        I Miei Annunci
+                      </h2>
+                      <button
+                        onClick={() => { setEditingCustomerAdId(undefined); setShowCustomerAdForm(true); }}
+                        className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Nuovo Annuncio
+                      </button>
+                    </div>
+                  </div>
+
+                  {showCustomerAdForm && (
+                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <ClassifiedAdForm
+                          adId={editingCustomerAdId}
+                          onSuccess={() => { setShowCustomerAdForm(false); loadCustomerClassifiedAds(); }}
+                          onCancel={() => setShowCustomerAdForm(false)}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="p-6">
+                    {customerClassifiedAds.length === 0 ? (
+                      <div className="text-center py-10">
+                        <Tag className="w-14 h-14 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-700 mb-2">Nessun annuncio</h3>
+                        <p className="text-gray-500 text-sm mb-6">Pubblica annunci di vendita, acquisto o regalo.</p>
+                        <button
+                          onClick={() => { setEditingCustomerAdId(undefined); setShowCustomerAdForm(true); }}
+                          className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-colors font-semibold"
+                        >
+                          <Plus className="w-5 h-5" />
+                          Crea il primo annuncio
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {customerClassifiedAds.map(ad => (
+                          <ProfileClassifiedAdCard
+                            key={ad.id}
+                            ad={{
+                              ...ad,
+                              price: ad.price ? parseFloat(ad.price) : null,
+                              classified_categories: ad.classified_categories,
+                              profiles: { full_name: profile?.nickname || profile?.full_name || 'Utente', avatar_url: null },
+                            }}
+                            onEdit={(id) => { setEditingCustomerAdId(id); setShowCustomerAdForm(true); }}
+                            onDelete={loadCustomerClassifiedAds}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 <FavoritesSection />
 
