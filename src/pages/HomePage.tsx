@@ -604,7 +604,7 @@ function AuthenticatedHomePage() {
             />
           </div>
 
-          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+          <div className="mt-8 grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
             <button
               onClick={() => navigate('/classified-ads')}
               className="group bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-xl p-4 transition-all hover:scale-105"
@@ -619,14 +619,6 @@ function AuthenticatedHomePage() {
             >
               <Briefcase className="w-6 h-6 text-white mx-auto mb-2 group-hover:scale-110 transition-transform" />
               <span className="text-white text-sm font-medium block">Lavoro</span>
-            </button>
-
-            <button
-              onClick={() => navigate('/leaderboard')}
-              className="group bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-xl p-4 transition-all hover:scale-105"
-            >
-              <Award className="w-6 h-6 text-white mx-auto mb-2 group-hover:scale-110 transition-transform" />
-              <span className="text-white text-sm font-medium block">Classifica</span>
             </button>
 
             <button
