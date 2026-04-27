@@ -103,6 +103,7 @@ export function DashboardPage() {
   const [showCreateBusinessForm, setShowCreateBusinessForm] = useState(false);
   const [showResponseForm, setShowResponseForm] = useState<string | null>(null);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
+  const [isRegisteredBusiness, setIsRegisteredBusiness] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
   const [availablePlans, setAvailablePlans] = useState<SubscriptionPlan[]>([]);
   const [upgradeMessage, setUpgradeMessage] = useState('');
@@ -181,10 +182,13 @@ export function DashboardPage() {
           });
         }
         // Cerca prima in registered_businesses (nuovo sistema)
-        let { data: businessesData } = await supabase
+        let { data: registeredData } = await supabase
           .from('registered_businesses')
           .select('*')
           .eq('owner_id', profile.id);
+
+        let isRegistered = false;
+        let businessesData: any[] | null = registeredData;
 
         // Fallback a businesses (vecchio sistema)
         if (!businessesData || businessesData.length === 0) {
@@ -193,7 +197,11 @@ export function DashboardPage() {
             .select('*')
             .eq('owner_id', profile.id);
           businessesData = result.data;
+        } else {
+          isRegistered = true;
         }
+
+        setIsRegisteredBusiness(isRegistered);
 
         if (businessesData) {
           setBusinesses(businessesData);
@@ -922,7 +930,7 @@ export function DashboardPage() {
                   )}
                 </div>
 
-                {selectedBusinessId && <BusinessJobPostingForm businessId={selectedBusinessId} />}
+                {selectedBusinessId && <BusinessJobPostingForm businessId={selectedBusinessId} isRegisteredBusiness={isRegisteredBusiness} />}
 
                 {currentSubscription && availablePlans.length > 0 && (
                   <div className="mt-12">

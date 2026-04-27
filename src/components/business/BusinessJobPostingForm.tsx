@@ -33,9 +33,10 @@ interface BusinessLocation {
 interface BusinessJobPostingFormProps {
   businessId: string;
   selectedLocationId?: string;
+  isRegisteredBusiness?: boolean;
 }
 
-export function BusinessJobPostingForm({ businessId, selectedLocationId }: BusinessJobPostingFormProps) {
+export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegisteredBusiness = false }: BusinessJobPostingFormProps) {
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,10 +71,11 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId }: Busin
 
   const loadJobPostings = async () => {
     try {
+      const businessIdColumn = isRegisteredBusiness ? 'registered_business_id' : 'business_id';
       const { data, error } = await supabase
         .from('job_postings')
         .select('*')
-        .eq('business_id', businessId)
+        .eq(businessIdColumn, businessId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -87,14 +89,20 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId }: Busin
 
   const loadBusinessLocations = async () => {
     try {
+      const table = isRegisteredBusiness ? 'registered_business_locations' : 'business_locations';
+      const addressCol = isRegisteredBusiness ? 'street' : 'address';
       const { data, error } = await supabase
-        .from('business_locations')
-        .select('id, name, internal_name, address, city')
+        .from(table)
+        .select(`id, name, internal_name, ${addressCol}, city`)
         .eq('business_id', businessId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setBusinessLocations(data || []);
+      const normalized = (data || []).map((l: any) => ({
+        ...l,
+        address: l.address ?? l.street,
+      }));
+      setBusinessLocations(normalized);
     } catch (error) {
       console.error('Error loading business locations:', error);
     }
@@ -133,10 +141,14 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId }: Busin
 
         if (error) throw error;
       } else {
+        const businessIdField = isRegisteredBusiness
+          ? { registered_business_id: businessId }
+          : { business_id: businessId };
+
         const { error } = await supabase
           .from('job_postings')
           .insert({
-            business_id: businessId,
+            ...businessIdField,
             ...postingData,
             status: 'pending',
             approval_status: 'pending',
