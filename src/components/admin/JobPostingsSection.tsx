@@ -73,6 +73,7 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
   const [selectedJobSeeker, setSelectedJobSeeker] = useState<JobSeeker | null>(null);
   const [jobSeekers, setJobSeekers] = useState<JobSeeker[]>([]);
   const [jobPostings, setJobPostings] = useState<JobPosting[]>(initialJobPostings);
+  const [loadingPostings, setLoadingPostings] = useState(true);
   const [loading, setLoading] = useState(true);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
@@ -88,16 +89,11 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
   };
 
   const loadJobPostings = async () => {
+    setLoadingPostings(true);
     try {
       const { data, error } = await supabase
         .from('job_postings')
-        .select(`
-          id, title, description, salary_min, salary_max, salary_currency, gross_annual_salary,
-          location, status, approval_status, position_type, experience_level,
-          created_at, expires_at, published_at,
-          business_location_id, registered_business_location_id,
-          business_id, registered_business_id
-        `)
+        .select('id, title, description, salary_min, salary_max, salary_currency, gross_annual_salary, location, status, approval_status, position_type, experience_level, created_at, expires_at, published_at, business_location_id, registered_business_location_id, business_id, registered_business_id')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -148,6 +144,8 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
       setJobPostings(enriched as any);
     } catch (error: any) {
       console.error('Error loading job postings:', error);
+    } finally {
+      setLoadingPostings(false);
     }
   };
 
@@ -421,7 +419,12 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
             Trova Lavoro - Annunci Aziende ({displayedJobPostings.length})
           </h3>
 
-          {displayedJobPostings.length === 0 ? (
+          {loadingPostings ? (
+            <div className="bg-white rounded-lg shadow p-8 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-600 mt-4">Caricamento...</p>
+            </div>
+          ) : displayedJobPostings.length === 0 ? (
             <div className="bg-white rounded-lg shadow p-8 text-center">
               <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600">
