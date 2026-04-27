@@ -58,8 +58,6 @@ export function UserAuctionsSection() {
       if (isBusinessUser) {
         if (selectedBusinessLocationId) {
           myQuery = myQuery.eq('registered_business_location_id', selectedBusinessLocationId);
-        } else {
-          myQuery = myQuery.is('registered_business_location_id', null);
         }
       } else if (familyMemberId) {
         myQuery = myQuery.eq('family_member_id', familyMemberId);

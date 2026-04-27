@@ -423,8 +423,6 @@ export function DashboardPage() {
 
     if (selectedBusinessLocationId) {
       query = query.eq('registered_business_location_id', selectedBusinessLocationId);
-    } else {
-      query = query.is('registered_business_location_id', null);
     }
 
     const { data } = await query;
