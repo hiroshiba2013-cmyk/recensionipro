@@ -7,7 +7,9 @@ interface JobPosting {
   id: string;
   title: string;
   description: string;
-  salary_range: string | null;
+  salary_min: number | null;
+  salary_max: number | null;
+  salary_currency: string | null;
   gross_annual_salary: number | null;
   location: string;
   status: string;
@@ -89,7 +91,7 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
       const { data, error } = await supabase
         .from('job_postings')
         .select(`
-          id, title, description, salary_range, gross_annual_salary,
+          id, title, description, salary_min, salary_max, salary_currency, gross_annual_salary,
           location, status, approval_status, position_type, experience_level,
           created_at, expires_at, published_at,
           business_location_id, registered_business_location_id,
