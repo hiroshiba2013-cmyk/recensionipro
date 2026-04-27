@@ -77,6 +77,7 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [processing, setProcessing] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -217,6 +218,9 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
       });
       if (error) throw error;
       await loadJobPostings();
+      setApprovalFilter('approved');
+      setSuccessMessage('Annuncio approvato con successo!');
+      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
       alert('Errore durante l\'approvazione: ' + err.message);
     } finally {
@@ -237,6 +241,9 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
       setRejectingId(null);
       setRejectReason('');
       await loadJobPostings();
+      setApprovalFilter('rejected');
+      setSuccessMessage('Annuncio rifiutato.');
+      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
       alert('Errore durante il rifiuto: ' + err.message);
     } finally {
@@ -315,6 +322,13 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
 
   return (
     <div className="space-y-6">
+      {successMessage && (
+        <div className="bg-green-50 border border-green-300 text-green-800 rounded-lg px-4 py-3 flex items-center gap-2 font-medium">
+          <ShieldCheck className="w-5 h-5 text-green-600 flex-shrink-0" />
+          {successMessage}
+        </div>
+      )}
+
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
           <Briefcase className="w-7 h-7 text-cyan-600" />
