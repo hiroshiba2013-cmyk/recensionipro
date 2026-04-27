@@ -86,6 +86,10 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegis
   const loadJobPostingsFor = async (isReg: boolean) => {
     try {
       const businessIdColumn = isReg ? 'registered_business_id' : 'business_id';
+      const locationCol = isReg ? 'registered_business_location_id' : 'business_location_id';
+
+      console.log('[JobPostings] loading:', { isReg, businessId, selectedLocationId, businessIdColumn, locationCol });
+
       let query = supabase
         .from('job_postings')
         .select('*')
@@ -93,11 +97,11 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegis
         .order('created_at', { ascending: false });
 
       if (selectedLocationId) {
-        const locationCol = isReg ? 'registered_business_location_id' : 'business_location_id';
         query = query.eq(locationCol, selectedLocationId);
       }
 
       const { data, error } = await query;
+      console.log('[JobPostings] result:', { count: data?.length, error, data });
       if (error) throw error;
       setJobPostings(data || []);
     } catch (error) {

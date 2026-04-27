@@ -679,9 +679,10 @@ export function DashboardPage() {
                 </div>
 
                 {/* Offerte di lavoro */}
-                {(selectedBusinessId || businesses.length > 0) && (
+                {(selectedBusinessId || businesses[0]?.id) && (
                   <BusinessJobPostingForm
-                    businessId={selectedBusinessId || businesses[0]?.id}
+                    key={`${selectedBusinessId || businesses[0]?.id}-${selectedBusinessLocationId || 'all'}`}
+                    businessId={(selectedBusinessId || businesses[0]?.id)!}
                     isRegisteredBusiness={isRegisteredBusiness}
                     selectedLocationId={selectedBusinessLocationId || undefined}
                   />
