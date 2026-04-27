@@ -571,426 +571,52 @@ export function DashboardPage() {
           <div className="space-y-8">
             {profile.user_type === 'business' ? (
               <>
+                {/* Statistiche sede selezionata */}
                 {selectedBusinessLocationId && (
-                  <div className="bg-gradient-to-br from-blue-100 via-purple-50 to-blue-100 rounded-2xl shadow-lg p-8 mb-8 border-4 border-blue-300">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="bg-gradient-to-br from-blue-500 to-purple-500 p-3 rounded-xl shadow-lg">
-                        <TrendingUp className="w-7 h-7 text-white" />
+                  <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-200">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-blue-600" />
+                      Statistiche Sede
+                    </h3>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="bg-yellow-50 rounded-xl p-4 text-center border border-yellow-200">
+                        <Star className="w-5 h-5 text-yellow-600 mx-auto mb-1" />
+                        <p className="text-2xl font-bold text-yellow-600">{reviews.length}</p>
+                        <p className="text-xs text-gray-600 font-medium">Recensioni</p>
                       </div>
-                      <div>
-                        <h3 className="text-2xl font-bold text-gray-900">Statistiche Sede Selezionata</h3>
-                        <p className="text-sm text-gray-600">Panoramica delle tue attività</p>
+                      <div className="bg-blue-50 rounded-xl p-4 text-center border border-blue-200">
+                        <Package className="w-5 h-5 text-blue-600 mx-auto mb-1" />
+                        <p className="text-2xl font-bold text-blue-600">{products.length}</p>
+                        <p className="text-xs text-gray-600 font-medium">Prodotti</p>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                      <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-6 shadow-md border-2 border-yellow-300">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Star className="w-6 h-6 text-yellow-600" />
-                          <span className="text-sm font-bold text-gray-700">Recensioni</span>
-                        </div>
-                        <p className="text-4xl font-bold text-yellow-600">{reviews.length}</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 shadow-md border-2 border-purple-300">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Package className="w-6 h-6 text-purple-600" />
-                          <span className="text-sm font-bold text-gray-700">Prodotti</span>
-                        </div>
-                        <p className="text-4xl font-bold text-purple-600">{products.length}</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 shadow-md border-2 border-orange-300">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Briefcase className="w-6 h-6 text-orange-600" />
-                          <span className="text-sm font-bold text-gray-700">Offerte Lavoro</span>
-                        </div>
-                        <p className="text-4xl font-bold text-orange-600">{jobPostings.length}</p>
+                      <div className="bg-orange-50 rounded-xl p-4 text-center border border-orange-200">
+                        <Briefcase className="w-5 h-5 text-orange-600 mx-auto mb-1" />
+                        <p className="text-2xl font-bold text-orange-600">{jobPostings.length}</p>
+                        <p className="text-xs text-gray-600 font-medium">Offerte Lavoro</p>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {showCreateBusinessForm ? (
-                  <CreateBusinessForm
-                    ownerId={profile.id}
-                    onSuccess={() => {
-                      setShowCreateBusinessForm(false);
-                      loadDashboardData();
-                    }}
-                    onCancel={() => setShowCreateBusinessForm(false)}
-                  />
-                ) : !selectedBusinessLocationId ? (
-                  <>
-                    <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl shadow-lg p-8 border-4 border-blue-200">
-                      <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                          <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-3 rounded-xl shadow-lg">
-                            <Building className="w-7 h-7 text-white" />
-                          </div>
-                          <div>
-                            <h2 className="text-3xl font-bold text-gray-900">Le Mie Attività</h2>
-                            <p className="text-sm text-gray-600">Gestisci le tue sedi</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => setShowCreateBusinessForm(true)}
-                          className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all flex items-center gap-2 font-bold shadow-lg transform hover:scale-105"
-                        >
-                          <Plus className="w-5 h-5" />
-                          Aggiungi Attività
-                        </button>
-                      </div>
-
-                      {businesses.length === 0 ? (
-                        <p className="text-gray-600 text-center py-8">
-                          Non hai ancora registrato nessuna attività
-                        </p>
-                      ) : (
-                        <div className="grid gap-4">
-                          {businesses.map((business) => (
-                            <div
-                              key={business.id}
-                              onClick={() => setSelectedBusinessId(business.id)}
-                              className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                                selectedBusinessId === business.id
-                                  ? 'border-blue-500 bg-blue-50'
-                                  : 'border-gray-200 hover:border-blue-300'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <h3 className="font-semibold text-lg">{business.name}</h3>
-                                  <p className="text-gray-600 text-sm">{business.city}</p>
-                                  {selectedBusinessId === business.id && (
-                                    <p className="text-blue-600 text-sm mt-1 font-medium">
-                                      Selezionata per la modifica
-                                    </p>
-                                  )}
-                                </div>
-                                {business.verified ? (
-                                  <span className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">
-                                    Verificato
-                                  </span>
-                                ) : (
-                                  <span className="px-3 py-1 bg-yellow-100 text-yellow-700 text-sm rounded-full">
-                                    In Attesa
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {selectedBusinessId && (
-                      <>
-                        <EditBusinessForm
-                          businessId={selectedBusinessId}
-                          selectedLocationId={selectedBusinessLocationId}
-                          onUpdate={loadDashboardData}
-                        />
-                        <EditBusinessLocationsForm
-                          businessId={selectedBusinessId}
-                          selectedLocationId={selectedBusinessLocationId}
-                          onUpdate={loadDashboardData}
-                        />
-                      </>
-                    )}
-                  </>
-                ) : null}
-
-                {!selectedBusinessLocationId && (
-                  <ImportBusinessesForm onImportComplete={loadDashboardData} />
-                )}
-
+                {/* Aste */}
                 <UserAuctionsSection />
 
-                <FavoritesSection />
-
-                {/* Sezione Cerco Lavoro */}
-                <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-lg p-8 border-4 border-blue-200">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="bg-gradient-to-br from-blue-500 to-purple-500 p-3 rounded-xl shadow-lg">
-                      <Users className="w-7 h-7 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-3xl font-bold text-gray-900">Cerco Lavoro</h2>
-                      <p className="text-sm text-gray-600">Profili di utenti in cerca di opportunità</p>
-                    </div>
-                  </div>
-
-                  {jobSeekers.length === 0 ? (
-                    <p className="text-gray-600 text-center py-8">
-                      Nessun profilo disponibile al momento
-                    </p>
-                  ) : (
-                    <div className="grid gap-4">
-                      {jobSeekers.map((seeker) => (
-                        <div key={seeker.id} className="bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-blue-400 transition-all">
-                          <div className="flex items-start gap-4">
-                            {seeker.profiles.avatar_url ? (
-                              <img
-                                src={seeker.profiles.avatar_url}
-                                alt={seeker.profiles.full_name}
-                                className="w-12 h-12 rounded-full"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
-                                {seeker.profiles.full_name.charAt(0)}
-                              </div>
-                            )}
-                            <div className="flex-1">
-                              <div className="flex items-start justify-between">
-                                <div>
-                                  <h3 className="font-bold text-lg text-gray-900">{seeker.title}</h3>
-                                  <p className="text-sm text-gray-600">
-                                    {seeker.profiles.nickname || seeker.profiles.full_name}
-                                  </p>
-                                </div>
-                                <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
-                                  {seeker.category}
-                                </span>
-                              </div>
-                              <p className="text-gray-700 text-sm mt-2">{seeker.description}</p>
-                              <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                                <span>{seeker.city}, {seeker.province}</span>
-                                <span>{new Date(seeker.created_at).toLocaleDateString('it-IT')}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="mt-6 text-center">
-                    <button
-                      onClick={() => navigate('/jobs')}
-                      className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all font-bold shadow-lg"
-                    >
-                      Vedi Tutti i Profili
-                    </button>
-                  </div>
-                </div>
-
-                {/* Sezione Classifica / Le Mie Attivita' */}
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-gray-100">
-                  <div className="flex border-b border-gray-200">
-                    <button
-                      onClick={() => setLeaderboardTab('leaderboard')}
-                      className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 font-semibold text-sm transition-all ${
-                        leaderboardTab === 'leaderboard'
-                          ? 'bg-yellow-50 text-yellow-700 border-b-2 border-yellow-500'
-                          : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Trophy className="w-5 h-5" />
-                      Classifica
-                    </button>
-                    <button
-                      onClick={() => setLeaderboardTab('my_activities')}
-                      className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 font-semibold text-sm transition-all ${
-                        leaderboardTab === 'my_activities'
-                          ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
-                          : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Activity className="w-5 h-5" />
-                      Le Mie Attivita'
-                    </button>
-                  </div>
-
-                  <div className="p-6">
-                    {leaderboardTab === 'leaderboard' ? (
-                      <div>
-                        <div className="flex items-center gap-3 mb-6">
-                          <div className="bg-gradient-to-br from-yellow-500 to-orange-500 p-3 rounded-xl shadow-lg">
-                            <Trophy className="w-6 h-6 text-white" />
-                          </div>
-                          <div>
-                            <h2 className="text-xl font-bold text-gray-900">Classifica Migliori Sedi</h2>
-                            <p className="text-sm text-gray-600">Le sedi aziendali con le valutazioni più alte</p>
-                          </div>
-                        </div>
-
-                        {topLocations.length === 0 ? (
-                          <p className="text-gray-600 text-center py-8">
-                            Nessuna sede disponibile
-                          </p>
-                        ) : (
-                          <div className="grid gap-4">
-                            {topLocations.map((location, index) => (
-                              <div key={location.id} className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4 hover:border-yellow-400 transition-all">
-                                <div className="flex items-start gap-4">
-                                  <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0 ${
-                                    index === 0 ? 'bg-yellow-400 text-white' :
-                                    index === 1 ? 'bg-gray-300 text-white' :
-                                    index === 2 ? 'bg-orange-400 text-white' :
-                                    'bg-gray-100 text-gray-600'
-                                  }`}>
-                                    {index + 1}
-                                  </div>
-                                  <div className="flex-1">
-                                    <div className="flex items-start justify-between">
-                                      <div>
-                                        <h3 className="font-bold text-lg text-gray-900">{location.name}</h3>
-                                        <p className="text-sm text-gray-600">{location.business.name}</p>
-                                        <p className="text-xs text-gray-500">{location.city}, {location.province}</p>
-                                      </div>
-                                      <div className="text-right">
-                                        <div className="flex items-center gap-1">
-                                          <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                                          <span className="font-bold text-lg text-gray-900">
-                                            {Number(location.avg_rating).toFixed(1)}
-                                          </span>
-                                        </div>
-                                        <p className="text-xs text-gray-500">{location.review_count} recensioni</p>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        <div className="mt-6 text-center">
-                          <button
-                            onClick={() => navigate('/leaderboard')}
-                            className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-3 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all font-bold shadow-lg"
-                          >
-                            Vedi Classifica Completa
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <ActivityFeed />
-                    )}
-                  </div>
-                </div>
-
-                {/* Sezione Solidarietà */}
-                {solidarityStats && (
-                  <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl shadow-lg p-8 border-4 border-green-200">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="bg-gradient-to-br from-green-500 to-blue-500 p-3 rounded-xl shadow-lg">
-                        <Heart className="w-7 h-7 text-white" />
-                      </div>
-                      <div>
-                        <h2 className="text-3xl font-bold text-gray-900">Solidarietà</h2>
-                        <p className="text-sm text-gray-600">Il 10% del fatturato va in beneficenza</p>
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="bg-white rounded-xl p-6 shadow-md border-2 border-green-300">
-                        <div className="flex items-center gap-3 mb-3">
-                          <DollarSign className="w-8 h-8 text-green-600" />
-                          <span className="text-sm font-bold text-gray-700">Fatturato Totale</span>
-                        </div>
-                        <p className="text-4xl font-bold text-green-600">
-                          €{solidarityStats.total_revenue.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </p>
-                      </div>
-                      <div className="bg-white rounded-xl p-6 shadow-md border-2 border-blue-300">
-                        <div className="flex items-center gap-3 mb-3">
-                          <Heart className="w-8 h-8 text-blue-600" fill="currentColor" />
-                          <span className="text-sm font-bold text-gray-700">Donato in Beneficenza</span>
-                        </div>
-                        <p className="text-4xl font-bold text-blue-600">
-                          €{solidarityStats.charity_amount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 text-center">
+                {/* Annunci classificati */}
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-green-100">
+                  <div className="bg-gradient-to-r from-green-600 to-teal-600 px-6 py-4">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                        <Tag className="w-6 h-6" />
+                        I Miei Annunci
+                      </h2>
                       <button
-                        onClick={() => navigate('/solidarity')}
-                        className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-blue-600 transition-all font-bold shadow-lg"
+                        onClick={() => { setEditingClassifiedAdId(undefined); setShowClassifiedAdForm(true); }}
+                        className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2"
                       >
-                        Scopri di Più
+                        <Plus className="w-4 h-4" />
+                        Nuovo Annuncio
                       </button>
                     </div>
-                  </div>
-                )}
-
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-2">
-                      <Star className="w-6 h-6" />
-                      {selectedBusinessLocationId ? 'Recensioni Sede Selezionata' : 'Recensioni Ricevute'}
-                    </h2>
-                  </div>
-
-                  {reviews.length === 0 ? (
-                    <p className="text-gray-600 text-center py-8">
-                      {selectedBusinessLocationId
-                        ? 'Questa sede non ha ancora ricevuto recensioni'
-                        : 'Non hai ancora ricevuto recensioni'}
-                    </p>
-                  ) : (
-                    <div className="space-y-4">
-                      {reviews.map((review) => (
-                        <div key={review.id} className="border border-gray-200 rounded-lg p-4">
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="flex">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`w-4 h-4 ${
-                                    i < review.rating
-                                      ? 'fill-yellow-400 text-yellow-400'
-                                      : 'text-gray-300'
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                            <span className="text-sm text-gray-500">
-                              {new Date(review.created_at).toLocaleDateString('it-IT')}
-                            </span>
-                          </div>
-                          <h4 className="font-semibold mb-1">{review.title}</h4>
-                          <p className="text-gray-700 text-sm">{review.content}</p>
-                          {!review.responses || review.responses.length === 0 ? (
-                            <button
-                              onClick={() => setShowResponseForm(review.id)}
-                              className="mt-3 text-blue-600 text-sm hover:text-blue-700 flex items-center gap-1"
-                            >
-                              <MessageSquare className="w-4 h-4" />
-                              Rispondi
-                            </button>
-                          ) : (
-                            <div className="mt-3 pl-4 border-l-2 border-blue-200">
-                              <p className="text-sm font-medium text-gray-600 mb-1">La tua risposta:</p>
-                              <p className="text-sm text-gray-700">{review.responses[0].content}</p>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {selectedBusinessId && <BusinessJobPostingForm businessId={selectedBusinessId} isRegisteredBusiness={isRegisteredBusiness} selectedLocationId={selectedBusinessLocationId || undefined} />}
-
-                {/* Sezione Annunci Classificati per utenti Business */}
-                <div className="mt-12">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                        <Tag className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900">I Miei Annunci</h2>
-                        <p className="text-sm text-gray-500">Gestisci i tuoi annunci personali</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => { setEditingClassifiedAdId(undefined); setShowClassifiedAdForm(true); }}
-                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-medium transition-colors shadow-sm"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Nuovo Annuncio
-                    </button>
                   </div>
 
                   {showClassifiedAdForm && (
@@ -1005,178 +631,279 @@ export function DashboardPage() {
                     </div>
                   )}
 
-                  {businessClassifiedAds.length === 0 ? (
-                    <div className="bg-white rounded-2xl border border-dashed border-gray-300 p-12 text-center">
-                      <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Tag className="w-7 h-7 text-green-500" />
+                  <div className="p-6">
+                    {businessClassifiedAds.length === 0 ? (
+                      <div className="text-center py-10">
+                        <Tag className="w-14 h-14 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-700 mb-2">Nessun annuncio</h3>
+                        <p className="text-gray-500 text-sm mb-6">Pubblica annunci di vendita, acquisto o regalo.</p>
+                        <button
+                          onClick={() => { setEditingClassifiedAdId(undefined); setShowClassifiedAdForm(true); }}
+                          className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-colors font-semibold"
+                        >
+                          <Plus className="w-5 h-5" />
+                          Crea il primo annuncio
+                        </button>
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-700 mb-2">Nessun annuncio</h3>
-                      <p className="text-gray-500 text-sm mb-4">Pubblica annunci di vendita, acquisto o regalo</p>
-                      <button
-                        onClick={() => { setEditingClassifiedAdId(undefined); setShowClassifiedAdForm(true); }}
-                        className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Crea il primo annuncio
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {businessClassifiedAds.map(ad => (
-                        <ProfileClassifiedAdCard
-                          key={ad.id}
-                          ad={{
-                            ...ad,
-                            price: ad.price ? parseFloat(ad.price) : null,
-                            classified_categories: ad.classified_categories,
-                            profiles: { full_name: profile?.nickname || profile?.full_name || 'Utente', avatar_url: null },
-                          }}
-                          onEdit={(id) => { setEditingClassifiedAdId(id); setShowClassifiedAdForm(true); }}
-                          onDelete={loadBusinessClassifiedAds}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {currentSubscription && availablePlans.length > 0 && (
-                  <div className="mt-12">
-                    <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-400 rounded-2xl shadow-xl p-8 mb-8">
-                      <div className="flex items-center justify-center mb-4">
-                        <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mr-3">
-                          <Heart className="w-6 h-6 text-white" fill="currentColor" />
-                        </div>
-                        <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-                          10% di Beneficenza
-                        </h2>
-                      </div>
-                      <p className="text-lg text-gray-800 max-w-3xl mx-auto text-center mb-4">
-                        Il tuo abbonamento fa la differenza! Ogni anno Trovafacile donerà il <strong>10% del fatturato totale</strong> ad associazioni di beneficenza.
-                      </p>
-                      <div className="grid md:grid-cols-3 gap-3 max-w-4xl mx-auto mt-6">
-                        <div className="bg-white/80 backdrop-blur rounded-xl p-3 text-center">
-                          <Gift className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                          <p className="text-sm font-semibold text-gray-900">Trasparenza Totale</p>
-                          <p className="text-xs text-gray-600 mt-1">Documenti certificati pubblici</p>
-                        </div>
-                        <div className="bg-white/80 backdrop-blur rounded-xl p-3 text-center">
-                          <UsersIcon className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                          <p className="text-sm font-semibold text-gray-900">Voti degli Utenti</p>
-                          <p className="text-xs text-gray-600 mt-1">Tu scegli le associazioni</p>
-                        </div>
-                        <div className="bg-white/80 backdrop-blur rounded-xl p-3 text-center">
-                          <TrendingUp className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                          <p className="text-sm font-semibold text-gray-900">Impatto Reale</p>
-                          <p className="text-xs text-gray-600 mt-1">Aiuto concreto ogni anno</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {upgradeMessage && (
-                      <div className={`mb-6 p-4 rounded-lg ${
-                        upgradeMessage.includes('successo') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {upgradeMessage}
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {businessClassifiedAds.map(ad => (
+                          <ProfileClassifiedAdCard
+                            key={ad.id}
+                            ad={{
+                              ...ad,
+                              price: ad.price ? parseFloat(ad.price) : null,
+                              classified_categories: ad.classified_categories,
+                              profiles: { full_name: profile?.nickname || profile?.full_name || 'Utente', avatar_url: null },
+                            }}
+                            onEdit={(id) => { setEditingClassifiedAdId(id); setShowClassifiedAdForm(true); }}
+                            onDelete={loadBusinessClassifiedAds}
+                          />
+                        ))}
                       </div>
                     )}
+                  </div>
+                </div>
 
-                    <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
-                      Cambia Piano
+                {/* Offerte di lavoro */}
+                {selectedBusinessId && (
+                  <BusinessJobPostingForm
+                    businessId={selectedBusinessId}
+                    isRegisteredBusiness={isRegisteredBusiness}
+                    selectedLocationId={selectedBusinessLocationId || undefined}
+                  />
+                )}
+
+                {/* Recensioni */}
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
+                  <div className="bg-gradient-to-r from-yellow-500 to-amber-500 px-6 py-4">
+                    <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                      <Star className="w-6 h-6" />
+                      {selectedBusinessLocationId ? 'Recensioni Sede' : 'Recensioni Ricevute'}
                     </h2>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {availablePlans.map((plan) => {
-                        const monthlyEquivalent = availablePlans.find(
-                          p => p.max_persons === plan.max_persons && p.billing_period === 'monthly'
-                        );
-                        const isAnnual = plan.billing_period === 'yearly';
-                        const savings = isAnnual && monthlyEquivalent
-                          ? (monthlyEquivalent.price * 12) - plan.price
-                          : null;
-                        const isCurrent = currentSubscription.plan.id === plan.id;
-
-                        return (
-                          <div
-                            key={plan.id}
-                            className={`bg-white rounded-xl shadow-lg p-6 border-2 transition-all relative ${
-                              isCurrent
-                                ? 'border-yellow-500 bg-yellow-50'
-                                : isAnnual
-                                ? 'border-green-400 ring-2 ring-green-200'
-                                : 'border-gray-200 hover:border-blue-500'
-                            }`}
-                          >
-                            {isAnnual && !isCurrent && (
-                              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                                <span className="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                                  <Star className="w-3 h-3" fill="currentColor" />
-                                  RISPARMIO
-                                </span>
+                  </div>
+                  <div className="p-6">
+                    {reviews.length === 0 ? (
+                      <p className="text-gray-500 text-center py-8">
+                        {selectedBusinessLocationId ? 'Nessuna recensione per questa sede' : 'Nessuna recensione ricevuta'}
+                      </p>
+                    ) : (
+                      <div className="space-y-4">
+                        {reviews.map((review) => (
+                          <div key={review.id} className="border border-gray-200 rounded-xl p-4">
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+                                ))}
                               </div>
-                            )}
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">
-                              {plan.name}
-                            </h3>
-                            <p className="text-xs text-gray-500 mb-1">Fino a {plan.max_persons} {plan.max_persons === 1 ? 'sede' : 'sedi'}</p>
-                            <p className="text-xs font-semibold text-gray-700 mb-4">
-                              Abbonamento {plan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'}
-                            </p>
-                            <div className="mb-6">
-                              <div className="flex items-baseline gap-2">
-                                <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
-                                <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
-                              </div>
-                              <p className="text-xs text-gray-500 mt-1">+ IVA</p>
-                              {savings && (
-                                <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3">
-                                  <p className="text-lg font-bold text-green-700">Risparmi €{savings.toFixed(2)}</p>
-                                  <p className="text-xs text-green-600">rispetto al piano mensile</p>
-                                </div>
-                              )}
-                              {!isAnnual && (
-                                <p className="text-xs text-gray-500 mt-2">€{(Number(plan.price) * 12).toFixed(2)} all'anno</p>
-                              )}
+                              <span className="text-sm text-gray-500">{new Date(review.created_at).toLocaleDateString('it-IT')}</span>
                             </div>
-                            <div className="mb-6 space-y-2">
-                              <div className="flex items-center gap-2 text-sm text-gray-700">
-                                <Shield className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                                <span>Profilo verificato</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm text-gray-700">
-                                <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                <span>Risposte recensioni</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm text-gray-700">
-                                <TrendingUp className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                                <span>Statistiche avanzate</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm text-gray-700">
-                                <Star className="w-4 h-4 text-yellow-500 flex-shrink-0" fill="currentColor" />
-                                <span>Priorità visibilità</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm text-gray-700">
-                                <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                <span>Inserire annunci di lavoro</span>
-                              </div>
-                            </div>
-                            {isCurrent ? (
-                              <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
-                                Piano Attuale
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => handleChangePlan(plan.id)}
-                                className={`w-full py-3 px-6 rounded-lg transition-colors font-semibold ${
-                                  isAnnual
-                                    ? 'bg-green-600 text-white hover:bg-green-700'
-                                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                                }`}
-                              >
-                                Cambia Piano
+                            <h4 className="font-semibold mb-1">{review.title}</h4>
+                            <p className="text-gray-700 text-sm">{review.content}</p>
+                            {!review.responses || review.responses.length === 0 ? (
+                              <button onClick={() => setShowResponseForm(review.id)} className="mt-3 text-blue-600 text-sm hover:text-blue-700 flex items-center gap-1">
+                                <MessageSquare className="w-4 h-4" />
+                                Rispondi
                               </button>
+                            ) : (
+                              <div className="mt-3 pl-4 border-l-2 border-blue-200">
+                                <p className="text-sm font-medium text-gray-600 mb-1">La tua risposta:</p>
+                                <p className="text-sm text-gray-700">{review.responses[0].content}</p>
+                              </div>
                             )}
                           </div>
-                        );
-                      })}
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Preferiti */}
+                <FavoritesSection />
+
+                {/* Gestione attività — solo su tutte le sedi */}
+                {!selectedBusinessLocationId && (
+                  <>
+                    {showCreateBusinessForm ? (
+                      <CreateBusinessForm
+                        ownerId={profile.id}
+                        onSuccess={() => { setShowCreateBusinessForm(false); loadDashboardData(); }}
+                        onCancel={() => setShowCreateBusinessForm(false)}
+                      />
+                    ) : (
+                      <>
+                        <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
+                          <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-4">
+                            <div className="flex items-center justify-between">
+                              <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                                <Building className="w-6 h-6" />
+                                Le Mie Attività
+                              </h2>
+                              <button
+                                onClick={() => setShowCreateBusinessForm(true)}
+                                className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2"
+                              >
+                                <Plus className="w-4 h-4" />
+                                Aggiungi
+                              </button>
+                            </div>
+                          </div>
+                          <div className="p-6">
+                            {businesses.length === 0 ? (
+                              <p className="text-gray-500 text-center py-6">Non hai ancora registrato nessuna attività</p>
+                            ) : (
+                              <div className="grid gap-3">
+                                {businesses.map((business) => (
+                                  <div
+                                    key={business.id}
+                                    onClick={() => setSelectedBusinessId(business.id)}
+                                    className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${selectedBusinessId === business.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <h3 className="font-semibold text-gray-900">{business.name}</h3>
+                                        <p className="text-gray-500 text-sm">{business.city}</p>
+                                      </div>
+                                      {business.verified ? (
+                                        <span className="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">Verificato</span>
+                                      ) : (
+                                        <span className="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full font-medium">In Attesa</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {selectedBusinessId && (
+                          <>
+                            <EditBusinessForm businessId={selectedBusinessId} selectedLocationId={selectedBusinessLocationId} onUpdate={loadDashboardData} />
+                            <EditBusinessLocationsForm businessId={selectedBusinessId} selectedLocationId={selectedBusinessLocationId} onUpdate={loadDashboardData} />
+                          </>
+                        )}
+
+                        <ImportBusinessesForm onImportComplete={loadDashboardData} />
+                      </>
+                    )}
+                  </>
+                )}
+
+                {/* Cerco Lavoro */}
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
+                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+                    <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                      <Users className="w-6 h-6" />
+                      Profili Cerco Lavoro
+                    </h2>
+                  </div>
+                  <div className="p-6">
+                    {jobSeekers.length === 0 ? (
+                      <p className="text-gray-500 text-center py-6">Nessun profilo disponibile al momento</p>
+                    ) : (
+                      <div className="grid gap-3">
+                        {jobSeekers.map((seeker) => (
+                          <div key={seeker.id} className="border border-gray-200 rounded-xl p-4 hover:border-blue-300 transition-all">
+                            <div className="flex items-start gap-3">
+                              {seeker.profiles.avatar_url ? (
+                                <img src={seeker.profiles.avatar_url} alt={seeker.profiles.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold flex-shrink-0">
+                                  {seeker.profiles.full_name.charAt(0)}
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2">
+                                  <h3 className="font-semibold text-gray-900 truncate">{seeker.title}</h3>
+                                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium flex-shrink-0">{seeker.category}</span>
+                                </div>
+                                <p className="text-sm text-gray-500">{seeker.profiles.nickname || seeker.profiles.full_name} · {seeker.city}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="mt-4 text-center">
+                      <button onClick={() => navigate('/jobs')} className="text-blue-600 text-sm font-semibold hover:underline">
+                        Vedi tutti i profili
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Solidarietà */}
+                {solidarityStats && (
+                  <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
+                    <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
+                      <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                        <Heart className="w-6 h-6" />
+                        Solidarietà
+                      </h2>
+                    </div>
+                    <div className="p-6">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <DollarSign className="w-5 h-5 text-green-600" />
+                            <span className="text-sm font-semibold text-gray-700">Fatturato Totale</span>
+                          </div>
+                          <p className="text-2xl font-bold text-green-600">€{solidarityStats.total_revenue.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        </div>
+                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Heart className="w-5 h-5 text-blue-600" />
+                            <span className="text-sm font-semibold text-gray-700">Donato in Beneficenza</span>
+                          </div>
+                          <p className="text-2xl font-bold text-blue-600">€{solidarityStats.charity_amount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        </div>
+                      </div>
+                      <div className="mt-4 text-center">
+                        <button onClick={() => navigate('/solidarity')} className="text-green-600 text-sm font-semibold hover:underline">Scopri di più</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Cambia Piano */}
+                {currentSubscription && availablePlans.length > 0 && (
+                  <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
+                    <div className="bg-gradient-to-r from-gray-700 to-gray-800 px-6 py-4">
+                      <h2 className="text-xl font-bold text-white">Cambia Piano</h2>
+                    </div>
+                    <div className="p-6">
+                      {upgradeMessage && (
+                        <div className={`mb-4 p-3 rounded-lg text-sm ${upgradeMessage.includes('successo') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {upgradeMessage}
+                        </div>
+                      )}
+                      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {availablePlans.map((plan) => {
+                          const monthlyEquivalent = availablePlans.find(p => p.max_persons === plan.max_persons && p.billing_period === 'monthly');
+                          const isAnnual = plan.billing_period === 'yearly';
+                          const savings = isAnnual && monthlyEquivalent ? (monthlyEquivalent.price * 12) - plan.price : null;
+                          const isCurrent = currentSubscription.plan.id === plan.id;
+                          return (
+                            <div key={plan.id} className={`rounded-xl p-4 border-2 relative ${isCurrent ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}>
+                              {isAnnual && !isCurrent && (
+                                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full">RISPARMIO</span>
+                              )}
+                              <h3 className="font-bold text-gray-900 mb-1">{plan.name}</h3>
+                              <p className="text-xs text-gray-500 mb-3">{plan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'} · {plan.max_persons} {plan.max_persons === 1 ? 'sede' : 'sedi'}</p>
+                              <p className="text-2xl font-bold text-blue-600 mb-1">€{Number(plan.price).toFixed(2)}</p>
+                              <p className="text-xs text-gray-400 mb-3">+ IVA / {plan.billing_period === 'monthly' ? 'mese' : 'anno'}</p>
+                              {savings && <p className="text-xs text-green-600 font-semibold mb-3">Risparmi €{savings.toFixed(2)}</p>}
+                              {isCurrent ? (
+                                <div className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-semibold text-center">Piano Attuale</div>
+                              ) : (
+                                <button onClick={() => handleChangePlan(plan.id)} className="w-full bg-gray-800 hover:bg-gray-900 text-white py-2 rounded-lg text-sm font-semibold transition-colors">Scegli Piano</button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 )}
