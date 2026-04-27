@@ -25,14 +25,15 @@ interface ParticipatingAuction extends Auction {
 }
 
 export function UserAuctionsSection() {
-  const { user, activeProfile } = useAuth();
+  const { user, activeProfile, profile } = useAuth();
   const [myAuctions, setMyAuctions] = useState<Auction[]>([]);
   const [participatingAuctions, setParticipatingAuctions] = useState<ParticipatingAuction[]>([]);
   const [activeTab, setActiveTab] = useState<'my' | 'participating'>('my');
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
-  const familyMemberId = activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
+  // Business users don't have family members — activeProfile is a location, not a family member
+  const familyMemberId = profile?.user_type !== 'business' && activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
 
   useEffect(() => {
     if (user) {
