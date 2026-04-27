@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Briefcase, Plus, X, FileEdit as Edit, Trash2, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
@@ -36,12 +36,14 @@ interface BusinessJobPostingFormProps {
   isRegisteredBusiness?: boolean;
 }
 
-export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegisteredBusiness = false }: BusinessJobPostingFormProps) {
+export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegisteredBusiness: isRegisteredProp = false }: BusinessJobPostingFormProps) {
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isRegisteredBusiness, setIsRegisteredBusiness] = useState(isRegisteredProp);
+  const isRegisteredRef = useRef(isRegisteredProp);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -59,8 +61,20 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegis
   });
 
   useEffect(() => {
-    loadJobPostings();
-    loadBusinessLocations();
+    const detectAndLoad = async () => {
+      // Detect if this businessId belongs to registered_businesses
+      const { data: regData } = await supabase
+        .from('registered_businesses')
+        .select('id')
+        .eq('id', businessId)
+        .maybeSingle();
+      const isReg = !!regData;
+      setIsRegisteredBusiness(isReg);
+      isRegisteredRef.current = isReg;
+      await loadJobPostingsFor(isReg);
+      await loadBusinessLocationsFor(isReg);
+    };
+    detectAndLoad();
   }, [businessId]);
 
   useEffect(() => {
@@ -69,9 +83,9 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegis
     }
   }, [selectedLocationId, editingId]);
 
-  const loadJobPostings = async () => {
+  const loadJobPostingsFor = async (isReg: boolean) => {
     try {
-      const businessIdColumn = isRegisteredBusiness ? 'registered_business_id' : 'business_id';
+      const businessIdColumn = isReg ? 'registered_business_id' : 'business_id';
       const { data, error } = await supabase
         .from('job_postings')
         .select('*')
@@ -87,10 +101,12 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegis
     }
   };
 
-  const loadBusinessLocations = async () => {
+  const loadJobPostings = () => loadJobPostingsFor(isRegisteredBusiness);
+
+  const loadBusinessLocationsFor = async (isReg: boolean) => {
     try {
-      const table = isRegisteredBusiness ? 'registered_business_locations' : 'business_locations';
-      const addressCol = isRegisteredBusiness ? 'street' : 'address';
+      const table = isReg ? 'registered_business_locations' : 'business_locations';
+      const addressCol = isReg ? 'street' : 'address';
       const { data, error } = await supabase
         .from(table)
         .select(`id, name, internal_name, ${addressCol}, city`)
@@ -117,6 +133,13 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegis
     e.preventDefault();
 
     try {
+      const isReg = isRegisteredRef.current;
+      const locationIdField = formData.business_location_id
+        ? isReg
+          ? { registered_business_location_id: formData.business_location_id, business_location_id: null }
+          : { business_location_id: formData.business_location_id }
+        : { business_location_id: null };
+
       const postingData = {
         title: formData.title,
         description: formData.description,
@@ -130,7 +153,7 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegis
         education_level: formData.education_level || null,
         expires_at: formData.expires_at,
         status: formData.status,
-        business_location_id: formData.business_location_id || null,
+        ...locationIdField,
       };
 
       if (editingId) {
@@ -141,7 +164,7 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegis
 
         if (error) throw error;
       } else {
-        const businessIdField = isRegisteredBusiness
+        const businessIdField = isReg
           ? { registered_business_id: businessId }
           : { business_id: businessId };
 

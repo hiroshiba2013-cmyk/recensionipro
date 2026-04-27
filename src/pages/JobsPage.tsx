@@ -31,6 +31,11 @@ interface JobPosting {
     name: string;
     owner_id: string;
   } | null;
+  registered_business: {
+    id: string;
+    name: string;
+    owner_id: string;
+  } | null;
 }
 
 interface JobSeeker {
@@ -144,7 +149,8 @@ export function JobsPage() {
         .from('job_postings')
         .select(`
           *,
-          business:businesses(id, name, owner_id)
+          business:businesses(id, name, owner_id),
+          registered_business:registered_businesses(id, name, owner_id)
         `)
         .eq('status', 'active')
         .eq('approval_status', 'approved')
@@ -201,7 +207,7 @@ export function JobsPage() {
       const { data } = await query;
 
       if (data) {
-        const businessIds = [...new Set(data.map(job => job.business?.id).filter(Boolean))];
+        const businessIds = [...new Set(data.map(job => (job.business ?? job.registered_business)?.id).filter(Boolean))];
 
         const reviewCounts = await Promise.all(
           businessIds.map(async (businessId) => {
@@ -220,8 +226,8 @@ export function JobsPage() {
         );
 
         const sortedJobs = [...data].sort((a, b) => {
-          const countA = reviewCountMap[a.business?.id || ''] || 0;
-          const countB = reviewCountMap[b.business?.id || ''] || 0;
+          const countA = reviewCountMap[(a.business ?? a.registered_business)?.id || ''] || 0;
+          const countB = reviewCountMap[(b.business ?? b.registered_business)?.id || ''] || 0;
 
           if (countB !== countA) {
             return countB - countA;
@@ -407,7 +413,8 @@ export function JobsPage() {
 
     try {
       const job = jobs.find(j => j.id === jobId);
-      if (!job || !job.business) {
+      const jobOwner = job?.business ?? job?.registered_business;
+      if (!job || !jobOwner) {
         alert('Informazioni sul datore di lavoro non disponibili');
         return;
       }
@@ -418,7 +425,7 @@ export function JobsPage() {
       const { data: conversationId, error: funcError } = await supabase
         .rpc('get_or_create_conversation', {
           p_user1_id: user.id,
-          p_user2_id: job.business.owner_id,
+          p_user2_id: jobOwner.owner_id,
           p_conversation_type: 'job_posting',
           p_reference_id: jobId,
           p_user1_family_member_id: familyMemberId,
@@ -766,7 +773,7 @@ export function JobsPage() {
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h3 className="text-xl font-bold text-gray-900">{job.title}</h3>
-                      <p className="text-gray-600 font-medium">{job.company_name || job.business?.name || 'Azienda'}</p>
+                      <p className="text-gray-600 font-medium">{job.company_name || job.business?.name || job.registered_business?.name || 'Azienda'}</p>
                     </div>
                     <span className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
                       {job.position_type}
