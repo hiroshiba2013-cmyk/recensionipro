@@ -215,7 +215,7 @@ export function JobsPage() {
               .from('reviews')
               .select('id', { count: 'exact', head: true })
               .eq('business_id', businessId)
-              .eq('status', 'approved');
+              .eq('review_status', 'approved');
 
             return { businessId, count: count || 0 };
           })
