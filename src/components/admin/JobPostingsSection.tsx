@@ -73,12 +73,10 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
   const [selectedJobSeeker, setSelectedJobSeeker] = useState<JobSeeker | null>(null);
   const [jobSeekers, setJobSeekers] = useState<JobSeeker[]>([]);
   const [jobPostings, setJobPostings] = useState<JobPosting[]>(initialJobPostings);
-  const [loadingPostings, setLoadingPostings] = useState(true);
   const [loading, setLoading] = useState(true);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [processing, setProcessing] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -89,11 +87,16 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
   };
 
   const loadJobPostings = async () => {
-    setLoadingPostings(true);
     try {
       const { data, error } = await supabase
         .from('job_postings')
-        .select('id, title, description, salary_min, salary_max, salary_currency, gross_annual_salary, location, status, approval_status, position_type, experience_level, created_at, expires_at, published_at, business_location_id, registered_business_location_id, business_id, registered_business_id')
+        .select(`
+          id, title, description, salary_min, salary_max, salary_currency, gross_annual_salary,
+          location, status, approval_status, position_type, experience_level,
+          created_at, expires_at, published_at,
+          business_location_id, registered_business_location_id,
+          business_id, registered_business_id
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -144,8 +147,6 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
       setJobPostings(enriched as any);
     } catch (error: any) {
       console.error('Error loading job postings:', error);
-    } finally {
-      setLoadingPostings(false);
     }
   };
 
@@ -216,9 +217,6 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
       });
       if (error) throw error;
       await loadJobPostings();
-      setApprovalFilter('approved');
-      setSuccessMessage('Annuncio approvato con successo!');
-      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
       alert('Errore durante l\'approvazione: ' + err.message);
     } finally {
@@ -239,9 +237,6 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
       setRejectingId(null);
       setRejectReason('');
       await loadJobPostings();
-      setApprovalFilter('rejected');
-      setSuccessMessage('Annuncio rifiutato.');
-      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
       alert('Errore durante il rifiuto: ' + err.message);
     } finally {
@@ -320,13 +315,6 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
 
   return (
     <div className="space-y-6">
-      {successMessage && (
-        <div className="bg-green-50 border border-green-300 text-green-800 rounded-lg px-4 py-3 flex items-center gap-2 font-medium">
-          <ShieldCheck className="w-5 h-5 text-green-600 flex-shrink-0" />
-          {successMessage}
-        </div>
-      )}
-
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
           <Briefcase className="w-7 h-7 text-cyan-600" />
@@ -419,12 +407,7 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
             Trova Lavoro - Annunci Aziende ({displayedJobPostings.length})
           </h3>
 
-          {loadingPostings ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-gray-600 mt-4">Caricamento...</p>
-            </div>
-          ) : displayedJobPostings.length === 0 ? (
+          {displayedJobPostings.length === 0 ? (
             <div className="bg-white rounded-lg shadow p-8 text-center">
               <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600">

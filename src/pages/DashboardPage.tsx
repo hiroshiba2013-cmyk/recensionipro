@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Star, Building, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase, Users, DollarSign, Trophy, Activity, Tag, MapPin } from 'lucide-react';
+import { Plus, Star, Building, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase, Users, DollarSign, Trophy, Activity, Tag } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Business, Review, FamilyMember } from '../lib/supabase';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
@@ -415,17 +415,11 @@ export function DashboardPage() {
 
   const loadBusinessClassifiedAds = async () => {
     if (!user) return;
-    let query = supabase
+    const { data } = await supabase
       .from('classified_ads')
       .select('*, classified_categories(name, icon)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
-
-    if (selectedBusinessLocationId) {
-      query = query.eq('registered_business_location_id', selectedBusinessLocationId);
-    }
-
-    const { data } = await query;
     if (data) setBusinessClassifiedAds(data);
   };
 
@@ -624,18 +618,10 @@ export function DashboardPage() {
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-green-100">
                   <div className="bg-gradient-to-r from-green-600 to-teal-600 px-6 py-4">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <h2 className="text-xl font-bold text-white flex items-center gap-3">
-                          <Tag className="w-6 h-6" />
-                          I Miei Annunci
-                        </h2>
-                        {activeProfile && !activeProfile.isOwner && (
-                          <p className="text-green-100 text-sm mt-0.5 flex items-center gap-1">
-                            <MapPin className="w-3.5 h-3.5" />
-                            {activeProfile.internal_name || activeProfile.name}
-                          </p>
-                        )}
-                      </div>
+                      <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                        <Tag className="w-6 h-6" />
+                        I Miei Annunci
+                      </h2>
                       <button
                         onClick={() => { setEditingClassifiedAdId(undefined); setShowClassifiedAdForm(true); }}
                         className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2"

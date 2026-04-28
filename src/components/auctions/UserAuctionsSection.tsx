@@ -25,7 +25,7 @@ interface ParticipatingAuction extends Auction {
 }
 
 export function UserAuctionsSection() {
-  const { user, activeProfile, profile, selectedBusinessLocationId } = useAuth();
+  const { user, activeProfile, profile } = useAuth();
   const [myAuctions, setMyAuctions] = useState<Auction[]>([]);
   const [participatingAuctions, setParticipatingAuctions] = useState<ParticipatingAuction[]>([]);
   const [activeTab, setActiveTab] = useState<'my' | 'participating'>('my');
@@ -34,7 +34,6 @@ export function UserAuctionsSection() {
 
   // Business users don't have family members — activeProfile is a location, not a family member
   const familyMemberId = profile?.user_type !== 'business' && activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
-  const isBusinessUser = profile?.user_type === 'business';
 
   useEffect(() => {
     if (user) {
@@ -42,7 +41,7 @@ export function UserAuctionsSection() {
     } else {
       setLoading(false);
     }
-  }, [user, activeProfile, selectedBusinessLocationId]);
+  }, [user, activeProfile]);
 
   const loadAuctions = async () => {
     if (!user) return;
@@ -55,11 +54,7 @@ export function UserAuctionsSection() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (isBusinessUser) {
-        if (selectedBusinessLocationId) {
-          myQuery = myQuery.eq('registered_business_location_id', selectedBusinessLocationId);
-        }
-      } else if (familyMemberId) {
+      if (familyMemberId) {
         myQuery = myQuery.eq('family_member_id', familyMemberId);
       } else {
         myQuery = myQuery.is('family_member_id', null);
@@ -196,18 +191,10 @@ export function UserAuctionsSection() {
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-orange-200">
       <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-3">
-              <Gavel className="w-6 h-6" />
-              Le Mie Aste
-            </h2>
-            {isBusinessUser && activeProfile && !activeProfile.isOwner && (
-              <p className="text-orange-100 text-sm mt-0.5 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5" />
-                {activeProfile.internal_name || activeProfile.name}
-              </p>
-            )}
-          </div>
+          <h2 className="text-xl font-bold text-white flex items-center gap-3">
+            <Gavel className="w-6 h-6" />
+            Le Mie Aste
+          </h2>
           <button
             onClick={() => setShowForm(!showForm)}
             className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2"

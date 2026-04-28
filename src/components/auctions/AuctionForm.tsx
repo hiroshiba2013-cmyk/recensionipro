@@ -40,7 +40,7 @@ const durations = [
 ];
 
 export default function AuctionForm({ onSuccess, onCancel }: AuctionFormProps) {
-  const { user, profile, selectedBusinessLocationId } = useAuth();
+  const { user, profile } = useAuth();
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -119,29 +119,23 @@ export default function AuctionForm({ onSuccess, onCancel }: AuctionFormProps) {
       const endsAt = new Date();
       endsAt.setDate(endsAt.getDate() + formData.duration);
 
-      const payload: Record<string, any> = {
-        user_id: user.id,
-        title: formData.title,
-        description: formData.description,
-        base_price: parseFloat(formData.base_price),
-        images: imageUrls,
-        category: formData.category,
-        condition: formData.condition,
-        city: formData.city,
-        province: formData.province,
-        region: formData.region,
-        ends_at: endsAt.toISOString(),
-        status: 'active',
-        approval_status: 'pending'
-      };
-
-      if (selectedBusinessLocationId) {
-        payload.registered_business_location_id = selectedBusinessLocationId;
-      }
-
       const { error: insertError } = await supabase
         .from('auctions')
-        .insert(payload);
+        .insert({
+          user_id: user.id,
+          title: formData.title,
+          description: formData.description,
+          base_price: parseFloat(formData.base_price),
+          images: imageUrls,
+          category: formData.category,
+          condition: formData.condition,
+          city: formData.city,
+          province: formData.province,
+          region: formData.region,
+          ends_at: endsAt.toISOString(),
+          status: 'active',
+          approval_status: 'pending'
+        });
 
       if (insertError) throw insertError;
 
