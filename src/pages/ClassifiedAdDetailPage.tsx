@@ -1,19 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import {
-  MapPin,
-  Calendar,
-  Eye,
-  Phone,
-  Mail,
-  MessageCircle,
-  Edit,
-  Trash2,
-  ArrowLeft,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
+import { MapPin, Calendar, Eye, Phone, Mail, MessageCircle, FileEdit as Edit, Trash2, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ClassifiedAdForm } from '../components/classifieds/ClassifiedAdForm';
 import ReportButton from '../components/moderation/ReportButton';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
@@ -34,6 +22,8 @@ interface ClassifiedAd {
   contact_email: string | null;
   views_count: number;
   created_at: string;
+  family_member_id?: string | null;
+  registered_business_location_id?: string | null;
   profiles: {
     full_name: string;
     avatar_url: string | null;
@@ -164,6 +154,7 @@ export function ClassifiedAdDetailPage() {
           p_reference_id: ad.id,
           p_user1_family_member_id: familyMemberId,
           p_user2_family_member_id: ad.family_member_id || null,
+          p_user2_location_id: ad.registered_business_location_id || null,
         });
 
       if (funcError) throw funcError;

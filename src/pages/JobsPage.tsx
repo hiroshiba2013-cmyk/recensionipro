@@ -420,7 +420,7 @@ export function JobsPage() {
       }
 
       const familyMemberId = activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
-      const businessLocationId = job.business_location_id || null;
+      const businessLocationId = job.registered_business_location_id || job.business_location_id || null;
 
       const { data: conversationId, error: funcError } = await supabase
         .rpc('get_or_create_conversation', {

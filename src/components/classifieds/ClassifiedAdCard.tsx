@@ -8,6 +8,7 @@ interface ClassifiedAd {
   id: string;
   user_id: string;
   family_member_id?: string | null;
+  registered_business_location_id?: string | null;
   ad_type: 'sell' | 'buy' | 'gift';
   title: string;
   description: string;
@@ -67,6 +68,7 @@ export function ClassifiedAdCard({ ad }: ClassifiedAdCardProps) {
           p_reference_id: ad.id,
           p_user1_family_member_id: familyMemberId,
           p_user2_family_member_id: ad.family_member_id || null,
+          p_user2_location_id: ad.registered_business_location_id || null,
         });
 
       if (funcError) throw funcError;
