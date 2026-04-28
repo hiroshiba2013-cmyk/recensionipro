@@ -15,7 +15,7 @@ interface Notification {
 }
 
 export function NotificationsPage() {
-  const { user, profile, activeProfile, loading: authLoading } = useAuth();
+  const { user, profile, activeProfile, selectedBusinessLocationId, loading: authLoading } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
@@ -23,6 +23,7 @@ export function NotificationsPage() {
   const activeFamilyMemberId = activeProfile && !activeProfile.isOwner && profile?.user_type === 'customer'
     ? activeProfile.id
     : null;
+  const activeBusinessLocationId = profile?.user_type === 'business' ? (selectedBusinessLocationId ?? null) : null;
 
   useEffect(() => {
     if (authLoading) return;
@@ -101,6 +102,7 @@ export function NotificationsPage() {
     try {
       const { error } = await supabase.rpc('mark_all_notifications_read', {
         p_family_member_id: activeFamilyMemberId,
+        p_business_location_id: activeBusinessLocationId,
       });
 
       if (error) throw error;

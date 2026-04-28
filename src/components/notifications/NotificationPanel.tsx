@@ -19,7 +19,12 @@ interface NotificationPanelProps {
 }
 
 export default function NotificationPanel({ onClose, onNotificationRead }: NotificationPanelProps) {
-  const { user } = useAuth();
+  const { user, profile, activeProfile, selectedBusinessLocationId } = useAuth();
+
+  const activeFamilyMemberId = activeProfile && !activeProfile.isOwner && profile?.user_type === 'customer'
+    ? activeProfile.id
+    : null;
+  const activeBusinessLocationId = profile?.user_type === 'business' ? (selectedBusinessLocationId ?? null) : null;
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -76,7 +81,10 @@ export default function NotificationPanel({ onClose, onNotificationRead }: Notif
 
   async function markAllAsRead() {
     try {
-      const { error } = await supabase.rpc('mark_all_notifications_read');
+      const { error } = await supabase.rpc('mark_all_notifications_read', {
+        p_family_member_id: activeFamilyMemberId,
+        p_business_location_id: activeBusinessLocationId,
+      });
 
       if (error) throw error;
 
