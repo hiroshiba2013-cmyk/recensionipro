@@ -4,48 +4,36 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function NotificationBell() {
-  const { user, profile, activeProfile } = useAuth();
+  const { user, profile, activeProfile, selectedBusinessLocationId } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const activeFamilyMemberId = activeProfile && !activeProfile.isOwner && profile?.user_type === 'customer'
+  const isBusiness = profile?.user_type === 'business';
+  const activeFamilyMemberId = activeProfile && !activeProfile.isOwner && !isBusiness
     ? activeProfile.id
     : null;
 
   useEffect(() => {
     if (!user) return;
-
     loadUnreadCount();
 
     const channel = supabase
       .channel('notifications_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          loadUnreadCount();
-        }
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        () => loadUnreadCount()
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, activeFamilyMemberId]);
+    return () => { supabase.removeChannel(channel); };
+  }, [user, activeFamilyMemberId, selectedBusinessLocationId]);
 
   async function loadUnreadCount() {
     if (!user) return;
-
     try {
-      const { data, error } = await supabase
-        .rpc('get_unread_notification_count', {
-          p_family_member_id: activeFamilyMemberId,
-        });
-
+      const params: any = { p_family_member_id: activeFamilyMemberId };
+      if (isBusiness) {
+        params.p_business_location_id = selectedBusinessLocationId ?? null;
+      }
+      const { data, error } = await supabase.rpc('get_unread_notification_count', params);
       if (error) throw error;
       setUnreadCount(data || 0);
     } catch (error) {

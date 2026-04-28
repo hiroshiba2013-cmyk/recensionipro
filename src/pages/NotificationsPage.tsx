@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, Check, CheckCheck, Trash2, ArrowLeft, Heart, Briefcase, CreditCard, Store, ShoppingBag, CheckCircle, XCircle, Star } from 'lucide-react';
+import { Bell, Check, CheckCheck, Trash2, ArrowLeft, Heart, Briefcase, CreditCard, Store, ShoppingBag, CheckCircle, XCircle, Star, MapPin } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -12,67 +12,57 @@ interface Notification {
   read: boolean;
   created_at: string;
   family_member_id: string | null;
+  business_location_id: string | null;
 }
 
 export function NotificationsPage() {
-  const { user, profile, activeProfile, loading: authLoading } = useAuth();
+  const { user, profile, activeProfile, selectedBusinessLocationId, loading: authLoading } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
-  const activeFamilyMemberId = activeProfile && !activeProfile.isOwner && profile?.user_type === 'customer'
+  const isBusiness = profile?.user_type === 'business';
+
+  const activeFamilyMemberId = activeProfile && !activeProfile.isOwner && !isBusiness
     ? activeProfile.id
     : null;
 
   useEffect(() => {
     if (authLoading) return;
-
-    if (!user) {
-      window.location.href = '/';
-      return;
-    }
-
+    if (!user) { window.location.href = '/'; return; }
     loadNotifications();
 
     const channel = supabase
       .channel('notifications-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          loadNotifications();
-        }
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        () => loadNotifications()
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, authLoading, activeFamilyMemberId]);
+    return () => { supabase.removeChannel(channel); };
+  }, [user, authLoading, activeFamilyMemberId, selectedBusinessLocationId]);
 
   async function loadNotifications() {
     if (!user) return;
-
     try {
       setLoading(true);
-      let query = supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id);
+      let query = supabase.from('notifications').select('*').eq('user_id', user.id);
 
-      if (activeFamilyMemberId) {
-        query = query.eq('family_member_id', activeFamilyMemberId);
+      if (isBusiness) {
+        if (selectedBusinessLocationId) {
+          // specific location: show notifications for that location OR no location
+          query = query.or(`business_location_id.eq.${selectedBusinessLocationId},business_location_id.is.null`);
+        }
+        // else: all locations - no filter needed
       } else {
-        query = query.is('family_member_id', null);
+        if (activeFamilyMemberId) {
+          query = query.eq('family_member_id', activeFamilyMemberId);
+        } else {
+          query = query.is('family_member_id', null);
+        }
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
-
       if (error) throw error;
       setNotifications(data || []);
     } catch (error) {
@@ -84,14 +74,9 @@ export function NotificationsPage() {
 
   async function markAsRead(notificationId: string) {
     try {
-      const { error } = await supabase
-        .rpc('mark_notification_read', { notification_id: notificationId });
-
+      const { error } = await supabase.rpc('mark_notification_read', { notification_id: notificationId });
       if (error) throw error;
-
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
-      );
+      setNotifications((prev) => prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n)));
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -99,12 +84,14 @@ export function NotificationsPage() {
 
   async function markAllAsRead() {
     try {
-      const { error } = await supabase.rpc('mark_all_notifications_read', {
-        p_family_member_id: activeFamilyMemberId,
-      });
-
+      const params: any = { p_family_member_id: activeFamilyMemberId };
+      if (isBusiness && selectedBusinessLocationId) {
+        params.p_business_location_id = selectedBusinessLocationId;
+      } else if (isBusiness) {
+        params.p_business_location_id = null;
+      }
+      const { error } = await supabase.rpc('mark_all_notifications_read', params);
       if (error) throw error;
-
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     } catch (error) {
       console.error('Error marking all as read:', error);
@@ -113,13 +100,8 @@ export function NotificationsPage() {
 
   async function deleteNotification(notificationId: string) {
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('id', notificationId);
-
+      const { error } = await supabase.from('notifications').delete().eq('id', notificationId);
       if (error) throw error;
-
       setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
     } catch (error) {
       console.error('Error deleting notification:', error);
@@ -127,13 +109,8 @@ export function NotificationsPage() {
   }
 
   function handleNotificationClick(notification: Notification) {
-    if (!notification.read) {
-      markAsRead(notification.id);
-    }
-
-    if (notification.data?.url) {
-      window.location.href = notification.data.url;
-    }
+    if (!notification.read) markAsRead(notification.id);
+    if (notification.data?.url) window.location.href = notification.data.url;
   }
 
   function formatTime(dateString: string) {
@@ -143,7 +120,6 @@ export function NotificationsPage() {
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
-
     if (diffMins < 1) return 'Ora';
     if (diffMins < 60) return `${diffMins}m fa`;
     if (diffHours < 24) return `${diffHours}h fa`;
@@ -153,32 +129,25 @@ export function NotificationsPage() {
 
   function getNotificationIcon(type: string) {
     switch (type) {
-      case 'ad_favorited':
-        return { icon: Heart, color: 'text-red-600', bg: 'bg-red-100' };
-      case 'job_favorited':
-        return { icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-100' };
-      case 'business_favorited':
-        return { icon: Store, color: 'text-green-600', bg: 'bg-green-100' };
-      case 'subscription_expiring':
-        return { icon: CreditCard, color: 'text-orange-600', bg: 'bg-orange-100' };
+      case 'ad_favorited': return { icon: Heart, color: 'text-red-600', bg: 'bg-red-100' };
+      case 'job_favorited': return { icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-100' };
+      case 'business_favorited': return { icon: Store, color: 'text-green-600', bg: 'bg-green-100' };
+      case 'subscription_expiring': return { icon: CreditCard, color: 'text-orange-600', bg: 'bg-orange-100' };
       case 'business_approved':
       case 'review_approved':
-        return { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100' };
+      case 'classified_ad_approved':
+      case 'job_approved': return { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100' };
       case 'business_rejected':
       case 'review_rejected':
-        return { icon: XCircle, color: 'text-red-600', bg: 'bg-red-100' };
-      case 'points_earned':
-        return { icon: Star, color: 'text-yellow-600', bg: 'bg-yellow-100' };
-      default:
-        return { icon: Bell, color: 'text-blue-600', bg: 'bg-blue-100' };
+      case 'classified_ad_rejected':
+      case 'job_rejected': return { icon: XCircle, color: 'text-red-600', bg: 'bg-red-100' };
+      case 'review_received': return { icon: Star, color: 'text-yellow-600', bg: 'bg-yellow-100' };
+      case 'points_earned': return { icon: Star, color: 'text-yellow-600', bg: 'bg-yellow-100' };
+      default: return { icon: Bell, color: 'text-blue-600', bg: 'bg-blue-100' };
     }
   }
 
-  const filteredNotifications =
-    filter === 'unread'
-      ? notifications.filter((n) => !n.read)
-      : notifications;
-
+  const filteredNotifications = filter === 'unread' ? notifications.filter((n) => !n.read) : notifications;
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   if (authLoading || loading) {
@@ -196,10 +165,7 @@ export function NotificationsPage() {
           <div className="p-4 md:p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => window.history.back()}
-                  className="text-gray-600 hover:text-gray-900 transition-colors"
-                >
+                <button onClick={() => window.history.back()} className="text-gray-600 hover:text-gray-900 transition-colors">
                   <ArrowLeft className="w-6 h-6" />
                 </button>
                 <div>
@@ -207,6 +173,12 @@ export function NotificationsPage() {
                     <Bell className="w-6 h-6" />
                     Notifiche
                   </h1>
+                  {isBusiness && (
+                    <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5" />
+                      {selectedBusinessLocationId ? 'Sede selezionata' : 'Tutte le sedi'}
+                    </p>
+                  )}
                   {unreadCount > 0 && (
                     <p className="text-sm text-gray-600 mt-1">
                       {unreadCount} non {unreadCount === 1 ? 'letta' : 'lette'}
@@ -230,9 +202,7 @@ export function NotificationsPage() {
               <button
                 onClick={() => setFilter('all')}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  filter === 'all'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  filter === 'all' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
                 Tutte ({notifications.length})
@@ -240,9 +210,7 @@ export function NotificationsPage() {
               <button
                 onClick={() => setFilter('unread')}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  filter === 'unread'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  filter === 'unread' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
                 Non lette ({unreadCount})
@@ -261,7 +229,9 @@ export function NotificationsPage() {
               <p className="text-gray-600">
                 {filter === 'unread'
                   ? 'Tutte le notifiche sono state lette'
-                  : 'Non hai ancora ricevuto notifiche'}
+                  : isBusiness && selectedBusinessLocationId
+                    ? 'Nessuna notifica per questa sede'
+                    : 'Non hai ancora ricevuto notifiche'}
               </p>
             </div>
           ) : (
@@ -270,76 +240,56 @@ export function NotificationsPage() {
               const IconComponent = iconConfig.icon;
 
               return (
-              <div
-                key={notification.id}
-                className={`bg-white hover:bg-gray-50 transition-colors cursor-pointer group ${
-                  !notification.read ? 'border-l-4 border-blue-600' : ''
-                }`}
-                onClick={() => handleNotificationClick(notification)}
-              >
-                <div className="p-4 md:p-6">
-                  <div className="flex items-start gap-4">
-                    <div
-                      className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${
-                        !notification.read ? iconConfig.bg : 'bg-gray-100'
-                      }`}
-                    >
-                      <IconComponent
-                        className={`w-6 h-6 ${
-                          !notification.read ? iconConfig.color : 'text-gray-400'
-                        }`}
-                      />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-2 flex-1">
-                          <h3
-                            className={`font-semibold ${
-                              !notification.read ? 'text-gray-900' : 'text-gray-700'
-                            }`}
-                          >
-                            {notification.title}
-                          </h3>
-                          {!notification.read && (
-                            <span className="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full"></span>
-                          )}
-                        </div>
-                        <span className="text-xs text-gray-500 flex-shrink-0">
-                          {formatTime(notification.created_at)}
-                        </span>
+                <div
+                  key={notification.id}
+                  className={`bg-white hover:bg-gray-50 transition-colors cursor-pointer group ${
+                    !notification.read ? 'border-l-4 border-blue-600' : ''
+                  }`}
+                  onClick={() => handleNotificationClick(notification)}
+                >
+                  <div className="p-4 md:p-6">
+                    <div className="flex items-start gap-4">
+                      <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${!notification.read ? iconConfig.bg : 'bg-gray-100'}`}>
+                        <IconComponent className={`w-6 h-6 ${!notification.read ? iconConfig.color : 'text-gray-400'}`} />
                       </div>
 
-                      <p className="text-gray-600 mb-3">{notification.message}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2 flex-1">
+                            <h3 className={`font-semibold ${!notification.read ? 'text-gray-900' : 'text-gray-700'}`}>
+                              {notification.title}
+                            </h3>
+                            {!notification.read && (
+                              <span className="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full"></span>
+                            )}
+                          </div>
+                          <span className="text-xs text-gray-500 flex-shrink-0">{formatTime(notification.created_at)}</span>
+                        </div>
 
-                      <div className="flex items-center gap-2">
-                        {!notification.read && (
+                        <p className="text-gray-600 mb-3">{notification.message}</p>
+
+                        <div className="flex items-center gap-2">
+                          {!notification.read && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); markAsRead(notification.id); }}
+                              className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            >
+                              <Check className="w-4 h-4" />
+                              Segna come letta
+                            </button>
+                          )}
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              markAsRead(notification.id);
-                            }}
-                            className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            onClick={(e) => { e.stopPropagation(); deleteNotification(notification.id); }}
+                            className="flex items-center gap-1 px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           >
-                            <Check className="w-4 h-4" />
-                            Segna come letta
+                            <Trash2 className="w-4 h-4" />
+                            Elimina
                           </button>
-                        )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteNotification(notification.id);
-                          }}
-                          className="flex items-center gap-1 px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Elimina
-                        </button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
               );
             })
           )}
