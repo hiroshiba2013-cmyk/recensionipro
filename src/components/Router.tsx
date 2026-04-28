@@ -22,6 +22,7 @@ import { AdminRegisterPage } from '../pages/AdminRegisterPage';
 import { AdminLoginPage } from '../pages/AdminLoginPage';
 import AuctionsPage from '../pages/AuctionsPage';
 import AuctionDetailPage from '../pages/AuctionDetailPage';
+import { JobSeekerDetailPage } from '../pages/JobSeekerDetailPage';
 import { useAuth } from '../contexts/AuthContext';
 
 const RouterContext = createContext<{ params: Record<string, string> }>({ params: {} });
@@ -91,6 +92,10 @@ export function Router() {
 
   if (currentPath === '/jobs') {
     return <JobsPage />;
+  }
+
+  if (currentPath.startsWith('/jobs/seekers/')) {
+    return <JobSeekerDetailPage />;
   }
 
   if (currentPath === '/profile') {

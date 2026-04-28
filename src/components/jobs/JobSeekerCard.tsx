@@ -30,11 +30,20 @@ interface JobSeekerCardProps {
 }
 
 export function JobSeekerCard({ jobSeeker, onContact, showContactButton = true }: JobSeekerCardProps) {
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking the contact button
+    if ((e.target as HTMLElement).closest('button')) return;
+    window.location.href = `/jobs/seekers/${jobSeeker.id}`;
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
+    <div
+      className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 cursor-pointer"
+      onClick={handleCardClick}
+    >
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
-          <h3 className="text-xl font-bold text-gray-900">{jobSeeker.title}</h3>
+          <h3 className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">{jobSeeker.title}</h3>
           <p className="text-gray-600 font-medium">{jobSeeker.profiles.nickname || jobSeeker.profiles.full_name}</p>
           {jobSeeker.business_categories && (
             <div className="flex items-center gap-1 mt-1">
