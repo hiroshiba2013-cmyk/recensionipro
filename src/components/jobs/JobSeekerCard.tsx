@@ -30,16 +30,10 @@ interface JobSeekerCardProps {
 }
 
 export function JobSeekerCard({ jobSeeker, onContact, showContactButton = true }: JobSeekerCardProps) {
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Don't navigate if clicking the contact button
-    if ((e.target as HTMLElement).closest('button')) return;
-    window.location.href = `/jobs/seekers/${jobSeeker.id}`;
-  };
-
   return (
-    <div
-      className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 cursor-pointer"
-      onClick={handleCardClick}
+    <a
+      href={`/jobs/seekers/${jobSeeker.id}`}
+      className="block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6"
     >
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
@@ -110,7 +104,7 @@ export function JobSeekerCard({ jobSeeker, onContact, showContactButton = true }
         </span>
         {showContactButton && onContact && (
           <button
-            onClick={() => onContact(jobSeeker.id)}
+            onClick={(e) => { e.preventDefault(); onContact(jobSeeker.id); }}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
           >
             <MessageCircle className="w-4 h-4" />
@@ -118,6 +112,6 @@ export function JobSeekerCard({ jobSeeker, onContact, showContactButton = true }
           </button>
         )}
       </div>
-    </div>
+    </a>
   );
 }
