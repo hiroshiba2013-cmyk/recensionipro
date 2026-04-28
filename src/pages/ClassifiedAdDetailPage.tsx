@@ -1,19 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import {
-  MapPin,
-  Calendar,
-  Eye,
-  Phone,
-  Mail,
-  MessageCircle,
-  Edit,
-  Trash2,
-  ArrowLeft,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
+import { MapPin, Calendar, Eye, Phone, Mail, MessageCircle, FileEdit as Edit, Trash2, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ClassifiedAdForm } from '../components/classifieds/ClassifiedAdForm';
 import ReportButton from '../components/moderation/ReportButton';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
@@ -45,7 +33,7 @@ interface ClassifiedAd {
 }
 
 export function ClassifiedAdDetailPage() {
-  const { user, activeProfile } = useAuth();
+  const { user, profile, activeProfile, selectedBusinessLocationId } = useAuth();
   const [ad, setAd] = useState<ClassifiedAd | null>(null);
   const [loading, setLoading] = useState(true);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -154,7 +142,17 @@ export function ClassifiedAdDetailPage() {
     if (!ad) return;
 
     try {
-      const familyMemberId = activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
+      const isBusiness = profile?.user_type === 'business';
+
+      // Private user: pass family_member_id; Business user: pass location_id
+      const p_user1_family_member_id = !isBusiness && activeProfile && !activeProfile.isOwner
+        ? activeProfile.id
+        : null;
+      const p_user1_location_id = isBusiness ? (selectedBusinessLocationId ?? null) : null;
+
+      // Ad owner context
+      const p_user2_family_member_id = ad.family_member_id || null;
+      const p_user2_location_id = (ad as any).registered_business_location_id || null;
 
       const { data: conversationId, error: funcError } = await supabase
         .rpc('get_or_create_conversation', {
@@ -162,8 +160,10 @@ export function ClassifiedAdDetailPage() {
           p_user2_id: ad.user_id,
           p_conversation_type: 'classified_ad',
           p_reference_id: ad.id,
-          p_user1_family_member_id: familyMemberId,
-          p_user2_family_member_id: ad.family_member_id || null,
+          p_user1_family_member_id,
+          p_user1_location_id,
+          p_user2_family_member_id,
+          p_user2_location_id,
         });
 
       if (funcError) throw funcError;

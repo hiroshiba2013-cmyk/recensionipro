@@ -5,7 +5,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { SearchableSelect } from '../components/common/SearchableSelect';
 import { JobSeekerForm } from '../components/jobs/JobSeekerForm';
 import { JobSeekerCard } from '../components/jobs/JobSeekerCard';
-import { JobConversation } from '../components/jobs/JobConversation';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
 import { LocationFilters } from '../components/common/LocationFilters';
 
@@ -90,11 +89,6 @@ export function JobsPage() {
   const [viewedJobs, setViewedJobs] = useState<string[]>([]);
   const [appliedJobId, setAppliedJobId] = useState<string | null>(null);
   const [markingAsViewed, setMarkingAsViewed] = useState<string | null>(null);
-  const [conversationData, setConversationData] = useState<{
-    conversationId: string;
-    type: 'job_seeker' | 'job_offer';
-    otherUserName: string;
-  } | null>(null);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const { user, profile, selectedBusinessLocationId, activeProfile } = useAuth();
 
@@ -369,17 +363,18 @@ export function JobsPage() {
       return;
     }
 
-    if (profile?.user_type !== 'business') {
-      alert('Solo gli utenti professionali possono contattare chi cerca lavoro');
-      return;
-    }
-
     try {
       const jobSeeker = jobSeekers.find(js => js.id === jobSeekerId);
       if (!jobSeeker) return;
 
-      const locationId = selectedBusinessLocationId || null;
-      const familyMemberId = jobSeeker.family_member_id || null;
+      const isBusiness = profile?.user_type === 'business';
+
+      // Business contatta con location; privato contatta con family_member
+      const p_user1_location_id = isBusiness ? (selectedBusinessLocationId ?? null) : null;
+      const p_user1_family_member_id = !isBusiness && activeProfile && !activeProfile.isOwner
+        ? activeProfile.id
+        : null;
+      const p_user2_family_member_id = (jobSeeker as any).family_member_id || null;
 
       const { data: conversationId, error: funcError } = await supabase
         .rpc('get_or_create_conversation', {
@@ -387,8 +382,9 @@ export function JobsPage() {
           p_user2_id: jobSeeker.user_id,
           p_conversation_type: 'job_seeker',
           p_reference_id: jobSeekerId,
-          p_user1_location_id: locationId,
-          p_user2_family_member_id: familyMemberId,
+          p_user1_location_id,
+          p_user1_family_member_id,
+          p_user2_family_member_id,
         });
 
       if (funcError) throw funcError;
@@ -406,11 +402,6 @@ export function JobsPage() {
       return;
     }
 
-    if (profile?.user_type === 'business') {
-      alert('Solo gli utenti privati possono contattare per offerte di lavoro');
-      return;
-    }
-
     try {
       const job = jobs.find(j => j.id === jobId);
       const jobOwner = job?.business ?? job?.registered_business;
@@ -419,8 +410,14 @@ export function JobsPage() {
         return;
       }
 
-      const familyMemberId = activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
-      const businessLocationId = job.business_location_id || null;
+      const isBusiness = profile?.user_type === 'business';
+
+      // Privato contatta con family_member; business contatta con location
+      const p_user1_family_member_id = !isBusiness && activeProfile && !activeProfile.isOwner
+        ? activeProfile.id
+        : null;
+      const p_user1_location_id = isBusiness ? (selectedBusinessLocationId ?? null) : null;
+      const p_user2_location_id = (job as any).registered_business_location_id || (job as any).business_location_id || null;
 
       const { data: conversationId, error: funcError } = await supabase
         .rpc('get_or_create_conversation', {
@@ -428,8 +425,9 @@ export function JobsPage() {
           p_user2_id: jobOwner.owner_id,
           p_conversation_type: 'job_posting',
           p_reference_id: jobId,
-          p_user1_family_member_id: familyMemberId,
-          p_user2_location_id: businessLocationId,
+          p_user1_family_member_id,
+          p_user1_location_id,
+          p_user2_location_id,
         });
 
       if (funcError) throw funcError;
@@ -768,7 +766,10 @@ export function JobsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {jobs.map((job) => (
+              {jobs.map((job) => {
+                const jobOwner = job.business ?? job.registered_business;
+                const isJobOwner = user && jobOwner && jobOwner.owner_id === user.id;
+                return (
                 <div key={job.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
@@ -833,26 +834,30 @@ export function JobsPage() {
                       Scade il {new Date(job.expires_at).toLocaleDateString('it-IT')}
                     </span>
                     <div className="flex items-center gap-3">
-                      {user && profile?.user_type !== 'business' && (
+                      {user && !isJobOwner && (
                         <>
-                          <FavoriteButton
-                            type="job"
-                            itemId={job.id}
-                            familyMemberId={activeProfile && !activeProfile.isOwner ? activeProfile.id : null}
-                          />
-                          {viewedJobs.includes(job.id) ? (
-                            <div className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg font-medium">
-                              <Check className="w-4 h-4" />
-                              <span>Visionato</span>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => handleMarkAsViewed(job.id)}
-                              disabled={markingAsViewed === job.id}
-                              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors disabled:bg-gray-100"
-                            >
-                              {markingAsViewed === job.id ? 'Salvataggio...' : 'Segna come visionato'}
-                            </button>
+                          {profile?.user_type !== 'business' && (
+                            <FavoriteButton
+                              type="job"
+                              itemId={job.id}
+                              familyMemberId={activeProfile && !activeProfile.isOwner ? activeProfile.id : null}
+                            />
+                          )}
+                          {profile?.user_type !== 'business' && (
+                            viewedJobs.includes(job.id) ? (
+                              <div className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg font-medium">
+                                <Check className="w-4 h-4" />
+                                <span>Visionato</span>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => handleMarkAsViewed(job.id)}
+                                disabled={markingAsViewed === job.id}
+                                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors disabled:bg-gray-100"
+                              >
+                                {markingAsViewed === job.id ? 'Salvataggio...' : 'Segna come visionato'}
+                              </button>
+                            )
                           )}
                           <button
                             onClick={() => handleContactEmployer(job.id)}
@@ -866,7 +871,8 @@ export function JobsPage() {
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )
         ) : (
@@ -882,7 +888,7 @@ export function JobsPage() {
                   key={jobSeeker.id}
                   jobSeeker={jobSeeker}
                   onContact={handleContactJobSeeker}
-                  showContactButton={user ? profile?.user_type === 'business' : false}
+                  showContactButton={user ? jobSeeker.user_id !== user.id : false}
                 />
               ))}
             </div>
@@ -890,14 +896,6 @@ export function JobsPage() {
         )}
       </div>
 
-      {conversationData && (
-        <JobConversation
-          conversationId={conversationData.conversationId}
-          conversationType={conversationData.type}
-          otherUserName={conversationData.otherUserName}
-          onClose={() => setConversationData(null)}
-        />
-      )}
     </div>
   );
 }
