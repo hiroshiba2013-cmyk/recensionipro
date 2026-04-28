@@ -957,6 +957,8 @@ export function ProfilePage() {
       if (jobPostingsData) {
         setJobPostings(jobPostingsData);
       }
+
+      await loadClassifiedAds();
       return;
     }
 
@@ -1005,6 +1007,8 @@ export function ProfilePage() {
       if (jobPostingsData) {
         setJobPostings(jobPostingsData);
       }
+
+      await loadClassifiedAds();
     }
   };
 
