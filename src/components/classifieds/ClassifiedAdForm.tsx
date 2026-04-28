@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Upload } from 'lucide-react';
+import { X, Upload, MapPin } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { ITALIAN_REGIONS, PROVINCES_BY_REGION, CITIES_BY_PROVINCE } from '../../lib/cities';
@@ -9,6 +9,13 @@ interface Category {
   name: string;
 }
 
+interface BusinessLocation {
+  id: string;
+  name: string;
+  internal_name: string | null;
+  city: string;
+}
+
 interface ClassifiedAdFormProps {
   adId?: string;
   onSuccess: () => void;
@@ -16,9 +23,10 @@ interface ClassifiedAdFormProps {
 }
 
 export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdFormProps) {
-  const { user, activeProfile } = useAuth();
+  const { user, activeProfile, profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
 
   const [formData, setFormData] = useState({
     ad_type: 'sell' as 'sell' | 'buy' | 'gift',
@@ -33,17 +41,23 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
     contact_phone: '',
     contact_email: '',
     images: [] as string[],
+    registered_business_location_id: '' as string,
   });
 
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
+  const isBusiness = profile?.user_type === 'business';
+
   useEffect(() => {
     loadCategories();
+    if (isBusiness) {
+      loadBusinessLocations();
+    }
     if (adId) {
       loadAd();
     }
-  }, [adId]);
+  }, [adId, isBusiness]);
 
   const loadCategories = async () => {
     try {
@@ -51,7 +65,6 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
         .from('classified_categories')
         .select('id, name')
         .order('name');
-
       if (error) throw error;
       setCategories(data || []);
     } catch (error) {
@@ -59,18 +72,31 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
     }
   };
 
+  const loadBusinessLocations = async () => {
+    if (!user?.id) return;
+    const { data: business } = await supabase
+      .from('registered_businesses')
+      .select('id')
+      .eq('owner_id', user.id)
+      .maybeSingle();
+    if (!business) return;
+    const { data: locations } = await supabase
+      .from('registered_business_locations')
+      .select('id, name, internal_name, city')
+      .eq('business_id', business.id)
+      .order('created_at', { ascending: true });
+    if (locations) setBusinessLocations(locations);
+  };
+
   const loadAd = async () => {
     if (!adId) return;
-
     try {
       const { data, error } = await supabase
         .from('classified_ads')
         .select('*')
         .eq('id', adId)
         .single();
-
       if (error) throw error;
-
       setFormData({
         ad_type: data.ad_type || 'sell',
         category_id: data.category_id,
@@ -84,32 +110,34 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
         contact_phone: data.contact_phone || '',
         contact_email: data.contact_email || '',
         images: data.images || [],
+        registered_business_location_id: data.registered_business_location_id || '',
       });
-
-      if (data.images) {
-        setImagePreviews(data.images);
-      }
+      if (data.images) setImagePreviews(data.images);
     } catch (error) {
       console.error('Error loading ad:', error);
       alert('Errore nel caricamento dell\'annuncio');
     }
   };
 
+  const handleLocationSelect = (locationId: string) => {
+    const loc = businessLocations.find(l => l.id === locationId);
+    if (loc) {
+      setFormData(prev => ({
+        ...prev,
+        registered_business_location_id: locationId,
+        city: loc.city || prev.city,
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, registered_business_location_id: '' }));
+    }
+  };
+
   const handleRegionChange = (region: string) => {
-    setFormData({
-      ...formData,
-      region,
-      province: '',
-      city: '',
-    });
+    setFormData({ ...formData, region, province: '', city: '' });
   };
 
   const handleProvinceChange = (province: string) => {
-    setFormData({
-      ...formData,
-      province,
-      city: '',
-    });
+    setFormData({ ...formData, province, city: '' });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,9 +146,7 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
       alert('Puoi caricare massimo 5 immagini');
       return;
     }
-
     setImageFiles([...imageFiles, ...files]);
-
     files.forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -137,58 +163,41 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
 
   const uploadImages = async (): Promise<string[]> => {
     const uploadedUrls: string[] = [];
-
     for (const file of imageFiles) {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user?.id}-${Date.now()}-${Math.random()}.${fileExt}`;
       const filePath = `classified-ads/${fileName}`;
-
       const { error: uploadError, data } = await supabase.storage
         .from('classified-ads')
         .upload(filePath, file);
-
-      if (uploadError) {
-        console.error('Error uploading image:', uploadError);
-        continue;
-      }
-
-      const { data: urlData } = supabase.storage
-        .from('classified-ads')
-        .getPublicUrl(filePath);
-
+      if (uploadError) { console.error('Error uploading image:', uploadError); continue; }
+      const { data: urlData } = supabase.storage.from('classified-ads').getPublicUrl(filePath);
       uploadedUrls.push(urlData.publicUrl);
     }
-
     return uploadedUrls;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-
     setLoading(true);
-
     try {
       let imageUrls = formData.images;
-
       if (imageFiles.length > 0) {
         const newUrls = await uploadImages();
         imageUrls = [...imageUrls, ...newUrls];
       }
-
       if (!formData.category_id) {
         alert('Seleziona una categoria');
         setLoading(false);
         return;
       }
-
       const adTypeMap: Record<string, string> = {
         'vendita': 'sell', 'vendo': 'sell', 'sell': 'sell',
         'acquisto': 'buy', 'cerco': 'buy', 'buy': 'buy',
         'regalo': 'gift', 'gift': 'gift',
       };
       const normalizedAdType = adTypeMap[formData.ad_type.toLowerCase()] || 'sell';
-
       const adData: Record<string, any> = {
         user_id: user.id,
         ad_type: normalizedAdType,
@@ -204,32 +213,23 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
         contact_email: formData.contact_email || null,
         images: imageUrls.length > 0 ? imageUrls : null,
         status: 'active',
+        registered_business_location_id: formData.registered_business_location_id || null,
       };
-
       if (activeProfile && !activeProfile.isOwner) {
         adData.family_member_id = activeProfile.id;
       }
-
       if (adId) {
-        const { error } = await supabase
-          .from('classified_ads')
-          .update(adData)
-          .eq('id', adId);
-
+        const { error } = await supabase.from('classified_ads').update(adData).eq('id', adId);
         if (error) throw error;
         alert('Annuncio aggiornato con successo!');
       } else {
-        const { error } = await supabase
-          .from('classified_ads')
-          .insert([adData]);
-
+        const { error } = await supabase.from('classified_ads').insert([adData]);
         if (error) throw error;
         alert('Annuncio inviato con successo! Sarà visibile dopo l\'approvazione da parte dell\'amministratore.');
       }
       onSuccess();
     } catch (error: any) {
       console.error('Error saving ad:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
       alert('Errore nel salvataggio: ' + (error?.message || error?.details || JSON.stringify(error)));
     } finally {
       setLoading(false);
@@ -242,15 +242,54 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
         <h2 className="text-2xl font-bold text-gray-900">
           {adId ? 'Modifica Annuncio' : 'Nuovo Annuncio'}
         </h2>
-        <button
-          onClick={onCancel}
-          className="text-gray-400 hover:text-gray-600"
-        >
+        <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
           <X className="w-6 h-6" />
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Sede (solo business) */}
+        {isBusiness && businessLocations.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Sede di riferimento
+            </label>
+            <div className="grid grid-cols-1 gap-2">
+              {[{ id: '', name: 'Nessuna sede specifica', internal_name: null, city: '' }, ...businessLocations].map((loc) => {
+                const isSelected = formData.registered_business_location_id === loc.id;
+                const displayName = loc.id
+                  ? (loc.internal_name || loc.name)
+                  : 'Nessuna sede specifica';
+                return (
+                  <button
+                    key={loc.id || 'none'}
+                    type="button"
+                    onClick={() => handleLocationSelect(loc.id)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all ${
+                      isSelected
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300 bg-white'
+                    }`}
+                  >
+                    <MapPin className={`w-5 h-5 flex-shrink-0 ${isSelected ? 'text-blue-500' : 'text-gray-400'}`} />
+                    <div>
+                      <p className={`font-medium text-sm ${isSelected ? 'text-blue-700' : 'text-gray-800'}`}>
+                        {displayName}
+                      </p>
+                      {loc.city && (
+                        <p className="text-xs text-gray-500">{loc.city}</p>
+                      )}
+                    </div>
+                    {isSelected && (
+                      <div className="ml-auto w-2 h-2 rounded-full bg-blue-500" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Ad Type */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -376,13 +415,10 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
             >
               <option value="">Seleziona regione</option>
               {ITALIAN_REGIONS.map((region) => (
-                <option key={region} value={region}>
-                  {region}
-                </option>
+                <option key={region} value={region}>{region}</option>
               ))}
             </select>
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Provincia *
@@ -396,13 +432,10 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
             >
               <option value="">Seleziona provincia</option>
               {formData.region && PROVINCES_BY_REGION[formData.region]?.map((province) => (
-                <option key={province} value={province}>
-                  {province}
-                </option>
+                <option key={province} value={province}>{province}</option>
               ))}
             </select>
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Città *
@@ -416,9 +449,7 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
             >
               <option value="">Seleziona città</option>
               {formData.province && CITIES_BY_PROVINCE[formData.province]?.map((city) => (
-                <option key={city} value={city}>
-                  {city}
-                </option>
+                <option key={city} value={city}>{city}</option>
               ))}
             </select>
           </div>
@@ -451,7 +482,6 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Email
