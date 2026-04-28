@@ -4,12 +4,14 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function NotificationBell() {
-  const { user, profile, activeProfile } = useAuth();
+  const { user, profile, activeProfile, selectedBusinessLocationId } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
 
   const activeFamilyMemberId = activeProfile && !activeProfile.isOwner && profile?.user_type === 'customer'
     ? activeProfile.id
     : null;
+
+  const activeBusinessLocationId = profile?.user_type === 'business' ? (selectedBusinessLocationId ?? null) : null;
 
   useEffect(() => {
     if (!user) return;
@@ -35,7 +37,7 @@ export default function NotificationBell() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, activeFamilyMemberId]);
+  }, [user, activeFamilyMemberId, activeBusinessLocationId]);
 
   async function loadUnreadCount() {
     if (!user) return;
@@ -44,6 +46,7 @@ export default function NotificationBell() {
       const { data, error } = await supabase
         .rpc('get_unread_notification_count', {
           p_family_member_id: activeFamilyMemberId,
+          p_business_location_id: activeBusinessLocationId,
         });
 
       if (error) throw error;
