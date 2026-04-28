@@ -215,7 +215,7 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
         status: 'active',
         registered_business_location_id: formData.registered_business_location_id || null,
       };
-      if (activeProfile && !activeProfile.isOwner) {
+      if (!isBusiness && activeProfile && !activeProfile.isOwner) {
         adData.family_member_id = activeProfile.id;
       }
       if (adId) {
