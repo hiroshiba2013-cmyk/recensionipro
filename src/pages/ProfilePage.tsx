@@ -957,8 +957,6 @@ export function ProfilePage() {
       if (jobPostingsData) {
         setJobPostings(jobPostingsData);
       }
-
-      await loadClassifiedAds();
       return;
     }
 
@@ -1007,8 +1005,6 @@ export function ProfilePage() {
       if (jobPostingsData) {
         setJobPostings(jobPostingsData);
       }
-
-      await loadClassifiedAds();
     }
   };
 
@@ -1093,13 +1089,6 @@ export function ProfilePage() {
   const filteredJobPostings = jobPostings.filter((job) => {
     if (!selectedBusinessLocationId) return true;
     return job.business_location_id === selectedBusinessLocationId;
-  });
-
-  const filteredClassifiedAds = classifiedAds.filter((ad) => {
-    if (!selectedBusinessLocationId) return true;
-    const adLocationId = (ad as any).registered_business_location_id;
-    if (!adLocationId) return true;
-    return adLocationId === selectedBusinessLocationId;
   });
 
   if (loading) {
@@ -2005,15 +1994,11 @@ export function ProfilePage() {
                 </div>
               )}
 
-              {filteredClassifiedAds.length === 0 ? (
+              {classifiedAds.length === 0 ? (
                 <div className="text-center py-10">
                   <Tag className="w-14 h-14 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Nessun annuncio</h3>
-                  <p className="text-gray-500 text-sm mb-6">
-                    {selectedBusinessLocationId
-                      ? 'Nessun annuncio per questa sede.'
-                      : 'Pubblica annunci di vendita, acquisto o regalo.'}
-                  </p>
+                  <p className="text-gray-500 text-sm mb-6">Pubblica annunci di vendita, acquisto o regalo.</p>
                   <button
                     onClick={() => { setEditingAdId(null); setShowEditAdForm(true); }}
                     className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-colors font-semibold"
@@ -2024,7 +2009,7 @@ export function ProfilePage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredClassifiedAds.map((ad) => (
+                  {classifiedAds.map((ad) => (
                     <ProfileClassifiedAdCard
                       key={ad.id}
                       ad={ad}

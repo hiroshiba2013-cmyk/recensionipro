@@ -69,7 +69,7 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
         staff_id_param: user.id,
       });
       if (error) throw error;
-      alert('Annuncio approvato!');
+      alert('Annuncio approvato e punti assegnati!');
       onReload();
     } catch (error: any) {
       console.error('Error approving ad:', error);
@@ -402,7 +402,7 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                     className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-bold disabled:opacity-50"
                   >
                     <CheckCircle className="w-5 h-5" />
-                    Approva
+                    Approva (+5 punti)
                   </button>
                   <button
                     onClick={() => rejectAd(ad.id)}
@@ -530,7 +530,7 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                       className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-bold"
                     >
                       <CheckCircle className="w-5 h-5" />
-                      Approva
+                      Approva (+5 punti)
                     </button>
                     <button
                       onClick={() => { rejectAd(selectedAd.id); setSelectedAd(null); }}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, ArrowLeft, MessageCircle, ShoppingBag, Briefcase, LayoutGrid } from 'lucide-react';
+import { Send, ArrowLeft, MessageCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -312,7 +312,6 @@ export function MessagesPage() {
   };
 
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
-  const [typeFilter, setTypeFilter] = useState<'all' | 'classified_ad' | 'job'>('all');
 
   useEffect(() => {
     if (!selectedConversation) {
@@ -407,73 +406,19 @@ export function MessagesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Messaggi</h1>
         </div>
 
-        {/* Type filter tabs */}
-        <div className="flex border-b border-gray-200 bg-gray-50">
-          {([
-            { key: 'all', label: 'Tutti', icon: LayoutGrid },
-            { key: 'classified_ad', label: 'Annunci', icon: ShoppingBag },
-            { key: 'job', label: 'Lavoro', icon: Briefcase },
-          ] as const).map(({ key, label, icon: Icon }) => {
-            const count = key === 'all'
-              ? conversations.filter(c => (c.unread_count || 0) > 0).length
-              : conversations.filter(c => {
-                  const match = key === 'job'
-                    ? c.conversation_type === 'job_seeker' || c.conversation_type === 'job_posting'
-                    : c.conversation_type === key;
-                  return match && (c.unread_count || 0) > 0;
-                }).length;
-
-            return (
-              <button
-                key={key}
-                onClick={() => setTypeFilter(key)}
-                className={`flex-1 flex flex-col items-center gap-1 py-2.5 text-xs font-medium transition-colors relative ${
-                  typeFilter === key
-                    ? 'text-blue-600 border-b-2 border-blue-600 bg-white'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <div className="relative">
-                  <Icon className="w-4 h-4" />
-                  {count > 0 && (
-                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 flex items-center justify-center px-1 bg-red-500 text-white text-[10px] font-bold rounded-full">
-                      {count}
-                    </span>
-                  )}
-                </div>
-                <span>{label}</span>
-              </button>
-            );
-          })}
-        </div>
-
         <div className="flex-1 overflow-y-auto">
-          {(() => {
-            const filtered = conversations.filter(conv => {
-              if (typeFilter === 'all') return true;
-              if (typeFilter === 'job') {
-                return conv.conversation_type === 'job_seeker' || conv.conversation_type === 'job_posting';
-              }
-              return conv.conversation_type === typeFilter;
-            });
-
-            if (filtered.length === 0) return (
+          {conversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center p-6">
               <MessageCircle className="w-16 h-16 text-gray-400 mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Nessun messaggio
               </h3>
               <p className="text-gray-600">
-                {typeFilter === 'all'
-                  ? 'Inizia una conversazione contattando un venditore'
-                  : typeFilter === 'classified_ad'
-                  ? 'Nessuna conversazione su annunci'
-                  : 'Nessuna conversazione su offerte di lavoro'}
+                Inizia una conversazione contattando un venditore
               </p>
             </div>
-            );
-
-            return filtered.map((conv) => {
+          ) : (
+            conversations.map((conv) => {
               const hasUnread = (conv.unread_count || 0) > 0;
               const isSelected = selectedConversation === conv.id;
 
@@ -523,20 +468,6 @@ export function MessagesPage() {
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      {conv.conversation_type === 'classified_ad' && (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-semibold rounded">
-                          <ShoppingBag className="w-2.5 h-2.5" />
-                          Annuncio
-                        </span>
-                      )}
-                      {(conv.conversation_type === 'job_seeker' || conv.conversation_type === 'job_posting') && (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-semibold rounded">
-                          <Briefcase className="w-2.5 h-2.5" />
-                          Lavoro
-                        </span>
-                      )}
-                    </div>
                     {conv.classified_ads && (
                       <div className={`text-sm truncate ${hasUnread ? 'text-gray-800 font-medium' : 'text-gray-600'}`}>
                         {conv.classified_ads.title}
@@ -558,8 +489,8 @@ export function MessagesPage() {
                   </div>
                 </button>
               );
-            });
-          })()}
+            })
+          )}
         </div>
       </div>
 
@@ -599,21 +530,18 @@ export function MessagesPage() {
                   {selectedConv.profiles?.full_name || 'Utente'}
                 </div>
                 {selectedConv.classified_ads && (
-                  <div className="flex items-center gap-1 text-sm text-gray-600">
-                    <ShoppingBag className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
-                    <span className="truncate max-w-xs">{selectedConv.classified_ads.title}</span>
+                  <div className="text-sm text-gray-600">
+                    📦 {selectedConv.classified_ads.title}
                   </div>
                 )}
                 {selectedConv.job_seekers && (
-                  <div className="flex items-center gap-1 text-sm text-gray-600">
-                    <Briefcase className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
-                    <span className="truncate max-w-xs">{selectedConv.job_seekers.title}</span>
+                  <div className="text-sm text-gray-600">
+                    💼 {selectedConv.job_seekers.title}
                   </div>
                 )}
                 {selectedConv.job_postings && (
-                  <div className="flex items-center gap-1 text-sm text-gray-600">
-                    <Briefcase className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
-                    <span className="truncate max-w-xs">{selectedConv.job_postings.title}</span>
+                  <div className="text-sm text-gray-600">
+                    🏢 {selectedConv.job_postings.title}
                   </div>
                 )}
               </div>
