@@ -680,6 +680,7 @@ export function DashboardPage() {
                   )}
 
                   <div className="p-6">
+                    {console.log('🎯 RENDER: businessClassifiedAds.length =', businessClassifiedAds.length)}
                     {businessClassifiedAds.length === 0 ? (
                       <div className="text-center py-10">
                         <Tag className="w-14 h-14 text-gray-300 mx-auto mb-4" />
