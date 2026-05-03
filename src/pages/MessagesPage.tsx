@@ -146,10 +146,12 @@ export function MessagesPage() {
         }
       } else if (profile?.user_type === 'business') {
         if (selectedBusinessLocationId) {
-          // Sede specifica: mostra solo le conversazioni di questa sede
+          // Sede specifica: conversazioni di questa sede + conversazioni senza location (es. annunci classificati)
           query = query.or(
             `and(participant1_id.eq.${user.id},participant1_location_id.eq.${selectedBusinessLocationId}),` +
-            `and(participant2_id.eq.${user.id},participant2_location_id.eq.${selectedBusinessLocationId})`
+            `and(participant2_id.eq.${user.id},participant2_location_id.eq.${selectedBusinessLocationId}),` +
+            `and(participant1_id.eq.${user.id},participant1_location_id.is.null),` +
+            `and(participant2_id.eq.${user.id},participant2_location_id.is.null)`
           );
         } else {
           // Vista tutte le sedi: mostra tutte le conversazioni dell'account
