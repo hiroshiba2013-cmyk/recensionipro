@@ -423,6 +423,15 @@ export function DashboardPage() {
     if (data) setBusinessClassifiedAds(data);
   };
 
+  const deleteClassifiedAd = async (adId: string) => {
+    await supabase.from('classified_ads').delete().eq('id', adId);
+    if (profile?.user_type === 'business') {
+      loadBusinessClassifiedAds();
+    } else {
+      loadCustomerClassifiedAds();
+    }
+  };
+
   const loadCustomerClassifiedAds = async () => {
     if (!profile) return;
     const familyMemberId = activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
@@ -669,8 +678,8 @@ export function DashboardPage() {
                               classified_categories: ad.classified_categories,
                               profiles: { full_name: profile?.nickname || profile?.full_name || 'Utente', avatar_url: null },
                             }}
-                            onEdit={(id) => { setEditingClassifiedAdId(id); setShowClassifiedAdForm(true); }}
-                            onDelete={loadBusinessClassifiedAds}
+                            onEdit={(ad) => { setEditingClassifiedAdId(ad.id); setShowClassifiedAdForm(true); }}
+                            onDelete={deleteClassifiedAd}
                           />
                         ))}
                       </div>
@@ -981,8 +990,8 @@ export function DashboardPage() {
                               classified_categories: ad.classified_categories,
                               profiles: { full_name: profile?.nickname || profile?.full_name || 'Utente', avatar_url: null },
                             }}
-                            onEdit={(id) => { setEditingCustomerAdId(id); setShowCustomerAdForm(true); }}
-                            onDelete={loadCustomerClassifiedAds}
+                            onEdit={(ad) => { setEditingCustomerAdId(ad.id); setShowCustomerAdForm(true); }}
+                            onDelete={deleteClassifiedAd}
                           />
                         ))}
                       </div>
