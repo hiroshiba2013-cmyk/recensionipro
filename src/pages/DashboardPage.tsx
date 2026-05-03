@@ -118,6 +118,43 @@ export function DashboardPage() {
   const [leaderboardTab, setLeaderboardTab] = useState<'leaderboard' | 'my_activities'>('leaderboard');
   const [userRank, setUserRank] = useState<{ points: number; rank: number; reviews_count: number } | null>(null);
 
+  const loadBusinessClassifiedAds = async () => {
+    if (!profile) return;
+    const { data, error } = await supabase
+      .from('classified_ads')
+      .select('*, classified_categories(name, icon)')
+      .eq('user_id', profile.id)
+      .order('created_at', { ascending: false });
+    console.log('📢 Business classified ads:', data, 'error:', error, 'profile.id:', profile.id);
+    if (data) setBusinessClassifiedAds(data);
+  };
+
+  const loadCustomerClassifiedAds = async () => {
+    if (!profile) return;
+    const familyMemberId = activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
+    let query = supabase
+      .from('classified_ads')
+      .select('*, classified_categories(name, icon)')
+      .eq('user_id', profile.id)
+      .order('created_at', { ascending: false });
+    if (familyMemberId) {
+      query = query.eq('family_member_id', familyMemberId);
+    } else {
+      query = query.is('family_member_id', null);
+    }
+    const { data } = await query;
+    if (data) setCustomerClassifiedAds(data);
+  };
+
+  const deleteClassifiedAd = async (adId: string) => {
+    await supabase.from('classified_ads').delete().eq('id', adId);
+    if (profile?.user_type === 'business') {
+      loadBusinessClassifiedAds();
+    } else {
+      loadCustomerClassifiedAds();
+    }
+  };
+
   useEffect(() => {
     if (profile) {
       loadDashboardData();
@@ -411,42 +448,6 @@ export function DashboardPage() {
     } catch (error) {
       console.error('Error loading subscription data:', error);
     }
-  };
-
-  const loadBusinessClassifiedAds = async () => {
-    if (!profile) return;
-    const { data } = await supabase
-      .from('classified_ads')
-      .select('*, classified_categories(name, icon)')
-      .eq('user_id', profile.id)
-      .order('created_at', { ascending: false });
-    if (data) setBusinessClassifiedAds(data);
-  };
-
-  const deleteClassifiedAd = async (adId: string) => {
-    await supabase.from('classified_ads').delete().eq('id', adId);
-    if (profile?.user_type === 'business') {
-      loadBusinessClassifiedAds();
-    } else {
-      loadCustomerClassifiedAds();
-    }
-  };
-
-  const loadCustomerClassifiedAds = async () => {
-    if (!profile) return;
-    const familyMemberId = activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
-    let query = supabase
-      .from('classified_ads')
-      .select('*, classified_categories(name, icon)')
-      .eq('user_id', profile.id)
-      .order('created_at', { ascending: false });
-    if (familyMemberId) {
-      query = query.eq('family_member_id', familyMemberId);
-    } else {
-      query = query.is('family_member_id', null);
-    }
-    const { data } = await query;
-    if (data) setCustomerClassifiedAds(data);
   };
 
   const calculateSavings = (plan: SubscriptionPlan) => {
