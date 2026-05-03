@@ -414,22 +414,22 @@ export function DashboardPage() {
   };
 
   const loadBusinessClassifiedAds = async () => {
-    if (!user) return;
+    if (!profile) return;
     const { data } = await supabase
       .from('classified_ads')
       .select('*, classified_categories(name, icon)')
-      .eq('user_id', user.id)
+      .eq('user_id', profile.id)
       .order('created_at', { ascending: false });
     if (data) setBusinessClassifiedAds(data);
   };
 
   const loadCustomerClassifiedAds = async () => {
-    if (!user) return;
+    if (!profile) return;
     const familyMemberId = activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
     let query = supabase
       .from('classified_ads')
       .select('*, classified_categories(name, icon)')
-      .eq('user_id', user.id)
+      .eq('user_id', profile.id)
       .order('created_at', { ascending: false });
     if (familyMemberId) {
       query = query.eq('family_member_id', familyMemberId);
