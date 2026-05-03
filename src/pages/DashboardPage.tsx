@@ -156,14 +156,39 @@ export function DashboardPage() {
   };
 
   useEffect(() => {
-    if (profile) {
-      loadDashboardData();
-      loadSubscriptionData();
-      if (profile.user_type === 'business') {
-        loadBusinessClassifiedAds();
+    if (!profile) return;
+    loadDashboardData();
+    loadSubscriptionData();
+
+    // Load classified ads directly here to avoid closure issues
+    const currentProfileId = profile.id;
+    const currentUserType = profile.user_type;
+    const currentFamilyMemberId = activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
+
+    if (currentUserType === 'business') {
+      supabase
+        .from('classified_ads')
+        .select('*, classified_categories(name, icon)')
+        .eq('user_id', currentProfileId)
+        .order('created_at', { ascending: false })
+        .then(({ data, error }) => {
+          console.log('📢 Ads caricati:', data?.length, 'errore:', error);
+          if (data) setBusinessClassifiedAds(data);
+        });
+    } else {
+      let query = supabase
+        .from('classified_ads')
+        .select('*, classified_categories(name, icon)')
+        .eq('user_id', currentProfileId)
+        .order('created_at', { ascending: false });
+      if (currentFamilyMemberId) {
+        query = query.eq('family_member_id', currentFamilyMemberId);
       } else {
-        loadCustomerClassifiedAds();
+        query = query.is('family_member_id', null);
       }
+      query.then(({ data }) => {
+        if (data) setCustomerClassifiedAds(data);
+      });
     }
   }, [profile, selectedBusinessLocationId, activeProfile]);
 
