@@ -693,7 +693,7 @@ function AuthenticatedHomePage() {
                 topUsers.length > 0 ? (
                   <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {topUsers.slice(0, 8).map((userActivity: any, index: number) => (
-                      <TopUserCard key={userActivity.user_id} userActivity={userActivity} rank={index + 1} />
+                      <TopUserCard key={`${userActivity.user_id}-${userActivity.family_member_id ?? 'main'}`} userActivity={userActivity} rank={index + 1} />
                     ))}
                   </div>
                 ) : (
