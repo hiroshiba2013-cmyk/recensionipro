@@ -778,7 +778,7 @@ function AuthenticatedHomePage() {
                       return (
                         <div
                           key={job.id}
-                          onClick={() => navigate('/jobs')}
+                          onClick={() => navigate(`/jobs?job=${job.id}`)}
                           className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-lg transition-all cursor-pointer hover:-translate-y-1"
                         >
                           <div className="flex items-start justify-between mb-3">
