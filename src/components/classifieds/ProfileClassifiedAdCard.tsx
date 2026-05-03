@@ -110,7 +110,7 @@ export function ProfileClassifiedAdCard({ ad, onEdit, onDelete }: ProfileClassif
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-400">
-            <span className="text-3xl">{ad.classified_categories.icon}</span>
+            <span className="text-3xl">{ad.classified_categories?.icon || '📦'}</span>
           </div>
         )}
 
@@ -127,7 +127,7 @@ export function ProfileClassifiedAdCard({ ad, onEdit, onDelete }: ProfileClassif
 
         {/* Category Badge */}
         <div className="absolute bottom-2 left-2 bg-white px-2 py-1 rounded-full text-xs font-medium text-gray-900 shadow-sm">
-          {ad.classified_categories.name}
+          {ad.classified_categories?.name || 'Annuncio'}
         </div>
 
         {/* Price Badge */}

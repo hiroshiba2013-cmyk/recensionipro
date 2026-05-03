@@ -680,7 +680,7 @@ export function DashboardPage() {
                   )}
 
                   <div className="p-6">
-                    {console.log('🎯 RENDER: businessClassifiedAds.length =', businessClassifiedAds.length)}
+                    {console.log('🎯 RENDER: businessClassifiedAds.length =', businessClassifiedAds.length, 'showing:', businessClassifiedAds.length === 0 ? 'EMPTY STATE' : 'ADS LIST')}
                     {businessClassifiedAds.length === 0 ? (
                       <div className="text-center py-10">
                         <Tag className="w-14 h-14 text-gray-300 mx-auto mb-4" />
@@ -696,8 +696,9 @@ export function DashboardPage() {
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {businessClassifiedAds.map(ad => (
-                          <ProfileClassifiedAdCard
+                        {businessClassifiedAds.map(ad => {
+                          console.log('🃏 Rendering card ad:', ad.id, 'categories:', ad.classified_categories);
+                          return (<ProfileClassifiedAdCard
                             key={ad.id}
                             ad={{
                               ...ad,
@@ -707,8 +708,8 @@ export function DashboardPage() {
                             }}
                             onEdit={(ad) => { setEditingClassifiedAdId(ad.id); setShowClassifiedAdForm(true); }}
                             onDelete={deleteClassifiedAd}
-                          />
-                        ))}
+                          />);
+                        })}
                       </div>
                     )}
                   </div>
