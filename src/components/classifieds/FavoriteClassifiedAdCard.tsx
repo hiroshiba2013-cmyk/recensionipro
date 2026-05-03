@@ -53,38 +53,20 @@ export function FavoriteClassifiedAdCard({ ad, familyMemberId = null, onRemove }
     }
 
     try {
-      const { data: existingConv, error: convError } = await supabase
-        .from('ad_conversations')
-        .select('id')
-        .eq('ad_id', ad.id)
-        .eq('buyer_id', user.id)
-        .eq('seller_id', ad.user_id)
-        .maybeSingle();
+      const { data: conversationId, error: funcError } = await supabase
+        .rpc('get_or_create_conversation', {
+          p_user1_id: user.id,
+          p_user2_id: ad.user_id,
+          p_conversation_type: 'classified_ad',
+          p_reference_id: ad.id,
+          p_user1_family_member_id: familyMemberId,
+        });
 
-      if (convError) throw convError;
+      if (funcError) throw funcError;
 
-      if (existingConv) {
-        window.location.href = `/messages?conversation=${existingConv.id}`;
-        return;
-      }
-
-      const { data: newConv, error: createError } = await supabase
-        .from('ad_conversations')
-        .insert([
-          {
-            ad_id: ad.id,
-            buyer_id: user.id,
-            seller_id: ad.user_id,
-          },
-        ])
-        .select()
-        .single();
-
-      if (createError) throw createError;
-
-      window.location.href = `/messages?conversation=${newConv.id}`;
+      window.location.href = `/messages?conversation=${conversationId}`;
     } catch (error) {
-      console.error('Error starting conversation:', error);
+      console.error('Error creating conversation:', error);
       alert('Errore nell\'avvio della conversazione');
     }
   };
