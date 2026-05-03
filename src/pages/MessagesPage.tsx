@@ -411,7 +411,6 @@ export function MessagesPage() {
               const count = key === 'all'
                 ? conversations.length
                 : conversations.filter((c) => c.conversation_type === key).length;
-              if (key !== 'all' && count === 0) return null;
               return (
                 <button
                   key={key}
