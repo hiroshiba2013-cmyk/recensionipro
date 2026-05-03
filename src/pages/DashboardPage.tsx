@@ -97,11 +97,6 @@ export function DashboardPage() {
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
 
-  console.log('🔍 DASHBOARD DEBUG:', {
-    jobSeekersCount: jobSeekers.length,
-    topLocationsCount: topLocations.length,
-    solidarityStats
-  });
   const [showCreateBusinessForm, setShowCreateBusinessForm] = useState(false);
   const [showResponseForm, setShowResponseForm] = useState<string | null>(null);
   const [businessClassifiedAds, setBusinessClassifiedAds] = useState<any[]>([]);
@@ -125,7 +120,6 @@ export function DashboardPage() {
       .select('*, classified_categories(name, icon)')
       .eq('user_id', profile.id)
       .order('created_at', { ascending: false });
-    console.log('📢 Business classified ads:', data, 'error:', error, 'profile.id:', profile.id);
     if (data) setBusinessClassifiedAds(data);
   };
 
@@ -159,43 +153,15 @@ export function DashboardPage() {
     if (!profile) return;
     loadDashboardData();
     loadSubscriptionData();
-
-    // Load classified ads directly here to avoid closure issues
-    const currentProfileId = profile.id;
-    const currentUserType = profile.user_type;
-    const currentFamilyMemberId = activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
-
-    if (currentUserType === 'business') {
-      supabase
-        .from('classified_ads')
-        .select('*, classified_categories(name, icon)')
-        .eq('user_id', currentProfileId)
-        .order('created_at', { ascending: false })
-        .then(({ data, error }) => {
-          console.log('📢 Ads caricati:', data?.length, 'errore:', error);
-          if (data) setBusinessClassifiedAds(data);
-        });
+    if (profile.user_type === 'business') {
+      loadBusinessClassifiedAds();
     } else {
-      let query = supabase
-        .from('classified_ads')
-        .select('*, classified_categories(name, icon)')
-        .eq('user_id', currentProfileId)
-        .order('created_at', { ascending: false });
-      if (currentFamilyMemberId) {
-        query = query.eq('family_member_id', currentFamilyMemberId);
-      } else {
-        query = query.is('family_member_id', null);
-      }
-      query.then(({ data }) => {
-        if (data) setCustomerClassifiedAds(data);
-      });
+      loadCustomerClassifiedAds();
     }
   }, [profile, selectedBusinessLocationId, activeProfile]);
 
   const loadDashboardData = async () => {
     if (!profile) return;
-
-    console.log('🔄 Caricamento dati dashboard per sede:', selectedBusinessLocationId || 'TUTTE');
 
     setLoading(true);
 
@@ -208,7 +174,6 @@ export function DashboardPage() {
 
     try {
       if (profile.user_type === 'business') {
-        console.log('🔄 Caricamento job seekers...');
         const { data: jobSeekersData, error: jobSeekersError } = await supabase
           .from('job_seekers')
           .select(`
@@ -219,36 +184,19 @@ export function DashboardPage() {
           .order('created_at', { ascending: false })
           .limit(10);
 
-        if (jobSeekersError) {
-          console.error('❌ Errore caricamento job seekers:', jobSeekersError);
-        } else {
-          console.log('✅ Job seekers caricati:', jobSeekersData?.length || 0);
-          if (jobSeekersData) {
-            setJobSeekers(jobSeekersData);
-          }
+        if (!jobSeekersError && jobSeekersData) {
+          setJobSeekers(jobSeekersData);
         }
-
-        console.log('🔄 Caricamento top locations...');
         const { data: topLocationsData, error: topLocationsError } = await supabase
           .rpc('get_top_business_locations', { limit_count: 10 });
 
-        if (topLocationsError) {
-          console.error('❌ Errore caricamento top locations:', topLocationsError);
-        } else {
-          console.log('✅ Top locations caricate:', topLocationsData?.length || 0);
-          if (topLocationsData) {
-            setTopLocations(topLocationsData);
-          }
+        if (!topLocationsError && topLocationsData) {
+          setTopLocations(topLocationsData);
         }
-
-        console.log('🔄 Caricamento statistiche solidarietà...');
         const { data: revenueData, error: revenueError } = await supabase
           .rpc('get_total_revenue');
 
-        if (revenueError) {
-          console.error('❌ Errore caricamento statistiche solidarietà:', revenueError);
-        } else if (revenueData !== null) {
-          console.log('✅ Statistiche solidarietà caricate:', revenueData);
+        if (!revenueError && revenueData !== null) {
           const totalRevenue = revenueData;
           const charityAmount = totalRevenue * 0.1;
           setSolidarityStats({
@@ -288,52 +236,59 @@ export function DashboardPage() {
           if (businessesData.length > 0) {
             const businessIds = businessesData.map(b => b.id);
 
-            // Filtra recensioni per sede se una sede è selezionata
-            let reviewsQuery = supabase
-              .from('reviews')
-              .select(`
-                *,
-                customer:profiles!customer_id(full_name),
-                responses:review_responses(*),
-                business_location:business_locations(internal_name, address),
-                registered_location:registered_business_locations(internal_name, street, city)
-              `)
-              .in('business_id', businessIds)
-              .eq('review_status', 'approved')
-              .order('created_at', { ascending: false });
+            if (isRegistered) {
+              // Registered businesses: get location IDs first, then query reviews
+              const locationsQuery = supabase
+                .from('registered_business_locations')
+                .select('id')
+                .in('business_id', businessIds);
+              const { data: locationRows } = await locationsQuery;
+              const locationIds = locationRows ? locationRows.map(l => l.id) : [];
 
-            if (selectedBusinessLocationId) {
-              reviewsQuery = reviewsQuery.or(`business_location_id.eq.${selectedBusinessLocationId},registered_location_id.eq.${selectedBusinessLocationId}`);
+              if (locationIds.length > 0) {
+                let reviewsQuery = supabase
+                  .from('reviews')
+                  .select(`
+                    *,
+                    customer:profiles!customer_id(full_name),
+                    responses:review_responses(*),
+                    business_location:registered_business_locations(internal_name, city)
+                  `)
+                  .in('business_location_id', locationIds)
+                  .eq('review_status', 'approved')
+                  .order('created_at', { ascending: false });
+
+                if (selectedBusinessLocationId) {
+                  reviewsQuery = reviewsQuery.eq('business_location_id', selectedBusinessLocationId);
+                }
+
+                const { data: reviewsData } = await reviewsQuery;
+                if (reviewsData) setReviews(reviewsData);
+              }
+              // Products not linked to registered businesses - nothing to load
+            } else {
+              // Old businesses table
+              let reviewsQuery = supabase
+                .from('reviews')
+                .select(`
+                  *,
+                  customer:profiles!customer_id(full_name),
+                  responses:review_responses(*),
+                  business_location:business_locations(internal_name, address)
+                `)
+                .in('business_id', businessIds)
+                .eq('review_status', 'approved')
+                .order('created_at', { ascending: false });
+
+              if (selectedBusinessLocationId) {
+                reviewsQuery = reviewsQuery.eq('business_location_id', selectedBusinessLocationId);
+              }
+
+              const { data: reviewsData } = await reviewsQuery;
+              if (reviewsData) setReviews(reviewsData);
             }
 
-            const { data: reviewsData } = await reviewsQuery;
-
-            console.log('📊 Recensioni caricate:', reviewsData?.length || 0, 'per sede:', selectedBusinessLocationId || 'TUTTE');
-
-            if (reviewsData) {
-              setReviews(reviewsData);
-            }
-
-            // Filtra prodotti per sede se una sede è selezionata
-            let productsQuery = supabase
-              .from('products')
-              .select('*')
-              .in('business_id', businessIds)
-              .order('created_at', { ascending: false });
-
-            if (selectedBusinessLocationId) {
-              productsQuery = productsQuery.eq('location_id', selectedBusinessLocationId);
-            }
-
-            const { data: productsData } = await productsQuery;
-
-            console.log('📦 Prodotti caricati:', productsData?.length || 0, 'per sede:', selectedBusinessLocationId || 'TUTTE');
-
-            if (productsData) {
-              setProducts(productsData);
-            }
-
-            // Filtra offerte di lavoro per sede - due query separate (vecchio e nuovo sistema)
+            // Job postings - support both old and new system
             const [jpOld, jpNew] = await Promise.all([
               supabase
                 .from('job_postings')
@@ -357,13 +312,7 @@ export function DashboardPage() {
             }
 
             allJobPostings.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-            const jobPostingsData = allJobPostings;
-
-            console.log('💼 Offerte lavoro caricate:', jobPostingsData?.length || 0, 'per sede:', selectedBusinessLocationId || 'TUTTE');
-
-            if (jobPostingsData) {
-              setJobPostings(jobPostingsData);
-            }
+            setJobPostings(allJobPostings);
           }
         }
       } else {
@@ -545,11 +494,6 @@ export function DashboardPage() {
     );
   }
 
-  console.log('Dashboard - Profile:', {
-    user_type: profile.user_type,
-    subscription_status: profile.subscription_status,
-    subscription_type: profile.subscription_type,
-  });
 
   if (profile.subscription_status !== 'active' && profile.subscription_status !== 'trial') {
     return (
@@ -680,7 +624,6 @@ export function DashboardPage() {
                   )}
 
                   <div className="p-6">
-                    {console.log('🎯 RENDER: businessClassifiedAds.length =', businessClassifiedAds.length, 'showing:', businessClassifiedAds.length === 0 ? 'EMPTY STATE' : 'ADS LIST')}
                     {businessClassifiedAds.length === 0 ? (
                       <div className="text-center py-10">
                         <Tag className="w-14 h-14 text-gray-300 mx-auto mb-4" />
@@ -696,9 +639,8 @@ export function DashboardPage() {
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {businessClassifiedAds.map(ad => {
-                          console.log('🃏 Rendering card ad:', ad.id, 'categories:', ad.classified_categories);
-                          return (<ProfileClassifiedAdCard
+                        {businessClassifiedAds.map(ad => (
+                          <ProfileClassifiedAdCard
                             key={ad.id}
                             ad={{
                               ...ad,
@@ -708,8 +650,8 @@ export function DashboardPage() {
                             }}
                             onEdit={(ad) => { setEditingClassifiedAdId(ad.id); setShowClassifiedAdForm(true); }}
                             onDelete={deleteClassifiedAd}
-                          />);
-                        })}
+                          />
+                        ))}
                       </div>
                     )}
                   </div>
