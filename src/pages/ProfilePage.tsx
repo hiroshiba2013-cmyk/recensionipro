@@ -1172,14 +1172,24 @@ export function ProfilePage() {
                 </>
               )}
             </div>
-            <button
-              onClick={handleSignOut}
-              className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors font-semibold shadow-md"
-              title="Esci"
-            >
-              <LogOut className="w-5 h-5" />
-              Esci
-            </button>
+            <div className="flex items-center gap-3">
+              <a
+                href="/dashboard"
+                className="flex items-center gap-2 bg-green-600 text-white px-5 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold shadow-md"
+                title="Dashboard"
+              >
+                <TrendingUp className="w-5 h-5" />
+                Dashboard
+              </a>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors font-semibold shadow-md"
+                title="Esci"
+              >
+                <LogOut className="w-5 h-5" />
+                Esci
+              </button>
+            </div>
           </div>
         </div>
 
