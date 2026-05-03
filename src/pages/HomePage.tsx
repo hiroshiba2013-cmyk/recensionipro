@@ -450,6 +450,7 @@ function AuthenticatedHomePage() {
   const { user, profile, activeProfile } = useAuth();
   const navigate = useNavigate();
   const [jobSeekers, setJobSeekers] = useState<any[]>([]);
+  const [jobPostings, setJobPostings] = useState<any[]>([]);
   const [featuredSellAds, setFeaturedSellAds] = useState<any[]>([]);
   const [expiringAuctions, setExpiringAuctions] = useState<any[]>([]);
   const [topUsers, setTopUsers] = useState<any[]>([]);
@@ -471,8 +472,11 @@ function AuthenticatedHomePage() {
     try {
       setLoading(true);
 
-      const [jobSeekersResult, sellAdsResult, topDataResult, auctionsResult] = await Promise.all([
+      const [jobSeekersResult, jobPostingsResult, sellAdsResult, topDataResult, auctionsResult] = await Promise.all([
+        // Business users see job seekers (private users looking for work)
         (async () => {
+          if (!isBusiness) return [];
+
           let query = supabase
             .from('job_seekers')
             .select(`
@@ -483,7 +487,7 @@ function AuthenticatedHomePage() {
             .eq('status', 'active')
             .order('created_at', { ascending: false });
 
-          if (isBusiness && profile?.business_id) {
+          if (profile?.business_id) {
             const { data: businessData } = await supabase
               .from('businesses')
               .select('category_id')
@@ -496,6 +500,26 @@ function AuthenticatedHomePage() {
           }
 
           const { data } = await query.limit(6);
+          return data || [];
+        })(),
+
+        // Private users see job postings from businesses
+        (async () => {
+          if (isBusiness) return [];
+
+          const { data } = await supabase
+            .from('job_postings')
+            .select(`
+              *,
+              business:businesses(id, name),
+              registered_business:registered_businesses(id, name)
+            `)
+            .eq('status', 'active')
+            .eq('approval_status', 'approved')
+            .gt('expires_at', new Date().toISOString())
+            .order('created_at', { ascending: false })
+            .limit(6);
+
           return data || [];
         })(),
 
@@ -533,6 +557,10 @@ function AuthenticatedHomePage() {
 
       if (jobSeekersResult) {
         setJobSeekers(jobSeekersResult);
+      }
+
+      if (jobPostingsResult) {
+        setJobPostings(jobPostingsResult);
       }
 
       if (sellAdsResult.data && sellAdsResult.data.length > 0) {
@@ -712,9 +740,11 @@ function AuthenticatedHomePage() {
                     <Briefcase className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Cerco Lavoro</h2>
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                      {isBusiness ? 'Cerco Lavoro' : 'Offerte di Lavoro'}
+                    </h2>
                     <p className="text-sm text-gray-600">
-                      {isBusiness ? 'Candidati nella tua categoria' : 'Annunci di chi cerca lavoro'}
+                      {isBusiness ? 'Candidati disponibili nella tua categoria' : 'Annunci di lavoro dalle aziende'}
                     </p>
                   </div>
                 </div>
@@ -727,19 +757,64 @@ function AuthenticatedHomePage() {
                 </button>
               </div>
 
-              {jobSeekers.length > 0 ? (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {jobSeekers.map((seeker) => (
-                    <JobSeekerCard key={seeker.id} seeker={seeker} onClick={() => navigate('/jobs')} />
-                  ))}
-                </div>
+              {isBusiness ? (
+                jobSeekers.length > 0 ? (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {jobSeekers.map((seeker) => (
+                      <JobSeekerCard key={seeker.id} seeker={seeker} onClick={() => navigate('/jobs')} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-white rounded-2xl">
+                    <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">Nessun candidato disponibile nella tua categoria</p>
+                  </div>
+                )
               ) : (
-                <div className="text-center py-12 bg-white rounded-2xl">
-                  <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">
-                    {isBusiness ? 'Nessun candidato disponibile nella tua categoria' : 'Nessun annuncio disponibile'}
-                  </p>
-                </div>
+                jobPostings.length > 0 ? (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {jobPostings.map((job) => {
+                      const businessName = job.business?.name || job.registered_business?.name || 'Azienda';
+                      return (
+                        <div
+                          key={job.id}
+                          onClick={() => navigate('/jobs')}
+                          className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-lg transition-all cursor-pointer hover:-translate-y-1"
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="bg-blue-100 p-2 rounded-lg">
+                              <Briefcase className="w-5 h-5 text-blue-600" />
+                            </div>
+                            {job.contract_type && (
+                              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full font-medium">
+                                {job.contract_type}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">{job.title}</h3>
+                          <p className="text-sm text-blue-600 font-medium mb-2">{businessName}</p>
+                          {job.location && (
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <MapPin className="w-3 h-3" />
+                              <span>{job.location}</span>
+                            </div>
+                          )}
+                          {job.salary_min && (
+                            <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                              <Euro className="w-3 h-3" />
+                              <span>{job.salary_min.toLocaleString('it-IT')}€{job.salary_max ? ` - ${job.salary_max.toLocaleString('it-IT')}€` : '+'}</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-white rounded-2xl">
+                    <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">Nessuna offerta di lavoro disponibile</p>
+                  </div>
+                )
               )}
             </section>
 
