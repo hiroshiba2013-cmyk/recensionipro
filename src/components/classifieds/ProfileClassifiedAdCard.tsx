@@ -34,6 +34,7 @@ interface ProfileClassifiedAdCardProps {
 
 export function ProfileClassifiedAdCard({ ad, onEdit, onDelete }: ProfileClassifiedAdCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  if (!ad) return null;
 
   const getDaysRemaining = () => {
     if (!ad.expires_at) {
