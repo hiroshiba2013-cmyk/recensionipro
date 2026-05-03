@@ -153,11 +153,6 @@ export function DashboardPage() {
     if (!profile) return;
     loadDashboardData();
     loadSubscriptionData();
-    if (profile.user_type === 'business') {
-      loadBusinessClassifiedAds();
-    } else {
-      loadCustomerClassifiedAds();
-    }
   }, [profile, selectedBusinessLocationId, activeProfile]);
 
   const loadDashboardData = async () => {
@@ -366,6 +361,29 @@ export function DashboardPage() {
           rank: (higherCount || 0) + 1,
           reviews_count: activityData?.reviews_count || 0,
         });
+      }
+      // Load classified ads
+      const familyMemberId = activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
+      if (profile.user_type === 'business') {
+        const { data: adsData } = await supabase
+          .from('classified_ads')
+          .select('*, classified_categories(name, icon)')
+          .eq('user_id', profile.id)
+          .order('created_at', { ascending: false });
+        if (adsData) setBusinessClassifiedAds(adsData);
+      } else {
+        let adsQuery = supabase
+          .from('classified_ads')
+          .select('*, classified_categories(name, icon)')
+          .eq('user_id', profile.id)
+          .order('created_at', { ascending: false });
+        if (familyMemberId) {
+          adsQuery = adsQuery.eq('family_member_id', familyMemberId);
+        } else {
+          adsQuery = adsQuery.is('family_member_id', null);
+        }
+        const { data: adsData } = await adsQuery;
+        if (adsData) setCustomerClassifiedAds(adsData);
       }
     } catch (error) {
       console.error('Error loading dashboard data:', error);
