@@ -1982,15 +1982,15 @@ export function ProfilePage() {
               isRegisteredBusiness={isRegisteredBusiness}
             />
 
-            <div className="bg-white rounded-xl shadow-md p-8 mb-8">
-              <div className="flex items-center justify-between mb-6">
+            <div className="bg-white rounded-xl shadow-md p-5 mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <Tag className="w-6 h-6 text-green-600" />
+                  <Tag className="w-5 h-5 text-green-600" />
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">
+                    <h2 className="text-lg font-bold text-gray-900">
                       {selectedBusinessLocationId ? `Annunci - ${selectedLocationName}` : 'I Miei Annunci (Tutte le Sedi)'}
                     </h2>
-                    <p className="text-sm text-gray-600 mt-1">Gestisci i tuoi annunci per questa sede</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Gestisci i tuoi annunci per questa sede</p>
                   </div>
                 </div>
                 <button

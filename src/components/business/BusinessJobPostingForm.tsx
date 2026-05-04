@@ -540,11 +540,11 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegis
           {selectedLocationId ? 'Nessun annuncio per questa sede' : 'Nessun annuncio pubblicato'}
         </p>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {filteredJobPostings.map((posting) => (
             <div
               key={posting.id}
-              className={`border-2 rounded-lg p-6 transition-colors ${
+              className={`border rounded-lg p-4 transition-colors ${
                 posting.approval_status === 'pending' || posting.status === 'pending'
                   ? 'border-yellow-200 bg-yellow-50'
                   : posting.status === 'active'
@@ -552,99 +552,79 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegis
                   : 'border-gray-200 bg-gray-50'
               }`}
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-bold text-xl text-gray-900">{posting.title}</h3>
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                        posting.approval_status === 'pending' || posting.status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : posting.approval_status === 'rejected'
-                          ? 'bg-red-100 text-red-700'
-                          : posting.status === 'active'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-gray-200 text-gray-600'
-                      }`}
-                    >
-                      {posting.approval_status === 'pending' || posting.status === 'pending'
-                        ? 'In attesa di approvazione'
-                        : posting.approval_status === 'rejected'
-                        ? 'Non approvato'
-                        : posting.status === 'active' ? 'Attivo' : 'Chiuso'}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-2 text-sm text-gray-600 mb-2">
-                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
-                      {posting.position_type}
-                    </span>
-                    <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full font-medium">
-                      {posting.experience_level}
-                    </span>
-                    {posting.education_level && (
-                      <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full font-medium">
-                        {posting.education_level}
-                      </span>
-                    )}
-                    <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full font-medium">
-                      {posting.location}
-                    </span>
-                  </div>
-                  {(posting.salary_min || posting.salary_max) && (
-                    <p className="text-sm font-semibold text-green-700">
-                      Salario: {posting.salary_min?.toLocaleString()} - {posting.salary_max?.toLocaleString()} {posting.salary_currency}
-                    </p>
-                  )}
+              {/* Header row: title + status + actions */}
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <h3 className="font-semibold text-base text-gray-900 truncate">{posting.title}</h3>
+                  <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                    posting.approval_status === 'pending' || posting.status === 'pending'
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : posting.approval_status === 'rejected'
+                      ? 'bg-red-100 text-red-700'
+                      : posting.status === 'active'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-gray-200 text-gray-600'
+                  }`}>
+                    {posting.approval_status === 'pending' || posting.status === 'pending'
+                      ? 'In attesa'
+                      : posting.approval_status === 'rejected'
+                      ? 'Non approvato'
+                      : posting.status === 'active' ? 'Attivo' : 'Chiuso'}
+                  </span>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleEdit(posting)}
-                    className="text-blue-600 hover:text-blue-700 p-2"
-                    title="Modifica"
-                  >
-                    <Edit className="w-5 h-5" />
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button onClick={() => handleEdit(posting)} className="text-blue-600 hover:text-blue-700 p-1.5 rounded hover:bg-blue-50" title="Modifica">
+                    <Edit className="w-4 h-4" />
                   </button>
-                  <button
-                    onClick={() => handleDelete(posting.id)}
-                    className="text-red-600 hover:text-red-700 p-2"
-                    title="Elimina"
-                  >
-                    <Trash2 className="w-5 h-5" />
+                  <button onClick={() => handleDelete(posting.id)} className="text-red-600 hover:text-red-700 p-1.5 rounded hover:bg-red-50" title="Elimina">
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              <p className="text-gray-700 leading-relaxed mb-3 whitespace-pre-line">
+              {/* Tags row */}
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">{posting.position_type}</span>
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">{posting.experience_level}</span>
+                {posting.education_level && (
+                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">{posting.education_level}</span>
+                )}
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">{posting.location}</span>
+                {(posting.salary_min || posting.salary_max) && (
+                  <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                    {posting.salary_min?.toLocaleString()} - {posting.salary_max?.toLocaleString()} {posting.salary_currency}
+                  </span>
+                )}
+              </div>
+
+              {/* Description — capped at 2 lines */}
+              <p className="text-sm text-gray-600 leading-relaxed mb-2 line-clamp-2">
                 {posting.description}
               </p>
 
+              {/* Skills */}
               {posting.required_skills.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-sm font-semibold text-gray-700 mb-2">Competenze richieste:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {posting.required_skills.map((skill, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {posting.required_skills.map((skill, index) => (
+                    <span key={index} className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                      {skill}
+                    </span>
+                  ))}
                 </div>
               )}
 
-              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <span>Scadenza: {new Date(posting.expires_at).toLocaleDateString('it-IT')}</span>
+              {/* Footer row */}
+              <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                <div className="flex items-center gap-3 text-xs text-gray-500">
+                  <span>Scade: {new Date(posting.expires_at).toLocaleDateString('it-IT')}</span>
                   <span className="flex items-center gap-1">
-                    <Users className="w-4 h-4" />
+                    <Users className="w-3 h-3" />
                     Candidature
                   </span>
                 </div>
                 <button
                   onClick={() => toggleStatus(posting.id, posting.status)}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                     posting.status === 'active'
                       ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                       : 'bg-green-600 text-white hover:bg-green-700'

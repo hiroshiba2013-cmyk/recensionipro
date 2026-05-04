@@ -463,17 +463,11 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
       : locations;
 
     return (
-      <div className="bg-white rounded-xl shadow-md p-8 mb-8">
-        <div className="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-300 rounded-lg p-4 mb-6">
-          <p className="text-sm text-gray-700">
-            <span className="font-semibold">Nota:</span> I punti vendita sono separati dai dati aziendali legali.
-            Ogni punto vendita deve avere il proprio indirizzo e informazioni complete, anche se coincidono con i dati della sede legale.
-          </p>
-        </div>
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white rounded-xl shadow-md p-5 mb-6">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <MapPin className="w-6 h-6 text-blue-600" />
-            <h2 className="text-2xl font-bold text-gray-900">
+            <MapPin className="w-5 h-5 text-blue-600" />
+            <h2 className="text-lg font-bold text-gray-900">
               {selectedLocationId ? 'Punto Vendita Selezionato' : 'Punti Vendita'}
             </h2>
           </div>
@@ -489,12 +483,12 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
         {displayLocations.length === 0 ? (
           <p className="text-gray-600 text-center py-8">Nessun punto vendita aggiunto</p>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {displayLocations.map((location, index) => (
-              <div key={location.id} className={`border rounded-lg p-6 ${
+              <div key={location.id} className={`border rounded-lg p-4 ${
                 location.is_primary ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-gray-50'
               }`}>
-                <div className="flex items-start gap-6 mb-4">
+                <div className="flex items-start gap-4 mb-3">
                   {!location.id.startsWith('new-') && (
                     <BusinessLocationAvatarUpload
                       locationId={location.id}
@@ -507,56 +501,56 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     />
                   )}
                   <div className="flex-1">
-                    <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center justify-between mb-1.5">
                       <div>
-                        <h3 className="font-bold text-lg text-gray-900">{location.internal_name || `Sede ${index + 1}`}</h3>
-                        <p className="text-sm text-gray-500 font-medium">{location.name}</p>
+                        <h3 className="font-semibold text-base text-gray-900">{location.internal_name || `Sede ${index + 1}`}</h3>
+                        <p className="text-xs text-gray-500">{location.name}</p>
                       </div>
                       {location.is_primary && (
-                        <span className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                        <span className="bg-blue-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
                           PRINCIPALE
                         </span>
                       )}
                     </div>
                     {location.description && (
-                      <p className="text-sm text-gray-600 mb-4 italic">{location.description}</p>
+                      <p className="text-xs text-gray-600 mb-2 italic">{location.description}</p>
                     )}
                     {location.services_description && (
-                      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <p className="text-sm font-semibold text-blue-900 mb-1">Servizi Disponibili</p>
-                        <p className="text-sm text-blue-800">{location.services_description}</p>
+                      <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-xs font-semibold text-blue-900 mb-0.5">Servizi Disponibili</p>
+                        <p className="text-xs text-blue-800">{location.services_description}</p>
                       </div>
                     )}
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid md:grid-cols-2 gap-2">
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">Indirizzo</p>
-                        <p className="text-lg font-semibold text-gray-900">{location.address}</p>
+                        <p className="text-xs text-gray-500">Indirizzo</p>
+                        <p className="text-sm font-medium text-gray-900">{location.address}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">Città</p>
-                        <p className="text-lg font-semibold text-gray-900">{location.city} ({location.province})</p>
+                        <p className="text-xs text-gray-500">Città</p>
+                        <p className="text-sm font-medium text-gray-900">{location.city} ({location.province})</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">CAP</p>
-                        <p className="text-lg font-semibold text-gray-900">{location.postal_code}</p>
+                        <p className="text-xs text-gray-500">CAP</p>
+                        <p className="text-sm font-medium text-gray-900">{location.postal_code}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">Telefono</p>
-                        <p className="text-lg font-semibold text-gray-900">{location.phone}</p>
+                        <p className="text-xs text-gray-500">Telefono</p>
+                        <p className="text-sm font-medium text-gray-900">{location.phone}</p>
                       </div>
                       {location.email && (
                         <div>
-                          <p className="text-sm text-gray-600 mb-1">Email</p>
-                          <p className="text-lg font-semibold text-gray-900">{location.email}</p>
+                          <p className="text-xs text-gray-500">Email</p>
+                          <p className="text-sm font-medium text-gray-900">{location.email}</p>
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
                 {location.business_hours && (
-                  <div className="mt-4">
-                    <p className="text-sm text-gray-600 mb-2 font-bold">Orari di Apertura</p>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="mt-2">
+                    <p className="text-xs text-gray-500 mb-1 font-semibold uppercase tracking-wide">Orari di Apertura</p>
+                    <div className="grid grid-cols-2 gap-1 text-xs">
                       {(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const).map(day => {
                         const dayNames = {
                           monday: 'Lunedì',
@@ -593,11 +587,11 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
     : locations;
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-8 mb-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-white rounded-xl shadow-md p-5 mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <MapPin className="w-6 h-6 text-blue-600" />
-          <h2 className="text-2xl font-bold text-gray-900">
+          <MapPin className="w-5 h-5 text-blue-600" />
+          <h2 className="text-lg font-bold text-gray-900">
             {selectedLocationId ? 'Modifica Punto Vendita Selezionato' : 'Modifica Punti Vendita'}
           </h2>
         </div>
