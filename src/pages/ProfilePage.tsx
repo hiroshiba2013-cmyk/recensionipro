@@ -1982,25 +1982,31 @@ export function ProfilePage() {
               isRegisteredBusiness={isRegisteredBusiness}
             />
 
-            <div className="bg-white rounded-xl shadow-md p-5 mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <Tag className="w-5 h-5 text-green-600" />
+            <div className="bg-white rounded-xl shadow-md overflow-hidden mb-6">
+              {/* Section header with green accent */}
+              <div className="bg-gradient-to-r from-green-600 to-emerald-500 px-5 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Tag className="w-5 h-5 text-white" />
                   <div>
-                    <h2 className="text-lg font-bold text-gray-900">
-                      {selectedBusinessLocationId ? `Annunci - ${selectedLocationName}` : 'I Miei Annunci (Tutte le Sedi)'}
+                    <h2 className="text-base font-bold text-white">
+                      {selectedBusinessLocationId ? `Annunci — ${selectedLocationName}` : 'I Miei Annunci'}
                     </h2>
-                    <p className="text-xs text-gray-500 mt-0.5">Gestisci i tuoi annunci per questa sede</p>
+                    <p className="text-xs text-green-100 mt-0.5">
+                      {selectedBusinessLocationId ? 'Annunci di questa sede' : 'Tutte le sedi'}
+                    </p>
                   </div>
                 </div>
                 <button
                   onClick={() => { setEditingAdId(null); setShowEditAdForm(true); }}
-                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-semibold transition-colors"
+                  className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors border border-white/30"
                 >
                   <Plus className="w-4 h-4" />
-                  Nuovo Annuncio
+                  Nuovo
                 </button>
               </div>
+
+              {/* Body */}
+              <div className="p-5">
 
               {showEditAdForm && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -2030,7 +2036,7 @@ export function ProfilePage() {
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {classifiedAds.map((ad) => (
                     <ProfileClassifiedAdCard
                       key={ad.id}
@@ -2041,6 +2047,7 @@ export function ProfilePage() {
                   ))}
                 </div>
               )}
+              </div>{/* end body */}
             </div>
 
             <div className="bg-white rounded-xl shadow-md p-8 mb-8">
