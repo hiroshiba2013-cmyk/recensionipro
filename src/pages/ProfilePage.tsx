@@ -194,6 +194,7 @@ export function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [business, setBusiness] = useState<Business | null>(null);
+  const [isRegisteredBusiness, setIsRegisteredBusiness] = useState(false);
   const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [classifiedAds, setClassifiedAds] = useState<ClassifiedAd[]>([]);
@@ -632,15 +633,23 @@ export function ProfilePage() {
   };
 
   const loadClassifiedAds = async () => {
-    const { data: adsData, error } = await supabase
+    let query = supabase
       .from('classified_ads')
-      .select(`
-        *,
-        classified_categories(name, icon)
-      `)
+      .select(`*, classified_categories(name, icon)`)
       .eq('user_id', user?.id)
       .is('family_member_id', null)
       .order('created_at', { ascending: false });
+
+    // For business users: filter by selected location (sede), or show all if "tutte le sedi"
+    if (profile?.user_type === 'business' && selectedBusinessLocationId) {
+      if (isRegisteredBusiness) {
+        query = query.eq('registered_business_location_id', selectedBusinessLocationId);
+      } else {
+        query = query.eq('business_location_id', selectedBusinessLocationId);
+      }
+    }
+
+    const { data: adsData, error } = await query;
 
     if (error) {
       console.error('Error loading classified ads:', error);
@@ -652,7 +661,7 @@ export function ProfilePage() {
         .from('profiles')
         .select('full_name, nickname, avatar_url')
         .eq('id', user?.id)
-        .single();
+        .maybeSingle();
 
       const profileInfo = profData
         ? { full_name: profData.nickname || profData.full_name, avatar_url: profData.avatar_url }
@@ -917,6 +926,7 @@ export function ProfilePage() {
 
     if (registeredBusinessData) {
       setBusiness(registeredBusinessData);
+      setIsRegisteredBusiness(true);
 
       const { data: locationsData } = await supabase
         .from('registered_business_locations')
@@ -963,6 +973,7 @@ export function ProfilePage() {
     }
 
     // Fallback: cerca nei business vecchi (per compatibilità)
+    setIsRegisteredBusiness(false);
     const { data: businessData } = await supabase
       .from('businesses')
       .select('*')
@@ -1966,15 +1977,20 @@ export function ProfilePage() {
               </>
             )}
 
-            <UserAuctionsSection />
+            <UserAuctionsSection
+              businessLocationId={selectedBusinessLocationId}
+              isRegisteredBusiness={isRegisteredBusiness}
+            />
 
             <div className="bg-white rounded-xl shadow-md p-8 mb-8">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <Tag className="w-6 h-6 text-green-600" />
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">I Miei Annunci</h2>
-                    <p className="text-sm text-gray-600 mt-1">Gestisci i tuoi annunci personali</p>
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      {selectedBusinessLocationId ? `Annunci - ${selectedLocationName}` : 'I Miei Annunci (Tutte le Sedi)'}
+                    </h2>
+                    <p className="text-sm text-gray-600 mt-1">Gestisci i tuoi annunci per questa sede</p>
                   </div>
                 </div>
                 <button
@@ -1991,6 +2007,8 @@ export function ProfilePage() {
                   <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                     <ClassifiedAdForm
                       adId={editingAdId || undefined}
+                      businessLocationId={selectedBusinessLocationId}
+                      isRegisteredBusiness={isRegisteredBusiness}
                       onSuccess={() => { setShowEditAdForm(false); loadClassifiedAds(); }}
                       onCancel={() => setShowEditAdForm(false)}
                     />

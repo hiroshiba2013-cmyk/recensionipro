@@ -24,7 +24,12 @@ interface ParticipatingAuction extends Auction {
   is_winning: boolean;
 }
 
-export function UserAuctionsSection() {
+interface Props {
+  businessLocationId?: string | null;
+  isRegisteredBusiness?: boolean;
+}
+
+export function UserAuctionsSection({ businessLocationId, isRegisteredBusiness }: Props) {
   const { user, activeProfile, profile } = useAuth();
   const [myAuctions, setMyAuctions] = useState<Auction[]>([]);
   const [participatingAuctions, setParticipatingAuctions] = useState<ParticipatingAuction[]>([]);
@@ -41,7 +46,7 @@ export function UserAuctionsSection() {
     } else {
       setLoading(false);
     }
-  }, [user, activeProfile]);
+  }, [user, activeProfile, businessLocationId]);
 
   const loadAuctions = async () => {
     if (!user) return;
@@ -58,6 +63,12 @@ export function UserAuctionsSection() {
         myQuery = myQuery.eq('family_member_id', familyMemberId);
       } else {
         myQuery = myQuery.is('family_member_id', null);
+      }
+
+      // Filter by business location if a specific sede is selected
+      if (businessLocationId) {
+        const locationCol = isRegisteredBusiness ? 'registered_business_location_id' : 'business_location_id';
+        myQuery = myQuery.eq(locationCol, businessLocationId);
       }
 
       const { data: myData } = await myQuery;
@@ -208,6 +219,8 @@ export function UserAuctionsSection() {
       {showForm && (
         <div className="p-6 border-b border-gray-200 bg-orange-50/50">
           <AuctionForm
+            businessLocationId={businessLocationId}
+            isRegisteredBusiness={isRegisteredBusiness}
             onSuccess={() => {
               setShowForm(false);
               loadAuctions();
@@ -302,7 +315,7 @@ export function UserAuctionsSection() {
                       <h3 className="font-semibold text-gray-900 truncate group-hover:text-orange-700 transition-colors">
                         {auction.title}
                       </h3>
-                      {getStatusBadge(auction.status, auction.ends_at, auction.approval_status)}
+                      {getStatusBadge(auction.status, auction.ends_at, (auction as any).approval_status)}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
                       <span className="flex items-center gap-1">
@@ -320,8 +333,8 @@ export function UserAuctionsSection() {
                         <div className="text-sm">
                           <span className="text-gray-500">Attuale: </span>
                           <span className="font-bold text-orange-600">{Number(auction.current_price).toFixed(2)} EUR</span>
-                          {auction.current_bidder_nickname && (
-                            <span className="text-xs text-gray-500 ml-1">di <span className="font-semibold text-gray-700">{auction.current_bidder_nickname}</span></span>
+                          {(auction as any).current_bidder_nickname && (
+                            <span className="text-xs text-gray-500 ml-1">di <span className="font-semibold text-gray-700">{(auction as any).current_bidder_nickname}</span></span>
                           )}
                         </div>
                       )}
@@ -406,7 +419,7 @@ export function UserAuctionsSection() {
                               Superato
                             </span>
                           )}
-                          {getStatusBadge(auction.status, auction.ends_at, auction.approval_status)}
+                          {getStatusBadge(auction.status, auction.ends_at, (auction as any).approval_status)}
                         </div>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
@@ -425,8 +438,8 @@ export function UserAuctionsSection() {
                           <div className="text-sm">
                             <span className="text-gray-500">Miglior offerta: </span>
                             <span className="font-bold text-gray-800">{Number(auction.current_price).toFixed(2)} EUR</span>
-                            {auction.current_bidder_nickname && (
-                              <span className="text-xs text-gray-500 ml-1">di <span className="font-semibold text-gray-700">{auction.current_bidder_nickname}</span></span>
+                            {(auction as any).current_bidder_nickname && (
+                              <span className="text-xs text-gray-500 ml-1">di <span className="font-semibold text-gray-700">{(auction as any).current_bidder_nickname}</span></span>
                             )}
                           </div>
                         )}

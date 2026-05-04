@@ -11,11 +11,13 @@ interface Category {
 
 interface ClassifiedAdFormProps {
   adId?: string;
+  businessLocationId?: string | null;
+  isRegisteredBusiness?: boolean;
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdFormProps) {
+export function ClassifiedAdForm({ adId, businessLocationId, isRegisteredBusiness, onSuccess, onCancel }: ClassifiedAdFormProps) {
   const { user, activeProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -208,6 +210,15 @@ export function ClassifiedAdForm({ adId, onSuccess, onCancel }: ClassifiedAdForm
 
       if (activeProfile && !activeProfile.isOwner) {
         adData.family_member_id = activeProfile.id;
+      }
+
+      // Attach business location if creating from a specific sede
+      if (businessLocationId) {
+        if (isRegisteredBusiness) {
+          adData.registered_business_location_id = businessLocationId;
+        } else {
+          adData.business_location_id = businessLocationId;
+        }
       }
 
       if (adId) {
