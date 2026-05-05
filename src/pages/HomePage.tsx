@@ -492,6 +492,7 @@ function AuthenticatedHomePage() {
   const [jobPostings, setJobPostings] = useState<any[]>([]);
   const [featuredSellAds, setFeaturedSellAds] = useState<any[]>([]);
   const [expiringAuctions, setExpiringAuctions] = useState<any[]>([]);
+  const [featuredAuctions, setFeaturedAuctions] = useState<any[]>([]);
   const [topUsers, setTopUsers] = useState<any[]>([]);
   const [topBusinesses, setTopBusinesses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -511,7 +512,7 @@ function AuthenticatedHomePage() {
     try {
       setLoading(true);
 
-      const [jobSeekersResult, jobPostingsResult, sellAdsResult, topDataResult, auctionsResult] = await Promise.all([
+      const [jobSeekersResult, jobPostingsResult, sellAdsResult, topDataResult, auctionsResult, featuredAuctionsResult] = await Promise.all([
         // Business users see job seekers (private users looking for work)
         (async () => {
           if (!isBusiness) return [];
@@ -591,6 +592,19 @@ function AuthenticatedHomePage() {
           .eq('approval_status', 'approved')
           .gt('ends_at', new Date().toISOString())
           .order('ends_at', { ascending: true })
+          .limit(6),
+
+        supabase
+          .from('auctions')
+          .select(`
+            *,
+            user:user_id(full_name, nickname),
+            bid_count:auction_bids(count)
+          `)
+          .eq('status', 'active')
+          .eq('approval_status', 'approved')
+          .gt('ends_at', new Date().toISOString())
+          .order('created_at', { ascending: false })
           .limit(6)
       ]);
 
@@ -625,6 +639,13 @@ function AuthenticatedHomePage() {
 
       if (auctionsResult.data) {
         setExpiringAuctions(auctionsResult.data.map((a: any) => ({
+          ...a,
+          bid_count: a.bid_count?.[0]?.count || 0
+        })));
+      }
+
+      if (featuredAuctionsResult.data) {
+        setFeaturedAuctions(featuredAuctionsResult.data.map((a: any) => ({
           ...a,
           bid_count: a.bid_count?.[0]?.count || 0
         })));
@@ -890,6 +911,42 @@ function AuthenticatedHomePage() {
                 </div>
               )}
             </section>
+
+            {!isBusiness && (
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-br from-amber-500 to-orange-500 p-3 rounded-xl shadow-lg">
+                      <Gavel className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Aste in Evidenza</h2>
+                      <p className="text-sm text-gray-600">Le aste più recenti sulla piattaforma</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => navigate('/auctions')}
+                    className="group flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-5 py-2.5 rounded-xl hover:shadow-lg font-semibold transition-all hover:scale-105"
+                  >
+                    Vedi tutte
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </div>
+
+                {featuredAuctions.length > 0 ? (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {featuredAuctions.map((auction) => (
+                      <AuctionCard key={auction.id} auction={auction} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-white rounded-2xl">
+                    <Gavel className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">Nessuna asta disponibile al momento</p>
+                  </div>
+                )}
+              </section>
+            )}
 
             {!isBusiness && expiringAuctions.length > 0 && (
               <section>
