@@ -28,6 +28,156 @@ export function HomePage() {
   return <AuthenticatedHomePage />;
 }
 
+function PricingPreviewSection({ plans, onNavigate }: { plans: any[]; onNavigate: () => void }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const privatePlan = plans.find(p => p.target_user_type === 'private');
+  const businessPlan = plans.find(p => p.target_user_type === 'business');
+
+  if (!privatePlan && !businessPlan) return null;
+
+  const PlanCard = ({ plan, color }: { plan: any; color: 'blue' | 'green' }) => {
+    const isBlue = color === 'blue';
+    return (
+      <div className={`rounded-2xl border-2 p-7 flex flex-col ${
+        isBlue
+          ? 'bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200'
+          : 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200'
+      }`}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className={`p-3 rounded-xl ${isBlue ? 'bg-blue-100' : 'bg-green-100'}`}>
+            {isBlue
+              ? <Users className={`w-6 h-6 ${isBlue ? 'text-blue-600' : 'text-green-600'}`} />
+              : <Building2 className="w-6 h-6 text-green-600" />
+            }
+          </div>
+          <div>
+            <p className={`text-xs font-semibold uppercase tracking-wide ${isBlue ? 'text-blue-500' : 'text-green-500'}`}>
+              {isBlue ? 'Utenti Privati' : 'Utenti Business'}
+            </p>
+            <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
+          </div>
+        </div>
+
+        {plan.description && (
+          <p className="text-sm text-gray-600 mb-5 leading-relaxed">{plan.description}</p>
+        )}
+
+        <div className="mb-5">
+          <p className={`text-xs font-semibold mb-1 ${isBlue ? 'text-blue-500' : 'text-green-500'}`}>A partire da</p>
+          <div className="flex items-baseline gap-1">
+            <span className={`text-4xl font-extrabold ${isBlue ? 'text-blue-700' : 'text-green-700'}`}>
+              {plan.price?.toFixed(2) || '0.00'}€
+            </span>
+            <span className="text-gray-500 text-sm">/mese</span>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">30 giorni di prova gratuita inclusi</p>
+        </div>
+
+        <ul className="space-y-2 mb-6">
+          {[
+            isBlue ? 'Cerca attività locali verificate' : 'Registra o rivendica la tua attività',
+            isBlue ? 'Scrivi recensioni e guadagna punti' : 'Gestisci sedi e offerte di lavoro',
+            isBlue ? 'Pubblica annunci e partecipa alle aste' : 'Rispondi alle recensioni dei clienti',
+          ].map((feat, i) => (
+            <li key={i} className="flex items-start gap-2">
+              <div className={`rounded-full p-0.5 flex-shrink-0 mt-0.5 ${isBlue ? 'bg-blue-100' : 'bg-green-100'}`}>
+                <Check className={`w-3.5 h-3.5 ${isBlue ? 'text-blue-600' : 'text-green-600'}`} />
+              </div>
+              <span className="text-sm text-gray-700">{feat}</span>
+            </li>
+          ))}
+          <li className={`text-xs font-medium mt-1 ${isBlue ? 'text-blue-600' : 'text-green-600'}`}>
+            + molte altre funzionalità...
+          </li>
+        </ul>
+
+        <button
+          onClick={onNavigate}
+          className={`mt-auto w-full py-3 rounded-xl font-bold text-sm transition-all shadow-sm hover:shadow-md ${
+            isBlue
+              ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600'
+              : 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
+          }`}
+        >
+          Inizia Gratis
+        </button>
+      </div>
+    );
+  };
+
+  return (
+    <section className="mb-16">
+      <div className="text-center mb-10">
+        <h2 className="text-4xl font-bold text-gray-900 mb-4">Piani di Abbonamento</h2>
+        <p className="text-xl text-gray-600">Scegli il piano più adatto alle tue esigenze</p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-8">
+        {privatePlan && <PlanCard plan={privatePlan} color="blue" />}
+        {businessPlan && <PlanCard plan={businessPlan} color="green" />}
+      </div>
+
+      {!expanded ? (
+        <div className="text-center">
+          <button
+            onClick={() => setExpanded(true)}
+            className="inline-flex items-center gap-2 bg-white border-2 border-gray-300 text-gray-700 px-7 py-3 rounded-xl font-semibold hover:border-gray-400 hover:bg-gray-50 transition-all shadow-sm hover:shadow-md"
+          >
+            Scopri tutti gli abbonamenti <ArrowRight className="w-5 h-5" />
+          </button>
+        </div>
+      ) : (
+        <div className="mt-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mb-8">
+            {plans
+              .filter(p => p.id !== privatePlan?.id && p.id !== businessPlan?.id)
+              .map(plan => (
+                <div
+                  key={plan.id}
+                  className="bg-white rounded-2xl border-2 border-gray-200 p-6 hover:border-gray-300 hover:shadow-lg transition-all"
+                >
+                  <div className="mb-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                      {plan.target_user_type === 'private' ? 'Utenti Privati' : 'Utenti Business'}
+                    </p>
+                    <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
+                  </div>
+                  {plan.description && (
+                    <p className="text-sm text-gray-600 mb-4">{plan.description}</p>
+                  )}
+                  <div className="mb-5">
+                    <p className="text-xs text-gray-500 mb-0.5">A partire da</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-extrabold text-gray-800">
+                        {plan.price?.toFixed(2) || '0.00'}€
+                      </span>
+                      <span className="text-gray-500 text-sm">/mese</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={onNavigate}
+                    className="w-full bg-gray-800 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-900 transition-colors"
+                  >
+                    Scopri di più
+                  </button>
+                </div>
+              ))}
+          </div>
+          <div className="text-center">
+            <button
+              onClick={onNavigate}
+              className="inline-flex items-center gap-2 bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-md hover:shadow-lg"
+            >
+              Vai alla pagina abbonamenti <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function LandingPage() {
   const navigate = useNavigate();
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
@@ -209,75 +359,7 @@ function LandingPage() {
             </div>
           </div>
         </section>
-        <section className="mb-16">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Piani di Abbonamento
-            </h2>
-            <p className="text-xl text-gray-600">
-              Scegli il piano più adatto alle tue esigenze
-            </p>
-          </div>
-
-          {subscriptionPlans.length > 0 && (
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              {subscriptionPlans.map((plan) => (
-                <div
-                  key={plan.id}
-                  className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-xl border-2 border-green-200 p-8 hover:shadow-2xl transition-all"
-                >
-                  <div className="text-center mb-6">
-                    <h3 className="text-3xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                    <div className="flex items-baseline justify-center gap-2">
-                      <span className="text-5xl font-extrabold text-green-600">
-                        {plan.price?.toFixed(2) || '0.00'}€
-                      </span>
-                      <span className="text-gray-600">/mese</span>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-2">
-                      Per {plan.target_user_type === 'private' ? 'Utenti Privati' : 'Aziende'}
-                    </p>
-                  </div>
-
-                  {plan.description && (
-                    <p className="text-gray-700 mb-6 text-center">{plan.description}</p>
-                  )}
-
-                  <ul className="space-y-3 mb-8">
-                    <li className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">Prova gratuita di 30 giorni</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">Cancellazione in qualsiasi momento</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">Supporto clienti dedicato</span>
-                    </li>
-                  </ul>
-
-                  <button
-                    onClick={() => navigate('/subscription')}
-                    className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-all"
-                  >
-                    Inizia Ora
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="text-center mt-8">
-            <button
-              onClick={() => navigate('/subscription')}
-              className="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-all inline-flex items-center gap-2"
-            >
-              Vedi Tutti i Piani <ArrowRight className="w-5 h-5" />
-            </button>
-          </div>
-        </section>
+        <PricingPreviewSection plans={subscriptionPlans} onNavigate={() => navigate('/subscription')} />
 
         <section className="mb-16">
           <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl border-2 border-orange-200 overflow-hidden">
