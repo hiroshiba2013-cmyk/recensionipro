@@ -598,6 +598,15 @@ function AuthenticatedHomePage() {
             </p>
           </div>
           <div className="mt-10 max-w-4xl">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-xl shadow-lg">
+                <Search className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Recensioni</h2>
+                <p className="text-sm text-gray-600">Cerca e scopri le attività locali recensite dagli utenti</p>
+              </div>
+            </div>
             <AdvancedSearch
               onSearch={() => {}}
               isLoading={false}
