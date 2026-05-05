@@ -639,7 +639,7 @@ function AuthenticatedHomePage() {
                       {isBusiness ? 'Top 20 Aziende' : 'Top Utenti'}
                     </h2>
                     <p className="text-sm text-gray-600">
-                      {isBusiness ? 'Le aziende più recensite' : 'I primi 20 vincono gift card'}
+                      {isBusiness ? 'Le più votate' : 'I primi 20 vincono gift card'}
                     </p>
                   </div>
                 </div>
