@@ -32,7 +32,7 @@ export function LeaderboardPage() {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'leaderboard' | 'rewards' | 'my_activities'>('leaderboard');
-  const [userTypeFilter, setUserTypeFilter] = useState<'all' | 'customer'>('all');
+  const userTypeFilter = 'all';
 
   useEffect(() => {
     loadLeaderboard();
@@ -330,28 +330,6 @@ export function LeaderboardPage() {
             <div className="max-w-4xl mx-auto mb-8">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">{t('leaderboard.top20')}</h2>
-                <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1">
-                  <button
-                    onClick={() => setUserTypeFilter('all')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      userTypeFilter === 'all'
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    {t('leaderboard.filter.all')}
-                  </button>
-                  <button
-                    onClick={() => setUserTypeFilter('customer')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      userTypeFilter === 'customer'
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    {t('leaderboard.filter.private')}
-                  </button>
-                </div>
               </div>
 
               <div className="space-y-3">
