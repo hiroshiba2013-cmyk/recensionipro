@@ -31,7 +31,6 @@ export function HomePage() {
 function LandingPage() {
   const navigate = useNavigate();
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
-  const [featuredAuctions, setFeaturedAuctions] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
@@ -41,37 +40,14 @@ function LandingPage() {
   const loadLandingData = async () => {
     try {
       setLoadingData(true);
-
       const { data: plansResult, error } = await supabase
         .from('subscription_plans')
         .select('*')
         .eq('billing_period', 'monthly')
         .order('price', { ascending: true });
 
-      if (error) {
-        console.error('Error loading subscription plans:', error);
-      } else if (plansResult) {
+      if (!error && plansResult) {
         setSubscriptionPlans(plansResult);
-      }
-
-      const { data: auctionsData } = await supabase
-        .from('auctions')
-        .select(`
-          *,
-          user:user_id(full_name, nickname),
-          bid_count:auction_bids(count)
-        `)
-        .eq('status', 'active')
-        .eq('approval_status', 'approved')
-        .order('created_at', { ascending: false })
-        .limit(6);
-
-      if (auctionsData) {
-        const auctionsWithBidCount = auctionsData.map(auction => ({
-          ...auction,
-          bid_count: auction.bid_count?.[0]?.count || 0
-        }));
-        setFeaturedAuctions(auctionsWithBidCount);
       }
     } catch (error) {
       console.error('Error loading landing data:', error);
@@ -303,36 +279,97 @@ function LandingPage() {
           </div>
         </section>
 
-        {featuredAuctions.length > 0 && (
-          <section className="mb-16">
-            <div className="text-center mb-12">
-              <div className="inline-block bg-gradient-to-br from-orange-500 to-red-500 p-4 rounded-full mb-4">
-                <Gavel className="w-12 h-12 text-white" />
+        <section className="mb-16">
+          <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl border-2 border-orange-200 overflow-hidden">
+            <div className="p-10 md:p-12">
+              <div className="flex flex-col md:flex-row items-center gap-8">
+                <div className="flex-shrink-0">
+                  <div className="bg-gradient-to-br from-orange-500 to-red-500 p-5 rounded-2xl shadow-lg">
+                    <Gavel className="w-14 h-14 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1 text-center md:text-left">
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+                    Aste Online
+                  </h2>
+                  <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+                    Partecipa alle aste e trova occasioni uniche. Metti all'asta oggetti che non usi più o aggiudica i migliori lotti pubblicati dagli utenti della piattaforma. Tutto in modo trasparente e sicuro.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-orange-100">
+                      <div className="text-2xl font-bold text-orange-600 mb-1">100%</div>
+                      <div className="text-sm text-gray-600">Aste verificate e approvate</div>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-orange-100">
+                      <div className="text-2xl font-bold text-orange-600 mb-1">Gratis</div>
+                      <div className="text-sm text-gray-600">Pubblicazione asta senza costi</div>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-orange-100">
+                      <div className="text-2xl font-bold text-orange-600 mb-1">Sicuro</div>
+                      <div className="text-sm text-gray-600">Deposito cauzionale a tutela</div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-orange-700 font-medium flex items-center justify-center md:justify-start gap-2 mb-4">
+                    <Award className="w-4 h-4" />
+                    Accedi o registrati per visualizzare le aste attive e fare offerte
+                  </p>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="bg-orange-600 text-white px-7 py-3 rounded-xl font-bold hover:bg-orange-700 transition-all shadow-md hover:shadow-lg inline-flex items-center gap-2"
+                  >
+                    Accedi per partecipare <ArrowRight className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                Aste Online
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Partecipa alle aste e trova occasioni uniche. Compra e vendi in tutta sicurezza.
-              </p>
             </div>
+          </div>
+        </section>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {featuredAuctions.map(auction => (
-                <AuctionCard key={auction.id} auction={auction} />
-              ))}
+        <section className="mb-16">
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200 overflow-hidden">
+            <div className="p-10 md:p-12">
+              <div className="flex flex-col md:flex-row items-center gap-8">
+                <div className="flex-shrink-0">
+                  <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-5 rounded-2xl shadow-lg">
+                    <Tag className="w-14 h-14 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1 text-center md:text-left">
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+                    Annunci Classificati
+                  </h2>
+                  <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+                    Compra, vendi o regala oggetti usati direttamente tra privati. Pubblica annunci in modo gratuito e raggiungi migliaia di utenti nella tua zona. Nessuna commissione, nessuna intermediazione.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-green-100">
+                      <div className="text-2xl font-bold text-green-600 mb-1">Vendo</div>
+                      <div className="text-sm text-gray-600">Dai una seconda vita agli oggetti</div>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-green-100">
+                      <div className="text-2xl font-bold text-green-600 mb-1">Cerco</div>
+                      <div className="text-sm text-gray-600">Trova ciò che stai cercando</div>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-green-100">
+                      <div className="text-2xl font-bold text-green-600 mb-1">Regalo</div>
+                      <div className="text-sm text-gray-600">Dona ciò che non usi più</div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-green-700 font-medium flex items-center justify-center md:justify-start gap-2 mb-4">
+                    <Award className="w-4 h-4" />
+                    Accedi o registrati per sfogliare e pubblicare annunci
+                  </p>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="bg-green-600 text-white px-7 py-3 rounded-xl font-bold hover:bg-green-700 transition-all shadow-md hover:shadow-lg inline-flex items-center gap-2"
+                  >
+                    Accedi per vedere gli annunci <ArrowRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
             </div>
-
-            <div className="text-center">
-              <button
-                onClick={() => navigate('/auctions')}
-                className="bg-orange-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-orange-700 transition-all shadow-lg hover:shadow-xl inline-flex items-center gap-2"
-              >
-                Vedi Tutte le Aste <ArrowRight className="w-5 h-5" />
-              </button>
-            </div>
-          </section>
-        )}
+          </div>
+        </section>
 
         <section className="mb-16 bg-gradient-to-r from-pink-50 to-red-50 rounded-2xl p-12 border-2 border-pink-200">
           <div className="text-center mb-8">
