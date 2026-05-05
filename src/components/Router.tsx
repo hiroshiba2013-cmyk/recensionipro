@@ -56,6 +56,10 @@ export function Router() {
   const { needsProfileSelection, loading, user, profile } = useAuth();
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [currentPath]);
+
+  useEffect(() => {
     const handlePopState = () => {
       setCurrentPath(window.location.pathname);
     };
