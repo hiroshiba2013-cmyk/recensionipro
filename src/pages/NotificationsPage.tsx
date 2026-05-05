@@ -256,7 +256,8 @@ export function NotificationsPage() {
   const totalUnread = notifications.filter(n => !n.read).length;
 
   const categories: CategoryFilter[] = ['all', 'unread', 'reviews', 'classifieds', 'auctions', 'businesses', 'jobs', 'reports', 'points'];
-  const visibleCategories = categories.filter(cat => cat === 'all' || cat === 'unread' || countByCategory(cat) > 0);
+  const ALWAYS_VISIBLE: CategoryFilter[] = ['all', 'unread', 'reviews', 'classifieds', 'reports'];
+  const visibleCategories = categories.filter(cat => ALWAYS_VISIBLE.includes(cat) || countByCategory(cat) > 0);
 
   if (authLoading || loading) {
     return (
