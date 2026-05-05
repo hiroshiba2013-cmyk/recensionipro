@@ -794,14 +794,14 @@ function AuthenticatedHomePage() {
               </div>
 
               {featuredSellAds.length > 0 ? (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                   {featuredSellAds.map((ad) => (
                     <div
                       key={ad.id}
                       onClick={() => navigate(`/classified-ads/${ad.id}`)}
                       className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer border border-gray-200"
                     >
-                      <div className="relative h-48 overflow-hidden">
+                      <div className="relative h-36 overflow-hidden">
                         {ad.images && ad.images.length > 0 ? (
                           <img
                             src={ad.images[0]}
@@ -810,11 +810,11 @@ function AuthenticatedHomePage() {
                           />
                         ) : (
                           <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                            <Tag className="w-16 h-16 text-gray-300" />
+                            <Tag className="w-10 h-10 text-gray-300" />
                           </div>
                         )}
                         <div className="absolute top-2 left-2">
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm ${
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold shadow-sm ${
                             ad.ad_type === 'sell' ? 'bg-blue-600 text-white'
                             : ad.ad_type === 'buy' ? 'bg-green-600 text-white'
                             : 'bg-orange-600 text-white'
@@ -823,39 +823,39 @@ function AuthenticatedHomePage() {
                           </span>
                         </div>
                         {ad.category && (
-                          <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium text-gray-700">
+                          <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded text-xs font-medium text-gray-700">
                             {ad.category}
                           </div>
                         )}
                         {ad.price != null && (
-                          <div className="absolute top-2 right-2 bg-white text-gray-900 px-2 py-1 rounded-full text-xs font-bold shadow-sm">
+                          <div className="absolute top-2 right-2 bg-white text-gray-900 px-2 py-0.5 rounded-full text-xs font-bold shadow-sm">
                             €{Number(ad.price).toLocaleString('it-IT')}
                           </div>
                         )}
                       </div>
 
-                      <div className="p-4">
-                        <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition-colors">
+                      <div className="p-3">
+                        <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-1 hover:text-blue-600 transition-colors">
                           {ad.title}
                         </h3>
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                        <p className="text-xs text-gray-500 mb-2 line-clamp-1">
                           {ad.description}
                         </p>
 
-                        <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
-                            <MapPin className="w-4 h-4" />
-                            <span>{ad.city}{ad.province ? `, ${ad.province}` : ''}</span>
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <MapPin className="w-3 h-3" />
+                            <span className="truncate max-w-[80px]">{ad.city}{ad.province ? `, ${ad.province}` : ''}</span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                          <div className="flex items-center gap-1 text-xs text-gray-400">
                             {ad.user_avatar_url ? (
-                              <img src={ad.user_avatar_url} alt={ad.user_nickname || ad.user_full_name} className="w-5 h-5 rounded-full object-cover" />
+                              <img src={ad.user_avatar_url} alt={ad.user_nickname || ad.user_full_name} className="w-4 h-4 rounded-full object-cover" />
                             ) : (
-                              <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center">
-                                <User className="w-3 h-3 text-gray-500" />
+                              <div className="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center">
+                                <User className="w-2.5 h-2.5 text-gray-500" />
                               </div>
                             )}
-                            <span className="text-xs">{ad.user_nickname || ad.user_full_name}</span>
+                            <span className="truncate max-w-[70px]">{ad.user_nickname || ad.user_full_name}</span>
                           </div>
                         </div>
                       </div>
@@ -892,7 +892,7 @@ function AuthenticatedHomePage() {
                 </div>
 
                 {featuredAuctions.length > 0 ? (
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                     {featuredAuctions.map((auction) => (
                       <AuctionCard key={auction.id} auction={auction} />
                     ))}
