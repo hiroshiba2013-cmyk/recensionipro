@@ -104,7 +104,7 @@ export function ClassifiedAdCard({ ad }: ClassifiedAdCardProps) {
     <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
       <a href={`/classified/${ad.id}`}>
         {/* Image */}
-        <div className="relative aspect-video bg-gray-200">
+        <div className="relative h-40 bg-gray-200">
           {firstImage ? (
             <img
               src={firstImage}
@@ -113,71 +113,69 @@ export function ClassifiedAdCard({ ad }: ClassifiedAdCardProps) {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400">
-              <span className="text-4xl">{ad.classified_categories.icon}</span>
+              <span className="text-3xl">{ad.classified_categories.icon}</span>
             </div>
           )}
 
           {/* Ad Type Badge */}
-          <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-sm font-bold shadow-sm ${
+          <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-xs font-bold shadow-sm ${
             ad.ad_type === 'sell'
               ? 'bg-blue-600 text-white'
               : ad.ad_type === 'buy'
               ? 'bg-green-600 text-white'
               : 'bg-orange-600 text-white'
           }`}>
-            {ad.ad_type === 'sell' ? '💰 Vendo' : ad.ad_type === 'buy' ? '🔍 Cerco' : '🎁 Regalo'}
+            {ad.ad_type === 'sell' ? 'Vendo' : ad.ad_type === 'buy' ? 'Cerco' : 'Regalo'}
           </div>
 
           {/* Category Badge */}
-          <div className="absolute bottom-3 left-3 bg-white px-3 py-1 rounded-full text-xs font-medium text-gray-900 shadow-sm">
+          <div className="absolute bottom-2 left-2 bg-white px-2 py-0.5 rounded-full text-xs font-medium text-gray-900 shadow-sm">
             {ad.classified_categories.name}
           </div>
 
           {/* Price Badge */}
           {ad.price && (
-            <div className="absolute top-3 right-3 bg-white text-gray-900 px-3 py-1 rounded-full text-sm font-bold shadow-sm">
+            <div className="absolute top-2 right-2 bg-white text-gray-900 px-2 py-0.5 rounded-full text-xs font-bold shadow-sm">
               €{ad.price.toLocaleString('it-IT')}
             </div>
           )}
         </div>
 
         {/* Content */}
-        <div className="p-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+        <div className="p-3">
+          <h3 className="text-sm font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors leading-snug">
             {truncateText(ad.title, 50)}
           </h3>
 
-          <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-            {truncateText(ad.description, 100)}
+          <p className="text-gray-500 text-xs mb-2 line-clamp-2">
+            {truncateText(ad.description, 80)}
           </p>
 
           {/* Location */}
-          <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
-            <MapPin className="w-4 h-4" />
-            <span>
-              {ad.city}, {ad.province}
-            </span>
+          <div className="flex items-center gap-1 text-gray-400 text-xs mb-2">
+            <MapPin className="w-3 h-3" />
+            <span>{ad.city}, {ad.province}</span>
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+            <div className="flex items-center gap-1.5">
               {ad.family_member ? (
                 <>
                   {ad.family_member.avatar_url ? (
                     <img
                       src={ad.family_member.avatar_url}
                       alt={ad.family_member.nickname}
-                      className="w-8 h-8 rounded-full object-cover"
+                      className="w-6 h-6 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                      <span className="text-sm font-medium text-gray-600">
+                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
+                      <span className="text-xs font-medium text-gray-600">
                         {ad.family_member.nickname.charAt(0)}
                       </span>
                     </div>
                   )}
-                  <span className="text-sm text-gray-700 font-medium">
+                  <span className="text-xs text-gray-600 font-medium">
                     {ad.family_member.nickname}
                   </span>
                 </>
@@ -187,29 +185,29 @@ export function ClassifiedAdCard({ ad }: ClassifiedAdCardProps) {
                     <img
                       src={ad.profiles.avatar_url}
                       alt={ad.profiles.nickname || ad.profiles.full_name}
-                      className="w-8 h-8 rounded-full object-cover"
+                      className="w-6 h-6 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                      <span className="text-sm font-medium text-gray-600">
+                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
+                      <span className="text-xs font-medium text-gray-600">
                         {(ad.profiles.nickname || ad.profiles.full_name).charAt(0)}
                       </span>
                     </div>
                   )}
-                  <span className="text-sm text-gray-700 font-medium">
+                  <span className="text-xs text-gray-600 font-medium">
                     {ad.profiles.nickname || ad.profiles.full_name}
                   </span>
                 </>
               )}
             </div>
 
-            <div className="flex items-center gap-3 text-gray-500 text-sm">
-              <div className="flex items-center gap-1">
-                <Eye className="w-4 h-4" />
+            <div className="flex items-center gap-2 text-gray-400 text-xs">
+              <div className="flex items-center gap-0.5">
+                <Eye className="w-3 h-3" />
                 <span>{ad.views_count}</span>
               </div>
-              <div className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
+              <div className="flex items-center gap-0.5">
+                <Calendar className="w-3 h-3" />
                 <span>{formatDate(ad.created_at)}</span>
               </div>
             </div>
@@ -218,13 +216,13 @@ export function ClassifiedAdCard({ ad }: ClassifiedAdCardProps) {
       </a>
 
       {/* Action Buttons */}
-      <div className="px-4 pb-4 flex gap-2">
+      <div className="px-3 pb-3 flex gap-2">
         {user && user.id !== ad.user_id && (
           <button
             onClick={startConversation}
-            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+            className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium"
           >
-            <MessageCircle className="w-4 h-4" />
+            <MessageCircle className="w-3.5 h-3.5" />
             Invia Messaggio
           </button>
         )}
