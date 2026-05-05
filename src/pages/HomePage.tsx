@@ -794,9 +794,9 @@ function AuthenticatedHomePage() {
               </div>
 
               {featuredSellAds.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {featuredSellAds.map((ad) => (
-                    <ClassifiedAdCard key={ad.id} ad={ad} onClick={() => navigate(`/classified-ads/${ad.id}`)} />
+                    <ClassifiedAdCard key={ad.id} ad={ad} />
                   ))}
                 </div>
               ) : (
