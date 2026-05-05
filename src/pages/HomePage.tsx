@@ -675,20 +675,9 @@ function AuthenticatedHomePage() {
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-4">
               Ciao, <span className="text-blue-600">{heroDisplayName}</span>!
             </h1>
-            <p className="text-lg text-gray-500 mb-8">
+            <p className="text-lg text-gray-500">
               Esplora attività locali, trova candidati, vendi e compra oggetti
             </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <button onClick={() => navigate('/classified-ads')} className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors">
-                <Tag className="w-4 h-4 text-blue-500" /> Annunci
-              </button>
-              <button onClick={() => navigate('/jobs')} className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors">
-                <Briefcase className="w-4 h-4 text-green-500" /> Lavoro
-              </button>
-              <button onClick={() => navigate('/solidarity')} className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors">
-                <Heart className="w-4 h-4 text-red-500" /> Solidarietà
-              </button>
-            </div>
           </div>
           <div className="mt-10 max-w-4xl">
             <AdvancedSearch
