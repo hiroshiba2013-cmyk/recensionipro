@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Star, Search, Award, Tag, Briefcase, Heart, Users, MapPin, Euro, ArrowRight, Check, Building2, Gavel, Shield, Gift, Lock } from 'lucide-react';
+import { Star, Search, Award, Tag, Briefcase, Heart, Users, MapPin, Euro, ArrowRight, Check, Building2, Gavel, Shield, Gift, Lock, User } from 'lucide-react';
 import { AdvancedSearch } from '../components/search/AdvancedSearch';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -796,7 +796,70 @@ function AuthenticatedHomePage() {
               {featuredSellAds.length > 0 ? (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {featuredSellAds.map((ad) => (
-                    <ClassifiedAdCard key={ad.id} ad={ad} />
+                    <div
+                      key={ad.id}
+                      onClick={() => navigate(`/classified-ads/${ad.id}`)}
+                      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer border border-gray-200"
+                    >
+                      <div className="relative h-48 overflow-hidden">
+                        {ad.images && ad.images.length > 0 ? (
+                          <img
+                            src={ad.images[0]}
+                            alt={ad.title}
+                            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                            <Tag className="w-16 h-16 text-gray-300" />
+                          </div>
+                        )}
+                        <div className="absolute top-2 left-2">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm ${
+                            ad.ad_type === 'sell' ? 'bg-blue-600 text-white'
+                            : ad.ad_type === 'buy' ? 'bg-green-600 text-white'
+                            : 'bg-orange-600 text-white'
+                          }`}>
+                            {ad.ad_type === 'sell' ? 'Vendo' : ad.ad_type === 'buy' ? 'Cerco' : 'Regalo'}
+                          </span>
+                        </div>
+                        {ad.category && (
+                          <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium text-gray-700">
+                            {ad.category}
+                          </div>
+                        )}
+                        {ad.price != null && (
+                          <div className="absolute top-2 right-2 bg-white text-gray-900 px-2 py-1 rounded-full text-xs font-bold shadow-sm">
+                            €{Number(ad.price).toLocaleString('it-IT')}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="p-4">
+                        <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition-colors">
+                          {ad.title}
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                          {ad.description}
+                        </p>
+
+                        <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                            <MapPin className="w-4 h-4" />
+                            <span>{ad.city}{ad.province ? `, ${ad.province}` : ''}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                            {ad.user_avatar_url ? (
+                              <img src={ad.user_avatar_url} alt={ad.user_nickname || ad.user_full_name} className="w-5 h-5 rounded-full object-cover" />
+                            ) : (
+                              <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center">
+                                <User className="w-3 h-3 text-gray-500" />
+                              </div>
+                            )}
+                            <span className="text-xs">{ad.user_nickname || ad.user_full_name}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -1080,50 +1143,6 @@ function JobSeekerCard({ seeker, onClick }: { seeker: any; onClick: () => void }
           <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
             {seeker.category.name}
           </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ClassifiedAdCard({ ad, onClick }: { ad: any; onClick: () => void }) {
-  return (
-    <div
-      onClick={onClick}
-      className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all cursor-pointer overflow-hidden border-2 border-green-100 hover:border-green-300 transform hover:-translate-y-1"
-    >
-      <div className="relative overflow-hidden">
-        {ad.images?.[0] ? (
-          <img
-            src={ad.images[0]}
-            alt={ad.title}
-            className="w-full h-40 object-cover group-hover:scale-110 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-40 bg-gradient-to-br from-green-100 via-emerald-100 to-green-200 flex items-center justify-center">
-            <Tag className="w-12 h-12 text-green-500 group-hover:scale-110 transition-transform" />
-          </div>
-        )}
-        <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-semibold text-gray-700">
-          {ad.ad_type === 'gift' ? '🎁 Regalo' : ad.ad_type === 'exchange' ? '🔄 Scambio' : '💰 Vendita'}
-        </div>
-      </div>
-
-      <div className="p-4">
-        <h3 className="font-bold text-sm text-gray-900 line-clamp-2 mb-3 group-hover:text-green-600 transition-colors min-h-[2.5rem]">
-          {ad.title}
-        </h3>
-
-        {ad.price > 0 ? (
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-2 rounded-xl border border-green-200">
-            <p className="text-green-700 font-bold text-center text-lg">{ad.price.toFixed(2)}€</p>
-          </div>
-        ) : (
-          <div className="bg-gradient-to-r from-blue-50 to-cyan-50 px-4 py-2 rounded-xl border border-blue-200">
-            <p className="text-blue-700 text-sm font-semibold text-center">
-              {ad.ad_type === 'gift' ? 'Gratis' : 'Scambio'}
-            </p>
-          </div>
         )}
       </div>
     </div>
