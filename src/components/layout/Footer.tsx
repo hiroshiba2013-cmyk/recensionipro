@@ -8,7 +8,6 @@ export function Footer() {
     {
       title: 'Navigazione',
       links: [
-        { label: 'Verifica Attività', href: '/search' },
         { label: 'Solidarietà', href: '/solidarity' },
         { label: 'Piani', href: '/subscription' },
         { label: 'Regole', href: '/rules' },
