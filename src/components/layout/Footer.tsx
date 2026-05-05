@@ -23,7 +23,7 @@ export function Footer() {
     {
       title: 'Supporto',
       links: [
-        { label: 'Domande frequenti', href: '/rules' },
+        { label: 'Domande frequenti', href: '/rules#faq' },
         { label: 'Privacy e Cookie', href: '/rules' },
       ],
     },

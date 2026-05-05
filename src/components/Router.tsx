@@ -34,8 +34,15 @@ export function useParams() {
 
 export function useNavigate() {
   return (path: string) => {
-    window.history.pushState({}, '', path);
+    const [pathname, hash] = path.split('#');
+    window.history.pushState({}, '', pathname);
     window.dispatchEvent(new PopStateEvent('popstate'));
+    if (hash) {
+      setTimeout(() => {
+        const el = document.getElementById(hash);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
   };
 }
 
@@ -56,7 +63,9 @@ export function Router() {
   const { needsProfileSelection, loading, user, profile } = useAuth();
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    if (!window.location.hash) {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
   }, [currentPath]);
 
   useEffect(() => {
