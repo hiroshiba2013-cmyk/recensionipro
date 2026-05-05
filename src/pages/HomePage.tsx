@@ -31,8 +31,9 @@ export function HomePage() {
 function PricingPreviewSection({ plans, onNavigate }: { plans: any[]; onNavigate: () => void }) {
   const [expanded, setExpanded] = useState(false);
 
-  const privatePlan = plans.find(p => p.target_user_type === 'private');
-  const businessPlan = plans.find(p => p.target_user_type === 'business');
+  const isBusiness = (p: any) => p.name?.toLowerCase().includes('business');
+  const privatePlan = plans.find(p => !isBusiness(p));
+  const businessPlan = plans.find(p => isBusiness(p));
 
   if (!privatePlan && !businessPlan) return null;
 
@@ -67,7 +68,7 @@ function PricingPreviewSection({ plans, onNavigate }: { plans: any[]; onNavigate
           <p className={`text-xs font-semibold mb-1 ${isBlue ? 'text-blue-500' : 'text-green-500'}`}>A partire da</p>
           <div className="flex items-baseline gap-1">
             <span className={`text-4xl font-extrabold ${isBlue ? 'text-blue-700' : 'text-green-700'}`}>
-              {plan.price?.toFixed(2) || '0.00'}€
+              {parseFloat(plan.price || 0).toFixed(2)}€
             </span>
             <span className="text-gray-500 text-sm">/mese</span>
           </div>
@@ -139,7 +140,7 @@ function PricingPreviewSection({ plans, onNavigate }: { plans: any[]; onNavigate
                 >
                   <div className="mb-4">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                      {plan.target_user_type === 'private' ? 'Utenti Privati' : 'Utenti Business'}
+                      {isBusiness(plan) ? 'Utenti Business' : 'Utenti Privati'}
                     </p>
                     <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
                   </div>
@@ -150,7 +151,7 @@ function PricingPreviewSection({ plans, onNavigate }: { plans: any[]; onNavigate
                     <p className="text-xs text-gray-500 mb-0.5">A partire da</p>
                     <div className="flex items-baseline gap-1">
                       <span className="text-3xl font-extrabold text-gray-800">
-                        {plan.price?.toFixed(2) || '0.00'}€
+                        {parseFloat(plan.price || 0).toFixed(2)}€
                       </span>
                       <span className="text-gray-500 text-sm">/mese</span>
                     </div>
