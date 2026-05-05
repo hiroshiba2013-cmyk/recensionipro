@@ -166,7 +166,7 @@ function LandingPage() {
       {/* HERO */}
       <section className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl mx-auto text-center">
             <div>
               <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
@@ -182,7 +182,7 @@ function LandingPage() {
               <p className="text-sm text-gray-400 mb-8">
                 Prova gratuita di 30 giorni per utenti privati e aziende
               </p>
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-col sm:flex-row justify-center gap-3">
                 <button
                   onClick={() => window.location.href = '/?register=user'}
                   className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-7 py-3.5 rounded-xl font-bold text-base transition-colors shadow-sm hover:shadow-md"
@@ -196,7 +196,7 @@ function LandingPage() {
                   Accedi
                 </button>
               </div>
-              <div className="mt-8 flex flex-wrap gap-5">
+              <div className="mt-8 flex flex-wrap justify-center gap-5">
                 {[
                   { icon: Shield, text: '30 giorni di prova gratuita' },
                   { icon: Lock, text: 'Semplice e sicuro' },
