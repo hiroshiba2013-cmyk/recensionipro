@@ -19,14 +19,12 @@ export function Footer() {
       links: [
         { label: 'Contatti', href: '/contact' },
         { label: 'Chi siamo', href: '/contact' },
-        { label: 'Lavora con noi', href: '/contact' },
       ],
     },
     {
       title: 'Supporto',
       links: [
         { label: 'Domande frequenti', href: '/rules' },
-        { label: 'Assistenza', href: '/contact' },
         { label: 'Privacy e Cookie', href: '/rules' },
       ],
     },
