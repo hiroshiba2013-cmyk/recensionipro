@@ -664,61 +664,41 @@ function AuthenticatedHomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djItaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bS0yIDJ2Mmgydi0yaC0yem0wLTJ2Mmgydi0yaC0yem0yLTJ2Mmgydi0yaC0yem0wLTJ2Mmgydi0yaC0yem0tMiAydjJoMnYtMmgtMnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30"></div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center mb-10">
-            <div className="inline-block mb-4">
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-white text-sm font-medium">Online</span>
-              </div>
+      {/* Hero */}
+      <section className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+              Online
             </div>
-
-            <h1 className="text-4xl md:text-6xl font-bold mb-3 text-white drop-shadow-lg">
-              Ciao, {heroDisplayName}!
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-4">
+              Ciao, <span className="text-blue-600">{heroDisplayName}</span>!
             </h1>
-            <p className="text-blue-100 text-lg md:text-xl max-w-2xl mx-auto mb-8">
+            <p className="text-lg text-gray-500 mb-8">
               Esplora attività locali, trova candidati, vendi e compra oggetti
             </p>
+            <div className="flex flex-wrap gap-3">
+              <button onClick={() => navigate('/classified-ads')} className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors">
+                <Tag className="w-4 h-4 text-blue-500" /> Annunci
+              </button>
+              <button onClick={() => navigate('/jobs')} className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors">
+                <Briefcase className="w-4 h-4 text-green-500" /> Lavoro
+              </button>
+              <button onClick={() => navigate('/solidarity')} className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors">
+                <Heart className="w-4 h-4 text-red-500" /> Solidarietà
+              </button>
+            </div>
           </div>
-
-          <div className="max-w-4xl mx-auto">
+          <div className="mt-10 max-w-4xl">
             <AdvancedSearch
               onSearch={() => {}}
               isLoading={false}
               navigateToSearchPage={true}
             />
           </div>
-
-          <div className="mt-8 grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
-            <button
-              onClick={() => navigate('/classified-ads')}
-              className="group bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-xl p-4 transition-all hover:scale-105"
-            >
-              <Tag className="w-6 h-6 text-white mx-auto mb-2 group-hover:scale-110 transition-transform" />
-              <span className="text-white text-sm font-medium block">Annunci</span>
-            </button>
-
-            <button
-              onClick={() => navigate('/jobs')}
-              className="group bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-xl p-4 transition-all hover:scale-105"
-            >
-              <Briefcase className="w-6 h-6 text-white mx-auto mb-2 group-hover:scale-110 transition-transform" />
-              <span className="text-white text-sm font-medium block">Lavoro</span>
-            </button>
-
-            <button
-              onClick={() => navigate('/solidarity')}
-              className="group bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-xl p-4 transition-all hover:scale-105"
-            >
-              <Heart className="w-6 h-6 text-white mx-auto mb-2 group-hover:scale-110 transition-transform" />
-              <span className="text-white text-sm font-medium block">Solidarietà</span>
-            </button>
-          </div>
         </div>
-      </div>
+      </section>
 
       <TopBusinessesBanner />
 

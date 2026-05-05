@@ -129,30 +129,32 @@ export function SolidarityPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-blue-700">
-        <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mb-5 mx-auto">
-            <Heart className="w-8 h-8 text-white" />
+      <section className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 text-center">
+          <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+            10% del fatturato donato ogni anno
           </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 drop-shadow-lg">Solidarieta Trovafacile</h1>
-          <p className="text-green-100 text-lg md:text-xl max-w-2xl mx-auto mb-6">
-            Doniamo il <span className="font-bold text-white">10% del nostro fatturato annuale</span> a organizzazioni no profit e progetti sociali
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-4">
+            Solidarieta <span className="text-green-600">Trovafacile</span>
+          </h1>
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-8">
+            Doniamo il 10% del nostro fatturato annuale a organizzazioni no profit e progetti sociali scelti dagli iscritti
           </p>
-          <div className="flex flex-wrap justify-center gap-4 text-sm">
+          <div className="flex flex-wrap justify-center gap-4">
             {[
-              { icon: '🤝', text: 'Trasparenza totale' },
-              { icon: '🗳️', text: 'Scelto dagli iscritti' },
-              { icon: '📋', text: 'Documenti pubblici' },
-            ].map(({ icon, text }) => (
-              <div key={text} className="flex items-center gap-2 bg-white/15 backdrop-blur-sm px-4 py-2 rounded-full text-white">
-                <span>{icon}</span>
-                <span>{text}</span>
-              </div>
+              { text: 'Trasparenza totale', color: 'bg-green-50 text-green-700' },
+              { text: 'Scelto dagli iscritti', color: 'bg-blue-50 text-blue-700' },
+              { text: 'Documenti pubblici', color: 'bg-gray-100 text-gray-700' },
+            ].map(({ text, color }) => (
+              <span key={text} className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full ${color}`}>
+                <div className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></div>
+                {text}
+              </span>
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
       <div className="max-w-7xl mx-auto px-4 py-12">
 

@@ -194,23 +194,21 @@ export function ClassifiedAdsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600">
-        <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl">
-                <Tag className="w-7 h-7 text-white" />
+      <section className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                Vendi, compra e regala
               </div>
-              <div>
-                <h1 className="text-3xl md:text-5xl font-extrabold text-white drop-shadow-lg">Annunci</h1>
-                <p className="text-blue-100 text-base md:text-lg mt-1">Trova quello che cerchi o pubblica il tuo annuncio</p>
-              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-3">Annunci</h1>
+              <p className="text-lg text-gray-500">Trova quello che cerchi o pubblica il tuo annuncio</p>
             </div>
             {user && (
               <button
                 onClick={() => setShowCreateForm(true)}
-                className="inline-flex items-center gap-2 bg-white text-blue-600 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition-colors shadow-lg"
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-7 py-3.5 rounded-xl font-bold text-base transition-colors shadow-sm hover:shadow-md"
               >
                 <Plus className="w-5 h-5" />
                 Pubblica Annuncio
@@ -218,7 +216,7 @@ export function ClassifiedAdsPage() {
             )}
           </div>
         </div>
-      </div>
+      </section>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
 

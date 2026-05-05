@@ -504,20 +504,16 @@ export function JobsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-teal-700">
-        <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-          <div className="flex items-center gap-4">
-            <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl">
-              <Briefcase className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl md:text-5xl font-extrabold text-white drop-shadow-lg">Lavoro</h1>
-              <p className="text-green-100 text-base md:text-lg mt-1">Trova opportunita di lavoro o trova i candidati ideali</p>
-            </div>
+      <section className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
+          <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+            <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+            Offerte e candidature
           </div>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-3">Lavoro</h1>
+          <p className="text-lg text-gray-500">Trova opportunita di lavoro o trova i candidati ideali per la tua attivita</p>
         </div>
-      </div>
+      </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-8">

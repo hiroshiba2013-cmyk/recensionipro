@@ -87,18 +87,18 @@ export function RulesPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600">
-        <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mb-5 mx-auto">
-            <Shield className="w-8 h-8 text-white" />
+      <section className="bg-white border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 text-center">
+          <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+            Leggi le regole e le FAQ
           </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-3 drop-shadow-lg">Regolamento e FAQ</h1>
-          <p className="text-blue-100 text-lg md:text-xl max-w-2xl mx-auto">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-4">Regolamento e FAQ</h1>
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
             Tutto quello che devi sapere per utilizzare al meglio la piattaforma
           </p>
         </div>
-      </div>
+      </section>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">

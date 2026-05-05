@@ -194,32 +194,28 @@ export function NotificationsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600">
-        <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+      <section className="bg-white border-b border-gray-100">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl">
-                <Bell className="w-7 h-7 text-white" />
+            <div>
+              <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                {unreadCount > 0 ? `${unreadCount} non ${unreadCount === 1 ? 'letta' : 'lette'}` : 'Tutto in ordine'}
               </div>
-              <div>
-                <h1 className="text-3xl md:text-4xl font-extrabold text-white drop-shadow-lg">Notifiche</h1>
-                <p className="text-blue-100 text-sm mt-1">
-                  {unreadCount > 0 ? `${unreadCount} non ${unreadCount === 1 ? 'letta' : 'lette'}` : 'Tutte lette'}
-                </p>
-              </div>
+              <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">Notifiche</h1>
+              <p className="text-lg text-gray-500 mt-2">Tieniti aggiornato su tutto quello che succede</p>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex gap-2 bg-white/10 backdrop-blur-sm rounded-xl p-1">
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="flex gap-2 bg-gray-100 rounded-xl p-1">
                 <button
                   onClick={() => setFilter('all')}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${filter === 'all' ? 'bg-white text-blue-700' : 'text-white hover:bg-white/20'}`}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${filter === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
                 >
                   Tutte ({notifications.length})
                 </button>
                 <button
                   onClick={() => setFilter('unread')}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${filter === 'unread' ? 'bg-white text-blue-700' : 'text-white hover:bg-white/20'}`}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${filter === 'unread' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
                 >
                   Non lette ({unreadCount})
                 </button>
@@ -227,7 +223,7 @@ export function NotificationsPage() {
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="flex items-center gap-2 px-4 py-2 bg-white text-blue-700 rounded-xl font-semibold text-sm hover:bg-blue-50 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors"
                 >
                   <CheckCheck className="w-4 h-4" />
                   <span className="hidden sm:inline">Segna tutte</span>
@@ -236,7 +232,7 @@ export function NotificationsPage() {
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       <div className="max-w-4xl mx-auto">
 

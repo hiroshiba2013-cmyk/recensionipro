@@ -310,34 +310,28 @@ export function SearchResultsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600">
-        <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+      <section className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <button
             onClick={handleBackToHome}
-            className="flex items-center gap-2 text-white bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all px-4 py-2 rounded-lg mb-6 font-medium"
+            className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm font-medium mb-6 transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Torna alla home</span>
+            <ArrowLeft className="w-4 h-4" />
+            Torna alla home
           </button>
-
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl mb-4 mx-auto">
-              <Search className="w-7 h-7 text-white" />
-            </div>
-            <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-3 drop-shadow-lg">Cerca Attivita</h1>
-            <p className="text-blue-100 text-lg md:text-xl">
-              Trova le migliori attivita della tua zona
-            </p>
+          <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
+            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+            Attivita in tutta Italia
           </div>
-
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-4">Cerca Attivita</h1>
+          <p className="text-lg text-gray-500 mb-8">Trova le migliori attivita locali verificate nella tua zona</p>
           <AdvancedSearch
             onSearch={applyFilters}
             isLoading={loading}
             initialFilters={initialFilters || undefined}
           />
         </div>
-      </div>
+      </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-6 bg-gradient-to-r from-blue-50 to-green-50 border-l-4 border-blue-600 rounded-lg p-4">

@@ -316,17 +316,16 @@ export function SubscriptionPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         {/* Hero */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600">
-          <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mb-5 mx-auto">
-              <CreditCard className="w-8 h-8 text-white" />
+        <section className="bg-white border-b border-gray-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 text-center">
+            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+              30 giorni di prova gratuita
             </div>
-            <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-3 drop-shadow-lg">Piani e Prezzi</h1>
-            <p className="text-blue-100 text-lg md:text-xl max-w-2xl mx-auto mb-2">Scegli il piano perfetto per te o per la tua attivita</p>
-            <p className="text-blue-200 text-base">Il primo mese di abbonamento e gratuito</p>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-4">Piani e Prezzi</h1>
+            <p className="text-lg text-gray-500 max-w-2xl mx-auto">Scegli il piano perfetto per te o per la tua attivita</p>
           </div>
-        </div>
+        </section>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
           <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-400 rounded-2xl shadow-xl p-12 mb-12">
@@ -599,25 +598,17 @@ export function SubscriptionPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         {/* Hero */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600">
-          <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mb-5 mx-auto">
-              <CreditCard className="w-8 h-8 text-white" />
+        <section className="bg-white border-b border-gray-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 text-center">
+            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+              Il tuo abbonamento
             </div>
-            <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-3 drop-shadow-lg">Prezzi Abbonamento</h1>
-            <p className="text-blue-100 text-lg md:text-xl max-w-2xl mx-auto">Gestisci il tuo abbonamento e accedi a sconti esclusivi</p>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-4">Prezzi Abbonamento</h1>
+            <p className="text-lg text-gray-500 max-w-2xl mx-auto">Gestisci il tuo abbonamento e accedi a sconti esclusivi</p>
           </div>
-        </div>
+        </section>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Prezzi Abbonamento
-            </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Gestisci il tuo abbonamento e accedi a sconti esclusivi
-            </p>
-          </div>
 
           <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-400 rounded-2xl shadow-xl p-12 mb-12">
             <div className="flex items-center justify-center mb-6">
@@ -1054,16 +1045,16 @@ export function SubscriptionPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600">
-        <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mb-5 mx-auto">
-            <CreditCard className="w-8 h-8 text-white" />
+      <section className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 text-center">
+          <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+            Abbonamento attivo
           </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-3 drop-shadow-lg">Abbonamento Business</h1>
-          <p className="text-blue-100 text-lg md:text-xl max-w-2xl mx-auto">Gestisci la tua attivita, rispondi alle recensioni e offri sconti ai clienti</p>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-4">Abbonamento Business</h1>
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto">Gestisci la tua attivita, rispondi alle recensioni e offri sconti ai clienti</p>
         </div>
-      </div>
+      </section>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
         <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 rounded-2xl shadow-lg p-12 mb-12 text-center">

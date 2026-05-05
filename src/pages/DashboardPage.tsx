@@ -542,41 +542,39 @@ export function DashboardPage() {
       <TrialExpirationModal />
 
       {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600">
-        <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl">
-                {profile.user_type === 'business'
-                  ? <Building className="w-7 h-7 text-white" />
-                  : <User className="w-7 h-7 text-white" />
-                }
+      <section className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+                {profile.user_type === 'business' ? 'Account Business' : 'Account Privato'}
               </div>
-              <div>
-                <h1 className="text-3xl md:text-4xl font-extrabold text-white drop-shadow-lg">
-                  Dashboard {profile.user_type === 'business' ? 'Attivita' : 'Cliente'}
-                </h1>
-                <p className="text-blue-100 text-base mt-1">
-                  Benvenuto, {activeProfile ? (activeProfile.nickname || activeProfile.name) : profile.full_name}!
-                </p>
-              </div>
+              <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-2">
+                Ciao, {activeProfile ? (activeProfile.nickname || activeProfile.name.split(' ')[0]) : (profile.full_name?.split(' ')[0] || 'Utente')}!
+              </h1>
+              <p className="text-lg text-gray-500">
+                {profile.user_type === 'business' ? 'Gestisci la tua attivita e le sedi' : 'Gestisci il tuo profilo e le attivita'}
+              </p>
             </div>
             {currentSubscription && (
-              <div className="bg-white/15 backdrop-blur-sm rounded-2xl px-6 py-4 border border-white/20">
-                <p className="text-xs text-blue-200 mb-1">Piano Attivo</p>
-                <p className="text-lg font-bold text-white">{currentSubscription.plan.name}</p>
-                <p className="text-sm text-blue-200">
+              <div className="bg-gray-50 border border-gray-200 rounded-2xl px-6 py-4">
+                <p className="text-xs text-gray-500 mb-1">Piano Attivo</p>
+                <p className="text-lg font-bold text-gray-900">{currentSubscription.plan.name}</p>
+                <p className="text-sm text-gray-500">
                   {currentSubscription.plan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'}
                 </p>
                 {currentSubscription.status === 'trial' && (
-                  <p className="text-xs text-yellow-300 font-semibold mt-1">Periodo di prova</p>
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full mt-1">
+                    <div className="w-1 h-1 bg-blue-500 rounded-full animate-pulse"></div>
+                    Periodo di prova
+                  </span>
                 )}
               </div>
             )}
           </div>
         </div>
-      </div>
+      </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
