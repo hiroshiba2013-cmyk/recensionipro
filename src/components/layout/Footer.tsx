@@ -24,15 +24,15 @@ export function Footer() {
       title: 'Supporto',
       links: [
         { label: 'Domande frequenti', href: '/rules#faq' },
-        { label: 'Privacy e Cookie', href: '/rules' },
+        { label: 'Privacy e Cookie', href: '/rules#cookie-policy' },
       ],
     },
     {
       title: 'Legale',
       links: [
-        { label: 'Termini di servizio', href: '/rules' },
-        { label: 'Privacy Policy', href: '/rules' },
-        { label: "Condizioni d'uso", href: '/rules' },
+        { label: 'Termini di servizio', href: '/rules#termini-servizio' },
+        { label: 'Privacy Policy', href: '/rules#privacy-policy' },
+        { label: "Condizioni d'uso", href: '/rules#condizioni-uso' },
       ],
     },
   ];

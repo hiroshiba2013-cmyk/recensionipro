@@ -35,13 +35,13 @@ export function useParams() {
 export function useNavigate() {
   return (path: string) => {
     const [pathname, hash] = path.split('#');
-    window.history.pushState({}, '', pathname);
+    window.history.pushState({}, '', hash ? `${pathname}#${hash}` : pathname);
     window.dispatchEvent(new PopStateEvent('popstate'));
     if (hash) {
       setTimeout(() => {
         const el = document.getElementById(hash);
         if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+      }, 300);
     }
   };
 }

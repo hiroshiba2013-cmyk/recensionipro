@@ -1,4 +1,4 @@
-import { Shield, HelpCircle } from 'lucide-react';
+import { Shield, HelpCircle, Cookie, FileText } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -106,10 +106,16 @@ export function RulesPage() {
           <div className="border-b bg-gray-50 px-8 py-4 overflow-x-auto">
             <div className="flex gap-2 min-w-max">
               <a href="#regolamento" className="px-4 py-2 bg-white rounded-lg hover:bg-blue-50 transition text-sm font-medium">
-                Regolamento Completo
+                Regolamento
               </a>
               <a href="#faq" className="px-4 py-2 bg-white rounded-lg hover:bg-blue-50 transition text-sm font-medium">
                 FAQ
+              </a>
+              <a href="#cookie-policy" className="px-4 py-2 bg-white rounded-lg hover:bg-blue-50 transition text-sm font-medium">
+                Cookie Policy
+              </a>
+              <a href="#termini" className="px-4 py-2 bg-white rounded-lg hover:bg-blue-50 transition text-sm font-medium">
+                Termini e Privacy
               </a>
             </div>
           </div>
@@ -220,6 +226,150 @@ export function RulesPage() {
                 </div>
               )}
             </section>
+            <section id="cookie-policy">
+              <div className="flex items-center gap-3 mb-8 pb-4 border-b-2 border-amber-200">
+                <Cookie className="w-10 h-10 text-amber-600" />
+                <h2 className="text-4xl font-bold text-gray-900">Cookie Policy</h2>
+              </div>
+
+              <div className="space-y-6">
+                <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-6">
+                  <p className="text-amber-900 font-semibold text-lg mb-2">Informativa semplice e trasparente</p>
+                  <p className="text-amber-800 leading-relaxed">
+                    Trovafacile utilizza esclusivamente cookie tecnici necessari al funzionamento della piattaforma.
+                    Non utilizziamo cookie di profilazione, non facciamo pubblicità comportamentale e
+                    non vendiamo né condividiamo i tuoi dati con terze parti a scopo commerciale.
+                  </p>
+                </div>
+
+                {[
+                  {
+                    title: 'Cookie tecnici e di sessione',
+                    color: 'blue',
+                    content: [
+                      { label: 'Cookie di autenticazione', desc: 'Gestiti da Supabase, mantengono la tua sessione attiva dopo il login. Sono strettamente necessari al funzionamento del sito e non richiedono consenso.' },
+                      { label: 'Cookie di preferenze', desc: 'Memorizzano impostazioni locali come la lingua selezionata o il profilo attivo. Non contengono dati personali identificativi.' },
+                    ]
+                  },
+                  {
+                    title: 'Cookie di terze parti (solo durante i pagamenti)',
+                    color: 'orange',
+                    content: [
+                      { label: 'Stripe', desc: 'Quando accedi al checkout per acquistare un piano, Stripe può impostare cookie propri necessari per la sicurezza della transazione. Stripe è certificato PCI-DSS e la sua privacy policy è disponibile su stripe.com/privacy.' },
+                    ]
+                  },
+                  {
+                    title: 'Cosa NON facciamo',
+                    color: 'green',
+                    content: [
+                      { label: 'Nessun tracciamento pubblicitario', desc: 'Non utilizziamo Google Ads, Meta Pixel, o qualsiasi altro sistema di tracciamento per la pubblicità.' },
+                      { label: 'Nessuna vendita di dati', desc: 'I tuoi dati non vengono mai venduti, ceduti o condivisi con terze parti per scopi commerciali.' },
+                      { label: 'Nessun cookie di analytics invasivo', desc: 'Non utilizziamo cookie di terze parti per analisi comportamentale degli utenti.' },
+                    ]
+                  },
+                  {
+                    title: 'Come gestire i cookie',
+                    color: 'gray',
+                    content: [
+                      { label: 'Impostazioni del browser', desc: 'Puoi configurare il tuo browser per bloccare o eliminare i cookie. Tieni presente che disabilitare i cookie tecnici potrebbe compromettere il corretto funzionamento del sito (es. impossibilità di rimanere connesso).' },
+                      { label: 'Cancellazione cookie', desc: 'Puoi eliminare i cookie salvati dal tuo browser in qualsiasi momento dalle impostazioni del browser stesso.' },
+                    ]
+                  },
+                ].map(({ title, color, content }) => (
+                  <div key={title} className={`bg-white border-2 border-${color}-100 rounded-xl p-6`}>
+                    <h3 className={`text-xl font-bold text-gray-900 mb-4 flex items-center gap-2`}>
+                      <div className={`w-1.5 h-6 bg-${color}-500 rounded`}></div>
+                      {title}
+                    </h3>
+                    <div className="space-y-4">
+                      {content.map(({ label, desc }) => (
+                        <div key={label} className="flex gap-3">
+                          <div className={`w-2 h-2 rounded-full bg-${color}-400 flex-shrink-0 mt-2`}></div>
+                          <div>
+                            <span className="font-semibold text-gray-800">{label}: </span>
+                            <span className="text-gray-600">{desc}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section id="termini">
+              <div className="flex items-center gap-3 mb-8 pb-4 border-b-2 border-teal-200">
+                <FileText className="w-10 h-10 text-teal-600" />
+                <h2 className="text-4xl font-bold text-gray-900">Termini di Servizio e Privacy</h2>
+              </div>
+
+              <div className="space-y-6">
+                {[
+                  {
+                    id: 'termini-servizio',
+                    title: 'Termini di Servizio',
+                    items: [
+                      { label: 'Accettazione', text: 'Utilizzando Trovafacile accetti i presenti termini. Se non li accetti, ti chiediamo di non utilizzare il servizio.' },
+                      { label: 'Descrizione del servizio', text: 'Trovafacile è una piattaforma italiana che consente agli utenti di cercare, recensire e scoprire attività commerciali locali, pubblicare annunci, partecipare ad aste e trovare opportunità di lavoro.' },
+                      { label: 'Account utente', text: 'Sei responsabile della sicurezza del tuo account e delle attività svolte con esso. Devi fornire informazioni veritiere durante la registrazione.' },
+                      { label: 'Contenuti pubblicati', text: 'Sei responsabile dei contenuti che pubblichi (recensioni, annunci, offerte di lavoro). Non è consentito pubblicare contenuti falsi, diffamatori, illegali o che violino i diritti di terzi.' },
+                      { label: 'Sospensione account', text: 'Ci riserviamo il diritto di sospendere o eliminare account che violino i termini di servizio o le regole della community.' },
+                      { label: 'Modifiche al servizio', text: 'Trovafacile può modificare, sospendere o interrompere il servizio in qualsiasi momento, con ragionevole preavviso agli utenti registrati.' },
+                    ]
+                  },
+                  {
+                    id: 'privacy-policy',
+                    title: 'Privacy Policy',
+                    items: [
+                      { label: 'Titolare del trattamento', text: 'Il titolare del trattamento dei dati personali è Trovafacile. Per qualsiasi richiesta relativa alla privacy, puoi contattarci tramite la sezione Contatti.' },
+                      { label: 'Dati raccolti', text: 'Raccogliamo i dati che fornisci durante la registrazione (nome, email, tipo di profilo), i contenuti che pubblichi sulla piattaforma, e i dati tecnici necessari al funzionamento del servizio (log di accesso, indirizzo IP).' },
+                      { label: 'Finalità del trattamento', text: 'I tuoi dati vengono utilizzati esclusivamente per: erogare il servizio, gestire il tuo account, inviare comunicazioni di servizio (es. notifiche, conferme d\'ordine), e migliorare la piattaforma.' },
+                      { label: 'Fornitori di servizio', text: 'Utilizziamo Supabase per il database e l\'autenticazione (dati protetti e cifrati), Stripe per la gestione sicura dei pagamenti (non archiviamo dati di carte di credito), e un servizio email per le comunicazioni automatiche di servizio.' },
+                      { label: 'Conservazione dei dati', text: 'I tuoi dati vengono conservati per il tempo necessario all\'erogazione del servizio e come previsto dalla normativa vigente. Puoi richiedere la cancellazione del tuo account e dei tuoi dati in qualsiasi momento.' },
+                      { label: 'I tuoi diritti (GDPR)', text: 'Hai diritto di accesso, rettifica, cancellazione ("diritto all\'oblio"), portabilità dei dati, opposizione al trattamento e limitazione del trattamento. Per esercitare questi diritti contattaci tramite la sezione Contatti.' },
+                      { label: 'Trasferimento dati', text: 'I dati possono essere trasferiti verso paesi extra-UE (es. USA) esclusivamente attraverso fornitori certificati che garantiscono un livello di protezione adeguato (es. Standard Contractual Clauses).' },
+                    ]
+                  },
+                  {
+                    id: 'condizioni-uso',
+                    title: "Condizioni d'uso",
+                    items: [
+                      { label: 'Uso lecito', text: 'La piattaforma deve essere utilizzata esclusivamente per scopi leciti e in conformità con la legislazione italiana ed europea vigente.' },
+                      { label: 'Recensioni', text: 'Le recensioni devono essere veritiere e basate su esperienze dirette. È vietato pubblicare recensioni false, acquistare recensioni o manipolare il sistema di valutazione.' },
+                      { label: 'Annunci e aste', text: 'Gli annunci e le aste devono riguardare prodotti o servizi reali. È vietato pubblicare offerte fraudolente, contraffatte o illegali.' },
+                      { label: 'Rispetto della community', text: 'È richiesto un comportamento rispettoso verso gli altri utenti. Sono vietati insulti, discriminazioni, molestie o qualsiasi forma di comportamento lesivo della dignità altrui.' },
+                      { label: 'Limitazione di responsabilità', text: 'Trovafacile non è responsabile per i contenuti pubblicati dagli utenti, per le transazioni tra utenti, o per eventuali danni derivanti dall\'uso della piattaforma da parte di terzi.' },
+                    ]
+                  },
+                ].map(({ id, title, items }) => (
+                  <div key={id} id={id} className="bg-white border-2 border-gray-200 rounded-xl p-6">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-5 flex items-center gap-2">
+                      <div className="w-1.5 h-7 bg-teal-500 rounded"></div>
+                      {title}
+                    </h3>
+                    <div className="space-y-4">
+                      {items.map(({ label, text }) => (
+                        <div key={label} className="flex gap-3">
+                          <div className="w-2 h-2 rounded-full bg-teal-400 flex-shrink-0 mt-2"></div>
+                          <div>
+                            <span className="font-semibold text-gray-800">{label}: </span>
+                            <span className="text-gray-600 leading-relaxed">{text}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                <div className="bg-teal-50 border-2 border-teal-200 rounded-xl p-6 text-center">
+                  <p className="text-teal-800 text-sm leading-relaxed">
+                    Ultimo aggiornamento: maggio 2026. Per domande o chiarimenti su termini, privacy o cookie,
+                    contattaci tramite la sezione <strong>Contatti</strong> della piattaforma.
+                  </p>
+                </div>
+              </div>
+            </section>
+
           </div>
         </div>
       </div>
