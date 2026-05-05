@@ -603,8 +603,7 @@ function AuthenticatedHomePage() {
           `)
           .eq('status', 'active')
           .eq('approval_status', 'approved')
-          .gt('ends_at', new Date().toISOString())
-          .order('created_at', { ascending: false })
+          .order('ends_at', { ascending: true })
           .limit(6)
       ]);
 
