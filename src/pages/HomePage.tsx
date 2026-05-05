@@ -166,7 +166,7 @@ function LandingPage() {
       {/* HERO */}
       <section className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="max-w-2xl">
             <div>
               <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
@@ -210,76 +210,6 @@ function LandingPage() {
               </div>
             </div>
 
-            {/* App mockup */}
-            <div className="hidden lg:block">
-              <div className="relative">
-                <div className="bg-gradient-to-br from-blue-50 to-gray-100 rounded-3xl p-6 shadow-xl border border-gray-200">
-                  {/* Browser bar */}
-                  <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
-                    <div className="bg-gray-50 px-4 py-3 flex items-center gap-2 border-b border-gray-100">
-                      <div className="flex gap-1.5">
-                        <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                        <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                        <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                      </div>
-                      <div className="flex-1 bg-white rounded-md px-3 py-1.5 text-xs text-gray-400 border border-gray-200">
-                        trovafacile.it
-                      </div>
-                    </div>
-                    <div className="p-5">
-                      {/* Search bar */}
-                      <div className="flex gap-2 mb-4">
-                        <div className="flex-1 bg-gray-100 rounded-lg px-3 py-2 text-xs text-gray-400 flex items-center gap-2">
-                          <Search className="w-3.5 h-3.5" />
-                          Cerca attività, servizi o categorie...
-                        </div>
-                        <div className="bg-blue-600 text-white px-3 py-2 rounded-lg text-xs font-semibold">Cerca</div>
-                      </div>
-                      {/* Categories */}
-                      <p className="text-xs font-semibold text-gray-700 mb-3">Categorie popolari</p>
-                      <div className="grid grid-cols-6 gap-2 mb-4">
-                        {[
-                          { icon: '🍕', label: 'Ristoranti' },
-                          { icon: '🔧', label: 'Servizi' },
-                          { icon: '💊', label: 'Salute' },
-                          { icon: '🏠', label: 'Casa' },
-                          { icon: '🚗', label: 'Auto' },
-                          { icon: '✂️', label: 'Bellezza' },
-                        ].map(({ icon, label }) => (
-                          <div key={label} className="flex flex-col items-center gap-1">
-                            <div className="w-9 h-9 bg-gray-50 border border-gray-100 rounded-xl flex items-center justify-center text-base">{icon}</div>
-                            <span className="text-[9px] text-gray-500 text-center leading-tight">{label}</span>
-                          </div>
-                        ))}
-                      </div>
-                      {/* Activities */}
-                      <p className="text-xs font-semibold text-gray-700 mb-3">Attività in evidenza</p>
-                      <div className="space-y-2">
-                        {[
-                          { name: 'Ristorante Da Marco', cat: 'Ristoranti', rating: '4.8', verified: true, color: 'bg-orange-400' },
-                          { name: 'Idraulica Express', cat: 'Servizi', rating: '4.5', verified: true, color: 'bg-blue-400' },
-                          { name: 'Parrucchiere Style', cat: 'Bellezza', rating: '4.7', verified: false, color: 'bg-pink-400' },
-                        ].map((biz) => (
-                          <div key={biz.name} className="flex items-center gap-2.5 bg-gray-50 rounded-lg p-2.5 border border-gray-100">
-                            <div className={`w-8 h-8 ${biz.color} rounded-lg flex-shrink-0`}></div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1">
-                                <p className="text-[10px] font-semibold text-gray-800 truncate">{biz.name}</p>
-                                {biz.verified && <div className="w-2.5 h-2.5 bg-blue-500 rounded-full flex-shrink-0"></div>}
-                              </div>
-                              <div className="flex items-center gap-1 mt-0.5">
-                                {[1,2,3,4,5].map(s => <Star key={s} className={`w-2.5 h-2.5 ${s <= Math.round(parseFloat(biz.rating)) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />)}
-                                <span className="text-[9px] text-gray-500 ml-0.5">({biz.rating})</span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
