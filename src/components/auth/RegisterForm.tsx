@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth, CustomerData, BusinessData } from '../../contexts/AuthContext';
 import { SearchableSelect } from '../common/SearchableSelect';
+import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { Plus, Trash2, MapPin } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -1361,39 +1362,18 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
-                <label htmlFor="billingCity" className="block text-sm font-medium text-gray-700 mb-1">
-                  Città
-                </label>
-                <input
-                  id="billingCity"
-                  name="billingCity"
-                  type="text"
-                  value={customerForm.billingCity}
-                  onChange={handleCustomerChange}
-                  required
-                  placeholder="Es. Roma"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="billingProvince" className="block text-sm font-medium text-gray-700 mb-1">
-                  Provincia
-                </label>
-                <input
-                  id="billingProvince"
-                  name="billingProvince"
-                  type="text"
-                  value={customerForm.billingProvince}
-                  onChange={handleCustomerChange}
-                  required
-                  placeholder="Es. RM"
-                  maxLength={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm uppercase"
-                />
-              </div>
+            <div className="mb-3">
+              <ItalianCityProvinceSelect
+                province={customerForm.billingProvince}
+                city={customerForm.billingCity}
+                required
+                onProvinceChange={(province) =>
+                  setCustomerForm(prev => ({ ...prev, billingProvince: province }))
+                }
+                onCityChange={(city) =>
+                  setCustomerForm(prev => ({ ...prev, billingCity: city }))
+                }
+              />
             </div>
 
             <div className="mb-3 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg">
@@ -1883,39 +1863,18 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
-                <label htmlFor="billingCity" className="block text-sm font-medium text-gray-700 mb-1">
-                  Città
-                </label>
-                <input
-                  id="billingCity"
-                  name="billingCity"
-                  type="text"
-                  value={businessForm.billingCity}
-                  onChange={handleBusinessChange}
-                  required
-                  placeholder="Es. Roma"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="billingProvince" className="block text-sm font-medium text-gray-700 mb-1">
-                  Provincia
-                </label>
-                <input
-                  id="billingProvince"
-                  name="billingProvince"
-                  type="text"
-                  value={businessForm.billingProvince}
-                  onChange={handleBusinessChange}
-                  required
-                  placeholder="Es. RM"
-                  maxLength={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm uppercase"
-                />
-              </div>
+            <div className="mb-3">
+              <ItalianCityProvinceSelect
+                province={businessForm.billingProvince}
+                city={businessForm.billingCity}
+                required
+                onProvinceChange={(province) =>
+                  setBusinessForm(prev => ({ ...prev, billingProvince: province }))
+                }
+                onCityChange={(city) =>
+                  setBusinessForm(prev => ({ ...prev, billingCity: city }))
+                }
+              />
             </div>
           </div>
 
@@ -2020,50 +1979,31 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3 mb-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    CAP
-                  </label>
-                  <input
-                    type="text"
-                    value={location.postalCode}
-                    onChange={(e) => updateBusinessLocation(index, 'postalCode', e.target.value)}
-                    required
-                    placeholder="Es. 20121"
-                    maxLength={5}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                  />
-                </div>
+              <div className="mb-3">
+                <ItalianCityProvinceSelect
+                  province={location.province}
+                  city={location.city}
+                  required
+                  onProvinceChange={(province, code) => {
+                    updateBusinessLocation(index, 'province', code);
+                  }}
+                  onCityChange={(city) => updateBusinessLocation(index, 'city', city)}
+                />
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Città
-                  </label>
-                  <input
-                    type="text"
-                    value={location.city}
-                    onChange={(e) => updateBusinessLocation(index, 'city', e.target.value)}
-                    required
-                    placeholder="Es. Milano"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Provincia
-                  </label>
-                  <input
-                    type="text"
-                    value={location.province}
-                    onChange={(e) => updateBusinessLocation(index, 'province', e.target.value.toUpperCase())}
-                    required
-                    placeholder="MI"
-                    maxLength={2}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm uppercase"
-                  />
-                </div>
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  CAP
+                </label>
+                <input
+                  type="text"
+                  value={location.postalCode}
+                  onChange={(e) => updateBusinessLocation(index, 'postalCode', e.target.value)}
+                  required
+                  placeholder="Es. 20121"
+                  maxLength={5}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-3 mb-3">
