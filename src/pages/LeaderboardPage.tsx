@@ -32,7 +32,7 @@ export function LeaderboardPage() {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'leaderboard' | 'rewards' | 'my_activities'>('leaderboard');
-  const [userTypeFilter, setUserTypeFilter] = useState<'all' | 'customer' | 'business'>('all');
+  const [userTypeFilter, setUserTypeFilter] = useState<'all' | 'customer'>('all');
 
   useEffect(() => {
     loadLeaderboard();
@@ -45,15 +45,24 @@ export function LeaderboardPage() {
     try {
       setLoading(true);
 
+      // Business users don't participate in the leaderboard
+      if (profile.user_type === 'business') {
+        setUserRank(null);
+        setLoading(false);
+        return;
+      }
+
       // Carica i top 20 utenti basati sul filtro
       await loadTopUsers();
 
       // Funzione comune per calcolare il rank dato un punteggio
+      // Only counts non-business users
       const calcRank = async (points: number): Promise<number> => {
         const { count } = await supabase
           .from('user_activity')
-          .select('*', { count: 'exact', head: true })
-          .gt('total_points', points);
+          .select('user_id', { count: 'exact', head: true })
+          .gt('total_points', points)
+          .not('user_id', 'in', `(SELECT id FROM profiles WHERE user_type = 'business')`);
         return (count || 0) + 1;
       };
 
@@ -120,31 +129,30 @@ export function LeaderboardPage() {
     try {
       const entries: LeaderboardUser[] = [];
 
-      if (userTypeFilter !== 'business') {
-        // Query 1: utenti principali (family_member_id IS NULL)
-        const { data: usersData } = await supabase
-          .from('user_activity')
-          .select('user_id, total_points, reviews_count, profiles(full_name, nickname, avatar_url, user_type)')
-          .is('family_member_id', null)
-          .order('total_points', { ascending: false })
-          .limit(200);
+      // Query 1: customer account owners (family_member_id IS NULL, not business, not admin)
+      const { data: usersData } = await supabase
+        .from('user_activity')
+        .select('user_id, total_points, reviews_count, profiles(full_name, nickname, avatar_url, user_type)')
+        .is('family_member_id', null)
+        .order('total_points', { ascending: false })
+        .limit(200);
 
-        for (const item of (usersData || []) as any[]) {
-          if (!item.profiles) continue;
-          if (item.profiles.user_type === 'admin') continue;
-          if (userTypeFilter !== 'all' && item.profiles.user_type !== userTypeFilter) continue;
-          entries.push({
-            id: item.user_id,
-            full_name: item.profiles.nickname || item.profiles.full_name,
-            avatar_url: item.profiles.avatar_url,
-            points: item.total_points || 0,
-            reviews_count: item.reviews_count || 0,
-            rank: 0,
-            is_family_member: false,
-          });
-        }
+      for (const item of (usersData || []) as any[]) {
+        if (!item.profiles) continue;
+        if (item.profiles.user_type !== 'customer') continue;
+        entries.push({
+          id: item.user_id,
+          full_name: item.profiles.nickname || item.profiles.full_name,
+          avatar_url: item.profiles.avatar_url,
+          points: item.total_points || 0,
+          reviews_count: item.reviews_count || 0,
+          rank: 0,
+          is_family_member: false,
+        });
+      }
 
-        // Query 2: membri della famiglia (family_member_id IS NOT NULL) - solo per filtri non-business
+      // Query 2: family members (family_member_id IS NOT NULL)
+      if (userTypeFilter === 'all') {
         const { data: familyData } = await supabase
           .from('user_activity')
           .select('family_member_id, total_points, reviews_count')
@@ -164,10 +172,9 @@ export function LeaderboardPage() {
           for (const item of familyData as any[]) {
             const member = membersMap.get(item.family_member_id);
             if (!member) continue;
-            const displayName = member.nickname || `${member.first_name} ${member.last_name}`;
             entries.push({
               id: item.family_member_id,
-              full_name: displayName,
+              full_name: member.nickname || `${member.first_name} ${member.last_name}`,
               avatar_url: member.avatar_url,
               points: item.total_points || 0,
               reviews_count: item.reviews_count || 0,
@@ -175,28 +182,6 @@ export function LeaderboardPage() {
               is_family_member: true,
             });
           }
-        }
-      } else {
-        // Solo business
-        const { data: usersData } = await supabase
-          .from('user_activity')
-          .select('user_id, total_points, reviews_count, profiles(full_name, nickname, avatar_url, user_type)')
-          .is('family_member_id', null)
-          .order('total_points', { ascending: false })
-          .limit(200);
-
-        for (const item of (usersData || []) as any[]) {
-          if (!item.profiles) continue;
-          if (item.profiles.user_type !== 'business') continue;
-          entries.push({
-            id: item.user_id,
-            full_name: item.profiles.nickname || item.profiles.full_name,
-            avatar_url: item.profiles.avatar_url,
-            points: item.total_points || 0,
-            reviews_count: item.reviews_count || 0,
-            rank: 0,
-            is_family_member: false,
-          });
         }
       }
 
@@ -318,9 +303,7 @@ export function LeaderboardPage() {
                         <p className="text-2xl font-bold">{userRank.full_name}</p>
                         <div className="flex items-center gap-4 mt-1">
                           <span className="text-sm">#{userRank.rank}</span>
-                          {profile?.user_type !== 'business' && (
-                            <span className="text-sm">{userRank.points} {t('leaderboard.points')}</span>
-                          )}
+                          <span className="text-sm">{userRank.points} {t('leaderboard.points')}</span>
                           <span className="text-sm">{userRank.reviews_count} {t('leaderboard.reviews')}</span>
                         </div>
                       </div>
@@ -367,16 +350,6 @@ export function LeaderboardPage() {
                     }`}
                   >
                     {t('leaderboard.filter.private')}
-                  </button>
-                  <button
-                    onClick={() => setUserTypeFilter('business')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      userTypeFilter === 'business'
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    {t('leaderboard.filter.business')}
                   </button>
                 </div>
               </div>
@@ -427,9 +400,7 @@ export function LeaderboardPage() {
                             )}
                           </div>
                           <div className="flex items-center gap-4 text-sm text-gray-600">
-                            {userTypeFilter !== 'business' && (
-                              <span>{user.points} {t('leaderboard.points')}</span>
-                            )}
+                            <span>{user.points} {t('leaderboard.points')}</span>
                             <span>{user.reviews_count} {t('leaderboard.reviews')}</span>
                           </div>
                         </div>
@@ -494,44 +465,11 @@ export function LeaderboardPage() {
               )}
 
               {profile?.user_type === 'business' && (
-                <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">Come Guadagnare Punti - Professionisti</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    I professionisti guadagnano punti in base alle recensioni ricevute dai clienti e alle attività pubblicate.
+                <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">Classifica Punti</h3>
+                  <p className="text-gray-600 text-sm">
+                    La classifica punti e' riservata agli utenti privati e ai loro familiari. Gli utenti business non partecipano al sistema punti.
                   </p>
-                  <ul className="space-y-2 text-gray-700">
-                    <li className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-red-600" />
-                      <span><strong>2 punti</strong> per recensione a 1 stella ricevuta</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-orange-600" />
-                      <span><strong>4 punti</strong> per recensione a 2 stelle ricevuta</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-yellow-600" />
-                      <span><strong>10 punti</strong> per recensione a 3 stelle ricevuta</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-blue-600" />
-                      <span><strong>25 punti</strong> per recensione a 4 stelle ricevuta</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-green-600" />
-                      <span><strong>50 punti</strong> per recensione a 5 stelle ricevuta</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Award className="w-5 h-5 text-blue-600" />
-                      <span><strong>30 punti</strong> per ogni annuncio di lavoro pubblicato</span>
-                    </li>
-                  </ul>
-
-                  <div className="mt-4 bg-amber-50 border border-amber-300 rounded-lg p-4">
-                    <p className="text-sm text-gray-700">
-                      <strong>Nota:</strong> I punti delle recensioni vengono assegnati solo dopo l'approvazione dello staff.
-                      Maggiore è la qualità del servizio, maggiori saranno i punti guadagnati.
-                    </p>
-                  </div>
                 </div>
               )}
 
