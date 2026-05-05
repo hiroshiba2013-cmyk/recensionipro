@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Star, Search, Award, Tag, Briefcase, Heart, Users, MapPin, Euro, ArrowRight, Check, Building2, Gavel, Shield, Gift, Lock, Trophy } from 'lucide-react';
+import { Star, Search, Award, Tag, Briefcase, Heart, Users, MapPin, Euro, ArrowRight, Check, Building2, Gavel, Shield, Gift, Lock } from 'lucide-react';
 import { AdvancedSearch } from '../components/search/AdvancedSearch';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -603,24 +603,6 @@ function AuthenticatedHomePage() {
               isLoading={false}
               navigateToSearchPage={true}
             />
-            <div className="mt-4 flex flex-wrap justify-center gap-2">
-              {[
-                { label: 'Lavoro', icon: Briefcase, href: '/jobs', color: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' },
-                { label: 'Annunci', icon: Tag, href: '/classifieds', color: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' },
-                { label: 'Aste', icon: Gavel, href: '/auctions', color: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' },
-                { label: 'Solidarieta', icon: Heart, href: '/solidarity', color: 'bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100' },
-                { label: 'Classifica', icon: Trophy, href: '/leaderboard', color: 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100' },
-              ].map(({ label, icon: Icon, href, color }) => (
-                <button
-                  key={label}
-                  onClick={() => navigate(href)}
-                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full border font-semibold text-sm transition-colors ${color}`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {label}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       </section>
