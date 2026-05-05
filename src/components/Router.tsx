@@ -1,29 +1,30 @@
-import { useEffect, useState, createContext, useContext } from 'react';
-import { HomePage } from '../pages/HomePage';
-import { DashboardPage } from '../pages/DashboardPage';
-import { SubscriptionPage } from '../pages/SubscriptionPage';
-import { JobsPage } from '../pages/JobsPage';
-import { ProfilePage } from '../pages/ProfilePage';
-import { LeaderboardPage } from '../pages/LeaderboardPage';
-import { BusinessDetailPage } from '../pages/BusinessDetailPage';
-import { SearchResultsPage } from '../pages/SearchResultsPage';
-import { ClassifiedAdsPage } from '../pages/ClassifiedAdsPage';
-import { ClassifiedAdDetailPage } from '../pages/ClassifiedAdDetailPage';
-import { MessagesPage } from '../pages/MessagesPage';
-import { NotificationsPage } from '../pages/NotificationsPage';
-import { SolidarityPage } from '../pages/SolidarityPage';
-import { ContactPage } from '../pages/ContactPage';
-import { RulesPage } from '../pages/RulesPage';
-import { ProfileSelectionPage } from '../pages/ProfileSelectionPage';
-import { ClaimBusinessPage } from '../pages/ClaimBusinessPage';
-import { AdminDashboardPage } from '../pages/AdminDashboardPage';
-import { AdminProfilePage } from '../pages/AdminProfilePage';
-import { AdminRegisterPage } from '../pages/AdminRegisterPage';
-import { AdminLoginPage } from '../pages/AdminLoginPage';
-import AuctionsPage from '../pages/AuctionsPage';
-import AuctionDetailPage from '../pages/AuctionDetailPage';
-import { JobSeekerDetailPage } from '../pages/JobSeekerDetailPage';
+import { useEffect, useState, createContext, useContext, lazy, Suspense } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+
+const HomePage = lazy(() => import('../pages/HomePage').then(m => ({ default: m.HomePage })));
+const DashboardPage = lazy(() => import('../pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
+const SubscriptionPage = lazy(() => import('../pages/SubscriptionPage').then(m => ({ default: m.SubscriptionPage })));
+const JobsPage = lazy(() => import('../pages/JobsPage').then(m => ({ default: m.JobsPage })));
+const ProfilePage = lazy(() => import('../pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
+const LeaderboardPage = lazy(() => import('../pages/LeaderboardPage').then(m => ({ default: m.LeaderboardPage })));
+const BusinessDetailPage = lazy(() => import('../pages/BusinessDetailPage').then(m => ({ default: m.BusinessDetailPage })));
+const SearchResultsPage = lazy(() => import('../pages/SearchResultsPage').then(m => ({ default: m.SearchResultsPage })));
+const ClassifiedAdsPage = lazy(() => import('../pages/ClassifiedAdsPage').then(m => ({ default: m.ClassifiedAdsPage })));
+const ClassifiedAdDetailPage = lazy(() => import('../pages/ClassifiedAdDetailPage').then(m => ({ default: m.ClassifiedAdDetailPage })));
+const MessagesPage = lazy(() => import('../pages/MessagesPage').then(m => ({ default: m.MessagesPage })));
+const NotificationsPage = lazy(() => import('../pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
+const SolidarityPage = lazy(() => import('../pages/SolidarityPage').then(m => ({ default: m.SolidarityPage })));
+const ContactPage = lazy(() => import('../pages/ContactPage').then(m => ({ default: m.ContactPage })));
+const RulesPage = lazy(() => import('../pages/RulesPage').then(m => ({ default: m.RulesPage })));
+const ProfileSelectionPage = lazy(() => import('../pages/ProfileSelectionPage').then(m => ({ default: m.ProfileSelectionPage })));
+const ClaimBusinessPage = lazy(() => import('../pages/ClaimBusinessPage').then(m => ({ default: m.ClaimBusinessPage })));
+const AdminDashboardPage = lazy(() => import('../pages/AdminDashboardPage').then(m => ({ default: m.AdminDashboardPage })));
+const AdminProfilePage = lazy(() => import('../pages/AdminProfilePage').then(m => ({ default: m.AdminProfilePage })));
+const AdminRegisterPage = lazy(() => import('../pages/AdminRegisterPage').then(m => ({ default: m.AdminRegisterPage })));
+const AdminLoginPage = lazy(() => import('../pages/AdminLoginPage').then(m => ({ default: m.AdminLoginPage })));
+const AuctionsPage = lazy(() => import('../pages/AuctionsPage'));
+const AuctionDetailPage = lazy(() => import('../pages/AuctionDetailPage'));
+const JobSeekerDetailPage = lazy(() => import('../pages/JobSeekerDetailPage').then(m => ({ default: m.JobSeekerDetailPage })));
 
 const RouterContext = createContext<{ params: Record<string, string> }>({ params: {} });
 
@@ -36,6 +37,17 @@ export function useNavigate() {
     window.history.pushState({}, '', path);
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
+}
+
+function PageLoader() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Caricamento...</p>
+      </div>
+    </div>
+  );
 }
 
 export function Router() {
@@ -74,149 +86,92 @@ export function Router() {
     setCurrentPath('/select-profile');
   }, [needsProfileSelection, loading, currentPath, profile]);
 
+  let page: React.ReactNode = null;
+
   if (currentPath === '/select-profile') {
-    return <ProfileSelectionPage />;
-  }
-
-  if (currentPath === '/search') {
-    return <SearchResultsPage />;
-  }
-
-  if (currentPath === '/dashboard') {
-    return <DashboardPage />;
-  }
-
-  if (currentPath === '/subscription') {
-    return <SubscriptionPage />;
-  }
-
-  if (currentPath === '/jobs') {
-    return <JobsPage />;
-  }
-
-  if (currentPath.startsWith('/jobs/seekers/')) {
-    return <JobSeekerDetailPage />;
-  }
-
-  if (currentPath === '/profile') {
-    return <ProfilePage />;
-  }
-
-  if (currentPath === '/leaderboard') {
-    return <LeaderboardPage />;
-  }
-
-  if (currentPath === '/classified' || currentPath === '/classified-ads') {
-    return <ClassifiedAdsPage />;
-  }
-
-  if (currentPath === '/auctions') {
-    return <AuctionsPage />;
-  }
-
-  if (currentPath.startsWith('/auctions/')) {
-    return <AuctionDetailPage />;
-  }
-
-  if (currentPath.startsWith('/classified/') || currentPath.startsWith('/classified-ads/')) {
+    page = <ProfileSelectionPage />;
+  } else if (currentPath === '/search') {
+    page = <SearchResultsPage />;
+  } else if (currentPath === '/dashboard') {
+    page = <DashboardPage />;
+  } else if (currentPath === '/subscription') {
+    page = <SubscriptionPage />;
+  } else if (currentPath === '/jobs') {
+    page = <JobsPage />;
+  } else if (currentPath.startsWith('/jobs/seekers/')) {
+    page = <JobSeekerDetailPage />;
+  } else if (currentPath === '/profile') {
+    page = <ProfilePage />;
+  } else if (currentPath === '/leaderboard') {
+    page = <LeaderboardPage />;
+  } else if (currentPath === '/classified' || currentPath === '/classified-ads') {
+    page = <ClassifiedAdsPage />;
+  } else if (currentPath === '/auctions') {
+    page = <AuctionsPage />;
+  } else if (currentPath.startsWith('/auctions/')) {
+    page = <AuctionDetailPage />;
+  } else if (currentPath.startsWith('/classified/') || currentPath.startsWith('/classified-ads/')) {
     const adId = currentPath.replace('/classified/', '').replace('/classified-ads/', '');
     if (adId) {
-      return <ClassifiedAdDetailPage />;
+      page = <ClassifiedAdDetailPage />;
     }
-  }
-
-  if (currentPath === '/messages') {
-    return <MessagesPage />;
-  }
-
-  if (currentPath === '/notifications') {
-    return <NotificationsPage />;
-  }
-
-  if (currentPath === '/solidarity') {
-    return <SolidarityPage />;
-  }
-
-  if (currentPath === '/contact' || currentPath === '/contatti') {
-    return <ContactPage />;
-  }
-
-  if (currentPath === '/rules' || currentPath === '/regolamento') {
-    return <RulesPage />;
-  }
-
-  if (currentPath === '/claim-business' || currentPath === '/rivendica-attivita') {
-    return <ClaimBusinessPage />;
-  }
-
-  if (currentPath === '/admin' || currentPath === '/admin-dashboard') {
+  } else if (currentPath === '/messages') {
+    page = <MessagesPage />;
+  } else if (currentPath === '/notifications') {
+    page = <NotificationsPage />;
+  } else if (currentPath === '/solidarity') {
+    page = <SolidarityPage />;
+  } else if (currentPath === '/contact' || currentPath === '/contatti') {
+    page = <ContactPage />;
+  } else if (currentPath === '/rules' || currentPath === '/regolamento') {
+    page = <RulesPage />;
+  } else if (currentPath === '/claim-business' || currentPath === '/rivendica-attivita') {
+    page = <ClaimBusinessPage />;
+  } else if (currentPath === '/admin' || currentPath === '/admin-dashboard') {
     if (loading) {
-      return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Caricamento...</p>
-          </div>
-        </div>
-      );
-    }
-
-    if (!user || !profile || profile.user_type !== 'admin') {
+      page = <PageLoader />;
+    } else if (!user || !profile || profile.user_type !== 'admin') {
       window.location.href = '/admin-login';
-      return null;
+      page = null;
+    } else {
+      page = <AdminDashboardPage />;
     }
-
-    return <AdminDashboardPage />;
-  }
-
-  if (currentPath === '/admin-profile') {
+  } else if (currentPath === '/admin-profile') {
     if (loading) {
-      return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Caricamento...</p>
-          </div>
-        </div>
-      );
-    }
-
-    if (!user || !profile || profile.user_type !== 'admin') {
+      page = <PageLoader />;
+    } else if (!user || !profile || profile.user_type !== 'admin') {
       window.location.href = '/admin-login';
-      return null;
+      page = null;
+    } else {
+      page = <AdminProfilePage />;
     }
-
-    return <AdminProfilePage />;
-  }
-
-  if (currentPath === '/admin-secure-register-2024') {
-    return <AdminRegisterPage />;
-  }
-
-  if (currentPath === '/admin-login') {
-    return <AdminLoginPage />;
-  }
-
-  if (currentPath.startsWith('/business/unclaimed/')) {
+  } else if (currentPath === '/admin-secure-register-2024') {
+    page = <AdminRegisterPage />;
+  } else if (currentPath === '/admin-login') {
+    page = <AdminLoginPage />;
+  } else if (currentPath.startsWith('/business/unclaimed/')) {
     const unclaimedBusinessId = currentPath.split('/')[3];
     if (unclaimedBusinessId) {
-      return <BusinessDetailPage businessId={unclaimedBusinessId} />;
+      page = <BusinessDetailPage businessId={unclaimedBusinessId} />;
     }
-  }
-
-  if (currentPath.startsWith('/business/')) {
+  } else if (currentPath.startsWith('/business/')) {
     const businessId = currentPath.split('/')[2];
     if (businessId && businessId !== 'unclaimed') {
-      return <BusinessDetailPage businessId={businessId} />;
+      page = <BusinessDetailPage businessId={businessId} />;
     }
-  }
-
-  // Redirect admins to admin dashboard when accessing home
-  if (currentPath === '/' && !loading && profile?.user_type === 'admin') {
+  } else if (currentPath === '/' && !loading && profile?.user_type === 'admin') {
     window.history.pushState({}, '', '/admin');
     setCurrentPath('/admin');
-    return <AdminDashboardPage />;
+    page = <AdminDashboardPage />;
+  } else {
+    page = <HomePage />;
   }
 
-  return <HomePage />;
+  return (
+    <RouterContext.Provider value={{ params }}>
+      <Suspense fallback={<PageLoader />}>
+        {page}
+      </Suspense>
+    </RouterContext.Provider>
+  );
 }
