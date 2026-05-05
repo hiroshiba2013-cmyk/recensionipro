@@ -659,10 +659,10 @@ function AuthenticatedHomePage() {
                   <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {topBusinesses.slice(0, 8).map((business: any, index: number) => (
                       <TopBusinessCard
-                        key={business.location_id}
+                        key={business.id}
                         business={business}
                         rank={index + 1}
-                        onClick={() => navigate(`/business/${business.location_id}`)}
+                        onClick={() => navigate(`/business/${business.id}`)}
                       />
                     ))}
                   </div>
@@ -870,8 +870,7 @@ function AuthenticatedHomePage() {
               )}
             </section>
 
-            {!isBusiness && (
-              <section>
+            <section>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
                     <div className="bg-gradient-to-br from-amber-500 to-orange-500 p-3 rounded-xl shadow-lg">
@@ -904,9 +903,8 @@ function AuthenticatedHomePage() {
                   </div>
                 )}
               </section>
-            )}
 
-            {!isBusiness && expiringAuctions.length > 0 && (
+            {expiringAuctions.length > 0 && (
               <section>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
