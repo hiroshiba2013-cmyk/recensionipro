@@ -30,7 +30,7 @@ type CategoryFilter =
 const CATEGORY_TYPES: Record<Exclude<CategoryFilter, 'all' | 'unread'>, string[]> = {
   reviews:     ['review_approved', 'review_rejected', 'admin_new_review'],
   classifieds: ['classified_ad_approved', 'classified_ad_rejected', 'admin_new_classified_ad'],
-  auctions:    ['auction_approved', 'auction_rejected', 'admin_new_auction'],
+  auctions:    ['auction_approved', 'auction_rejected', 'auction_concluded', 'auction_won', 'admin_new_auction'],
   businesses:  ['business_approved', 'business_rejected', 'admin_new_business'],
   jobs:        ['job_approved', 'job_rejected', 'admin_new_job_seeker', 'admin_new_job_posting'],
   reports:     ['report_submitted', 'report_resolved'],
@@ -94,6 +94,10 @@ function getIconConfig(type: string): IconConfig {
       return { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100' };
     case 'auction_rejected':
       return { icon: XCircle, color: 'text-red-600', bg: 'bg-red-100' };
+    case 'auction_concluded':
+      return { icon: Gavel, color: 'text-gray-600', bg: 'bg-gray-100' };
+    case 'auction_won':
+      return { icon: Trophy, color: 'text-yellow-600', bg: 'bg-yellow-100' };
     case 'admin_new_auction':
       return { icon: Gavel, color: 'text-orange-600', bg: 'bg-orange-100' };
 
