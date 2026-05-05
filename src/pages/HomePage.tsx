@@ -667,7 +667,7 @@ function AuthenticatedHomePage() {
       {/* Hero */}
       <section className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
               Online
@@ -678,7 +678,7 @@ function AuthenticatedHomePage() {
             <p className="text-lg text-gray-500 mb-8">
               Esplora attività locali, trova candidati, vendi e compra oggetti
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap justify-center gap-3">
               <button onClick={() => navigate('/classified-ads')} className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors">
                 <Tag className="w-4 h-4 text-blue-500" /> Annunci
               </button>
