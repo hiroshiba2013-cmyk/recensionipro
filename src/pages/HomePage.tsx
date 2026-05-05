@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Star, Search, Award, Tag, Briefcase, Heart, Users, MapPin, Euro, ArrowRight, Check, Building2, Gavel } from 'lucide-react';
+import { Star, Search, Award, Tag, Briefcase, Heart, Users, MapPin, Euro, ArrowRight, Check, Building2, Gavel, Shield, Gift, Lock, Facebook, Instagram, Mail } from 'lucide-react';
 import { AdvancedSearch } from '../components/search/AdvancedSearch';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -31,150 +31,118 @@ export function HomePage() {
 function PricingPreviewSection({ plans, onNavigate }: { plans: any[]; onNavigate: () => void }) {
   const [expanded, setExpanded] = useState(false);
 
-  const isBusiness = (p: any) => p.name?.toLowerCase().includes('business');
-  const privatePlan = plans.find(p => !isBusiness(p));
-  const businessPlan = plans.find(p => isBusiness(p));
+  const isBizPlan = (p: any) => p.name?.toLowerCase().includes('business');
+  const privatePlan = plans.find(p => !isBizPlan(p));
+  const businessPlan = plans.find(p => isBizPlan(p));
 
   if (!privatePlan && !businessPlan) return null;
 
-  const PlanCard = ({ plan, color }: { plan: any; color: 'blue' | 'green' }) => {
-    const isBlue = color === 'blue';
-    return (
-      <div className={`rounded-2xl border-2 p-7 flex flex-col ${
-        isBlue
-          ? 'bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200'
-          : 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200'
-      }`}>
-        <div className="flex items-center gap-3 mb-4">
-          <div className={`p-3 rounded-xl ${isBlue ? 'bg-blue-100' : 'bg-green-100'}`}>
-            {isBlue
-              ? <Users className={`w-6 h-6 ${isBlue ? 'text-blue-600' : 'text-green-600'}`} />
-              : <Building2 className="w-6 h-6 text-green-600" />
-            }
-          </div>
-          <div>
-            <p className={`text-xs font-semibold uppercase tracking-wide ${isBlue ? 'text-blue-500' : 'text-green-500'}`}>
-              {isBlue ? 'Utenti Privati' : 'Utenti Business'}
-            </p>
-            <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-          </div>
-        </div>
-
-        {plan.description && (
-          <p className="text-sm text-gray-600 mb-5 leading-relaxed">{plan.description}</p>
-        )}
-
-        <div className="mb-5">
-          <p className={`text-xs font-semibold mb-1 ${isBlue ? 'text-blue-500' : 'text-green-500'}`}>A partire da</p>
-          <div className="flex items-baseline gap-1">
-            <span className={`text-4xl font-extrabold ${isBlue ? 'text-blue-700' : 'text-green-700'}`}>
-              {parseFloat(plan.price || 0).toFixed(2)}€
-            </span>
-            <span className="text-gray-500 text-sm">/mese</span>
-          </div>
-          <p className="text-xs text-gray-500 mt-1">30 giorni di prova gratuita inclusi</p>
-        </div>
-
-        <ul className="space-y-2 mb-6">
-          {[
-            isBlue ? 'Cerca attività locali verificate' : 'Registra o rivendica la tua attività',
-            isBlue ? 'Scrivi recensioni e guadagna punti' : 'Gestisci sedi e offerte di lavoro',
-            isBlue ? 'Pubblica annunci e partecipa alle aste' : 'Rispondi alle recensioni dei clienti',
-          ].map((feat, i) => (
-            <li key={i} className="flex items-start gap-2">
-              <div className={`rounded-full p-0.5 flex-shrink-0 mt-0.5 ${isBlue ? 'bg-blue-100' : 'bg-green-100'}`}>
-                <Check className={`w-3.5 h-3.5 ${isBlue ? 'text-blue-600' : 'text-green-600'}`} />
-              </div>
-              <span className="text-sm text-gray-700">{feat}</span>
-            </li>
-          ))}
-          <li className={`text-xs font-medium mt-1 ${isBlue ? 'text-blue-600' : 'text-green-600'}`}>
-            + molte altre funzionalità...
-          </li>
-        </ul>
-
-        <button
-          onClick={onNavigate}
-          className={`mt-auto w-full py-3 rounded-xl font-bold text-sm transition-all shadow-sm hover:shadow-md ${
-            isBlue
-              ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600'
-              : 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
-          }`}
-        >
-          Inizia Gratis
-        </button>
-      </div>
-    );
-  };
-
   return (
-    <section className="mb-16">
-      <div className="text-center mb-10">
-        <h2 className="text-4xl font-bold text-gray-900 mb-4">Piani di Abbonamento</h2>
-        <p className="text-xl text-gray-600">Scegli il piano più adatto alle tue esigenze</p>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-8">
-        {privatePlan && <PlanCard plan={privatePlan} color="blue" />}
-        {businessPlan && <PlanCard plan={businessPlan} color="green" />}
-      </div>
-
-      {!expanded ? (
-        <div className="text-center">
-          <button
-            onClick={() => setExpanded(true)}
-            className="inline-flex items-center gap-2 bg-white border-2 border-gray-300 text-gray-700 px-7 py-3 rounded-xl font-semibold hover:border-gray-400 hover:bg-gray-50 transition-all shadow-sm hover:shadow-md"
-          >
-            Scopri tutti gli abbonamenti <ArrowRight className="w-5 h-5" />
-          </button>
+    <section className="py-16 bg-white">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Piani di Abbonamento</h2>
+          <p className="text-gray-500">Scegli il piano più adatto alle tue esigenze</p>
         </div>
-      ) : (
-        <div className="mt-8">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mb-8">
-            {plans
-              .filter(p => p.id !== privatePlan?.id && p.id !== businessPlan?.id)
-              .map(plan => (
-                <div
-                  key={plan.id}
-                  className="bg-white rounded-2xl border-2 border-gray-200 p-6 hover:border-gray-300 hover:shadow-lg transition-all"
-                >
-                  <div className="mb-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                      {isBusiness(plan) ? 'Utenti Business' : 'Utenti Privati'}
-                    </p>
-                    <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-                  </div>
-                  {plan.description && (
-                    <p className="text-sm text-gray-600 mb-4">{plan.description}</p>
-                  )}
-                  <div className="mb-5">
-                    <p className="text-xs text-gray-500 mb-0.5">A partire da</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-extrabold text-gray-800">
-                        {parseFloat(plan.price || 0).toFixed(2)}€
-                      </span>
-                      <span className="text-gray-500 text-sm">/mese</span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={onNavigate}
-                    className="w-full bg-gray-800 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-900 transition-colors"
-                  >
-                    Scopri di più
-                  </button>
-                </div>
-              ))}
-          </div>
+
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          {privatePlan && (
+            <div className="bg-white rounded-2xl border border-gray-200 p-7 shadow-sm hover:shadow-md transition-shadow">
+              <div className="mb-5">
+                <p className="text-xs font-semibold text-blue-600 uppercase tracking-widest mb-1">Utenti Privati</p>
+                <h3 className="text-xl font-bold text-gray-900">{privatePlan.name}</h3>
+              </div>
+              <p className="text-xs text-gray-400 mb-1">A partire da</p>
+              <div className="flex items-baseline gap-1 mb-1">
+                <span className="text-4xl font-extrabold text-blue-600">{parseFloat(privatePlan.price || 0).toFixed(2)}€</span>
+                <span className="text-gray-400 text-sm">/mese</span>
+              </div>
+              <p className="text-xs text-gray-400 mb-6">30 giorni di prova gratuita inclusi</p>
+              <ul className="space-y-2.5 mb-7">
+                {['Cerca attività locali verificate', 'Scrivi recensioni e guadagna punti', 'Pubblica annunci e partecipa alle aste'].map((f, i) => (
+                  <li key={i} className="flex items-center gap-2.5 text-sm text-gray-700">
+                    <Check className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                    {f}
+                  </li>
+                ))}
+                <li className="text-xs text-blue-500 font-medium pl-6">+ molte altre funzionalità...</li>
+              </ul>
+              <button onClick={onNavigate} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold text-sm transition-colors">
+                Inizia Gratis
+              </button>
+            </div>
+          )}
+
+          {businessPlan && (
+            <div className="relative bg-white rounded-2xl border-2 border-green-500 p-7 shadow-md">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="bg-green-500 text-white text-xs font-bold px-4 py-1 rounded-full">Piu scelto</span>
+              </div>
+              <div className="mb-5">
+                <p className="text-xs font-semibold text-green-600 uppercase tracking-widest mb-1">Utenti Business</p>
+                <h3 className="text-xl font-bold text-gray-900">{businessPlan.name}</h3>
+              </div>
+              <p className="text-xs text-gray-400 mb-1">A partire da</p>
+              <div className="flex items-baseline gap-1 mb-1">
+                <span className="text-4xl font-extrabold text-green-600">{parseFloat(businessPlan.price || 0).toFixed(2)}€</span>
+                <span className="text-gray-400 text-sm">/mese</span>
+              </div>
+              <p className="text-xs text-gray-400 mb-6">30 giorni di prova gratuita inclusi</p>
+              <ul className="space-y-2.5 mb-7">
+                {['Registra o rivendica la tua attività', 'Gestisci sedi e offerte di lavoro', 'Rispondi alle recensioni dei clienti'].map((f, i) => (
+                  <li key={i} className="flex items-center gap-2.5 text-sm text-gray-700">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    {f}
+                  </li>
+                ))}
+                <li className="text-xs text-green-500 font-medium pl-6">+ molte altre funzionalità...</li>
+              </ul>
+              <button onClick={onNavigate} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold text-sm transition-colors">
+                Inizia Gratis
+              </button>
+            </div>
+          )}
+        </div>
+
+        {!expanded ? (
           <div className="text-center">
             <button
-              onClick={onNavigate}
-              className="inline-flex items-center gap-2 bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-md hover:shadow-lg"
+              onClick={() => setExpanded(true)}
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 font-semibold text-sm border border-gray-300 hover:border-gray-400 px-6 py-3 rounded-xl bg-white hover:bg-gray-50 transition-all shadow-sm"
             >
-              Vai alla pagina abbonamenti <ArrowRight className="w-5 h-5" />
+              Scopri tutti gli abbonamenti <ArrowRight className="w-4 h-4" />
             </button>
           </div>
-        </div>
-      )}
+        ) : (
+          <div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+              {plans
+                .filter(p => p.id !== privatePlan?.id && p.id !== businessPlan?.id)
+                .map(plan => (
+                  <div key={plan.id} className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
+                    <p className="text-xs font-semibold uppercase tracking-widest mb-1 text-gray-400">
+                      {isBizPlan(plan) ? 'Business' : 'Privati'}
+                    </p>
+                    <h3 className="font-bold text-gray-900 mb-3">{plan.name}</h3>
+                    <p className="text-xs text-gray-400 mb-0.5">A partire da</p>
+                    <div className="flex items-baseline gap-1 mb-4">
+                      <span className="text-2xl font-extrabold text-gray-800">{parseFloat(plan.price || 0).toFixed(2)}€</span>
+                      <span className="text-gray-400 text-xs">/mese</span>
+                    </div>
+                    <button onClick={onNavigate} className="w-full bg-gray-900 hover:bg-black text-white py-2 rounded-lg text-sm font-semibold transition-colors">
+                      Scopri di più
+                    </button>
+                  </div>
+                ))}
+            </div>
+            <div className="text-center">
+              <button onClick={onNavigate} className="inline-flex items-center gap-2 bg-blue-600 text-white px-7 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-sm">
+                Vai alla pagina abbonamenti <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </section>
   );
 }
@@ -182,386 +150,407 @@ function PricingPreviewSection({ plans, onNavigate }: { plans: any[]; onNavigate
 function LandingPage() {
   const navigate = useNavigate();
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
-  const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
-    loadLandingData();
+    supabase
+      .from('subscription_plans')
+      .select('*')
+      .eq('billing_period', 'monthly')
+      .order('price', { ascending: true })
+      .then(({ data }) => { if (data) setSubscriptionPlans(data); });
   }, []);
 
-  const loadLandingData = async () => {
-    try {
-      setLoadingData(true);
-      const { data: plansResult, error } = await supabase
-        .from('subscription_plans')
-        .select('*')
-        .eq('billing_period', 'monthly')
-        .order('price', { ascending: true });
-
-      if (!error && plansResult) {
-        setSubscriptionPlans(plansResult);
-      }
-    } catch (error) {
-      console.error('Error loading landing data:', error);
-    } finally {
-      setLoadingData(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-white">
-      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
-          <div className="text-center">
-            <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">
-              Benvenuto su<br />
-              <span className="text-yellow-300">Trovafacile</span>
-            </h1>
-            <p className="text-xl md:text-2xl text-blue-100 mb-4 max-w-3xl mx-auto leading-relaxed">
-              La piattaforma che connette persone e attività locali in tutta Italia
-            </p>
-            <p className="text-lg text-blue-200 mb-8 max-w-2xl mx-auto">
-              Prova gratuita di 30 giorni per utenti privati e aziende
-            </p>
+    <div className="min-h-screen bg-gray-50">
 
-            <div className="flex justify-center">
-              <button
-                onClick={() => window.location.href = '/?register=user'}
-                className="bg-yellow-400 text-gray-900 px-8 py-4 rounded-lg text-lg font-bold hover:bg-yellow-300 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                Inizia Gratis
-              </button>
+      {/* HERO */}
+      <section className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                La piattaforma che connette persone e attività
+              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-5">
+                Benvenuto su{' '}
+                <span className="text-blue-600">Trovafacile</span>
+              </h1>
+              <p className="text-lg text-gray-500 mb-3 leading-relaxed">
+                La piattaforma che connette persone e attività locali in tutta Italia
+              </p>
+              <p className="text-sm text-gray-400 mb-8">
+                Prova gratuita di 30 giorni per utenti privati e aziende
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => window.location.href = '/?register=user'}
+                  className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-7 py-3.5 rounded-xl font-bold text-base transition-colors shadow-sm hover:shadow-md"
+                >
+                  Inizia Gratis <ArrowRight className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="inline-flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 px-7 py-3.5 rounded-xl font-semibold text-base border border-gray-300 transition-colors"
+                >
+                  Accedi
+                </button>
+              </div>
+              <div className="mt-8 flex flex-wrap gap-5">
+                {[
+                  { icon: Shield, text: '30 giorni di prova gratuita' },
+                  { icon: Lock, text: 'Semplice e sicuro' },
+                  { icon: Check, text: 'Attività verificate' },
+                ].map(({ icon: Icon, text }) => (
+                  <div key={text} className="flex items-center gap-2 text-sm text-gray-500">
+                    <Icon className="w-4 h-4 text-blue-500" />
+                    {text}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* App mockup */}
+            <div className="hidden lg:block">
+              <div className="relative">
+                <div className="bg-gradient-to-br from-blue-50 to-gray-100 rounded-3xl p-6 shadow-xl border border-gray-200">
+                  {/* Browser bar */}
+                  <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+                    <div className="bg-gray-50 px-4 py-3 flex items-center gap-2 border-b border-gray-100">
+                      <div className="flex gap-1.5">
+                        <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                        <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                        <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                      </div>
+                      <div className="flex-1 bg-white rounded-md px-3 py-1.5 text-xs text-gray-400 border border-gray-200">
+                        trovafacile.it
+                      </div>
+                    </div>
+                    <div className="p-5">
+                      {/* Search bar */}
+                      <div className="flex gap-2 mb-4">
+                        <div className="flex-1 bg-gray-100 rounded-lg px-3 py-2 text-xs text-gray-400 flex items-center gap-2">
+                          <Search className="w-3.5 h-3.5" />
+                          Cerca attività, servizi o categorie...
+                        </div>
+                        <div className="bg-blue-600 text-white px-3 py-2 rounded-lg text-xs font-semibold">Cerca</div>
+                      </div>
+                      {/* Categories */}
+                      <p className="text-xs font-semibold text-gray-700 mb-3">Categorie popolari</p>
+                      <div className="grid grid-cols-6 gap-2 mb-4">
+                        {[
+                          { icon: '🍕', label: 'Ristoranti' },
+                          { icon: '🔧', label: 'Servizi' },
+                          { icon: '💊', label: 'Salute' },
+                          { icon: '🏠', label: 'Casa' },
+                          { icon: '🚗', label: 'Auto' },
+                          { icon: '✂️', label: 'Bellezza' },
+                        ].map(({ icon, label }) => (
+                          <div key={label} className="flex flex-col items-center gap-1">
+                            <div className="w-9 h-9 bg-gray-50 border border-gray-100 rounded-xl flex items-center justify-center text-base">{icon}</div>
+                            <span className="text-[9px] text-gray-500 text-center leading-tight">{label}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Activities */}
+                      <p className="text-xs font-semibold text-gray-700 mb-3">Attività in evidenza</p>
+                      <div className="space-y-2">
+                        {[
+                          { name: 'Ristorante Da Marco', cat: 'Ristoranti', rating: '4.8', verified: true, color: 'bg-orange-400' },
+                          { name: 'Idraulica Express', cat: 'Servizi', rating: '4.5', verified: true, color: 'bg-blue-400' },
+                          { name: 'Parrucchiere Style', cat: 'Bellezza', rating: '4.7', verified: false, color: 'bg-pink-400' },
+                        ].map((biz) => (
+                          <div key={biz.name} className="flex items-center gap-2.5 bg-gray-50 rounded-lg p-2.5 border border-gray-100">
+                            <div className={`w-8 h-8 ${biz.color} rounded-lg flex-shrink-0`}></div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1">
+                                <p className="text-[10px] font-semibold text-gray-800 truncate">{biz.name}</p>
+                                {biz.verified && <div className="w-2.5 h-2.5 bg-blue-500 rounded-full flex-shrink-0"></div>}
+                              </div>
+                              <div className="flex items-center gap-1 mt-0.5">
+                                {[1,2,3,4,5].map(s => <Star key={s} className={`w-2.5 h-2.5 ${s <= Math.round(parseFloat(biz.rating)) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />)}
+                                <span className="text-[9px] text-gray-500 ml-0.5">({biz.rating})</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <section className="mb-16">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Scegli il Tuo Account
-            </h2>
-            <p className="text-xl text-gray-600">
-              Unisciti a Trovafacile e scopri tutte le funzionalità della piattaforma
-            </p>
+      {/* ACCOUNT TYPE */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Scegli il Tuo Account</h2>
+            <p className="text-gray-500">Unisciti a Trovafacile e scopri tutte le funzionalità della piattaforma</p>
           </div>
-
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <div className="bg-gradient-to-br from-blue-50 via-white to-cyan-50 rounded-2xl shadow-xl border-2 border-blue-200 p-8 hover:shadow-2xl transition-all transform hover:scale-105">
-              <div className="text-center mb-6">
-                <div className="inline-block bg-gradient-to-br from-blue-500 to-cyan-500 p-4 rounded-full mb-4">
-                  <Users className="w-12 h-12 text-white" />
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Privato */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-4">
+                  <Users className="w-8 h-8 text-blue-600" />
                 </div>
-                <h3 className="text-3xl font-bold text-gray-900 mb-3">Utente Privato</h3>
-                <p className="text-gray-600 text-lg leading-relaxed">
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Utente Privato</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">
                   Perfetto per famiglie e persone che vogliono trovare attività locali, lasciare recensioni e accedere a vantaggi esclusivi
                 </p>
               </div>
-
-              <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
-                <h4 className="font-bold text-gray-900 mb-4 text-lg">Cosa puoi fare:</h4>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <div className="bg-blue-100 rounded-full p-1 flex-shrink-0 mt-0.5">
-                      <Check className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <span className="text-gray-700">Cerca e scopri attività locali verificate</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="bg-blue-100 rounded-full p-1 flex-shrink-0 mt-0.5">
-                      <Check className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <span className="text-gray-700">Scrivi recensioni e guadagna punti</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="bg-blue-100 rounded-full p-1 flex-shrink-0 mt-0.5">
-                      <Check className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <span className="text-gray-700">Pubblica annunci di compravendita e cerca lavoro</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="bg-blue-100 rounded-full p-1 flex-shrink-0 mt-0.5">
-                      <Check className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <span className="text-gray-700">Gestisci fino a 4 profili familiari</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="bg-blue-100 rounded-full p-1 flex-shrink-0 mt-0.5">
-                      <Check className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <span className="text-gray-700">Partecipa alla classifica e vinci gift card</span>
-                  </li>
+              <div className="mb-6">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Cosa puoi fare:</p>
+                <ul className="space-y-2.5">
+                  {['Cerca e scopri attività locali verificate', 'Scrivi recensioni e guadagna punti', 'Pubblica annunci di compravendita e cerca lavoro', 'Gestisci fino a 4 profili familiari', 'Partecipa alla classifica e vinci gift card'].map((item, i) => (
+                    <li key={i} className="flex items-center gap-2.5 text-sm text-gray-700">
+                      <Check className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                      {item}
+                    </li>
+                  ))}
                 </ul>
               </div>
-
-              <button
-                onClick={() => window.location.href = '/?register=user'}
-                className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-              >
-                Inizia Gratis <ArrowRight className="w-5 h-5" />
+              <button onClick={() => window.location.href = '/?register=user'} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition-colors">
+                Inizia Gratis
               </button>
-              <p className="text-center text-sm text-gray-500 mt-3">30 giorni di prova gratuita</p>
+              <p className="text-center text-xs text-gray-400 mt-2">30 giorni di prova gratuita</p>
             </div>
 
-            <div className="bg-gradient-to-br from-green-50 via-white to-emerald-50 rounded-2xl shadow-xl border-2 border-green-200 p-8 hover:shadow-2xl transition-all transform hover:scale-105">
-              <div className="text-center mb-6">
-                <div className="inline-block bg-gradient-to-br from-green-500 to-emerald-500 p-4 rounded-full mb-4">
-                  <Building2 className="w-12 h-12 text-white" />
+            {/* Business */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-4">
+                  <Building2 className="w-8 h-8 text-green-600" />
                 </div>
-                <h3 className="text-3xl font-bold text-gray-900 mb-3">Utente Business</h3>
-                <p className="text-gray-600 text-lg leading-relaxed">
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Utente Business</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">
                   Ideale per aziende e attività commerciali che vogliono farsi trovare, gestire recensioni e pubblicare offerte di lavoro
                 </p>
               </div>
-
-              <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
-                <h4 className="font-bold text-gray-900 mb-4 text-lg">Cosa puoi fare:</h4>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <div className="bg-green-100 rounded-full p-1 flex-shrink-0 mt-0.5">
-                      <Check className="w-4 h-4 text-green-600" />
-                    </div>
-                    <span className="text-gray-700">Rivendica o registra la tua attività</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="bg-green-100 rounded-full p-1 flex-shrink-0 mt-0.5">
-                      <Check className="w-4 h-4 text-green-600" />
-                    </div>
-                    <span className="text-gray-700">Gestisci più sedi aziendali</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="bg-green-100 rounded-full p-1 flex-shrink-0 mt-0.5">
-                      <Check className="w-4 h-4 text-green-600" />
-                    </div>
-                    <span className="text-gray-700">Rispondi alle recensioni dei clienti</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="bg-green-100 rounded-full p-1 flex-shrink-0 mt-0.5">
-                      <Check className="w-4 h-4 text-green-600" />
-                    </div>
-                    <span className="text-gray-700">Pubblica offerte di lavoro e trova candidati</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="bg-green-100 rounded-full p-1 flex-shrink-0 mt-0.5">
-                      <Check className="w-4 h-4 text-green-600" />
-                    </div>
-                    <span className="text-gray-700">Crea sconti e promozioni verificate</span>
-                  </li>
+              <div className="mb-6">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Cosa puoi fare:</p>
+                <ul className="space-y-2.5">
+                  {['Rivendica o registra la tua attività', 'Gestisci più sedi aziendali', 'Rispondi alle recensioni dei clienti', 'Pubblica offerte di lavoro e trova candidati', 'Crea sconti e promozioni verificate'].map((item, i) => (
+                    <li key={i} className="flex items-center gap-2.5 text-sm text-gray-700">
+                      <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                      {item}
+                    </li>
+                  ))}
                 </ul>
               </div>
-
-              <button
-                onClick={() => window.location.href = '/?register=business'}
-                className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-4 rounded-xl font-bold text-lg hover:from-green-600 hover:to-emerald-600 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-              >
-                Inizia Gratis <ArrowRight className="w-5 h-5" />
+              <button onClick={() => window.location.href = '/?register=business'} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold transition-colors">
+                Inizia Gratis
               </button>
-              <p className="text-center text-sm text-gray-500 mt-3">30 giorni di prova gratuita</p>
+              <p className="text-center text-xs text-gray-400 mt-2">30 giorni di prova gratuita</p>
             </div>
           </div>
-        </section>
-        <PricingPreviewSection plans={subscriptionPlans} onNavigate={() => navigate('/subscription')} />
+        </div>
+      </section>
 
-        <section className="mb-16">
-          <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl border-2 border-orange-200 overflow-hidden">
-            <div className="p-10 md:p-12">
-              <div className="flex flex-col md:flex-row items-center gap-8">
-                <div className="flex-shrink-0">
-                  <div className="bg-gradient-to-br from-orange-500 to-red-500 p-5 rounded-2xl shadow-lg">
-                    <Gavel className="w-14 h-14 text-white" />
-                  </div>
+      {/* PRICING */}
+      <PricingPreviewSection plans={subscriptionPlans} onNavigate={() => navigate('/subscription')} />
+
+      {/* ASTE */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-3">Aste Online</h2>
+          <p className="text-gray-500 mb-10 max-w-2xl mx-auto">
+            Partecipa alle aste e trova occasioni uniche. Metti all'asta oggetti che non usi più o aggiudica i migliori lotti pubblicati dagli utenti della piattaforma. Tutto in modo trasparente e sicuro.
+          </p>
+          <div className="grid grid-cols-3 gap-4 max-w-xl mx-auto mb-8">
+            {[
+              { icon: Shield, color: 'bg-orange-100 text-orange-600', label: '100%', sub: 'Aste verificate e approvate' },
+              { icon: Gift, color: 'bg-amber-100 text-amber-600', label: 'Gratis', sub: 'Pubblicazione asta senza costi' },
+              { icon: Lock, color: 'bg-blue-100 text-blue-600', label: 'Sicuro', sub: 'Deposito cauzionale a tutela' },
+            ].map(({ icon: Icon, color, label, sub }) => (
+              <div key={label} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm text-center">
+                <div className={`w-10 h-10 ${color} rounded-xl flex items-center justify-center mx-auto mb-2`}>
+                  <Icon className="w-5 h-5" />
                 </div>
-                <div className="flex-1 text-center md:text-left">
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-                    Aste Online
-                  </h2>
-                  <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                    Partecipa alle aste e trova occasioni uniche. Metti all'asta oggetti che non usi più o aggiudica i migliori lotti pubblicati dagli utenti della piattaforma. Tutto in modo trasparente e sicuro.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-orange-100">
-                      <div className="text-2xl font-bold text-orange-600 mb-1">100%</div>
-                      <div className="text-sm text-gray-600">Aste verificate e approvate</div>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-orange-100">
-                      <div className="text-2xl font-bold text-orange-600 mb-1">Gratis</div>
-                      <div className="text-sm text-gray-600">Pubblicazione asta senza costi</div>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-orange-100">
-                      <div className="text-2xl font-bold text-orange-600 mb-1">Sicuro</div>
-                      <div className="text-sm text-gray-600">Deposito cauzionale a tutela</div>
-                    </div>
-                  </div>
-                  <p className="text-sm text-orange-700 font-medium flex items-center justify-center md:justify-start gap-2 mb-4">
-                    <Award className="w-4 h-4" />
-                    Accedi o registrati per visualizzare le aste attive e fare offerte
-                  </p>
-                  <button
-                    onClick={() => navigate('/login')}
-                    className="bg-orange-600 text-white px-7 py-3 rounded-xl font-bold hover:bg-orange-700 transition-all shadow-md hover:shadow-lg inline-flex items-center gap-2"
-                  >
-                    Accedi per partecipare <ArrowRight className="w-5 h-5" />
-                  </button>
-                </div>
+                <p className="font-bold text-gray-900 text-sm">{label}</p>
+                <p className="text-xs text-gray-400 mt-0.5 leading-tight">{sub}</p>
               </div>
-            </div>
+            ))}
           </div>
-        </section>
+          <button onClick={() => navigate('/login')} className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-7 py-3 rounded-xl font-bold transition-colors shadow-sm">
+            Accedi per partecipare <ArrowRight className="w-4 h-4" />
+          </button>
+          <p className="text-xs text-gray-400 mt-3 flex items-center justify-center gap-1.5">
+            <Lock className="w-3.5 h-3.5" />
+            Accedi o registrati per visualizzare le aste attive e fare offerte
+          </p>
+        </div>
+      </section>
 
-        <section className="mb-16">
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200 overflow-hidden">
-            <div className="p-10 md:p-12">
-              <div className="flex flex-col md:flex-row items-center gap-8">
-                <div className="flex-shrink-0">
-                  <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-5 rounded-2xl shadow-lg">
-                    <Tag className="w-14 h-14 text-white" />
-                  </div>
+      {/* ANNUNCI */}
+      <section className="py-16 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-3">Annunci Classificati</h2>
+          <p className="text-gray-500 mb-10 max-w-2xl mx-auto">
+            Compra, vendi o regala oggetti usati direttamente tra privati. Pubblica annunci in modo gratuito e raggiungi migliaia di utenti nella tua zona. Nessuna commissione, nessuna intermediazione.
+          </p>
+          <div className="grid grid-cols-3 gap-4 max-w-xl mx-auto mb-8">
+            {[
+              { icon: Tag, color: 'bg-green-100 text-green-600', label: 'Vendo', sub: 'Dai una seconda vita agli oggetti' },
+              { icon: Search, color: 'bg-blue-100 text-blue-600', label: 'Cerco', sub: 'Trova ciò che stai cercando' },
+              { icon: Gift, color: 'bg-pink-100 text-pink-600', label: 'Regalo', sub: 'Dona ciò che non usi più' },
+            ].map(({ icon: Icon, color, label, sub }) => (
+              <div key={label} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm text-center">
+                <div className={`w-10 h-10 ${color} rounded-xl flex items-center justify-center mx-auto mb-2`}>
+                  <Icon className="w-5 h-5" />
                 </div>
-                <div className="flex-1 text-center md:text-left">
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-                    Annunci Classificati
-                  </h2>
-                  <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                    Compra, vendi o regala oggetti usati direttamente tra privati. Pubblica annunci in modo gratuito e raggiungi migliaia di utenti nella tua zona. Nessuna commissione, nessuna intermediazione.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-green-100">
-                      <div className="text-2xl font-bold text-green-600 mb-1">Vendo</div>
-                      <div className="text-sm text-gray-600">Dai una seconda vita agli oggetti</div>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-green-100">
-                      <div className="text-2xl font-bold text-green-600 mb-1">Cerco</div>
-                      <div className="text-sm text-gray-600">Trova ciò che stai cercando</div>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-green-100">
-                      <div className="text-2xl font-bold text-green-600 mb-1">Regalo</div>
-                      <div className="text-sm text-gray-600">Dona ciò che non usi più</div>
-                    </div>
-                  </div>
-                  <p className="text-sm text-green-700 font-medium flex items-center justify-center md:justify-start gap-2 mb-4">
-                    <Award className="w-4 h-4" />
-                    Accedi o registrati per sfogliare e pubblicare annunci
-                  </p>
-                  <button
-                    onClick={() => navigate('/login')}
-                    className="bg-green-600 text-white px-7 py-3 rounded-xl font-bold hover:bg-green-700 transition-all shadow-md hover:shadow-lg inline-flex items-center gap-2"
-                  >
-                    Accedi per vedere gli annunci <ArrowRight className="w-5 h-5" />
-                  </button>
-                </div>
+                <p className="font-bold text-gray-900 text-sm">{label}</p>
+                <p className="text-xs text-gray-400 mt-0.5 leading-tight">{sub}</p>
               </div>
+            ))}
+          </div>
+          <button onClick={() => navigate('/login')} className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-7 py-3 rounded-xl font-bold transition-colors shadow-sm">
+            Accedi per vedere gli annunci <ArrowRight className="w-4 h-4" />
+          </button>
+          <p className="text-xs text-gray-400 mt-3 flex items-center justify-center gap-1.5">
+            <Lock className="w-3.5 h-3.5" />
+            Accedi o registrati per sfogliare e pubblicare annunci
+          </p>
+        </div>
+      </section>
+
+      {/* SOLIDARIETA */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="w-14 h-14 bg-pink-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+            <Heart className="w-7 h-7 text-pink-600" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-3">Sezione Solidarietà</h2>
+          <p className="text-gray-500 mb-6 leading-relaxed">
+            Il 10% del fatturato di Trovafacile viene devoluto in beneficenza ad associazioni e enti no profit che gli utenti sceglieranno attraverso un form dedicato.
+          </p>
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm text-left mb-6">
+            <h3 className="font-bold text-gray-900 mb-3">Come Funziona</h3>
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Award className="w-4 h-4 text-pink-600" />
+              </div>
+              <p className="text-sm text-gray-600">Tutti i documenti contabili e le donazioni effettuate sono pubblicamente consultabili</p>
             </div>
           </div>
-        </section>
+          <button onClick={() => navigate('/solidarity')} className="inline-flex items-center gap-2 bg-pink-600 hover:bg-pink-700 text-white px-7 py-3 rounded-xl font-semibold transition-colors">
+            Scopri di Più <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      </section>
 
-        <section className="mb-16 bg-gradient-to-r from-pink-50 to-red-50 rounded-2xl p-12 border-2 border-pink-200">
-          <div className="text-center mb-8">
-            <div className="inline-block bg-gradient-to-br from-pink-500 to-red-500 p-4 rounded-full mb-4">
-              <Heart className="w-12 h-12 text-white" />
-            </div>
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Sezione Solidarietà
-            </h2>
-            <p className="text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
-              Il 10% del fatturato di Trovafacile viene devoluto in beneficenza ad associazioni e enti no profit che gli utenti sceglieranno attraverso un form dedicato.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-xl p-8 shadow-lg max-w-3xl mx-auto">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Come Funziona</h3>
-            <ul className="space-y-4 text-gray-700">
-              <li className="flex items-start gap-3">
-                <div className="bg-pink-100 rounded-full p-2 flex-shrink-0">
-                  <Award className="w-5 h-5 text-pink-600" />
-                </div>
-                <p>Tutti i documenti contabili e le donazioni effettuate sono pubblicamente consultabili</p>
-              </li>
-            </ul>
-
-            <div className="mt-6 text-center">
-              <button
-                onClick={() => navigate('/solidarity')}
-                className="bg-pink-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-pink-700 transition-all inline-flex items-center gap-2"
-              >
-                Scopri di Più <ArrowRight className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <section>
+      {/* COSA PUOI FARE */}
+      <section className="py-16 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Cosa Puoi Fare con Trovafacile
-            </h2>
-            <p className="text-xl text-gray-600">
-              Una piattaforma completa per connettere persone e attività
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Cosa Puoi Fare con Trovafacile</h2>
+            <p className="text-gray-500">Una piattaforma completa per connettere persone e attività</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { step: '1', color: 'bg-blue-500', label: 'Registrati', desc: 'Crea il tuo account gratuito in pochi secondi' },
+              { step: '2', color: 'bg-teal-500', label: 'Esplora', desc: 'Cerca attività, servizi, aste e annunci nella tua zona' },
+              { step: '3', color: 'bg-orange-500', label: 'Interagisci', desc: 'Lascia recensioni, partecipa alle aste e pubblica annunci' },
+              { step: '4', color: 'bg-green-500', label: 'Guadagna', desc: 'Ottieni vantaggi esclusivi e partecipa alla classifica' },
+            ].map(({ step, color, label, desc }) => (
+              <div key={step} className="text-center">
+                <div className={`w-12 h-12 ${color} text-white rounded-full flex items-center justify-center text-lg font-bold mx-auto mb-3 shadow-sm`}>
+                  {step}
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1">{label}</h3>
+                <p className="text-xs text-gray-500 leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="bg-gray-900 text-white pt-14 pb-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-5 gap-8 mb-10">
+            <div className="md:col-span-1">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <MapPin className="w-4 h-4 text-white" />
+                </div>
+                <span className="font-bold text-lg">Trovafacile</span>
+              </div>
+              <p className="text-gray-400 text-sm leading-relaxed mb-4">La piattaforma che connette persone e attività locali in tutta Italia.</p>
+              <div className="flex gap-3">
+                <button className="w-8 h-8 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-center transition-colors">
+                  <Facebook className="w-4 h-4 text-gray-400" />
+                </button>
+                <button className="w-8 h-8 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-center transition-colors">
+                  <Instagram className="w-4 h-4 text-gray-400" />
+                </button>
+                <button className="w-8 h-8 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-center transition-colors">
+                  <Mail className="w-4 h-4 text-gray-400" />
+                </button>
+              </div>
+            </div>
+
+            {[
+              {
+                title: 'Navigazione',
+                links: [
+                  { label: 'Verifica Attività', href: '/search' },
+                  { label: 'Solidarietà', href: '/solidarity' },
+                  { label: 'Piani', href: '/subscription' },
+                  { label: 'Regole', href: '/rules' },
+                ],
+              },
+              {
+                title: 'Azienda',
+                links: [
+                  { label: 'Contatti', href: '/contact' },
+                  { label: 'Chi siamo', href: '/contact' },
+                  { label: 'Lavora con noi', href: '/contact' },
+                ],
+              },
+              {
+                title: 'Supporto',
+                links: [
+                  { label: 'Domande frequenti', href: '/rules' },
+                  { label: 'Assistenza', href: '/contact' },
+                  { label: 'Privacy e Cookie', href: '/rules' },
+                ],
+              },
+              {
+                title: 'Legale',
+                links: [
+                  { label: 'Termini di servizio', href: '/rules' },
+                  { label: 'Privacy Policy', href: '/rules' },
+                  { label: 'Condizioni d\'uso', href: '/rules' },
+                ],
+              },
+            ].map(col => (
+              <div key={col.title}>
+                <h4 className="font-semibold text-sm mb-3 text-gray-300">{col.title}</h4>
+                <ul className="space-y-2">
+                  {col.links.map(link => (
+                    <li key={link.label}>
+                      <button onClick={() => navigate(link.href)} className="text-gray-400 hover:text-white text-sm transition-colors text-left">
+                        {link.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <div className="border-t border-gray-800 pt-6 text-center">
+            <p className="text-gray-500 text-sm">
+              &copy; {new Date().getFullYear()} Trovafacile. Tutti i diritti riservati.
             </p>
           </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all border-2 border-blue-100 hover:border-blue-300">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 w-16 h-16 rounded-xl flex items-center justify-center mb-4">
-                <Search className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Cerca Attività</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Trova attività commerciali verificate nella tua zona. Consulta recensioni autentiche e confronta servizi.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all border-2 border-yellow-100 hover:border-yellow-300">
-              <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 w-16 h-16 rounded-xl flex items-center justify-center mb-4">
-                <Star className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Scrivi Recensioni</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Condividi la tua esperienza con foto. Guadagna punti per ogni recensione verificata.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all border-2 border-green-100 hover:border-green-300">
-              <div className="bg-gradient-to-br from-green-500 to-green-600 w-16 h-16 rounded-xl flex items-center justify-center mb-4">
-                <Tag className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Annunci Gratis</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Compra, vendi o regala oggetti usati. Pubblica annunci senza costi.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all border-2 border-orange-100 hover:border-orange-300">
-              <div className="bg-gradient-to-br from-orange-500 to-orange-600 w-16 h-16 rounded-xl flex items-center justify-center mb-4">
-                <Briefcase className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Trova Lavoro</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Cerca opportunità nella tua zona o pubblica il tuo profilo per essere contattato.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all border-2 border-red-100 hover:border-red-300">
-              <div className="bg-gradient-to-br from-red-500 to-red-600 w-16 h-16 rounded-xl flex items-center justify-center mb-4">
-                <Award className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Vinci Premi</h3>
-              <p className="text-gray-600 leading-relaxed">
-                I migliori 20 utenti dell'anno vincono gift card ricaricabili.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all border-2 border-pink-100 hover:border-pink-300">
-              <div className="bg-gradient-to-br from-pink-500 to-pink-600 w-16 h-16 rounded-xl flex items-center justify-center mb-4">
-                <Heart className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Solidarietà</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Il 10% del fatturato va in beneficenza. Consulta i documenti di trasparenza.
-              </p>
-            </div>
-          </div>
-        </section>
-      </div>
+        </div>
+      </footer>
     </div>
   );
 }
