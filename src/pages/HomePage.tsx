@@ -293,7 +293,7 @@ function LandingPage() {
           </p>
           <div className="grid grid-cols-3 gap-4 max-w-xl mx-auto mb-8">
             {[
-              { icon: Shield, color: 'bg-orange-100 text-orange-600', label: '100%', sub: 'Aste verificate e approvate' },
+              { icon: Gavel, color: 'bg-orange-100 text-orange-600', label: '100%', sub: 'Aste verificate e approvate' },
               { icon: Gift, color: 'bg-amber-100 text-amber-600', label: 'Gratis', sub: 'Pubblicazione asta senza costi' },
               { icon: Lock, color: 'bg-blue-100 text-blue-600', label: 'Sicuro', sub: 'Deposito cauzionale a tutela' },
             ].map(({ icon: Icon, color, label, sub }) => (
