@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Search } from 'lucide-react';
 import { supabase, BusinessCategory } from '../lib/supabase';
 import { LocationCard } from '../components/business/LocationCard';
 import { AdvancedSearch, SearchFilters } from '../components/search/AdvancedSearch';
@@ -308,21 +308,26 @@ export function SearchResultsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-green-50">
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 text-white py-16 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600">
+        <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
           <button
             onClick={handleBackToHome}
-            className="flex items-center gap-2 text-white bg-white bg-opacity-20 hover:bg-opacity-30 transition-all px-4 py-2 rounded-lg mb-6 font-medium"
+            className="flex items-center gap-2 text-white bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all px-4 py-2 rounded-lg mb-6 font-medium"
           >
             <ArrowLeft className="w-5 h-5" />
             <span>Torna alla home</span>
           </button>
 
           <div className="text-center mb-8">
-            <h1 className="text-5xl font-bold mb-4 drop-shadow-lg">Cerca Attività</h1>
-            <p className="text-xl text-blue-100">
-              Trova le migliori attività della tua zona
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl mb-4 mx-auto">
+              <Search className="w-7 h-7 text-white" />
+            </div>
+            <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-3 drop-shadow-lg">Cerca Attivita</h1>
+            <p className="text-blue-100 text-lg md:text-xl">
+              Trova le migliori attivita della tua zona
             </p>
           </div>
 

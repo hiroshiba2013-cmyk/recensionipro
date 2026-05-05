@@ -538,34 +538,47 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-purple-50 py-8">
+    <div className="min-h-screen bg-gray-50">
       <TrialExpirationModal />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 bg-gradient-to-r from-blue-100 to-purple-100 rounded-2xl p-8 shadow-lg border-4 border-blue-200">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                Dashboard {profile.user_type === 'business' ? 'Attività' : 'Cliente'}
-              </h1>
-              <p className="text-gray-700 text-lg font-medium">
-                Benvenuto, {activeProfile ? (activeProfile.nickname || activeProfile.name) : profile.full_name}!
-              </p>
+      {/* Hero */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600">
+        <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl">
+                {profile.user_type === 'business'
+                  ? <Building className="w-7 h-7 text-white" />
+                  : <User className="w-7 h-7 text-white" />
+                }
+              </div>
+              <div>
+                <h1 className="text-3xl md:text-4xl font-extrabold text-white drop-shadow-lg">
+                  Dashboard {profile.user_type === 'business' ? 'Attivita' : 'Cliente'}
+                </h1>
+                <p className="text-blue-100 text-base mt-1">
+                  Benvenuto, {activeProfile ? (activeProfile.nickname || activeProfile.name) : profile.full_name}!
+                </p>
+              </div>
             </div>
             {currentSubscription && (
-              <div className="bg-white rounded-xl p-4 shadow-md border-2 border-blue-300">
-                <p className="text-xs text-gray-600 mb-1">Piano Attivo</p>
-                <p className="text-lg font-bold text-gray-900">{currentSubscription.plan.name}</p>
-                <p className="text-sm font-semibold text-blue-600">
-                  {currentSubscription.plan.billing_period === 'monthly' ? 'Abbonamento Mensile' : 'Abbonamento Annuale'}
+              <div className="bg-white/15 backdrop-blur-sm rounded-2xl px-6 py-4 border border-white/20">
+                <p className="text-xs text-blue-200 mb-1">Piano Attivo</p>
+                <p className="text-lg font-bold text-white">{currentSubscription.plan.name}</p>
+                <p className="text-sm text-blue-200">
+                  {currentSubscription.plan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'}
                 </p>
                 {currentSubscription.status === 'trial' && (
-                  <p className="text-xs text-purple-600 font-semibold mt-1">Periodo di prova</p>
+                  <p className="text-xs text-yellow-300 font-semibold mt-1">Periodo di prova</p>
                 )}
               </div>
             )}
           </div>
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {profile.user_type === 'business' && (
           <TrialStatusBanner

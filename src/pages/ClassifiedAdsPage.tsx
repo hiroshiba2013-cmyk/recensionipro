@@ -193,25 +193,34 @@ export function ClassifiedAdsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Annunci</h1>
-            <p className="text-gray-600 mt-2">
-              Trova quello che cerchi o pubblica il tuo annuncio
-            </p>
+      {/* Hero */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600">
+        <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl">
+                <Tag className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl md:text-5xl font-extrabold text-white drop-shadow-lg">Annunci</h1>
+                <p className="text-blue-100 text-base md:text-lg mt-1">Trova quello che cerchi o pubblica il tuo annuncio</p>
+              </div>
+            </div>
+            {user && (
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="inline-flex items-center gap-2 bg-white text-blue-600 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition-colors shadow-lg"
+              >
+                <Plus className="w-5 h-5" />
+                Pubblica Annuncio
+              </button>
+            )}
           </div>
-          {user && (
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              Pubblica Annuncio
-            </button>
-          )}
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-8">
 
         {/* Ad Type Tabs */}
         <div className="bg-white rounded-lg shadow-sm p-4 mb-6">

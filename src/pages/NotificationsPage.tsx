@@ -193,65 +193,52 @@ export function NotificationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white shadow-sm border-b border-gray-200">
-          <div className="p-4 md:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => window.history.back()}
-                  className="text-gray-600 hover:text-gray-900 transition-colors"
-                >
-                  <ArrowLeft className="w-6 h-6" />
-                </button>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <Bell className="w-6 h-6" />
-                    Notifiche
-                  </h1>
-                  {unreadCount > 0 && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      {unreadCount} non {unreadCount === 1 ? 'letta' : 'lette'}
-                    </p>
-                  )}
-                </div>
+      {/* Hero */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600">
+        <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl">
+                <Bell className="w-7 h-7 text-white" />
               </div>
-
+              <div>
+                <h1 className="text-3xl md:text-4xl font-extrabold text-white drop-shadow-lg">Notifiche</h1>
+                <p className="text-blue-100 text-sm mt-1">
+                  {unreadCount > 0 ? `${unreadCount} non ${unreadCount === 1 ? 'letta' : 'lette'}` : 'Tutte lette'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex gap-2 bg-white/10 backdrop-blur-sm rounded-xl p-1">
+                <button
+                  onClick={() => setFilter('all')}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${filter === 'all' ? 'bg-white text-blue-700' : 'text-white hover:bg-white/20'}`}
+                >
+                  Tutte ({notifications.length})
+                </button>
+                <button
+                  onClick={() => setFilter('unread')}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${filter === 'unread' ? 'bg-white text-blue-700' : 'text-white hover:bg-white/20'}`}
+                >
+                  Non lette ({unreadCount})
+                </button>
+              </div>
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-white text-blue-700 rounded-xl font-semibold text-sm hover:bg-blue-50 transition-colors"
                 >
-                  <CheckCheck className="w-5 h-5" />
-                  <span className="hidden sm:inline">Segna tutte come lette</span>
+                  <CheckCheck className="w-4 h-4" />
+                  <span className="hidden sm:inline">Segna tutte</span>
                 </button>
               )}
             </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  filter === 'all'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Tutte ({notifications.length})
-              </button>
-              <button
-                onClick={() => setFilter('unread')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  filter === 'unread'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Non lette ({unreadCount})
-              </button>
-            </div>
           </div>
         </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto">
 
         <div className="divide-y divide-gray-200">
           {filteredNotifications.length === 0 ? (

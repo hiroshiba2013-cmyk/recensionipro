@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
-import { Check, Heart, Star, Shield, TrendingUp, Users, Gift, Trophy, MessageSquare, Bookmark, Megaphone, Briefcase, ShoppingBag, Eye, Tag } from 'lucide-react';
+import { Check, Heart, Star, Shield, TrendingUp, Users, Gift, Trophy, MessageSquare, Bookmark, Megaphone, Briefcase, ShoppingBag, Eye, Tag, CreditCard } from 'lucide-react';
 
 interface SubscriptionPlan {
   id: string;
@@ -314,19 +314,20 @@ export function SubscriptionPage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Piani e Prezzi
-            </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-4">
-              Scegli il piano perfetto per te o per la tua attività
-            </p>
-            <p className="text-lg text-gray-700 max-w-3xl mx-auto">
-              Il primo mese di abbonamento è gratuito e dopo scegli se abbonarti o cancellare il profilo
-            </p>
+      <div className="min-h-screen bg-gray-50">
+        {/* Hero */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600">
+          <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mb-5 mx-auto">
+              <CreditCard className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-3 drop-shadow-lg">Piani e Prezzi</h1>
+            <p className="text-blue-100 text-lg md:text-xl max-w-2xl mx-auto mb-2">Scegli il piano perfetto per te o per la tua attivita</p>
+            <p className="text-blue-200 text-base">Il primo mese di abbonamento e gratuito</p>
           </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
           <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-400 rounded-2xl shadow-xl p-12 mb-12">
             <div className="flex items-center justify-center mb-6">
@@ -596,8 +597,19 @@ export function SubscriptionPage() {
 
   if (profile?.user_type === 'customer') {
     return (
-      <div className="min-h-screen bg-gray-50 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gray-50">
+        {/* Hero */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600">
+          <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mb-5 mx-auto">
+              <CreditCard className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-3 drop-shadow-lg">Prezzi Abbonamento</h1>
+            <p className="text-blue-100 text-lg md:text-xl max-w-2xl mx-auto">Gestisci il tuo abbonamento e accedi a sconti esclusivi</p>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
               Prezzi Abbonamento
@@ -1040,16 +1052,19 @@ export function SubscriptionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Il Tuo Abbonamento Business
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Gestisci la tua attività, rispondi alle recensioni e offri sconti ai tuoi clienti
-          </p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600">
+        <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mb-5 mx-auto">
+            <CreditCard className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-3 drop-shadow-lg">Abbonamento Business</h1>
+          <p className="text-blue-100 text-lg md:text-xl max-w-2xl mx-auto">Gestisci la tua attivita, rispondi alle recensioni e offri sconti ai clienti</p>
         </div>
+      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
         <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 rounded-2xl shadow-lg p-12 mb-12 text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">

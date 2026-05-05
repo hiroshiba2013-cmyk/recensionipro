@@ -394,7 +394,24 @@ export function MessagesPage() {
   }
 
   return (
-    <div className="h-screen bg-gray-50 flex">
+    <div className="flex flex-col" style={{height: 'calc(100vh - 0px)'}}>
+      {/* Hero */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600 flex-shrink-0">
+        <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl">
+              <MessageCircle className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-extrabold text-white drop-shadow-lg">Messaggi</h1>
+              <p className="text-blue-100 text-sm">Le tue conversazioni in un unico posto</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden bg-gray-50">
       {/* Conversations List */}
       <div
         className={`w-full md:w-96 bg-white border-r border-gray-200 flex flex-col ${
@@ -402,7 +419,7 @@ export function MessagesPage() {
         }`}
       >
         <div className="p-4 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900 mb-3">Messaggi</h1>
+          <h1 className="text-xl font-bold text-gray-900 mb-3">Conversazioni</h1>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {([
               { key: 'all', label: 'Tutti', icon: null },
@@ -650,6 +667,7 @@ export function MessagesPage() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

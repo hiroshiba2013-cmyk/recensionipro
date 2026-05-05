@@ -127,48 +127,34 @@ export function SolidarityPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-white">
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        {/* Hero Section */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12 mb-12">
-          <div className="flex items-center justify-center mb-6">
-            <div className="bg-gradient-to-r from-green-500 to-blue-500 p-4 rounded-full">
-              <Heart className="w-12 h-12 text-white" />
-            </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-blue-700">
+        <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mb-5 mx-auto">
+            <Heart className="w-8 h-8 text-white" />
           </div>
-
-          <h1 className="text-4xl md:text-5xl font-bold text-center text-gray-900 mb-6">
-            Solidarietà Trovafacile
-          </h1>
-
-          <div className="max-w-3xl mx-auto text-center space-y-6 text-lg text-gray-700">
-            <p className="leading-relaxed">
-              In <span className="font-bold text-blue-600">Trovafacile</span> crediamo fermamente nel valore della solidarietà
-              e nel dare un contributo concreto alla nostra comunità.
-            </p>
-
-            <p className="leading-relaxed">
-              Per questo motivo, ci impegniamo a donare{' '}
-              <span className="font-bold text-green-600 text-2xl">il 10% del nostro fatturato annuale</span>{' '}
-              a organizzazioni no profit, enti di beneficenza e progetti sociali che fanno la differenza.
-            </p>
-
-            <p className="leading-relaxed">
-              La scelta dei destinatari viene effettuata dai nostri iscritti con un sondaggio, con attenzione e trasparenza,
-              privilegiando realtà locali e progetti che abbiano un impatto positivo e misurabile sulla società.
-            </p>
-
-            <div className="bg-gradient-to-r from-green-100 to-blue-100 rounded-lg p-6 mt-8">
-              <p className="font-bold text-xl text-gray-900 mb-2">
-                Trasparenza Totale
-              </p>
-              <p className="text-gray-700">
-                In questa pagina pubblichiamo regolarmente i documenti che attestano il nostro fatturato
-                e le donazioni effettuate, perché crediamo che la trasparenza sia fondamentale per costruire fiducia.
-              </p>
-            </div>
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 drop-shadow-lg">Solidarieta Trovafacile</h1>
+          <p className="text-green-100 text-lg md:text-xl max-w-2xl mx-auto mb-6">
+            Doniamo il <span className="font-bold text-white">10% del nostro fatturato annuale</span> a organizzazioni no profit e progetti sociali
+          </p>
+          <div className="flex flex-wrap justify-center gap-4 text-sm">
+            {[
+              { icon: '🤝', text: 'Trasparenza totale' },
+              { icon: '🗳️', text: 'Scelto dagli iscritti' },
+              { icon: '📋', text: 'Documenti pubblici' },
+            ].map(({ icon, text }) => (
+              <div key={text} className="flex items-center gap-2 bg-white/15 backdrop-blur-sm px-4 py-2 rounded-full text-white">
+                <span>{icon}</span>
+                <span>{text}</span>
+              </div>
+            ))}
           </div>
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-12">
 
         {/* Revenue and Solidarity Counters */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">

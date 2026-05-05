@@ -5,16 +5,24 @@ export function ContactPage() {
   const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600">
+        <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mb-5">
+            <Mail className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-3 drop-shadow-lg">
             {t('contact.title')}
           </h1>
-          <p className="text-xl text-gray-600">
+          <p className="text-blue-100 text-lg md:text-xl max-w-2xl mx-auto">
             {t('contact.subtitle')}
           </p>
         </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
         <div className="grid md:grid-cols-2 gap-8 mb-12">
           <div className="bg-white rounded-xl shadow-lg p-8">
@@ -153,3 +161,4 @@ export function ContactPage() {
     </div>
   );
 }
+

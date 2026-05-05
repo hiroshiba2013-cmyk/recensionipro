@@ -95,22 +95,34 @@ export default function AuctionsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Aste</h1>
-            <p className="text-gray-600">Partecipa alle aste e trova occasioni uniche</p>
+      {/* Hero */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-600 to-red-600">
+        <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
+              </div>
+              <div>
+                <h1 className="text-3xl md:text-5xl font-extrabold text-white drop-shadow-lg">Aste</h1>
+                <p className="text-orange-100 text-base md:text-lg mt-1">Partecipa alle aste e trova occasioni uniche</p>
+              </div>
+            </div>
+            {user && (
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="inline-flex items-center gap-2 bg-white text-orange-600 px-6 py-3 rounded-xl font-bold hover:bg-orange-50 transition-colors shadow-lg"
+              >
+                <Plus className="w-5 h-5" />
+                Crea Asta
+              </button>
+            )}
           </div>
-          {user && (
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700"
-            >
-              <Plus className="w-5 h-5" />
-              Crea Asta
-            </button>
-          )}
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-8">
 
         {showCreateForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">

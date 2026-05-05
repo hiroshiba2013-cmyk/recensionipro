@@ -503,15 +503,19 @@ export function JobsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3 mb-4">
-            <Briefcase className="w-10 h-10" />
-            <h1 className="text-5xl font-bold">Lavoro</h1>
+      {/* Hero */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-teal-700">
+        <div className="absolute inset-0 opacity-[0.07]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl">
+              <Briefcase className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl md:text-5xl font-extrabold text-white drop-shadow-lg">Lavoro</h1>
+              <p className="text-green-100 text-base md:text-lg mt-1">Trova opportunita di lavoro o trova i candidati ideali</p>
+            </div>
           </div>
-          <p className="text-green-100 text-lg">
-            Trova opportunità di lavoro o trova i candidati ideali
-          </p>
         </div>
       </div>
 
