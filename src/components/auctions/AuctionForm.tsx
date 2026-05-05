@@ -42,7 +42,7 @@ const durations = [
 ];
 
 export default function AuctionForm({ onSuccess, onCancel, businessLocationId, isRegisteredBusiness }: AuctionFormProps) {
-  const { user, profile } = useAuth();
+  const { user, profile, activeProfile } = useAuth();
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -121,8 +121,15 @@ export default function AuctionForm({ onSuccess, onCancel, businessLocationId, i
       const endsAt = new Date();
       endsAt.setDate(endsAt.getDate() + formData.duration);
 
+      // family_member_id: null for account owner, uuid for family member
+      const familyMemberId =
+        profile?.user_type !== 'business' && activeProfile && !activeProfile.isOwner
+          ? activeProfile.id
+          : null;
+
       const auctionData: Record<string, any> = {
         user_id: user.id,
+        family_member_id: familyMemberId,
         title: formData.title,
         description: formData.description,
         base_price: parseFloat(formData.base_price),
