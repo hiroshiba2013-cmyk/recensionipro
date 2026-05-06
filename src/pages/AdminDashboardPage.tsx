@@ -23,20 +23,28 @@ import AuctionsSection from '../components/admin/AuctionsSection';
 
 interface DashboardStats {
   totalUsers: number;
+  trialUsers: number;
   totalReviews: number;
   pendingReviews: number;
   totalAds: number;
+  adsSell: number;
+  adsBuy: number;
+  adsGift: number;
   activeSubscriptions: number;
+  trialSubscriptions: number;
   totalBusinesses: number;
   totalProducts: number;
   totalReports: number;
   pendingReports: number;
   totalJobPostings: number;
+  totalJobSeekers: number;
+  totalAuctions: number;
   registeredBusinesses: number;
   importedBusinesses: number;
   userAddedBusinesses: number;
   totalLocations: number;
   totalFamilyMembers: number;
+  solidarityTotal: number;
 }
 
 interface PendingCounts {
@@ -216,20 +224,28 @@ export function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
+    trialUsers: 0,
     totalReviews: 0,
     pendingReviews: 0,
     totalAds: 0,
+    adsSell: 0,
+    adsBuy: 0,
+    adsGift: 0,
     activeSubscriptions: 0,
+    trialSubscriptions: 0,
     totalBusinesses: 0,
     totalProducts: 0,
     totalReports: 0,
     pendingReports: 0,
     totalJobPostings: 0,
+    totalJobSeekers: 0,
+    totalAuctions: 0,
     registeredBusinesses: 0,
     importedBusinesses: 0,
     userAddedBusinesses: 0,
     totalLocations: 0,
     totalFamilyMembers: 0,
+    solidarityTotal: 0,
   });
   const [pendingReviews, setPendingReviews] = useState<PendingReview[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -366,50 +382,77 @@ export function AdminDashboardPage() {
   const loadStats = async () => {
     const [
       usersCount,
+      trialUsersCount,
       reviewsCount,
-      pendingCount,
-      adsCount,
-      subsCount,
+      pendingReviewsCount,
+      adsSellCount,
+      adsBuyCount,
+      adsGiftCount,
+      activeSubsCount,
+      trialSubsCount,
       productsCount,
       reportsCount,
       pendingReportsCount,
-      jobsCount,
+      jobPostingsCount,
+      jobSeekersCount,
+      auctionsCount,
       claimedBusinessesCount,
       unclaimedLocationsCount,
       locationsCount,
-      familyCount
+      familyCount,
+      solidarityData,
     ] = await Promise.all([
-      supabase.from('profiles').select('id', { count: 'exact', head: true }),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).neq('user_type', 'admin'),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('subscription_status', 'trial'),
       supabase.from('reviews').select('id', { count: 'exact', head: true }),
       supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('review_status', 'pending'),
-      supabase.from('classified_ads').select('id', { count: 'exact', head: true }),
+      supabase.from('classified_ads').select('id', { count: 'exact', head: true }).eq('ad_type', 'sell'),
+      supabase.from('classified_ads').select('id', { count: 'exact', head: true }).eq('ad_type', 'buy'),
+      supabase.from('classified_ads').select('id', { count: 'exact', head: true }).eq('ad_type', 'gift'),
       supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+      supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'trial'),
       supabase.from('products').select('id', { count: 'exact', head: true }),
       supabase.from('reports').select('id', { count: 'exact', head: true }),
       supabase.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('job_postings').select('id', { count: 'exact', head: true }),
+      supabase.from('job_seekers').select('id', { count: 'exact', head: true }),
+      supabase.from('auctions').select('id', { count: 'exact', head: true }),
       supabase.from('registered_businesses').select('id', { count: 'exact', head: true }),
       supabase.from('unclaimed_business_locations').select('id', { count: 'exact', head: true }),
       supabase.from('registered_business_locations').select('id', { count: 'exact', head: true }),
-      supabase.from('customer_family_members').select('id', { count: 'exact', head: true })
+      supabase.from('customer_family_members').select('id', { count: 'exact', head: true }),
+      supabase.from('solidarity_documents').select('amount'),
     ]);
+
+    const solidarityTotal = (solidarityData.data || []).reduce(
+      (sum: number, doc: { amount: number | null }) => sum + (doc.amount || 0),
+      0
+    );
 
     setStats({
       totalUsers: usersCount.count || 0,
+      trialUsers: trialUsersCount.count || 0,
       totalReviews: reviewsCount.count || 0,
-      pendingReviews: pendingCount.count || 0,
-      totalAds: adsCount.count || 0,
-      activeSubscriptions: subsCount.count || 0,
+      pendingReviews: pendingReviewsCount.count || 0,
+      totalAds: (adsSellCount.count || 0) + (adsBuyCount.count || 0) + (adsGiftCount.count || 0),
+      adsSell: adsSellCount.count || 0,
+      adsBuy: adsBuyCount.count || 0,
+      adsGift: adsGiftCount.count || 0,
+      activeSubscriptions: activeSubsCount.count || 0,
+      trialSubscriptions: trialSubsCount.count || 0,
       totalBusinesses: (claimedBusinessesCount.count || 0) + (unclaimedLocationsCount.count || 0),
       totalProducts: productsCount.count || 0,
       totalReports: reportsCount.count || 0,
       pendingReports: pendingReportsCount.count || 0,
-      totalJobPostings: jobsCount.count || 0,
+      totalJobPostings: jobPostingsCount.count || 0,
+      totalJobSeekers: jobSeekersCount.count || 0,
+      totalAuctions: auctionsCount.count || 0,
       registeredBusinesses: claimedBusinessesCount.count || 0,
       importedBusinesses: unclaimedLocationsCount.count || 0,
       userAddedBusinesses: 0,
       totalLocations: locationsCount.count || 0,
       totalFamilyMembers: familyCount.count || 0,
+      solidarityTotal,
     });
   };
 
