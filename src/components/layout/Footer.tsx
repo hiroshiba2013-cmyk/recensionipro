@@ -4,13 +4,24 @@ import { useNavigate } from '../Router';
 export function Footer() {
   const navigate = useNavigate();
 
+  const handleLink = (href: string) => {
+    const [path, hash] = href.split('#');
+    const currentPath = window.location.pathname;
+    if (path === currentPath || (path === '' && hash)) {
+      // same page: just update hash and dispatch hashchange
+      window.location.hash = hash || '';
+    } else {
+      navigate(href);
+    }
+  };
+
   const columns = [
     {
       title: 'Navigazione',
       links: [
         { label: 'Solidarietà', href: '/solidarity' },
         { label: 'Piani', href: '/subscription' },
-        { label: 'Regole', href: '/rules' },
+        { label: 'Regolamento', href: '/rules' },
       ],
     },
     {
@@ -71,7 +82,7 @@ export function Footer() {
                 {col.links.map(link => (
                   <li key={link.label}>
                     <button
-                      onClick={() => navigate(link.href)}
+                      onClick={() => handleLink(link.href)}
                       className="text-gray-400 hover:text-white text-sm transition-colors text-left"
                     >
                       {link.label}

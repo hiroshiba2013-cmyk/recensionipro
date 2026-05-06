@@ -54,13 +54,30 @@ export function RulesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('Tutte');
   const [activeTab, setActiveTab] = useState<'regolamento' | 'faq' | 'cookie' | 'termini'>('regolamento');
 
+  const applyHash = () => {
+    const hash = window.location.hash.replace('#', '');
+    if (!hash) return;
+    if (hash === 'faq') {
+      setActiveTab('faq');
+    } else if (hash === 'cookie-policy') {
+      setActiveTab('cookie');
+    } else if (hash === 'termini' || hash === 'termini-servizio' || hash === 'privacy-policy' || hash === 'condizioni-uso') {
+      setActiveTab('termini');
+    } else if (hash === 'regolamento') {
+      setActiveTab('regolamento');
+    }
+    // scroll to element after tab renders
+    setTimeout(() => {
+      const el = document.getElementById(hash);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 150);
+  };
+
   useEffect(() => {
     loadData();
-    // set tab from hash
-    const hash = window.location.hash.replace('#', '');
-    if (hash === 'faq') setActiveTab('faq');
-    else if (hash === 'cookie-policy') setActiveTab('cookie');
-    else if (hash === 'termini' || hash === 'termini-servizio' || hash === 'privacy-policy' || hash === 'condizioni-uso') setActiveTab('termini');
+    applyHash();
+    window.addEventListener('hashchange', applyHash);
+    return () => window.removeEventListener('hashchange', applyHash);
   }, []);
 
   const loadData = async () => {
