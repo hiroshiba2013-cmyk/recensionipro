@@ -371,33 +371,6 @@ export function ClassifiedAdsPage() {
           )}
         </div>
 
-        {/* Category Pills */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          <button
-            onClick={() => setSelectedCategory('')}
-            className={`px-4 py-2 rounded-full transition-colors ${
-              !selectedCategory
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            Tutte
-          </button>
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
-              className={`px-4 py-2 rounded-full transition-colors ${
-                selectedCategory === category.id
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              {category.name}
-            </button>
-          ))}
-        </div>
-
         {/* Ads Grid */}
         {loading ? (
           <div className="text-center py-12">
