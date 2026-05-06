@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { ChevronDown, Search, X, MapPin, Building2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { ITALIAN_PROVINCES, PROVINCES_BY_REGION, PROVINCE_TO_CODE } from '../../lib/cities';
 
 interface Props {
   province: string;
@@ -12,37 +13,6 @@ interface Props {
   region?: string;
 }
 
-const PROVINCE_CODES: Record<string, string> = {
-  'Agrigento': 'AG', 'Alessandria': 'AL', 'Ancona': 'AN', 'Arezzo': 'AR',
-  'Ascoli Piceno': 'AP', 'Asti': 'AT', 'Avellino': 'AV', 'Bari': 'BA',
-  'Barletta-Andria-Trani': 'BT', 'Belluno': 'BL', 'Benevento': 'BN',
-  'Bergamo': 'BG', 'Biella': 'BI', 'Bologna': 'BO', 'Bolzano': 'BZ',
-  'Brescia': 'BS', 'Brindisi': 'BR', 'Cagliari': 'CA', 'Caltanissetta': 'CL',
-  'Campobasso': 'CB', 'Caserta': 'CE', 'Catania': 'CT', 'Catanzaro': 'CZ',
-  'Chieti': 'CH', 'Como': 'CO', 'Cosenza': 'CS', 'Cremona': 'CR',
-  'Crotone': 'KR', 'Cuneo': 'CN', 'Enna': 'EN', 'Fermo': 'FM',
-  'Ferrara': 'FE', 'Firenze': 'FI', 'Foggia': 'FG', 'Forlì-Cesena': 'FC',
-  'Frosinone': 'FR', 'Genova': 'GE', 'Gorizia': 'GO', 'Grosseto': 'GR',
-  'Imperia': 'IM', 'Isernia': 'IS', "L'Aquila": 'AQ', 'La Spezia': 'SP',
-  'Latina': 'LT', 'Lecce': 'LE', 'Lecco': 'LC', 'Livorno': 'LI',
-  'Lodi': 'LO', 'Lucca': 'LU', 'Macerata': 'MC', 'Mantova': 'MN',
-  'Massa-Carrara': 'MS', 'Matera': 'MT', 'Messina': 'ME', 'Milano': 'MI',
-  'Modena': 'MO', 'Monza e Brianza': 'MB', 'Napoli': 'NA', 'Novara': 'NO',
-  'Nuoro': 'NU', 'Oristano': 'OR', 'Padova': 'PD', 'Palermo': 'PA',
-  'Parma': 'PR', 'Pavia': 'PV', 'Perugia': 'PG', 'Pesaro e Urbino': 'PU',
-  'Pescara': 'PE', 'Piacenza': 'PC', 'Pisa': 'PI', 'Pistoia': 'PT',
-  'Pordenone': 'PN', 'Potenza': 'PZ', 'Prato': 'PO', 'Ragusa': 'RG',
-  'Ravenna': 'RA', 'Reggio Calabria': 'RC', 'Reggio Emilia': 'RE',
-  'Rieti': 'RI', 'Rimini': 'RN', 'Roma': 'RM', 'Rovigo': 'RO',
-  'Salerno': 'SA', 'Sassari': 'SS', 'Savona': 'SV', 'Siena': 'SI',
-  'Siracusa': 'SR', 'Sondrio': 'SO', 'Sud Sardegna': 'SU', 'Taranto': 'TA',
-  'Teramo': 'TE', 'Terni': 'TR', 'Torino': 'TO', 'Trapani': 'TP',
-  'Trento': 'TN', 'Treviso': 'TV', 'Trieste': 'TS', 'Udine': 'UD',
-  'Aosta': 'AO', 'Varese': 'VA', 'Venezia': 'VE',
-  'Verbano-Cusio-Ossola': 'VB', 'Vercelli': 'VC', 'Verona': 'VR',
-  'Vibo Valentia': 'VV', 'Vicenza': 'VI', 'Viterbo': 'VT',
-};
-
 export function ItalianCityProvinceSelect({
   province,
   city,
@@ -52,11 +22,7 @@ export function ItalianCityProvinceSelect({
   disabled = false,
   region = '',
 }: Props) {
-  const [allProvinces, setAllProvinces] = useState<string[]>([]);
-  const [provincesForRegion, setProvincesForRegion] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
-  const [loadingProvinces, setLoadingProvinces] = useState(false);
-  const [loadingProvincesForRegion, setLoadingProvincesForRegion] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
 
   const [provinceOpen, setProvinceOpen] = useState(false);
@@ -65,41 +31,21 @@ export function ItalianCityProvinceSelect({
   const provinceRef = useRef<HTMLDivElement>(null);
   const provinceInputRef = useRef<HTMLInputElement>(null);
 
-  // Load all provinces once on mount
-  useEffect(() => {
-    setLoadingProvinces(true);
-    supabase
-      .rpc('get_province_list')
-      .then(({ data }) => {
-        if (data) setAllProvinces(data.map((r: { provincia: string }) => r.provincia));
-        setLoadingProvinces(false);
-      });
-  }, []);
+  // Derive province list synchronously from local data — no async needed
+  const provinces: string[] = region
+    ? (PROVINCES_BY_REGION[region] ?? ITALIAN_PROVINCES)
+    : ITALIAN_PROVINCES;
 
-  // When region changes, load filtered provinces
+  // When region changes, clear province/city if no longer valid
   useEffect(() => {
-    if (!region) {
-      setProvincesForRegion([]);
-      setLoadingProvincesForRegion(false);
-      return;
+    if (!region) return;
+    const list = PROVINCES_BY_REGION[region] ?? [];
+    if (province && list.length > 0 && !list.includes(province)) {
+      onProvinceChange('', '');
+      onCityChange('');
     }
-    setLoadingProvincesForRegion(true);
-    setProvincesForRegion([]);
-    supabase
-      .rpc('get_province_by_region', { p_regione: region })
-      .then(({ data }) => {
-        const list = data ? data.map((r: { provincia: string }) => r.provincia) : [];
-        setProvincesForRegion(list);
-        setLoadingProvincesForRegion(false);
-        if (province && list.length > 0 && !list.includes(province)) {
-          onProvinceChange('', '');
-          onCityChange('');
-        }
-      });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [region]);
-
-  const provinces = region ? provincesForRegion : allProvinces;
 
   const loadCities = useCallback(async (prov: string) => {
     if (!prov) { setCities([]); return; }
@@ -133,7 +79,7 @@ export function ItalianCityProvinceSelect({
   );
 
   function selectProvince(p: string) {
-    const code = PROVINCE_CODES[p] || '';
+    const code = PROVINCE_TO_CODE[p] || '';
     onProvinceChange(p, code);
     onCityChange('');
     setProvinceOpen(false);
@@ -147,11 +93,9 @@ export function ItalianCityProvinceSelect({
     setCities([]);
   }
 
-  const isProvinceLoading = loadingProvinces || loadingProvincesForRegion;
-
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-      {/* Provincia — custom dropdown con sigla */}
+      {/* Provincia — custom dropdown */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1.5">
           <span className="flex items-center gap-1.5">
@@ -171,8 +115,8 @@ export function ItalianCityProvinceSelect({
           >
             <span className={`flex-1 min-w-0 truncate ${province ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
               {province
-                ? <>{province}{PROVINCE_CODES[province] && <span className="ml-1.5 text-xs font-mono text-gray-400">({PROVINCE_CODES[province]})</span>}</>
-                : region ? 'Seleziona provincia...' : 'Seleziona provincia...'}
+                ? <>{province}{PROVINCE_TO_CODE[province] && <span className="ml-1.5 text-xs font-mono text-gray-400">({PROVINCE_TO_CODE[province]})</span>}</>
+                : 'Seleziona provincia...'}
             </span>
             <div className="flex items-center gap-1 flex-shrink-0">
               {province && !disabled && (
@@ -189,7 +133,6 @@ export function ItalianCityProvinceSelect({
               className="absolute z-[9999] left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl"
               style={{ minWidth: '100%', width: 'max-content', maxWidth: '320px' }}
             >
-              {/* Search */}
               <div className="p-2.5 border-b border-gray-100 bg-gray-50 rounded-t-xl">
                 <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5">
                   <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
@@ -212,15 +155,12 @@ export function ItalianCityProvinceSelect({
                   )}
                 </div>
               </div>
-              {/* List — altezza fissa, scroll nativo */}
               <div style={{ height: '220px', overflowY: 'scroll' }}>
-                {isProvinceLoading ? (
-                  <div className="px-4 py-6 text-sm text-gray-400 text-center">Caricamento...</div>
-                ) : filteredProvinces.length === 0 ? (
+                {filteredProvinces.length === 0 ? (
                   <div className="px-4 py-6 text-sm text-gray-400 text-center">Nessuna provincia trovata</div>
                 ) : (
                   filteredProvinces.map(p => {
-                    const code = PROVINCE_CODES[p] || '';
+                    const code = PROVINCE_TO_CODE[p] || '';
                     const isSelected = p === province;
                     return (
                       <button
@@ -243,14 +183,14 @@ export function ItalianCityProvinceSelect({
                 )}
               </div>
               <div className="px-3 py-1.5 border-t border-gray-100 bg-gray-50 rounded-b-xl text-xs text-gray-400 text-right">
-                {isProvinceLoading ? 'Caricamento...' : `${filteredProvinces.length} ${region ? `province in ${region}` : 'province'}`}
+                {filteredProvinces.length} {region ? `province in ${region}` : 'province'}
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Comune — select nativo: scroll garantito dal browser */}
+      {/* Comune — select nativo */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1.5">
           <span className="flex items-center gap-1.5">
