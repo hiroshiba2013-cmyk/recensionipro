@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Search, Building2, MapPin, CheckCircle, XCircle, ArrowRight, Plus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { ItalianCityProvinceSelect } from '../components/common/ItalianCityProvinceSelect';
 
 interface LocationResult {
   id: string;
@@ -287,33 +288,12 @@ export function ClaimBusinessPage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Città
-                </label>
-                <input
-                  type="text"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                  placeholder="es. Milano"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Provincia
-                </label>
-                <input
-                  type="text"
-                  value={formData.province}
-                  onChange={(e) => setFormData({ ...formData, province: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                  placeholder="es. MI"
-                />
-              </div>
-            </div>
+            <ItalianCityProvinceSelect
+              province={formData.province}
+              city={formData.city}
+              onProvinceChange={(prov) => setFormData({ ...formData, province: prov, city: '' })}
+              onCityChange={(c) => setFormData({ ...formData, city: c })}
+            />
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, X, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase, BusinessCategory } from '../../lib/supabase';
-import { ITALIAN_REGIONS, PROVINCES_BY_REGION, ITALIAN_PROVINCES, CITIES_BY_PROVINCE } from '../../lib/cities';
 import { SearchableSelect } from '../common/SearchableSelect';
+import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import BusinessAutocomplete from './BusinessAutocomplete';
 
 export interface SearchFilters {
@@ -40,8 +40,6 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showRatingFilters, setShowRatingFilters] = useState(false);
   const [categories, setCategories] = useState<BusinessCategory[]>([]);
-  const [availableProvinces, setAvailableProvinces] = useState<string[]>(ITALIAN_PROVINCES);
-  const [availableCities, setAvailableCities] = useState<string[]>([]);
 
   const [filters, setFilters] = useState<SearchFilters>(initialFilters || {
     category: '',
@@ -61,13 +59,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
   useEffect(() => {
     if (initialFilters) {
       setFilters({ ...initialFilters });
-      if (initialFilters.region) {
-        setAvailableProvinces(PROVINCES_BY_REGION[initialFilters.region] || ITALIAN_PROVINCES);
-      }
-      if (initialFilters.province) {
-        setAvailableCities(CITIES_BY_PROVINCE[initialFilters.province] || []);
-      }
-      const hasAdvanced = initialFilters.category || initialFilters.region || initialFilters.province || initialFilters.city || (initialFilters.minRating || 0) > 0;
+      const hasAdvanced = initialFilters.category || initialFilters.province || initialFilters.city || (initialFilters.minRating || 0) > 0;
       if (hasAdvanced) setShowAdvanced(true);
       const hasRating = (initialFilters.minServiceUsedRating || 0) > 0 || (initialFilters.minBookingRating || 0) > 0 ||
         (initialFilters.minQuoteRating || 0) > 0 || (initialFilters.minCustomerServiceRating || 0) > 0 || (initialFilters.minProblemRating || 0) > 0;
@@ -78,31 +70,6 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
   useEffect(() => {
     loadCategories();
   }, []);
-
-  useEffect(() => {
-    if (filters.region) {
-      const provinces = PROVINCES_BY_REGION[filters.region] || [];
-      setAvailableProvinces(provinces);
-      if (filters.province && !provinces.includes(filters.province)) {
-        setFilters(prev => ({ ...prev, province: '', city: '' }));
-        setAvailableCities([]);
-      }
-    } else {
-      setAvailableProvinces(ITALIAN_PROVINCES);
-    }
-  }, [filters.region]);
-
-  useEffect(() => {
-    if (filters.province) {
-      const cities = CITIES_BY_PROVINCE[filters.province] || [];
-      setAvailableCities(cities);
-      if (filters.city && !cities.includes(filters.city)) {
-        setFilters(prev => ({ ...prev, city: '' }));
-      }
-    } else {
-      setAvailableCities([]);
-    }
-  }, [filters.province]);
 
   const loadCategories = async () => {
     try {
@@ -153,13 +120,13 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
     onSearch(empty);
   };
 
-  const hasActiveFilters = filters.category || filters.region || filters.province || filters.city ||
+  const hasActiveFilters = filters.category || filters.province || filters.city ||
     filters.businessName || filters.minRating > 0 ||
     (filters.minServiceUsedRating || 0) > 0 || (filters.minBookingRating || 0) > 0 ||
     (filters.minQuoteRating || 0) > 0 || (filters.minCustomerServiceRating || 0) > 0 || (filters.minProblemRating || 0) > 0;
 
   const activeFilterCount = [
-    filters.category, filters.region, filters.province, filters.city,
+    filters.category, filters.province, filters.city,
     filters.minRating > 0 ? 'rating' : '',
     (filters.minServiceUsedRating || 0) > 0 ? 'service' : '',
     (filters.minBookingRating || 0) > 0 ? 'booking' : '',
@@ -182,7 +149,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
 
         {showAdvanced && (
           <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
                 <SearchableSelect
@@ -193,55 +160,6 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
                     ...categories.map((cat) => ({ value: cat.id, label: cat.name }))
                   ]}
                   placeholder="Tutte le categorie"
-                  className="text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Regione</label>
-                <SearchableSelect
-                  value={filters.region}
-                  onChange={(value) => {
-                    setFilters(prev => {
-                      const newProvinces = value ? PROVINCES_BY_REGION[value] || [] : ITALIAN_PROVINCES;
-                      const shouldResetProvince = prev.province && value && !newProvinces.includes(prev.province);
-                      return { ...prev, region: value, province: shouldResetProvince ? '' : prev.province, city: shouldResetProvince ? '' : prev.city };
-                    });
-                  }}
-                  options={[
-                    { value: '', label: 'Tutte le regioni' },
-                    ...ITALIAN_REGIONS.map((region) => ({ value: region, label: region }))
-                  ]}
-                  placeholder="Tutte le regioni"
-                  className="text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Provincia</label>
-                <SearchableSelect
-                  value={filters.province}
-                  onChange={(value) => setFilters(prev => ({ ...prev, province: value, city: value ? prev.city : '' }))}
-                  options={[
-                    { value: '', label: 'Tutte le province' },
-                    ...availableProvinces.map((province) => ({ value: province, label: province }))
-                  ]}
-                  placeholder="Tutte le province"
-                  className="text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Città</label>
-                <SearchableSelect
-                  value={filters.city}
-                  onChange={(value) => setFilters(prev => ({ ...prev, city: value }))}
-                  disabled={!filters.province}
-                  options={[
-                    { value: '', label: filters.province ? 'Tutte le città' : 'Seleziona prima provincia' },
-                    ...availableCities.map((city) => ({ value: city, label: city }))
-                  ]}
-                  placeholder={filters.province ? 'Tutte le città' : 'Seleziona prima provincia'}
                   className="text-sm"
                 />
               </div>
@@ -264,10 +182,17 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
                   className="w-full px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium flex items-center justify-center gap-2"
                 >
                   <X className="w-4 h-4" />
-                  Azzera
+                  Azzera filtri
                 </button>
               </div>
             </div>
+
+            <ItalianCityProvinceSelect
+              province={filters.province}
+              city={filters.city}
+              onProvinceChange={(prov) => setFilters(prev => ({ ...prev, province: prov, city: '' }))}
+              onCityChange={(c) => setFilters(prev => ({ ...prev, city: c }))}
+            />
 
             <div className="flex flex-wrap gap-3">
               <label className="flex items-center gap-2 cursor-pointer group">

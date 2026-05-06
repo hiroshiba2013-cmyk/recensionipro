@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ClassifiedAdCard } from '../components/classifieds/ClassifiedAdCard';
 import { ClassifiedAdForm } from '../components/classifieds/ClassifiedAdForm';
-import { LocationFilters } from '../components/common/LocationFilters';
+import { ItalianCityProvinceSelect } from '../components/common/ItalianCityProvinceSelect';
 
 interface Category {
   id: string;
@@ -58,7 +58,6 @@ export function ClassifiedAdsPage() {
   const [adType, setAdType] = useState<'all' | 'sell' | 'buy' | 'gift'>(typeParam || 'all');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRegion, setSelectedRegion] = useState('');
   const [selectedProvince, setSelectedProvince] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [minPrice, setMinPrice] = useState('');
@@ -67,7 +66,7 @@ export function ClassifiedAdsPage() {
   useEffect(() => {
     loadCategories();
     loadAds();
-  }, [adType, selectedCategory, searchQuery, selectedRegion, selectedProvince, selectedCity, minPrice, maxPrice]);
+  }, [adType, selectedCategory, searchQuery, selectedProvince, selectedCity, minPrice, maxPrice]);
 
   const loadCategories = async () => {
     try {
@@ -106,10 +105,6 @@ export function ClassifiedAdsPage() {
 
       if (searchQuery) {
         query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
-      }
-
-      if (selectedRegion) {
-        query = query.ilike('region', `%${selectedRegion}%`);
       }
 
       if (selectedProvince) {
@@ -330,33 +325,21 @@ export function ClassifiedAdsPage() {
           </div>
 
           <div className="mt-6">
-            <LocationFilters
-              selectedRegion={selectedRegion}
-              selectedProvince={selectedProvince}
-              selectedCity={selectedCity}
-              onRegionChange={(region) => {
-                setSelectedRegion(region);
-                setSelectedProvince('');
-                setSelectedCity('');
-              }}
-              onProvinceChange={(province) => {
-                setSelectedProvince(province);
-                setSelectedCity('');
-              }}
+            <ItalianCityProvinceSelect
+              province={selectedProvince}
+              city={selectedCity}
+              onProvinceChange={(prov) => { setSelectedProvince(prov); setSelectedCity(''); }}
               onCityChange={setSelectedCity}
-              showAllOption={true}
-              label="Filtra per Posizione"
             />
           </div>
 
           {/* Clear Filters */}
-          {(adType !== 'all' || selectedCategory || searchQuery || selectedRegion || selectedProvince || selectedCity || minPrice || maxPrice) && (
+          {(adType !== 'all' || selectedCategory || searchQuery || selectedProvince || selectedCity || minPrice || maxPrice) && (
             <button
               onClick={() => {
                 setAdType('all');
                 setSelectedCategory('');
                 setSearchQuery('');
-                setSelectedRegion('');
                 setSelectedProvince('');
                 setSelectedCity('');
                 setMinPrice('');

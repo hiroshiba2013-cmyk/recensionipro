@@ -7,7 +7,7 @@ import { JobSeekerForm } from '../components/jobs/JobSeekerForm';
 import { JobSeekerCard } from '../components/jobs/JobSeekerCard';
 import { JobConversation } from '../components/jobs/JobConversation';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
-import { LocationFilters } from '../components/common/LocationFilters';
+import { ItalianCityProvinceSelect } from '../components/common/ItalianCityProvinceSelect';
 
 interface JobPosting {
   id: string;
@@ -631,15 +631,11 @@ export function JobsPage() {
                 </div>
               </div>
 
-              <LocationFilters
-                selectedRegion={filters.region}
-                selectedProvince={filters.province}
-                selectedCity={filters.city}
-                onRegionChange={(region) => setFilters({ ...filters, region, province: '', city: '' })}
-                onProvinceChange={(province) => setFilters({ ...filters, province, city: '' })}
+              <ItalianCityProvinceSelect
+                province={filters.province}
+                city={filters.city}
+                onProvinceChange={(prov) => setFilters({ ...filters, province: prov, city: '' })}
                 onCityChange={(city) => setFilters({ ...filters, city })}
-                showAllOption={true}
-                label="Filtra per Posizione"
               />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
