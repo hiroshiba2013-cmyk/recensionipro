@@ -1053,117 +1053,154 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                   </div>
                 )}
 
+                {/* ── SEZIONE RECENSIONI HERO ── */}
                 <div>
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">Recensioni</h2>
-                    {canReview && !isOwner && (
-                      <button
-                        onClick={() => setShowReviewForm(true)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        Scrivi Recensione
-                      </button>
-                    )}
+
+                  {/* Hero header */}
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 mb-6 px-6 py-8">
+                    {/* pattern decorativo */}
+                    <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '28px 28px' }} />
+                    <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+                      <div>
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Opinioni verificate</p>
+                        <h2 className="text-3xl font-bold text-white leading-tight">Recensioni</h2>
+                        {reviews.length > 0 && (() => {
+                          const overallAvg = reviews.reduce((s, r) => s + r.overall_rating, 0) / reviews.length;
+                          const label = ['', 'Pessimo', 'Discreto', 'Buono', 'Eccellente', 'Ottimo'][Math.round(overallAvg)] ?? '';
+                          return (
+                            <div className="flex items-center gap-3 mt-3">
+                              <div className="flex">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star key={i} className={`w-6 h-6 ${i < Math.round(overallAvg) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-600'}`} />
+                                ))}
+                              </div>
+                              <span className="text-2xl font-black text-white">{overallAvg.toFixed(1)}</span>
+                              <span className="text-sm font-medium text-gray-300">{label}</span>
+                              <span className="text-sm text-gray-400">&middot; {reviews.length} {reviews.length === 1 ? 'recensione' : 'recensioni'}</span>
+                            </div>
+                          );
+                        })()}
+                        {reviews.length === 0 && (
+                          <p className="text-gray-400 text-sm mt-2">Nessuna recensione ancora</p>
+                        )}
+                      </div>
+                      {canReview && !isOwner && (
+                        <button
+                          onClick={() => setShowReviewForm(true)}
+                          className="flex-shrink-0 inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-semibold px-6 py-3 rounded-xl shadow-lg shadow-orange-900/30 transition-all duration-150"
+                        >
+                          <Star className="w-5 h-5 fill-white" />
+                          Scrivi Recensione
+                        </button>
+                      )}
+                    </div>
                   </div>
 
+                  {/* Stat cards per tipo */}
                   {reviews.length > 0 && (() => {
                     const MANAGEMENT_TYPES = ['booking_not_completed', 'quote_request', 'customer_service', 'problem_before_service'];
-
                     const serviceReviews = reviews.filter(r => (r as any).review_type === 'service_used');
                     const managementReviews = reviews.filter(r => MANAGEMENT_TYPES.includes((r as any).review_type));
-
-                    const serviceAvg = serviceReviews.length > 0
-                      ? serviceReviews.reduce((sum, r) => sum + r.overall_rating, 0) / serviceReviews.length
-                      : 0;
-                    const managementAvg = managementReviews.length > 0
-                      ? managementReviews.reduce((sum, r) => sum + r.overall_rating, 0) / managementReviews.length
-                      : 0;
+                    const serviceAvg = serviceReviews.length > 0 ? serviceReviews.reduce((s, r) => s + r.overall_rating, 0) / serviceReviews.length : 0;
+                    const managementAvg = managementReviews.length > 0 ? managementReviews.reduce((s, r) => s + r.overall_rating, 0) / managementReviews.length : 0;
 
                     const detailTypes = [
-                      { key: 'booking_not_completed', label: 'Prenotazione non completata', bg: 'from-red-50 to-red-100 border-red-200', text: 'text-red-900', sub: 'text-red-700' },
-                      { key: 'quote_request', label: 'Preventivo / Informazioni', bg: 'from-blue-50 to-blue-100 border-blue-200', text: 'text-blue-900', sub: 'text-blue-700' },
-                      { key: 'customer_service', label: 'Assistenza Clienti', bg: 'from-teal-50 to-teal-100 border-teal-200', text: 'text-teal-900', sub: 'text-teal-700' },
-                      { key: 'problem_before_service', label: 'Problema pre-servizio', bg: 'from-amber-50 to-amber-100 border-amber-200', text: 'text-amber-900', sub: 'text-amber-700' },
+                      { key: 'booking_not_completed',  label: 'Prenotazione non completata', accent: '#ef4444', accentLight: '#fef2f2', accentBorder: '#fecaca' },
+                      { key: 'quote_request',          label: 'Preventivo / Informazioni',    accent: '#3b82f6', accentLight: '#eff6ff', accentBorder: '#bfdbfe' },
+                      { key: 'customer_service',       label: 'Assistenza Clienti',            accent: '#0d9488', accentLight: '#f0fdfa', accentBorder: '#99f6e4' },
+                      { key: 'problem_before_service', label: 'Problema pre-servizio',         accent: '#f59e0b', accentLight: '#fffbeb', accentBorder: '#fde68a' },
                     ];
-
                     const detailData = detailTypes.map(rt => {
-                      const typeReviews = reviews.filter(r => (r as any).review_type === rt.key);
-                      const avg = typeReviews.length > 0
-                        ? typeReviews.reduce((sum, r) => sum + r.overall_rating, 0) / typeReviews.length
-                        : 0;
-                      return { ...rt, reviews: typeReviews, avg };
-                    }).filter(d => d.reviews.length > 0);
+                      const tr = reviews.filter(r => (r as any).review_type === rt.key);
+                      const avg = tr.length > 0 ? tr.reduce((s, r) => s + r.overall_rating, 0) / tr.length : 0;
+                      return { ...rt, count: tr.length, avg };
+                    }).filter(d => d.count > 0);
 
                     return (
-                      <div className="mb-6 space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="mb-8 space-y-3">
+                        {/* Big stat cards */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {serviceReviews.length > 0 && (
-                            <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-5">
-                              <p className="text-green-100 text-xs font-semibold uppercase tracking-wide mb-3">Servizio</p>
-                              <div className="flex items-center gap-3">
-                                <div className="flex">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star key={i} className={`w-6 h-6 ${i < Math.round(serviceAvg) ? 'fill-yellow-300 text-yellow-300' : 'text-green-400'}`} />
-                                  ))}
+                            <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-5 shadow-md">
+                              <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-white/10" />
+                              <p className="text-emerald-100 text-xs font-bold uppercase tracking-widest mb-2">Servizio fruito</p>
+                              <div className="flex items-end gap-3">
+                                <span className="text-5xl font-black text-white leading-none">{serviceAvg.toFixed(1)}</span>
+                                <div className="pb-1">
+                                  <div className="flex mb-0.5">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star key={i} className={`w-5 h-5 ${i < Math.round(serviceAvg) ? 'fill-yellow-300 text-yellow-300' : 'text-emerald-400'}`} />
+                                    ))}
+                                  </div>
+                                  <p className="text-emerald-100 text-xs">{serviceReviews.length} {serviceReviews.length === 1 ? 'recensione' : 'recensioni'}</p>
                                 </div>
-                                <span className="text-3xl font-bold text-white">{serviceAvg.toFixed(1)}</span>
                               </div>
-                              <p className="text-green-100 text-sm mt-2">
-                                {serviceReviews.length} {serviceReviews.length === 1 ? 'recensione' : 'recensioni'} &mdash; Ho usufruito del servizio
-                              </p>
                             </div>
                           )}
                           {managementReviews.length > 0 && (
-                            <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-5">
-                              <p className="text-blue-100 text-xs font-semibold uppercase tracking-wide mb-3">Gestione e Affidabilita'</p>
-                              <div className="flex items-center gap-3">
-                                <div className="flex">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star key={i} className={`w-6 h-6 ${i < Math.round(managementAvg) ? 'fill-yellow-300 text-yellow-300' : 'text-blue-400'}`} />
-                                  ))}
+                            <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-5 shadow-md">
+                              <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-white/10" />
+                              <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mb-2">Gestione e Affidabilita'</p>
+                              <div className="flex items-end gap-3">
+                                <span className="text-5xl font-black text-white leading-none">{managementAvg.toFixed(1)}</span>
+                                <div className="pb-1">
+                                  <div className="flex mb-0.5">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star key={i} className={`w-5 h-5 ${i < Math.round(managementAvg) ? 'fill-yellow-300 text-yellow-300' : 'text-blue-400'}`} />
+                                    ))}
+                                  </div>
+                                  <p className="text-blue-100 text-xs">{managementReviews.length} {managementReviews.length === 1 ? 'recensione' : 'recensioni'}</p>
                                 </div>
-                                <span className="text-3xl font-bold text-white">{managementAvg.toFixed(1)}</span>
                               </div>
-                              <p className="text-blue-100 text-sm mt-2">
-                                {managementReviews.length} {managementReviews.length === 1 ? 'recensione' : 'recensioni'} &mdash; Prenotazione, preventivo, assistenza
-                              </p>
                             </div>
                           )}
                         </div>
 
+                        {/* Detail breakdown pills */}
                         {detailData.length > 0 && (
-                          <div>
-                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Dettaglio Gestione e Affidabilita'</p>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              {detailData.map(d => (
-                                <div key={d.key} className={`bg-gradient-to-br ${d.bg} border rounded-lg p-4`}>
-                                  <p className={`text-xs font-semibold ${d.sub} mb-2`}>{d.label}</p>
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex">
-                                      {[...Array(5)].map((_, i) => (
-                                        <Star key={i} className={`w-4 h-4 ${i < Math.round(d.avg) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
-                                      ))}
-                                    </div>
-                                    <span className={`text-lg font-bold ${d.text}`}>{d.avg.toFixed(1)}</span>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            {detailData.map(d => (
+                              <div key={d.key} className="rounded-xl border px-3 py-3" style={{ background: d.accentLight, borderColor: d.accentBorder }}>
+                                <p className="text-xs font-semibold mb-1 truncate" style={{ color: d.accent }}>{d.label}</p>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xl font-black" style={{ color: d.accent }}>{d.avg.toFixed(1)}</span>
+                                  <div className="flex">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star key={i} className={`w-3 h-3 ${i < Math.round(d.avg) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+                                    ))}
                                   </div>
-                                  <p className={`text-xs ${d.sub} mt-1`}>
-                                    {d.reviews.length} {d.reviews.length === 1 ? 'recensione' : 'recensioni'}
-                                  </p>
                                 </div>
-                              ))}
-                            </div>
+                                <p className="text-xs mt-0.5" style={{ color: d.accent }}>{d.count} {d.count === 1 ? 'rec.' : 'rec.'}</p>
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
                     );
                   })()}
 
+                  {/* Lista recensioni */}
                   {reviews.length === 0 ? (
-                    <p className="text-gray-600 text-center py-8 bg-gray-50 rounded-lg">
-                      {profile?.user_type === 'business'
-                        ? 'Nessuna recensione ancora.'
-                        : 'Nessuna recensione ancora. Sii il primo a recensire!'}
-                    </p>
+                    <div className="flex flex-col items-center py-16 gap-4">
+                      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                        <Star className="w-8 h-8 text-gray-300" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-semibold text-gray-700 text-lg">Ancora nessuna recensione</p>
+                        <p className="text-sm text-gray-400 mt-1">
+                          {profile?.user_type === 'business' ? 'Le recensioni dei clienti appariranno qui.' : 'Sii il primo a condividere la tua esperienza!'}
+                        </p>
+                      </div>
+                      {canReview && !isOwner && (
+                        <button
+                          onClick={() => setShowReviewForm(true)}
+                          className="mt-2 inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+                        >
+                          <Star className="w-4 h-4 fill-white" />
+                          Scrivi la prima recensione
+                        </button>
+                      )}
+                    </div>
                   ) : (
                     <div className="space-y-4">
                       {reviews.map((review) => (
