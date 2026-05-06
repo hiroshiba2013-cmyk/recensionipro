@@ -46,6 +46,7 @@ export default function AuctionsPage() {
   const loadAuctions = async () => {
     setLoading(true);
     try {
+      const now = new Date().toISOString();
       let query = supabase
         .from('auctions')
         .select(`
@@ -53,9 +54,14 @@ export default function AuctionsPage() {
           user:user_id(full_name, nickname),
           bid_count:auction_bids(count)
         `)
-        .eq('status', filters.status)
         .eq('approval_status', 'approved')
         .order('created_at', { ascending: false });
+
+      if (filters.status === 'active') {
+        query = query.gt('ends_at', now);
+      } else {
+        query = query.lte('ends_at', now);
+      }
 
       if (selectedCategory !== 'Tutte') {
         query = query.eq('category', selectedCategory);
