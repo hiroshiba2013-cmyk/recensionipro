@@ -38,7 +38,7 @@ const PROVINCE_CODES: Record<string, string> = {
   'Siracusa': 'SR', 'Sondrio': 'SO', 'Sud Sardegna': 'SU', 'Taranto': 'TA',
   'Teramo': 'TE', 'Terni': 'TR', 'Torino': 'TO', 'Trapani': 'TP',
   'Trento': 'TN', 'Treviso': 'TV', 'Trieste': 'TS', 'Udine': 'UD',
-  "Valle d'Aosta": 'AO', 'Varese': 'VA', 'Venezia': 'VE',
+  'Aosta': 'AO', 'Varese': 'VA', 'Venezia': 'VE',
   'Verbano-Cusio-Ossola': 'VB', 'Vercelli': 'VC', 'Verona': 'VR',
   'Vibo Valentia': 'VV', 'Vicenza': 'VI', 'Viterbo': 'VT',
 };
@@ -151,7 +151,9 @@ export function ItalianCityProvinceSelect({
     minWidth: '100%',
     width: 'max-content',
     maxWidth: '320px',
-    maxHeight: '320px',
+    height: '320px',
+    display: 'flex',
+    flexDirection: 'column',
   };
 
   return (
@@ -188,7 +190,7 @@ export function ItalianCityProvinceSelect({
           </button>
 
           {provinceOpen && (
-            <div className="absolute z-[300] left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl flex flex-col" style={dropdownStyle}>
+            <div className="absolute z-[300] left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden" style={dropdownStyle}>
               <div className="p-2.5 border-b border-gray-100 bg-gray-50 rounded-t-xl flex-shrink-0">
                 <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5">
                   <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
@@ -280,7 +282,7 @@ export function ItalianCityProvinceSelect({
           </button>
 
           {cityOpen && province && (
-            <div className="absolute z-[300] left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl flex flex-col" style={dropdownStyle}>
+            <div className="absolute z-[300] left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden" style={dropdownStyle}>
               <div className="p-2.5 border-b border-gray-100 bg-gray-50 rounded-t-xl flex-shrink-0">
                 <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5">
                   <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
