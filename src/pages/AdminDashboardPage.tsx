@@ -36,6 +36,9 @@ interface DashboardStats {
   totalProducts: number;
   totalReports: number;
   pendingReports: number;
+  pendingAds: number;
+  pendingJobs: number;
+  pendingAuctions: number;
   totalJobPostings: number;
   totalJobSeekers: number;
   totalAuctions: number;
@@ -240,6 +243,9 @@ export function AdminDashboardPage() {
     totalProducts: 0,
     totalReports: 0,
     pendingReports: 0,
+    pendingAds: 0,
+    pendingJobs: 0,
+    pendingAuctions: 0,
     totalJobPostings: 0,
     totalJobSeekers: 0,
     totalAuctions: 0,
@@ -412,6 +418,9 @@ export function AdminDashboardPage() {
       productsCount,
       reportsCount,
       pendingReportsCount,
+      pendingAdsCount,
+      pendingJobsCount,
+      pendingAuctionsCount,
       jobPostingsCount,
       jobSeekersCount,
       auctionsCount,
@@ -438,8 +447,11 @@ export function AdminDashboardPage() {
       supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'trial'),
       dated(supabase.from('products').select('id', { count: 'exact', head: true })),
       dated(supabase.from('reports').select('id', { count: 'exact', head: true })),
-      // Pending reports: stato istantaneo
+      // Pending: sempre stato istantaneo
       supabase.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('classified_ads').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
+      supabase.from('job_postings').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
+      supabase.from('auctions').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
       dated(supabase.from('job_postings').select('id', { count: 'exact', head: true })),
       dated(supabase.from('job_seekers').select('id', { count: 'exact', head: true })),
       dated(supabase.from('auctions').select('id', { count: 'exact', head: true })),
@@ -483,6 +495,9 @@ export function AdminDashboardPage() {
       totalProducts: productsCount.count || 0,
       totalReports: reportsCount.count || 0,
       pendingReports: pendingReportsCount.count || 0,
+      pendingAds: pendingAdsCount.count || 0,
+      pendingJobs: pendingJobsCount.count || 0,
+      pendingAuctions: pendingAuctionsCount.count || 0,
       totalJobPostings: jobPostingsCount.count || 0,
       totalJobSeekers: jobSeekersCount.count || 0,
       totalAuctions: auctionsCount.count || 0,

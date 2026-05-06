@@ -26,6 +26,9 @@ interface AdminStatsProps {
     totalProducts: number;
     totalReports: number;
     pendingReports: number;
+    pendingAds: number;
+    pendingJobs: number;
+    pendingAuctions: number;
     totalJobPostings: number;
     totalJobSeekers: number;
     totalAuctions: number;
@@ -295,76 +298,6 @@ export function AdminStats({ stats, period, onPeriodChange }: AdminStatsProps) {
         </div>
       </section>
 
-      {/* Sezione: Moderazione */}
-      <section>
-        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4" /> Da Moderare
-        </h3>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <Star className="w-4 h-4 text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 text-sm">Recensioni in Attesa</p>
-                    <p className="text-xs text-gray-500">Richiedono approvazione</p>
-                  </div>
-                </div>
-                <span className="text-2xl font-bold text-orange-600">{stats.pendingReviews}</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-red-100 rounded-lg">
-                    <AlertTriangle className="w-4 h-4 text-red-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 text-sm">Segnalazioni Aperte</p>
-                    <p className="text-xs text-gray-500">Da verificare</p>
-                  </div>
-                </div>
-                <span className="text-2xl font-bold text-red-600">{stats.pendingReports}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Metriche */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <h4 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-green-500" />
-              Metriche Chiave
-            </h4>
-            <div className="space-y-3">
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-gray-600">Tasso Approvazione Recensioni</span>
-                  <span className="text-xs font-bold text-green-600">{approvalRate}%</span>
-                </div>
-                <div className="w-full bg-gray-100 rounded-full h-1.5">
-                  <div className="bg-gradient-to-r from-green-400 to-green-600 h-1.5 rounded-full transition-all duration-500" style={{ width: `${approvalRate}%` }} />
-                </div>
-              </div>
-              <div className="pt-2 mt-2 border-t border-gray-100 grid grid-cols-3 gap-3 text-center">
-                <div>
-                  <p className="text-lg font-bold text-gray-900">{stats.totalFamilyMembers}</p>
-                  <p className="text-xs text-gray-500">Membri Famiglia</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold text-gray-900">{stats.totalProducts}</p>
-                  <p className="text-xs text-gray-500">Prodotti</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold text-gray-900">{stats.totalBusinesses}</p>
-                  <p className="text-xs text-gray-500">Attivita'</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Sezione: Attività Commerciali */}
       <section>
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -456,6 +389,115 @@ export function AdminStats({ stats, period, onPeriodChange }: AdminStatsProps) {
             iconBg="bg-teal-50"
             iconColor="text-teal-600"
           />
+        </div>
+      </section>
+
+      {/* Sezione: Da Moderare */}
+      <section>
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4" /> Da Moderare
+          <span className="text-xs font-normal text-gray-400 normal-case tracking-normal">(stato attuale)</span>
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {/* Recensioni da approvare */}
+          <div className={`bg-white rounded-xl border shadow-sm p-5 flex flex-col gap-3 ${stats.pendingReviews > 0 ? 'border-orange-200' : 'border-gray-100'}`}>
+            <div className={`p-2.5 rounded-lg w-fit ${stats.pendingReviews > 0 ? 'bg-orange-50' : 'bg-gray-50'}`}>
+              <Star className={`w-5 h-5 ${stats.pendingReviews > 0 ? 'text-orange-500' : 'text-gray-400'}`} />
+            </div>
+            <div>
+              <p className={`text-2xl font-bold ${stats.pendingReviews > 0 ? 'text-orange-600' : 'text-gray-900'}`}>
+                {stats.pendingReviews.toLocaleString('it-IT')}
+              </p>
+              <p className="text-sm font-medium text-gray-600 mt-0.5">Recensioni</p>
+              <p className="text-xs text-gray-400 mt-0.5">Da approvare</p>
+            </div>
+            {stats.pendingReviews > 0 && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-semibold rounded-full w-fit">
+                <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                In attesa
+              </span>
+            )}
+          </div>
+
+          {/* Lavoro da approvare */}
+          <div className={`bg-white rounded-xl border shadow-sm p-5 flex flex-col gap-3 ${stats.pendingJobs > 0 ? 'border-cyan-200' : 'border-gray-100'}`}>
+            <div className={`p-2.5 rounded-lg w-fit ${stats.pendingJobs > 0 ? 'bg-cyan-50' : 'bg-gray-50'}`}>
+              <Briefcase className={`w-5 h-5 ${stats.pendingJobs > 0 ? 'text-cyan-600' : 'text-gray-400'}`} />
+            </div>
+            <div>
+              <p className={`text-2xl font-bold ${stats.pendingJobs > 0 ? 'text-cyan-700' : 'text-gray-900'}`}>
+                {stats.pendingJobs.toLocaleString('it-IT')}
+              </p>
+              <p className="text-sm font-medium text-gray-600 mt-0.5">Lavoro</p>
+              <p className="text-xs text-gray-400 mt-0.5">Annunci da approvare</p>
+            </div>
+            {stats.pendingJobs > 0 && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-cyan-100 text-cyan-700 text-xs font-semibold rounded-full w-fit">
+                <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse" />
+                In attesa
+              </span>
+            )}
+          </div>
+
+          {/* Annunci da approvare */}
+          <div className={`bg-white rounded-xl border shadow-sm p-5 flex flex-col gap-3 ${stats.pendingAds > 0 ? 'border-pink-200' : 'border-gray-100'}`}>
+            <div className={`p-2.5 rounded-lg w-fit ${stats.pendingAds > 0 ? 'bg-pink-50' : 'bg-gray-50'}`}>
+              <ShoppingBag className={`w-5 h-5 ${stats.pendingAds > 0 ? 'text-pink-600' : 'text-gray-400'}`} />
+            </div>
+            <div>
+              <p className={`text-2xl font-bold ${stats.pendingAds > 0 ? 'text-pink-600' : 'text-gray-900'}`}>
+                {stats.pendingAds.toLocaleString('it-IT')}
+              </p>
+              <p className="text-sm font-medium text-gray-600 mt-0.5">Annunci</p>
+              <p className="text-xs text-gray-400 mt-0.5">Da approvare</p>
+            </div>
+            {stats.pendingAds > 0 && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-pink-100 text-pink-700 text-xs font-semibold rounded-full w-fit">
+                <span className="w-1.5 h-1.5 bg-pink-500 rounded-full animate-pulse" />
+                In attesa
+              </span>
+            )}
+          </div>
+
+          {/* Aste da approvare */}
+          <div className={`bg-white rounded-xl border shadow-sm p-5 flex flex-col gap-3 ${stats.pendingAuctions > 0 ? 'border-orange-200' : 'border-gray-100'}`}>
+            <div className={`p-2.5 rounded-lg w-fit ${stats.pendingAuctions > 0 ? 'bg-orange-50' : 'bg-gray-50'}`}>
+              <Gavel className={`w-5 h-5 ${stats.pendingAuctions > 0 ? 'text-orange-600' : 'text-gray-400'}`} />
+            </div>
+            <div>
+              <p className={`text-2xl font-bold ${stats.pendingAuctions > 0 ? 'text-orange-600' : 'text-gray-900'}`}>
+                {stats.pendingAuctions.toLocaleString('it-IT')}
+              </p>
+              <p className="text-sm font-medium text-gray-600 mt-0.5">Aste</p>
+              <p className="text-xs text-gray-400 mt-0.5">Da approvare</p>
+            </div>
+            {stats.pendingAuctions > 0 && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-semibold rounded-full w-fit">
+                <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                In attesa
+              </span>
+            )}
+          </div>
+
+          {/* Segnalazioni aperte */}
+          <div className={`bg-white rounded-xl border shadow-sm p-5 flex flex-col gap-3 ${stats.pendingReports > 0 ? 'border-red-200' : 'border-gray-100'}`}>
+            <div className={`p-2.5 rounded-lg w-fit ${stats.pendingReports > 0 ? 'bg-red-50' : 'bg-gray-50'}`}>
+              <AlertTriangle className={`w-5 h-5 ${stats.pendingReports > 0 ? 'text-red-500' : 'text-gray-400'}`} />
+            </div>
+            <div>
+              <p className={`text-2xl font-bold ${stats.pendingReports > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                {stats.pendingReports.toLocaleString('it-IT')}
+              </p>
+              <p className="text-sm font-medium text-gray-600 mt-0.5">Segnalazioni</p>
+              <p className="text-xs text-gray-400 mt-0.5">Aperte</p>
+            </div>
+            {stats.pendingReports > 0 && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 text-xs font-semibold rounded-full w-fit">
+                <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                Da verificare
+              </span>
+            )}
+          </div>
         </div>
       </section>
     </div>
