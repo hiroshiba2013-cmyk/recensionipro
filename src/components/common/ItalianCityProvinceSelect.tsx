@@ -159,7 +159,7 @@ export function ItalianCityProvinceSelect({
           </button>
 
           {provinceOpen && (
-            <div className="absolute z-[200] left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden" style={{minWidth: '220px'}}>
+            <div className="absolute z-[200] left-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden" style={{minWidth: '100%', width: 'max-content', maxWidth: '320px'}}>
               <div className="p-2.5 border-b border-gray-100 bg-gray-50">
                 <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 shadow-sm">
                   <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
@@ -249,7 +249,7 @@ export function ItalianCityProvinceSelect({
           </button>
 
           {cityOpen && provinceName && (
-            <div className="absolute z-[200] left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden" style={{minWidth: '220px'}}>
+            <div className="absolute z-[200] left-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden" style={{minWidth: '100%', width: 'max-content', maxWidth: '320px'}}>
               <div className="p-2.5 border-b border-gray-100 bg-gray-50">
                 <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 shadow-sm">
                   <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
@@ -290,7 +290,7 @@ export function ItalianCityProvinceSelect({
                         key={c}
                         type="button"
                         onClick={() => selectCity(c)}
-                        className={`w-full text-left px-3.5 py-2.5 text-sm transition-colors ${
+                        className={`block w-full text-left px-3.5 py-2.5 text-sm transition-colors whitespace-nowrap ${
                           isSelected ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                         }`}
                       >
