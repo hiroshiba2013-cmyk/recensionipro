@@ -151,9 +151,12 @@ export function ItalianCityProvinceSelect({
     minWidth: '100%',
     width: 'max-content',
     maxWidth: '320px',
-    height: '320px',
-    display: 'flex',
-    flexDirection: 'column',
+  };
+
+  const listStyle: React.CSSProperties = {
+    overflowY: 'auto',
+    height: '220px',
+    minHeight: 0,
   };
 
   return (
@@ -190,7 +193,7 @@ export function ItalianCityProvinceSelect({
           </button>
 
           {provinceOpen && (
-            <div className="absolute z-[300] left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden" style={dropdownStyle}>
+            <div className="absolute z-[300] left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl" style={dropdownStyle}>
               <div className="p-2.5 border-b border-gray-100 bg-gray-50 rounded-t-xl flex-shrink-0">
                 <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5">
                   <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
@@ -213,7 +216,7 @@ export function ItalianCityProvinceSelect({
                   )}
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto">
+              <div style={listStyle}>
                 {loadingProvinces ? (
                   <div className="px-4 py-6 text-sm text-gray-400 text-center">Caricamento...</div>
                 ) : filteredProvinces.length === 0 ? (
@@ -282,7 +285,7 @@ export function ItalianCityProvinceSelect({
           </button>
 
           {cityOpen && province && (
-            <div className="absolute z-[300] left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden" style={dropdownStyle}>
+            <div className="absolute z-[300] left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl" style={dropdownStyle}>
               <div className="p-2.5 border-b border-gray-100 bg-gray-50 rounded-t-xl flex-shrink-0">
                 <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5">
                   <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
@@ -305,7 +308,7 @@ export function ItalianCityProvinceSelect({
                   )}
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto">
+              <div style={listStyle}>
                 {loadingCities ? (
                   <div className="px-4 py-6 text-sm text-gray-400 text-center flex items-center justify-center gap-2">
                     <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
