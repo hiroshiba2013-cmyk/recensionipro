@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Gavel, Search, Filter, Eye, Trash2, CheckCircle, XCircle, Clock, TrendingUp, Users, ShieldCheck, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { ITALIAN_REGIONS, PROVINCES_BY_REGION, CITIES_BY_PROVINCE } from '../../lib/cities';
+import { AdminLocationFilter } from './AdminLocationFilter';
 
 const AUCTION_CATEGORIES = [
   'Elettronica',
@@ -55,9 +55,7 @@ export default function AuctionsSection() {
   const [approvalFilter, setApprovalFilter] = useState<string>('pending');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [priceRangeFilter, setPriceRangeFilter] = useState<string>('all');
-  const [regionFilter, setRegionFilter] = useState<string>('all');
-  const [provinceFilter, setProvinceFilter] = useState<string>('all');
-  const [cityFilter, setCityFilter] = useState<string>('all');
+  const [locationFilter, setLocationFilter] = useState({ region: '', province: '', city: '' });
   const [showFilters, setShowFilters] = useState(false);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
@@ -214,22 +212,13 @@ export default function AuctionsSection() {
       }
     })();
 
-    const matchesRegion = regionFilter === 'all' || auction.region === regionFilter;
-    const matchesProvince = provinceFilter === 'all' || auction.province === provinceFilter;
-    const matchesCity = cityFilter === 'all' || auction.city === cityFilter;
+    const matchesRegion = !locationFilter.region || auction.region === locationFilter.region;
+    const matchesProvince = !locationFilter.province || auction.province === locationFilter.province;
+    const matchesCity = !locationFilter.city || auction.city === locationFilter.city;
 
     return matchesSearch && matchesCategory && matchesPriceRange && matchesRegion && matchesProvince && matchesCity;
   });
 
-  const provinces = regionFilter === 'all'
-    ? Object.values(PROVINCES_BY_REGION).flat().sort()
-    : (PROVINCES_BY_REGION[regionFilter] || []).sort();
-  const cities = provinceFilter === 'all'
-    ? (regionFilter === 'all'
-        ? Object.values(CITIES_BY_PROVINCE).flat().sort()
-        : (PROVINCES_BY_REGION[regionFilter] || []).flatMap(p => CITIES_BY_PROVINCE[p] || []).sort()
-      )
-    : (CITIES_BY_PROVINCE[provinceFilter] || []).sort();
 
   const getTimeRemaining = (endsAt: string) => {
     const now = new Date();
@@ -391,53 +380,19 @@ export default function AuctionsSection() {
                   <option value="5000+">Oltre 5.000 EUR</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Regione</label>
-                <select
-                  value={regionFilter}
-                  onChange={(e) => { setRegionFilter(e.target.value); setProvinceFilter('all'); setCityFilter('all'); }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                >
-                  <option value="all">Tutte le regioni</option>
-                  {ITALIAN_REGIONS.map(reg => (
-                    <option key={reg} value={reg}>{reg}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Provincia</label>
-                <select
-                  value={provinceFilter}
-                  onChange={(e) => { setProvinceFilter(e.target.value); setCityFilter('all'); }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                >
-                  <option value="all">Tutte le province</option>
-                  {provinces.map(prov => (
-                    <option key={prov} value={prov}>{prov}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Citta</label>
-                <select
-                  value={cityFilter}
-                  onChange={(e) => setCityFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                >
-                  <option value="all">Tutte le citta</option>
-                  {cities.map(city => (
-                    <option key={city} value={city}>{city}</option>
-                  ))}
-                </select>
+              <div className="col-span-full">
+                <AdminLocationFilter
+                  value={locationFilter}
+                  onChange={setLocationFilter}
+                  accentColor="orange"
+                />
               </div>
               <div className="flex items-end">
                 <button
                   onClick={() => {
                     setCategoryFilter('all');
                     setPriceRangeFilter('all');
-                    setRegionFilter('all');
-                    setProvinceFilter('all');
-                    setCityFilter('all');
+                    setLocationFilter({ region: '', province: '', city: '' });
                   }}
                   className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
                 >

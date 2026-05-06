@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CheckCircle, XCircle, Eye, Star, Filter, MapPin, Building2, Calendar, Clock, User, Search, X, FileEdit as Edit, Save, X as CloseIcon, ChevronDown, ChevronUp, Image, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { AdminLocationFilter } from './AdminLocationFilter';
 
 interface Review {
   id: string;
@@ -34,11 +35,15 @@ interface Review {
     name: string;
     internal_name: string | null;
     city: string;
+    province: string | null;
+    region: string | null;
     address: string;
   } | null;
   unclaimed_business_location?: {
     name: string;
     city: string;
+    province: string | null;
+    region: string | null;
     street: string;
   } | null;
   businesses?: {
@@ -87,6 +92,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
   const [rejectReason, setRejectReason] = useState('');
   const [reviewToReject, setReviewToReject] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [locationFilter, setLocationFilter] = useState({ region: '', province: '', city: '' });
   const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [editForm, setEditForm] = useState<Partial<Review> | null>(null);
 
@@ -134,6 +140,19 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
       if (review.overall_rating < Number(minProblemRating)) return false;
     }
 
+    if (locationFilter.region) {
+      const loc = review.business_location || review.unclaimed_business_location;
+      if (!loc || loc.region !== locationFilter.region) return false;
+    }
+    if (locationFilter.province) {
+      const loc = review.business_location || review.unclaimed_business_location;
+      if (!loc || loc.province !== locationFilter.province) return false;
+    }
+    if (locationFilter.city) {
+      const loc = review.business_location || review.unclaimed_business_location;
+      if (!loc || loc.city !== locationFilter.city) return false;
+    }
+
     return true;
   });
 
@@ -150,6 +169,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
     setMinQuoteRating('');
     setMinCustomerServiceRating('');
     setMinProblemRating('');
+    setLocationFilter({ region: '', province: '', city: '' });
   };
 
   const formatDate = (dateString: string) => {
@@ -459,6 +479,14 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                 ))}
               </select>
             </div>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <MapPin className="w-4 h-4 inline mr-1" />
+              Filtra per posizione attivita'
+            </label>
+            <AdminLocationFilter value={locationFilter} onChange={setLocationFilter} />
           </div>
 
           <div className="mt-5 border-t border-gray-100 pt-4">

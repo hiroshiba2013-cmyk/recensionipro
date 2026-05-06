@@ -421,8 +421,8 @@ export function AdminDashboardPage() {
         *,
         customer:customer_id(id, full_name, nickname, email),
         family_member:family_member_id(first_name, last_name, nickname),
-        business_location:business_location_id(name, internal_name, city, address),
-        unclaimed_business_location:unclaimed_business_location_id(name, city, street),
+        business_location:business_location_id(name, internal_name, city, province, region, address),
+        unclaimed_business_location:unclaimed_business_location_id(name, city, province, region, street),
         businesses:business_id(name)
       `)
       .order('created_at', { ascending: false })

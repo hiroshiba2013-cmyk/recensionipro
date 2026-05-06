@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Briefcase, MapPin, Trash2, Filter, Calendar, Euro, Eye, Search, Users, X, ShieldCheck, XCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { AdminLocationFilter } from './AdminLocationFilter';
 
 interface JobPosting {
   id: string;
@@ -12,6 +13,9 @@ interface JobPosting {
   salary_currency: string | null;
   gross_annual_salary: number | null;
   location: string;
+  region: string | null;
+  province: string | null;
+  city: string | null;
   status: string;
   approval_status: string;
   position_type: string;
@@ -69,6 +73,7 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
   const [jobType, setJobType] = useState<JobType>('all');
   const [approvalFilter, setApprovalFilter] = useState<ApprovalFilter>('pending');
   const [searchTerm, setSearchTerm] = useState('');
+  const [locationFilter, setLocationFilter] = useState({ region: '', province: '', city: '' });
   const [selectedJobPosting, setSelectedJobPosting] = useState<JobPosting | null>(null);
   const [selectedJobSeeker, setSelectedJobSeeker] = useState<JobSeeker | null>(null);
   const [jobSeekers, setJobSeekers] = useState<JobSeeker[]>([]);
@@ -281,7 +286,10 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
     const matchesSearch = searchTerm === '' ||
       job.business_location?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.title.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesApproval && matchesSearch;
+    const matchesRegion = !locationFilter.region || job.region === locationFilter.region;
+    const matchesProvince = !locationFilter.province || job.province === locationFilter.province;
+    const matchesCity = !locationFilter.city || job.city === locationFilter.city;
+    return matchesApproval && matchesSearch && matchesRegion && matchesProvince && matchesCity;
   });
 
   const filteredJobSeekers = jobSeekers.filter(seeker => {
@@ -347,6 +355,10 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
               <option value="cerca">Solo cerca lavoro (utenti)</option>
             </select>
           </div>
+        </div>
+
+        <div className="mb-6">
+          <AdminLocationFilter value={locationFilter} onChange={setLocationFilter} />
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mb-6">

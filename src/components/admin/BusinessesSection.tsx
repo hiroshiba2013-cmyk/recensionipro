@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Building2, CheckCircle, MapPin, Mail, Phone, FileEdit as Edit2, Search, Filter, Download, Upload, UserPlus, X, FileText, Briefcase, Clock, ShieldCheck, ShieldX, XCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { ITALIAN_REGIONS, PROVINCES_BY_REGION, CITIES_BY_PROVINCE } from '../../lib/cities';
+import { AdminLocationFilter } from './AdminLocationFilter';
 
 const DAYS_IT: { [key: string]: string } = {
   monday: 'Lunedì',
@@ -782,61 +782,26 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           </div>
 
           {/* Advanced Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Regione</label>
-              <select
-                value={filters.region}
-                onChange={(e) => setFilters({ ...filters, region: e.target.value, province: '', city: '' })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              >
-                <option value="">Tutte le regioni</option>
-                {ITALIAN_REGIONS.map((region) => (
-                  <option key={region} value={region}>{region}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Provincia</label>
-              <select
-                value={filters.province}
-                onChange={(e) => setFilters({ ...filters, province: e.target.value, city: '' })}
-                disabled={!filters.region}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-              >
-                <option value="">Tutte le province</option>
-                {filters.region && PROVINCES_BY_REGION[filters.region]?.map((province) => (
-                  <option key={province} value={province}>{province}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Città</label>
-              <select
-                value={filters.city}
-                onChange={(e) => setFilters({ ...filters, city: e.target.value })}
-                disabled={!filters.province}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-              >
-                <option value="">Tutte le città</option>
-                {filters.province && CITIES_BY_PROVINCE[filters.province]?.map((city) => (
-                  <option key={city} value={city}>{city}</option>
-                ))}
-              </select>
-            </div>
+          <div className="space-y-3">
+            <AdminLocationFilter
+              value={{ region: filters.region, province: filters.province, city: filters.city }}
+              onChange={loc => setFilters({ ...filters, region: loc.region, province: loc.province, city: loc.city })}
+            />
             {activeTab === 'user_added' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Stato Approvazione</label>
-                <select
-                  value={filters.verified}
-                  onChange={(e) => setFilters({ ...filters, verified: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                >
-                  <option value="all">Tutte</option>
-                  <option value="unverified">In Attesa</option>
-                  <option value="verified">Approvate</option>
-                  <option value="rejected">Rifiutate</option>
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Stato Approvazione</label>
+                  <select
+                    value={filters.verified}
+                    onChange={(e) => setFilters({ ...filters, verified: e.target.value as any })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  >
+                    <option value="all">Tutte</option>
+                    <option value="unverified">In Attesa</option>
+                    <option value="verified">Approvate</option>
+                    <option value="rejected">Rifiutate</option>
+                  </select>
+                </div>
               </div>
             )}
           </div>

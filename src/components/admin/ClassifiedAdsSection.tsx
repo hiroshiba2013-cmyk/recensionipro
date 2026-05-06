@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Trash2, Eye, Filter, Tag, Calendar, User, MapPin, Euro, Search, FileEdit as Edit, Save, X as CloseIcon, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { AdminLocationFilter } from './AdminLocationFilter';
 
 interface ClassifiedAd {
   id: string;
@@ -38,6 +39,7 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
   const [filterApproval, setFilterApproval] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterNickname, setFilterNickname] = useState<string>('');
+  const [locationFilter, setLocationFilter] = useState({ region: '', province: '', city: '' });
   const [selectedAd, setSelectedAd] = useState<ClassifiedAd | null>(null);
   const [editingAd, setEditingAd] = useState<ClassifiedAd | null>(null);
   const [editForm, setEditForm] = useState<Partial<ClassifiedAd> | null>(null);
@@ -57,7 +59,10 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
     const typeMatch = filterType === 'all' || ad.ad_type === filterType;
     const nicknameMatch = !filterNickname.trim() ||
       getUserNickname(ad).toLowerCase().includes(filterNickname.toLowerCase());
-    return statusMatch && approvalMatch && typeMatch && nicknameMatch;
+    const regionMatch = !locationFilter.region || ad.region === locationFilter.region;
+    const provinceMatch = !locationFilter.province || ad.province === locationFilter.province;
+    const cityMatch = !locationFilter.city || ad.city === locationFilter.city;
+    return statusMatch && approvalMatch && typeMatch && nicknameMatch && regionMatch && provinceMatch && cityMatch;
   });
 
   const approveAd = async (adId: string) => {
@@ -305,6 +310,10 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
               className="flex-1 border border-gray-300 rounded-lg px-4 py-2"
             />
           </div>
+        </div>
+
+        <div className="mt-4">
+          <AdminLocationFilter value={locationFilter} onChange={setLocationFilter} />
         </div>
       </div>
 
