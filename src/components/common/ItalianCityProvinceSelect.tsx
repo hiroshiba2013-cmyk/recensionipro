@@ -56,6 +56,7 @@ export function ItalianCityProvinceSelect({
   const [provincesForRegion, setProvincesForRegion] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
   const [loadingProvinces, setLoadingProvinces] = useState(false);
+  const [loadingProvincesForRegion, setLoadingProvincesForRegion] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
 
   const [provinceOpen, setProvinceOpen] = useState(false);
@@ -75,18 +76,21 @@ export function ItalianCityProvinceSelect({
       });
   }, []);
 
-  // When region changes, load filtered provinces and reset province/city if no longer valid
+  // When region changes, load filtered provinces
   useEffect(() => {
     if (!region) {
       setProvincesForRegion([]);
+      setLoadingProvincesForRegion(false);
       return;
     }
+    setLoadingProvincesForRegion(true);
+    setProvincesForRegion([]);
     supabase
       .rpc('get_province_by_region', { p_regione: region })
       .then(({ data }) => {
         const list = data ? data.map((r: { provincia: string }) => r.provincia) : [];
         setProvincesForRegion(list);
-        // If the currently selected province doesn't belong to the new region, clear it
+        setLoadingProvincesForRegion(false);
         if (province && list.length > 0 && !list.includes(province)) {
           onProvinceChange('', '');
           onCityChange('');
@@ -143,7 +147,7 @@ export function ItalianCityProvinceSelect({
     setCities([]);
   }
 
-  const isProvinceDisabled = disabled || (region !== '' && provincesForRegion.length === 0 && loadingProvinces === false && allProvinces.length > 0);
+  const isProvinceLoading = loadingProvinces || loadingProvincesForRegion;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
@@ -210,7 +214,7 @@ export function ItalianCityProvinceSelect({
               </div>
               {/* List — altezza fissa, scroll nativo */}
               <div style={{ height: '220px', overflowY: 'scroll' }}>
-                {loadingProvinces ? (
+                {isProvinceLoading ? (
                   <div className="px-4 py-6 text-sm text-gray-400 text-center">Caricamento...</div>
                 ) : filteredProvinces.length === 0 ? (
                   <div className="px-4 py-6 text-sm text-gray-400 text-center">Nessuna provincia trovata</div>
@@ -239,7 +243,7 @@ export function ItalianCityProvinceSelect({
                 )}
               </div>
               <div className="px-3 py-1.5 border-t border-gray-100 bg-gray-50 rounded-b-xl text-xs text-gray-400 text-right">
-                {filteredProvinces.length} {region ? `province in ${region}` : 'province'}
+                {isProvinceLoading ? 'Caricamento...' : `${filteredProvinces.length} ${region ? `province in ${region}` : 'province'}`}
               </div>
             </div>
           )}
