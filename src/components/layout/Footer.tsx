@@ -78,12 +78,12 @@ export function Footer() {
           {columns.map(col => (
             <div key={col.title}>
               <h4 className="font-semibold text-sm mb-3 text-gray-300">{col.title}</h4>
-              <ul className="space-y-2">
+              <ul className="flex flex-col gap-2">
                 {col.links.map(link => (
-                  <li key={link.label}>
+                  <li key={link.label} className="leading-none">
                     <button
                       onClick={() => handleLink(link.href)}
-                      className="text-gray-400 hover:text-white text-sm transition-colors text-left"
+                      className="text-gray-400 hover:text-white text-sm transition-colors text-left leading-tight p-0 m-0"
                     >
                       {link.label}
                     </button>
