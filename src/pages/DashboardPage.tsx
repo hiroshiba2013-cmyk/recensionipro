@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Star, Building, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase, Users, DollarSign, Trophy, Activity, Tag } from 'lucide-react';
+import { Plus, Star, Building, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase, Users, DollarSign, Trophy, Activity, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Business, Review, FamilyMember } from '../lib/supabase';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
@@ -112,6 +112,23 @@ export function DashboardPage() {
   const [upgradeMessage, setUpgradeMessage] = useState('');
   const [leaderboardTab, setLeaderboardTab] = useState<'leaderboard' | 'my_activities'>('leaderboard');
   const [userRank, setUserRank] = useState<{ points: number; rank: number; reviews_count: number } | null>(null);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    auctions: true,
+    ads: true,
+    favorites: false,
+    leaderboard: false,
+    reviews: false,
+    family_reviews: false,
+    plans: false,
+    business_activities: false,
+    job_postings: false,
+    business_reviews: false,
+    job_seekers: false,
+    solidarity: false,
+    business_plans: false,
+  });
+  const toggleSection = (key: string) =>
+    setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
 
   const loadBusinessClassifiedAds = async () => {
     if (!profile) return;
@@ -579,9 +596,7 @@ export function DashboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {profile.user_type === 'business' && (
-          <TrialStatusBanner
-            onUpgradeClick={() => navigate('/subscription')}
-          />
+          <TrialStatusBanner onUpgradeClick={() => navigate('/subscription')} />
         )}
 
         {loading ? (
@@ -589,524 +604,369 @@ export function DashboardPage() {
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-3">
+
             {profile.user_type === 'business' ? (
               <>
-                {/* Statistiche sede selezionata */}
                 {selectedBusinessLocationId && (
-                  <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-200">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-blue-600" />
-                      Statistiche Sede
-                    </h3>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="bg-yellow-50 rounded-xl p-4 text-center border border-yellow-200">
-                        <Star className="w-5 h-5 text-yellow-600 mx-auto mb-1" />
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="text-center">
                         <p className="text-2xl font-bold text-yellow-600">{reviews.length}</p>
-                        <p className="text-xs text-gray-600 font-medium">Recensioni</p>
+                        <p className="text-xs text-gray-500 mt-0.5 flex items-center justify-center gap-1"><Star className="w-3 h-3" />Recensioni</p>
                       </div>
-                      <div className="bg-blue-50 rounded-xl p-4 text-center border border-blue-200">
-                        <Package className="w-5 h-5 text-blue-600 mx-auto mb-1" />
+                      <div className="text-center border-x border-gray-100">
                         <p className="text-2xl font-bold text-blue-600">{products.length}</p>
-                        <p className="text-xs text-gray-600 font-medium">Prodotti</p>
+                        <p className="text-xs text-gray-500 mt-0.5 flex items-center justify-center gap-1"><Package className="w-3 h-3" />Prodotti</p>
                       </div>
-                      <div className="bg-orange-50 rounded-xl p-4 text-center border border-orange-200">
-                        <Briefcase className="w-5 h-5 text-orange-600 mx-auto mb-1" />
+                      <div className="text-center">
                         <p className="text-2xl font-bold text-orange-600">{jobPostings.length}</p>
-                        <p className="text-xs text-gray-600 font-medium">Offerte Lavoro</p>
+                        <p className="text-xs text-gray-500 mt-0.5 flex items-center justify-center gap-1"><Briefcase className="w-3 h-3" />Offerte</p>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Aste */}
                 <UserAuctionsSection />
 
-                {/* Annunci classificati */}
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-green-100">
-                  <div className="bg-gradient-to-r from-green-600 to-teal-600 px-6 py-4">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-xl font-bold text-white flex items-center gap-3">
-                        <Tag className="w-6 h-6" />
-                        I Miei Annunci
-                      </h2>
-                      <button
-                        onClick={() => { setEditingClassifiedAdId(undefined); setShowClassifiedAdForm(true); }}
-                        className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Nuovo Annuncio
-                      </button>
+                {/* Annunci */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <button onClick={() => toggleSection('ads')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center"><Tag className="w-4 h-4 text-green-600" /></div>
+                      <span className="font-semibold text-gray-900">I Miei Annunci</span>
+                      {businessClassifiedAds.length > 0 && <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">{businessClassifiedAds.length}</span>}
                     </div>
-                  </div>
-
-                  {showClassifiedAdForm && (
-                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <ClassifiedAdForm
-                          adId={editingClassifiedAdId}
-                          onSuccess={() => { setShowClassifiedAdForm(false); loadBusinessClassifiedAds(); }}
-                          onCancel={() => setShowClassifiedAdForm(false)}
-                        />
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={(e) => { e.stopPropagation(); setEditingClassifiedAdId(undefined); setShowClassifiedAdForm(true); }} className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"><Plus className="w-3 h-3" />Nuovo</button>
+                      {openSections.ads ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                    </div>
+                  </button>
+                  {openSections.ads && (
+                    <div className="px-5 pb-5 border-t border-gray-100">
+                      {businessClassifiedAds.length === 0 ? (
+                        <div className="text-center py-8">
+                          <Tag className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                          <p className="text-sm text-gray-500 mb-3">Nessun annuncio pubblicato</p>
+                          <button onClick={() => { setEditingClassifiedAdId(undefined); setShowClassifiedAdForm(true); }} className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 text-sm font-semibold"><Plus className="w-4 h-4" />Crea annuncio</button>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4">
+                          {businessClassifiedAds.map(ad => (
+                            <ProfileClassifiedAdCard key={ad.id} ad={{ ...ad, price: ad.price ? parseFloat(ad.price) : null, classified_categories: ad.classified_categories, profiles: { full_name: profile?.nickname || profile?.full_name || 'Utente', avatar_url: null } }} onEdit={(ad) => { setEditingClassifiedAdId(ad.id); setShowClassifiedAdForm(true); }} onDelete={deleteClassifiedAd} />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
-
-                  <div className="p-6">
-                    {businessClassifiedAds.length === 0 ? (
-                      <div className="text-center py-10">
-                        <Tag className="w-14 h-14 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-700 mb-2">Nessun annuncio</h3>
-                        <p className="text-gray-500 text-sm mb-6">Pubblica annunci di vendita, acquisto o regalo.</p>
-                        <button
-                          onClick={() => { setEditingClassifiedAdId(undefined); setShowClassifiedAdForm(true); }}
-                          className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-colors font-semibold"
-                        >
-                          <Plus className="w-5 h-5" />
-                          Crea il primo annuncio
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {businessClassifiedAds.map(ad => (
-                          <ProfileClassifiedAdCard
-                            key={ad.id}
-                            ad={{
-                              ...ad,
-                              price: ad.price ? parseFloat(ad.price) : null,
-                              classified_categories: ad.classified_categories,
-                              profiles: { full_name: profile?.nickname || profile?.full_name || 'Utente', avatar_url: null },
-                            }}
-                            onEdit={(ad) => { setEditingClassifiedAdId(ad.id); setShowClassifiedAdForm(true); }}
-                            onDelete={deleteClassifiedAd}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
                 </div>
 
-                {/* Offerte di lavoro */}
                 {!loading && (selectedBusinessId || businesses[0]?.id) && (
-                  <BusinessJobPostingForm
-                    key={`${selectedBusinessId || businesses[0]?.id}-${selectedBusinessLocationId || 'all'}`}
-                    businessId={(selectedBusinessId || businesses[0]?.id)!}
-                    isRegisteredBusiness={isRegisteredBusiness}
-                    selectedLocationId={selectedBusinessLocationId || undefined}
-                  />
+                  <BusinessJobPostingForm key={`${selectedBusinessId || businesses[0]?.id}-${selectedBusinessLocationId || 'all'}`} businessId={(selectedBusinessId || businesses[0]?.id)!} isRegisteredBusiness={isRegisteredBusiness} selectedLocationId={selectedBusinessLocationId || undefined} />
                 )}
 
-                {/* Recensioni */}
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
-                  <div className="bg-gradient-to-r from-yellow-500 to-amber-500 px-6 py-4">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-3">
-                      <Star className="w-6 h-6" />
-                      {selectedBusinessLocationId ? 'Recensioni Sede' : 'Recensioni Ricevute'}
-                    </h2>
-                  </div>
-                  <div className="p-6">
-                    {reviews.length === 0 ? (
-                      <p className="text-gray-500 text-center py-8">
-                        {selectedBusinessLocationId ? 'Nessuna recensione per questa sede' : 'Nessuna recensione ricevuta'}
-                      </p>
-                    ) : (
-                      <div className="space-y-4">
-                        {reviews.map((review) => (
-                          <div key={review.id} className="border border-gray-200 rounded-xl p-4">
-                            <div className="flex items-start justify-between mb-2">
-                              <div className="flex">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
-                                ))}
+                {/* Recensioni ricevute */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <button onClick={() => toggleSection('business_reviews')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center"><Star className="w-4 h-4 text-yellow-600" /></div>
+                      <span className="font-semibold text-gray-900">{selectedBusinessLocationId ? 'Recensioni Sede' : 'Recensioni Ricevute'}</span>
+                      {reviews.length > 0 && <span className="bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-0.5 rounded-full">{reviews.length}</span>}
+                    </div>
+                    {openSections.business_reviews ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  </button>
+                  {openSections.business_reviews && (
+                    <div className="px-5 pb-5 border-t border-gray-100">
+                      {reviews.length === 0 ? (
+                        <p className="text-gray-500 text-sm text-center py-6">{selectedBusinessLocationId ? 'Nessuna recensione per questa sede' : 'Nessuna recensione ricevuta'}</p>
+                      ) : (
+                        <div className="space-y-3 pt-4">
+                          {reviews.map((review) => (
+                            <div key={review.id} className="border border-gray-100 rounded-xl p-4">
+                              <div className="flex items-start justify-between mb-1">
+                                <div className="flex">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />)}</div>
+                                <span className="text-xs text-gray-400">{new Date(review.created_at).toLocaleDateString('it-IT')}</span>
                               </div>
-                              <span className="text-sm text-gray-500">{new Date(review.created_at).toLocaleDateString('it-IT')}</span>
+                              <h4 className="font-semibold text-sm mb-1">{review.title}</h4>
+                              <p className="text-gray-600 text-sm">{review.content}</p>
+                              {!review.responses || review.responses.length === 0 ? (
+                                <button onClick={() => setShowResponseForm(review.id)} className="mt-2 text-blue-600 text-xs hover:text-blue-700 flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5" />Rispondi</button>
+                              ) : (
+                                <div className="mt-2 pl-3 border-l-2 border-blue-200"><p className="text-xs font-medium text-gray-500 mb-0.5">La tua risposta:</p><p className="text-xs text-gray-700">{review.responses[0].content}</p></div>
+                              )}
                             </div>
-                            <h4 className="font-semibold mb-1">{review.title}</h4>
-                            <p className="text-gray-700 text-sm">{review.content}</p>
-                            {!review.responses || review.responses.length === 0 ? (
-                              <button onClick={() => setShowResponseForm(review.id)} className="mt-3 text-blue-600 text-sm hover:text-blue-700 flex items-center gap-1">
-                                <MessageSquare className="w-4 h-4" />
-                                Rispondi
-                              </button>
-                            ) : (
-                              <div className="mt-3 pl-4 border-l-2 border-blue-200">
-                                <p className="text-sm font-medium text-gray-600 mb-1">La tua risposta:</p>
-                                <p className="text-sm text-gray-700">{review.responses[0].content}</p>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Preferiti */}
-                <FavoritesSection />
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <button onClick={() => toggleSection('favorites')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center"><Heart className="w-4 h-4 text-red-500" /></div>
+                      <span className="font-semibold text-gray-900">Preferiti</span>
+                    </div>
+                    {openSections.favorites ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  </button>
+                  {openSections.favorites && <div className="border-t border-gray-100"><FavoritesSection /></div>}
+                </div>
 
-                {/* Gestione attività — solo su tutte le sedi */}
+                {/* Gestione attività */}
                 {!selectedBusinessLocationId && (
-                  <>
-                    {showCreateBusinessForm ? (
-                      <CreateBusinessForm
-                        ownerId={profile.id}
-                        onSuccess={() => { setShowCreateBusinessForm(false); loadDashboardData(); }}
-                        onCancel={() => setShowCreateBusinessForm(false)}
-                      />
-                    ) : (
-                      <>
-                        <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
-                          <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-4">
-                            <div className="flex items-center justify-between">
-                              <h2 className="text-xl font-bold text-white flex items-center gap-3">
-                                <Building className="w-6 h-6" />
-                                Le Mie Attività
-                              </h2>
-                              <button
-                                onClick={() => setShowCreateBusinessForm(true)}
-                                className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2"
-                              >
-                                <Plus className="w-4 h-4" />
-                                Aggiungi
-                              </button>
-                            </div>
-                          </div>
-                          <div className="p-6">
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <button onClick={() => toggleSection('business_activities')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"><Building className="w-4 h-4 text-blue-600" /></div>
+                        <span className="font-semibold text-gray-900">Le Mie Attività</span>
+                        {businesses.length > 0 && <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">{businesses.length}</span>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={(e) => { e.stopPropagation(); setShowCreateBusinessForm(true); }} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"><Plus className="w-3 h-3" />Aggiungi</button>
+                        {openSections.business_activities ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                      </div>
+                    </button>
+                    {openSections.business_activities && (
+                      <div className="px-5 pb-5 border-t border-gray-100 pt-4">
+                        {showCreateBusinessForm ? (
+                          <CreateBusinessForm ownerId={profile.id} onSuccess={() => { setShowCreateBusinessForm(false); loadDashboardData(); }} onCancel={() => setShowCreateBusinessForm(false)} />
+                        ) : (
+                          <>
                             {businesses.length === 0 ? (
-                              <p className="text-gray-500 text-center py-6">Non hai ancora registrato nessuna attività</p>
+                              <p className="text-sm text-gray-500 text-center py-4">Non hai ancora registrato nessuna attività</p>
                             ) : (
-                              <div className="grid gap-3">
+                              <div className="grid gap-2 mb-4">
                                 {businesses.map((business) => (
-                                  <div
-                                    key={business.id}
-                                    onClick={() => setSelectedBusinessId(business.id)}
-                                    className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${selectedBusinessId === business.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <div>
-                                        <h3 className="font-semibold text-gray-900">{business.name}</h3>
-                                        <p className="text-gray-500 text-sm">{business.city}</p>
-                                      </div>
-                                      {business.verified ? (
-                                        <span className="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">Verificato</span>
-                                      ) : (
-                                        <span className="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full font-medium">In Attesa</span>
-                                      )}
-                                    </div>
+                                  <div key={business.id} onClick={() => setSelectedBusinessId(business.id)} className={`border rounded-xl p-3 cursor-pointer transition-all flex items-center justify-between ${selectedBusinessId === business.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}>
+                                    <div><h3 className="font-semibold text-gray-900 text-sm">{business.name}</h3><p className="text-gray-500 text-xs">{business.city}</p></div>
+                                    {business.verified ? <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">Verificato</span> : <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full font-medium">In Attesa</span>}
                                   </div>
                                 ))}
                               </div>
                             )}
-                          </div>
-                        </div>
-
-                        {selectedBusinessId && (
-                          <>
-                            <EditBusinessForm businessId={selectedBusinessId} selectedLocationId={selectedBusinessLocationId} onUpdate={loadDashboardData} />
-                            <EditBusinessLocationsForm businessId={selectedBusinessId} selectedLocationId={selectedBusinessLocationId} onUpdate={loadDashboardData} />
+                            {selectedBusinessId && (
+                              <>
+                                <EditBusinessForm businessId={selectedBusinessId} selectedLocationId={selectedBusinessLocationId} onUpdate={loadDashboardData} />
+                                <EditBusinessLocationsForm businessId={selectedBusinessId} selectedLocationId={selectedBusinessLocationId} onUpdate={loadDashboardData} />
+                              </>
+                            )}
+                            <ImportBusinessesForm onImportComplete={loadDashboardData} />
                           </>
                         )}
-
-                        <ImportBusinessesForm onImportComplete={loadDashboardData} />
-                      </>
-                    )}
-                  </>
-                )}
-
-                {/* Cerco Lavoro */}
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
-                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-3">
-                      <Users className="w-6 h-6" />
-                      Profili Cerco Lavoro
-                    </h2>
-                  </div>
-                  <div className="p-6">
-                    {jobSeekers.length === 0 ? (
-                      <p className="text-gray-500 text-center py-6">Nessun profilo disponibile al momento</p>
-                    ) : (
-                      <div className="grid gap-3">
-                        {jobSeekers.map((seeker) => (
-                          <div key={seeker.id} className="border border-gray-200 rounded-xl p-4 hover:border-blue-300 transition-all">
-                            <div className="flex items-start gap-3">
-                              {seeker.profiles.avatar_url ? (
-                                <img src={seeker.profiles.avatar_url} alt={seeker.profiles.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
-                              ) : (
-                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold flex-shrink-0">
-                                  {seeker.profiles.full_name.charAt(0)}
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between gap-2">
-                                  <h3 className="font-semibold text-gray-900 truncate">{seeker.title}</h3>
-                                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium flex-shrink-0">{seeker.category}</span>
-                                </div>
-                                <p className="text-sm text-gray-500">{seeker.profiles.nickname || seeker.profiles.full_name} · {seeker.city}</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
                       </div>
                     )}
-                    <div className="mt-4 text-center">
-                      <button onClick={() => navigate('/jobs')} className="text-blue-600 text-sm font-semibold hover:underline">
-                        Vedi tutti i profili
-                      </button>
-                    </div>
                   </div>
+                )}
+
+                {/* Profili Cerco Lavoro */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <button onClick={() => toggleSection('job_seekers')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"><Users className="w-4 h-4 text-blue-600" /></div>
+                      <span className="font-semibold text-gray-900">Profili Cerco Lavoro</span>
+                      {jobSeekers.length > 0 && <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">{jobSeekers.length}</span>}
+                    </div>
+                    {openSections.job_seekers ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  </button>
+                  {openSections.job_seekers && (
+                    <div className="px-5 pb-5 border-t border-gray-100">
+                      {jobSeekers.length === 0 ? (
+                        <p className="text-sm text-gray-500 text-center py-6">Nessun profilo disponibile</p>
+                      ) : (
+                        <div className="grid gap-2 pt-4">
+                          {jobSeekers.map((seeker) => (
+                            <div key={seeker.id} className="border border-gray-100 rounded-xl p-3 hover:border-blue-200 transition-all flex items-center gap-3">
+                              {seeker.profiles.avatar_url ? <img src={seeker.profiles.avatar_url} alt={seeker.profiles.full_name} className="w-9 h-9 rounded-full object-cover flex-shrink-0" /> : <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">{seeker.profiles.full_name.charAt(0)}</div>}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2">
+                                  <h3 className="font-semibold text-gray-900 text-sm truncate">{seeker.title}</h3>
+                                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium flex-shrink-0">{seeker.category}</span>
+                                </div>
+                                <p className="text-xs text-gray-500">{seeker.profiles.nickname || seeker.profiles.full_name} · {seeker.city}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="mt-3 text-center"><button onClick={() => navigate('/jobs')} className="text-blue-600 text-sm font-semibold hover:underline">Vedi tutti i profili</button></div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Solidarietà */}
                 {solidarityStats && (
-                  <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
-                    <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
-                      <h2 className="text-xl font-bold text-white flex items-center gap-3">
-                        <Heart className="w-6 h-6" />
-                        Solidarietà
-                      </h2>
-                    </div>
-                    <div className="p-6">
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-                          <div className="flex items-center gap-2 mb-2">
-                            <DollarSign className="w-5 h-5 text-green-600" />
-                            <span className="text-sm font-semibold text-gray-700">Fatturato Totale</span>
-                          </div>
-                          <p className="text-2xl font-bold text-green-600">€{solidarityStats.total_revenue.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                        </div>
-                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Heart className="w-5 h-5 text-blue-600" />
-                            <span className="text-sm font-semibold text-gray-700">Donato in Beneficenza</span>
-                          </div>
-                          <p className="text-2xl font-bold text-blue-600">€{solidarityStats.charity_amount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                        </div>
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <button onClick={() => toggleSection('solidarity')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center"><Heart className="w-4 h-4 text-green-600" /></div>
+                        <span className="font-semibold text-gray-900">Solidarietà</span>
+                        <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">€{solidarityStats.charity_amount.toLocaleString('it-IT', { maximumFractionDigits: 0 })}</span>
                       </div>
-                      <div className="mt-4 text-center">
-                        <button onClick={() => navigate('/solidarity')} className="text-green-600 text-sm font-semibold hover:underline">Scopri di più</button>
+                      {openSections.solidarity ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                    </button>
+                    {openSections.solidarity && (
+                      <div className="px-5 pb-5 border-t border-gray-100 pt-4">
+                        <div className="grid md:grid-cols-2 gap-3">
+                          <div className="bg-green-50 rounded-xl p-4 border border-green-100"><div className="flex items-center gap-2 mb-1"><DollarSign className="w-4 h-4 text-green-600" /><span className="text-xs font-semibold text-gray-600">Fatturato Totale</span></div><p className="text-xl font-bold text-green-600">€{solidarityStats.total_revenue.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
+                          <div className="bg-blue-50 rounded-xl p-4 border border-blue-100"><div className="flex items-center gap-2 mb-1"><Heart className="w-4 h-4 text-blue-600" /><span className="text-xs font-semibold text-gray-600">Donato in Beneficenza</span></div><p className="text-xl font-bold text-blue-600">€{solidarityStats.charity_amount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
+                        </div>
+                        <div className="mt-3 text-center"><button onClick={() => navigate('/solidarity')} className="text-green-600 text-sm font-semibold hover:underline">Scopri di più</button></div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
 
-                {/* Cambia Piano */}
+                {/* Cambia Piano - Business */}
                 {currentSubscription && availablePlans.length > 0 && (
-                  <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
-                    <div className="bg-gradient-to-r from-gray-700 to-gray-800 px-6 py-4">
-                      <h2 className="text-xl font-bold text-white">Cambia Piano</h2>
-                    </div>
-                    <div className="p-6">
-                      {upgradeMessage && (
-                        <div className={`mb-4 p-3 rounded-lg text-sm ${upgradeMessage.includes('successo') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                          {upgradeMessage}
-                        </div>
-                      )}
-                      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {availablePlans.map((plan) => {
-                          const monthlyEquivalent = availablePlans.find(p => p.max_persons === plan.max_persons && p.billing_period === 'monthly');
-                          const isAnnual = plan.billing_period === 'yearly';
-                          const savings = isAnnual && monthlyEquivalent ? (monthlyEquivalent.price * 12) - plan.price : null;
-                          const isCurrent = currentSubscription.plan.id === plan.id;
-                          return (
-                            <div key={plan.id} className={`rounded-xl p-4 border-2 relative ${isCurrent ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}>
-                              {isAnnual && !isCurrent && (
-                                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full">RISPARMIO</span>
-                              )}
-                              <h3 className="font-bold text-gray-900 mb-1">{plan.name}</h3>
-                              <p className="text-xs text-gray-500 mb-3">{plan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'} · {plan.max_persons} {plan.max_persons === 1 ? 'sede' : 'sedi'}</p>
-                              <p className="text-2xl font-bold text-blue-600 mb-1">€{Number(plan.price).toFixed(2)}</p>
-                              <p className="text-xs text-gray-400 mb-3">+ IVA / {plan.billing_period === 'monthly' ? 'mese' : 'anno'}</p>
-                              {savings && <p className="text-xs text-green-600 font-semibold mb-3">Risparmi €{savings.toFixed(2)}</p>}
-                              {isCurrent ? (
-                                <div className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-semibold text-center">Piano Attuale</div>
-                              ) : (
-                                <button onClick={() => handleChangePlan(plan.id)} className="w-full bg-gray-800 hover:bg-gray-900 text-white py-2 rounded-lg text-sm font-semibold transition-colors">Scegli Piano</button>
-                              )}
-                            </div>
-                          );
-                        })}
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <button onClick={() => toggleSection('business_plans')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center"><Shield className="w-4 h-4 text-gray-600" /></div>
+                        <span className="font-semibold text-gray-900">Cambia Piano</span>
+                        <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full">{currentSubscription.plan.name}</span>
                       </div>
-                    </div>
+                      {openSections.business_plans ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                    </button>
+                    {openSections.business_plans && (
+                      <div className="px-5 pb-5 border-t border-gray-100 pt-4">
+                        {upgradeMessage && <div className={`mb-4 p-3 rounded-xl text-sm ${upgradeMessage.includes('successo') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{upgradeMessage}</div>}
+                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
+                          {availablePlans.map((plan) => {
+                            const monthlyEquivalent = availablePlans.find(p => p.max_persons === plan.max_persons && p.billing_period === 'monthly');
+                            const isAnnual = plan.billing_period === 'yearly';
+                            const savings = isAnnual && monthlyEquivalent ? (monthlyEquivalent.price * 12) - plan.price : null;
+                            const isCurrent = currentSubscription.plan.id === plan.id;
+                            return (
+                              <div key={plan.id} className={`rounded-xl p-4 border-2 relative ${isCurrent ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}>
+                                {isAnnual && !isCurrent && <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full">RISPARMIO</span>}
+                                <h3 className="font-bold text-gray-900 text-sm mb-0.5">{plan.name}</h3>
+                                <p className="text-xs text-gray-500 mb-2">{plan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'} · {plan.max_persons} {plan.max_persons === 1 ? 'sede' : 'sedi'}</p>
+                                <p className="text-xl font-bold text-blue-600 mb-0.5">€{Number(plan.price).toFixed(2)}</p>
+                                <p className="text-xs text-gray-400 mb-2">+ IVA / {plan.billing_period === 'monthly' ? 'mese' : 'anno'}</p>
+                                {savings && <p className="text-xs text-green-600 font-semibold mb-2">Risparmi €{savings.toFixed(2)}</p>}
+                                {isCurrent ? <div className="w-full bg-blue-600 text-white py-1.5 rounded-lg text-xs font-semibold text-center">Piano Attuale</div> : <button onClick={() => handleChangePlan(plan.id)} className="w-full bg-gray-800 hover:bg-gray-900 text-white py-1.5 rounded-lg text-xs font-semibold transition-colors">Scegli Piano</button>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </>
             ) : (
-              <div className="space-y-6">
+              /* ── PRIVATO ──────────────────────────────────────────── */
+              <>
                 <UserAuctionsSection />
 
-                {/* Sezione Annunci Classificati per utenti privati */}
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-green-100">
-                  <div className="bg-gradient-to-r from-green-500 to-teal-500 px-6 py-4">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-xl font-bold text-white flex items-center gap-3">
-                        <Tag className="w-6 h-6" />
-                        I Miei Annunci
-                      </h2>
-                      <button
-                        onClick={() => { setEditingCustomerAdId(undefined); setShowCustomerAdForm(true); }}
-                        className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Nuovo Annuncio
-                      </button>
+                {/* Annunci */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <button onClick={() => toggleSection('ads')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center"><Tag className="w-4 h-4 text-green-600" /></div>
+                      <span className="font-semibold text-gray-900">I Miei Annunci</span>
+                      {customerClassifiedAds.length > 0 && <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">{customerClassifiedAds.length}</span>}
                     </div>
-                  </div>
-
-                  {showCustomerAdForm && (
-                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <ClassifiedAdForm
-                          adId={editingCustomerAdId}
-                          onSuccess={() => { setShowCustomerAdForm(false); loadCustomerClassifiedAds(); }}
-                          onCancel={() => setShowCustomerAdForm(false)}
-                        />
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={(e) => { e.stopPropagation(); setEditingCustomerAdId(undefined); setShowCustomerAdForm(true); }} className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"><Plus className="w-3 h-3" />Nuovo</button>
+                      {openSections.ads ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                    </div>
+                  </button>
+                  {openSections.ads && (
+                    <div className="px-5 pb-5 border-t border-gray-100">
+                      {customerClassifiedAds.length === 0 ? (
+                        <div className="text-center py-8">
+                          <Tag className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                          <p className="text-sm text-gray-500 mb-3">Nessun annuncio pubblicato</p>
+                          <button onClick={() => { setEditingCustomerAdId(undefined); setShowCustomerAdForm(true); }} className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 text-sm font-semibold"><Plus className="w-4 h-4" />Crea annuncio</button>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4">
+                          {customerClassifiedAds.map(ad => (
+                            <ProfileClassifiedAdCard key={ad.id} ad={{ ...ad, price: ad.price ? parseFloat(ad.price) : null, classified_categories: ad.classified_categories, profiles: { full_name: profile?.nickname || profile?.full_name || 'Utente', avatar_url: null } }} onEdit={(ad) => { setEditingCustomerAdId(ad.id); setShowCustomerAdForm(true); }} onDelete={deleteClassifiedAd} />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
+                </div>
 
-                  <div className="p-6">
-                    {customerClassifiedAds.length === 0 ? (
-                      <div className="text-center py-10">
-                        <Tag className="w-14 h-14 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-700 mb-2">Nessun annuncio</h3>
-                        <p className="text-gray-500 text-sm mb-6">Pubblica annunci di vendita, acquisto o regalo.</p>
-                        <button
-                          onClick={() => { setEditingCustomerAdId(undefined); setShowCustomerAdForm(true); }}
-                          className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-colors font-semibold"
-                        >
-                          <Plus className="w-5 h-5" />
-                          Crea il primo annuncio
+                {/* Preferiti */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <button onClick={() => toggleSection('favorites')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center"><Heart className="w-4 h-4 text-red-500" /></div>
+                      <span className="font-semibold text-gray-900">Preferiti</span>
+                    </div>
+                    {openSections.favorites ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  </button>
+                  {openSections.favorites && <div className="border-t border-gray-100"><FavoritesSection /></div>}
+                </div>
+
+                {/* Classifica */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <button onClick={() => toggleSection('leaderboard')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center"><Trophy className="w-4 h-4 text-yellow-600" /></div>
+                      <span className="font-semibold text-gray-900">La Mia Classifica</span>
+                      {userRank && <span className="bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-0.5 rounded-full">#{userRank.rank} · {userRank.points} pt</span>}
+                    </div>
+                    {openSections.leaderboard ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  </button>
+                  {openSections.leaderboard && (
+                    <div className="px-5 pb-5 border-t border-gray-100 pt-4">
+                      {userRank && (
+                        <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4 mb-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shadow ${userRank.rank === 1 ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-white' : userRank.rank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-white' : userRank.rank === 3 ? 'bg-gradient-to-br from-orange-400 to-amber-600 text-white' : 'bg-gradient-to-br from-blue-400 to-blue-500 text-white'}`}>#{userRank.rank}</div>
+                              <div><p className="text-xs text-gray-500">La tua posizione</p><p className="font-bold text-gray-900">{activeProfile?.isOwner === false ? activeProfile.name : profile?.nickname || profile?.full_name}</p></div>
+                            </div>
+                            <div className="text-right"><p className="text-2xl font-bold text-gray-900">{userRank.points}</p><p className="text-xs text-gray-500">punti · {userRank.reviews_count} rec.</p></div>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <button onClick={() => navigate('/leaderboard')} className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2.5 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all font-semibold text-sm text-center">Classifica Completa</button>
+                        <button onClick={() => setLeaderboardTab(leaderboardTab === 'my_activities' ? 'leaderboard' : 'my_activities')} className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-1.5 transition-all ${leaderboardTab === 'my_activities' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}>
+                          <Activity className="w-4 h-4" />Le Mie Attività
                         </button>
                       </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {customerClassifiedAds.map(ad => (
-                          <ProfileClassifiedAdCard
-                            key={ad.id}
-                            ad={{
-                              ...ad,
-                              price: ad.price ? parseFloat(ad.price) : null,
-                              classified_categories: ad.classified_categories,
-                              profiles: { full_name: profile?.nickname || profile?.full_name || 'Utente', avatar_url: null },
-                            }}
-                            onEdit={(ad) => { setEditingCustomerAdId(ad.id); setShowCustomerAdForm(true); }}
-                            onDelete={deleteClassifiedAd}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <FavoritesSection />
-
-                {/* Sezione Classifica */}
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-gray-100">
-                  <div className="bg-gradient-to-r from-yellow-500 to-orange-500 px-6 py-4">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-3">
-                      <Trophy className="w-6 h-6" />
-                      La Mia Classifica
-                    </h2>
-                  </div>
-
-                  <div className="p-6">
-                    {userRank && (
-                      <div className="bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-6 mb-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className={`w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl shadow-lg ${
-                              userRank.rank === 1 ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-white' :
-                              userRank.rank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-white' :
-                              userRank.rank === 3 ? 'bg-gradient-to-br from-orange-400 to-amber-600 text-white' :
-                              'bg-gradient-to-br from-blue-400 to-blue-500 text-white'
-                            }`}>
-                              #{userRank.rank}
-                            </div>
-                            <div>
-                              <p className="text-sm text-gray-500 font-medium">La tua posizione</p>
-                              <p className="text-2xl font-bold text-gray-900">
-                                {activeProfile?.isOwner === false
-                                  ? activeProfile.name
-                                  : profile?.nickname || profile?.full_name}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="flex items-center gap-2 justify-end">
-                              <Trophy className="w-6 h-6 text-yellow-500" />
-                              <span className="text-3xl font-bold text-gray-900">{userRank.points}</span>
-                            </div>
-                            <p className="text-sm text-gray-500">punti totali</p>
-                            <p className="text-xs text-gray-400 mt-1">{userRank.reviews_count} recensioni</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => navigate('/leaderboard')}
-                        className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-3 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all font-bold shadow-lg text-center"
-                      >
-                        Vedi Classifica Completa
-                      </button>
-                      <button
-                        onClick={() => setLeaderboardTab(leaderboardTab === 'my_activities' ? 'leaderboard' : 'my_activities')}
-                        className={`flex-1 px-6 py-3 rounded-xl font-bold shadow-lg transition-all text-center flex items-center justify-center gap-2 ${
-                          leaderboardTab === 'my_activities'
-                            ? 'bg-blue-600 text-white hover:bg-blue-700'
-                            : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700'
-                        }`}
-                      >
-                        <Activity className="w-5 h-5" />
-                        Le Mie Attivita'
-                      </button>
+                      {leaderboardTab === 'my_activities' && <div className="mt-4 border border-blue-100 rounded-xl overflow-hidden"><ActivityFeed /></div>}
                     </div>
-                  </div>
+                  )}
                 </div>
 
-                {/* Sezione Le Mie Attivita' (espandibile) */}
-                {leaderboardTab === 'my_activities' && (
-                  <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-blue-200">
-                    <ActivityFeed />
-                  </div>
-                )}
-
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                  <h2 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-                    <User className="w-6 h-6" />
-                    Le Tue Recensioni - {profile.full_name}
-                  </h2>
-
-                  {reviews.filter(r => !r.family_member_id).length === 0 ? (
-                    <p className="text-gray-600 text-center py-8">
-                      Non hai ancora scritto recensioni
-                    </p>
-                  ) : (
-                    <div className="space-y-4">
-                      {reviews.filter(r => !r.family_member_id).map((review) => (
-                        <div key={review.id} className="border border-gray-200 rounded-lg p-4">
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="flex">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`w-4 h-4 ${
-                                    i < review.rating
-                                      ? 'fill-yellow-400 text-yellow-400'
-                                      : 'text-gray-300'
-                                  }`}
-                                />
-                              ))}
+                {/* Recensioni personali */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <button onClick={() => toggleSection('reviews')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center"><Star className="w-4 h-4 text-yellow-600" /></div>
+                      <span className="font-semibold text-gray-900">Le Mie Recensioni</span>
+                      {reviews.filter(r => !r.family_member_id).length > 0 && <span className="bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-0.5 rounded-full">{reviews.filter(r => !r.family_member_id).length}</span>}
+                    </div>
+                    {openSections.reviews ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  </button>
+                  {openSections.reviews && (
+                    <div className="px-5 pb-5 border-t border-gray-100">
+                      {reviews.filter(r => !r.family_member_id).length === 0 ? (
+                        <p className="text-sm text-gray-500 text-center py-6">Non hai ancora scritto recensioni</p>
+                      ) : (
+                        <div className="space-y-3 pt-4">
+                          {reviews.filter(r => !r.family_member_id).map((review) => (
+                            <div key={review.id} className="border border-gray-100 rounded-xl p-4">
+                              <div className="flex items-start justify-between mb-1">
+                                <div className="flex">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />)}</div>
+                                <span className="text-xs text-gray-400">{new Date(review.created_at).toLocaleDateString('it-IT')}</span>
+                              </div>
+                              <h4 className="font-semibold text-sm mb-0.5">{review.title}</h4>
+                              <p className="text-gray-600 text-sm">{review.content}</p>
                             </div>
-                            <span className="text-sm text-gray-500">
-                              {new Date(review.created_at).toLocaleDateString('it-IT')}
-                            </span>
-                          </div>
-                          <h4 className="font-semibold mb-1">{review.title}</h4>
-                          <p className="text-gray-700 text-sm">{review.content}</p>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
                   )}
                 </div>
@@ -1114,187 +974,111 @@ export function DashboardPage() {
                 {familyMembers.map((member) => {
                   const memberReviews = reviews.filter(r => r.family_member_id === member.id);
                   return (
-                    <div key={member.id} className="bg-white rounded-lg shadow-sm p-6">
-                      <h2 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-                        <User className="w-6 h-6" />
-                        Recensioni di {member.nickname || `${member.first_name} ${member.last_name}`}
-                      </h2>
-
-                      {memberReviews.length === 0 ? (
-                        <p className="text-gray-600 text-center py-8">
-                          Nessuna recensione ancora
-                        </p>
-                      ) : (
-                        <div className="space-y-4">
-                          {memberReviews.map((review) => (
-                            <div key={review.id} className="border border-gray-200 rounded-lg p-4">
-                              <div className="flex items-start justify-between mb-2">
-                                <div className="flex">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className={`w-4 h-4 ${
-                                        i < review.rating
-                                          ? 'fill-yellow-400 text-yellow-400'
-                                          : 'text-gray-300'
-                                      }`}
-                                    />
-                                  ))}
+                    <div key={member.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                      <button onClick={() => toggleSection(`family_${member.id}`)} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"><User className="w-4 h-4 text-blue-600" /></div>
+                          <span className="font-semibold text-gray-900">Recensioni di {member.nickname || `${member.first_name} ${member.last_name}`}</span>
+                          {memberReviews.length > 0 && <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">{memberReviews.length}</span>}
+                        </div>
+                        {openSections[`family_${member.id}`] ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                      </button>
+                      {openSections[`family_${member.id}`] && (
+                        <div className="px-5 pb-5 border-t border-gray-100">
+                          {memberReviews.length === 0 ? (
+                            <p className="text-sm text-gray-500 text-center py-6">Nessuna recensione ancora</p>
+                          ) : (
+                            <div className="space-y-3 pt-4">
+                              {memberReviews.map((review) => (
+                                <div key={review.id} className="border border-gray-100 rounded-xl p-4">
+                                  <div className="flex items-start justify-between mb-1">
+                                    <div className="flex">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />)}</div>
+                                    <span className="text-xs text-gray-400">{new Date(review.created_at).toLocaleDateString('it-IT')}</span>
+                                  </div>
+                                  <h4 className="font-semibold text-sm mb-0.5">{review.title}</h4>
+                                  <p className="text-gray-600 text-sm">{review.content}</p>
                                 </div>
-                                <span className="text-sm text-gray-500">
-                                  {new Date(review.created_at).toLocaleDateString('it-IT')}
-                                </span>
-                              </div>
-                              <h4 className="font-semibold mb-1">{review.title}</h4>
-                              <p className="text-gray-700 text-sm">{review.content}</p>
+                              ))}
                             </div>
-                          ))}
+                          )}
                         </div>
                       )}
                     </div>
                   );
                 })}
 
+                {/* Cambia Piano - Privato */}
                 {currentSubscription && availablePlans.length > 0 && (
-                  <div className="mt-12">
-                    <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-400 rounded-2xl shadow-xl p-8 mb-8">
-                      <div className="flex items-center justify-center mb-4">
-                        <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mr-3">
-                          <Heart className="w-6 h-6 text-white" fill="currentColor" />
-                        </div>
-                        <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-                          10% di Beneficenza
-                        </h2>
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <button onClick={() => toggleSection('plans')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center"><Shield className="w-4 h-4 text-gray-600" /></div>
+                        <span className="font-semibold text-gray-900">Cambia Piano</span>
+                        <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full">{currentSubscription.plan.name}</span>
                       </div>
-                      <p className="text-lg text-gray-800 max-w-3xl mx-auto text-center mb-4">
-                        Il tuo abbonamento fa la differenza! Ogni anno Trovafacile donerà il <strong>10% del fatturato totale</strong> ad associazioni di beneficenza.
-                      </p>
-                      <div className="grid md:grid-cols-3 gap-3 max-w-4xl mx-auto mt-6">
-                        <div className="bg-white/80 backdrop-blur rounded-xl p-3 text-center">
-                          <Gift className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                          <p className="text-sm font-semibold text-gray-900">Trasparenza Totale</p>
-                          <p className="text-xs text-gray-600 mt-1">Documenti certificati pubblici</p>
+                      {openSections.plans ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                    </button>
+                    {openSections.plans && (
+                      <div className="px-5 pb-5 border-t border-gray-100 pt-4">
+                        <div className="bg-gradient-to-br from-green-50 to-blue-50 border border-green-200 rounded-xl p-5 mb-4">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-9 h-9 bg-green-500 rounded-full flex items-center justify-center"><Heart className="w-5 h-5 text-white" fill="currentColor" /></div>
+                            <h3 className="font-bold text-gray-900">10% in Beneficenza</h3>
+                          </div>
+                          <p className="text-sm text-gray-700 mb-3">Ogni anno Trovafacile dona il <strong>10% del fatturato</strong> ad associazioni di beneficenza.</p>
+                          <div className="grid grid-cols-3 gap-2">
+                            <div className="bg-white/80 rounded-lg p-2 text-center"><Gift className="w-4 h-4 text-green-600 mx-auto mb-1" /><p className="text-xs font-semibold text-gray-900">Trasparenza</p></div>
+                            <div className="bg-white/80 rounded-lg p-2 text-center"><UsersIcon className="w-4 h-4 text-green-600 mx-auto mb-1" /><p className="text-xs font-semibold text-gray-900">Voti Utenti</p></div>
+                            <div className="bg-white/80 rounded-lg p-2 text-center"><TrendingUp className="w-4 h-4 text-green-600 mx-auto mb-1" /><p className="text-xs font-semibold text-gray-900">Impatto Reale</p></div>
+                          </div>
                         </div>
-                        <div className="bg-white/80 backdrop-blur rounded-xl p-3 text-center">
-                          <UsersIcon className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                          <p className="text-sm font-semibold text-gray-900">Voti degli Utenti</p>
-                          <p className="text-xs text-gray-600 mt-1">Tu scegli le associazioni</p>
+                        {upgradeMessage && <div className={`mb-4 p-3 rounded-xl text-sm ${upgradeMessage.includes('successo') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{upgradeMessage}</div>}
+                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
+                          {availablePlans.map((plan) => {
+                            const savings = calculateSavings(plan);
+                            const isAnnual = plan.billing_period === 'yearly';
+                            const isCurrent = currentSubscription.plan.id === plan.id;
+                            return (
+                              <div key={plan.id} className={`rounded-xl p-4 border-2 relative ${isCurrent ? 'border-yellow-500 bg-yellow-50' : isAnnual ? 'border-green-400 ring-2 ring-green-100' : 'border-gray-200 hover:border-blue-400'}`}>
+                                {isAnnual && !isCurrent && <div className="absolute -top-2.5 left-1/2 -translate-x-1/2"><span className="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full"><Star className="w-2.5 h-2.5" fill="currentColor" />RISPARMIO</span></div>}
+                                <h3 className="font-bold text-gray-900 text-sm mb-0.5">{plan.name}</h3>
+                                <p className="text-xs text-gray-500 mb-3">{plan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'} · {plan.max_persons} {plan.max_persons === 1 ? 'persona' : 'persone'}</p>
+                                <p className="text-2xl font-bold text-blue-600 mb-0.5">€{Number(plan.price).toFixed(2)}</p>
+                                <p className="text-xs text-gray-400 mb-2">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</p>
+                                {savings && <p className="text-xs text-green-600 font-semibold mb-3">Risparmi €{savings.toFixed(2)}</p>}
+                                <div className="space-y-1 mb-3">
+                                  {['Recensioni illimitate', 'Salva preferiti', 'Pubblica annunci'].map(f => (
+                                    <div key={f} className="flex items-center gap-1.5 text-xs text-gray-600"><Check className="w-3 h-3 text-green-600 flex-shrink-0" />{f}</div>
+                                  ))}
+                                </div>
+                                {isCurrent ? <div className="w-full bg-green-600 text-white py-2 rounded-lg text-xs font-semibold text-center">Piano Attuale</div> : <button onClick={() => handleChangePlan(plan.id)} className={`w-full py-2 rounded-lg text-xs font-semibold transition-colors ${isAnnual ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>Cambia Piano</button>}
+                              </div>
+                            );
+                          })}
                         </div>
-                        <div className="bg-white/80 backdrop-blur rounded-xl p-3 text-center">
-                          <TrendingUp className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                          <p className="text-sm font-semibold text-gray-900">Impatto Reale</p>
-                          <p className="text-xs text-gray-600 mt-1">Aiuto concreto ogni anno</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {upgradeMessage && (
-                      <div className={`mb-6 p-4 rounded-lg ${
-                        upgradeMessage.includes('successo') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {upgradeMessage}
                       </div>
                     )}
-
-                    <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
-                      Cambia Piano
-                    </h2>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {availablePlans.map((plan) => {
-                        const savings = calculateSavings(plan);
-                        const isAnnual = plan.billing_period === 'yearly';
-                        const isCurrent = currentSubscription.plan.id === plan.id;
-
-                        return (
-                          <div
-                            key={plan.id}
-                            className={`bg-white rounded-xl shadow-lg p-6 border-2 transition-all relative ${
-                              isCurrent
-                                ? 'border-yellow-500 bg-yellow-50'
-                                : isAnnual
-                                ? 'border-green-400 ring-2 ring-green-200'
-                                : 'border-gray-200 hover:border-blue-500'
-                            }`}
-                          >
-                            {isAnnual && !isCurrent && (
-                              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                                <span className="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                                  <Star className="w-3 h-3" fill="currentColor" />
-                                  RISPARMIO
-                                </span>
-                              </div>
-                            )}
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">
-                              {plan.name}
-                            </h3>
-                            <p className="text-xs text-gray-500 mb-1">Fino a {plan.max_persons} {plan.max_persons === 1 ? 'persona' : 'persone'}</p>
-                            <p className="text-xs font-semibold text-gray-700 mb-4">
-                              Abbonamento {plan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'}
-                            </p>
-                            <div className="mb-6">
-                              <div className="flex items-baseline gap-2">
-                                <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
-                                <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
-                              </div>
-                              {savings && (
-                                <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3">
-                                  <p className="text-lg font-bold text-green-700">Risparmi €{savings.toFixed(2)}</p>
-                                  <p className="text-xs text-green-600">rispetto al piano mensile</p>
-                                </div>
-                              )}
-                              {!isAnnual && (
-                                <p className="text-xs text-gray-500 mt-2">€{(Number(plan.price) * 12).toFixed(2)} all'anno</p>
-                              )}
-                            </div>
-                            <div className="mb-6 space-y-2">
-                              <div className="flex items-center gap-2 text-sm text-gray-700">
-                                <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                <span>Recensioni illimitate</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm text-gray-700">
-                                <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                <span>Salva preferiti</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm text-gray-700">
-                                <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                <span>Pubblicare annunci</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm text-gray-700">
-                                <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                <span>Ricerca offerte di lavoro</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm text-gray-700">
-                                <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                <span>Ricerca prodotti di ogni genere</span>
-                              </div>
-                            </div>
-                            {isCurrent ? (
-                              <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
-                                Piano Attuale
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => handleChangePlan(plan.id)}
-                                className={`w-full py-3 px-6 rounded-lg transition-colors font-semibold ${
-                                  isAnnual
-                                    ? 'bg-green-600 text-white hover:bg-green-700'
-                                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                                }`}
-                              >
-                                Cambia Piano
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
                   </div>
                 )}
-              </div>
+              </>
             )}
           </div>
         )}
 
+        {showClassifiedAdForm && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <ClassifiedAdForm adId={editingClassifiedAdId} onSuccess={() => { setShowClassifiedAdForm(false); loadBusinessClassifiedAds(); }} onCancel={() => setShowClassifiedAdForm(false)} />
+            </div>
+          </div>
+        )}
+        {showCustomerAdForm && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <ClassifiedAdForm adId={editingCustomerAdId} onSuccess={() => { setShowCustomerAdForm(false); loadCustomerClassifiedAds(); }} onCancel={() => setShowCustomerAdForm(false)} />
+            </div>
+          </div>
+        )}
         {showResponseForm && (
           <ReviewResponseForm
             reviewId={showResponseForm}
