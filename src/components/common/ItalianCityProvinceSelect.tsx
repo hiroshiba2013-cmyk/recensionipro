@@ -159,8 +159,8 @@ export function ItalianCityProvinceSelect({
           </button>
 
           {provinceOpen && (
-            <div className="absolute z-[200] left-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden" style={{minWidth: '100%', width: 'max-content', maxWidth: '320px'}}>
-              <div className="p-2.5 border-b border-gray-100 bg-gray-50">
+            <div className="absolute z-[200] left-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl flex flex-col" style={{minWidth: '100%', width: 'max-content', maxWidth: '320px', maxHeight: '320px'}}>
+              <div className="p-2.5 border-b border-gray-100 bg-gray-50 rounded-t-xl flex-shrink-0">
                 <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 shadow-sm">
                   <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                   <input
@@ -182,7 +182,7 @@ export function ItalianCityProvinceSelect({
                   )}
                 </div>
               </div>
-              <div className="max-h-56 overflow-y-auto overscroll-contain">
+              <div className="flex-1 overflow-y-auto overscroll-contain">
                 {filteredProvinces.length === 0 ? (
                   <div className="px-4 py-6 text-sm text-gray-400 text-center">Nessuna provincia trovata</div>
                 ) : (
@@ -209,7 +209,7 @@ export function ItalianCityProvinceSelect({
                   })
                 )}
               </div>
-              <div className="px-3 py-1.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-400 text-right">
+              <div className="px-3 py-1.5 border-t border-gray-100 bg-gray-50 rounded-b-xl text-xs text-gray-400 text-right flex-shrink-0">
                 {filteredProvinces.length} province
               </div>
             </div>
@@ -249,8 +249,8 @@ export function ItalianCityProvinceSelect({
           </button>
 
           {cityOpen && provinceName && (
-            <div className="absolute z-[200] left-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden" style={{minWidth: '100%', width: 'max-content', maxWidth: '320px'}}>
-              <div className="p-2.5 border-b border-gray-100 bg-gray-50">
+            <div className="absolute z-[200] left-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl flex flex-col" style={{minWidth: '100%', width: 'max-content', maxWidth: '320px', maxHeight: '320px'}}>
+              <div className="p-2.5 border-b border-gray-100 bg-gray-50 rounded-t-xl flex-shrink-0">
                 <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 shadow-sm">
                   <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                   <input
@@ -272,7 +272,7 @@ export function ItalianCityProvinceSelect({
                   )}
                 </div>
               </div>
-              <div className="max-h-56 overflow-y-auto overscroll-contain">
+              <div className="flex-1 overflow-y-auto overscroll-contain">
                 {loadingCities ? (
                   <div className="px-4 py-6 text-sm text-gray-400 text-center flex items-center justify-center gap-2">
                     <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
@@ -300,7 +300,7 @@ export function ItalianCityProvinceSelect({
                   })
                 )}
               </div>
-              <div className="px-3 py-1.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-400 text-right">
+              <div className="px-3 py-1.5 border-t border-gray-100 bg-gray-50 rounded-b-xl text-xs text-gray-400 text-right flex-shrink-0">
                 {loadingCities ? '...' : `${filteredCities.length} comuni`}
               </div>
             </div>
