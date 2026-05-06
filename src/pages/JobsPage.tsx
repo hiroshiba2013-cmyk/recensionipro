@@ -636,7 +636,7 @@ export function JobsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Regione</label>
                 <select
                   value={filters.region}
-                  onChange={(e) => setFilters({ ...filters, region: e.target.value, province: '', city: '' })}
+                  onChange={(e) => setFilters(prev => ({ ...prev, region: e.target.value, province: '', city: '' }))}
                   className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 text-sm bg-white"
                 >
                   <option value="">Tutte le regioni</option>
@@ -647,8 +647,8 @@ export function JobsPage() {
                 province={filters.province}
                 city={filters.city}
                 region={filters.region}
-                onProvinceChange={(prov) => setFilters({ ...filters, province: prov, city: '' })}
-                onCityChange={(city) => setFilters({ ...filters, city })}
+                onProvinceChange={(prov) => setFilters(prev => ({ ...prev, province: prov, city: '' }))}
+                onCityChange={(city) => setFilters(prev => ({ ...prev, city }))}
               />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
