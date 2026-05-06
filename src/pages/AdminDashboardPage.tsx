@@ -42,6 +42,8 @@ interface DashboardStats {
   registeredBusinesses: number;
   importedBusinesses: number;
   userAddedBusinesses: number;
+  claimedBusinesses: number;
+  selfRegisteredBusinesses: number;
   totalLocations: number;
   totalFamilyMembers: number;
   solidarityTotal: number;
@@ -244,6 +246,8 @@ export function AdminDashboardPage() {
     registeredBusinesses: 0,
     importedBusinesses: 0,
     userAddedBusinesses: 0,
+    claimedBusinesses: 0,
+    selfRegisteredBusinesses: 0,
     totalLocations: 0,
     totalFamilyMembers: 0,
     solidarityTotal: 0,
@@ -411,8 +415,11 @@ export function AdminDashboardPage() {
       jobPostingsCount,
       jobSeekersCount,
       auctionsCount,
-      claimedBusinessesCount,
-      unclaimedLocationsCount,
+      // Aziende — 4 tipologie
+      importedBizCount,
+      userAddedBizCount,
+      selfRegisteredBizCount,
+      claimedBizCount,
       locationsCount,
       familyCount,
       solidarityData,
@@ -436,8 +443,14 @@ export function AdminDashboardPage() {
       dated(supabase.from('job_postings').select('id', { count: 'exact', head: true })),
       dated(supabase.from('job_seekers').select('id', { count: 'exact', head: true })),
       dated(supabase.from('auctions').select('id', { count: 'exact', head: true })),
-      dated(supabase.from('registered_businesses').select('id', { count: 'exact', head: true })),
-      dated(supabase.from('unclaimed_business_locations').select('id', { count: 'exact', head: true })),
+      // Importate: unclaimed senza added_by (inserite da import OSM/Google)
+      dated(supabase.from('unclaimed_business_locations').select('id', { count: 'exact', head: true }).is('added_by', null)),
+      // Aggiunte da utente: unclaimed con added_by valorizzato
+      dated(supabase.from('unclaimed_business_locations').select('id', { count: 'exact', head: true }).not('added_by', 'is', null)),
+      // Iscritte da sole: source_type = 'direct_registration'
+      dated(supabase.from('registered_businesses').select('id', { count: 'exact', head: true }).eq('source_type', 'direct_registration')),
+      // Rivendicate: source_type claimed
+      dated(supabase.from('registered_businesses').select('id', { count: 'exact', head: true }).in('source_type', ['claimed_imported', 'claimed_user_added'])),
       dated(supabase.from('registered_business_locations').select('id', { count: 'exact', head: true })),
       dated(supabase.from('customer_family_members').select('id', { count: 'exact', head: true })),
       since
@@ -450,6 +463,11 @@ export function AdminDashboardPage() {
       0
     );
 
+    const imported = importedBizCount.count || 0;
+    const userAdded = userAddedBizCount.count || 0;
+    const selfReg = selfRegisteredBizCount.count || 0;
+    const claimed = claimedBizCount.count || 0;
+
     setStats({
       totalUsers: usersCount.count || 0,
       trialUsers: trialUsersCount.count || 0,
@@ -461,16 +479,18 @@ export function AdminDashboardPage() {
       adsGift: adsGiftCount.count || 0,
       activeSubscriptions: activeSubsCount.count || 0,
       trialSubscriptions: trialSubsCount.count || 0,
-      totalBusinesses: (claimedBusinessesCount.count || 0) + (unclaimedLocationsCount.count || 0),
+      totalBusinesses: imported + userAdded + selfReg + claimed,
       totalProducts: productsCount.count || 0,
       totalReports: reportsCount.count || 0,
       pendingReports: pendingReportsCount.count || 0,
       totalJobPostings: jobPostingsCount.count || 0,
       totalJobSeekers: jobSeekersCount.count || 0,
       totalAuctions: auctionsCount.count || 0,
-      registeredBusinesses: claimedBusinessesCount.count || 0,
-      importedBusinesses: unclaimedLocationsCount.count || 0,
-      userAddedBusinesses: 0,
+      registeredBusinesses: selfReg + claimed,
+      importedBusinesses: imported,
+      userAddedBusinesses: userAdded,
+      claimedBusinesses: claimed,
+      selfRegisteredBusinesses: selfReg,
       totalLocations: locationsCount.count || 0,
       totalFamilyMembers: familyCount.count || 0,
       solidarityTotal,

@@ -32,6 +32,8 @@ interface AdminStatsProps {
     registeredBusinesses: number;
     importedBusinesses: number;
     userAddedBusinesses: number;
+    claimedBusinesses: number;
+    selfRegisteredBusinesses: number;
     totalLocations: number;
     totalFamilyMembers: number;
     solidarityTotal: number;
@@ -363,35 +365,96 @@ export function AdminStats({ stats, period, onPeriodChange }: AdminStatsProps) {
         </div>
       </section>
 
-      {/* Sezione: Attività */}
+      {/* Sezione: Attività Commerciali */}
       <section>
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
           <Building2 className="w-4 h-4" /> Attivita' Commerciali
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard
-            title="Registrate"
-            value={stats.registeredBusinesses}
-            subtitle="Attivita' con account"
-            icon={Building2}
-            iconBg="bg-blue-50"
-            iconColor="text-blue-600"
-          />
+
+        {/* Riquadro totale con breakdown visivo */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-3xl font-bold text-gray-900">{stats.totalBusinesses.toLocaleString('it-IT')}</p>
+              <p className="text-sm font-medium text-gray-600 mt-0.5">Attivita' totali sulla piattaforma</p>
+              {period !== null && (
+                <p className="text-xs text-gray-400 mt-0.5">Negli ultimi {period === 1 ? 'giorno' : `${period} giorni`}</p>
+              )}
+            </div>
+            {/* Barre proporzionali */}
+            {stats.totalBusinesses > 0 && (
+              <div className="flex-1 max-w-sm space-y-2">
+                {[
+                  { label: 'Importate', value: stats.importedBusinesses, color: 'bg-gray-400' },
+                  { label: 'Aggiunte utenti', value: stats.userAddedBusinesses, color: 'bg-sky-400' },
+                  { label: 'Iscritte', value: stats.selfRegisteredBusinesses, color: 'bg-blue-500' },
+                  { label: 'Rivendicate', value: stats.claimedBusinesses, color: 'bg-green-500' },
+                ].map(({ label, value, color }) => {
+                  const pct = stats.totalBusinesses > 0 ? Math.round((value / stats.totalBusinesses) * 100) : 0;
+                  return (
+                    <div key={label} className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 w-28 flex-shrink-0">{label}</span>
+                      <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                        <div className={`${color} h-1.5 rounded-full transition-all duration-500`} style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="text-xs font-semibold text-gray-700 w-8 text-right">{value.toLocaleString('it-IT')}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             title="Importate"
             value={stats.importedBusinesses}
-            subtitle="Da fonti esterne"
+            subtitle={period !== null ? `Negli ultimi ${period === 1 ? 'giorno' : `${period} giorni`}` : 'Da OSM / fonti esterne'}
             icon={Building2}
             iconBg="bg-gray-50"
             iconColor="text-gray-500"
           />
           <StatCard
-            title="Sedi Totali"
-            value={stats.totalLocations}
-            subtitle="Sedi registrate"
+            title="Aggiunte da Utente"
+            value={stats.userAddedBusinesses}
+            subtitle={period !== null ? `Negli ultimi ${period === 1 ? 'giorno' : `${period} giorni`}` : 'Inserite manualmente dagli utenti'}
+            icon={UserCheck}
+            iconBg="bg-sky-50"
+            iconColor="text-sky-600"
+          />
+          <StatCard
+            title="Iscritte da Sole"
+            value={stats.selfRegisteredBusinesses}
+            subtitle={period !== null ? `Negli ultimi ${period === 1 ? 'giorno' : `${period} giorni`}` : 'Registrazione diretta'}
+            icon={Building2}
+            iconBg="bg-blue-50"
+            iconColor="text-blue-600"
+          />
+          <StatCard
+            title="Rivendicate"
+            value={stats.claimedBusinesses}
+            subtitle={period !== null ? `Negli ultimi ${period === 1 ? 'giorno' : `${period} giorni`}` : 'Scheda rivendicata dal proprietario'}
             icon={UserCheck}
             iconBg="bg-green-50"
             iconColor="text-green-600"
+            badge={stats.claimedBusinesses > 0 && stats.totalBusinesses > 0 ? {
+              label: 'del totale',
+              value: `${Math.round((stats.claimedBusinesses / stats.totalBusinesses) * 100)}%`,
+              color: 'bg-green-100 text-green-700'
+            } : undefined}
+          />
+        </div>
+
+        {/* Sedi */}
+        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <StatCard
+            title="Sedi Registrate"
+            value={stats.totalLocations}
+            subtitle={period !== null ? `Negli ultimi ${period === 1 ? 'giorno' : `${period} giorni`}` : 'Sedi di aziende con account'}
+            icon={Building2}
+            iconBg="bg-teal-50"
+            iconColor="text-teal-600"
           />
         </div>
       </section>
