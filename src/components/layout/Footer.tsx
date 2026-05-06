@@ -83,9 +83,19 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="border-t border-gray-800 pt-6 text-center">
+        <div className="border-t border-gray-800 pt-6 space-y-2 text-center">
           <p className="text-gray-500 text-sm">
             &copy; {new Date().getFullYear()} Trovafacile. Tutti i diritti riservati.
+          </p>
+          <p className="text-gray-600 text-xs">
+            Dati geografici &copy;{' '}
+            <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="hover:text-gray-400 underline underline-offset-2">
+              OpenStreetMap contributors
+            </a>
+            {' '}(ODbL) · elaborati via{' '}
+            <a href="https://www.geofabrik.de" target="_blank" rel="noopener noreferrer" className="hover:text-gray-400 underline underline-offset-2">
+              Geofabrik
+            </a>
           </p>
         </div>
       </div>

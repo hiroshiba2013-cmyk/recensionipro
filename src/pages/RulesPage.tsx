@@ -260,29 +260,31 @@ export function RulesPage() {
               {
                 title: 'Cookie tecnici e di sessione',
                 items: [
-                  { label: 'Autenticazione', desc: 'Gestiti da Supabase, mantengono la tua sessione attiva dopo il login. Strettamente necessari al funzionamento del sito, non richiedono consenso.' },
-                  { label: 'Preferenze', desc: 'Memorizzano impostazioni locali come la lingua selezionata o il profilo attivo. Non contengono dati personali identificativi.' },
+                  { label: 'Autenticazione (Supabase)', desc: 'Gestiti da Supabase, mantengono la tua sessione attiva dopo il login. Strettamente necessari al funzionamento del sito, non richiedono consenso. I server Supabase sono localizzati nell\'Unione Europea.' },
+                  { label: 'Preferenze locali', desc: 'Memorizzano impostazioni locali come la lingua selezionata o il profilo attivo. Non contengono dati personali identificativi e sono salvati solo nel tuo browser (localStorage).' },
                 ]
               },
               {
-                title: 'Cookie di terze parti (solo durante i pagamenti)',
+                title: 'Cookie di terze parti',
                 items: [
-                  { label: 'Stripe', desc: 'Durante il checkout per acquistare un piano, Stripe può impostare cookie propri necessari per la sicurezza della transazione. Stripe è certificato PCI-DSS. La sua privacy policy è disponibile su stripe.com/privacy.' },
+                  { label: 'Stripe (pagamenti)', desc: 'Durante il checkout per acquistare un piano, Stripe Inc. può impostare cookie propri necessari per la sicurezza della transazione e la prevenzione delle frodi. Stripe è certificato PCI-DSS Level 1. Privacy policy: stripe.com/privacy.' },
+                  { label: 'Brevo (email transazionali)', desc: 'Utilizziamo Brevo (ex Sendinblue, sede legale in Francia - UE) per l\'invio di email automatiche di servizio (conferme di registrazione, notifiche, avvisi). Brevo non imposta cookie sul tuo browser ma riceve il tuo indirizzo email per la consegna dei messaggi. Privacy policy: brevo.com/legal/privacypolicy.' },
                 ]
               },
               {
                 title: 'Cosa NON facciamo',
                 items: [
-                  { label: 'Nessun tracciamento pubblicitario', desc: 'Non utilizziamo Google Ads, Meta Pixel o sistemi analoghi di tracciamento per la pubblicità.' },
+                  { label: 'Nessun tracciamento pubblicitario', desc: 'Non utilizziamo Google Ads, Meta Pixel, TikTok Pixel o sistemi analoghi di tracciamento per la pubblicità comportamentale.' },
                   { label: 'Nessuna vendita di dati', desc: 'I tuoi dati non vengono mai venduti, ceduti o condivisi con terze parti per scopi commerciali.' },
-                  { label: 'Nessuna analytics invasiva', desc: 'Non utilizziamo cookie di terze parti per analisi comportamentale degli utenti.' },
+                  { label: 'Nessuna analytics invasiva', desc: 'Non utilizziamo Google Analytics, Hotjar o sistemi di analisi comportamentale di terze parti che tracciano i tuoi movimenti sul sito.' },
                 ]
               },
               {
                 title: 'Come gestire i cookie',
                 items: [
                   { label: 'Impostazioni del browser', desc: 'Puoi configurare il browser per bloccare o eliminare i cookie. Disabilitare i cookie tecnici può compromettere il funzionamento del sito (es. impossibilità di restare connesso).' },
-                  { label: 'Cancellazione', desc: 'Puoi eliminare i cookie salvati dal browser in qualsiasi momento dalle impostazioni del browser stesso.' },
+                  { label: 'Cancellazione', desc: 'Puoi eliminare i cookie salvati dal browser in qualsiasi momento dalle impostazioni del browser stesso (Chrome: Impostazioni > Privacy > Cancella dati di navigazione).' },
+                  { label: 'Revoca consenso', desc: 'Puoi revocare il consenso ai cookie non essenziali in qualsiasi momento utilizzando il banner cookie presente sul sito o scrivendo a ' + CONTACT_EMAIL + '.' },
                 ]
               },
             ].map(({ title, items }) => (
@@ -345,7 +347,7 @@ export function RulesPage() {
                   },
                   {
                     label: 'Descrizione del servizio',
-                    text: `${PLATFORM_NAME} è una piattaforma italiana che consente agli utenti di cercare, recensire e scoprire attività commerciali locali, pubblicare annunci, partecipare ad aste online e trovare opportunità di lavoro. Il servizio è riservato a maggiorenni residenti in Italia.`,
+                    text: `${PLATFORM_NAME} è una piattaforma italiana che consente agli utenti di cercare, recensire e scoprire attività commerciali locali, pubblicare annunci, partecipare ad aste online e trovare opportunità di lavoro. Il servizio è riservato a maggiorenni residenti in Italia. I dati geografici delle attività commerciali sono parzialmente derivati da OpenStreetMap (© OpenStreetMap contributors, licenza ODbL) e da Geofabrik GmbH.`,
                   },
                   {
                     label: 'Registrazione e account',
@@ -387,7 +389,7 @@ export function RulesPage() {
                   },
                   {
                     label: 'Fornitori di servizio (responsabili del trattamento)',
-                    text: 'Utilizziamo: Supabase Inc. (database e autenticazione, server in UE) per l\'archiviazione sicura dei dati; Stripe Inc. (pagamenti, certificato PCI-DSS) che non ci trasmette mai i dati della carta di credito; un servizio email transazionale per le comunicazioni automatiche.',
+                    text: 'Ai sensi dell\'art. 28 GDPR, ci avvaliamo dei seguenti responsabili del trattamento: (1) Supabase Inc. — database, autenticazione e archiviazione file; server localizzati nell\'Unione Europea; DPA disponibile su supabase.com/privacy. (2) Stripe Inc. — gestione pagamenti; certificato PCI-DSS Level 1; non archiviamo né riceviamo i dati della carta di credito; DPA e privacy policy su stripe.com/privacy. (3) Brevo SAS (ex Sendinblue) — invio email transazionali di servizio (conferme, notifiche, avvisi); sede legale in Francia (UE); riceve l\'indirizzo email degli utenti per la consegna dei messaggi; DPA e privacy policy su brevo.com/legal/privacypolicy. (4) OpenStreetMap Foundation / Geofabrik GmbH — utilizzati esclusivamente come fonte di dati geografici pubblici (Open Database License 1.0) per popolare il database delle attività commerciali; non ricevono dati personali degli utenti della piattaforma.',
                   },
                   {
                     label: 'Conservazione dei dati',
