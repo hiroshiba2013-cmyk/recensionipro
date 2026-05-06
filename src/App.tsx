@@ -1,3 +1,4 @@
+// build: 20260506-v3
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { Header } from './components/layout/Header';
