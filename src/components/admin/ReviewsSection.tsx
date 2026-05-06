@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle, XCircle, Eye, Star, Filter, MapPin, Building2, Calendar, Clock, User, Search, X, FileEdit as Edit, Save, X as CloseIcon, ChevronDown, ChevronUp, Image, FileText } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Star, Filter, MapPin, Building2, Calendar, Clock, User, Search, X, FileEdit as Edit, Save, X as CloseIcon, ChevronDown, ChevronUp, Image, FileText, Upload } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { AdminLocationFilter } from './AdminLocationFilter';
 
@@ -16,6 +16,31 @@ interface Review {
   proof_documents: string[] | null;
   review_status: string;
   created_at: string;
+  // service_used
+  booking_management_rating: number | null;
+  reliability_rating: number | null;
+  organization_rating: number | null;
+  experience_rating: number | null;
+  // booking_not_completed
+  booking_gestione_prenotazione: number | null;
+  booking_affidabilita: number | null;
+  booking_organizzazione: number | null;
+  booking_comunicazione: number | null;
+  // quote_request
+  quote_chiarezza: number | null;
+  quote_trasparenza: number | null;
+  quote_tempistiche_risposta: number | null;
+  quote_disponibilita: number | null;
+  // customer_service
+  cs_cortesia: number | null;
+  cs_competenza: number | null;
+  cs_rapidita: number | null;
+  cs_risoluzione_problema: number | null;
+  // problem_before_service
+  problem_affidabilita: number | null;
+  problem_organizzazione: number | null;
+  problem_gestione_problema: number | null;
+  problem_comunicazione: number | null;
   customer: {
     id: string;
     full_name: string;
@@ -654,261 +679,322 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
         </div>
       )}
 
-      {/* Modal Dettaglio Recensione */}
-      {selectedReview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900">Dettaglio Recensione</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  {formatDate(selectedReview.created_at)} alle {formatTime(selectedReview.created_at)}
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedReview(null)}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <XCircle className="w-6 h-6" />
-              </button>
+      {/* Modal Dettaglio Recensione — replica fedele del form utente */}
+      {selectedReview && (() => {
+        const proofUrls = getProofUrls(selectedReview);
+
+        // Mappa tipo → config colore e label
+        const typeConfig: Record<string, { label: string; icon: string; bg: string; border: string; text: string; badge: string }> = {
+          service_used:           { label: 'Ho usufruito del servizio',               icon: '✓', bg: 'bg-green-50',  border: 'border-green-400',  text: 'text-green-800',  badge: 'bg-green-100 text-green-800 border-green-300' },
+          booking_not_completed:  { label: 'Ho prenotato ma il servizio non si è svolto', icon: '✗', bg: 'bg-red-50',    border: 'border-red-400',    text: 'text-red-800',    badge: 'bg-red-100 text-red-800 border-red-300' },
+          quote_request:          { label: 'Ho richiesto preventivo/informazioni',    icon: '?', bg: 'bg-blue-50',  border: 'border-blue-400',  text: 'text-blue-800',  badge: 'bg-blue-100 text-blue-800 border-blue-300' },
+          customer_service:       { label: "Ho avuto un contatto con l'assistenza",   icon: '☎', bg: 'bg-teal-50',  border: 'border-teal-400',  text: 'text-teal-800',  badge: 'bg-teal-100 text-teal-800 border-teal-300' },
+          problem_before_service: { label: "Ho avuto un problema prima dell'erogazione", icon: '⚠', bg: 'bg-amber-50', border: 'border-amber-400', text: 'text-amber-800', badge: 'bg-amber-100 text-amber-800 border-amber-300' },
+        };
+        const tc = selectedReview.review_type ? typeConfig[selectedReview.review_type] : null;
+
+        // Valutazioni per tipo
+        type RatingEntry = { label: string; value: number | null };
+        const getRatings = (): RatingEntry[] => {
+          switch (selectedReview.review_type) {
+            case 'service_used': return [
+              { label: 'Gestione Prenotazione', value: selectedReview.booking_management_rating },
+              { label: 'Affidabilità',          value: selectedReview.reliability_rating },
+              { label: 'Organizzazione',         value: selectedReview.organization_rating },
+              { label: 'Esperienza/Servizio',    value: selectedReview.experience_rating },
+              { label: 'Prezzo',                 value: selectedReview.price_rating },
+            ];
+            case 'booking_not_completed': return [
+              { label: 'Gestione Prenotazione', value: selectedReview.booking_gestione_prenotazione },
+              { label: 'Affidabilità',          value: selectedReview.booking_affidabilita },
+              { label: 'Organizzazione',         value: selectedReview.booking_organizzazione },
+              { label: 'Comunicazione',          value: selectedReview.booking_comunicazione },
+            ];
+            case 'quote_request': return [
+              { label: 'Chiarezza',           value: selectedReview.quote_chiarezza },
+              { label: 'Trasparenza',          value: selectedReview.quote_trasparenza },
+              { label: 'Tempistiche Risposta', value: selectedReview.quote_tempistiche_risposta },
+              { label: 'Disponibilità',        value: selectedReview.quote_disponibilita },
+            ];
+            case 'customer_service': return [
+              { label: 'Cortesia',            value: selectedReview.cs_cortesia },
+              { label: 'Competenza',          value: selectedReview.cs_competenza },
+              { label: 'Rapidità',            value: selectedReview.cs_rapidita },
+              { label: 'Risoluzione Problema', value: selectedReview.cs_risoluzione_problema },
+            ];
+            case 'problem_before_service': return [
+              { label: 'Affidabilità',        value: selectedReview.problem_affidabilita },
+              { label: 'Organizzazione',       value: selectedReview.problem_organizzazione },
+              { label: 'Gestione Problema',    value: selectedReview.problem_gestione_problema },
+              { label: 'Comunicazione',        value: selectedReview.problem_comunicazione },
+            ];
+            default: return [];
+          }
+        };
+        const ratings = getRatings();
+        const ratingLabel = (v: number) => ['', 'Pessimo', 'Discreto', 'Buono', 'Eccellente', 'Ottimo'][v] ?? '';
+
+        const StarRow = ({ value, label }: { value: number | null; label: string }) => (
+          <div className="mb-5">
+            <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <Star key={s} className={`w-8 h-8 ${s <= (value ?? 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+              ))}
+              <span className="ml-2 text-sm text-gray-500">
+                {value ? `${value}/5 — ${ratingLabel(value)}` : 'Non valutato'}
+              </span>
             </div>
+          </div>
+        );
 
-            <div className="p-6 space-y-6">
-              {/* Info Recensore */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-900 mb-2">Recensore</h4>
-                <p className="text-gray-700">{getReviewerName(selectedReview)}</p>
-                <p className="text-sm text-gray-500">{selectedReview.customer.email}</p>
+        return (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+
+              {/* Header */}
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center rounded-t-xl z-10">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Scrivi una recensione</h2>
+                  <p className="text-sm text-gray-500">{getBusinessName(selectedReview)}</p>
+                </div>
+                <button onClick={() => setSelectedReview(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                  <XCircle className="w-6 h-6" />
+                </button>
               </div>
 
-              {/* Info Attività */}
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-blue-600" />
-                  Attività Recensita
-                </h4>
-                <p className="font-semibold text-blue-900">{getBusinessName(selectedReview)}</p>
-                <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-                  <MapPin className="w-4 h-4" />
-                  {getLocationInfo(selectedReview)}
-                </p>
-              </div>
+              <div className="px-6 py-5 space-y-0">
 
-              {/* Form Recensione (stessi campi del form utente) */}
-              <div className="border-t pt-6">
-                <h4 className="font-semibold text-gray-900 mb-4">Valutazioni</h4>
-
-                <div className="space-y-4">
-                  {/* Qualità */}
-                  {selectedReview.quality_rating && (
+                {/* Intestazione admin: recensore + azienda + data */}
+                <div className="mb-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="bg-gray-50 rounded-lg px-4 py-3 flex items-start gap-3">
+                    <User className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        1. Qualità
-                      </label>
-                      <div className="flex gap-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`w-8 h-8 ${
-                              star <= selectedReview.quality_rating!
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <p className="text-sm text-gray-600 mt-2">
-                        {selectedReview.quality_rating === 1 && 'Pessimo'}
-                        {selectedReview.quality_rating === 2 && 'Discreto'}
-                        {selectedReview.quality_rating === 3 && 'Buono'}
-                        {selectedReview.quality_rating === 4 && 'Eccellente'}
-                        {selectedReview.quality_rating === 5 && 'Ottimo'}
+                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-0.5">Recensore</p>
+                      <p className="font-semibold text-gray-900 text-sm">{getReviewerName(selectedReview)}</p>
+                      <p className="text-xs text-gray-500">{selectedReview.customer.email}</p>
+                    </div>
+                  </div>
+                  <div className="bg-blue-50 rounded-lg px-4 py-3 flex items-start gap-3">
+                    <Building2 className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-blue-600 font-medium uppercase tracking-wide mb-0.5">Attività</p>
+                      <p className="font-semibold text-blue-900 text-sm">{getBusinessName(selectedReview)}</p>
+                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                        <MapPin className="w-3 h-3" />{getLocationInfo(selectedReview)}
                       </p>
                     </div>
-                  )}
-
-                  {/* Prezzo */}
-                  {selectedReview.price_rating && (
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        2. Prezzo
-                      </label>
-                      <div className="flex gap-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`w-8 h-8 ${
-                              star <= selectedReview.price_rating!
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <p className="text-sm text-gray-600 mt-2">
-                        {selectedReview.price_rating === 1 && 'Pessimo'}
-                        {selectedReview.price_rating === 2 && 'Discreto'}
-                        {selectedReview.price_rating === 3 && 'Buono'}
-                        {selectedReview.price_rating === 4 && 'Eccellente'}
-                        {selectedReview.price_rating === 5 && 'Ottimo'}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Servizio */}
-                  {selectedReview.service_rating && (
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        3. Esperienza / Servizio
-                      </label>
-                      <div className="flex gap-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`w-8 h-8 ${
-                              star <= selectedReview.service_rating!
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <p className="text-sm text-gray-600 mt-2">
-                        {selectedReview.service_rating === 1 && 'Pessimo'}
-                        {selectedReview.service_rating === 2 && 'Discreto'}
-                        {selectedReview.service_rating === 3 && 'Buono'}
-                        {selectedReview.service_rating === 4 && 'Eccellente'}
-                        {selectedReview.service_rating === 5 && 'Ottimo'}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Voto Generale */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      4. Voto Generale
-                    </label>
-                    <div className="flex gap-2">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`w-8 h-8 ${
-                            star <= selectedReview.overall_rating
-                              ? 'fill-yellow-400 text-yellow-400'
-                              : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <p className="text-sm text-gray-600 mt-2">
-                      {selectedReview.overall_rating === 1 && 'Pessimo'}
-                      {selectedReview.overall_rating === 2 && 'Discreto'}
-                      {selectedReview.overall_rating === 3 && 'Buono'}
-                      {selectedReview.overall_rating === 4 && 'Eccellente'}
-                      {selectedReview.overall_rating === 5 && 'Ottimo'}
-                    </p>
                   </div>
                 </div>
-              </div>
 
-              {/* Titolo e Contenuto */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Titolo della recensione
-                </label>
-                <p className="text-gray-900 font-medium">{selectedReview.title}</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Descrizione dell'esperienza
-                </label>
-                <p className="text-gray-700 whitespace-pre-wrap">{selectedReview.content}</p>
-              </div>
-
-              {/* Prova di Acquisto - VISIBILE SOLO IN ADMIN */}
-              {reviewHasProof(selectedReview) && (
-                <div className="bg-gradient-to-br from-green-50 to-teal-50 border-2 border-green-400 rounded-lg p-5">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Image className="w-5 h-5 text-green-700" />
-                    <label className="text-base font-bold text-green-900">
-                      Documenti di Prova Allegati
-                    </label>
-                    <span className="ml-auto px-2.5 py-0.5 bg-green-200 text-green-800 text-xs font-bold rounded-full">
-                      {getProofUrls(selectedReview).length} {getProofUrls(selectedReview).length === 1 ? 'documento' : 'documenti'}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {getProofUrls(selectedReview).map((url, idx) => (
-                      <div key={idx} className="bg-white rounded-lg p-2 border border-green-200">
-                        {url.match(/\.(jpg|jpeg|png|gif|webp)/i) ? (
-                          <a href={url} target="_blank" rel="noopener noreferrer">
-                            <img
-                              src={url}
-                              alt={`Prova ${idx + 1}`}
-                              className="w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                            />
-                          </a>
-                        ) : (
-                          <a
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
-                          >
-                            <FileText className="w-8 h-8 text-green-600" />
-                            <span className="text-sm font-medium text-green-800">Documento {idx + 1}</span>
-                          </a>
-                        )}
+                {/* Step indicatori (visualizzazione statica) */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    {[1, 2, 3].map((s) => (
+                      <div key={s} className="flex items-center flex-1">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 bg-orange-600 text-white">{s}</div>
+                        {s < 3 && <div className="flex-1 h-1 mx-2 rounded bg-orange-600" />}
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-green-700 mt-3 italic">
-                    Clicca sulle immagini per aprirle a dimensione completa.
-                  </p>
-                </div>
-              )}
-
-              {/* Azioni */}
-              {selectedReview.review_status === 'pending' && (
-                <div className="space-y-3 pt-6 border-t">
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => approveReview(selectedReview.id)}
-                      className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-semibold"
-                    >
-                      <CheckCircle className="w-5 h-5" />
-                      Approva {reviewHasProof(selectedReview) ? '(50 punti con prova)' : '(25 punti)'}
-                    </button>
-                    <button
-                      onClick={() => openRejectModal(selectedReview.id)}
-                      className="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 font-semibold"
-                    >
-                      <XCircle className="w-5 h-5" />
-                      Rifiuta Completamente
-                    </button>
+                  <div className="flex justify-between text-xs text-gray-500 px-0">
+                    <span>Tipo esperienza</span>
+                    <span className="text-center">Valutazione</span>
+                    <span className="text-right">Descrizione</span>
                   </div>
+                </div>
 
-                  {reviewHasProof(selectedReview) && (
-                    <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
-                      <p className="text-sm text-yellow-800 font-medium mb-3">
-                        Se la prova non è valida ma la recensione è corretta, puoi approvarla comunque con 25 punti:
-                      </p>
-                      <button
-                        onClick={() => approveReviewWithoutProof(selectedReview.id)}
-                        className="w-full bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors flex items-center justify-center gap-2 font-semibold"
-                      >
-                        <CheckCircle className="w-5 h-5" />
-                        Approva senza prova (25 punti)
-                      </button>
+                {/* Step 1: Tipo esperienza */}
+                <div className="mb-6">
+                  <h3 className="font-semibold text-lg mb-4 text-gray-900">Che tipo di esperienza hai avuto?</h3>
+                  {tc && (
+                    <div className={`w-full p-4 border-2 rounded-xl ${tc.border} ${tc.bg}`}>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl w-8 text-center">{tc.icon}</span>
+                        <span className={`font-medium ${tc.text}`}>{tc.label}</span>
+                      </div>
                     </div>
                   )}
+                  {!tc && (
+                    <p className="text-sm text-gray-400 italic">Tipo non specificato</p>
+                  )}
                 </div>
-              )}
+
+                {/* Step 2: Valutazioni */}
+                {ratings.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="font-semibold text-lg mb-5 text-gray-900">
+                      {selectedReview.review_type === 'service_used' && 'Valuta il servizio ricevuto'}
+                      {selectedReview.review_type === 'booking_not_completed' && 'Valuta la gestione della prenotazione'}
+                      {selectedReview.review_type === 'quote_request' && 'Valuta la risposta al tuo preventivo'}
+                      {selectedReview.review_type === 'customer_service' && "Valuta il contatto con l'assistenza"}
+                      {selectedReview.review_type === 'problem_before_service' && 'Valuta la gestione del problema'}
+                    </h3>
+                    {ratings.map((r) => (
+                      <StarRow key={r.label} value={r.value} label={r.label} />
+                    ))}
+
+                    {/* Media */}
+                    {ratings.every(r => r.value) && (
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-2">
+                        <p className="text-sm text-blue-900">
+                          <strong>Media valutazioni:</strong>{' '}
+                          {(ratings.reduce((s, r) => s + (r.value ?? 0), 0) / ratings.length).toFixed(1)} / 5.0
+                          &nbsp;—&nbsp;
+                          <strong>Voto generale archiviato:</strong> {selectedReview.overall_rating}/5 ({ratingLabel(selectedReview.overall_rating)})
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Upload placeholder (documenti gia' allegati mostrati sotto) */}
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Carica documenti di prova <span className="text-gray-400">(facoltativo)</span>
+                      </label>
+                      {reviewHasProof(selectedReview) ? (
+                        <div className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-green-400 rounded-lg bg-green-50">
+                          <Image className="w-5 h-5 text-green-600" />
+                          <span className="text-sm font-semibold text-green-800">
+                            {proofUrls.length} {proofUrls.length === 1 ? 'documento allegato' : 'documenti allegati'}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg">
+                          <Upload className="w-5 h-5 text-gray-400" />
+                          <span className="text-sm text-gray-400">Nessun documento allegato</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3: Titolo e Descrizione */}
+                <div className="mb-6">
+                  <h3 className="font-semibold text-lg mb-4 text-gray-900">Descrivi la tua esperienza</h3>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Titolo <span className="text-gray-400 font-normal">(facoltativo)</span>
+                    </label>
+                    <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
+                      {selectedReview.title || <span className="text-gray-400 italic">Nessun titolo</span>}
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Descrizione <span className="text-red-500">*</span>
+                    </label>
+                    <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 whitespace-pre-wrap min-h-[120px]">
+                      {selectedReview.content}
+                    </div>
+                    <div className="flex justify-between text-xs mt-1">
+                      <span className="text-gray-400">{selectedReview.content?.length ?? 0} caratteri</span>
+                      {(selectedReview.content?.length ?? 0) >= 100 && (
+                        <span className="text-green-600 font-medium">Requisito soddisfatto</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Punti stimati */}
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4 mb-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                      <span className="font-semibold text-gray-900 text-sm">Punti stimati</span>
+                    </div>
+                    <div className="text-2xl font-bold text-green-600">
+                      {reviewHasProof(selectedReview) ? 50 : 25} punti
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {reviewHasProof(selectedReview) ? 'Con prova documentale allegata' : 'Aggiungi un documento per guadagnare 50 punti'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Prove allegate (visibile solo admin) */}
+                {reviewHasProof(selectedReview) && (
+                  <div className="bg-gradient-to-br from-green-50 to-teal-50 border-2 border-green-400 rounded-lg p-5 mb-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Image className="w-5 h-5 text-green-700" />
+                      <span className="text-base font-bold text-green-900">Documenti di Prova Allegati</span>
+                      <span className="ml-auto px-2.5 py-0.5 bg-green-200 text-green-800 text-xs font-bold rounded-full">
+                        {proofUrls.length} {proofUrls.length === 1 ? 'documento' : 'documenti'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {proofUrls.map((url, idx) => (
+                        <div key={idx} className="bg-white rounded-lg p-2 border border-green-200">
+                          {url.match(/\.(jpg|jpeg|png|gif|webp)/i) ? (
+                            <a href={url} target="_blank" rel="noopener noreferrer">
+                              <img src={url} alt={`Prova ${idx + 1}`} className="w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity" />
+                            </a>
+                          ) : (
+                            <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                              <FileText className="w-8 h-8 text-green-600" />
+                              <span className="text-sm font-medium text-green-800">Documento {idx + 1}</span>
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-green-700 mt-3 italic">Clicca sulle immagini per aprirle a dimensione completa.</p>
+                  </div>
+                )}
+
+                {/* Stato badge */}
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-sm font-medium text-gray-600">Stato:</span>
+                  <span className={`px-3 py-1 text-xs rounded-full font-semibold ${
+                    selectedReview.review_status === 'approved' ? 'bg-green-100 text-green-800' :
+                    selectedReview.review_status === 'pending'  ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {selectedReview.review_status === 'approved' ? 'Approvata' :
+                     selectedReview.review_status === 'pending'  ? 'In attesa' : 'Rifiutata'}
+                  </span>
+                  <span className="ml-auto text-xs text-gray-400">{formatDate(selectedReview.created_at)} alle {formatTime(selectedReview.created_at)}</span>
+                </div>
+
+                {/* Azioni */}
+                {selectedReview.review_status === 'pending' && (
+                  <div className="space-y-3 pt-4 border-t">
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => approveReview(selectedReview.id)}
+                        className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-semibold"
+                      >
+                        <CheckCircle className="w-5 h-5" />
+                        Approva {reviewHasProof(selectedReview) ? '(50 punti con prova)' : '(25 punti)'}
+                      </button>
+                      <button
+                        onClick={() => openRejectModal(selectedReview.id)}
+                        className="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 font-semibold"
+                      >
+                        <XCircle className="w-5 h-5" />
+                        Rifiuta Completamente
+                      </button>
+                    </div>
+                    {reviewHasProof(selectedReview) && (
+                      <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
+                        <p className="text-sm text-yellow-800 font-medium mb-3">
+                          Se la prova non è valida ma la recensione è corretta, puoi approvarla comunque con 25 punti:
+                        </p>
+                        <button
+                          onClick={() => approveReviewWithoutProof(selectedReview.id)}
+                          className="w-full bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors flex items-center justify-center gap-2 font-semibold"
+                        >
+                          <CheckCircle className="w-5 h-5" />
+                          Approva senza prova (25 punti)
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Modal Rifiuto con Motivazione */}
       {showRejectModal && (
