@@ -1,9 +1,9 @@
-// build: 2026-05-06
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { Router } from './components/Router';
+import { CookieBanner } from './components/common/CookieBanner';
 
 function AppContent() {
   const { user, profile } = useAuth();
@@ -18,6 +18,7 @@ function AppContent() {
         <Router key={user ? `authenticated-${user.id}` : 'unauthenticated'} />
       </div>
       {!isAdminPage && <Footer />}
+      <CookieBanner />
     </div>
   );
 }

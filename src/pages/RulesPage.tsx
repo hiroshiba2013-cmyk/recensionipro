@@ -1,4 +1,4 @@
-import { Shield, HelpCircle, Cookie, FileText } from 'lucide-react';
+import { Shield, HelpCircle, Cookie, FileText, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -20,65 +20,86 @@ interface FAQ {
   is_active: boolean;
 }
 
+const LAST_UPDATED = 'maggio 2026';
+const PLATFORM_NAME = 'Trovafacile';
+const CONTACT_EMAIL = 'privacy@trovafacile.it'; // aggiornare con email reale
+const COMPANY_NAME = '[Ragione Sociale]'; // aggiornare con dati reali
+const COMPANY_ADDRESS = '[Indirizzo, CAP, Città]'; // aggiornare con dati reali
+const VAT_NUMBER = '[P.IVA]'; // aggiornare con dati reali
+
+function AccordionItem({ question, answer }: { question: string; answer: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border border-gray-200 rounded-xl overflow-hidden">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition-colors"
+      >
+        <span className="font-semibold text-gray-900 text-sm pr-4">{question}</span>
+        {open ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+      </button>
+      {open && (
+        <div className="px-5 pb-5 border-t border-gray-100">
+          <p className="text-gray-600 text-sm leading-relaxed pt-4">{answer}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function RulesPage() {
   const [rulesContent, setRulesContent] = useState<RulesContent[]>([]);
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('Tutte');
+  const [activeTab, setActiveTab] = useState<'regolamento' | 'faq' | 'cookie' | 'termini'>('regolamento');
 
   useEffect(() => {
     loadData();
+    // set tab from hash
+    const hash = window.location.hash.replace('#', '');
+    if (hash === 'faq') setActiveTab('faq');
+    else if (hash === 'cookie-policy') setActiveTab('cookie');
+    else if (hash === 'termini' || hash === 'termini-servizio' || hash === 'privacy-policy' || hash === 'condizioni-uso') setActiveTab('termini');
   }, []);
 
   const loadData = async () => {
     try {
       setLoading(true);
-
       const [rulesResult, faqsResult] = await Promise.all([
-        supabase
-          .from('rules_content')
-          .select('*')
-          .eq('is_active', true)
-          .order('display_order'),
-        supabase
-          .from('faqs')
-          .select('*')
-          .eq('is_active', true)
-          .order('category')
-          .order('display_order')
+        supabase.from('rules_content').select('*').eq('is_active', true).order('display_order'),
+        supabase.from('faqs').select('*').eq('is_active', true).order('category').order('display_order'),
       ]);
-
-      if (rulesResult.error) throw rulesResult.error;
-      if (faqsResult.error) throw faqsResult.error;
-
       setRulesContent(rulesResult.data || []);
       setFaqs(faqsResult.data || []);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error loading rules:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const categories = ['Tutte', ...Array.from(new Set(faqs.map(faq => faq.category)))];
-  const filteredFAQs = selectedCategory === 'Tutte'
-    ? faqs
-    : faqs.filter(faq => faq.category === selectedCategory);
-
+  const categories = ['Tutte', ...Array.from(new Set(faqs.map(f => f.category)))];
+  const filteredFAQs = selectedCategory === 'Tutte' ? faqs : faqs.filter(f => f.category === selectedCategory);
   const groupedFAQs = filteredFAQs.reduce((acc, faq) => {
-    if (!acc[faq.category]) {
-      acc[faq.category] = [];
-    }
+    if (!acc[faq.category]) acc[faq.category] = [];
     acc[faq.category].push(faq);
     return acc;
   }, {} as Record<string, FAQ[]>);
 
+  const tabs = [
+    { key: 'regolamento' as const, label: 'Regolamento', icon: Shield, color: 'blue' },
+    { key: 'faq' as const, label: 'FAQ', icon: HelpCircle, color: 'green' },
+    { key: 'cookie' as const, label: 'Cookie Policy', icon: Cookie, color: 'amber' },
+    { key: 'termini' as const, label: 'Termini & Privacy', icon: FileText, color: 'teal' },
+  ];
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Caricamento regolamento...</p>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-3"></div>
+          <p className="text-gray-500 text-sm">Caricamento...</p>
         </div>
       </div>
     );
@@ -87,291 +108,362 @@ export function RulesPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Hero */}
-      <section className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 text-center">
-          <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
-            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-            Leggi le regole e le FAQ
+      <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+          <div className="inline-flex items-center gap-2 bg-white/10 text-white/70 text-xs font-semibold px-3 py-1.5 rounded-full mb-5 backdrop-blur">
+            <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></div>
+            Documenti legali e regolamento
           </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-4">Regolamento e FAQ</h1>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            Tutto quello che devi sapere per utilizzare al meglio la piattaforma
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">Regolamento, FAQ e Documenti Legali</h1>
+          <p className="text-slate-400 text-base max-w-xl mx-auto">
+            Tutto quello che devi sapere per utilizzare {PLATFORM_NAME} in modo corretto e sicuro.
           </p>
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-          <div className="border-b bg-gray-50 px-8 py-4 overflow-x-auto">
-            <div className="flex gap-2 min-w-max">
-              <a href="#regolamento" className="px-4 py-2 bg-white rounded-lg hover:bg-blue-50 transition text-sm font-medium">
-                Regolamento
-              </a>
-              <a href="#faq" className="px-4 py-2 bg-white rounded-lg hover:bg-blue-50 transition text-sm font-medium">
-                FAQ
-              </a>
-              <a href="#cookie-policy" className="px-4 py-2 bg-white rounded-lg hover:bg-blue-50 transition text-sm font-medium">
-                Cookie Policy
-              </a>
-              <a href="#termini" className="px-4 py-2 bg-white rounded-lg hover:bg-blue-50 transition text-sm font-medium">
-                Termini e Privacy
-              </a>
-            </div>
+        {/* Tab bar */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mb-6 overflow-hidden">
+          <div className="flex overflow-x-auto">
+            {tabs.map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-4 text-sm font-semibold border-b-2 transition-colors ${
+                  activeTab === key
+                    ? 'border-blue-600 text-blue-600 bg-blue-50/50'
+                    : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="hidden sm:inline">{label}</span>
+              </button>
+            ))}
           </div>
+        </div>
 
-          <div className="p-8 space-y-16">
-            <section id="regolamento">
-              <div className="flex items-center gap-3 mb-8 pb-4 border-b-2 border-blue-200">
-                <Shield className="w-10 h-10 text-blue-600" />
-                <h2 className="text-4xl font-bold text-gray-900">Regolamento Completo</h2>
+        {/* Regolamento */}
+        {activeTab === 'regolamento' && (
+          <div id="regolamento" className="space-y-4">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Shield className="w-5 h-5 text-blue-600" />
               </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Regolamento della Piattaforma</h2>
+                <p className="text-sm text-gray-500">Aggiornato il {LAST_UPDATED}</p>
+              </div>
+            </div>
 
-              <div className="space-y-12">
-                {rulesContent.map((section, index) => (
-                  <div
-                    key={section.id}
-                    id={section.section_key}
-                    className="bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 p-8 rounded-xl hover:border-blue-300 transition-all"
-                  >
-                    <div className="flex items-start gap-4 mb-6">
-                      <div className="flex-shrink-0 w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xl">
-                        {index + 1}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-3xl font-bold text-gray-900 mb-4">
-                          {section.section_title}
-                        </h3>
-                        <div className="prose prose-lg max-w-none">
-                          <div className="text-gray-700 whitespace-pre-line leading-relaxed">
-                            {section.content_text}
-                          </div>
-                        </div>
-                      </div>
+            {rulesContent.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center">
+                <Shield className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm">Nessun contenuto disponibile al momento.</p>
+                <p className="text-gray-400 text-xs mt-1">Il regolamento viene gestito dall'admin dalla sezione apposita.</p>
+              </div>
+            ) : (
+              rulesContent.map((section, index) => (
+                <div key={section.id} id={section.section_key} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="flex items-center gap-4 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                    <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
+                      {index + 1}
                     </div>
+                    <h3 className="font-bold text-gray-900">{section.section_title}</h3>
                   </div>
-                ))}
-              </div>
-
-              {rulesContent.length === 0 && (
-                <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-12 text-center">
-                  <Shield className="w-16 h-16 text-yellow-600 mx-auto mb-4" />
-                  <p className="text-yellow-800 font-medium text-lg">
-                    Nessun contenuto disponibile al momento
-                  </p>
+                  <div className="px-6 py-5">
+                    <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{section.content_text}</p>
+                  </div>
                 </div>
-              )}
-            </section>
+              ))
+            )}
+          </div>
+        )}
 
-            <section id="faq">
-              <div className="flex items-center gap-3 mb-8 pb-4 border-b-2 border-green-200">
-                <HelpCircle className="w-10 h-10 text-green-600" />
-                <h2 className="text-4xl font-bold text-gray-900">Domande Frequenti (FAQ)</h2>
+        {/* FAQ */}
+        {activeTab === 'faq' && (
+          <div id="faq" className="space-y-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-9 h-9 bg-green-100 rounded-xl flex items-center justify-center">
+                <HelpCircle className="w-5 h-5 text-green-600" />
               </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Domande Frequenti</h2>
+                <p className="text-sm text-gray-500">Trova risposta alle domande più comuni</p>
+              </div>
+            </div>
 
-              <div className="mb-8">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Filtra per categoria:
-                </label>
+            {/* Filtro categoria */}
+            {categories.length > 2 && (
+              <div className="bg-white rounded-2xl border border-gray-200 p-4">
                 <div className="flex flex-wrap gap-2">
-                  {categories.map((category) => (
+                  {categories.map(cat => (
                     <button
-                      key={category}
-                      onClick={() => setSelectedCategory(category)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                        selectedCategory === category
-                          ? 'bg-blue-600 text-white shadow-lg'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                        selectedCategory === cat ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                     >
-                      {category}
+                      {cat}
                     </button>
                   ))}
                 </div>
               </div>
+            )}
 
-              <div className="space-y-8">
-                {Object.entries(groupedFAQs).map(([category, categoryFaqs]) => (
-                  <div key={category} className="space-y-4">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <div className="w-2 h-8 bg-blue-600 rounded"></div>
-                      {category}
-                    </h3>
-                    <div className="space-y-3">
-                      {categoryFaqs.map((faq) => (
-                        <div
-                          key={faq.id}
-                          className="bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-blue-300 transition-all shadow-sm"
-                        >
-                          <h4 className="text-lg font-bold text-gray-900 mb-3 flex items-start gap-2">
-                            <HelpCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                            {faq.question}
-                          </h4>
-                          <p className="text-gray-700 leading-relaxed pl-7">
-                            {faq.answer}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+            {filteredFAQs.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center">
+                <HelpCircle className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm">Nessuna FAQ disponibile{selectedCategory !== 'Tutte' ? ' in questa categoria' : ''}.</p>
+              </div>
+            ) : (
+              Object.entries(groupedFAQs).map(([category, categoryFaqs]) => (
+                <div key={category}>
+                  {selectedCategory === 'Tutte' && (
+                    <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3 pl-1">{category}</h3>
+                  )}
+                  <div className="space-y-2">
+                    {categoryFaqs.map(faq => (
+                      <AccordionItem key={faq.id} question={faq.question} answer={faq.answer} />
+                    ))}
                   </div>
-                ))}
-              </div>
-
-              {filteredFAQs.length === 0 && (
-                <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-12 text-center">
-                  <HelpCircle className="w-16 h-16 text-yellow-600 mx-auto mb-4" />
-                  <p className="text-yellow-800 font-medium text-lg">
-                    Nessuna FAQ disponibile{selectedCategory !== 'Tutte' ? ' in questa categoria' : ''}
-                  </p>
                 </div>
-              )}
-            </section>
-            <section id="cookie-policy">
-              <div className="flex items-center gap-3 mb-8 pb-4 border-b-2 border-amber-200">
-                <Cookie className="w-10 h-10 text-amber-600" />
-                <h2 className="text-4xl font-bold text-gray-900">Cookie Policy</h2>
-              </div>
-
-              <div className="space-y-6">
-                <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-6">
-                  <p className="text-amber-900 font-semibold text-lg mb-2">Informativa semplice e trasparente</p>
-                  <p className="text-amber-800 leading-relaxed">
-                    Trovafacile utilizza esclusivamente cookie tecnici necessari al funzionamento della piattaforma.
-                    Non utilizziamo cookie di profilazione, non facciamo pubblicità comportamentale e
-                    non vendiamo né condividiamo i tuoi dati con terze parti a scopo commerciale.
-                  </p>
-                </div>
-
-                {[
-                  {
-                    title: 'Cookie tecnici e di sessione',
-                    color: 'blue',
-                    content: [
-                      { label: 'Cookie di autenticazione', desc: 'Gestiti da Supabase, mantengono la tua sessione attiva dopo il login. Sono strettamente necessari al funzionamento del sito e non richiedono consenso.' },
-                      { label: 'Cookie di preferenze', desc: 'Memorizzano impostazioni locali come la lingua selezionata o il profilo attivo. Non contengono dati personali identificativi.' },
-                    ]
-                  },
-                  {
-                    title: 'Cookie di terze parti (solo durante i pagamenti)',
-                    color: 'orange',
-                    content: [
-                      { label: 'Stripe', desc: 'Quando accedi al checkout per acquistare un piano, Stripe può impostare cookie propri necessari per la sicurezza della transazione. Stripe è certificato PCI-DSS e la sua privacy policy è disponibile su stripe.com/privacy.' },
-                    ]
-                  },
-                  {
-                    title: 'Cosa NON facciamo',
-                    color: 'green',
-                    content: [
-                      { label: 'Nessun tracciamento pubblicitario', desc: 'Non utilizziamo Google Ads, Meta Pixel, o qualsiasi altro sistema di tracciamento per la pubblicità.' },
-                      { label: 'Nessuna vendita di dati', desc: 'I tuoi dati non vengono mai venduti, ceduti o condivisi con terze parti per scopi commerciali.' },
-                      { label: 'Nessun cookie di analytics invasivo', desc: 'Non utilizziamo cookie di terze parti per analisi comportamentale degli utenti.' },
-                    ]
-                  },
-                  {
-                    title: 'Come gestire i cookie',
-                    color: 'gray',
-                    content: [
-                      { label: 'Impostazioni del browser', desc: 'Puoi configurare il tuo browser per bloccare o eliminare i cookie. Tieni presente che disabilitare i cookie tecnici potrebbe compromettere il corretto funzionamento del sito (es. impossibilità di rimanere connesso).' },
-                      { label: 'Cancellazione cookie', desc: 'Puoi eliminare i cookie salvati dal tuo browser in qualsiasi momento dalle impostazioni del browser stesso.' },
-                    ]
-                  },
-                ].map(({ title, color, content }) => (
-                  <div key={title} className={`bg-white border-2 border-${color}-100 rounded-xl p-6`}>
-                    <h3 className={`text-xl font-bold text-gray-900 mb-4 flex items-center gap-2`}>
-                      <div className={`w-1.5 h-6 bg-${color}-500 rounded`}></div>
-                      {title}
-                    </h3>
-                    <div className="space-y-4">
-                      {content.map(({ label, desc }) => (
-                        <div key={label} className="flex gap-3">
-                          <div className={`w-2 h-2 rounded-full bg-${color}-400 flex-shrink-0 mt-2`}></div>
-                          <div>
-                            <span className="font-semibold text-gray-800">{label}: </span>
-                            <span className="text-gray-600">{desc}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section id="termini">
-              <div className="flex items-center gap-3 mb-8 pb-4 border-b-2 border-teal-200">
-                <FileText className="w-10 h-10 text-teal-600" />
-                <h2 className="text-4xl font-bold text-gray-900">Termini di Servizio e Privacy</h2>
-              </div>
-
-              <div className="space-y-6">
-                {[
-                  {
-                    id: 'termini-servizio',
-                    title: 'Termini di Servizio',
-                    items: [
-                      { label: 'Accettazione', text: 'Utilizzando Trovafacile accetti i presenti termini. Se non li accetti, ti chiediamo di non utilizzare il servizio.' },
-                      { label: 'Descrizione del servizio', text: 'Trovafacile è una piattaforma italiana che consente agli utenti di cercare, recensire e scoprire attività commerciali locali, pubblicare annunci, partecipare ad aste e trovare opportunità di lavoro.' },
-                      { label: 'Account utente', text: 'Sei responsabile della sicurezza del tuo account e delle attività svolte con esso. Devi fornire informazioni veritiere durante la registrazione.' },
-                      { label: 'Contenuti pubblicati', text: 'Sei responsabile dei contenuti che pubblichi (recensioni, annunci, offerte di lavoro). Non è consentito pubblicare contenuti falsi, diffamatori, illegali o che violino i diritti di terzi.' },
-                      { label: 'Sospensione account', text: 'Ci riserviamo il diritto di sospendere o eliminare account che violino i termini di servizio o le regole della community.' },
-                      { label: 'Modifiche al servizio', text: 'Trovafacile può modificare, sospendere o interrompere il servizio in qualsiasi momento, con ragionevole preavviso agli utenti registrati.' },
-                    ]
-                  },
-                  {
-                    id: 'privacy-policy',
-                    title: 'Privacy Policy',
-                    items: [
-                      { label: 'Titolare del trattamento', text: 'Il titolare del trattamento dei dati personali è Trovafacile. Per qualsiasi richiesta relativa alla privacy, puoi contattarci tramite la sezione Contatti.' },
-                      { label: 'Dati raccolti', text: 'Raccogliamo i dati che fornisci durante la registrazione (nome, email, tipo di profilo), i contenuti che pubblichi sulla piattaforma, e i dati tecnici necessari al funzionamento del servizio (log di accesso, indirizzo IP).' },
-                      { label: 'Finalità del trattamento', text: 'I tuoi dati vengono utilizzati esclusivamente per: erogare il servizio, gestire il tuo account, inviare comunicazioni di servizio (es. notifiche, conferme d\'ordine), e migliorare la piattaforma.' },
-                      { label: 'Fornitori di servizio', text: 'Utilizziamo Supabase per il database e l\'autenticazione (dati protetti e cifrati), Stripe per la gestione sicura dei pagamenti (non archiviamo dati di carte di credito), e un servizio email per le comunicazioni automatiche di servizio.' },
-                      { label: 'Conservazione dei dati', text: 'I tuoi dati vengono conservati per il tempo necessario all\'erogazione del servizio e come previsto dalla normativa vigente. Puoi richiedere la cancellazione del tuo account e dei tuoi dati in qualsiasi momento.' },
-                      { label: 'I tuoi diritti (GDPR)', text: 'Hai diritto di accesso, rettifica, cancellazione ("diritto all\'oblio"), portabilità dei dati, opposizione al trattamento e limitazione del trattamento. Per esercitare questi diritti contattaci tramite la sezione Contatti.' },
-                      { label: 'Trasferimento dati', text: 'I dati possono essere trasferiti verso paesi extra-UE (es. USA) esclusivamente attraverso fornitori certificati che garantiscono un livello di protezione adeguato (es. Standard Contractual Clauses).' },
-                    ]
-                  },
-                  {
-                    id: 'condizioni-uso',
-                    title: "Condizioni d'uso",
-                    items: [
-                      { label: 'Uso lecito', text: 'La piattaforma deve essere utilizzata esclusivamente per scopi leciti e in conformità con la legislazione italiana ed europea vigente.' },
-                      { label: 'Recensioni', text: 'Le recensioni devono essere veritiere e basate su esperienze dirette. È vietato pubblicare recensioni false, acquistare recensioni o manipolare il sistema di valutazione.' },
-                      { label: 'Annunci e aste', text: 'Gli annunci e le aste devono riguardare prodotti o servizi reali. È vietato pubblicare offerte fraudolente, contraffatte o illegali.' },
-                      { label: 'Rispetto della community', text: 'È richiesto un comportamento rispettoso verso gli altri utenti. Sono vietati insulti, discriminazioni, molestie o qualsiasi forma di comportamento lesivo della dignità altrui.' },
-                      { label: 'Limitazione di responsabilità', text: 'Trovafacile non è responsabile per i contenuti pubblicati dagli utenti, per le transazioni tra utenti, o per eventuali danni derivanti dall\'uso della piattaforma da parte di terzi.' },
-                    ]
-                  },
-                ].map(({ id, title, items }) => (
-                  <div key={id} id={id} className="bg-white border-2 border-gray-200 rounded-xl p-6">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-5 flex items-center gap-2">
-                      <div className="w-1.5 h-7 bg-teal-500 rounded"></div>
-                      {title}
-                    </h3>
-                    <div className="space-y-4">
-                      {items.map(({ label, text }) => (
-                        <div key={label} className="flex gap-3">
-                          <div className="w-2 h-2 rounded-full bg-teal-400 flex-shrink-0 mt-2"></div>
-                          <div>
-                            <span className="font-semibold text-gray-800">{label}: </span>
-                            <span className="text-gray-600 leading-relaxed">{text}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-
-                <div className="bg-teal-50 border-2 border-teal-200 rounded-xl p-6 text-center">
-                  <p className="text-teal-800 text-sm leading-relaxed">
-                    Ultimo aggiornamento: maggio 2026. Per domande o chiarimenti su termini, privacy o cookie,
-                    contattaci tramite la sezione <strong>Contatti</strong> della piattaforma.
-                  </p>
-                </div>
-              </div>
-            </section>
-
+              ))
+            )}
           </div>
-        </div>
+        )}
+
+        {/* Cookie Policy */}
+        {activeTab === 'cookie' && (
+          <div id="cookie-policy" className="space-y-4">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-9 h-9 bg-amber-100 rounded-xl flex items-center justify-center">
+                <Cookie className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Cookie Policy</h2>
+                <p className="text-sm text-gray-500">Aggiornata il {LAST_UPDATED}</p>
+              </div>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
+              <p className="text-amber-900 font-semibold text-sm mb-1">Informativa trasparente</p>
+              <p className="text-amber-800 text-sm leading-relaxed">
+                {PLATFORM_NAME} utilizza esclusivamente cookie tecnici necessari al funzionamento della piattaforma.
+                Non utilizziamo cookie di profilazione, non facciamo pubblicità comportamentale e non vendiamo
+                né condividiamo i tuoi dati con terze parti a scopo commerciale.
+              </p>
+            </div>
+
+            {[
+              {
+                title: 'Cookie tecnici e di sessione',
+                items: [
+                  { label: 'Autenticazione', desc: 'Gestiti da Supabase, mantengono la tua sessione attiva dopo il login. Strettamente necessari al funzionamento del sito, non richiedono consenso.' },
+                  { label: 'Preferenze', desc: 'Memorizzano impostazioni locali come la lingua selezionata o il profilo attivo. Non contengono dati personali identificativi.' },
+                ]
+              },
+              {
+                title: 'Cookie di terze parti (solo durante i pagamenti)',
+                items: [
+                  { label: 'Stripe', desc: 'Durante il checkout per acquistare un piano, Stripe può impostare cookie propri necessari per la sicurezza della transazione. Stripe è certificato PCI-DSS. La sua privacy policy è disponibile su stripe.com/privacy.' },
+                ]
+              },
+              {
+                title: 'Cosa NON facciamo',
+                items: [
+                  { label: 'Nessun tracciamento pubblicitario', desc: 'Non utilizziamo Google Ads, Meta Pixel o sistemi analoghi di tracciamento per la pubblicità.' },
+                  { label: 'Nessuna vendita di dati', desc: 'I tuoi dati non vengono mai venduti, ceduti o condivisi con terze parti per scopi commerciali.' },
+                  { label: 'Nessuna analytics invasiva', desc: 'Non utilizziamo cookie di terze parti per analisi comportamentale degli utenti.' },
+                ]
+              },
+              {
+                title: 'Come gestire i cookie',
+                items: [
+                  { label: 'Impostazioni del browser', desc: 'Puoi configurare il browser per bloccare o eliminare i cookie. Disabilitare i cookie tecnici può compromettere il funzionamento del sito (es. impossibilità di restare connesso).' },
+                  { label: 'Cancellazione', desc: 'Puoi eliminare i cookie salvati dal browser in qualsiasi momento dalle impostazioni del browser stesso.' },
+                ]
+              },
+            ].map(({ title, items }) => (
+              <div key={title} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+                  <h3 className="font-bold text-gray-900 text-sm">{title}</h3>
+                </div>
+                <div className="px-5 py-4 space-y-3">
+                  {items.map(({ label, desc }) => (
+                    <div key={label} className="flex gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0 mt-2"></div>
+                      <div className="text-sm">
+                        <span className="font-semibold text-gray-800">{label}: </span>
+                        <span className="text-gray-600">{desc}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center">
+              <p className="text-gray-500 text-xs">
+                Per domande sui cookie scrivi a <strong>{CONTACT_EMAIL}</strong>
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Termini & Privacy */}
+        {activeTab === 'termini' && (
+          <div id="termini" className="space-y-4">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-9 h-9 bg-teal-100 rounded-xl flex items-center justify-center">
+                <FileText className="w-5 h-5 text-teal-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Termini di Servizio e Privacy</h2>
+                <p className="text-sm text-gray-500">Aggiornati il {LAST_UPDATED} · {COMPANY_NAME}</p>
+              </div>
+            </div>
+
+            {/* Info azienda - placeholder */}
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl px-5 py-4">
+              <p className="text-blue-900 text-xs font-semibold mb-1">Titolare del Trattamento</p>
+              <p className="text-blue-800 text-sm">
+                <strong>{COMPANY_NAME}</strong> — {COMPANY_ADDRESS}<br />
+                P.IVA: {VAT_NUMBER} — Email: <strong>{CONTACT_EMAIL}</strong>
+              </p>
+            </div>
+
+            {[
+              {
+                id: 'termini-servizio',
+                title: 'Termini di Servizio',
+                items: [
+                  {
+                    label: 'Accettazione dei termini',
+                    text: `Utilizzando ${PLATFORM_NAME} accetti integralmente i presenti Termini di Servizio. Se non li accetti, ti chiediamo di non utilizzare il servizio. L'accettazione avviene al momento della registrazione tramite apposita checkbox.`,
+                  },
+                  {
+                    label: 'Descrizione del servizio',
+                    text: `${PLATFORM_NAME} è una piattaforma italiana che consente agli utenti di cercare, recensire e scoprire attività commerciali locali, pubblicare annunci, partecipare ad aste online e trovare opportunità di lavoro. Il servizio è riservato a maggiorenni residenti in Italia.`,
+                  },
+                  {
+                    label: 'Registrazione e account',
+                    text: 'Sei responsabile della sicurezza del tuo account e di tutte le attività svolte con esso. Devi fornire informazioni veritiere e aggiornate durante la registrazione. Non è consentito condividere le credenziali di accesso con terzi.',
+                  },
+                  {
+                    label: 'Contenuti pubblicati dall\'utente',
+                    text: 'Sei l\'unico responsabile dei contenuti che pubblichi (recensioni, annunci, offerte di lavoro, immagini). Non è consentito pubblicare contenuti falsi, diffamatori, offensivi, illegali o che violino i diritti di proprietà intellettuale di terzi.',
+                  },
+                  {
+                    label: 'Sospensione e chiusura account',
+                    text: `Ci riserviamo il diritto di sospendere o eliminare account che violino i presenti Termini, le regole della community o la normativa vigente. In caso di violazioni gravi, la sospensione può avvenire senza preavviso.`,
+                  },
+                  {
+                    label: 'Modifiche al servizio',
+                    text: `${PLATFORM_NAME} può modificare, sospendere o interrompere il servizio in qualsiasi momento. Le modifiche sostanziali verranno comunicate agli utenti registrati con ragionevole preavviso via email o notifica in-app.`,
+                  },
+                  {
+                    label: 'Legge applicabile e foro competente',
+                    text: 'I presenti Termini sono regolati dalla legge italiana. Per qualsiasi controversia è competente in via esclusiva il Tribunale del luogo di sede legale della società.',
+                  },
+                ],
+              },
+              {
+                id: 'privacy-policy',
+                title: 'Privacy Policy',
+                items: [
+                  {
+                    label: 'Base giuridica del trattamento',
+                    text: 'Il trattamento dei tuoi dati avviene sulla base del tuo consenso esplicito (art. 6 lett. a GDPR), dell\'esecuzione del contratto di servizio (art. 6 lett. b GDPR) e degli obblighi legali (art. 6 lett. c GDPR).',
+                  },
+                  {
+                    label: 'Dati raccolti',
+                    text: 'Raccogliamo: dati forniti in fase di registrazione (nome, email, tipologia di profilo, codice fiscale opzionale); contenuti pubblicati sulla piattaforma; dati tecnici necessari al servizio (log di accesso, indirizzo IP, dispositivo). Non raccogliamo dati bancari o di carta di credito.',
+                  },
+                  {
+                    label: 'Finalità del trattamento',
+                    text: 'I tuoi dati vengono utilizzati esclusivamente per: erogare e migliorare il servizio, gestire il tuo account e abbonamento, inviare comunicazioni di servizio (notifiche, conferme, avvisi di sicurezza), adempiere a obblighi legali e fiscali.',
+                  },
+                  {
+                    label: 'Fornitori di servizio (responsabili del trattamento)',
+                    text: 'Utilizziamo: Supabase Inc. (database e autenticazione, server in UE) per l\'archiviazione sicura dei dati; Stripe Inc. (pagamenti, certificato PCI-DSS) che non ci trasmette mai i dati della carta di credito; un servizio email transazionale per le comunicazioni automatiche.',
+                  },
+                  {
+                    label: 'Conservazione dei dati',
+                    text: 'I dati vengono conservati per il tempo necessario all\'erogazione del servizio e nel rispetto degli obblighi di legge (es. dati fiscali: 10 anni). Alla cancellazione dell\'account i dati personali vengono eliminati entro 30 giorni, salvo obblighi di conservazione.',
+                  },
+                  {
+                    label: 'I tuoi diritti (GDPR)',
+                    text: `Hai diritto di: accesso ai tuoi dati (art. 15), rettifica (art. 16), cancellazione ("diritto all'oblio", art. 17), portabilità (art. 20), opposizione al trattamento (art. 21), limitazione (art. 18). Per esercitare questi diritti scrivi a ${CONTACT_EMAIL}. Hai anche il diritto di proporre reclamo al Garante per la Protezione dei Dati Personali (garante.privacy.it).`,
+                  },
+                  {
+                    label: 'Trasferimento dati extra-UE',
+                    text: 'I dati possono essere trasferiti verso paesi extra-UE esclusivamente attraverso fornitori certificati che garantiscono un livello di protezione adeguato tramite Clausole Contrattuali Standard (Standard Contractual Clauses) approvate dalla Commissione Europea.',
+                  },
+                  {
+                    label: 'Minori',
+                    text: `${PLATFORM_NAME} è riservato a persone di età superiore ai 18 anni. Non raccogliamo consapevolmente dati personali di minori. Se rilevi che un minore ha fornito dati senza consenso, contattaci a ${CONTACT_EMAIL}.`,
+                  },
+                ],
+              },
+              {
+                id: 'condizioni-uso',
+                title: "Condizioni d'uso",
+                items: [
+                  {
+                    label: 'Uso lecito',
+                    text: 'La piattaforma deve essere utilizzata esclusivamente per scopi leciti e in conformità con la legislazione italiana ed europea vigente, inclusi il Codice del Consumo, il GDPR e il D.Lgs. 70/2003 sul commercio elettronico.',
+                  },
+                  {
+                    label: 'Recensioni',
+                    text: 'Le recensioni devono essere veritiere e basate su esperienze dirette e personali. È vietato pubblicare recensioni false, acquistare recensioni, manipolare il sistema di valutazione o recensire attività con cui si ha un conflitto di interesse.',
+                  },
+                  {
+                    label: 'Annunci e aste',
+                    text: 'Gli annunci e le aste devono riguardare prodotti o servizi reali, legali e di proprietà del pubblicante. È vietato pubblicare offerte fraudolente, prodotti contraffatti, materiale illegale o utilizzare la piattaforma per truffe.',
+                  },
+                  {
+                    label: 'Rispetto della community',
+                    text: 'È richiesto un comportamento rispettoso verso tutti gli utenti. Sono vietati insulti, discriminazioni per qualsiasi motivo, molestie, spam, comportamenti intimidatori o qualsiasi forma di abuso della piattaforma.',
+                  },
+                  {
+                    label: 'Proprietà intellettuale',
+                    text: `Il marchio ${PLATFORM_NAME}, il design, il codice e i contenuti originali della piattaforma sono di proprietà esclusiva del titolare. È vietata qualsiasi riproduzione, distribuzione o utilizzo non autorizzato.`,
+                  },
+                  {
+                    label: 'Limitazione di responsabilità',
+                    text: `${PLATFORM_NAME} non è responsabile per i contenuti pubblicati dagli utenti, per le transazioni tra utenti, per l'accuratezza delle informazioni sulle attività commerciali, o per eventuali danni derivanti dall'uso della piattaforma da parte di terzi. Il servizio è fornito "così com'è".`,
+                  },
+                ],
+              },
+            ].map(({ id, title, items }) => (
+              <div key={id} id={id} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+                  <h3 className="font-bold text-gray-900">{title}</h3>
+                </div>
+                <div className="px-5 py-4 space-y-4">
+                  {items.map(({ label, text }) => (
+                    <div key={label} className="flex gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-teal-400 flex-shrink-0 mt-2"></div>
+                      <div className="text-sm">
+                        <span className="font-semibold text-gray-800">{label}: </span>
+                        <span className="text-gray-600 leading-relaxed">{text}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            <div className="bg-gray-100 rounded-2xl p-5 text-center">
+              <p className="text-gray-500 text-xs leading-relaxed">
+                Ultimo aggiornamento: {LAST_UPDATED}. Per domande su privacy, termini o cookie contatta{' '}
+                <strong className="text-gray-700">{CONTACT_EMAIL}</strong>
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

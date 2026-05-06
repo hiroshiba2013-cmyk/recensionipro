@@ -1478,7 +1478,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
               <span className="text-sm text-gray-700">
                 Accetto la{' '}
                 <a
-                  href="/rules#privacy-gdpr"
+                  href="/rules#privacy-policy"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:underline font-semibold"
@@ -2198,7 +2198,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
               <span className="text-sm text-gray-700">
                 Accetto la{' '}
                 <a
-                  href="/rules#privacy-gdpr"
+                  href="/rules#privacy-policy"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:underline font-semibold"
