@@ -16,6 +16,7 @@ import { LeaderboardSection } from '../components/admin/LeaderboardSection';
 import { BusinessTrackingSection } from '../components/admin/BusinessTrackingSection';
 import { MessagingSection } from '../components/admin/MessagingSection';
 import { ContactSection } from '../components/admin/ContactSection';
+import { PlatformMessagesSection } from '../components/admin/PlatformMessagesSection';
 import { PlansSection } from '../components/admin/PlansSection';
 import { RulesSection } from '../components/admin/RulesSection';
 import AuctionsSection from '../components/admin/AuctionsSection';
@@ -48,6 +49,7 @@ interface PendingCounts {
   newUsers: number;
   newSubscriptions: number;
   newMessages: number;
+  unreadPlatformMessages: number;
 }
 
 interface PendingReview {
@@ -238,7 +240,7 @@ export function AdminDashboardPage() {
   const [businesses, setBusinesses] = useState<RegisteredBusiness[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pendingCounts, setPendingCounts] = useState<PendingCounts>({ reviews: 0, ads: 0, businesses: 0, reports: 0, auctions: 0, jobs: 0, newUsers: 0, newSubscriptions: 0, newMessages: 0 });
+  const [pendingCounts, setPendingCounts] = useState<PendingCounts>({ reviews: 0, ads: 0, businesses: 0, reports: 0, auctions: 0, jobs: 0, newUsers: 0, newSubscriptions: 0, newMessages: 0, unreadPlatformMessages: 0 });
   const [selectedReview, setSelectedReview] = useState<PendingReview | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
@@ -302,7 +304,7 @@ export function AdminDashboardPage() {
   const loadPendingCounts = async () => {
     try {
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const [reviewsRes, adsRes, businessesRes, reportsRes, auctionsRes, jobsRes, newUsersRes, newSubsRes, newMsgsRes] = await Promise.all([
+      const [reviewsRes, adsRes, businessesRes, reportsRes, auctionsRes, jobsRes, newUsersRes, newSubsRes, newMsgsRes, unreadPlatformMsgsRes] = await Promise.all([
         supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('review_status', 'pending'),
         supabase.from('classified_ads').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
         supabase.from('unclaimed_business_locations').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
@@ -312,6 +314,7 @@ export function AdminDashboardPage() {
         supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', oneDayAgo),
         supabase.from('subscriptions').select('id', { count: 'exact', head: true }).gte('created_at', oneDayAgo),
         supabase.from('conversations').select('id', { count: 'exact', head: true }).gte('updated_at', oneDayAgo),
+        supabase.from('platform_messages').select('id', { count: 'exact', head: true }).eq('status', 'unread'),
       ]);
       setPendingCounts({
         reviews: reviewsRes.count || 0,
@@ -323,6 +326,7 @@ export function AdminDashboardPage() {
         newUsers: newUsersRes.count || 0,
         newSubscriptions: newSubsRes.count || 0,
         newMessages: newMsgsRes.count || 0,
+        unreadPlatformMessages: unreadPlatformMsgsRes.count || 0,
       });
     } catch (error) {
       console.error('Error loading pending counts:', error);
@@ -1138,6 +1142,22 @@ export function AdminDashboardPage() {
                 Contatti
               </button>
               <button
+                onClick={() => setActiveTab('platform_messages')}
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'platform_messages'
+                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <MessageSquare className="w-4 h-4" />
+                Messaggi Utenti
+                {pendingCounts.unreadPlatformMessages > 0 && (
+                  <span className="ml-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                    {pendingCounts.unreadPlatformMessages}
+                  </span>
+                )}
+              </button>
+              <button
                 onClick={() => setActiveTab('plans')}
                 className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'plans'
@@ -1637,6 +1657,8 @@ export function AdminDashboardPage() {
             {activeTab === 'messaging' && <MessagingSection adminId={profile!.id} />}
 
             {activeTab === 'contact' && <ContactSection adminId={profile!.id} />}
+
+            {activeTab === 'platform_messages' && <PlatformMessagesSection adminId={profile!.id} />}
 
             {activeTab === 'plans' && <PlansSection adminId={profile!.id} />}
 

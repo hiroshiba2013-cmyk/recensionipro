@@ -1,0 +1,359 @@
+import { useState, useEffect } from 'react';
+import { Mail, MailOpen, Archive, Reply, Search, ChevronDown, ChevronUp, Send, Clock, User, X, RefreshCw } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { format } from 'date-fns';
+import { it } from 'date-fns/locale';
+
+interface PlatformMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  user_id: string | null;
+  status: 'unread' | 'read' | 'replied' | 'archived';
+  admin_reply: string | null;
+  replied_at: string | null;
+  created_at: string;
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  unread: 'Non letto',
+  read: 'Letto',
+  replied: 'Risposto',
+  archived: 'Archiviato',
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  unread: 'bg-blue-100 text-blue-700',
+  read: 'bg-gray-100 text-gray-600',
+  replied: 'bg-green-100 text-green-700',
+  archived: 'bg-amber-100 text-amber-700',
+};
+
+interface Props {
+  adminId: string;
+}
+
+export function PlatformMessagesSection({ adminId }: Props) {
+  const [messages, setMessages] = useState<PlatformMessage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<string>('all');
+  const [search, setSearch] = useState('');
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState<Record<string, string>>({});
+  const [replying, setReplying] = useState<string | null>(null);
+  const [counts, setCounts] = useState({ unread: 0, read: 0, replied: 0, archived: 0 });
+
+  useEffect(() => {
+    loadMessages();
+  }, [filter]);
+
+  const loadMessages = async () => {
+    setLoading(true);
+    let query = supabase
+      .from('platform_messages')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (filter !== 'all') query = query.eq('status', filter);
+
+    const { data } = await query;
+    setMessages(data || []);
+
+    // Load counts
+    const { data: all } = await supabase.from('platform_messages').select('status');
+    if (all) {
+      setCounts({
+        unread: all.filter(m => m.status === 'unread').length,
+        read: all.filter(m => m.status === 'read').length,
+        replied: all.filter(m => m.status === 'replied').length,
+        archived: all.filter(m => m.status === 'archived').length,
+      });
+    }
+
+    setLoading(false);
+  };
+
+  const openMessage = async (msg: PlatformMessage) => {
+    const isOpen = expanded === msg.id;
+    setExpanded(isOpen ? null : msg.id);
+
+    if (!isOpen && msg.status === 'unread') {
+      await supabase.from('platform_messages').update({ status: 'read' }).eq('id', msg.id);
+      setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, status: 'read' } : m));
+      setCounts(prev => ({ ...prev, unread: prev.unread - 1, read: prev.read + 1 }));
+    }
+  };
+
+  const sendReply = async (msg: PlatformMessage) => {
+    const text = replyText[msg.id]?.trim();
+    if (!text) return;
+
+    setReplying(msg.id);
+    const { error } = await supabase.from('platform_messages').update({
+      status: 'replied',
+      admin_reply: text,
+      replied_at: new Date().toISOString(),
+      replied_by: adminId,
+    }).eq('id', msg.id);
+
+    setReplying(null);
+    if (error) { alert('Errore durante il salvataggio della risposta.'); return; }
+
+    setMessages(prev => prev.map(m => m.id === msg.id
+      ? { ...m, status: 'replied', admin_reply: text, replied_at: new Date().toISOString() }
+      : m
+    ));
+    setReplyText(prev => ({ ...prev, [msg.id]: '' }));
+    await loadMessages();
+  };
+
+  const updateStatus = async (id: string, status: PlatformMessage['status']) => {
+    await supabase.from('platform_messages').update({ status }).eq('id', id);
+    setMessages(prev => prev.map(m => m.id === id ? { ...m, status } : m));
+    await loadMessages();
+  };
+
+  const filtered = messages.filter(m => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || m.subject.toLowerCase().includes(q) || m.message.toLowerCase().includes(q);
+  });
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Messaggi dalla Piattaforma</h2>
+          <p className="text-sm text-gray-500 mt-1">Messaggi inviati dagli utenti tramite il form Contatti</p>
+        </div>
+        <button
+          onClick={loadMessages}
+          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Aggiorna
+        </button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { key: 'unread', label: 'Non letti', icon: Mail, color: 'blue' },
+          { key: 'read', label: 'Letti', icon: MailOpen, color: 'gray' },
+          { key: 'replied', label: 'Risposti', icon: Reply, color: 'green' },
+          { key: 'archived', label: 'Archiviati', icon: Archive, color: 'amber' },
+        ].map(({ key, label, icon: Icon, color }) => (
+          <button
+            key={key}
+            onClick={() => setFilter(filter === key ? 'all' : key)}
+            className={`flex items-center gap-3 p-4 rounded-xl border transition-all text-left ${
+              filter === key
+                ? `bg-${color}-50 border-${color}-300 shadow-sm`
+                : 'bg-white border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-${color}-100`}>
+              <Icon className={`w-4 h-4 text-${color}-600`} />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-gray-900">{counts[key as keyof typeof counts]}</p>
+              <p className="text-xs text-gray-500">{label}</p>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Search + filter */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Cerca per nome, email, oggetto..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none bg-white"
+          />
+          {search && (
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+        <select
+          value={filter}
+          onChange={e => setFilter(e.target.value)}
+          className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none"
+        >
+          <option value="all">Tutti i messaggi</option>
+          <option value="unread">Non letti</option>
+          <option value="read">Letti</option>
+          <option value="replied">Risposti</option>
+          <option value="archived">Archiviati</option>
+        </select>
+      </div>
+
+      {/* Message list */}
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
+          <Mail className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+          <p className="text-gray-500 font-medium">Nessun messaggio trovato</p>
+          {search && <p className="text-sm text-gray-400 mt-1">Prova a modificare la ricerca</p>}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filtered.map(msg => {
+            const isExpanded = expanded === msg.id;
+            const isUnread = msg.status === 'unread';
+
+            return (
+              <div
+                key={msg.id}
+                className={`bg-white border rounded-xl overflow-hidden transition-all ${
+                  isUnread ? 'border-blue-200 shadow-sm' : 'border-gray-200'
+                }`}
+              >
+                {/* Row header */}
+                <button
+                  onClick={() => openMessage(msg)}
+                  className="w-full text-left px-5 py-4 flex items-center gap-4 hover:bg-gray-50 transition-colors"
+                >
+                  {/* Status dot */}
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isUnread ? 'bg-blue-500' : 'bg-transparent'}`} />
+
+                  {/* Avatar */}
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-sm font-bold">{msg.name.charAt(0).toUpperCase()}</span>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`text-sm font-semibold ${isUnread ? 'text-gray-900' : 'text-gray-700'}`}>{msg.name}</span>
+                      <span className="text-xs text-gray-400">{msg.email}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[msg.status]}`}>
+                        {STATUS_LABELS[msg.status]}
+                      </span>
+                    </div>
+                    <p className={`text-sm mt-0.5 truncate ${isUnread ? 'font-medium text-gray-800' : 'text-gray-500'}`}>
+                      {msg.subject} — <span className="font-normal text-gray-400">{msg.message}</span>
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="text-xs text-gray-400 whitespace-nowrap hidden sm:block">
+                      {format(new Date(msg.created_at), 'd MMM yyyy', { locale: it })}
+                    </span>
+                    {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  </div>
+                </button>
+
+                {/* Expanded content */}
+                {isExpanded && (
+                  <div className="border-t border-gray-100 px-5 py-5 space-y-5 bg-gray-50">
+                    {/* Message body */}
+                    <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
+                        <User className="w-3.5 h-3.5" />
+                        <span className="font-medium text-gray-700">{msg.name}</span>
+                        <span>&lt;{msg.email}&gt;</span>
+                        <span>·</span>
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>{format(new Date(msg.created_at), 'd MMMM yyyy, HH:mm', { locale: it })}</span>
+                        {msg.user_id && (
+                          <span className="ml-auto bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-xs font-medium">Utente registrato</span>
+                        )}
+                      </div>
+                      <div className="border-t border-gray-100 pt-3">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Oggetto</p>
+                        <p className="text-sm font-medium text-gray-900">{msg.subject}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Messaggio</p>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{msg.message}</p>
+                      </div>
+                    </div>
+
+                    {/* Previous reply */}
+                    {msg.admin_reply && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2 text-xs text-green-700 font-semibold mb-2">
+                          <Reply className="w-3.5 h-3.5" />
+                          Risposta admin — {msg.replied_at ? format(new Date(msg.replied_at), 'd MMMM yyyy, HH:mm', { locale: it }) : ''}
+                        </div>
+                        <p className="text-sm text-green-900 whitespace-pre-wrap">{msg.admin_reply}</p>
+                      </div>
+                    )}
+
+                    {/* Reply form */}
+                    {msg.status !== 'archived' && (
+                      <div className="space-y-3">
+                        <label className="block text-sm font-medium text-gray-700">
+                          {msg.admin_reply ? 'Aggiorna risposta' : 'Rispondi'}
+                        </label>
+                        <textarea
+                          rows={4}
+                          placeholder={`Scrivi una risposta a ${msg.name}...`}
+                          value={replyText[msg.id] || msg.admin_reply || ''}
+                          onChange={e => setReplyText(prev => ({ ...prev, [msg.id]: e.target.value }))}
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm resize-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none bg-white"
+                        />
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <button
+                            onClick={() => sendReply(msg)}
+                            disabled={replying === msg.id || !replyText[msg.id]?.trim()}
+                            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                          >
+                            {replying === msg.id
+                              ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              : <Send className="w-3.5 h-3.5" />
+                            }
+                            {msg.admin_reply ? 'Aggiorna risposta' : 'Invia risposta'}
+                          </button>
+
+                          {msg.status !== 'read' && (
+                            <button
+                              onClick={() => updateStatus(msg.id, 'read')}
+                              className="flex items-center gap-1.5 text-sm text-gray-600 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                            >
+                              <MailOpen className="w-3.5 h-3.5" />
+                              Segna come letto
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => updateStatus(msg.id, 'archived')}
+                            className="flex items-center gap-1.5 text-sm text-gray-600 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors ml-auto"
+                          >
+                            <Archive className="w-3.5 h-3.5" />
+                            Archivia
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Restore from archive */}
+                    {msg.status === 'archived' && (
+                      <button
+                        onClick={() => updateStatus(msg.id, 'read')}
+                        className="text-sm text-amber-700 hover:text-amber-800 font-medium"
+                      >
+                        Ripristina dalla raccolta archiviata
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
