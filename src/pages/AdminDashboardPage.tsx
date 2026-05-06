@@ -222,6 +222,7 @@ interface Product {
 export function AdminDashboardPage() {
   const { profile, user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [statsPeriod, setStatsPeriod] = useState<number | null>(null); // null = tutti i tempi
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     trialUsers: 0,
@@ -317,6 +318,12 @@ export function AdminDashboardPage() {
     }
   }, [checkingAdmin, isAdmin, activeTab]);
 
+  useEffect(() => {
+    if (!checkingAdmin && isAdmin && activeTab === 'dashboard') {
+      loadStats(statsPeriod);
+    }
+  }, [statsPeriod]);
+
   const loadPendingCounts = async () => {
     try {
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -353,7 +360,7 @@ export function AdminDashboardPage() {
     setLoading(true);
     try {
       if (activeTab === 'dashboard') {
-        await loadStats();
+        await loadStats(statsPeriod);
       } else if (activeTab === 'reviews') {
         await loadPendingReviews();
       } else if (activeTab === 'users') {
@@ -379,7 +386,15 @@ export function AdminDashboardPage() {
     }
   };
 
-  const loadStats = async () => {
+  const loadStats = async (days: number | null = null) => {
+    const since = days !== null
+      ? new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+      : null;
+
+    // Applica filtro data di creazione solo alle metriche di attività (non agli stati istantanei)
+    const dated = (q: ReturnType<typeof supabase.from>) =>
+      since ? (q as any).gte('created_at', since) : q;
+
     const [
       usersCount,
       trialUsersCount,
@@ -402,26 +417,32 @@ export function AdminDashboardPage() {
       familyCount,
       solidarityData,
     ] = await Promise.all([
-      supabase.from('profiles').select('id', { count: 'exact', head: true }).neq('user_type', 'admin'),
+      dated(supabase.from('profiles').select('id', { count: 'exact', head: true }).neq('user_type', 'admin')),
+      // Stato istantaneo — non filtrato per data
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('subscription_status', 'trial'),
-      supabase.from('reviews').select('id', { count: 'exact', head: true }),
+      dated(supabase.from('reviews').select('id', { count: 'exact', head: true })),
+      // Pending: sempre totale corrente
       supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('review_status', 'pending'),
-      supabase.from('classified_ads').select('id', { count: 'exact', head: true }).eq('ad_type', 'sell'),
-      supabase.from('classified_ads').select('id', { count: 'exact', head: true }).eq('ad_type', 'buy'),
-      supabase.from('classified_ads').select('id', { count: 'exact', head: true }).eq('ad_type', 'gift'),
+      dated(supabase.from('classified_ads').select('id', { count: 'exact', head: true }).eq('ad_type', 'sell')),
+      dated(supabase.from('classified_ads').select('id', { count: 'exact', head: true }).eq('ad_type', 'buy')),
+      dated(supabase.from('classified_ads').select('id', { count: 'exact', head: true }).eq('ad_type', 'gift')),
+      // Abbonamenti attivi/trial: stato istantaneo
       supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'active'),
       supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'trial'),
-      supabase.from('products').select('id', { count: 'exact', head: true }),
-      supabase.from('reports').select('id', { count: 'exact', head: true }),
+      dated(supabase.from('products').select('id', { count: 'exact', head: true })),
+      dated(supabase.from('reports').select('id', { count: 'exact', head: true })),
+      // Pending reports: stato istantaneo
       supabase.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-      supabase.from('job_postings').select('id', { count: 'exact', head: true }),
-      supabase.from('job_seekers').select('id', { count: 'exact', head: true }),
-      supabase.from('auctions').select('id', { count: 'exact', head: true }),
-      supabase.from('registered_businesses').select('id', { count: 'exact', head: true }),
-      supabase.from('unclaimed_business_locations').select('id', { count: 'exact', head: true }),
-      supabase.from('registered_business_locations').select('id', { count: 'exact', head: true }),
-      supabase.from('customer_family_members').select('id', { count: 'exact', head: true }),
-      supabase.from('solidarity_documents').select('amount'),
+      dated(supabase.from('job_postings').select('id', { count: 'exact', head: true })),
+      dated(supabase.from('job_seekers').select('id', { count: 'exact', head: true })),
+      dated(supabase.from('auctions').select('id', { count: 'exact', head: true })),
+      dated(supabase.from('registered_businesses').select('id', { count: 'exact', head: true })),
+      dated(supabase.from('unclaimed_business_locations').select('id', { count: 'exact', head: true })),
+      dated(supabase.from('registered_business_locations').select('id', { count: 'exact', head: true })),
+      dated(supabase.from('customer_family_members').select('id', { count: 'exact', head: true })),
+      since
+        ? supabase.from('solidarity_documents').select('amount').gte('created_at', since)
+        : supabase.from('solidarity_documents').select('amount'),
     ]);
 
     const solidarityTotal = (solidarityData.data || []).reduce(
@@ -1234,7 +1255,13 @@ export function AdminDashboardPage() {
           </div>
         ) : (
           <>
-            {activeTab === 'dashboard' && <AdminStats stats={stats} />}
+            {activeTab === 'dashboard' && (
+              <AdminStats
+                stats={stats}
+                period={statsPeriod}
+                onPeriodChange={(days) => setStatsPeriod(days)}
+              />
+            )}
 
             {activeTab === 'reviews' && (
               <ReviewsSection reviews={pendingReviews} onReload={async () => { await loadPendingReviews(); await loadPendingCounts(); }} adminId={profile!.id} />

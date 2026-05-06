@@ -1,4 +1,14 @@
-import { Star, ShoppingBag, Briefcase, Search, Gift, Gavel, Users, CreditCard, Heart, Building2, AlertTriangle, Clock, TrendingUp, UserCheck, Activity } from 'lucide-react';
+import { Star, ShoppingBag, Briefcase, Search, Gift, Gavel, Users, CreditCard, Heart, Building2, AlertTriangle, Clock, TrendingUp, UserCheck, Activity, Calendar } from 'lucide-react';
+
+const PERIOD_OPTIONS: { label: string; days: number | null }[] = [
+  { label: 'Tutti', days: null },
+  { label: 'Oggi', days: 1 },
+  { label: '7 giorni', days: 7 },
+  { label: '15 giorni', days: 15 },
+  { label: '30 giorni', days: 30 },
+  { label: '90 giorni', days: 90 },
+  { label: '180 giorni', days: 180 },
+];
 
 interface AdminStatsProps {
   stats: {
@@ -26,6 +36,8 @@ interface AdminStatsProps {
     totalFamilyMembers: number;
     solidarityTotal: number;
   };
+  period: number | null;
+  onPeriodChange: (days: number | null) => void;
 }
 
 interface StatCardProps {
@@ -72,7 +84,7 @@ function StatCard({ title, value, subtitle, icon: Icon, iconBg, iconColor, badge
   );
 }
 
-export function AdminStats({ stats }: AdminStatsProps) {
+export function AdminStats({ stats, period, onPeriodChange }: AdminStatsProps) {
   const approvalRate = stats.totalReviews > 0
     ? Math.round(((stats.totalReviews - stats.pendingReviews) / stats.totalReviews) * 100)
     : 0;
@@ -84,17 +96,56 @@ export function AdminStats({ stats }: AdminStatsProps) {
     maximumFractionDigits: 0,
   });
 
+  const activePeriodLabel = PERIOD_OPTIONS.find(o => o.days === period)?.label ?? 'Tutti';
+
   return (
     <div className="space-y-8">
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Panoramica Piattaforma</h2>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
-          <Activity className="w-4 h-4 text-green-600" />
-          <span className="text-sm font-medium text-green-700">Sistema Attivo</span>
+      {/* Header + filtro periodo */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Panoramica Piattaforma</h2>
+          {period !== null && (
+            <p className="text-sm text-gray-500 mt-0.5">
+              Dati di attivita' per gli ultimi {period === 1 ? 'giorno' : `${period} giorni`}
+              {' '}— abbonamenti e moderazione sono sempre aggiornati al momento attuale
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 text-sm text-gray-500">
+            <Calendar className="w-4 h-4" />
+            <span className="font-medium">Periodo:</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {PERIOD_OPTIONS.map(({ label, days }) => (
+              <button
+                key={label}
+                onClick={() => onPeriodChange(days)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  period === days
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300 hover:text-blue-600'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
+            <Activity className="w-4 h-4 text-green-600" />
+            <span className="text-sm font-medium text-green-700">Sistema Attivo</span>
+          </div>
         </div>
       </div>
+
+      {/* Banner periodo attivo */}
+      {period !== null && (
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+          <Calendar className="w-4 h-4 flex-shrink-0" />
+          <span>Stai visualizzando l'attivita' degli <strong>ultimi {period === 1 ? 'giorno' : `${period} giorni`}</strong> ({activePeriodLabel}). I contatori di abbonamenti attivi, utenti in prova e elementi in moderazione riflettono sempre lo stato attuale.</span>
+        </div>
+      )}
 
       {/* Sezione: Utenti */}
       <section>
@@ -105,16 +156,15 @@ export function AdminStats({ stats }: AdminStatsProps) {
           <StatCard
             title="Utenti Iscritti"
             value={stats.totalUsers}
-            subtitle="Esclusi amministratori"
+            subtitle={period !== null ? `Registrati negli ultimi ${period === 1 ? 'giorno' : `${period} giorni`}` : 'Esclusi amministratori'}
             icon={Users}
             iconBg="bg-blue-50"
             iconColor="text-blue-600"
-            badge={stats.trialUsers > 0 ? { label: 'in prova', value: stats.trialUsers, color: 'bg-amber-100 text-amber-700' } : undefined}
           />
           <StatCard
             title="Utenti in Prova"
             value={stats.trialUsers}
-            subtitle="Abbonamento trial attivo"
+            subtitle="Stato attuale"
             icon={Clock}
             iconBg="bg-amber-50"
             iconColor="text-amber-600"
@@ -122,7 +172,7 @@ export function AdminStats({ stats }: AdminStatsProps) {
           <StatCard
             title="Abbonamenti Attivi"
             value={stats.activeSubscriptions}
-            subtitle="Business e privati"
+            subtitle="Stato attuale — business e privati"
             icon={CreditCard}
             iconBg="bg-teal-50"
             iconColor="text-teal-600"
@@ -130,7 +180,7 @@ export function AdminStats({ stats }: AdminStatsProps) {
           <StatCard
             title="Abbonamenti in Prova"
             value={stats.trialSubscriptions}
-            subtitle="Trial attivi"
+            subtitle="Stato attuale"
             icon={CreditCard}
             iconBg="bg-orange-50"
             iconColor="text-orange-500"
@@ -147,14 +197,14 @@ export function AdminStats({ stats }: AdminStatsProps) {
           <StatCard
             title="Recensioni"
             value={stats.totalReviews}
-            subtitle="Tutte le recensioni"
+            subtitle={period !== null ? `Pubblicate negli ultimi ${period === 1 ? 'giorno' : `${period} giorni`}` : 'Totale storico'}
             icon={Star}
             iconBg="bg-yellow-50"
             iconColor="text-yellow-500"
             badge={stats.pendingReviews > 0 ? { label: 'in attesa', value: stats.pendingReviews, color: 'bg-orange-100 text-orange-700' } : undefined}
             breakdown={[
               { label: 'approvate', value: stats.totalReviews - stats.pendingReviews },
-              { label: 'in attesa', value: stats.pendingReviews },
+              { label: 'in attesa (totale)', value: stats.pendingReviews },
             ]}
           />
         </div>
@@ -169,7 +219,7 @@ export function AdminStats({ stats }: AdminStatsProps) {
           <StatCard
             title="Trova Lavoro"
             value={stats.totalJobPostings}
-            subtitle="Offerte pubblicate da aziende"
+            subtitle={period !== null ? `Negli ultimi ${period === 1 ? 'giorno' : `${period} giorni`}` : 'Offerte pubblicate da aziende'}
             icon={Briefcase}
             iconBg="bg-cyan-50"
             iconColor="text-cyan-600"
@@ -177,7 +227,7 @@ export function AdminStats({ stats }: AdminStatsProps) {
           <StatCard
             title="Cerca Lavoro"
             value={stats.totalJobSeekers}
-            subtitle="Profili candidati attivi"
+            subtitle={period !== null ? `Negli ultimi ${period === 1 ? 'giorno' : `${period} giorni`}` : 'Profili candidati attivi'}
             icon={Search}
             iconBg="bg-sky-50"
             iconColor="text-sky-600"
@@ -194,7 +244,7 @@ export function AdminStats({ stats }: AdminStatsProps) {
           <StatCard
             title="Annunci Vendita"
             value={stats.adsSell}
-            subtitle="Tipo: Vendo"
+            subtitle={period !== null ? `Negli ultimi ${period === 1 ? 'giorno' : `${period} giorni`}` : 'Tipo: Vendo'}
             icon={ShoppingBag}
             iconBg="bg-pink-50"
             iconColor="text-pink-600"
@@ -202,7 +252,7 @@ export function AdminStats({ stats }: AdminStatsProps) {
           <StatCard
             title="Annunci Cerco"
             value={stats.adsBuy}
-            subtitle="Tipo: Cerco"
+            subtitle={period !== null ? `Negli ultimi ${period === 1 ? 'giorno' : `${period} giorni`}` : 'Tipo: Cerco'}
             icon={Search}
             iconBg="bg-violet-50"
             iconColor="text-violet-600"
@@ -210,7 +260,7 @@ export function AdminStats({ stats }: AdminStatsProps) {
           <StatCard
             title="Annunci Regalo"
             value={stats.adsGift}
-            subtitle="Tipo: Regalo"
+            subtitle={period !== null ? `Negli ultimi ${period === 1 ? 'giorno' : `${period} giorni`}` : 'Tipo: Regalo'}
             icon={Gift}
             iconBg="bg-rose-50"
             iconColor="text-rose-600"
@@ -218,7 +268,7 @@ export function AdminStats({ stats }: AdminStatsProps) {
           <StatCard
             title="Aste"
             value={stats.totalAuctions}
-            subtitle="Tutte le aste"
+            subtitle={period !== null ? `Negli ultimi ${period === 1 ? 'giorno' : `${period} giorni`}` : 'Tutte le aste'}
             icon={Gavel}
             iconBg="bg-orange-50"
             iconColor="text-orange-600"
@@ -235,7 +285,7 @@ export function AdminStats({ stats }: AdminStatsProps) {
           <StatCard
             title="Totale in Beneficienza"
             value={solidarityFormatted}
-            subtitle="Cifra destinata alle organizzazioni"
+            subtitle={period !== null ? `Documenti negli ultimi ${period === 1 ? 'giorno' : `${period} giorni`}` : 'Cifra totale destinata alle organizzazioni'}
             icon={Heart}
             iconBg="bg-red-50"
             iconColor="text-red-500"
