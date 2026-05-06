@@ -398,11 +398,6 @@ export function ClassifiedAdsPage() {
           ))}
         </div>
 
-        {/* Results Count */}
-        <div className="mb-4 text-gray-600">
-          {loading ? 'Caricamento...' : `${ads.length} annunci trovati`}
-        </div>
-
         {/* Ads Grid */}
         {loading ? (
           <div className="text-center py-12">
