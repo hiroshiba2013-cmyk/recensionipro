@@ -70,6 +70,7 @@ interface SearchFilters {
   experience_level: string;
   region: string;
   province: string;
+  provinceCode: string;
   city: string;
   searchTerm: string;
   salary_min: string;
@@ -105,6 +106,7 @@ export function JobsPage() {
     experience_level: '',
     region: '',
     province: '',
+    provinceCode: '',
     city: '',
     searchTerm: '',
     salary_min: '',
@@ -180,7 +182,9 @@ export function JobsPage() {
       }
 
       if (filters.province) {
-        query = query.ilike('province', `%${filters.province}%`);
+        // job_postings stores province as sigla (e.g. "VA"), use provinceCode when available
+        const provFilter = filters.provinceCode || filters.province;
+        query = query.ilike('province', `%${provFilter}%`);
       }
 
       if (filters.city) {
@@ -636,7 +640,7 @@ export function JobsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Regione</label>
                 <select
                   value={filters.region}
-                  onChange={(e) => setFilters(prev => ({ ...prev, region: e.target.value, province: '', city: '' }))}
+                  onChange={(e) => setFilters(prev => ({ ...prev, region: e.target.value, province: '', provinceCode: '', city: '' }))}
                   className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 text-sm bg-white"
                 >
                   <option value="">Tutte le regioni</option>
@@ -647,7 +651,7 @@ export function JobsPage() {
                 province={filters.province}
                 city={filters.city}
                 region={filters.region}
-                onProvinceChange={(prov) => setFilters(prev => ({ ...prev, province: prov, city: '' }))}
+                onProvinceChange={(prov, code) => setFilters(prev => ({ ...prev, province: prov, provinceCode: code, city: '' }))}
                 onCityChange={(city) => setFilters(prev => ({ ...prev, city }))}
               />
 
