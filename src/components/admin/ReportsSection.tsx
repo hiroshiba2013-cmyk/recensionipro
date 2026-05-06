@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AlertTriangle, CheckCircle, XCircle, Eye, Filter, Search, FileText, MessageSquare, Store, Star, ShoppingBag } from 'lucide-react';
+import { AlertTriangle, CheckCircle, XCircle, Eye, Filter, Search, FileText, MessageSquare, Store, Star, ShoppingBag, Briefcase } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Report {
@@ -67,6 +67,7 @@ type FilterType = 'all' | 'classified_ad' | 'review' | 'business';
 export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [entityDetails, setEntityDetails] = useState<ClassifiedAdDetails | ReviewDetails | BusinessDetails | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
@@ -264,73 +265,116 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="flex-1">
+
+      {/* ── Hero header ── */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-6 mb-6">
+        {/* dot overlay */}
+        <div
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+            backgroundSize: '28px 28px',
+          }}
+        />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          {/* Left: labels + stats */}
+          <div>
+            <p className="text-gray-400 uppercase text-xs font-semibold tracking-widest mb-1">Moderazione</p>
+            <h2 className="text-2xl font-bold text-white mb-3">Segnalazioni</h2>
+
+            {/* Stat chips */}
+            <div className="flex flex-wrap gap-2">
+              <span className="bg-white/10 text-white rounded-xl px-3 py-1 text-sm font-medium">
+                Totale: {filteredReports.length}
+              </span>
+              <span className="bg-red-500/20 text-red-300 rounded-xl px-3 py-1 text-sm font-medium">
+                In sospeso: {pendingReports.length}
+              </span>
+              <span className="bg-green-500/20 text-green-300 rounded-xl px-3 py-1 text-sm font-medium">
+                Revisionate: {reviewedReports.length}
+              </span>
+            </div>
+          </div>
+
+          {/* Right: search toggle */}
+          <button
+            onClick={() => setShowSearch(v => !v)}
+            className="self-start bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl px-4 py-2 flex items-center gap-2 transition-colors text-sm font-medium"
+          >
+            <Search className="w-4 h-4" />
+            {showSearch ? 'Nascondi ricerca' : 'Cerca'}
+          </button>
+        </div>
+
+        {/* Search bar (toggled) */}
+        {showSearch && (
+          <div className="relative z-10 mt-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Cerca per nome utente o email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 text-sm"
               />
             </div>
           </div>
+        )}
 
-          <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-gray-600" />
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value as FilterType)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-            >
-              <option value="all">Tutte le segnalazioni</option>
-              <option value="business">Solo attività</option>
-              <option value="classified_ad">Solo annunci</option>
-              <option value="review">Solo recensioni</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="flex gap-4 text-sm text-gray-600">
-          <div>
-            <span className="font-semibold text-red-600">{pendingReports.length}</span> in sospeso
-          </div>
-          <div>
-            <span className="font-semibold text-gray-600">{reviewedReports.length}</span> revisionate
-          </div>
-          <div>
-            <span className="font-semibold text-gray-900">{filteredReports.length}</span> totali
-          </div>
+        {/* Filter tabs */}
+        <div className="relative z-10 mt-4 flex flex-wrap gap-2">
+          {(['all', 'classified_ad', 'review', 'business'] as FilterType[]).map((type) => {
+            const labels: Record<FilterType, string> = {
+              all: 'Tutte',
+              classified_ad: 'Annunci',
+              review: 'Recensioni',
+              business: 'Attività',
+            };
+            const isActive = filterType === type;
+            return (
+              <button
+                key={type}
+                onClick={() => setFilterType(type)}
+                className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {labels[type]}
+              </button>
+            );
+          })}
         </div>
       </div>
 
+      {/* ── Pending reports ── */}
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
           Segnalazioni in Sospeso ({pendingReports.length})
         </h2>
 
         {pendingReports.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
             <AlertTriangle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600">Nessuna segnalazione in sospeso</p>
           </div>
         ) : (
           <div className="space-y-4">
             {pendingReports.map((report) => (
-              <div key={report.id} className="bg-white rounded-lg shadow border border-red-200 p-6">
+              <div key={report.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getEntityTypeBadgeColor(report.reported_entity_type)}`}>
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getEntityTypeBadgeColor(report.reported_entity_type)}`}>
                         {getEntityTypeLabel(report.reported_entity_type)}
                       </span>
-                      <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
+                      <span className="rounded-full px-3 py-1 text-xs font-semibold bg-red-100 text-red-800">
                         {getReasonLabel(report.reason)}
                       </span>
-                      <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
+                      <span className="rounded-full px-3 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800">
                         In sospeso
                       </span>
                     </div>
@@ -397,6 +441,7 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
         )}
       </div>
 
+      {/* ── Reviewed reports ── */}
       {reviewedReports.length > 0 && (
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
@@ -404,17 +449,17 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
           </h2>
           <div className="space-y-4">
             {reviewedReports.slice(0, 20).map((report) => (
-              <div key={report.id} className="bg-gray-50 rounded-lg border border-gray-200 p-4">
+              <div key={report.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getEntityTypeBadgeColor(report.reported_entity_type)}`}>
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getEntityTypeBadgeColor(report.reported_entity_type)}`}>
                         {getEntityTypeLabel(report.reported_entity_type)}
                       </span>
-                      <span className="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-medium">
+                      <span className="rounded-full px-3 py-1 text-xs font-semibold bg-red-100 text-red-800">
                         {getReasonLabel(report.reason)}
                       </span>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
                         report.status === 'resolved'
                           ? 'bg-green-100 text-green-700'
                           : 'bg-gray-200 text-gray-700'
@@ -455,10 +500,11 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
         </div>
       )}
 
+      {/* ── Detail modal ── */}
       {selectedReport && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 flex items-center justify-between">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 text-white px-6 py-4 rounded-t-2xl flex items-center justify-between">
               <h3 className="text-xl font-bold text-white">Dettagli Segnalazione</h3>
               <button
                 onClick={() => setSelectedReport(null)}

@@ -315,7 +315,7 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
     };
     const badge = badges[status] || badges.pending;
     return (
-      <span className={`px-3 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text}`}>
+      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${badge.bg} ${badge.text}`}>
         {badge.label}
       </span>
     );
@@ -323,13 +323,46 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-          <Briefcase className="w-7 h-7 text-cyan-600" />
-          Gestione Lavoro
-        </h2>
+      {/* Hero Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-6 mb-6">
+        <div
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+            backgroundSize: '28px 28px',
+          }}
+        />
+        <div className="relative z-10 flex justify-between items-start gap-4">
+          <div className="flex-1">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Amministrazione</p>
+            <h2 className="text-3xl font-bold text-white mb-4">Gestione Lavoro</h2>
+            <div className="flex flex-wrap gap-3">
+              <span className="inline-flex items-center gap-1.5 bg-white/10 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
+                <Briefcase className="w-3.5 h-3.5" />
+                {jobPostings.length} annunci totali
+              </span>
+              {pendingCount > 0 && (
+                <span className="inline-flex items-center gap-1.5 bg-orange-500/20 text-orange-300 text-xs font-semibold px-3 py-1.5 rounded-full border border-orange-500/30">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  {pendingCount} in attesa
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1.5 bg-white/10 text-gray-300 text-xs font-semibold px-3 py-1.5 rounded-full">
+                <Search className="w-3.5 h-3.5" />
+                {jobSeekers.length} cerca lavoro
+              </span>
+              <span className="inline-flex items-center gap-1.5 bg-white/10 text-gray-300 text-xs font-semibold px-3 py-1.5 rounded-full">
+                <Users className="w-3.5 h-3.5" />
+                {jobPostings.length} trova lavoro
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
+      {/* Filter Panel */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4">
+        <div className="flex flex-col md:flex-row gap-4 mb-5">
           <div className="flex-1">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -338,50 +371,40 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
                 placeholder="Cerca per nome azienda o utente..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent"
               />
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <Briefcase className="w-5 h-5 text-gray-600" />
-            <select
-              value={jobType}
-              onChange={(e) => setJobType(e.target.value as JobType)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">Tutti gli annunci</option>
-              <option value="trova">Solo trova lavoro (aziende)</option>
-              <option value="cerca">Solo cerca lavoro (utenti)</option>
-            </select>
-          </div>
         </div>
 
-        <div className="mb-6">
+        {/* Job Type Tabs */}
+        <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
+          {([
+            { key: 'all' as JobType, label: 'Tutti gli annunci' },
+            { key: 'trova' as JobType, label: 'Trova lavoro (aziende)' },
+            { key: 'cerca' as JobType, label: 'Cerca lavoro (utenti)' },
+          ] as { key: JobType; label: string }[]).map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setJobType(tab.key)}
+              className={`rounded-xl px-4 py-2 text-sm font-medium transition-all whitespace-nowrap ${
+                jobType === tab.key
+                  ? 'bg-gray-900 text-white shadow-sm'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mb-5">
           <AdminLocationFilter value={locationFilter} onChange={setLocationFilter} />
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mb-6">
-          <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-            <p className="text-2xl font-bold text-yellow-700">{pendingCount}</p>
-            <p className="text-sm text-gray-600">Da Approvare</p>
-          </div>
-          <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-            <p className="text-2xl font-bold text-green-600">{approvedCount}</p>
-            <p className="text-sm text-gray-600">Approvate</p>
-          </div>
-          <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-            <p className="text-2xl font-bold text-red-600">{rejectedCount}</p>
-            <p className="text-sm text-gray-600">Rifiutate</p>
-          </div>
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-            <p className="text-2xl font-bold text-blue-600">{jobSeekers.filter(s => s.status === 'active').length}</p>
-            <p className="text-sm text-gray-600">Cerca Lavoro Attivi</p>
-          </div>
-        </div>
-
+        {/* Approval Filter Tabs */}
         {jobType !== 'cerca' && (
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <div className="flex gap-2 overflow-x-auto pb-1">
             {[
               { key: 'pending' as ApprovalFilter, label: 'Da Approvare', count: pendingCount },
               { key: 'approved' as ApprovalFilter, label: 'Approvate', count: approvedCount },
@@ -391,13 +414,10 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
               <button
                 key={tab.key}
                 onClick={() => setApprovalFilter(tab.key)}
-                className={`relative px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                className={`relative rounded-xl px-4 py-2 text-sm font-medium transition-all whitespace-nowrap ${
                   approvalFilter === tab.key
-                    ? tab.key === 'pending' ? 'bg-yellow-600 text-white'
-                    : tab.key === 'approved' ? 'bg-green-600 text-white'
-                    : tab.key === 'rejected' ? 'bg-red-600 text-white'
-                    : 'bg-cyan-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-gray-900 text-white shadow-sm'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
                 }`}
               >
                 {tab.label}
@@ -420,8 +440,10 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
           </h3>
 
           {displayedJobPostings.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center">
-              <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+              <div className="bg-gray-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <Briefcase className="w-8 h-8 text-gray-400" />
+              </div>
               <p className="text-gray-600">
                 {approvalFilter === 'pending' ? 'Nessuna offerta da approvare' : 'Nessuna offerta trovata'}
               </p>
@@ -435,9 +457,7 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
                 return (
                   <div
                     key={job.id}
-                    className={`bg-white rounded-lg shadow border p-6 ${
-                      job.approval_status === 'pending' ? 'border-yellow-300 bg-yellow-50/30' : 'border-gray-200'
-                    }`}
+                    className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow"
                   >
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
@@ -535,13 +555,15 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
           </h3>
 
           {loading ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
               <p className="text-gray-600 mt-4">Caricamento...</p>
             </div>
           ) : displayedJobSeekers.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center">
-              <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+              <div className="bg-gray-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <Users className="w-8 h-8 text-gray-400" />
+              </div>
               <p className="text-gray-600">Nessun annuncio cerca lavoro trovato</p>
             </div>
           ) : (
@@ -550,11 +572,11 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
                 const displayName = seeker.family_member?.nickname || seeker.profile?.nickname || seeker.profile?.full_name || 'Utente';
 
                 return (
-                  <div key={seeker.id} className="bg-white rounded-lg shadow border border-green-200 p-6">
+                  <div key={seeker.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className={`px-3 py-1 text-xs rounded-full font-medium ${
+                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
                             seeker.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                           }`}>
                             {seeker.status}
@@ -635,8 +657,8 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
 
       {selectedJobPosting && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white sticky top-0 z-10 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <h3 className="text-xl font-bold text-white">Dettagli Offerta Lavoro</h3>
               <button onClick={() => setSelectedJobPosting(null)} className="p-2 hover:bg-white/20 rounded-lg transition-colors">
                 <X className="w-5 h-5 text-white" />
@@ -702,8 +724,8 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
 
       {selectedJobSeeker && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-green-600 to-green-700 px-6 py-4 flex items-center justify-between">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white sticky top-0 z-10 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <h3 className="text-xl font-bold text-white">Dettagli Cerca Lavoro</h3>
               <button onClick={() => setSelectedJobSeeker(null)} className="p-2 hover:bg-white/20 rounded-lg transition-colors">
                 <X className="w-5 h-5 text-white" />

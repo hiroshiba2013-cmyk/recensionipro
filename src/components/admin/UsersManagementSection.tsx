@@ -427,28 +427,61 @@ export default function UsersManagementSection() {
     }
   };
 
+  // Derived counts for hero stats
+  const customerCount = users.filter(u => u.user_type === 'customer').length;
+  const businessCount = users.filter(u => u.user_type === 'business').length;
+  const adminCount = users.filter(u => u.is_admin).length;
+
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Users className="w-8 h-8 text-blue-600" />
+      {/* Hero Banner */}
+      <div
+        className="relative mb-6 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"
+      >
+        {/* Dot pattern overlay */}
+        <div
+          className="absolute inset-0 opacity-5 pointer-events-none"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+            backgroundSize: '28px 28px',
+          }}
+        />
+        <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-8 py-6">
+          {/* Left: label + title + stats chips */}
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Gestione Utenti</h2>
-            <p className="text-sm text-gray-600">
-              {users.length} {users.length === 1 ? 'utente registrato' : 'utenti registrati'}
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">
+              Pannello di Amministrazione
             </p>
+            <h2 className="text-2xl font-bold text-white mb-3">Gestione Utenti</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-sm font-medium border border-white/20">
+                <Users className="w-3.5 h-3.5" />
+                {users.length} {users.length === 1 ? 'utente' : 'utenti'}
+              </span>
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 text-gray-300 text-sm font-medium border border-white/20">
+                Privati: {customerCount}
+              </span>
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 text-gray-300 text-sm font-medium border border-white/20">
+                Business: {businessCount}
+              </span>
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 text-gray-300 text-sm font-medium border border-white/20">
+                Admin: {adminCount}
+              </span>
+            </div>
           </div>
+          {/* Right: placeholder for future action buttons (area reserved) */}
+          <div className="flex items-center gap-2 shrink-0" />
         </div>
       </div>
 
-      {/* Filtri */}
+      {/* Filter pills */}
       <div className="mb-6 flex flex-wrap gap-2">
         <button
           onClick={() => setFilterType('all')}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             filterType === 'all'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? 'bg-gray-900 text-white'
+              : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
           }`}
         >
           Tutti ({users.length})
@@ -457,8 +490,8 @@ export default function UsersManagementSection() {
           onClick={() => setFilterType('customer')}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             filterType === 'customer'
-              ? 'bg-green-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? 'bg-gray-900 text-white'
+              : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
           }`}
         >
           Privati
@@ -467,8 +500,8 @@ export default function UsersManagementSection() {
           onClick={() => setFilterType('business')}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             filterType === 'business'
-              ? 'bg-orange-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? 'bg-gray-900 text-white'
+              : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
           }`}
         >
           Business
@@ -477,8 +510,8 @@ export default function UsersManagementSection() {
           onClick={() => setFilterType('admin')}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             filterType === 'admin'
-              ? 'bg-purple-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? 'bg-gray-900 text-white'
+              : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
           }`}
         >
           Admin
@@ -496,29 +529,32 @@ export default function UsersManagementSection() {
 
       {loading ? (
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
           <p className="mt-4 text-gray-600">Caricamento utenti...</p>
         </div>
       ) : users.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-12 text-center">
-          <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 text-lg">Nessun utente trovato</p>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Users className="w-8 h-8 text-gray-400" />
+          </div>
+          <p className="text-gray-900 font-semibold text-lg">Nessun utente trovato</p>
+          <p className="text-gray-400 text-sm mt-1">Prova a cambiare i filtri di ricerca</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b-2 border-gray-200">
+              <thead className="bg-gray-900">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Nome</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Email</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Tipo</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Stato</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">Registrato</th>
-                  <th className="px-6 py-4 text-right text-sm font-bold text-gray-900">Azioni</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">Nome</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">Email</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">Tipo</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">Stato</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">Registrato</th>
+                  <th className="px-6 py-4 text-right text-sm font-bold text-white">Azioni</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-100">
                 {users.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
@@ -583,16 +619,16 @@ export default function UsersManagementSection() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             {/* Header */}
-            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-2xl flex items-center justify-between z-10">
+            <div className="sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 text-white px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-white bg-opacity-20 backdrop-blur-sm flex items-center justify-center text-2xl font-bold">
                   {viewingUser.full_name?.charAt(0).toUpperCase() || 'U'}
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold">{viewingUser.full_name}</h3>
-                  <p className="text-blue-100">{viewingUser.email}</p>
+                  <p className="text-gray-300">{viewingUser.email}</p>
                   {viewingUser.nickname && (
-                    <p className="text-blue-200 text-sm">@{viewingUser.nickname}</p>
+                    <p className="text-gray-400 text-sm">@{viewingUser.nickname}</p>
                   )}
                 </div>
               </div>
@@ -600,7 +636,7 @@ export default function UsersManagementSection() {
                 {!isEditing ? (
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="px-4 py-2 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl font-semibold transition-colors flex items-center gap-2"
                   >
                     <Edit className="w-4 h-4" />
                     Modifica
@@ -610,7 +646,7 @@ export default function UsersManagementSection() {
                     <button
                       onClick={handleSaveUser}
                       disabled={saving}
-                      className="px-4 py-2 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors flex items-center gap-2 disabled:opacity-50"
+                      className="px-4 py-2 bg-green-500 text-white rounded-xl font-semibold hover:bg-green-600 transition-colors flex items-center gap-2 disabled:opacity-50"
                     >
                       <Save className="w-4 h-4" />
                       {saving ? 'Salvataggio...' : 'Salva'}
@@ -620,7 +656,7 @@ export default function UsersManagementSection() {
                         setIsEditing(false);
                         setEditedUser(viewingUser);
                       }}
-                      className="px-4 py-2 bg-white bg-opacity-20 text-white rounded-lg font-semibold hover:bg-opacity-30 transition-colors"
+                      className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl font-semibold transition-colors"
                     >
                       Annulla
                     </button>
@@ -632,7 +668,7 @@ export default function UsersManagementSection() {
                     setEditedUser(null);
                     setIsEditing(false);
                   }}
-                  className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors"
+                  className="p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl transition-colors"
                 >
                   <CloseIcon className="w-6 h-6" />
                 </button>
@@ -645,8 +681,8 @@ export default function UsersManagementSection() {
               {viewingUser.user_type === 'customer' && (
                 <div className="space-y-6">
                   {/* Dati Personali */}
-                  <div className="bg-green-50 rounded-xl p-6 border-2 border-green-200">
-                    <h3 className="text-lg font-bold text-green-900 mb-4">Dati Personali</h3>
+                  <div className="bg-gray-50 rounded-xl border border-gray-100 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Dati Personali</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Nome Completo</label>
@@ -763,8 +799,8 @@ export default function UsersManagementSection() {
                   </div>
 
                   {/* Indirizzo di Fatturazione */}
-                  <div className="bg-blue-50 rounded-xl p-6 border-2 border-blue-200">
-                    <h3 className="text-lg font-bold text-blue-900 mb-4">Indirizzo di Fatturazione</h3>
+                  <div className="bg-gray-50 rounded-xl border border-gray-100 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Indirizzo di Fatturazione</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="md:col-span-2">
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Via e Numero Civico</label>
@@ -832,10 +868,10 @@ export default function UsersManagementSection() {
                   </div>
 
                   {/* Membri della Famiglia */}
-                  <div className="bg-purple-50 rounded-xl p-6 border-2 border-purple-200">
+                  <div className="bg-gray-50 rounded-xl border border-gray-100 p-6">
                     <div className="flex items-center gap-2 mb-4">
                       <UserCircle className="w-6 h-6 text-purple-600" />
-                      <h3 className="text-lg font-bold text-purple-900">Membri della Famiglia</h3>
+                      <h3 className="text-lg font-bold text-gray-900">Membri della Famiglia</h3>
                       <span className="ml-auto bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full">
                         {familyMembers.length}
                       </span>
@@ -849,7 +885,7 @@ export default function UsersManagementSection() {
                           const displayMember = isEditingThisMember ? editedMember! : member;
 
                           return (
-                            <div key={member.id} className="bg-white rounded-lg p-4 border border-purple-200">
+                            <div key={member.id} className="bg-white rounded-lg p-4 border border-gray-200">
                               <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1 space-y-3">
                                   {/* Nome e Cognome */}
@@ -995,8 +1031,8 @@ export default function UsersManagementSection() {
 
                   {/* Piano Abbonamento */}
                   {subscriptionPlan && (
-                    <div className="bg-yellow-50 rounded-xl p-6 border-2 border-yellow-200">
-                      <h3 className="text-lg font-bold text-yellow-900 mb-4">Piano Selezionato</h3>
+                    <div className="bg-gray-50 rounded-xl border border-gray-100 p-6">
+                      <h3 className="text-lg font-bold text-gray-900 mb-4">Piano Selezionato</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 mb-1">Piano</label>
@@ -1020,8 +1056,8 @@ export default function UsersManagementSection() {
               {viewingUser.user_type === 'business' && (
                 <div className="space-y-6">
                   {/* Dati Aziendali */}
-                  <div className="bg-orange-50 rounded-xl p-6 border-2 border-orange-200">
-                    <h3 className="text-lg font-bold text-orange-900 mb-4">Dati Aziendali</h3>
+                  <div className="bg-gray-50 rounded-xl border border-gray-100 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Dati Aziendali</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Ragione Sociale</label>
@@ -1164,8 +1200,8 @@ export default function UsersManagementSection() {
                   </div>
 
                   {/* Sede Legale / Fatturazione */}
-                  <div className="bg-blue-50 rounded-xl p-6 border-2 border-blue-200">
-                    <h3 className="text-lg font-bold text-blue-900 mb-4">Sede Legale / Fatturazione</h3>
+                  <div className="bg-gray-50 rounded-xl border border-gray-100 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Sede Legale / Fatturazione</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="md:col-span-2">
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Via e Numero Civico</label>
@@ -1233,8 +1269,8 @@ export default function UsersManagementSection() {
                   </div>
 
                   {/* Sede Operativa */}
-                  <div className="bg-teal-50 rounded-xl p-6 border-2 border-teal-200">
-                    <h3 className="text-lg font-bold text-teal-900 mb-4">Sede Operativa (Opzionale)</h3>
+                  <div className="bg-gray-50 rounded-xl border border-gray-100 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Sede Operativa (Opzionale)</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="md:col-span-2">
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Via e Numero Civico</label>
@@ -1303,8 +1339,8 @@ export default function UsersManagementSection() {
 
                   {/* Piano Abbonamento */}
                   {subscriptionPlan && (
-                    <div className="bg-yellow-50 rounded-xl p-6 border-2 border-yellow-200">
-                      <h3 className="text-lg font-bold text-yellow-900 mb-4">Piano Selezionato</h3>
+                    <div className="bg-gray-50 rounded-xl border border-gray-100 p-6">
+                      <h3 className="text-lg font-bold text-gray-900 mb-4">Piano Selezionato</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 mb-1">Piano</label>
@@ -1323,10 +1359,10 @@ export default function UsersManagementSection() {
                   )}
 
                   {/* Sedi Business */}
-                  <div className="bg-indigo-50 rounded-xl p-6 border-2 border-indigo-200">
+                  <div className="bg-gray-50 rounded-xl border border-gray-100 p-6">
                     <div className="flex items-center gap-2 mb-4">
                       <MapPin className="w-6 h-6 text-indigo-600" />
-                      <h3 className="text-lg font-bold text-indigo-900">Sedi / Punti Vendita</h3>
+                      <h3 className="text-lg font-bold text-gray-900">Sedi / Punti Vendita</h3>
                       <span className="ml-auto bg-indigo-600 text-white text-xs font-bold px-2 py-1 rounded-full">
                         {businessLocations.length}
                       </span>
@@ -1340,7 +1376,7 @@ export default function UsersManagementSection() {
                           const displayLocation = isEditingThisLocation ? editedLocation! : location;
 
                           return (
-                            <div key={location.id} className="bg-white rounded-lg p-4 border border-indigo-200">
+                            <div key={location.id} className="bg-white rounded-lg p-4 border border-gray-200">
                               <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1 space-y-3">
                                   {/* Nome Sede */}
@@ -1505,8 +1541,8 @@ export default function UsersManagementSection() {
               {/* FORM ADMIN */}
               {viewingUser.is_admin && (
                 <div className="space-y-6">
-                  <div className="bg-red-50 rounded-xl p-6 border-2 border-red-200">
-                    <h3 className="text-lg font-bold text-red-900 mb-4">Dati Admin</h3>
+                  <div className="bg-gray-50 rounded-xl border border-gray-100 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Dati Admin</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Nome Completo</label>

@@ -301,47 +301,68 @@ export function PlansSection({ adminId }: PlansSectionProps) {
     return end < now;
   };
 
+  const activeSubscriptions = subscriptions.filter(s => s.customer?.subscription_status === 'active' || s.customer?.subscription_status === 'trial');
+
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Gestione Abbonamenti</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Visualizza e modifica i piani di abbonamento della piattaforma
-          </p>
+    <div className="space-y-6">
+      {/* Hero Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-6 mb-6">
+        {/* Dot overlay */}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
+          }}
+        />
+        <div className="relative flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">
+              Abbonamenti
+            </p>
+            <h2 className="text-2xl font-bold text-white mb-3">Piani e Sottoscrizioni</h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 bg-white/10 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                <CreditCard className="w-3.5 h-3.5" />
+                {plans.length} {plans.length === 1 ? 'piano' : 'piani'}
+              </span>
+              <span className="inline-flex items-center gap-1.5 bg-white/10 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                <Users className="w-3.5 h-3.5" />
+                {activeSubscriptions.length} abbonamenti attivi
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="flex">
-          <button
-            onClick={() => setActiveTab('plans')}
-            className={`flex-1 px-6 py-4 font-semibold transition-colors ${
-              activeTab === 'plans'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <CreditCard className="w-5 h-5" />
-              <span>Piani Disponibili ({plans.length})</span>
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab('subscriptions')}
-            className={`flex-1 px-6 py-4 font-semibold transition-colors ${
-              activeTab === 'subscriptions'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <Users className="w-5 h-5" />
-              <span>Abbonamenti Attivi ({subscriptions.length})</span>
-            </div>
-          </button>
-        </div>
+      {/* Tab Navigation — outside banner */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setActiveTab('plans')}
+          className={`rounded-xl px-5 py-2 text-sm font-semibold transition-colors ${
+            activeTab === 'plans'
+              ? 'bg-gray-900 text-white'
+              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <CreditCard className="w-4 h-4" />
+            Piani ({plans.length})
+          </span>
+        </button>
+        <button
+          onClick={() => setActiveTab('subscriptions')}
+          className={`rounded-xl px-5 py-2 text-sm font-semibold transition-colors ${
+            activeTab === 'subscriptions'
+              ? 'bg-gray-900 text-white'
+              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Abbonamenti ({subscriptions.length})
+          </span>
+        </button>
       </div>
 
       {/* Plans Tab */}
@@ -364,9 +385,9 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                     return (
                       <div
                         key={plan.id}
-                        className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+                        className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow"
                       >
-                        <div className={`p-6 text-white bg-gradient-to-r ${colorClass}`}>
+                        <div className={`-mx-6 -mt-6 mb-4 p-6 rounded-t-2xl text-white bg-gradient-to-r ${colorClass}`}>
                           <div className="flex items-center justify-between mb-2">
                             <span className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-semibold">
                               {planType}
@@ -382,40 +403,38 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                           </div>
                         </div>
 
-                        <div className="p-6 space-y-4">
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-2 text-sm">
-                              <Users className="w-5 h-5 text-blue-600" />
-                              <span className="font-medium">
-                                {isBusiness ? (
-                                  plan.max_persons === 999 ? (
-                                    'Sedi illimitate'
-                                  ) : (
-                                    `Fino a ${plan.max_persons} ${plan.max_persons === 1 ? 'sede' : 'sedi'}`
-                                  )
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 text-sm">
+                            <Users className="w-5 h-5 text-blue-600" />
+                            <span className="font-medium">
+                              {isBusiness ? (
+                                plan.max_persons === 999 ? (
+                                  'Sedi illimitate'
                                 ) : (
-                                  `Fino a ${plan.max_persons} ${plan.max_persons === 1 ? 'persona' : 'persone'}`
-                                )}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <CheckCircle className="w-5 h-5 text-green-600" />
-                              <span>Tutte le funzionalità incluse</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <CheckCircle className="w-5 h-5 text-green-600" />
-                              <span>{plan.billing_period === 'yearly' ? 'Risparmio annuale' : 'Flessibilità mensile'}</span>
-                            </div>
+                                  `Fino a ${plan.max_persons} ${plan.max_persons === 1 ? 'sede' : 'sedi'}`
+                                )
+                              ) : (
+                                `Fino a ${plan.max_persons} ${plan.max_persons === 1 ? 'persona' : 'persone'}`
+                              )}
+                            </span>
                           </div>
-
-                          <button
-                            onClick={() => setEditingPlan(plan)}
-                            className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                          >
-                            <Edit className="w-4 h-4" />
-                            Modifica Piano
-                          </button>
+                          <div className="flex items-center gap-2 text-sm">
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                            <span>Tutte le funzionalità incluse</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                            <span>{plan.billing_period === 'yearly' ? 'Risparmio annuale' : 'Flessibilità mensile'}</span>
+                          </div>
                         </div>
+
+                        <button
+                          onClick={() => setEditingPlan(plan)}
+                          className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                        >
+                          <Edit className="w-4 h-4" />
+                          Modifica Piano
+                        </button>
                       </div>
                     );
                   })}
@@ -428,27 +447,27 @@ export function PlansSection({ adminId }: PlansSectionProps) {
 
       {/* Subscriptions Tab */}
       {activeTab === 'subscriptions' && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-900">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                     Utente
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                     Piano
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                     Stato
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                     Inizio
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                     Scadenza
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                     Prezzo
                   </th>
                 </tr>
@@ -491,7 +510,7 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                         </td>
                         <td className="px-6 py-4">
                           <span
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full ${
+                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
                               isTrial
                                 ? 'bg-yellow-100 text-yellow-700'
                                 : expired
@@ -567,7 +586,7 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                   type="text"
                   value={editingPlan.name}
                   onChange={(e) => setEditingPlan({ ...editingPlan, name: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                   placeholder="Es: Piano Mensile - 2 Persone"
                 />
               </div>
@@ -583,7 +602,7 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                     min="0"
                     value={editingPlan.price}
                     onChange={(e) => setEditingPlan({ ...editingPlan, price: parseFloat(e.target.value) || 0 })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                   />
                 </div>
 
@@ -594,7 +613,7 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                   <select
                     value={editingPlan.billing_period}
                     onChange={(e) => setEditingPlan({ ...editingPlan, billing_period: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                   >
                     <option value="monthly">Mensile</option>
                     <option value="yearly">Annuale</option>
@@ -611,7 +630,7 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                   min="1"
                   value={editingPlan.max_persons}
                   onChange={(e) => setEditingPlan({ ...editingPlan, max_persons: parseInt(e.target.value) || 1 })}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   {getPlanType(editingPlan.name) === 'Business'

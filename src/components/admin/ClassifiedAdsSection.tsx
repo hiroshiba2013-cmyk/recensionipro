@@ -44,6 +44,7 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
   const [editingAd, setEditingAd] = useState<ClassifiedAd | null>(null);
   const [editForm, setEditForm] = useState<Partial<ClassifiedAd> | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   const getUserNickname = (ad: ClassifiedAd) => {
     return ad.user.nickname || ad.user.full_name;
@@ -243,126 +244,152 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
 
   return (
     <div className="space-y-4">
-      <div className="space-y-4 mb-4">
-        <div className="flex justify-between items-center flex-wrap gap-4">
-          <h2 className="text-2xl font-bold text-gray-900">Gestione Annunci Classificati</h2>
-          {pendingCount > 0 && (
-            <div className="flex items-center gap-2 bg-amber-100 border-2 border-amber-400 text-amber-800 px-4 py-2 rounded-xl font-bold animate-pulse">
-              <Clock className="w-5 h-5" />
-              {pendingCount} annunci da approvare
+      {/* Hero Banner */}
+      <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl overflow-hidden mb-2">
+        {/* Dot pattern overlay */}
+        <div
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+            backgroundSize: '28px 28px',
+          }}
+        />
+        <div className="relative px-6 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Left: label, title, stat chips */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">
+              Gestione Annunci
+            </p>
+            <h2 className="text-2xl font-bold text-white mb-3">Annunci Classificati</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="bg-white/10 text-white px-3 py-1 rounded-full text-sm">
+                {ads.length} totali
+              </span>
+              <span className="bg-white/10 text-orange-300 px-3 py-1 rounded-full text-sm">
+                {pendingCount} in attesa
+              </span>
+              <span className="bg-white/10 text-green-300 px-3 py-1 rounded-full text-sm">
+                {approvedCount} approvati
+              </span>
+              <span className="bg-white/10 text-red-300 px-3 py-1 rounded-full text-sm">
+                {rejectedCount} rifiutati
+              </span>
             </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-gray-500" />
-            <select
-              value={filterApproval}
-              onChange={(e) => setFilterApproval(e.target.value)}
-              className="border border-gray-300 rounded-lg px-4 py-2"
+          </div>
+          {/* Right: filter toggle */}
+          <div className="flex-shrink-0">
+            <button
+              onClick={() => setShowFilters(prev => !prev)}
+              className="bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl px-4 py-2 flex items-center gap-2 transition-colors"
             >
-              <option value="all">Tutte le approvazioni</option>
-              <option value="pending">In attesa ({pendingCount})</option>
-              <option value="approved">Approvati ({approvedCount})</option>
-              <option value="rejected">Rifiutati ({rejectedCount})</option>
-            </select>
+              <Filter className="w-4 h-4" />
+              {showFilters ? 'Nascondi filtri' : 'Mostra filtri'}
+            </button>
           </div>
-
-          <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-gray-500" />
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="border border-gray-300 rounded-lg px-4 py-2"
-            >
-              <option value="all">Tutti gli stati</option>
-              <option value="pending">In attesa</option>
-              <option value="active">Attivi</option>
-              <option value="sold">Venduti</option>
-              <option value="expired">Scaduti</option>
-              <option value="deleted">Eliminati</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Tag className="w-5 h-5 text-gray-500" />
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="border border-gray-300 rounded-lg px-4 py-2"
-            >
-              <option value="all">Tutti i tipi</option>
-              <option value="sell">Vendo</option>
-              <option value="buy">Cerco</option>
-              <option value="gift">Regalo</option>
-              <option value="exchange">Scambio</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2 flex-1 min-w-[250px]">
-            <Search className="w-5 h-5 text-gray-500" />
-            <input
-              type="text"
-              value={filterNickname}
-              onChange={(e) => setFilterNickname(e.target.value)}
-              placeholder="Cerca per nickname..."
-              className="flex-1 border border-gray-300 rounded-lg px-4 py-2"
-            />
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <AdminLocationFilter value={locationFilter} onChange={setLocationFilter} />
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4 mb-4">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
-          <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
-            <p className="text-2xl font-bold text-amber-700">{pendingCount}</p>
-            <p className="text-sm text-amber-600 font-medium">Da Approvare</p>
+      {/* Filter panel */}
+      {showFilters && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-5">
+          <div className="flex items-center gap-4 flex-wrap mb-4">
+            <div className="flex items-center gap-2">
+              <Filter className="w-5 h-5 text-gray-500" />
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="border border-gray-300 rounded-lg px-4 py-2"
+              >
+                <option value="all">Tutti gli stati</option>
+                <option value="pending">In attesa</option>
+                <option value="active">Attivi</option>
+                <option value="sold">Venduti</option>
+                <option value="expired">Scaduti</option>
+                <option value="deleted">Eliminati</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Tag className="w-5 h-5 text-gray-500" />
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="border border-gray-300 rounded-lg px-4 py-2"
+              >
+                <option value="all">Tutti i tipi</option>
+                <option value="sell">Vendo</option>
+                <option value="buy">Cerco</option>
+                <option value="gift">Regalo</option>
+                <option value="exchange">Scambio</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2 flex-1 min-w-[250px]">
+              <Search className="w-5 h-5 text-gray-500" />
+              <input
+                type="text"
+                value={filterNickname}
+                onChange={(e) => setFilterNickname(e.target.value)}
+                placeholder="Cerca per nickname..."
+                className="flex-1 border border-gray-300 rounded-lg px-4 py-2"
+              />
+            </div>
           </div>
-          <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-            <p className="text-2xl font-bold text-green-700">{approvedCount}</p>
-            <p className="text-sm text-green-600 font-medium">Approvati</p>
-          </div>
-          <div className="bg-red-50 rounded-lg p-3 border border-red-200">
-            <p className="text-2xl font-bold text-red-700">{rejectedCount}</p>
-            <p className="text-sm text-red-600 font-medium">Rifiutati</p>
-          </div>
+
           <div>
-            <p className="text-2xl font-bold text-gray-900">{ads.filter(a => a.status === 'active').length}</p>
-            <p className="text-sm text-gray-600">Attivi</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-gray-900">{ads.length}</p>
-            <p className="text-sm text-gray-600">Totali</p>
+            <AdminLocationFilter value={locationFilter} onChange={setLocationFilter} />
           </div>
         </div>
+      )}
+
+      {/* Approval status quick-filter tabs */}
+      <div className="flex flex-wrap gap-2 mb-2">
+        {[
+          { value: 'all', label: 'Tutti' },
+          { value: 'pending', label: 'In attesa' },
+          { value: 'approved', label: 'Approvati' },
+          { value: 'rejected', label: 'Rifiutati' },
+        ].map(tab => (
+          <button
+            key={tab.value}
+            onClick={() => setFilterApproval(tab.value)}
+            className={
+              filterApproval === tab.value
+                ? 'bg-gray-900 text-white rounded-xl px-4 py-2 text-sm font-medium transition-colors'
+                : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300 rounded-xl px-4 py-2 text-sm font-medium transition-colors'
+            }
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {filteredAds.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <Tag className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+          <div className="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <Tag className="w-8 h-8 text-gray-400" />
+          </div>
           <p className="text-gray-600">Nessun annuncio trovato</p>
         </div>
       ) : (
         <div className="grid md:grid-cols-2 gap-4">
           {filteredAds.map((ad) => (
-            <div key={ad.id} className={`bg-white rounded-lg shadow p-6 ${
-              ad.approval_status === 'pending' ? 'ring-2 ring-amber-400' : ''
-            }`}>
+            <div
+              key={ad.id}
+              className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow ${
+                ad.approval_status === 'pending' ? 'ring-2 ring-amber-400' : ''
+              }`}
+            >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${getTypeColor(ad.ad_type)}`}>
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getTypeColor(ad.ad_type)}`}>
                       {getAdTypeLabel(ad.ad_type)}
                     </span>
-                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${getApprovalColor(ad.approval_status)}`}>
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getApprovalColor(ad.approval_status)}`}>
                       {getApprovalLabel(ad.approval_status)}
                     </span>
-                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${getStatusColor(ad.status)}`}>
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(ad.status)}`}>
                       {ad.status}
                     </span>
                   </div>
@@ -466,116 +493,119 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
         </div>
       )}
 
+      {/* View modal */}
       {selectedAd && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-2xl font-bold mb-2">{selectedAd.title}</h3>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${getTypeColor(selectedAd.ad_type)}`}>
-                      {getAdTypeLabel(selectedAd.ad_type)}
-                    </span>
-                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${getApprovalColor(selectedAd.approval_status)}`}>
-                      {getApprovalLabel(selectedAd.approval_status)}
-                    </span>
-                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${getStatusColor(selectedAd.status)}`}>
-                      {selectedAd.status}
-                    </span>
-                  </div>
-                  {selectedAd.price !== null && selectedAd.price > 0 && (
-                    <p className="text-2xl font-bold text-green-600">{'\u20AC'}{selectedAd.price.toFixed(2)}</p>
-                  )}
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal header */}
+            <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white px-6 py-4 rounded-t-2xl flex justify-between items-start">
+              <div>
+                <h3 className="text-2xl font-bold mb-2">{selectedAd.title}</h3>
+                <div className="flex items-center gap-2 flex-wrap mb-2">
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getTypeColor(selectedAd.ad_type)}`}>
+                    {getAdTypeLabel(selectedAd.ad_type)}
+                  </span>
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getApprovalColor(selectedAd.approval_status)}`}>
+                    {getApprovalLabel(selectedAd.approval_status)}
+                  </span>
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(selectedAd.status)}`}>
+                    {selectedAd.status}
+                  </span>
                 </div>
-                <button
-                  onClick={() => setSelectedAd(null)}
-                  className="text-gray-500 hover:text-gray-700 text-3xl"
-                >
-                  {'\u00D7'}
-                </button>
+                {selectedAd.price !== null && selectedAd.price > 0 && (
+                  <p className="text-2xl font-bold text-green-300">{'\u20AC'}{selectedAd.price.toFixed(2)}</p>
+                )}
+              </div>
+              <button
+                onClick={() => setSelectedAd(null)}
+                className="text-white/70 hover:text-white text-3xl leading-none ml-4"
+              >
+                {'\u00D7'}
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {/* Descrizione */}
+              <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                <h4 className="font-semibold text-gray-900 mb-2">Descrizione:</h4>
+                <p className="text-gray-700 whitespace-pre-wrap">{selectedAd.description}</p>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Descrizione:</h4>
-                  <p className="text-gray-700 whitespace-pre-wrap">{selectedAd.description}</p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Informazioni:</h4>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-600">Utente:</span>
-                      <p className="font-medium">{selectedAd.user.nickname || selectedAd.user.full_name}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Email:</span>
-                      <p className="font-medium">{selectedAd.user.email}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Localita:</span>
-                      <p className="font-medium">{selectedAd.city}, {selectedAd.province}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Categoria:</span>
-                      <p className="font-medium">{selectedAd.category}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Creato il:</span>
-                      <p className="font-medium">{new Date(selectedAd.created_at).toLocaleDateString('it-IT')}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Scade il:</span>
-                      <p className="font-medium">{selectedAd.expires_at ? new Date(selectedAd.expires_at).toLocaleDateString('it-IT') : 'N/A'}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {selectedAd.approval_status === 'pending' && (
-                  <div className="flex gap-3 pt-2">
-                    <button
-                      onClick={() => { approveAd(selectedAd.id); setSelectedAd(null); }}
-                      className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-bold"
-                    >
-                      <CheckCircle className="w-5 h-5" />
-                      Approva (+5 punti)
-                    </button>
-                    <button
-                      onClick={() => { rejectAd(selectedAd.id); setSelectedAd(null); }}
-                      className="flex-1 bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 font-bold"
-                    >
-                      <XCircle className="w-5 h-5" />
-                      Rifiuta
-                    </button>
-                  </div>
-                )}
-
-                {selectedAd.images && selectedAd.images.length > 0 && (
+              {/* Informazioni */}
+              <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                <h4 className="font-semibold text-gray-900 mb-2">Informazioni:</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Immagini:</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      {selectedAd.images.map((image, index) => (
-                        <img
-                          key={index}
-                          src={image}
-                          alt={`${selectedAd.title} - ${index + 1}`}
-                          className="w-full h-64 object-cover rounded-lg"
-                        />
-                      ))}
-                    </div>
+                    <span className="text-gray-600">Utente:</span>
+                    <p className="font-medium">{selectedAd.user.nickname || selectedAd.user.full_name}</p>
                   </div>
-                )}
+                  <div>
+                    <span className="text-gray-600">Email:</span>
+                    <p className="font-medium">{selectedAd.user.email}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Localita:</span>
+                    <p className="font-medium">{selectedAd.city}, {selectedAd.province}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Categoria:</span>
+                    <p className="font-medium">{selectedAd.category}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Creato il:</span>
+                    <p className="font-medium">{new Date(selectedAd.created_at).toLocaleDateString('it-IT')}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Scade il:</span>
+                    <p className="font-medium">{selectedAd.expires_at ? new Date(selectedAd.expires_at).toLocaleDateString('it-IT') : 'N/A'}</p>
+                  </div>
+                </div>
               </div>
+
+              {selectedAd.approval_status === 'pending' && (
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => { approveAd(selectedAd.id); setSelectedAd(null); }}
+                    className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-bold"
+                  >
+                    <CheckCircle className="w-5 h-5" />
+                    Approva (+5 punti)
+                  </button>
+                  <button
+                    onClick={() => { rejectAd(selectedAd.id); setSelectedAd(null); }}
+                    className="flex-1 bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 font-bold"
+                  >
+                    <XCircle className="w-5 h-5" />
+                    Rifiuta
+                  </button>
+                </div>
+              )}
+
+              {selectedAd.images && selectedAd.images.length > 0 && (
+                <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                  <h4 className="font-semibold text-gray-900 mb-2">Immagini:</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedAd.images.map((image, index) => (
+                      <img
+                        key={index}
+                        src={image}
+                        alt={`${selectedAd.title} - ${index + 1}`}
+                        className="w-full h-64 object-cover rounded-lg"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
+      {/* Edit modal */}
       {editingAd && editForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[70]">
-          <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-amber-600 to-amber-700 px-6 py-4 flex items-center justify-between">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 text-white px-6 py-4 rounded-t-2xl flex items-center justify-between">
               <h3 className="text-xl font-bold text-white">Modifica Annuncio</h3>
               <button
                 onClick={cancelEditAd}
@@ -586,7 +616,7 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
             </div>
 
             <div className="p-6 space-y-4">
-              <div className="bg-gray-50 rounded-lg p-4">
+              <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
                 <h4 className="font-semibold text-gray-900 mb-2">Informazioni Inserzionista</h4>
                 <div className="text-sm space-y-1">
                   <p>

@@ -247,285 +247,259 @@ export function AdminProfileDashboard({ adminId }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Dati di Iscrizione</h2>
-          <p className="text-sm text-gray-600 mt-1">Informazioni del profilo amministratore</p>
-        </div>
-        <div className="p-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <User className="w-5 h-5 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600">Avatar</p>
-                  <div className="mt-2">
-                    <div className="relative inline-block">
-                      <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 border-2 border-gray-300">
-                        {adminData?.avatar_url ? (
-                          <img
-                            src={adminData.avatar_url}
-                            alt="Avatar Admin"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gray-300">
-                            <User className="w-12 h-12 text-gray-600" />
-                          </div>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploading}
-                        className="absolute bottom-0 right-0 p-1.5 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
-                        title="Cambia Avatar"
-                      >
-                        {uploading ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        ) : (
-                          <Camera className="w-4 h-4" />
-                        )}
-                      </button>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleAvatarUpload}
-                        className="hidden"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-green-50 rounded-lg">
-                  <User className="w-5 h-5 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600">Nome Completo</p>
-                  <p className="text-lg font-semibold text-gray-900">{profileData.full_name}</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <User className="w-5 h-5 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600 mb-2">Nickname</p>
-                  {editingNickname ? (
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={newNickname}
-                        onChange={(e) => setNewNickname(e.target.value)}
-                        placeholder="Inserisci nickname"
-                        className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                      />
-                      <button
-                        onClick={handleNicknameUpdate}
-                        className="px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
-                      >
-                        Salva
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditingNickname(false);
-                          setNewNickname(adminData?.nickname || '');
-                        }}
-                        className="px-3 py-1.5 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm font-medium"
-                      >
-                        Annulla
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      {adminData?.nickname ? (
-                        <span className="text-lg font-semibold text-gray-900">@{adminData.nickname}</span>
-                      ) : (
-                        <span className="text-gray-500 italic">Nessun nickname</span>
-                      )}
-                      <button
-                        onClick={() => setEditingNickname(true)}
-                        className="text-blue-600 hover:text-blue-700 text-sm underline font-medium"
-                      >
-                        Modifica
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-yellow-50 rounded-lg">
-                  <Mail className="w-5 h-5 text-yellow-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600">Email</p>
-                  <p className="text-lg font-semibold text-gray-900">{profileData.email}</p>
-                </div>
-              </div>
-
-              {profileData.fiscal_code && (
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-orange-50 rounded-lg">
-                    <User className="w-5 h-5 text-orange-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-600">Codice Fiscale</p>
-                    <p className="text-lg font-semibold text-gray-900">{profileData.fiscal_code}</p>
-                  </div>
+      {/* Hero profile card */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-8">
+        {/* Dot overlay */}
+        <div
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
+            backgroundSize: '20px 20px',
+          }}
+        />
+        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+          {/* Avatar */}
+          <div className="relative flex-shrink-0">
+            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white/20">
+              {adminData?.avatar_url ? (
+                <img
+                  src={adminData.avatar_url}
+                  alt="Avatar Admin"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-white/10">
+                  <User className="w-12 h-12 text-white/60" />
                 </div>
               )}
-
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-red-50 rounded-lg">
-                  <Shield className="w-5 h-5 text-red-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600">Ruolo</p>
-                  <p className="text-lg font-semibold text-gray-900">Amministratore</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <Calendar className="w-5 h-5 text-gray-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600">Data Iscrizione</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {new Date(profileData.created_at).toLocaleDateString('it-IT', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                  </p>
-                </div>
-              </div>
             </div>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="absolute bottom-0 right-0 p-1.5 bg-white text-gray-800 rounded-full shadow-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+              title="Cambia Avatar"
+            >
+              {uploading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-800"></div>
+              ) : (
+                <Camera className="w-4 h-4" />
+              )}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              className="hidden"
+            />
+          </div>
+
+          {/* Name / email / role */}
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-3 mb-1">
+              <h2 className="text-2xl font-bold text-white truncate">{profileData.full_name}</h2>
+              <span className="bg-white/10 text-white rounded-full px-3 py-1 text-xs font-semibold border border-white/20">
+                Amministratore
+              </span>
+            </div>
+            <p className="text-gray-400 text-sm">{profileData.email}</p>
+            {adminData?.nickname && (
+              <p className="text-gray-400 text-sm mt-0.5">@{adminData.nickname}</p>
+            )}
+          </div>
+
+          {/* Nickname edit (inline, hero context) */}
+          <div className="flex-shrink-0">
+            {editingNickname ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newNickname}
+                  onChange={(e) => setNewNickname(e.target.value)}
+                  placeholder="Inserisci nickname"
+                  className="px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-gray-900 focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm"
+                />
+                <button
+                  onClick={handleNicknameUpdate}
+                  className="px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+                >
+                  Salva
+                </button>
+                <button
+                  onClick={() => {
+                    setEditingNickname(false);
+                    setNewNickname(adminData?.nickname || '');
+                  }}
+                  className="px-3 py-1.5 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors text-sm font-medium"
+                >
+                  Annulla
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setEditingNickname(true)}
+                className="px-4 py-2 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-colors text-sm font-medium border border-white/20"
+              >
+                Modifica nickname
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Ultimi Accessi</h2>
-          <p className="text-sm text-gray-600 mt-1">Cronologia degli accessi al pannello amministratore</p>
-        </div>
-        <div className="p-6">
-          {loginLogs.length > 0 ? (
-            <div className="space-y-3">
-              {loginLogs.map((log) => (
-                <div
-                  key={log.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <Clock className="w-4 h-4 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        {new Date(log.login_time).toLocaleString('it-IT', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </p>
-                      {log.ip_address && (
-                        <p className="text-sm text-gray-600">IP: {log.ip_address}</p>
-                      )}
-                    </div>
-                  </div>
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                </div>
-              ))}
+      {/* Stats grid */}
+      <div>
+        <h3 className="text-lg font-bold text-gray-900 mb-4">Attività Svolte</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-green-50 rounded-lg">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900 text-sm">Recensioni Approvate</h4>
             </div>
-          ) : (
-            <div className="text-center py-8">
-              <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-600">Nessun accesso registrato</p>
+            <p className="text-3xl font-bold text-green-600">{activity.reviews_approved}</p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-red-50 rounded-lg">
+                <MessageSquare className="w-5 h-5 text-red-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900 text-sm">Recensioni Rifiutate</h4>
+            </div>
+            <p className="text-3xl font-bold text-red-600">{activity.reviews_rejected}</p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <Star className="w-5 h-5 text-blue-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900 text-sm">Attività Verificate</h4>
+            </div>
+            <p className="text-3xl font-bold text-blue-600">{activity.businesses_verified}</p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-yellow-50 rounded-lg">
+                <MapPin className="w-5 h-5 text-yellow-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900 text-sm">Segnalazioni Gestite</h4>
+            </div>
+            <p className="text-3xl font-bold text-yellow-600">{activity.reports_handled}</p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-pink-50 rounded-lg">
+                <Tag className="w-5 h-5 text-pink-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900 text-sm">Annunci Moderati</h4>
+            </div>
+            <p className="text-3xl font-bold text-pink-600">{activity.ads_moderated}</p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-teal-50 rounded-lg">
+                <User className="w-5 h-5 text-teal-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900 text-sm">Utenti Gestiti</h4>
+            </div>
+            <p className="text-3xl font-bold text-teal-600">{activity.users_managed}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Profile details */}
+      <div>
+        <h3 className="text-lg font-bold text-gray-900 mb-4">Dati di Iscrizione</h3>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+              <Mail className="w-4 h-4" />
+              Email
+            </div>
+            <p className="text-gray-900 font-medium">{profileData.email}</p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+              <Shield className="w-4 h-4" />
+              Ruolo
+            </div>
+            <p className="text-gray-900 font-medium">Amministratore</p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+              <Calendar className="w-4 h-4" />
+              Data Iscrizione
+            </div>
+            <p className="text-gray-900 font-medium">
+              {new Date(profileData.created_at).toLocaleDateString('it-IT', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })}
+            </p>
+          </div>
+
+          {profileData.fiscal_code && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                <User className="w-4 h-4" />
+                Codice Fiscale
+              </div>
+              <p className="text-gray-900 font-medium">{profileData.fiscal_code}</p>
             </div>
           )}
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Attività Svolte</h2>
-          <p className="text-sm text-gray-600 mt-1">Riepilogo delle azioni amministrative</p>
-        </div>
-        <div className="p-6">
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="bg-white rounded-xl p-5 border border-gray-200">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-green-50 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
+      {/* Login logs */}
+      <div>
+        <h3 className="text-lg font-bold text-gray-900 mb-4">Ultimi Accessi</h3>
+        {loginLogs.length > 0 ? (
+          <div>
+            {loginLogs.map((log) => (
+              <div
+                key={log.id}
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-3 flex items-center justify-between hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
+                    <Clock className="w-4 h-4 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      {new Date(log.login_time).toLocaleString('it-IT', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                    {log.ip_address && (
+                      <p className="text-sm text-gray-600">IP: {log.ip_address}</p>
+                    )}
+                  </div>
                 </div>
-                <h3 className="font-semibold text-gray-900">Recensioni Approvate</h3>
+                <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
               </div>
-              <p className="text-3xl font-bold text-green-600">{activity.reviews_approved}</p>
-            </div>
-
-            <div className="bg-white rounded-xl p-5 border border-gray-200">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-red-50 rounded-lg">
-                  <MessageSquare className="w-5 h-5 text-red-600" />
-                </div>
-                <h3 className="font-semibold text-gray-900">Recensioni Rifiutate</h3>
-              </div>
-              <p className="text-3xl font-bold text-red-600">{activity.reviews_rejected}</p>
-            </div>
-
-            <div className="bg-white rounded-xl p-5 border border-gray-200">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <Star className="w-5 h-5 text-blue-600" />
-                </div>
-                <h3 className="font-semibold text-gray-900">Attività Verificate</h3>
-              </div>
-              <p className="text-3xl font-bold text-blue-600">{activity.businesses_verified}</p>
-            </div>
-
-            <div className="bg-white rounded-xl p-5 border border-gray-200">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-yellow-50 rounded-lg">
-                  <MapPin className="w-5 h-5 text-yellow-600" />
-                </div>
-                <h3 className="font-semibold text-gray-900">Segnalazioni Gestite</h3>
-              </div>
-              <p className="text-3xl font-bold text-yellow-600">{activity.reports_handled}</p>
-            </div>
-
-            <div className="bg-white rounded-xl p-5 border border-gray-200">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-pink-50 rounded-lg">
-                  <Tag className="w-5 h-5 text-pink-600" />
-                </div>
-                <h3 className="font-semibold text-gray-900">Annunci Moderati</h3>
-              </div>
-              <p className="text-3xl font-bold text-pink-600">{activity.ads_moderated}</p>
-            </div>
-
-            <div className="bg-white rounded-xl p-5 border border-gray-200">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-teal-50 rounded-lg">
-                  <User className="w-5 h-5 text-teal-600" />
-                </div>
-                <h3 className="font-semibold text-gray-900">Utenti Gestiti</h3>
-              </div>
-              <p className="text-3xl font-bold text-teal-600">{activity.users_managed}</p>
-            </div>
+            ))}
           </div>
-        </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
+            <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+              <Clock className="w-6 h-6 text-gray-400" />
+            </div>
+            <p className="text-gray-600">Nessun accesso registrato</p>
+          </div>
+        )}
       </div>
     </div>
   );

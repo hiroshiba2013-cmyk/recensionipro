@@ -37,42 +37,65 @@ export function ProductsSection({ products, onReload }: ProductsSectionProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">
-        Prodotti ({products.length})
-      </h2>
+    <div className="space-y-6">
+      {/* Hero Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-6">
+        {/* Dot overlay */}
+        <div
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
+            backgroundSize: '20px 20px',
+          }}
+        />
+        <div className="relative z-10 flex items-center gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">
+              Catalogo
+            </p>
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-bold text-white">Prodotti</h2>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white border border-white/20">
+                {products.length}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {products.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
+          <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+            <Package className="w-8 h-8 text-gray-400" />
+          </div>
           <p className="text-gray-600">Nessun prodotto pubblicato</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-100">
+              <thead>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="bg-gray-900 text-white text-xs font-semibold uppercase tracking-wider px-6 py-3 text-left">
                     Prodotto
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="bg-gray-900 text-white text-xs font-semibold uppercase tracking-wider px-6 py-3 text-left">
                     Azienda
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="bg-gray-900 text-white text-xs font-semibold uppercase tracking-wider px-6 py-3 text-left">
                     Prezzo
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="bg-gray-900 text-white text-xs font-semibold uppercase tracking-wider px-6 py-3 text-left">
                     Giacenza
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="bg-gray-900 text-white text-xs font-semibold uppercase tracking-wider px-6 py-3 text-left">
                     Creato il
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-100">
                 {products.map((product) => (
-                  <tr key={product.id}>
+                  <tr key={product.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <Package className="w-5 h-5 text-gray-400" />
@@ -90,7 +113,7 @@ export function ProductsSection({ products, onReload }: ProductsSectionProps) {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`px-2 py-1 text-xs rounded-full ${
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
                           product.stock > 10
                             ? 'bg-green-100 text-green-800'
                             : product.stock > 0

@@ -239,7 +239,7 @@ export default function AuctionsSection() {
     };
     const badge = badges[approvalStatus] || badges.pending;
     return (
-      <span className={`px-3 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text}`}>
+      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${badge.bg} ${badge.text}`}>
         {badge.label}
       </span>
     );
@@ -247,97 +247,87 @@ export default function AuctionsSection() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2 mb-2">
-          <Gavel className="w-7 h-7 text-orange-600" />
-          Gestione Aste
-        </h2>
-        <p className="text-gray-600">Approva, monitora e gestisci tutte le aste della piattaforma</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-blue-900">Totali</span>
-            <Gavel className="w-5 h-5 text-blue-600" />
-          </div>
-          <div className="text-3xl font-bold text-blue-900">{stats.total}</div>
-        </div>
-
-        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-4 border border-yellow-200">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-yellow-900">Da Approvare</span>
-            <AlertCircle className="w-5 h-5 text-yellow-600" />
-          </div>
-          <div className="text-3xl font-bold text-yellow-900">{stats.pending}</div>
-        </div>
-
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-green-900">Approvate</span>
-            <ShieldCheck className="w-5 h-5 text-green-600" />
-          </div>
-          <div className="text-3xl font-bold text-green-900">{stats.approved}</div>
-        </div>
-
-        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-orange-900">Offerte Totali</span>
-            <TrendingUp className="w-5 h-5 text-orange-600" />
-          </div>
-          <div className="text-3xl font-bold text-orange-900">{stats.totalBids}</div>
-        </div>
-
-        <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-lg p-4 border border-cyan-200">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-cyan-900">Depositi</span>
-            <Users className="w-5 h-5 text-cyan-600" />
-          </div>
-          <div className="text-2xl font-bold text-cyan-900">{stats.totalDeposits.toFixed(0)}€</div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex flex-col gap-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Cerca per titolo, descrizione, utente..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              />
+      {/* Hero Header */}
+      <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-6 mb-6 overflow-hidden">
+        {/* Dot overlay */}
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
+            backgroundSize: '24px 24px'
+          }}
+        />
+        <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          {/* Left: label, title, stats chips */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">
+              Pannello Admin
+            </p>
+            <h2 className="text-3xl font-bold text-white mb-4">Aste</h2>
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1.5 bg-white/10 border border-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
+                <Gavel className="w-3.5 h-3.5" />
+                Totali: {stats.total}
+              </span>
+              <span className="inline-flex items-center gap-1.5 bg-yellow-500/20 border border-yellow-400/30 text-yellow-300 text-xs font-semibold px-3 py-1.5 rounded-full">
+                <AlertCircle className="w-3.5 h-3.5" />
+                In attesa: {stats.pending}
+              </span>
+              <span className="inline-flex items-center gap-1.5 bg-green-500/20 border border-green-400/30 text-green-300 text-xs font-semibold px-3 py-1.5 rounded-full">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Approvate: {stats.approved}
+              </span>
+              <span className="inline-flex items-center gap-1.5 bg-red-500/20 border border-red-400/30 text-red-300 text-xs font-semibold px-3 py-1.5 rounded-full">
+                <XCircle className="w-3.5 h-3.5" />
+                Rifiutate: {stats.rejected}
+              </span>
             </div>
+          </div>
+          {/* Right: filter toggle */}
+          <div className="flex-shrink-0">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
-                showFilters ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-colors whitespace-nowrap border border-white/20 text-white ${
+                showFilters ? 'bg-white/20 hover:bg-white/30' : 'bg-white/10 hover:bg-white/20'
               }`}
             >
               <Filter className="w-4 h-4" />
               Filtri Avanzati
             </button>
           </div>
+        </div>
+      </div>
 
+      {/* Main content card */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <div className="flex flex-col gap-4 mb-6">
+          {/* Search bar */}
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Cerca per titolo, descrizione, utente..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+            />
+          </div>
+
+          {/* Approval status tabs */}
           <div className="flex gap-2 overflow-x-auto pb-2">
             {[
-              { key: 'pending', label: 'Da Approvare', color: 'yellow', count: stats.pending },
-              { key: 'approved', label: 'Approvate', color: 'green', count: stats.approved },
-              { key: 'rejected', label: 'Rifiutate', color: 'red', count: stats.rejected },
-              { key: 'all', label: 'Tutte', color: 'gray', count: stats.total },
+              { key: 'pending', label: 'Da Approvare', count: stats.pending },
+              { key: 'approved', label: 'Approvate', count: stats.approved },
+              { key: 'rejected', label: 'Rifiutate', count: stats.rejected },
+              { key: 'all', label: 'Tutte', count: stats.total },
             ].map(tab => (
               <button
                 key={tab.key}
                 onClick={() => setApprovalFilter(tab.key)}
-                className={`relative px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                className={`relative px-4 py-2 rounded-xl font-medium transition-colors whitespace-nowrap text-sm ${
                   approvalFilter === tab.key
-                    ? tab.key === 'pending' ? 'bg-yellow-600 text-white'
-                    : tab.key === 'approved' ? 'bg-green-600 text-white'
-                    : tab.key === 'rejected' ? 'bg-red-600 text-white'
-                    : 'bg-orange-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
                 }`}
               >
                 {tab.label}
@@ -350,58 +340,62 @@ export default function AuctionsSection() {
             ))}
           </div>
 
+          {/* Filter panel */}
           {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                >
-                  <option value="all">Tutte le categorie</option>
-                  {AUCTION_CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Fascia di Prezzo</label>
-                <select
-                  value={priceRangeFilter}
-                  onChange={(e) => setPriceRangeFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                >
-                  <option value="all">Tutti i prezzi</option>
-                  <option value="0-100">0 - 100 EUR</option>
-                  <option value="100-500">100 - 500 EUR</option>
-                  <option value="500-1000">500 - 1.000 EUR</option>
-                  <option value="1000-5000">1.000 - 5.000 EUR</option>
-                  <option value="5000+">Oltre 5.000 EUR</option>
-                </select>
-              </div>
-              <div className="col-span-full">
-                <AdminLocationFilter
-                  value={locationFilter}
-                  onChange={setLocationFilter}
-                  accentColor="orange"
-                />
-              </div>
-              <div className="flex items-end">
-                <button
-                  onClick={() => {
-                    setCategoryFilter('all');
-                    setPriceRangeFilter('all');
-                    setLocationFilter({ region: '', province: '', city: '' });
-                  }}
-                  className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
-                >
-                  Cancella Filtri
-                </button>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                  >
+                    <option value="all">Tutte le categorie</option>
+                    {AUCTION_CATEGORIES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Fascia di Prezzo</label>
+                  <select
+                    value={priceRangeFilter}
+                    onChange={(e) => setPriceRangeFilter(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                  >
+                    <option value="all">Tutti i prezzi</option>
+                    <option value="0-100">0 - 100 EUR</option>
+                    <option value="100-500">100 - 500 EUR</option>
+                    <option value="500-1000">500 - 1.000 EUR</option>
+                    <option value="1000-5000">1.000 - 5.000 EUR</option>
+                    <option value="5000+">Oltre 5.000 EUR</option>
+                  </select>
+                </div>
+                <div className="col-span-full">
+                  <AdminLocationFilter
+                    value={locationFilter}
+                    onChange={setLocationFilter}
+                    accentColor="orange"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button
+                    onClick={() => {
+                      setCategoryFilter('all');
+                      setPriceRangeFilter('all');
+                      setLocationFilter({ region: '', province: '', city: '' });
+                    }}
+                    className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
+                  >
+                    Cancella Filtri
+                  </button>
+                </div>
               </div>
             </div>
           )}
 
+          {/* Result count */}
           <div className="flex items-center justify-between text-sm text-gray-600">
             <span>
               Risultati: <strong className="text-gray-900">{filteredAuctions.length}</strong> di <strong className="text-gray-900">{auctions.length}</strong> aste
@@ -409,28 +403,32 @@ export default function AuctionsSection() {
           </div>
         </div>
 
+        {/* Auction list */}
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+          <div className="flex items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
           </div>
         ) : filteredAuctions.length === 0 ? (
-          <div className="text-center py-12 text-gray-600">
-            {approvalFilter === 'pending' ? 'Nessuna asta da approvare' : 'Nessuna asta trovata'}
+          <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+              <Gavel className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="text-base font-medium text-gray-600">
+              {approvalFilter === 'pending' ? 'Nessuna asta da approvare' : 'Nessuna asta trovata'}
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
             {filteredAuctions.map(auction => (
               <div
                 key={auction.id}
-                className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${
-                  auction.approval_status === 'pending' ? 'border-yellow-300 bg-yellow-50/30' : 'border-gray-200'
-                }`}
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow"
               >
                 <div className="flex gap-4">
                   <img
                     src={auction.images?.[0] || 'https://images.pexels.com/photos/5632388/pexels-photo-5632388.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'}
                     alt={auction.title}
-                    className="w-32 h-32 object-cover rounded-lg flex-shrink-0"
+                    className="w-32 h-32 object-cover rounded-xl flex-shrink-0"
                   />
 
                   <div className="flex-1 min-w-0">
@@ -506,7 +504,7 @@ export default function AuctionsSection() {
                     </div>
 
                     {auction.winner && (
-                      <div className="mb-3 p-2 bg-blue-50 rounded border border-blue-200">
+                      <div className="mb-3 p-2 bg-blue-50 rounded-xl border border-blue-200">
                         <span className="text-sm text-blue-900">
                           <strong>Vincitore:</strong> {auction.winner.nickname || auction.winner.full_name}
                         </span>
@@ -519,7 +517,7 @@ export default function AuctionsSection() {
                           <button
                             onClick={() => handleApprove(auction.id)}
                             disabled={processing === auction.id}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
                           >
                             <ShieldCheck className="w-4 h-4" />
                             {processing === auction.id ? 'Approvando...' : 'Approva'}
@@ -527,7 +525,7 @@ export default function AuctionsSection() {
                           <button
                             onClick={() => setRejectingId(auction.id)}
                             disabled={processing === auction.id}
-                            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 font-medium"
+                            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 font-medium"
                           >
                             <XCircle className="w-4 h-4" />
                             Rifiuta
@@ -539,7 +537,7 @@ export default function AuctionsSection() {
                         href={`/auctions/${auction.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-1.5 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition-colors"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-orange-600 text-white text-sm rounded-xl hover:bg-orange-700 transition-colors"
                       >
                         <Eye className="w-4 h-4" />
                         Visualizza
@@ -547,7 +545,7 @@ export default function AuctionsSection() {
 
                       <button
                         onClick={() => handleDeleteAuction(auction.id)}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors ml-auto"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-gray-600 text-white text-sm rounded-xl hover:bg-gray-700 transition-colors ml-auto"
                       >
                         <Trash2 className="w-4 h-4" />
                         Elimina
@@ -561,34 +559,41 @@ export default function AuctionsSection() {
         )}
       </div>
 
+      {/* Reject modal */}
       {rejectingId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Rifiuta Asta</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Inserisci il motivo del rifiuto (opzionale). L'utente ricevera una notifica.
-            </p>
-            <textarea
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Motivo del rifiuto..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
-              rows={3}
-            />
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={handleReject}
-                disabled={processing !== null}
-                className="flex-1 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50"
-              >
-                {processing ? 'Rifiutando...' : 'Conferma Rifiuto'}
-              </button>
-              <button
-                onClick={() => { setRejectingId(null); setRejectReason(''); }}
-                className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-              >
-                Annulla
-              </button>
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden">
+            <div className="bg-gradient-to-r from-gray-800 to-gray-900 px-6 py-5">
+              <h3 className="text-lg font-bold text-white">Rifiuta Asta</h3>
+              <p className="text-sm text-gray-400 mt-1">
+                Inserisci il motivo del rifiuto (opzionale). L'utente ricevera una notifica.
+              </p>
+            </div>
+            <div className="p-6">
+              <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                <textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Motivo del rifiuto..."
+                  className="w-full bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none resize-none"
+                  rows={3}
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleReject}
+                  disabled={processing !== null}
+                  className="flex-1 bg-red-600 text-white py-2.5 rounded-xl hover:bg-red-700 transition-colors font-medium disabled:opacity-50"
+                >
+                  {processing ? 'Rifiutando...' : 'Conferma Rifiuto'}
+                </button>
+                <button
+                  onClick={() => { setRejectingId(null); setRejectReason(''); }}
+                  className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl hover:bg-gray-200 transition-colors font-medium"
+                >
+                  Annulla
+                </button>
+              </div>
             </div>
           </div>
         </div>

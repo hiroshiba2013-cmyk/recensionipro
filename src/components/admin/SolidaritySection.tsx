@@ -329,336 +329,356 @@ export function SolidaritySection({ onReload }: SolidaritySectionProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-pink-500 to-rose-500 rounded-xl shadow-lg p-6 text-white">
-        <div className="flex items-center gap-3 mb-4">
-          <Heart className="w-8 h-8" />
-          <h2 className="text-3xl font-bold">Gestione Solidarietà</h2>
-        </div>
-        <p className="text-pink-100">
-          Gestisci i contatori, i documenti di trasparenza e le organizzazioni benefiche
-        </p>
-      </div>
-
-      {/* Tabs */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="border-b border-gray-200">
-          <div className="flex gap-2 p-2">
+      {/* Hero Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-6 mb-6">
+        {/* Dot overlay */}
+        <div
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
+            backgroundSize: '20px 20px',
+          }}
+        />
+        <div className="relative flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">
+              Trasparenza
+            </p>
+            <h2 className="text-2xl font-bold text-white mb-3">Solidarietà</h2>
+            {/* Key metric chips */}
+            <div className="flex flex-wrap gap-2">
+              <span className="flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-xl px-3 py-1 text-sm text-white font-medium">
+                <Euro className="w-3.5 h-3.5" />
+                €{totalRevenue.toLocaleString('it-IT', { minimumFractionDigits: 2 })} fatturato
+              </span>
+              <span className="flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-xl px-3 py-1 text-sm text-white font-medium">
+                <Users className="w-3.5 h-3.5" />
+                {subscriptionStats.totalActive} abbonamenti attivi
+              </span>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 shrink-0">
             <button
-              onClick={() => setActiveTab('stats')}
-              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
-                activeTab === 'stats'
-                  ? 'bg-pink-100 text-pink-700'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
+              onClick={() => setShowDocumentForm(true)}
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl px-4 py-2 transition-colors font-medium text-sm"
             >
-              <TrendingUp className="w-5 h-5 inline mr-2" />
-              Contatori
+              <Plus className="w-4 h-4" />
+              Aggiungi documento
             </button>
             <button
-              onClick={() => setActiveTab('documents')}
-              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
-                activeTab === 'documents'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
+              onClick={() => {
+                setEditingOrg(null);
+                setShowOrgForm(true);
+              }}
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl px-4 py-2 transition-colors font-medium text-sm"
             >
-              <FileText className="w-5 h-5 inline mr-2" />
-              Documenti ({documents.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('organizations')}
-              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
-                activeTab === 'organizations'
-                  ? 'bg-green-100 text-green-700'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <Building className="w-5 h-5 inline mr-2" />
-              Organizzazioni ({organizations.length})
+              <Plus className="w-4 h-4" />
+              Aggiungi organizzazione
             </button>
           </div>
         </div>
+      </div>
 
-        <div className="p-6">
-          {/* Stats Tab */}
-          {activeTab === 'stats' && (
-            <div className="space-y-6">
-              <h3 className="text-xl font-bold text-gray-900">Contatori Pubblici in Tempo Reale</h3>
+      {/* Tab switcher */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setActiveTab('stats')}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+            activeTab === 'stats'
+              ? 'bg-gray-900 text-white'
+              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          <TrendingUp className="w-4 h-4" />
+          Stats
+        </button>
+        <button
+          onClick={() => setActiveTab('documents')}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+            activeTab === 'documents'
+              ? 'bg-gray-900 text-white'
+              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          Documenti ({documents.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('organizations')}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+            activeTab === 'organizations'
+              ? 'bg-gray-900 text-white'
+              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          <Building className="w-4 h-4" />
+          Organizzazioni ({organizations.length})
+        </button>
+      </div>
 
-              {/* Main Revenue Counters */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200">
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="bg-blue-500 p-4 rounded-full">
-                      <Euro className="w-8 h-8 text-white" />
-                    </div>
+      <div>
+        {/* Stats Tab */}
+        {activeTab === 'stats' && (
+          <div className="space-y-6">
+            <h3 className="text-xl font-bold text-gray-900">Contatori Pubblici in Tempo Reale</h3>
+
+            {/* Main Revenue Counters */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="bg-blue-500 p-4 rounded-full">
+                    <Euro className="w-8 h-8 text-white" />
                   </div>
-                  <h4 className="text-lg font-bold text-gray-900 mb-2 text-center">Fatturato Totale</h4>
-                  <div className="text-4xl font-bold text-blue-600 text-center">
-                    €{totalRevenue.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                  </div>
-                  <p className="text-sm text-gray-600 text-center mt-2">Da tutti gli abbonamenti attivi</p>
                 </div>
+                <h4 className="text-lg font-bold text-gray-900 mb-2 text-center">Fatturato Totale</h4>
+                <div className="text-4xl font-bold text-blue-600 text-center">
+                  €{totalRevenue.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                </div>
+                <p className="text-sm text-gray-600 text-center mt-2">Da tutti gli abbonamenti attivi</p>
+              </div>
 
-                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border-2 border-green-200">
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="bg-green-500 p-4 rounded-full">
-                      <Heart className="w-8 h-8 text-white" />
-                    </div>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="bg-green-500 p-4 rounded-full">
+                    <Heart className="w-8 h-8 text-white" />
                   </div>
-                  <h4 className="text-lg font-bold text-gray-900 mb-2 text-center">Solidarietà (10%)</h4>
-                  <div className="text-4xl font-bold text-green-600 text-center">
-                    €{(totalRevenue * 0.1).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                  </div>
-                  <p className="text-sm text-gray-600 text-center mt-2">Destinato alla beneficenza</p>
+                </div>
+                <h4 className="text-lg font-bold text-gray-900 mb-2 text-center">Solidarietà (10%)</h4>
+                <div className="text-4xl font-bold text-green-600 text-center">
+                  €{(totalRevenue * 0.1).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                </div>
+                <p className="text-sm text-gray-600 text-center mt-2">Destinato alla beneficenza</p>
+              </div>
+            </div>
+
+            {/* Subscription Stats */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <h4 className="text-lg font-bold text-gray-900 mb-4 text-center">Abbonamenti Attivi</h4>
+              <div className="text-5xl font-bold text-purple-600 text-center mb-6">
+                {subscriptionStats.totalActive}
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-gray-50 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-blue-600">{subscriptionStats.customerMonthly}</div>
+                  <div className="text-xs text-gray-600 mt-1">Clienti Mensili</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-cyan-600">{subscriptionStats.customerYearly}</div>
+                  <div className="text-xs text-gray-600 mt-1">Clienti Annuali</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-orange-600">{subscriptionStats.businessMonthly}</div>
+                  <div className="text-xs text-gray-600 mt-1">Aziende Mensili</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-amber-600">{subscriptionStats.businessYearly}</div>
+                  <div className="text-xs text-gray-600 mt-1">Aziende Annuali</div>
                 </div>
               </div>
 
-              {/* Subscription Stats */}
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border-2 border-purple-200">
-                <h4 className="text-lg font-bold text-gray-900 mb-4 text-center">Abbonamenti Attivi</h4>
-                <div className="text-5xl font-bold text-purple-600 text-center mb-6">
-                  {subscriptionStats.totalActive}
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-white rounded-lg p-4 text-center shadow-sm">
-                    <div className="text-2xl font-bold text-blue-600">{subscriptionStats.customerMonthly}</div>
-                    <div className="text-xs text-gray-600 mt-1">Clienti Mensili</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-4 text-center shadow-sm">
-                    <div className="text-2xl font-bold text-cyan-600">{subscriptionStats.customerYearly}</div>
-                    <div className="text-xs text-gray-600 mt-1">Clienti Annuali</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-4 text-center shadow-sm">
-                    <div className="text-2xl font-bold text-orange-600">{subscriptionStats.businessMonthly}</div>
-                    <div className="text-xs text-gray-600 mt-1">Aziende Mensili</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-4 text-center shadow-sm">
-                    <div className="text-2xl font-bold text-amber-600">{subscriptionStats.businessYearly}</div>
-                    <div className="text-xs text-gray-600 mt-1">Aziende Annuali</div>
-                  </div>
-                </div>
-
-                {subscriptionStats.trialUsers > 0 && (
-                  <div className="mt-4 bg-purple-200 rounded-lg p-3 text-center">
-                    <p className="text-sm font-semibold text-purple-900">
-                      + {subscriptionStats.trialUsers} utenti in prova gratuita
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Donations Stats */}
-              {totalDonations > 0 && (
-                <div className="bg-gradient-to-br from-rose-50 to-pink-100 rounded-xl p-6 border-2 border-rose-200">
-                  <h4 className="text-lg font-bold text-gray-900 mb-2 text-center">Donazioni Totali Effettuate</h4>
-                  <div className="text-4xl font-bold text-rose-600 text-center">
-                    €{totalDonations.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                  </div>
-                  <p className="text-sm text-gray-600 text-center mt-2">
-                    {documents.filter(d => d.document_type === 'donation').length} donazioni documentate
+              {subscriptionStats.trialUsers > 0 && (
+                <div className="mt-4 bg-purple-50 rounded-lg p-3 text-center border border-purple-100">
+                  <p className="text-sm font-semibold text-purple-900">
+                    + {subscriptionStats.trialUsers} utenti in prova gratuita
                   </p>
                 </div>
               )}
+            </div>
 
-              <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-gray-700 text-center">
-                  <span className="font-semibold">Nota:</span> Questi contatori sono visibili pubblicamente nella pagina Solidarietà
-                  e si aggiornano automaticamente in tempo reale
+            {/* Donations Stats */}
+            {totalDonations > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <h4 className="text-lg font-bold text-gray-900 mb-2 text-center">Donazioni Totali Effettuate</h4>
+                <div className="text-4xl font-bold text-rose-600 text-center">
+                  €{totalDonations.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                </div>
+                <p className="text-sm text-gray-600 text-center mt-2">
+                  {documents.filter(d => d.document_type === 'donation').length} donazioni documentate
                 </p>
               </div>
+            )}
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+              <p className="text-sm text-gray-700 text-center">
+                <span className="font-semibold">Nota:</span> Questi contatori sono visibili pubblicamente nella pagina Solidarietà
+                e si aggiornano automaticamente in tempo reale
+              </p>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Documents Tab */}
-          {activeTab === 'documents' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-gray-900">Documenti di Trasparenza</h3>
-                <button
-                  onClick={() => setShowDocumentForm(true)}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Carica Documento
-                </button>
+        {/* Documents Tab */}
+        {activeTab === 'documents' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900">Documenti di Trasparenza</h3>
+            </div>
+
+            {documents.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+                <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">Nessun documento caricato</p>
               </div>
-
-              {documents.length === 0 ? (
-                <div className="text-center py-12">
-                  <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">Nessun documento caricato</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {documents.map((doc) => (
-                    <div key={doc.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                              doc.document_type === 'revenue'
-                                ? 'bg-blue-100 text-blue-700'
-                                : 'bg-green-100 text-green-700'
-                            }`}>
-                              {doc.document_type === 'revenue' ? 'Fatturato' : 'Donazione'}
+            ) : (
+              <div className="space-y-3">
+                {documents.map((doc) => (
+                  <div key={doc.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                            doc.document_type === 'revenue'
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-green-100 text-green-700'
+                          }`}>
+                            {doc.document_type === 'revenue' ? 'Fatturato' : 'Donazione'}
+                          </span>
+                          <span className="text-sm text-gray-600 flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            {doc.year}
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-gray-900 mb-1">{doc.title}</h4>
+                        {doc.description && (
+                          <p className="text-sm text-gray-600 mb-2">{doc.description}</p>
+                        )}
+                        <div className="flex flex-wrap gap-3 text-sm text-gray-600">
+                          {doc.amount && (
+                            <span className="flex items-center gap-1">
+                              <Euro className="w-4 h-4" />
+                              €{doc.amount.toLocaleString('it-IT')}
                             </span>
-                            <span className="text-sm text-gray-600 flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              {doc.year}
-                            </span>
-                          </div>
-                          <h4 className="font-bold text-gray-900 mb-1">{doc.title}</h4>
-                          {doc.description && (
-                            <p className="text-sm text-gray-600 mb-2">{doc.description}</p>
                           )}
-                          <div className="flex flex-wrap gap-3 text-sm text-gray-600">
-                            {doc.amount && (
-                              <span className="flex items-center gap-1">
-                                <Euro className="w-4 h-4" />
-                                €{doc.amount.toLocaleString('it-IT')}
-                              </span>
-                            )}
-                            {doc.recipient && (
-                              <span>Destinatario: {doc.recipient}</span>
-                            )}
-                          </div>
+                          {doc.recipient && (
+                            <span>Destinatario: {doc.recipient}</span>
+                          )}
                         </div>
-                        <div className="flex items-center gap-2 ml-4">
-                          <a
-                            href={doc.file_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          >
-                            <Download className="w-5 h-5" />
-                          </a>
-                          <button
-                            onClick={() => deleteDocument(doc.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 ml-4">
+                        <a
+                          href={doc.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        >
+                          <Download className="w-5 h-5" />
+                        </a>
+                        <button
+                          onClick={() => deleteDocument(doc.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Organizations Tab */}
-          {activeTab === 'organizations' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-gray-900">Organizzazioni Benefiche</h3>
-                <button
-                  onClick={() => {
-                    setEditingOrg(null);
-                    setShowOrgForm(true);
-                  }}
-                  className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Aggiungi Organizzazione
-                </button>
+                  </div>
+                ))}
               </div>
+            )}
+          </div>
+        )}
 
-              {organizations.length === 0 ? (
-                <div className="text-center py-12">
-                  <Building className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">Nessuna organizzazione aggiunta</p>
-                </div>
-              ) : (
-                <div className="grid md:grid-cols-2 gap-4">
-                  {organizations.map((org) => (
-                    <div key={org.id} className={`border-2 rounded-lg p-4 ${
-                      org.is_active ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
-                    }`}>
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h4 className="font-bold text-lg text-gray-900">{org.name}</h4>
-                            {!org.is_active && (
-                              <span className="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded-full">
-                                Inattiva
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-sm text-blue-600 font-medium">{org.category}</span>
+        {/* Organizations Tab */}
+        {activeTab === 'organizations' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900">Organizzazioni Benefiche</h3>
+            </div>
+
+            {organizations.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+                <Building className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">Nessuna organizzazione aggiunta</p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-4">
+                {organizations.map((org) => (
+                  <div key={org.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-bold text-lg text-gray-900">{org.name}</h4>
+                          {org.is_active ? (
+                            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                              Attiva
+                            </span>
+                          ) : (
+                            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full">
+                              Inattiva
+                            </span>
+                          )}
                         </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => editOrganization(org)}
-                            className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => deleteOrganization(org.id)}
-                            className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                        <span className="text-sm text-blue-600 font-medium">{org.category}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => editOrganization(org)}
+                          className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => deleteOrganization(org.id)}
+                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-gray-700 mb-3">{org.description}</p>
+
+                    <div className="space-y-1 text-sm text-gray-600">
+                      {org.website && (
+                        <div className="flex items-center gap-2">
+                          <Globe className="w-4 h-4" />
+                          <a href={org.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                            {org.website}
+                          </a>
                         </div>
-                      </div>
-
-                      <p className="text-sm text-gray-700 mb-3">{org.description}</p>
-
-                      <div className="space-y-1 text-sm text-gray-600">
-                        {org.website && (
-                          <div className="flex items-center gap-2">
-                            <Globe className="w-4 h-4" />
-                            <a href={org.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                              {org.website}
-                            </a>
-                          </div>
-                        )}
-                        {org.contact_email && (
-                          <div className="flex items-center gap-2">
-                            <Mail className="w-4 h-4" />
-                            <span>{org.contact_email}</span>
-                          </div>
-                        )}
-                        {org.contact_phone && (
-                          <div className="flex items-center gap-2">
-                            <Phone className="w-4 h-4" />
-                            <span>{org.contact_phone}</span>
-                          </div>
-                        )}
-                        {org.address && (
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4" />
-                            <span>{org.address}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {org.total_received > 0 && (
-                        <div className="mt-3 pt-3 border-t border-green-200">
-                          <div className="flex items-center gap-2 text-green-600 font-semibold">
-                            <Euro className="w-4 h-4" />
-                            <span>Ricevuto: €{org.total_received.toLocaleString('it-IT')}</span>
-                          </div>
+                      )}
+                      {org.contact_email && (
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-4 h-4" />
+                          <span>{org.contact_email}</span>
+                        </div>
+                      )}
+                      {org.contact_phone && (
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-4 h-4" />
+                          <span>{org.contact_phone}</span>
+                        </div>
+                      )}
+                      {org.address && (
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4" />
+                          <span>{org.address}</span>
                         </div>
                       )}
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+
+                    {org.total_received > 0 && (
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <div className="flex items-center gap-2 text-green-600 font-semibold">
+                          <Euro className="w-4 h-4" />
+                          <span>Ricevuto: €{org.total_received.toLocaleString('it-IT')}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Document Upload Modal */}
       {showDocumentForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
+            <div className="sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 px-6 py-4 flex items-center justify-between rounded-t-xl">
               <h3 className="text-xl font-bold text-white">Carica Documento</h3>
               <button
                 onClick={() => setShowDocumentForm(false)}
@@ -795,7 +815,7 @@ export function SolidaritySection({ onReload }: SolidaritySectionProps) {
       {showOrgForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-green-600 to-green-700 px-6 py-4 flex items-center justify-between">
+            <div className="sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 px-6 py-4 flex items-center justify-between rounded-t-xl">
               <h3 className="text-xl font-bold text-white">
                 {editingOrg ? 'Modifica Organizzazione' : 'Aggiungi Organizzazione'}
               </h3>

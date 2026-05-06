@@ -295,173 +295,154 @@ export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionPro
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-      <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-amber-100">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-500 rounded-lg">
-              <Building2 className="w-5 h-5 text-white" />
-            </div>
+    <div>
+      {/* Hero Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-6 mb-6">
+        {/* Dot overlay */}
+        <div
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
+            backgroundSize: '20px 20px',
+          }}
+        />
+        <div className="relative z-10">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Tracking Attività</h2>
-              <p className="text-sm text-gray-600">
-                {loading ? (
-                  <span className="inline-flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-orange-600"></div>
-                    Caricamento...
-                  </span>
-                ) : (
-                  <span>{activities.length} attività trovate</span>
-                )}
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">
+                Monitoraggio
               </p>
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl font-bold text-white">Attività Commerciali</h2>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white border border-white/20">
+                  {activities.length}
+                </span>
+              </div>
             </div>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => setTypeFilter('all')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                typeFilter === 'all'
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Tutte
-            </button>
-            <button
-              onClick={() => setTypeFilter('registered')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-                typeFilter === 'registered'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <Building2 className="w-4 h-4" />
-              Registrate
-            </button>
-            <button
-              onClick={() => setTypeFilter('claimed')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-                typeFilter === 'claimed'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <CheckCircle className="w-4 h-4" />
-              Rivendicate
-            </button>
-            <button
-              onClick={() => setTypeFilter('user_added')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-                typeFilter === 'user_added'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <UserPlus className="w-4 h-4" />
-              Aggiunte
-            </button>
-            <button
-              onClick={() => setTypeFilter('imported')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-                typeFilter === 'imported'
-                  ? 'bg-gray-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <MapPin className="w-4 h-4" />
-              Importate
-            </button>
+
+            {/* Type filter tabs */}
+            <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={() => setTypeFilter('all')}
+                className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                  typeFilter === 'all'
+                    ? 'bg-gray-900 text-white shadow'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Tutte
+              </button>
+              <button
+                onClick={() => setTypeFilter('claimed')}
+                className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                  typeFilter === 'claimed'
+                    ? 'bg-gray-900 text-white shadow'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Rivendicate
+              </button>
+              <button
+                onClick={() => setTypeFilter('user_added')}
+                className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                  typeFilter === 'user_added'
+                    ? 'bg-gray-900 text-white shadow'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Aggiunte
+              </button>
+              <button
+                onClick={() => setTypeFilter('imported')}
+                className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                  typeFilter === 'imported'
+                    ? 'bg-gray-900 text-white shadow'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Importate
+              </button>
+              <button
+                onClick={() => setTypeFilter('registered')}
+                className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                  typeFilter === 'registered'
+                    ? 'bg-gray-900 text-white shadow'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Registrate
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                Attività
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                Tipo
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                Categoria
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                Luogo
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                Proprietario/Aggiunto da
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                Data
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                Azioni
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-100">
-            {loading ? (
-              <tr>
-                <td colSpan={7} className="px-6 py-12 text-center">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-600"></div>
-                    <p className="text-sm text-gray-500">Caricamento attività...</p>
-                  </div>
-                </td>
-              </tr>
-            ) : activities.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-6 py-12 text-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <Building2 className="w-12 h-12 text-gray-300" />
-                    <p className="text-sm font-medium text-gray-600">Nessuna attività trovata</p>
-                    <p className="text-xs text-gray-500">
-                      {typeFilter === 'all' && 'Non ci sono attività da visualizzare'}
-                      {typeFilter === 'registered' && 'Nessuna attività registrata'}
-                      {typeFilter === 'claimed' && 'Nessuna attività rivendicata'}
-                      {typeFilter === 'user_added' && 'Nessuna attività aggiunta da utenti'}
-                      {typeFilter === 'imported' && 'Nessuna attività importata'}
-                    </p>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              activities.map((activity) => {
-                const badge = getTypeBadge(activity.type);
-                return (
-                  <tr key={`${activity.type}-${activity.id}`} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      {activity.verified && (
-                        <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+      {/* Activity cards */}
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="flex flex-col items-center gap-3">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-700"></div>
+            <p className="text-sm text-gray-500">Caricamento attività...</p>
+          </div>
+        </div>
+      ) : activities.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-2">
+              <Building2 className="w-7 h-7 text-gray-400" />
+            </div>
+            <p className="text-sm font-medium text-gray-600">Nessuna attività trovata</p>
+            <p className="text-xs text-gray-500">
+              {typeFilter === 'all' && 'Non ci sono attività da visualizzare'}
+              {typeFilter === 'registered' && 'Nessuna attività registrata'}
+              {typeFilter === 'claimed' && 'Nessuna attività rivendicata'}
+              {typeFilter === 'user_added' && 'Nessuna attività aggiunta da utenti'}
+              {typeFilter === 'imported' && 'Nessuna attività importata'}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {activities.map((activity) => {
+            const badge = getTypeBadge(activity.type);
+            return (
+              <div
+                key={`${activity.type}-${activity.id}`}
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  {/* Name + address */}
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    {activity.verified && (
+                      <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    )}
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-gray-900 truncate">{activity.name}</div>
+                      {activity.address && (
+                        <div className="text-xs text-gray-500 mt-0.5 truncate">{activity.address}</div>
                       )}
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{activity.name}</div>
-                        {activity.address && (
-                          <div className="text-xs text-gray-500 mt-0.5">{activity.address}</div>
-                        )}
-                      </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full ${badge.bg}`}>
-                      {badge.icon}
-                      {badge.label}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-600">
-                      {activity.category?.name || 'N/A'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  </div>
+
+                  {/* Type badge */}
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full flex-shrink-0 ${badge.bg}`}>
+                    {badge.icon}
+                    {badge.label}
+                  </span>
+
+                  {/* Category */}
+                  <span className="text-sm text-gray-600 flex-shrink-0 hidden md:block">
+                    {activity.category?.name || 'N/A'}
+                  </span>
+
+                  {/* Location */}
+                  <div className="flex-shrink-0 hidden md:block">
                     <div className="text-sm text-gray-900">{activity.city}</div>
                     <div className="text-xs text-gray-500">{activity.province}</div>
-                  </td>
-                  <td className="px-6 py-4">
+                  </div>
+
+                  {/* Owner / added by */}
+                  <div className="flex-shrink-0 hidden lg:block">
                     {activity.owner ? (
                       <div>
                         <div className="text-sm font-medium text-gray-900">{activity.owner.full_name}</div>
@@ -475,50 +456,53 @@ export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionPro
                     ) : (
                       <span className="text-sm text-gray-400">Sistema</span>
                     )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {new Date(activity.created_at).toLocaleDateString('it-IT')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setSelectedBusiness(activity)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                        title="Dettagli"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteBusiness(activity)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                        title="Elimina"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                  </div>
 
+                  {/* Date */}
+                  <span className="text-sm text-gray-500 flex-shrink-0 hidden sm:block">
+                    {new Date(activity.created_at).toLocaleDateString('it-IT')}
+                  </span>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => setSelectedBusiness(activity)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                      title="Dettagli"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteBusiness(activity)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                      title="Elimina"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Detail modal */}
       {selectedBusiness && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900">Dettagli Attività</h3>
-                <button
-                  onClick={() => setSelectedBusiness(null)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
-                >
-                  ×
-                </button>
-              </div>
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+            {/* Modal header */}
+            <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white px-6 py-5 rounded-t-2xl flex items-center justify-between">
+              <h3 className="text-xl font-bold">Dettagli Attività</h3>
+              <button
+                onClick={() => setSelectedBusiness(null)}
+                className="text-white/70 hover:text-white text-2xl font-bold leading-none"
+              >
+                ×
+              </button>
+            </div>
 
+            <div className="p-6">
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-semibold text-gray-700">Nome</label>
@@ -604,13 +588,6 @@ export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionPro
               </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {activities.length === 0 && (
-        <div className="text-center py-12">
-          <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg font-medium">Nessuna attività trovata</p>
         </div>
       )}
     </div>

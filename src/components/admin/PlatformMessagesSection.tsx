@@ -151,45 +151,71 @@ export function PlatformMessagesSection({ adminId }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Messaggi dalla Piattaforma</h2>
-          <p className="text-sm text-gray-500 mt-1">Messaggi inviati dagli utenti tramite il form Contatti</p>
+      {/* Hero banner header */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-6 mb-6">
+        {/* Dot overlay */}
+        <div
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
+            backgroundSize: '28px 28px',
+          }}
+        />
+        {/* Content */}
+        <div className="relative z-10 flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <p className="text-gray-400 text-xs font-semibold uppercase tracking-widest mb-1">
+              Comunicazioni
+            </p>
+            <h2 className="text-2xl font-bold text-white mb-3">Messaggi Piattaforma</h2>
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1.5 bg-blue-500/20 text-blue-300 text-xs font-semibold px-3 py-1 rounded-full border border-blue-500/30">
+                <Mail className="w-3 h-3" />
+                {counts.unread} non letti
+              </span>
+              <span className="inline-flex items-center gap-1.5 bg-gray-500/20 text-gray-300 text-xs font-semibold px-3 py-1 rounded-full border border-gray-500/30">
+                <MailOpen className="w-3 h-3" />
+                {counts.read} letti
+              </span>
+              <span className="inline-flex items-center gap-1.5 bg-green-500/20 text-green-300 text-xs font-semibold px-3 py-1 rounded-full border border-green-500/30">
+                <Reply className="w-3 h-3" />
+                {counts.replied} risposti
+              </span>
+              <span className="inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-300 text-xs font-semibold px-3 py-1 rounded-full border border-amber-500/30">
+                <Archive className="w-3 h-3" />
+                {counts.archived} archiviati
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={loadMessages}
+            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl px-4 py-2 text-sm transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Aggiorna
+          </button>
         </div>
-        <button
-          onClick={loadMessages}
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Aggiorna
-        </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* Status filter tabs */}
+      <div className="flex flex-wrap gap-2">
         {[
-          { key: 'unread', label: 'Non letti', icon: Mail, color: 'blue' },
-          { key: 'read', label: 'Letti', icon: MailOpen, color: 'gray' },
-          { key: 'replied', label: 'Risposti', icon: Reply, color: 'green' },
-          { key: 'archived', label: 'Archiviati', icon: Archive, color: 'amber' },
-        ].map(({ key, label, icon: Icon, color }) => (
+          { key: 'all', label: 'Tutti' },
+          { key: 'unread', label: 'Non letto' },
+          { key: 'read', label: 'Letto' },
+          { key: 'replied', label: 'Risposto' },
+          { key: 'archived', label: 'Archiviato' },
+        ].map(({ key, label }) => (
           <button
             key={key}
-            onClick={() => setFilter(filter === key ? 'all' : key)}
-            className={`flex items-center gap-3 p-4 rounded-xl border transition-all text-left ${
+            onClick={() => setFilter(key)}
+            className={`rounded-xl px-3 py-1.5 text-sm font-medium transition-colors ${
               filter === key
-                ? `bg-${color}-50 border-${color}-300 shadow-sm`
-                : 'bg-white border-gray-200 hover:border-gray-300'
+                ? 'bg-gray-900 text-white'
+                : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
             }`}
           >
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-${color}-100`}>
-              <Icon className={`w-4 h-4 text-${color}-600`} />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-gray-900">{counts[key as keyof typeof counts]}</p>
-              <p className="text-xs text-gray-500">{label}</p>
-            </div>
+            {label}
           </button>
         ))}
       </div>
@@ -227,22 +253,11 @@ export function PlatformMessagesSection({ adminId }: Props) {
             </span>
           )}
         </button>
-        <select
-          value={filter}
-          onChange={e => setFilter(e.target.value)}
-          className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none"
-        >
-          <option value="all">Tutti gli stati</option>
-          <option value="unread">Non letti</option>
-          <option value="read">Letti</option>
-          <option value="replied">Risposti</option>
-          <option value="archived">Archiviati</option>
-        </select>
       </div>
 
       {/* Pannello filtri avanzati */}
       {showFilters && (
-        <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-5">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4 space-y-5">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <Filter className="w-4 h-4 text-gray-400" />
@@ -389,9 +404,7 @@ export function PlatformMessagesSection({ adminId }: Props) {
             return (
               <div
                 key={msg.id}
-                className={`bg-white border rounded-xl overflow-hidden transition-all ${
-                  isUnread ? 'border-blue-200 shadow-sm' : 'border-gray-200'
-                }`}
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-3 overflow-hidden"
               >
                 {/* Row header */}
                 <button
@@ -429,7 +442,7 @@ export function PlatformMessagesSection({ adminId }: Props) {
 
                 {/* Expanded content */}
                 {isExpanded && (
-                  <div className="border-t border-gray-100 px-5 py-5 space-y-5 bg-gray-50">
+                  <div className="bg-gray-50 border-t border-gray-100 p-5 space-y-5">
                     {/* Message body */}
                     <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
                       <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
@@ -481,7 +494,7 @@ export function PlatformMessagesSection({ adminId }: Props) {
                           <button
                             onClick={() => sendReply(msg)}
                             disabled={replying === msg.id || !replyText[msg.id]?.trim()}
-                            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-xl px-5 py-2 font-semibold text-sm transition-colors disabled:opacity-50"
                           >
                             {replying === msg.id
                               ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />

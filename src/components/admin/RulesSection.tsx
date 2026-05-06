@@ -243,196 +243,200 @@ export function RulesSection({ adminId }: RulesSectionProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Gestione Regole e FAQ</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            {activeTab === 'rules'
-              ? `Modifica i contenuti della pagina Regole (${rulesContent.length} sezioni)`
-              : `Modifica le domande frequenti (${faqs.length} FAQ)`}
-          </p>
+      {/* Hero Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-6 mb-6">
+        {/* Dot overlay */}
+        <div
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
+            backgroundSize: '20px 20px',
+          }}
+        />
+        <div className="relative flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">
+              Contenuti Piattaforma
+            </p>
+            <h2 className="text-2xl font-bold text-white">Regole e FAQ</h2>
+          </div>
+          <button
+            onClick={activeTab === 'rules' ? addNewRule : addNewFAQ}
+            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl px-4 py-2 transition-colors font-medium text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            {activeTab === 'rules' ? 'Nuovo' : 'Nuovo'}
+          </button>
         </div>
+      </div>
+
+      {/* Tab switcher */}
+      <div className="flex gap-2">
         <button
-          onClick={activeTab === 'rules' ? addNewRule : addNewFAQ}
-          className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
+          onClick={() => setActiveTab('rules')}
+          className={`flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-semibold transition-colors ${
+            activeTab === 'rules'
+              ? 'bg-gray-900 text-white'
+              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+          }`}
         >
-          <Plus className="w-5 h-5" />
-          {activeTab === 'rules' ? 'Aggiungi Sezione' : 'Aggiungi FAQ'}
+          <Shield className="w-4 h-4" />
+          Regole ({rulesContent.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('faqs')}
+          className={`flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-semibold transition-colors ${
+            activeTab === 'faqs'
+              ? 'bg-gray-900 text-white'
+              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          <HelpCircle className="w-4 h-4" />
+          FAQ ({faqs.length})
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        <div className="border-b border-gray-200">
-          <div className="flex">
-            <button
-              onClick={() => setActiveTab('rules')}
-              className={`flex-1 px-6 py-4 text-center font-semibold transition-colors ${
-                activeTab === 'rules'
-                  ? 'bg-blue-600 text-white border-b-2 border-blue-600'
-                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <Shield className="w-5 h-5" />
-                <span>Contenuti Regole ({rulesContent.length})</span>
+      <div>
+        {activeTab === 'rules' ? (
+          <div className="space-y-3">
+            {rulesContent.map((rule) => (
+              <div key={rule.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between gap-4 mb-2">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="inline-block px-2 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded">
+                        Ordine: {rule.display_order}
+                      </span>
+                      <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
+                        {rule.section_key}
+                      </span>
+                      {rule.is_active ? (
+                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                          Attiva
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full">
+                          Disattivata
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="font-bold text-gray-900 mb-2 text-lg">{rule.section_title}</h3>
+                    <p className="text-gray-700 text-sm whitespace-pre-line line-clamp-4">{rule.content_text}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={() => {
+                      setEditingRule(rule);
+                      setIsNewRule(false);
+                    }}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Modifica
+                  </button>
+                  <button
+                    onClick={() => deleteRule(rule.id)}
+                    className="flex items-center gap-2 bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Elimina
+                  </button>
+                </div>
               </div>
-            </button>
-            <button
-              onClick={() => setActiveTab('faqs')}
-              className={`flex-1 px-6 py-4 text-center font-semibold transition-colors ${
-                activeTab === 'faqs'
-                  ? 'bg-blue-600 text-white border-b-2 border-blue-600'
-                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <HelpCircle className="w-5 h-5" />
-                <span>FAQ ({faqs.length})</span>
-              </div>
-            </button>
-          </div>
-        </div>
+            ))}
 
-        <div className="p-6">
-          {activeTab === 'rules' ? (
+            {rulesContent.length === 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+                <Shield className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600 font-medium">Nessun contenuto presente</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Category filter pills */}
+            <div className="mb-6">
+              <div className="flex flex-wrap gap-2">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`rounded-xl px-3 py-1 text-sm font-medium transition ${
+                      selectedCategory === category
+                        ? 'bg-gray-900 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-3">
-              {rulesContent.map((rule) => (
-                <div key={rule.id} className="bg-gray-50 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition">
-                  <div className="p-4">
-                    <div className="flex items-start justify-between gap-4 mb-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="inline-block px-2 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded">
-                            Ordine: {rule.display_order}
+              {filteredFAQs.map((faq) => (
+                <div key={faq.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between gap-4 mb-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
+                          {faq.category}
+                        </span>
+                        {faq.is_active ? (
+                          <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                            Attiva
                           </span>
-                          <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
-                            {rule.section_key}
+                        ) : (
+                          <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full">
+                            Disattivata
                           </span>
-                          {!rule.is_active && (
-                            <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded">
-                              Disattivata
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="font-bold text-gray-900 mb-2 text-lg">{rule.section_title}</h3>
-                        <p className="text-gray-700 text-sm whitespace-pre-line line-clamp-4">{rule.content_text}</p>
+                        )}
                       </div>
+                      <h3 className="font-bold text-gray-900 mb-2">{faq.question}</h3>
+                      <p className="text-gray-700 text-sm">{faq.answer}</p>
                     </div>
-                    <div className="flex gap-2 mt-4">
-                      <button
-                        onClick={() => {
-                          setEditingRule(rule);
-                          setIsNewRule(false);
-                        }}
-                        className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                      >
-                        <Edit className="w-4 h-4" />
-                        Modifica
-                      </button>
-                      <button
-                        onClick={() => deleteRule(rule.id)}
-                        className="flex items-center gap-2 bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Elimina
-                      </button>
-                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <button
+                      onClick={() => {
+                        setEditingFAQ(faq);
+                        setIsNewFAQ(false);
+                      }}
+                      className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                    >
+                      <Edit className="w-4 h-4" />
+                      Modifica
+                    </button>
+                    <button
+                      onClick={() => deleteFAQ(faq.id)}
+                      className="flex items-center gap-2 bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Elimina
+                    </button>
                   </div>
                 </div>
               ))}
 
-              {rulesContent.length === 0 && (
-                <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-8 text-center">
-                  <Shield className="w-12 h-12 text-yellow-600 mx-auto mb-3" />
-                  <p className="text-yellow-800 font-medium">Nessun contenuto presente</p>
+              {filteredFAQs.length === 0 && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+                  <HelpCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-600 font-medium">Nessuna FAQ presente in questa categoria</p>
                 </div>
               )}
             </div>
-          ) : (
-            <>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Filtra per categoria:
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => setSelectedCategory(category)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                        selectedCategory === category
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {filteredFAQs.map((faq) => (
-                  <div key={faq.id} className="bg-gray-50 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition">
-                    <div className="p-4">
-                      <div className="flex items-start justify-between gap-4 mb-2">
-                        <div className="flex-1">
-                          <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded mb-2">
-                            {faq.category}
-                          </span>
-                          <h3 className="font-bold text-gray-900 mb-2">{faq.question}</h3>
-                          <p className="text-gray-700 text-sm">{faq.answer}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {!faq.is_active && (
-                            <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded">
-                              Disattivata
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex gap-2 mt-4">
-                        <button
-                          onClick={() => {
-                            setEditingFAQ(faq);
-                            setIsNewFAQ(false);
-                          }}
-                          className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                        >
-                          <Edit className="w-4 h-4" />
-                          Modifica
-                        </button>
-                        <button
-                          onClick={() => deleteFAQ(faq.id)}
-                          className="flex items-center gap-2 bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Elimina
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                {filteredFAQs.length === 0 && (
-                  <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-8 text-center">
-                    <HelpCircle className="w-12 h-12 text-yellow-600 mx-auto mb-3" />
-                    <p className="text-yellow-800 font-medium">Nessuna FAQ presente in questa categoria</p>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </div>
+          </>
+        )}
       </div>
 
       {editingFAQ && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+            <div className="sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 text-white p-6 flex items-center justify-between rounded-t-xl">
               <div>
-                <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                  <HelpCircle className="w-8 h-8 text-blue-600" />
+                <h3 className="text-2xl font-bold flex items-center gap-3">
+                  <HelpCircle className="w-8 h-8 text-gray-300" />
                   {isNewFAQ ? 'Aggiungi Nuova FAQ' : 'Modifica FAQ'}
                 </h3>
               </div>
@@ -441,7 +445,7 @@ export function RulesSection({ adminId }: RulesSectionProps) {
                   setEditingFAQ(null);
                   setIsNewFAQ(false);
                 }}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
+                className="text-gray-300 hover:text-white transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -514,15 +518,17 @@ export function RulesSection({ adminId }: RulesSectionProps) {
                     Stato
                   </label>
                   <div className="flex items-center gap-4 h-10">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={editingFAQ.is_active}
-                        onChange={(e) => setEditingFAQ({ ...editingFAQ, is_active: e.target.checked })}
-                        className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                      />
-                      <span className="text-sm font-medium">Attiva</span>
-                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setEditingFAQ({ ...editingFAQ, is_active: !editingFAQ.is_active })}
+                      className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+                        editingFAQ.is_active
+                          ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                          : 'bg-red-100 text-red-700 hover:bg-red-200'
+                      }`}
+                    >
+                      {editingFAQ.is_active ? 'Attiva' : 'Disattivata'}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -554,10 +560,10 @@ export function RulesSection({ adminId }: RulesSectionProps) {
       {editingRule && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+            <div className="sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 text-white p-6 flex items-center justify-between rounded-t-xl">
               <div>
-                <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                  <Shield className="w-8 h-8 text-blue-600" />
+                <h3 className="text-2xl font-bold flex items-center gap-3">
+                  <Shield className="w-8 h-8 text-gray-300" />
                   {isNewRule ? 'Aggiungi Nuovo Contenuto' : 'Modifica Contenuto'}
                 </h3>
               </div>
@@ -566,7 +572,7 @@ export function RulesSection({ adminId }: RulesSectionProps) {
                   setEditingRule(null);
                   setIsNewRule(false);
                 }}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
+                className="text-gray-300 hover:text-white transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -634,15 +640,17 @@ export function RulesSection({ adminId }: RulesSectionProps) {
                     Stato
                   </label>
                   <div className="flex items-center gap-4 h-10">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={editingRule.is_active}
-                        onChange={(e) => setEditingRule({ ...editingRule, is_active: e.target.checked })}
-                        className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                      />
-                      <span className="text-sm font-medium">Attiva</span>
-                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setEditingRule({ ...editingRule, is_active: !editingRule.is_active })}
+                      className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+                        editingRule.is_active
+                          ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                          : 'bg-red-100 text-red-700 hover:bg-red-200'
+                      }`}
+                    >
+                      {editingRule.is_active ? 'Attiva' : 'Disattivata'}
+                    </button>
                   </div>
                 </div>
               </div>

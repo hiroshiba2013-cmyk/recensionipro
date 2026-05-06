@@ -211,19 +211,41 @@ export function MessagingSection({ adminId }: MessagingSectionProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Gestione Messaggi</h2>
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Filter className="w-5 h-5" />
-          {showFilters ? 'Nascondi Filtri' : 'Mostra Filtri'}
-        </button>
+      {/* Hero banner header */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-6 mb-6">
+        {/* Dot overlay */}
+        <div
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
+            backgroundSize: '28px 28px',
+          }}
+        />
+        {/* Content */}
+        <div className="relative z-10 flex items-center justify-between">
+          <div>
+            <p className="text-gray-400 text-xs font-semibold uppercase tracking-widest mb-1">
+              Messaggistica
+            </p>
+            <h2 className="text-2xl font-bold text-white">Messaggi</h2>
+            <div className="mt-2">
+              <span className="inline-flex items-center bg-white/10 text-white text-sm font-medium px-3 py-1 rounded-full border border-white/20">
+                {messages.length} totali
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl px-4 py-2 transition-colors"
+          >
+            <Filter className="w-5 h-5" />
+            {showFilters ? 'Nascondi Filtri' : 'Mostra Filtri'}
+          </button>
+        </div>
       </div>
 
       {showFilters && (
-        <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -265,14 +287,14 @@ export function MessagingSection({ adminId }: MessagingSectionProps) {
       )}
 
       {filteredMessages.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
           <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600">Nessun messaggio trovato</p>
         </div>
       ) : (
         <div className="grid gap-4">
           {filteredMessages.map((message) => (
-            <div key={message.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+            <div key={message.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
@@ -286,7 +308,11 @@ export function MessagingSection({ adminId }: MessagingSectionProps) {
                       </span>
                     )}
                     {!message.is_read && (
-                      <span className="px-3 py-1 text-xs rounded-full font-medium bg-green-100 text-green-800">
+                      <span className="flex items-center gap-1.5 px-3 py-1 text-xs rounded-full font-medium bg-green-100 text-green-800">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
                         Non letto
                       </span>
                     )}
@@ -324,16 +350,16 @@ export function MessagingSection({ adminId }: MessagingSectionProps) {
       {selectedMessage && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+            <div className="sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 text-white px-6 py-4 rounded-t-2xl flex items-center justify-between">
               <div>
-                <h3 className="text-2xl font-bold text-gray-900">Dettaglio Messaggio</h3>
-                <p className="text-sm text-gray-600 mt-1">
+                <h3 className="text-2xl font-bold text-white">Dettaglio Messaggio</h3>
+                <p className="text-sm text-gray-300 mt-1">
                   {formatDate(selectedMessage.created_at)} alle {formatTime(selectedMessage.created_at)}
                 </p>
               </div>
               <button
                 onClick={() => setSelectedMessage(null)}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
+                className="text-gray-300 hover:text-white transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
