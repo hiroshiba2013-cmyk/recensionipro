@@ -80,7 +80,7 @@ export function RulesPage() {
       if (el) {
         const headerEl = document.querySelector('header');
         const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 64;
-        const top = el.getBoundingClientRect().top + window.scrollY - headerHeight - 64;
+        const top = el.getBoundingClientRect().top + window.scrollY - headerHeight - 88;
         window.scrollTo({ top, behavior: 'smooth' });
         setPendingScrollId(null);
       } else {
