@@ -345,6 +345,7 @@ export function ClassifiedAdsPage() {
             <ItalianCityProvinceSelect
               province={selectedProvince}
               city={selectedCity}
+              region={selectedRegion}
               onProvinceChange={(prov) => { setSelectedProvince(prov); setSelectedCity(''); }}
               onCityChange={setSelectedCity}
             />

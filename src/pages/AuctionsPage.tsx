@@ -176,6 +176,7 @@ export default function AuctionsPage() {
               <ItalianCityProvinceSelect
                 province={filters.province}
                 city={filters.city}
+                region={filters.region}
                 onProvinceChange={(prov) => setFilters({ ...filters, province: prov, city: '' })}
                 onCityChange={(c) => setFilters({ ...filters, city: c })}
               />

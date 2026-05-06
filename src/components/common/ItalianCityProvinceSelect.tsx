@@ -9,6 +9,7 @@ interface Props {
   onCityChange: (city: string) => void;
   required?: boolean;
   disabled?: boolean;
+  region?: string;
 }
 
 const PROVINCE_CODES: Record<string, string> = {
@@ -49,8 +50,10 @@ export function ItalianCityProvinceSelect({
   onCityChange,
   required = false,
   disabled = false,
+  region = '',
 }: Props) {
-  const [provinces, setProvinces] = useState<string[]>([]);
+  const [allProvinces, setAllProvinces] = useState<string[]>([]);
+  const [provincesForRegion, setProvincesForRegion] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
   const [loadingProvinces, setLoadingProvinces] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
@@ -61,15 +64,38 @@ export function ItalianCityProvinceSelect({
   const provinceRef = useRef<HTMLDivElement>(null);
   const provinceInputRef = useRef<HTMLInputElement>(null);
 
+  // Load all provinces once on mount
   useEffect(() => {
     setLoadingProvinces(true);
     supabase
       .rpc('get_province_list')
       .then(({ data }) => {
-        if (data) setProvinces(data.map((r: { provincia: string }) => r.provincia));
+        if (data) setAllProvinces(data.map((r: { provincia: string }) => r.provincia));
         setLoadingProvinces(false);
       });
   }, []);
+
+  // When region changes, load filtered provinces and reset province/city if no longer valid
+  useEffect(() => {
+    if (!region) {
+      setProvincesForRegion([]);
+      return;
+    }
+    supabase
+      .rpc('get_province_by_region', { p_regione: region })
+      .then(({ data }) => {
+        const list = data ? data.map((r: { provincia: string }) => r.provincia) : [];
+        setProvincesForRegion(list);
+        // If the currently selected province doesn't belong to the new region, clear it
+        if (province && list.length > 0 && !list.includes(province)) {
+          onProvinceChange('', '');
+          onCityChange('');
+        }
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [region]);
+
+  const provinces = region ? provincesForRegion : allProvinces;
 
   const loadCities = useCallback(async (prov: string) => {
     if (!prov) { setCities([]); return; }
@@ -117,6 +143,8 @@ export function ItalianCityProvinceSelect({
     setCities([]);
   }
 
+  const isProvinceDisabled = disabled || (region !== '' && provincesForRegion.length === 0 && loadingProvinces === false && allProvinces.length > 0);
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
       {/* Provincia — custom dropdown con sigla */}
@@ -140,7 +168,7 @@ export function ItalianCityProvinceSelect({
             <span className={`flex-1 min-w-0 truncate ${province ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
               {province
                 ? <>{province}{PROVINCE_CODES[province] && <span className="ml-1.5 text-xs font-mono text-gray-400">({PROVINCE_CODES[province]})</span>}</>
-                : 'Seleziona provincia...'}
+                : region ? 'Seleziona provincia...' : 'Seleziona provincia...'}
             </span>
             <div className="flex items-center gap-1 flex-shrink-0">
               {province && !disabled && (
@@ -211,7 +239,7 @@ export function ItalianCityProvinceSelect({
                 )}
               </div>
               <div className="px-3 py-1.5 border-t border-gray-100 bg-gray-50 rounded-b-xl text-xs text-gray-400 text-right">
-                {filteredProvinces.length} province
+                {filteredProvinces.length} {region ? `province in ${region}` : 'province'}
               </div>
             </div>
           )}

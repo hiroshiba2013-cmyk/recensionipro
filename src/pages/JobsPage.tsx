@@ -646,6 +646,7 @@ export function JobsPage() {
               <ItalianCityProvinceSelect
                 province={filters.province}
                 city={filters.city}
+                region={filters.region}
                 onProvinceChange={(prov) => setFilters({ ...filters, province: prov, city: '' })}
                 onCityChange={(city) => setFilters({ ...filters, city })}
               />

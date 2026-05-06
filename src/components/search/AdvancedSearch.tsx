@@ -4,6 +4,7 @@ import { supabase, BusinessCategory } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import BusinessAutocomplete from './BusinessAutocomplete';
+import { ITALIAN_REGIONS } from '../../lib/cities';
 
 export interface SearchFilters {
   category: string;
@@ -120,13 +121,13 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
     onSearch(empty);
   };
 
-  const hasActiveFilters = filters.category || filters.province || filters.city ||
+  const hasActiveFilters = filters.category || filters.region || filters.province || filters.city ||
     filters.businessName || filters.minRating > 0 ||
     (filters.minServiceUsedRating || 0) > 0 || (filters.minBookingRating || 0) > 0 ||
     (filters.minQuoteRating || 0) > 0 || (filters.minCustomerServiceRating || 0) > 0 || (filters.minProblemRating || 0) > 0;
 
   const activeFilterCount = [
-    filters.category, filters.province, filters.city,
+    filters.category, filters.region, filters.province, filters.city,
     filters.minRating > 0 ? 'rating' : '',
     (filters.minServiceUsedRating || 0) > 0 ? 'service' : '',
     (filters.minBookingRating || 0) > 0 ? 'booking' : '',
@@ -187,9 +188,22 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
               </div>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Regione</label>
+              <select
+                value={filters.region}
+                onChange={(e) => setFilters(prev => ({ ...prev, region: e.target.value, province: '', city: '' }))}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 text-sm bg-white"
+              >
+                <option value="">Tutte le regioni</option>
+                {ITALIAN_REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
+
             <ItalianCityProvinceSelect
               province={filters.province}
               city={filters.city}
+              region={filters.region}
               onProvinceChange={(prov) => setFilters(prev => ({ ...prev, province: prov, city: '' }))}
               onCityChange={(c) => setFilters(prev => ({ ...prev, city: c }))}
             />
