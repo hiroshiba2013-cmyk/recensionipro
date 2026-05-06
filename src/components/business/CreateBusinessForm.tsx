@@ -2,13 +2,9 @@ import { useState } from 'react';
 import { Building, X, Save, Search, PlusCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
-import { CITIES_BY_PROVINCE, PROVINCE_TO_CODE } from '../../lib/cities';
+import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { ClaimBusinessLocationsForm } from './ClaimBusinessLocationsForm';
 import { getPlanDisplayName } from '../../lib/subscription-helper';
-
-const italianCities = Object.entries(CITIES_BY_PROVINCE).flatMap(([province, cities]) =>
-  cities.map(city => ({ city, province }))
-);
 
 const businessCategories = [
   'Ristorante',
@@ -96,16 +92,6 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
     billing_city: '',
     billing_province: '',
   });
-
-  const handleCityChange = (city: string) => {
-    const selectedCity = italianCities.find(c => c.city === city);
-    const provinceCode = selectedCity?.province ? PROVINCE_TO_CODE[selectedCity.province] : '';
-    setFormData({
-      ...formData,
-      city,
-      province: provinceCode || '',
-    });
-  };
 
   const checkVatNumber = async (vat: string) => {
     if (vat.length !== 11) return;
@@ -917,36 +903,27 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Città Sede *
-                  </label>
-                  <SearchableSelect
-                    value={formData.city}
-                    onChange={handleCityChange}
-                    options={italianCities.map(city => ({
-                      value: city.city,
-                      label: `${city.city} (${city.province})`,
-                    }))}
-                    placeholder="Seleziona città"
-                  />
-                </div>
+              <ItalianCityProvinceSelect
+                province={formData.province}
+                city={formData.city}
+                onProvinceChange={(prov, code) => setFormData({ ...formData, province: code || prov, city: '' })}
+                onCityChange={(c) => setFormData({ ...formData, city: c })}
+                required
+              />
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    CAP Sede *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.postal_code}
-                    onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
-                    required
-                    maxLength={5}
-                    placeholder="Es. 00100"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  CAP Sede *
+                </label>
+                <input
+                  type="text"
+                  value={formData.postal_code}
+                  onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
+                  required
+                  maxLength={5}
+                  placeholder="Es. 00100"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
               </div>
 
               <div>

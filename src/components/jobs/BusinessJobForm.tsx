@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { SearchableSelect } from '../common/SearchableSelect';
-import { LocationFilters } from '../common/LocationFilters';
+import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 
 interface Business {
   id: string;
@@ -354,27 +354,12 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
 
       <div className="space-y-4 border-t pt-4">
         <h3 className="text-sm font-medium text-gray-700">Località di Lavoro</h3>
-        <LocationFilters
-          region={formData.region}
+        <ItalianCityProvinceSelect
           province={formData.province}
           city={formData.city}
-          onRegionChange={(value) => setFormData(prev => ({ ...prev, region: value, province: '', city: '' }))}
-          onProvinceChange={(value) => setFormData(prev => ({ ...prev, province: value, city: '' }))}
-          onCityChange={(value) => setFormData(prev => ({ ...prev, city: value }))}
+          onProvinceChange={(prov) => setFormData(prev => ({ ...prev, province: prov, city: '' }))}
+          onCityChange={(c) => setFormData(prev => ({ ...prev, city: c }))}
         />
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Oppure scrivi manualmente la località
-          </label>
-          <input
-            type="text"
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-            placeholder="Es. Milano"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          />
-        </div>
       </div>
 
       <div>

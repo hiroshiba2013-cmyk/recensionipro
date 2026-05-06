@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { SearchableSelect } from '../common/SearchableSelect';
-import { LocationFilters } from '../common/LocationFilters';
+import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { X } from 'lucide-react';
 
 interface JobSeekerFormProps {
@@ -180,26 +180,12 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
 
         <div className="space-y-4 border-t pt-4">
           <h3 className="text-lg font-semibold text-gray-900">Località di Lavoro</h3>
-          <LocationFilters
-            region={formData.region}
+          <ItalianCityProvinceSelect
             province={formData.province}
             city={formData.city}
-            onRegionChange={(value) => setFormData({ ...formData, region: value, province: '', city: '' })}
-            onProvinceChange={(value) => setFormData({ ...formData, province: value, city: '' })}
-            onCityChange={(value) => setFormData({ ...formData, city: value })}
+            onProvinceChange={(prov) => setFormData({ ...formData, province: prov, city: '' })}
+            onCityChange={(c) => setFormData({ ...formData, city: c })}
           />
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Oppure scrivi manualmente la località
-            </label>
-            <input
-              type="text"
-              value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Es. Milano, Roma..."
-            />
-          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

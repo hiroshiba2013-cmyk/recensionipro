@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Upload } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { ITALIAN_REGIONS, PROVINCES_BY_REGION, CITIES_BY_PROVINCE } from '../../lib/cities';
+import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 
 interface Category {
   id: string;
@@ -95,23 +95,6 @@ export function ClassifiedAdForm({ adId, businessLocationId, isRegisteredBusines
       console.error('Error loading ad:', error);
       alert('Errore nel caricamento dell\'annuncio');
     }
-  };
-
-  const handleRegionChange = (region: string) => {
-    setFormData({
-      ...formData,
-      region,
-      province: '',
-      city: '',
-    });
-  };
-
-  const handleProvinceChange = (province: string) => {
-    setFormData({
-      ...formData,
-      province,
-      city: '',
-    });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -374,66 +357,13 @@ export function ClassifiedAdForm({ adId, businessLocationId, isRegisteredBusines
         </div>
 
         {/* Location */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Regione *
-            </label>
-            <select
-              required
-              value={formData.region}
-              onChange={(e) => handleRegionChange(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Seleziona regione</option>
-              {ITALIAN_REGIONS.map((region) => (
-                <option key={region} value={region}>
-                  {region}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Provincia *
-            </label>
-            <select
-              required
-              value={formData.province}
-              onChange={(e) => handleProvinceChange(e.target.value)}
-              disabled={!formData.region}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-            >
-              <option value="">Seleziona provincia</option>
-              {formData.region && PROVINCES_BY_REGION[formData.region]?.map((province) => (
-                <option key={province} value={province}>
-                  {province}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Città *
-            </label>
-            <select
-              required
-              value={formData.city}
-              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-              disabled={!formData.province}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-            >
-              <option value="">Seleziona città</option>
-              {formData.province && CITIES_BY_PROVINCE[formData.province]?.map((city) => (
-                <option key={city} value={city}>
-                  {city}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <ItalianCityProvinceSelect
+          province={formData.province}
+          city={formData.city}
+          onProvinceChange={(prov, code) => setFormData({ ...formData, province: prov, city: '' })}
+          onCityChange={(c) => setFormData({ ...formData, city: c })}
+          required
+        />
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">

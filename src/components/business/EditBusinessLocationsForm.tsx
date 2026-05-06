@@ -2,13 +2,9 @@ import { useState, useEffect } from 'react';
 import { MapPin, FileEdit as Edit, Save, X, Building2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
-import { CITIES_BY_PROVINCE, PROVINCE_TO_CODE } from '../../lib/cities';
+import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { BusinessLocationAvatarUpload } from './BusinessLocationAvatarUpload';
 import { useAuth } from '../../contexts/AuthContext';
-
-const italianCities = Object.entries(CITIES_BY_PROVINCE).flatMap(([province, cities]) =>
-  cities.map(city => ({ city, province }))
-);
 
 interface DayHours {
   open: string;
@@ -239,19 +235,6 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
         ...location,
         is_primary: location.id === id,
       })));
-    } else if (field === 'city') {
-      const selectedCity = italianCities.find(c => c.city === value);
-      setLocations(locations.map(location => {
-        if (location.id === id) {
-          const provinceCode = selectedCity?.province ? PROVINCE_TO_CODE[selectedCity.province] : location.province;
-          return {
-            ...location,
-            city: value as string,
-            province: provinceCode || location.province || '',
-          };
-        }
-        return location;
-      }));
     } else {
       console.log('Setting field', field, 'to value:', value);
       setLocations(prev => {
@@ -718,18 +701,15 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Città *
-                  </label>
-                  <SearchableSelect
-                    value={location.city || ''}
-                    onChange={(value) => handleChange(location.id, 'city', value)}
-                    options={italianCities.map(city => ({
-                      value: city.city,
-                      label: `${city.city} (${city.province})`,
-                    }))}
-                    placeholder="Seleziona città"
+                <div className="col-span-full">
+                  <ItalianCityProvinceSelect
+                    province={location.province || ''}
+                    city={location.city || ''}
+                    onProvinceChange={(prov, code) => {
+                      setLocations(locations.map(l => l.id === location.id ? { ...l, province: code || prov, city: '' } : l));
+                    }}
+                    onCityChange={(c) => handleChange(location.id, 'city', c)}
+                    required
                   />
                 </div>
 

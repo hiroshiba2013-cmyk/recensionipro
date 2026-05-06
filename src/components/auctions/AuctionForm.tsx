@@ -3,6 +3,7 @@ import { Upload, X, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 
 interface AuctionFormProps {
   onSuccess?: () => void;
@@ -276,49 +277,13 @@ export default function AuctionForm({ onSuccess, onCancel, businessLocationId, i
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Città *
-          </label>
-          <input
-            type="text"
-            required
-            value={formData.city}
-            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Provincia *
-          </label>
-          <input
-            type="text"
-            required
-            maxLength={2}
-            value={formData.province}
-            onChange={(e) => setFormData({ ...formData, province: e.target.value.toUpperCase() })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="VA"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Regione *
-          </label>
-          <input
-            type="text"
-            required
-            value={formData.region}
-            onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Lombardia"
-          />
-        </div>
-      </div>
+      <ItalianCityProvinceSelect
+        province={formData.province}
+        city={formData.city}
+        onProvinceChange={(prov) => setFormData({ ...formData, province: prov, city: '' })}
+        onCityChange={(c) => setFormData({ ...formData, city: c })}
+        required
+      />
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">

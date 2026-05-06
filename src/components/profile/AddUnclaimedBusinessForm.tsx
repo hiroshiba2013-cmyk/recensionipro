@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, X, Award, MapPin, Phone, Mail, Globe, User, FileEdit as Edit2, Trash2, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { supabase, BusinessCategory } from '../../lib/supabase';
-import { CITIES_BY_PROVINCE, PROVINCE_TO_CODE, PROVINCES_BY_REGION } from '../../lib/cities';
+import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 
 interface AddUnclaimedBusinessFormProps {
   customerId: string;
@@ -24,16 +24,6 @@ interface UserAddedBusiness {
   approval_status: 'pending' | 'approved' | 'rejected' | null;
   rejection_reason: string | null;
 }
-
-const ALL_CITIES = Object.entries(CITIES_BY_PROVINCE).flatMap(([province, cities]) =>
-  cities.map(city => ({
-    name: city,
-    province: province,
-    region: Object.entries(PROVINCES_BY_REGION).find(([_, provinces]) =>
-      provinces.includes(province)
-    )?.[0] || ''
-  }))
-).sort((a, b) => a.name.localeCompare(b.name));
 
 export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onSuccess }: AddUnclaimedBusinessFormProps) {
   const [showForm, setShowForm] = useState(false);
@@ -265,19 +255,6 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
       alert('Errore durante l\'aggiunta dell\'attività');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleCityChange = (cityName: string) => {
-    const city = ALL_CITIES.find(c => c.name === cityName);
-    if (city) {
-      const provinceCode = PROVINCE_TO_CODE[city.province] || city.province;
-      setFormData({
-        ...formData,
-        city: city.name,
-        province: provinceCode,
-        region: city.region,
-      });
     }
   };
 
@@ -525,23 +502,14 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Città *
-              </label>
-              <select
-                value={formData.city}
-                onChange={(e) => handleCityChange(e.target.value)}
+            <div className="md:col-span-2">
+              <ItalianCityProvinceSelect
+                province={formData.province}
+                city={formData.city}
+                onProvinceChange={(prov, code) => setFormData({ ...formData, province: code || prov, city: '' })}
+                onCityChange={(c) => setFormData({ ...formData, city: c })}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Seleziona città</option>
-                {ALL_CITIES.map((city) => (
-                  <option key={city.name} value={city.name}>
-                    {city.name} ({city.province})
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div>
