@@ -3,6 +3,7 @@ import { X, Upload } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
+import { ITALIAN_REGIONS } from '../../lib/cities';
 
 interface Category {
   id: string;
@@ -357,9 +358,21 @@ export function ClassifiedAdForm({ adId, businessLocationId, isRegisteredBusines
         </div>
 
         {/* Location */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Regione</label>
+          <select
+            value={formData.region}
+            onChange={(e) => setFormData(prev => ({ ...prev, region: e.target.value, province: '', city: '' }))}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+          >
+            <option value="">Seleziona regione...</option>
+            {ITALIAN_REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+        </div>
         <ItalianCityProvinceSelect
           province={formData.province}
           city={formData.city}
+          region={formData.region}
           onProvinceChange={(prov) => setFormData(prev => ({ ...prev, province: prov, city: '' }))}
           onCityChange={(c) => setFormData(prev => ({ ...prev, city: c }))}
           required
