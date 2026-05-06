@@ -126,7 +126,7 @@ export function ItalianCityProvinceSelect({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
       {/* Provincia */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -141,11 +141,11 @@ export function ItalianCityProvinceSelect({
             type="button"
             disabled={disabled}
             onClick={() => { if (!disabled) { setProvinceOpen(v => !v); setCityOpen(false); } }}
-            className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 border rounded-lg text-sm transition-all text-left bg-white ${
+            className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 border rounded-lg text-sm transition-all text-left bg-white min-w-0 ${
               disabled ? 'bg-gray-50 cursor-not-allowed opacity-60' : 'hover:border-blue-400 cursor-pointer'
             } ${provinceOpen ? 'border-blue-500 ring-2 ring-blue-100 shadow-sm' : 'border-gray-300'}`}
           >
-            <span className={`flex-1 truncate ${provinceName ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
+            <span className={`flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${provinceName ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
               {provinceName || 'Seleziona provincia...'}
             </span>
             <div className="flex items-center gap-1 flex-shrink-0">
@@ -159,7 +159,7 @@ export function ItalianCityProvinceSelect({
           </button>
 
           {provinceOpen && (
-            <div className="absolute z-[200] w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden">
+            <div className="absolute z-[200] left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden" style={{minWidth: '220px'}}>
               <div className="p-2.5 border-b border-gray-100 bg-gray-50">
                 <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 shadow-sm">
                   <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
@@ -194,11 +194,11 @@ export function ItalianCityProvinceSelect({
                         key={p}
                         type="button"
                         onClick={() => selectProvince(p)}
-                        className={`w-full text-left px-3.5 py-2.5 text-sm flex items-center justify-between gap-2 transition-colors ${
+                        className={`w-full text-left px-3.5 py-2.5 text-sm flex items-center justify-between gap-3 transition-colors ${
                           isSelected ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                         }`}
                       >
-                        <span className={`font-medium ${isSelected ? 'text-blue-700' : ''}`}>{p}</span>
+                        <span className={`font-medium flex-1 min-w-0 text-left ${isSelected ? 'text-blue-700' : ''}`}>{p}</span>
                         <span className={`text-xs px-1.5 py-0.5 rounded font-mono font-semibold flex-shrink-0 ${
                           isSelected ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'
                         }`}>
@@ -231,11 +231,11 @@ export function ItalianCityProvinceSelect({
             type="button"
             disabled={disabled || !provinceName}
             onClick={() => { if (!disabled && provinceName) { setCityOpen(v => !v); setProvinceOpen(false); } }}
-            className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 border rounded-lg text-sm transition-all text-left bg-white ${
+            className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 border rounded-lg text-sm transition-all text-left bg-white min-w-0 ${
               disabled || !provinceName ? 'bg-gray-50 cursor-not-allowed opacity-60' : 'hover:border-blue-400 cursor-pointer'
             } ${cityOpen ? 'border-blue-500 ring-2 ring-blue-100 shadow-sm' : 'border-gray-300'}`}
           >
-            <span className={`flex-1 truncate ${city ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
+            <span className={`flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${city ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
               {city || (provinceName ? 'Seleziona comune...' : 'Prima scegli la provincia')}
             </span>
             <div className="flex items-center gap-1 flex-shrink-0">
@@ -249,7 +249,7 @@ export function ItalianCityProvinceSelect({
           </button>
 
           {cityOpen && provinceName && (
-            <div className="absolute z-[200] w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden">
+            <div className="absolute z-[200] left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden" style={{minWidth: '220px'}}>
               <div className="p-2.5 border-b border-gray-100 bg-gray-50">
                 <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 shadow-sm">
                   <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
