@@ -66,18 +66,13 @@ export function ItalianCityProvinceSelect({
   const provinceInputRef = useRef<HTMLInputElement>(null);
   const cityInputRef = useRef<HTMLInputElement>(null);
 
-  // Load provinces from DB once
+  // Load provinces from DB once via RPC (bypasses default 1000-row limit)
   useEffect(() => {
     setLoadingProvinces(true);
     supabase
-      .from('comuni_italiani')
-      .select('provincia')
-      .order('provincia')
+      .rpc('get_province_list')
       .then(({ data }) => {
-        if (data) {
-          const unique = [...new Set(data.map((r: { provincia: string }) => r.provincia))];
-          setProvinces(unique);
-        }
+        if (data) setProvinces(data.map((r: { provincia: string }) => r.provincia));
         setLoadingProvinces(false);
       });
   }, []);
@@ -85,11 +80,7 @@ export function ItalianCityProvinceSelect({
   const loadCities = useCallback(async (prov: string) => {
     if (!prov) { setCities([]); return; }
     setLoadingCities(true);
-    const { data } = await supabase
-      .from('comuni_italiani')
-      .select('comune')
-      .eq('provincia', prov)
-      .order('comune');
+    const { data } = await supabase.rpc('get_comuni_by_provincia', { p_provincia: prov });
     setCities(data ? data.map((r: { comune: string }) => r.comune) : []);
     setLoadingCities(false);
   }, []);
