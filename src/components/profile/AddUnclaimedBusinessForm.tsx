@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, X, Award, MapPin, Phone, Mail, Globe, User, FileEdit as Edit2, Trash2, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { supabase, BusinessCategory } from '../../lib/supabase';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
+import { ITALIAN_REGIONS } from '../../lib/cities';
 
 interface AddUnclaimedBusinessFormProps {
   customerId: string;
@@ -16,6 +17,7 @@ interface UserAddedBusiness {
   street: string | null;
   city: string;
   province: string | null;
+  region: string | null;
   phone: string | null;
   email: string | null;
   website: string | null;
@@ -76,6 +78,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
           street,
           city,
           province,
+          region,
           phone,
           email,
           website,
@@ -104,6 +107,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
             street: business.street,
             city: business.city,
             province: business.province,
+            region: business.region,
             phone: business.phone,
             email: business.email,
             website: business.website,
@@ -142,6 +146,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
             street: business.street,
             city: business.city,
             province: business.province,
+            region: null,
             phone: business.phone,
             email: business.email,
             website: business.website,
@@ -266,7 +271,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
       street: business.street || '',
       city: business.city,
       province: business.province || '',
-      region: '',
+      region: business.region || '',
       postal_code: '',
       website: business.website || '',
       email: business.email || '',
@@ -503,11 +508,29 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
             </div>
 
             <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Regione *
+              </label>
+              <select
+                value={formData.region}
+                onChange={(e) => setFormData(prev => ({ ...prev, region: e.target.value, province: '', city: '' }))}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Seleziona regione</option>
+                {ITALIAN_REGIONS.map(r => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
               <ItalianCityProvinceSelect
                 province={formData.province}
                 city={formData.city}
-                onProvinceChange={(prov, code) => setFormData({ ...formData, province: code || prov, city: '' })}
-                onCityChange={(c) => setFormData({ ...formData, city: c })}
+                region={formData.region}
+                onProvinceChange={(prov, code) => setFormData(prev => ({ ...prev, province: code || prov, city: '' }))}
+                onCityChange={(c) => setFormData(prev => ({ ...prev, city: c }))}
                 required
               />
             </div>
