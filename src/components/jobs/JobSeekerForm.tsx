@@ -29,7 +29,8 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
     desired_salary_max: '',
     location: '',
     region: '',
-    province: '',
+    province: '',      // nome completo per ItalianCityProvinceSelect
+    provinceCode: '',  // sigla salvata nel DB
     city: '',
     available_from: '',
     experience_years: '',
@@ -76,7 +77,7 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
         desired_salary_max: formData.desired_salary_max ? parseFloat(formData.desired_salary_max) : null,
         location: locationString,
         region: formData.region || null,
-        province: formData.province || null,
+        province: formData.provinceCode || formData.province || null,
         city: formData.city || null,
         available_from: formData.available_from || null,
         experience_years: formData.experience_years ? parseInt(formData.experience_years) : 0,
@@ -185,7 +186,7 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
             <label className="block text-sm font-medium text-gray-700 mb-1">Regione</label>
             <select
               value={formData.region}
-              onChange={(e) => setFormData({ ...formData, region: e.target.value, province: '', city: '' })}
+              onChange={(e) => setFormData({ ...formData, region: e.target.value, province: '', provinceCode: '', city: '' })}
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 text-sm bg-white"
             >
               <option value="">Seleziona regione...</option>
@@ -196,7 +197,7 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
             province={formData.province}
             city={formData.city}
             region={formData.region}
-            onProvinceChange={(prov) => setFormData({ ...formData, province: prov, city: '' })}
+            onProvinceChange={(prov, code) => setFormData({ ...formData, province: prov, provinceCode: code, city: '' })}
             onCityChange={(c) => setFormData({ ...formData, city: c })}
           />
         </div>
