@@ -71,14 +71,17 @@ export function RulesPage() {
     setPendingScrollId(hash);
   };
 
-  // scroll after tab renders — wait for DOM paint
+  // scroll after tab renders — wait for DOM paint, offset for sticky header
   useEffect(() => {
     if (!pendingScrollId) return;
     let raf: number;
     const tryScroll = () => {
       const el = document.getElementById(pendingScrollId);
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const headerEl = document.querySelector('header');
+        const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 64;
+        const top = el.getBoundingClientRect().top + window.scrollY - headerHeight - 16;
+        window.scrollTo({ top, behavior: 'smooth' });
         setPendingScrollId(null);
       } else {
         raf = requestAnimationFrame(tryScroll);
