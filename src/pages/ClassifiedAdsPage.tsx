@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ClassifiedAdCard } from '../components/classifieds/ClassifiedAdCard';
 import { ClassifiedAdForm } from '../components/classifieds/ClassifiedAdForm';
 import { ItalianCityProvinceSelect } from '../components/common/ItalianCityProvinceSelect';
+import { ITALIAN_REGIONS } from '../lib/cities';
 
 interface Category {
   id: string;
@@ -58,6 +59,7 @@ export function ClassifiedAdsPage() {
   const [adType, setAdType] = useState<'all' | 'sell' | 'buy' | 'gift'>(typeParam || 'all');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRegion, setSelectedRegion] = useState('');
   const [selectedProvince, setSelectedProvince] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [minPrice, setMinPrice] = useState('');
@@ -66,7 +68,7 @@ export function ClassifiedAdsPage() {
   useEffect(() => {
     loadCategories();
     loadAds();
-  }, [adType, selectedCategory, searchQuery, selectedProvince, selectedCity, minPrice, maxPrice]);
+  }, [adType, selectedCategory, searchQuery, selectedRegion, selectedProvince, selectedCity, minPrice, maxPrice]);
 
   const loadCategories = async () => {
     try {
@@ -105,6 +107,10 @@ export function ClassifiedAdsPage() {
 
       if (searchQuery) {
         query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+      }
+
+      if (selectedRegion) {
+        query = query.ilike('region', `%${selectedRegion}%`);
       }
 
       if (selectedProvince) {
@@ -324,7 +330,18 @@ export function ClassifiedAdsPage() {
             </div>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Regione</label>
+              <select
+                value={selectedRegion}
+                onChange={(e) => { setSelectedRegion(e.target.value); setSelectedProvince(''); setSelectedCity(''); }}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 text-sm bg-white"
+              >
+                <option value="">Tutte le regioni</option>
+                {ITALIAN_REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
             <ItalianCityProvinceSelect
               province={selectedProvince}
               city={selectedCity}
@@ -334,12 +351,13 @@ export function ClassifiedAdsPage() {
           </div>
 
           {/* Clear Filters */}
-          {(adType !== 'all' || selectedCategory || searchQuery || selectedProvince || selectedCity || minPrice || maxPrice) && (
+          {(adType !== 'all' || selectedCategory || searchQuery || selectedRegion || selectedProvince || selectedCity || minPrice || maxPrice) && (
             <button
               onClick={() => {
                 setAdType('all');
                 setSelectedCategory('');
                 setSearchQuery('');
+                setSelectedRegion('');
                 setSelectedProvince('');
                 setSelectedCity('');
                 setMinPrice('');

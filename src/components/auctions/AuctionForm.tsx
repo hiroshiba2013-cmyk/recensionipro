@@ -3,6 +3,7 @@ import { Upload, X, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { ITALIAN_REGIONS } from '../../lib/cities';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 
 interface AuctionFormProps {
@@ -275,6 +276,19 @@ export default function AuctionForm({ onSuccess, onCancel, businessLocationId, i
             ))}
           </select>
         </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Regione *</label>
+        <select
+          required
+          value={formData.region}
+          onChange={(e) => setFormData({ ...formData, region: e.target.value, province: '', city: '' })}
+          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 text-sm bg-white"
+        >
+          <option value="">Seleziona regione...</option>
+          {ITALIAN_REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+        </select>
       </div>
 
       <ItalianCityProvinceSelect

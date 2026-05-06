@@ -3,8 +3,10 @@ import { Plus, Search, Filter } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { ITALIAN_REGIONS } from '../lib/cities';
 import AuctionCard from '../components/auctions/AuctionCard';
 import AuctionForm from '../components/auctions/AuctionForm';
+import { ItalianCityProvinceSelect } from '../components/common/ItalianCityProvinceSelect';
 
 const categories = [
   'Tutte',
@@ -159,39 +161,24 @@ export default function AuctionsPage() {
           </div>
 
           {showFilters && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Regione</label>
-                  <input
-                    type="text"
-                    value={filters.region}
-                    onChange={(e) => setFilters({ ...filters, region: e.target.value })}
-                    placeholder="Tutte le regioni"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Provincia</label>
-                  <input
-                    type="text"
-                    value={filters.province}
-                    onChange={(e) => setFilters({ ...filters, province: e.target.value })}
-                    placeholder="Tutte le province"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Città</label>
-                  <input
-                    type="text"
-                    value={filters.city}
-                    onChange={(e) => setFilters({ ...filters, city: e.target.value })}
-                    placeholder="Tutte le città"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
+            <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Regione</label>
+                <select
+                  value={filters.region}
+                  onChange={(e) => setFilters({ ...filters, region: e.target.value, province: '', city: '' })}
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 text-sm bg-white"
+                >
+                  <option value="">Tutte le regioni</option>
+                  {ITALIAN_REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
               </div>
+              <ItalianCityProvinceSelect
+                province={filters.province}
+                city={filters.city}
+                onProvinceChange={(prov) => setFilters({ ...filters, province: prov, city: '' })}
+                onCityChange={(c) => setFilters({ ...filters, city: c })}
+              />
             </div>
           )}
 
