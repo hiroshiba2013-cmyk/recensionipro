@@ -84,7 +84,6 @@ interface SolidarityStats {
   charity_amount: number;
 }
 
-// v2-accordion
 export function DashboardPage() {
   const { profile, selectedBusinessLocationId, activeProfile } = useAuth();
   const navigate = useNavigate();
@@ -560,32 +559,34 @@ export function DashboardPage() {
       <TrialExpirationModal />
 
       {/* Hero */}
-      <section className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+      <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div>
-              <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
-                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+              <div className="inline-flex items-center gap-2 bg-white/10 text-white/80 text-xs font-semibold px-3 py-1.5 rounded-full mb-4 backdrop-blur">
+                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
                 {profile.user_type === 'business' ? 'Account Business' : 'Account Privato'}
               </div>
-              <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-2">
-                Ciao, {activeProfile ? (activeProfile.nickname || activeProfile.name.split(' ')[0]) : (profile.full_name?.split(' ')[0] || 'Utente')}!
+              <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-1">
+                Ciao, {activeProfile ? (activeProfile.nickname || activeProfile.name.split(' ')[0]) : (profile.full_name?.split(' ')[0] || 'Utente')}
               </h1>
-              <p className="text-lg text-gray-500">
+              <p className="text-slate-400 text-base">
                 {profile.user_type === 'business' ? 'Gestisci la tua attivita e le sedi' : 'Gestisci il tuo profilo e le attivita'}
               </p>
             </div>
             {currentSubscription && (
-              <div className="bg-gray-50 border border-gray-200 rounded-2xl px-6 py-4">
-                <p className="text-xs text-gray-500 mb-1">Piano Attivo</p>
-                <p className="text-lg font-bold text-gray-900">{currentSubscription.plan.name}</p>
-                <p className="text-sm text-gray-500">
-                  {currentSubscription.plan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'}
-                </p>
+              <div className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl px-5 py-4 flex items-center gap-4">
+                <div>
+                  <p className="text-xs text-slate-400 mb-0.5">Piano Attivo</p>
+                  <p className="text-base font-bold text-white">{currentSubscription.plan.name}</p>
+                  <p className="text-xs text-slate-400">
+                    {currentSubscription.plan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'}
+                  </p>
+                </div>
                 {currentSubscription.status === 'trial' && (
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full mt-1">
-                    <div className="w-1 h-1 bg-blue-500 rounded-full animate-pulse"></div>
-                    Periodo di prova
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-1 rounded-full">
+                    <div className="w-1 h-1 bg-emerald-400 rounded-full animate-pulse"></div>
+                    Prova gratuita
                   </span>
                 )}
               </div>
