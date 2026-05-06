@@ -84,7 +84,6 @@ interface SolidarityStats {
   charity_amount: number;
 }
 
-// v2-accordion
 export function DashboardPage() {
   const { profile, selectedBusinessLocationId, activeProfile } = useAuth();
   const navigate = useNavigate();
