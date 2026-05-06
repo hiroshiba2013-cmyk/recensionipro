@@ -1,5 +1,5 @@
 // v2 - badge navigation
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Star, Building, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase, Users, DollarSign, Trophy, Activity, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Business, Review, FamilyMember } from '../lib/supabase';
