@@ -4,6 +4,37 @@ import { supabase, BusinessCategory } from '../../lib/supabase';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { ITALIAN_REGIONS } from '../../lib/cities';
 
+const PROVINCE_NAMES: Record<string, string> = {
+  'AG': 'Agrigento', 'AL': 'Alessandria', 'AN': 'Ancona', 'AR': 'Arezzo',
+  'AP': 'Ascoli Piceno', 'AT': 'Asti', 'AV': 'Avellino', 'BA': 'Bari',
+  'BT': 'Barletta-Andria-Trani', 'BL': 'Belluno', 'BN': 'Benevento',
+  'BG': 'Bergamo', 'BI': 'Biella', 'BO': 'Bologna', 'BZ': 'Bolzano',
+  'BS': 'Brescia', 'BR': 'Brindisi', 'CA': 'Cagliari', 'CL': 'Caltanissetta',
+  'CB': 'Campobasso', 'CE': 'Caserta', 'CT': 'Catania', 'CZ': 'Catanzaro',
+  'CH': 'Chieti', 'CO': 'Como', 'CS': 'Cosenza', 'CR': 'Cremona',
+  'KR': 'Crotone', 'CN': 'Cuneo', 'EN': 'Enna', 'FM': 'Fermo',
+  'FE': 'Ferrara', 'FI': 'Firenze', 'FG': 'Foggia', 'FC': 'Forlì-Cesena',
+  'FR': 'Frosinone', 'GE': 'Genova', 'GO': 'Gorizia', 'GR': 'Grosseto',
+  'IM': 'Imperia', 'IS': 'Isernia', 'AQ': "L'Aquila", 'SP': 'La Spezia',
+  'LT': 'Latina', 'LE': 'Lecce', 'LC': 'Lecco', 'LI': 'Livorno',
+  'LO': 'Lodi', 'LU': 'Lucca', 'MC': 'Macerata', 'MN': 'Mantova',
+  'MS': 'Massa-Carrara', 'MT': 'Matera', 'ME': 'Messina', 'MI': 'Milano',
+  'MO': 'Modena', 'MB': 'Monza e Brianza', 'NA': 'Napoli', 'NO': 'Novara',
+  'NU': 'Nuoro', 'OR': 'Oristano', 'PD': 'Padova', 'PA': 'Palermo',
+  'PR': 'Parma', 'PV': 'Pavia', 'PG': 'Perugia', 'PU': 'Pesaro e Urbino',
+  'PE': 'Pescara', 'PC': 'Piacenza', 'PI': 'Pisa', 'PT': 'Pistoia',
+  'PN': 'Pordenone', 'PZ': 'Potenza', 'PO': 'Prato', 'RG': 'Ragusa',
+  'RA': 'Ravenna', 'RC': 'Reggio Calabria', 'RE': 'Reggio Emilia',
+  'RI': 'Rieti', 'RN': 'Rimini', 'RM': 'Roma', 'RO': 'Rovigo',
+  'SA': 'Salerno', 'SS': 'Sassari', 'SV': 'Savona', 'SI': 'Siena',
+  'SR': 'Siracusa', 'SO': 'Sondrio', 'SU': 'Sud Sardegna', 'TA': 'Taranto',
+  'TE': 'Teramo', 'TR': 'Terni', 'TO': 'Torino', 'TP': 'Trapani',
+  'TN': 'Trento', 'TV': 'Treviso', 'TS': 'Trieste', 'UD': 'Udine',
+  'AO': 'Aosta', 'VA': 'Varese', 'VE': 'Venezia',
+  'VB': 'Verbano-Cusio-Ossola', 'VC': 'Vercelli', 'VR': 'Verona',
+  'VV': 'Vibo Valentia', 'VI': 'Vicenza', 'VT': 'Viterbo',
+};
+
 interface AddUnclaimedBusinessFormProps {
   customerId: string;
   activeFamilyMemberId?: string | null;
@@ -40,7 +71,8 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
     category_id: '',
     street: '',
     city: '',
-    province: '',
+    province: '',      // nome completo, usato da ItalianCityProvinceSelect per caricare i comuni
+    provinceCode: '',  // sigla (es. "VA"), salvata nel DB
     region: '',
     postal_code: '',
     website: '',
@@ -214,7 +246,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
           category_id: formData.category_id || null,
           street: formData.street,
           city: formData.city,
-          province: formData.province,
+          province: formData.provinceCode || formData.province,
           region: formData.region,
           postal_code: formData.postal_code,
           website: formData.website,
@@ -237,6 +269,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
         street: '',
         city: '',
         province: '',
+        provinceCode: '',
         region: '',
         postal_code: '',
         website: '',
@@ -265,12 +298,17 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
 
   const handleEdit = (business: UserAddedBusiness) => {
     const category = categories.find(c => c.name === business.category);
+    const storedProvince = business.province || '';
+    const isSigla = storedProvince.length <= 2 && storedProvince === storedProvince.toUpperCase();
+    const provinceName = isSigla ? (PROVINCE_NAMES[storedProvince] || storedProvince) : storedProvince;
+    const provinceCode = isSigla ? storedProvince : '';
     setFormData({
       name: business.name,
       category_id: category?.id || '',
       street: business.street || '',
       city: business.city,
-      province: business.province || '',
+      province: provinceName,
+      provinceCode,
       region: business.region || '',
       postal_code: '',
       website: business.website || '',
@@ -295,7 +333,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
           category_id: formData.category_id || null,
           street: formData.street,
           city: formData.city,
-          province: formData.province,
+          province: formData.provinceCode || formData.province,
           region: formData.region,
           postal_code: formData.postal_code,
           website: formData.website,
@@ -314,6 +352,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
         street: '',
         city: '',
         province: '',
+        provinceCode: '',
         region: '',
         postal_code: '',
         website: '',
@@ -529,7 +568,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
                 province={formData.province}
                 city={formData.city}
                 region={formData.region}
-                onProvinceChange={(prov, code) => setFormData(prev => ({ ...prev, province: code || prov, city: '' }))}
+                onProvinceChange={(prov, code) => setFormData(prev => ({ ...prev, province: prov, provinceCode: code, city: '' }))}
                 onCityChange={(c) => setFormData(prev => ({ ...prev, city: c }))}
                 required
               />
