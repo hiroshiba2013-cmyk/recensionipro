@@ -630,23 +630,56 @@ export function DashboardPage() {
                   </div>
                 )}
 
-                <UserAuctionsSection />
+                {/* Badge navigation - Business */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                  <div className="flex flex-wrap gap-2">
+                    {([
+                      { key: 'biz_ads', label: 'I Miei Annunci', icon: Tag, color: 'green', badge: businessClassifiedAds.length > 0 ? String(businessClassifiedAds.length) : null },
+                      { key: 'biz_jobs', label: 'Offerte di Lavoro', icon: Briefcase, color: 'blue', badge: jobPostings.length > 0 ? String(jobPostings.length) : null },
+                      { key: 'biz_reviews', label: 'Recensioni Ricevute', icon: Star, color: 'amber', badge: reviews.length > 0 ? String(reviews.length) : null },
+                      { key: 'biz_auctions', label: 'Le Mie Aste', icon: TrendingUp, color: 'orange', badge: null },
+                      { key: 'biz_favorites', label: 'Preferiti', icon: Heart, color: 'red', badge: null },
+                      ...(!selectedBusinessLocationId ? [{ key: 'business_activities', label: 'Le Mie Attivita', icon: Building, color: 'sky', badge: businesses.length > 0 ? String(businesses.length) : null }] : []),
+                      { key: 'biz_seekers', label: 'Profili Cerco Lavoro', icon: Users, color: 'teal', badge: jobSeekers.length > 0 ? String(jobSeekers.length) : null },
+                      ...(solidarityStats ? [{ key: 'biz_solidarity', label: 'Solidarieta', icon: Gift, color: 'emerald', badge: null }] : []),
+                      ...(currentSubscription && availablePlans.length > 0 ? [{ key: 'business_plans', label: 'Cambia Piano', icon: Shield, color: 'slate', badge: currentSubscription.plan.name }] : []),
+                    ] as Array<{ key: string; label: string; icon: React.ElementType; color: string; badge: string | null }>).map(({ key, label, icon: Icon, color, badge }) => {
+                      const active = !!openSections[key];
+                      const colorMap: Record<string, { on: string; off: string }> = {
+                        green:   { on: 'bg-green-600 text-white border-green-600',     off: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' },
+                        blue:    { on: 'bg-blue-600 text-white border-blue-600',       off: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' },
+                        amber:   { on: 'bg-amber-500 text-white border-amber-500',     off: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' },
+                        orange:  { on: 'bg-orange-500 text-white border-orange-500',   off: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' },
+                        red:     { on: 'bg-red-500 text-white border-red-500',         off: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' },
+                        sky:     { on: 'bg-sky-500 text-white border-sky-500',         off: 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100' },
+                        teal:    { on: 'bg-teal-600 text-white border-teal-600',       off: 'bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100' },
+                        emerald: { on: 'bg-emerald-600 text-white border-emerald-600', off: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' },
+                        slate:   { on: 'bg-slate-600 text-white border-slate-600',     off: 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' },
+                      };
+                      const cls = colorMap[color] ?? colorMap.blue;
+                      return (
+                        <button key={key} onClick={() => toggleSection(key)} className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${active ? cls.on : cls.off}`}>
+                          <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span>{label}</span>
+                          {badge && <span className={`ml-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold px-1 ${active ? 'bg-white/30 text-white' : 'bg-white shadow-sm'}`}>{badge}</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-                {/* Annunci */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  <button onClick={() => toggleSection('ads')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center"><Tag className="w-4 h-4 text-green-600" /></div>
-                      <span className="font-semibold text-gray-900">I Miei Annunci</span>
-                      {businessClassifiedAds.length > 0 && <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">{businessClassifiedAds.length}</span>}
+                {/* I Miei Annunci */}
+                {openSections.biz_ads && (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center"><Tag className="w-4 h-4 text-green-600" /></div>
+                        <span className="font-semibold text-gray-900">I Miei Annunci</span>
+                        {businessClassifiedAds.length > 0 && <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">{businessClassifiedAds.length}</span>}
+                      </div>
+                      <button onClick={() => { setEditingClassifiedAdId(undefined); setShowClassifiedAdForm(true); }} className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"><Plus className="w-3 h-3" />Nuovo</button>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={(e) => { e.stopPropagation(); setEditingClassifiedAdId(undefined); setShowClassifiedAdForm(true); }} className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"><Plus className="w-3 h-3" />Nuovo</button>
-                      {openSections.ads ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                    </div>
-                  </button>
-                  {openSections.ads && (
-                    <div className="px-5 pb-5 border-t border-gray-100">
+                    <div className="px-5 pb-5">
                       {businessClassifiedAds.length === 0 ? (
                         <div className="text-center py-8">
                           <Tag className="w-10 h-10 text-gray-200 mx-auto mb-3" />
@@ -661,25 +694,23 @@ export function DashboardPage() {
                         </div>
                       )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
-                {!loading && (selectedBusinessId || businesses[0]?.id) && (
+                {/* Offerte di Lavoro */}
+                {openSections.biz_jobs && !loading && (selectedBusinessId || businesses[0]?.id) && (
                   <BusinessJobPostingForm key={`${selectedBusinessId || businesses[0]?.id}-${selectedBusinessLocationId || 'all'}`} businessId={(selectedBusinessId || businesses[0]?.id)!} isRegisteredBusiness={isRegisteredBusiness} selectedLocationId={selectedBusinessLocationId || undefined} />
                 )}
 
-                {/* Recensioni ricevute */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  <button onClick={() => toggleSection('business_reviews')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center"><Star className="w-4 h-4 text-yellow-600" /></div>
+                {/* Recensioni Ricevute */}
+                {openSections.biz_reviews && (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
+                      <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center"><Star className="w-4 h-4 text-amber-600" /></div>
                       <span className="font-semibold text-gray-900">{selectedBusinessLocationId ? 'Recensioni Sede' : 'Recensioni Ricevute'}</span>
-                      {reviews.length > 0 && <span className="bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-0.5 rounded-full">{reviews.length}</span>}
+                      {reviews.length > 0 && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{reviews.length}</span>}
                     </div>
-                    {openSections.business_reviews ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                  </button>
-                  {openSections.business_reviews && (
-                    <div className="px-5 pb-5 border-t border-gray-100">
+                    <div className="px-5 pb-5">
                       {reviews.length === 0 ? (
                         <p className="text-gray-500 text-sm text-center py-6">{selectedBusinessLocationId ? 'Nessuna recensione per questa sede' : 'Nessuna recensione ricevuta'}</p>
                       ) : (
@@ -702,90 +733,86 @@ export function DashboardPage() {
                         </div>
                       )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
+
+                {/* Le Mie Aste */}
+                {openSections.biz_auctions && (
+                  <UserAuctionsSection />
+                )}
 
                 {/* Preferiti */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  <button onClick={() => toggleSection('favorites')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
+                {openSections.biz_favorites && (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
                       <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center"><Heart className="w-4 h-4 text-red-500" /></div>
                       <span className="font-semibold text-gray-900">Preferiti</span>
                     </div>
-                    {openSections.favorites ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                  </button>
-                  {openSections.favorites && <div className="border-t border-gray-100"><FavoritesSection /></div>}
-                </div>
+                    <FavoritesSection />
+                  </div>
+                )}
 
-                {/* Gestione attività */}
-                {!selectedBusinessLocationId && (
+                {/* Le Mie Attivita */}
+                {openSections.business_activities && !selectedBusinessLocationId && (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <button onClick={() => toggleSection('business_activities')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"><Building className="w-4 h-4 text-blue-600" /></div>
-                        <span className="font-semibold text-gray-900">Le Mie Attività</span>
-                        {businesses.length > 0 && <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">{businesses.length}</span>}
+                        <div className="w-8 h-8 bg-sky-100 rounded-lg flex items-center justify-center"><Building className="w-4 h-4 text-sky-600" /></div>
+                        <span className="font-semibold text-gray-900">Le Mie Attivita</span>
+                        {businesses.length > 0 && <span className="bg-sky-100 text-sky-700 text-xs font-bold px-2 py-0.5 rounded-full">{businesses.length}</span>}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button onClick={(e) => { e.stopPropagation(); setShowCreateBusinessForm(true); }} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"><Plus className="w-3 h-3" />Aggiungi</button>
-                        {openSections.business_activities ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                      </div>
-                    </button>
-                    {openSections.business_activities && (
-                      <div className="px-5 pb-5 border-t border-gray-100 pt-4">
-                        {showCreateBusinessForm ? (
-                          <CreateBusinessForm ownerId={profile.id} onSuccess={() => { setShowCreateBusinessForm(false); loadDashboardData(); }} onCancel={() => setShowCreateBusinessForm(false)} />
-                        ) : (
-                          <>
-                            {businesses.length === 0 ? (
-                              <p className="text-sm text-gray-500 text-center py-4">Non hai ancora registrato nessuna attività</p>
-                            ) : (
-                              <div className="grid gap-2 mb-4">
-                                {businesses.map((business) => (
-                                  <div key={business.id} onClick={() => setSelectedBusinessId(business.id)} className={`border rounded-xl p-3 cursor-pointer transition-all flex items-center justify-between ${selectedBusinessId === business.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}>
-                                    <div><h3 className="font-semibold text-gray-900 text-sm">{business.name}</h3><p className="text-gray-500 text-xs">{business.city}</p></div>
-                                    {business.verified ? <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">Verificato</span> : <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full font-medium">In Attesa</span>}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            {selectedBusinessId && (
-                              <>
-                                <EditBusinessForm businessId={selectedBusinessId} selectedLocationId={selectedBusinessLocationId} onUpdate={loadDashboardData} />
-                                <EditBusinessLocationsForm businessId={selectedBusinessId} selectedLocationId={selectedBusinessLocationId} onUpdate={loadDashboardData} />
-                              </>
-                            )}
-                            <ImportBusinessesForm onImportComplete={loadDashboardData} />
-                          </>
-                        )}
-                      </div>
-                    )}
+                      <button onClick={() => setShowCreateBusinessForm(true)} className="bg-sky-600 hover:bg-sky-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"><Plus className="w-3 h-3" />Aggiungi</button>
+                    </div>
+                    <div className="px-5 pb-5 pt-4">
+                      {showCreateBusinessForm ? (
+                        <CreateBusinessForm ownerId={profile.id} onSuccess={() => { setShowCreateBusinessForm(false); loadDashboardData(); }} onCancel={() => setShowCreateBusinessForm(false)} />
+                      ) : (
+                        <>
+                          {businesses.length === 0 ? (
+                            <p className="text-sm text-gray-500 text-center py-4">Non hai ancora registrato nessuna attivita</p>
+                          ) : (
+                            <div className="grid gap-2 mb-4">
+                              {businesses.map((business) => (
+                                <div key={business.id} onClick={() => setSelectedBusinessId(business.id)} className={`border rounded-xl p-3 cursor-pointer transition-all flex items-center justify-between ${selectedBusinessId === business.id ? 'border-sky-500 bg-sky-50' : 'border-gray-200 hover:border-sky-300'}`}>
+                                  <div><h3 className="font-semibold text-gray-900 text-sm">{business.name}</h3><p className="text-gray-500 text-xs">{business.city}</p></div>
+                                  {business.verified ? <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">Verificato</span> : <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full font-medium">In Attesa</span>}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {selectedBusinessId && (
+                            <>
+                              <EditBusinessForm businessId={selectedBusinessId} selectedLocationId={selectedBusinessLocationId} onUpdate={loadDashboardData} />
+                              <EditBusinessLocationsForm businessId={selectedBusinessId} selectedLocationId={selectedBusinessLocationId} onUpdate={loadDashboardData} />
+                            </>
+                          )}
+                          <ImportBusinessesForm onImportComplete={loadDashboardData} />
+                        </>
+                      )}
+                    </div>
                   </div>
                 )}
 
                 {/* Profili Cerco Lavoro */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  <button onClick={() => toggleSection('job_seekers')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"><Users className="w-4 h-4 text-blue-600" /></div>
+                {openSections.biz_seekers && (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
+                      <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center"><Users className="w-4 h-4 text-teal-600" /></div>
                       <span className="font-semibold text-gray-900">Profili Cerco Lavoro</span>
-                      {jobSeekers.length > 0 && <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">{jobSeekers.length}</span>}
+                      {jobSeekers.length > 0 && <span className="bg-teal-100 text-teal-700 text-xs font-bold px-2 py-0.5 rounded-full">{jobSeekers.length}</span>}
                     </div>
-                    {openSections.job_seekers ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                  </button>
-                  {openSections.job_seekers && (
-                    <div className="px-5 pb-5 border-t border-gray-100">
+                    <div className="px-5 pb-5">
                       {jobSeekers.length === 0 ? (
                         <p className="text-sm text-gray-500 text-center py-6">Nessun profilo disponibile</p>
                       ) : (
                         <div className="grid gap-2 pt-4">
                           {jobSeekers.map((seeker) => (
-                            <div key={seeker.id} className="border border-gray-100 rounded-xl p-3 hover:border-blue-200 transition-all flex items-center gap-3">
-                              {seeker.profiles.avatar_url ? <img src={seeker.profiles.avatar_url} alt={seeker.profiles.full_name} className="w-9 h-9 rounded-full object-cover flex-shrink-0" /> : <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">{seeker.profiles.full_name.charAt(0)}</div>}
+                            <div key={seeker.id} className="border border-gray-100 rounded-xl p-3 hover:border-teal-200 transition-all flex items-center gap-3">
+                              {seeker.profiles.avatar_url ? <img src={seeker.profiles.avatar_url} alt={seeker.profiles.full_name} className="w-9 h-9 rounded-full object-cover flex-shrink-0" /> : <div className="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 font-bold text-sm flex-shrink-0">{seeker.profiles.full_name.charAt(0)}</div>}
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between gap-2">
                                   <h3 className="font-semibold text-gray-900 text-sm truncate">{seeker.title}</h3>
-                                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium flex-shrink-0">{seeker.category}</span>
+                                  <span className="px-2 py-0.5 bg-teal-100 text-teal-700 text-xs rounded-full font-medium flex-shrink-0">{seeker.category}</span>
                                 </div>
                                 <p className="text-xs text-gray-500">{seeker.profiles.nickname || seeker.profiles.full_name} · {seeker.city}</p>
                               </div>
@@ -793,69 +820,59 @@ export function DashboardPage() {
                           ))}
                         </div>
                       )}
-                      <div className="mt-3 text-center"><button onClick={() => navigate('/jobs')} className="text-blue-600 text-sm font-semibold hover:underline">Vedi tutti i profili</button></div>
+                      <div className="mt-3 text-center"><button onClick={() => navigate('/jobs')} className="text-teal-600 text-sm font-semibold hover:underline">Vedi tutti i profili</button></div>
                     </div>
-                  )}
-                </div>
-
-                {/* Solidarietà */}
-                {solidarityStats && (
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <button onClick={() => toggleSection('solidarity')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center"><Heart className="w-4 h-4 text-green-600" /></div>
-                        <span className="font-semibold text-gray-900">Solidarietà</span>
-                        <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">€{solidarityStats.charity_amount.toLocaleString('it-IT', { maximumFractionDigits: 0 })}</span>
-                      </div>
-                      {openSections.solidarity ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                    </button>
-                    {openSections.solidarity && (
-                      <div className="px-5 pb-5 border-t border-gray-100 pt-4">
-                        <div className="grid md:grid-cols-2 gap-3">
-                          <div className="bg-green-50 rounded-xl p-4 border border-green-100"><div className="flex items-center gap-2 mb-1"><DollarSign className="w-4 h-4 text-green-600" /><span className="text-xs font-semibold text-gray-600">Fatturato Totale</span></div><p className="text-xl font-bold text-green-600">€{solidarityStats.total_revenue.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
-                          <div className="bg-blue-50 rounded-xl p-4 border border-blue-100"><div className="flex items-center gap-2 mb-1"><Heart className="w-4 h-4 text-blue-600" /><span className="text-xs font-semibold text-gray-600">Donato in Beneficenza</span></div><p className="text-xl font-bold text-blue-600">€{solidarityStats.charity_amount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
-                        </div>
-                        <div className="mt-3 text-center"><button onClick={() => navigate('/solidarity')} className="text-green-600 text-sm font-semibold hover:underline">Scopri di più</button></div>
-                      </div>
-                    )}
                   </div>
                 )}
 
-                {/* Cambia Piano - Business */}
-                {currentSubscription && availablePlans.length > 0 && (
+                {/* Solidarieta */}
+                {openSections.biz_solidarity && solidarityStats && (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <button onClick={() => toggleSection('business_plans')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center"><Shield className="w-4 h-4 text-gray-600" /></div>
-                        <span className="font-semibold text-gray-900">Cambia Piano</span>
-                        <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full">{currentSubscription.plan.name}</span>
+                    <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
+                      <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center"><Gift className="w-4 h-4 text-emerald-600" /></div>
+                      <span className="font-semibold text-gray-900">Solidarieta</span>
+                      <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-0.5 rounded-full">€{solidarityStats.charity_amount.toLocaleString('it-IT', { maximumFractionDigits: 0 })}</span>
+                    </div>
+                    <div className="px-5 pb-5 pt-4">
+                      <div className="grid md:grid-cols-2 gap-3">
+                        <div className="bg-green-50 rounded-xl p-4 border border-green-100"><div className="flex items-center gap-2 mb-1"><DollarSign className="w-4 h-4 text-green-600" /><span className="text-xs font-semibold text-gray-600">Fatturato Totale</span></div><p className="text-xl font-bold text-green-600">€{solidarityStats.total_revenue.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
+                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-100"><div className="flex items-center gap-2 mb-1"><Heart className="w-4 h-4 text-blue-600" /><span className="text-xs font-semibold text-gray-600">Donato in Beneficenza</span></div><p className="text-xl font-bold text-blue-600">€{solidarityStats.charity_amount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
                       </div>
-                      {openSections.business_plans ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                    </button>
-                    {openSections.business_plans && (
-                      <div className="px-5 pb-5 border-t border-gray-100 pt-4">
-                        {upgradeMessage && <div className={`mb-4 p-3 rounded-xl text-sm ${upgradeMessage.includes('successo') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{upgradeMessage}</div>}
-                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
-                          {availablePlans.map((plan) => {
-                            const monthlyEquivalent = availablePlans.find(p => p.max_persons === plan.max_persons && p.billing_period === 'monthly');
-                            const isAnnual = plan.billing_period === 'yearly';
-                            const savings = isAnnual && monthlyEquivalent ? (monthlyEquivalent.price * 12) - plan.price : null;
-                            const isCurrent = currentSubscription.plan.id === plan.id;
-                            return (
-                              <div key={plan.id} className={`rounded-xl p-4 border-2 relative ${isCurrent ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}>
-                                {isAnnual && !isCurrent && <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full">RISPARMIO</span>}
-                                <h3 className="font-bold text-gray-900 text-sm mb-0.5">{plan.name}</h3>
-                                <p className="text-xs text-gray-500 mb-2">{plan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'} · {plan.max_persons} {plan.max_persons === 1 ? 'sede' : 'sedi'}</p>
-                                <p className="text-xl font-bold text-blue-600 mb-0.5">€{Number(plan.price).toFixed(2)}</p>
-                                <p className="text-xs text-gray-400 mb-2">+ IVA / {plan.billing_period === 'monthly' ? 'mese' : 'anno'}</p>
-                                {savings && <p className="text-xs text-green-600 font-semibold mb-2">Risparmi €{savings.toFixed(2)}</p>}
-                                {isCurrent ? <div className="w-full bg-blue-600 text-white py-1.5 rounded-lg text-xs font-semibold text-center">Piano Attuale</div> : <button onClick={() => handleChangePlan(plan.id)} className="w-full bg-gray-800 hover:bg-gray-900 text-white py-1.5 rounded-lg text-xs font-semibold transition-colors">Scegli Piano</button>}
-                              </div>
-                            );
-                          })}
-                        </div>
+                      <div className="mt-3 text-center"><button onClick={() => navigate('/solidarity')} className="text-emerald-600 text-sm font-semibold hover:underline">Scopri di piu</button></div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Cambia Piano */}
+                {openSections.business_plans && currentSubscription && availablePlans.length > 0 && (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
+                      <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center"><Shield className="w-4 h-4 text-slate-600" /></div>
+                      <span className="font-semibold text-gray-900">Cambia Piano</span>
+                      <span className="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-0.5 rounded-full">{currentSubscription.plan.name}</span>
+                    </div>
+                    <div className="px-5 pb-5 pt-4">
+                      {upgradeMessage && <div className={`mb-4 p-3 rounded-xl text-sm ${upgradeMessage.includes('successo') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{upgradeMessage}</div>}
+                      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
+                        {availablePlans.map((plan) => {
+                          const monthlyEquivalent = availablePlans.find(p => p.max_persons === plan.max_persons && p.billing_period === 'monthly');
+                          const isAnnual = plan.billing_period === 'yearly';
+                          const savings = isAnnual && monthlyEquivalent ? (monthlyEquivalent.price * 12) - plan.price : null;
+                          const isCurrent = currentSubscription.plan.id === plan.id;
+                          return (
+                            <div key={plan.id} className={`rounded-xl p-4 border-2 relative ${isCurrent ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}>
+                              {isAnnual && !isCurrent && <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full">RISPARMIO</span>}
+                              <h3 className="font-bold text-gray-900 text-sm mb-0.5">{plan.name}</h3>
+                              <p className="text-xs text-gray-500 mb-2">{plan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'} · {plan.max_persons} {plan.max_persons === 1 ? 'sede' : 'sedi'}</p>
+                              <p className="text-xl font-bold text-blue-600 mb-0.5">€{Number(plan.price).toFixed(2)}</p>
+                              <p className="text-xs text-gray-400 mb-2">+ IVA / {plan.billing_period === 'monthly' ? 'mese' : 'anno'}</p>
+                              {savings && <p className="text-xs text-green-600 font-semibold mb-2">Risparmi €{savings.toFixed(2)}</p>}
+                              {isCurrent ? <div className="w-full bg-blue-600 text-white py-1.5 rounded-lg text-xs font-semibold text-center">Piano Attuale</div> : <button onClick={() => handleChangePlan(plan.id)} className="w-full bg-gray-800 hover:bg-gray-900 text-white py-1.5 rounded-lg text-xs font-semibold transition-colors">Scegli Piano</button>}
+                            </div>
+                          );
+                        })}
                       </div>
-                    )}
+                    </div>
                   </div>
                 )}
               </>
