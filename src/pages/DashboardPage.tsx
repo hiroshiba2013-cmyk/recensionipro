@@ -861,64 +861,57 @@ export function DashboardPage() {
             ) : (
               /* ── PRIVATO ──────────────────────────────────────────── */
               <>
-                <UserAuctionsSection />
-
-                {/* Annunci */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  <button onClick={() => toggleSection('ads')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center"><Tag className="w-4 h-4 text-green-600" /></div>
-                      <span className="font-semibold text-gray-900">I Miei Annunci</span>
-                      {customerClassifiedAds.length > 0 && <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">{customerClassifiedAds.length}</span>}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={(e) => { e.stopPropagation(); setEditingCustomerAdId(undefined); setShowCustomerAdForm(true); }} className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"><Plus className="w-3 h-3" />Nuovo</button>
-                      {openSections.ads ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                    </div>
-                  </button>
-                  {openSections.ads && (
-                    <div className="px-5 pb-5 border-t border-gray-100">
-                      {customerClassifiedAds.length === 0 ? (
-                        <div className="text-center py-8">
-                          <Tag className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-                          <p className="text-sm text-gray-500 mb-3">Nessun annuncio pubblicato</p>
-                          <button onClick={() => { setEditingCustomerAdId(undefined); setShowCustomerAdForm(true); }} className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 text-sm font-semibold"><Plus className="w-4 h-4" />Crea annuncio</button>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4">
-                          {customerClassifiedAds.map(ad => (
-                            <ProfileClassifiedAdCard key={ad.id} ad={{ ...ad, price: ad.price ? parseFloat(ad.price) : null, classified_categories: ad.classified_categories, profiles: { full_name: profile?.nickname || profile?.full_name || 'Utente', avatar_url: null } }} onEdit={(ad) => { setEditingCustomerAdId(ad.id); setShowCustomerAdForm(true); }} onDelete={deleteClassifiedAd} />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Preferiti */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  <button onClick={() => toggleSection('favorites')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center"><Heart className="w-4 h-4 text-red-500" /></div>
-                      <span className="font-semibold text-gray-900">Preferiti</span>
-                    </div>
-                    {openSections.favorites ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                  </button>
-                  {openSections.favorites && <div className="border-t border-gray-100"><FavoritesSection /></div>}
+                {/* Badge navigation row */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { key: 'leaderboard', label: 'La Tua Classifica', icon: Trophy, color: 'yellow', badge: userRank ? `#${userRank.rank}` : null },
+                      { key: 'activities', label: 'Attività Aggiunte', icon: Activity, color: 'blue', badge: null },
+                      { key: 'job_seekers_customer', label: 'Annunci Cerco Lavoro', icon: Briefcase, color: 'sky', badge: null },
+                      { key: 'reviews', label: 'Le Tue Recensioni', icon: Star, color: 'amber', badge: reviews.filter(r => !r.family_member_id).length > 0 ? String(reviews.filter(r => !r.family_member_id).length) : null },
+                      { key: 'ads', label: 'I Tuoi Annunci', icon: Tag, color: 'green', badge: customerClassifiedAds.length > 0 ? String(customerClassifiedAds.length) : null },
+                      { key: 'auctions_customer', label: 'Le Mie Aste', icon: TrendingUp, color: 'orange', badge: null },
+                      { key: 'fav_ads', label: 'Annunci Preferiti', icon: Heart, color: 'red', badge: null },
+                      { key: 'fav_businesses', label: 'Attività Preferite', icon: Building, color: 'rose', badge: null },
+                    ].map(({ key, label, icon: Icon, color, badge }) => {
+                      const colorMap: Record<string, string> = {
+                        yellow: openSections[key] ? 'bg-yellow-500 text-white border-yellow-500' : 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100',
+                        blue: openSections[key] ? 'bg-blue-600 text-white border-blue-600' : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
+                        sky: openSections[key] ? 'bg-sky-500 text-white border-sky-500' : 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100',
+                        amber: openSections[key] ? 'bg-amber-500 text-white border-amber-500' : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100',
+                        green: openSections[key] ? 'bg-green-600 text-white border-green-600' : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100',
+                        orange: openSections[key] ? 'bg-orange-500 text-white border-orange-500' : 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100',
+                        red: openSections[key] ? 'bg-red-500 text-white border-red-500' : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100',
+                        rose: openSections[key] ? 'bg-rose-500 text-white border-rose-500' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100',
+                      };
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => toggleSection(key)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${colorMap[color]}`}
+                        >
+                          <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span>{label}</span>
+                          {badge && (
+                            <span className={`ml-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold px-1 ${openSections[key] ? 'bg-white/30' : 'bg-white shadow-sm'} ${openSections[key] ? 'text-white' : ''}`}>
+                              {badge}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Classifica */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  <button onClick={() => toggleSection('leaderboard')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
+                {openSections.leaderboard && (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
                       <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center"><Trophy className="w-4 h-4 text-yellow-600" /></div>
-                      <span className="font-semibold text-gray-900">La Mia Classifica</span>
+                      <span className="font-semibold text-gray-900">La Tua Classifica</span>
                       {userRank && <span className="bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-0.5 rounded-full">#{userRank.rank} · {userRank.points} pt</span>}
                     </div>
-                    {openSections.leaderboard ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                  </button>
-                  {openSections.leaderboard && (
-                    <div className="px-5 pb-5 border-t border-gray-100 pt-4">
+                    <div className="px-5 pb-5 pt-4">
                       {userRank && (
                         <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4 mb-4">
                           <div className="flex items-center justify-between">
@@ -930,29 +923,45 @@ export function DashboardPage() {
                           </div>
                         </div>
                       )}
-                      <div className="flex gap-2">
-                        <button onClick={() => navigate('/leaderboard')} className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2.5 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all font-semibold text-sm text-center">Classifica Completa</button>
-                        <button onClick={() => setLeaderboardTab(leaderboardTab === 'my_activities' ? 'leaderboard' : 'my_activities')} className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-1.5 transition-all ${leaderboardTab === 'my_activities' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}>
-                          <Activity className="w-4 h-4" />Le Mie Attività
-                        </button>
-                      </div>
-                      {leaderboardTab === 'my_activities' && <div className="mt-4 border border-blue-100 rounded-xl overflow-hidden"><ActivityFeed /></div>}
+                      <button onClick={() => navigate('/leaderboard')} className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2.5 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all font-semibold text-sm text-center">Classifica Completa</button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
-                {/* Recensioni personali */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  <button onClick={() => toggleSection('reviews')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center"><Star className="w-4 h-4 text-yellow-600" /></div>
-                      <span className="font-semibold text-gray-900">Le Mie Recensioni</span>
-                      {reviews.filter(r => !r.family_member_id).length > 0 && <span className="bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-0.5 rounded-full">{reviews.filter(r => !r.family_member_id).length}</span>}
+                {/* Attività aggiunte */}
+                {openSections.activities && (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
+                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"><Activity className="w-4 h-4 text-blue-600" /></div>
+                      <span className="font-semibold text-gray-900">Attività Aggiunte</span>
                     </div>
-                    {openSections.reviews ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                  </button>
-                  {openSections.reviews && (
-                    <div className="px-5 pb-5 border-t border-gray-100">
+                    <div className="border-t border-gray-100"><ActivityFeed /></div>
+                  </div>
+                )}
+
+                {/* Annunci cerco lavoro */}
+                {openSections.job_seekers_customer && (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
+                      <div className="w-8 h-8 bg-sky-100 rounded-lg flex items-center justify-center"><Briefcase className="w-4 h-4 text-sky-600" /></div>
+                      <span className="font-semibold text-gray-900">Annunci Cerco Lavoro</span>
+                    </div>
+                    <div className="px-5 pb-5 pt-4">
+                      <p className="text-sm text-gray-500 text-center py-4">Vai alla sezione lavoro per gestire il tuo profilo candidato.</p>
+                      <button onClick={() => navigate('/jobs')} className="w-full bg-sky-600 text-white py-2.5 rounded-xl hover:bg-sky-700 transition-colors font-semibold text-sm">Vai a Cerca Lavoro</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Le Tue Recensioni */}
+                {openSections.reviews && (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
+                      <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center"><Star className="w-4 h-4 text-amber-600" /></div>
+                      <span className="font-semibold text-gray-900">Le Tue Recensioni</span>
+                      {reviews.filter(r => !r.family_member_id).length > 0 && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{reviews.filter(r => !r.family_member_id).length}</span>}
+                    </div>
+                    <div className="px-5 pb-5">
                       {reviews.filter(r => !r.family_member_id).length === 0 ? (
                         <p className="text-sm text-gray-500 text-center py-6">Non hai ancora scritto recensioni</p>
                       ) : (
@@ -970,44 +979,86 @@ export function DashboardPage() {
                         </div>
                       )}
                     </div>
-                  )}
-                </div>
-
-                {familyMembers.map((member) => {
-                  const memberReviews = reviews.filter(r => r.family_member_id === member.id);
-                  return (
-                    <div key={member.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                      <button onClick={() => toggleSection(`family_${member.id}`)} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"><User className="w-4 h-4 text-blue-600" /></div>
-                          <span className="font-semibold text-gray-900">Recensioni di {member.nickname || `${member.first_name} ${member.last_name}`}</span>
-                          {memberReviews.length > 0 && <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">{memberReviews.length}</span>}
-                        </div>
-                        {openSections[`family_${member.id}`] ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                      </button>
-                      {openSections[`family_${member.id}`] && (
-                        <div className="px-5 pb-5 border-t border-gray-100">
-                          {memberReviews.length === 0 ? (
-                            <p className="text-sm text-gray-500 text-center py-6">Nessuna recensione ancora</p>
-                          ) : (
-                            <div className="space-y-3 pt-4">
-                              {memberReviews.map((review) => (
-                                <div key={review.id} className="border border-gray-100 rounded-xl p-4">
-                                  <div className="flex items-start justify-between mb-1">
-                                    <div className="flex">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />)}</div>
-                                    <span className="text-xs text-gray-400">{new Date(review.created_at).toLocaleDateString('it-IT')}</span>
-                                  </div>
-                                  <h4 className="font-semibold text-sm mb-0.5">{review.title}</h4>
-                                  <p className="text-gray-600 text-sm">{review.content}</p>
+                    {/* Recensioni familiari */}
+                    {familyMembers.map((member) => {
+                      const memberReviews = reviews.filter(r => r.family_member_id === member.id);
+                      if (memberReviews.length === 0) return null;
+                      return (
+                        <div key={member.id} className="border-t border-gray-100 px-5 pb-5">
+                          <p className="text-xs font-semibold text-gray-500 pt-3 pb-2">Recensioni di {member.nickname || `${member.first_name} ${member.last_name}`}</p>
+                          <div className="space-y-3">
+                            {memberReviews.map((review) => (
+                              <div key={review.id} className="border border-gray-100 rounded-xl p-4">
+                                <div className="flex items-start justify-between mb-1">
+                                  <div className="flex">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />)}</div>
+                                  <span className="text-xs text-gray-400">{new Date(review.created_at).toLocaleDateString('it-IT')}</span>
                                 </div>
-                              ))}
-                            </div>
-                          )}
+                                <h4 className="font-semibold text-sm mb-0.5">{review.title}</h4>
+                                <p className="text-gray-600 text-sm">{review.content}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* I Tuoi Annunci */}
+                {openSections.ads && (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center"><Tag className="w-4 h-4 text-green-600" /></div>
+                        <span className="font-semibold text-gray-900">I Tuoi Annunci</span>
+                        {customerClassifiedAds.length > 0 && <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">{customerClassifiedAds.length}</span>}
+                      </div>
+                      <button onClick={() => { setEditingCustomerAdId(undefined); setShowCustomerAdForm(true); }} className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"><Plus className="w-3 h-3" />Nuovo</button>
+                    </div>
+                    <div className="px-5 pb-5">
+                      {customerClassifiedAds.length === 0 ? (
+                        <div className="text-center py-8">
+                          <Tag className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                          <p className="text-sm text-gray-500 mb-3">Nessun annuncio pubblicato</p>
+                          <button onClick={() => { setEditingCustomerAdId(undefined); setShowCustomerAdForm(true); }} className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 text-sm font-semibold"><Plus className="w-4 h-4" />Crea annuncio</button>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4">
+                          {customerClassifiedAds.map(ad => (
+                            <ProfileClassifiedAdCard key={ad.id} ad={{ ...ad, price: ad.price ? parseFloat(ad.price) : null, classified_categories: ad.classified_categories, profiles: { full_name: profile?.nickname || profile?.full_name || 'Utente', avatar_url: null } }} onEdit={(ad) => { setEditingCustomerAdId(ad.id); setShowCustomerAdForm(true); }} onDelete={deleteClassifiedAd} />
+                          ))}
                         </div>
                       )}
                     </div>
-                  );
-                })}
+                  </div>
+                )}
+
+                {/* Le Mie Aste */}
+                {openSections.auctions_customer && (
+                  <UserAuctionsSection />
+                )}
+
+                {/* Annunci Preferiti */}
+                {openSections.fav_ads && (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
+                      <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center"><Heart className="w-4 h-4 text-red-500" /></div>
+                      <span className="font-semibold text-gray-900">Annunci Preferiti</span>
+                    </div>
+                    <FavoritesSection />
+                  </div>
+                )}
+
+                {/* Attività Preferite */}
+                {openSections.fav_businesses && (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
+                      <div className="w-8 h-8 bg-rose-100 rounded-lg flex items-center justify-center"><Building className="w-4 h-4 text-rose-500" /></div>
+                      <span className="font-semibold text-gray-900">Attività Preferite</span>
+                    </div>
+                    <FavoritesSection />
+                  </div>
+                )}
 
                 {/* Cambia Piano - Privato */}
                 {currentSubscription && availablePlans.length > 0 && (
