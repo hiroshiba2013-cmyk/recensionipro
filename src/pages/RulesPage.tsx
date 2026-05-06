@@ -53,25 +53,40 @@ export function RulesPage() {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('Tutte');
   const [activeTab, setActiveTab] = useState<'regolamento' | 'faq' | 'cookie' | 'termini'>('regolamento');
+  const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
+
+  const hashToTab = (hash: string): typeof activeTab | null => {
+    if (hash === 'faq') return 'faq';
+    if (hash === 'cookie-policy') return 'cookie';
+    if (hash === 'termini' || hash === 'termini-servizio' || hash === 'privacy-policy' || hash === 'condizioni-uso') return 'termini';
+    if (hash === 'regolamento') return 'regolamento';
+    return null;
+  };
 
   const applyHash = () => {
     const hash = window.location.hash.replace('#', '');
     if (!hash) return;
-    if (hash === 'faq') {
-      setActiveTab('faq');
-    } else if (hash === 'cookie-policy') {
-      setActiveTab('cookie');
-    } else if (hash === 'termini' || hash === 'termini-servizio' || hash === 'privacy-policy' || hash === 'condizioni-uso') {
-      setActiveTab('termini');
-    } else if (hash === 'regolamento') {
-      setActiveTab('regolamento');
-    }
-    // scroll to element after tab renders
-    setTimeout(() => {
-      const el = document.getElementById(hash);
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-    }, 150);
+    const tab = hashToTab(hash);
+    if (tab) setActiveTab(tab);
+    setPendingScrollId(hash);
   };
+
+  // scroll after tab renders — wait for DOM paint
+  useEffect(() => {
+    if (!pendingScrollId) return;
+    let raf: number;
+    const tryScroll = () => {
+      const el = document.getElementById(pendingScrollId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setPendingScrollId(null);
+      } else {
+        raf = requestAnimationFrame(tryScroll);
+      }
+    };
+    raf = requestAnimationFrame(tryScroll);
+    return () => cancelAnimationFrame(raf);
+  }, [pendingScrollId, activeTab, loading]);
 
   useEffect(() => {
     loadData();
