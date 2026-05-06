@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { SearchableSelect } from '../common/SearchableSelect';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
+import { ITALIAN_REGIONS } from '../../lib/cities';
 
 interface Business {
   id: string;
@@ -354,9 +355,21 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
 
       <div className="space-y-4 border-t pt-4">
         <h3 className="text-sm font-medium text-gray-700">Località di Lavoro</h3>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Regione</label>
+          <select
+            value={formData.region}
+            onChange={(e) => setFormData(prev => ({ ...prev, region: e.target.value, province: '', city: '' }))}
+            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 text-sm bg-white"
+          >
+            <option value="">Seleziona regione...</option>
+            {ITALIAN_REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+        </div>
         <ItalianCityProvinceSelect
           province={formData.province}
           city={formData.city}
+          region={formData.region}
           onProvinceChange={(prov) => setFormData(prev => ({ ...prev, province: prov, city: '' }))}
           onCityChange={(c) => setFormData(prev => ({ ...prev, city: c }))}
         />

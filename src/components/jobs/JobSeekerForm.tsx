@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { SearchableSelect } from '../common/SearchableSelect';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
+import { ITALIAN_REGIONS } from '../../lib/cities';
 import { X } from 'lucide-react';
 
 interface JobSeekerFormProps {
@@ -180,9 +181,21 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
 
         <div className="space-y-4 border-t pt-4">
           <h3 className="text-lg font-semibold text-gray-900">Località di Lavoro</h3>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Regione</label>
+            <select
+              value={formData.region}
+              onChange={(e) => setFormData({ ...formData, region: e.target.value, province: '', city: '' })}
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 text-sm bg-white"
+            >
+              <option value="">Seleziona regione...</option>
+              {ITALIAN_REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
           <ItalianCityProvinceSelect
             province={formData.province}
             city={formData.city}
+            region={formData.region}
             onProvinceChange={(prov) => setFormData({ ...formData, province: prov, city: '' })}
             onCityChange={(c) => setFormData({ ...formData, city: c })}
           />
