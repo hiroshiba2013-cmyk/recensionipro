@@ -1,8 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Mail, MailOpen, Archive, Reply, Search, ChevronDown, ChevronUp, Send, Clock, User, X, RefreshCw } from 'lucide-react';
+import { Mail, MailOpen, Archive, Reply, Search, ChevronDown, ChevronUp, Send, Clock, User, X, RefreshCw, Filter } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
+
+const SUBJECT_FILTERS = [
+  'Informazioni generali',
+  'Problemi tecnici',
+  'Segnalazione contenuto',
+  'Richiesta rimborso',
+  'Collaborazione / Partnership',
+  'Altro',
+];
 
 interface PlatformMessage {
   id: string;
@@ -39,11 +48,15 @@ export function PlatformMessagesSection({ adminId }: Props) {
   const [messages, setMessages] = useState<PlatformMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
+  const [subjectFilter, setSubjectFilter] = useState<string>('');
+  const [nameFilter, setNameFilter] = useState('');
+  const [emailFilter, setEmailFilter] = useState('');
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [replyText, setReplyText] = useState<Record<string, string>>({});
   const [replying, setReplying] = useState<string | null>(null);
   const [counts, setCounts] = useState({ unread: 0, read: 0, replied: 0, archived: 0 });
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     loadMessages();
@@ -115,11 +128,26 @@ export function PlatformMessagesSection({ adminId }: Props) {
     await loadMessages();
   };
 
+  const activeFiltersCount = [nameFilter, emailFilter, subjectFilter].filter(Boolean).length;
+
   const filtered = messages.filter(m => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || m.subject.toLowerCase().includes(q) || m.message.toLowerCase().includes(q);
+    if (search) {
+      const q = search.toLowerCase();
+      if (!m.name.toLowerCase().includes(q) && !m.email.toLowerCase().includes(q) && !m.subject.toLowerCase().includes(q) && !m.message.toLowerCase().includes(q)) return false;
+    }
+    if (nameFilter && !m.name.toLowerCase().includes(nameFilter.toLowerCase())) return false;
+    if (emailFilter && !m.email.toLowerCase().includes(emailFilter.toLowerCase())) return false;
+    if (subjectFilter && m.subject !== subjectFilter) return false;
+    return true;
   });
+
+  const clearAllFilters = () => {
+    setNameFilter('');
+    setEmailFilter('');
+    setSubjectFilter('');
+    setSearch('');
+    setFilter('all');
+  };
 
   return (
     <div className="space-y-6">
@@ -166,13 +194,13 @@ export function PlatformMessagesSection({ adminId }: Props) {
         ))}
       </div>
 
-      {/* Search + filter */}
+      {/* Search bar + toggle filtri */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Cerca per nome, email, oggetto..."
+            placeholder="Ricerca rapida per nome, email, oggetto, testo..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none bg-white"
@@ -183,18 +211,163 @@ export function PlatformMessagesSection({ adminId }: Props) {
             </button>
           )}
         </div>
+        <button
+          onClick={() => setShowFilters(v => !v)}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
+            showFilters || activeFiltersCount > 0
+              ? 'bg-blue-50 border-blue-300 text-blue-700'
+              : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          <Filter className="w-4 h-4" />
+          Filtri
+          {activeFiltersCount > 0 && (
+            <span className="bg-blue-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+              {activeFiltersCount}
+            </span>
+          )}
+        </button>
         <select
           value={filter}
           onChange={e => setFilter(e.target.value)}
           className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none"
         >
-          <option value="all">Tutti i messaggi</option>
+          <option value="all">Tutti gli stati</option>
           <option value="unread">Non letti</option>
           <option value="read">Letti</option>
           <option value="replied">Risposti</option>
           <option value="archived">Archiviati</option>
         </select>
       </div>
+
+      {/* Pannello filtri avanzati */}
+      {showFilters && (
+        <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Filter className="w-4 h-4 text-gray-400" />
+              Filtri avanzati
+            </h3>
+            {activeFiltersCount > 0 && (
+              <button
+                onClick={clearAllFilters}
+                className="text-xs text-red-600 hover:text-red-700 font-medium flex items-center gap-1"
+              >
+                <X className="w-3 h-3" />
+                Azzera filtri
+              </button>
+            )}
+          </div>
+
+          {/* Nome e Email */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
+                Nome utente
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Filtra per nome..."
+                  value={nameFilter}
+                  onChange={e => setNameFilter(e.target.value)}
+                  className="w-full pl-8 pr-8 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none bg-white"
+                />
+                {nameFilter && (
+                  <button onClick={() => setNameFilter('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Filtra per email..."
+                  value={emailFilter}
+                  onChange={e => setEmailFilter(e.target.value)}
+                  className="w-full pl-8 pr-8 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none bg-white"
+                />
+                {emailFilter && (
+                  <button onClick={() => setEmailFilter('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Oggetto — pill buttons */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+              Oggetto del messaggio
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSubjectFilter('')}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                  subjectFilter === ''
+                    ? 'bg-gray-800 text-white border-gray-800'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                }`}
+              >
+                Tutti
+              </button>
+              {SUBJECT_FILTERS.map(s => (
+                <button
+                  key={s}
+                  onClick={() => setSubjectFilter(subjectFilter === s ? '' : s)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                    subjectFilter === s
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Riepilogo filtri attivi */}
+      {(activeFiltersCount > 0 || search) && (
+        <div className="flex items-center gap-2 flex-wrap text-sm">
+          <span className="text-gray-500">Filtri attivi:</span>
+          {search && (
+            <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-xs font-medium">
+              Testo: "{search}"
+              <button onClick={() => setSearch('')}><X className="w-3 h-3" /></button>
+            </span>
+          )}
+          {nameFilter && (
+            <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-medium">
+              Nome: "{nameFilter}"
+              <button onClick={() => setNameFilter('')}><X className="w-3 h-3" /></button>
+            </span>
+          )}
+          {emailFilter && (
+            <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-medium">
+              Email: "{emailFilter}"
+              <button onClick={() => setEmailFilter('')}><X className="w-3 h-3" /></button>
+            </span>
+          )}
+          {subjectFilter && (
+            <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-medium">
+              Oggetto: "{subjectFilter}"
+              <button onClick={() => setSubjectFilter('')}><X className="w-3 h-3" /></button>
+            </span>
+          )}
+          <span className="text-gray-400 text-xs ml-auto">{filtered.length} risultati</span>
+        </div>
+      )}
 
       {/* Message list */}
       {loading ? (
