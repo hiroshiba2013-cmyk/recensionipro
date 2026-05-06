@@ -11,7 +11,6 @@ interface Props {
   disabled?: boolean;
 }
 
-// Sigla provincia per nome (usata solo per display)
 const PROVINCE_CODES: Record<string, string> = {
   'Agrigento': 'AG', 'Alessandria': 'AL', 'Ancona': 'AN', 'Arezzo': 'AR',
   'Ascoli Piceno': 'AP', 'Asti': 'AT', 'Avellino': 'AV', 'Bari': 'BA',
@@ -57,16 +56,11 @@ export function ItalianCityProvinceSelect({
   const [loadingCities, setLoadingCities] = useState(false);
 
   const [provinceOpen, setProvinceOpen] = useState(false);
-  const [cityOpen, setCityOpen] = useState(false);
   const [provinceSearch, setProvinceSearch] = useState('');
-  const [citySearch, setCitySearch] = useState('');
 
   const provinceRef = useRef<HTMLDivElement>(null);
-  const cityRef = useRef<HTMLDivElement>(null);
   const provinceInputRef = useRef<HTMLInputElement>(null);
-  const cityInputRef = useRef<HTMLInputElement>(null);
 
-  // Load provinces from DB once via RPC (bypasses default 1000-row limit)
   useEffect(() => {
     setLoadingProvinces(true);
     supabase
@@ -89,16 +83,11 @@ export function ItalianCityProvinceSelect({
     loadCities(province);
   }, [province, loadCities]);
 
-  // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (provinceRef.current && !provinceRef.current.contains(e.target as Node)) {
         setProvinceOpen(false);
         setProvinceSearch('');
-      }
-      if (cityRef.current && !cityRef.current.contains(e.target as Node)) {
-        setCityOpen(false);
-        setCitySearch('');
       }
     }
     document.addEventListener('mousedown', handleClick);
@@ -109,16 +98,8 @@ export function ItalianCityProvinceSelect({
     if (provinceOpen) setTimeout(() => provinceInputRef.current?.focus(), 50);
   }, [provinceOpen]);
 
-  useEffect(() => {
-    if (cityOpen) setTimeout(() => cityInputRef.current?.focus(), 50);
-  }, [cityOpen]);
-
   const filteredProvinces = provinces.filter(p =>
     p.toLowerCase().includes(provinceSearch.toLowerCase())
-  );
-
-  const filteredCities = cities.filter(c =>
-    c.toLowerCase().includes(citySearch.toLowerCase())
   );
 
   function selectProvince(p: string) {
@@ -129,12 +110,6 @@ export function ItalianCityProvinceSelect({
     setProvinceSearch('');
   }
 
-  function selectCity(c: string) {
-    onCityChange(c);
-    setCityOpen(false);
-    setCitySearch('');
-  }
-
   function clearProvince(e: React.MouseEvent) {
     e.stopPropagation();
     onProvinceChange('', '');
@@ -142,26 +117,9 @@ export function ItalianCityProvinceSelect({
     setCities([]);
   }
 
-  function clearCity(e: React.MouseEvent) {
-    e.stopPropagation();
-    onCityChange('');
-  }
-
-  const dropdownStyle: React.CSSProperties = {
-    minWidth: '100%',
-    width: 'max-content',
-    maxWidth: '320px',
-  };
-
-  const listStyle: React.CSSProperties = {
-    overflowY: 'auto',
-    height: '220px',
-    minHeight: 0,
-  };
-
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-      {/* Provincia */}
+      {/* Provincia — custom dropdown con sigla */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1.5">
           <span className="flex items-center gap-1.5">
@@ -174,13 +132,15 @@ export function ItalianCityProvinceSelect({
           <button
             type="button"
             disabled={disabled}
-            onClick={() => { if (!disabled) { setProvinceOpen(v => !v); setCityOpen(false); } }}
+            onClick={() => { if (!disabled) setProvinceOpen(v => !v); }}
             className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 border rounded-lg text-sm transition-all text-left bg-white ${
               disabled ? 'bg-gray-50 cursor-not-allowed opacity-60' : 'hover:border-blue-400 cursor-pointer'
             } ${provinceOpen ? 'border-blue-500 ring-2 ring-blue-100 shadow-sm' : 'border-gray-300'}`}
           >
             <span className={`flex-1 min-w-0 truncate ${province ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
-              {province || 'Seleziona provincia...'}
+              {province
+                ? <>{province}{PROVINCE_CODES[province] && <span className="ml-1.5 text-xs font-mono text-gray-400">({PROVINCE_CODES[province]})</span>}</>
+                : 'Seleziona provincia...'}
             </span>
             <div className="flex items-center gap-1 flex-shrink-0">
               {province && !disabled && (
@@ -193,8 +153,12 @@ export function ItalianCityProvinceSelect({
           </button>
 
           {provinceOpen && (
-            <div className="absolute z-[300] left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl" style={dropdownStyle}>
-              <div className="p-2.5 border-b border-gray-100 bg-gray-50 rounded-t-xl flex-shrink-0">
+            <div
+              className="absolute z-[9999] left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl"
+              style={{ minWidth: '100%', width: 'max-content', maxWidth: '320px' }}
+            >
+              {/* Search */}
+              <div className="p-2.5 border-b border-gray-100 bg-gray-50 rounded-t-xl">
                 <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5">
                   <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                   <input
@@ -216,7 +180,8 @@ export function ItalianCityProvinceSelect({
                   )}
                 </div>
               </div>
-              <div style={listStyle}>
+              {/* List — altezza fissa, scroll nativo */}
+              <div style={{ height: '220px', overflowY: 'scroll' }}>
                 {loadingProvinces ? (
                   <div className="px-4 py-6 text-sm text-gray-400 text-center">Caricamento...</div>
                 ) : filteredProvinces.length === 0 ? (
@@ -245,7 +210,7 @@ export function ItalianCityProvinceSelect({
                   })
                 )}
               </div>
-              <div className="px-3 py-1.5 border-t border-gray-100 bg-gray-50 rounded-b-xl text-xs text-gray-400 text-right flex-shrink-0">
+              <div className="px-3 py-1.5 border-t border-gray-100 bg-gray-50 rounded-b-xl text-xs text-gray-400 text-right">
                 {filteredProvinces.length} province
               </div>
             </div>
@@ -253,7 +218,7 @@ export function ItalianCityProvinceSelect({
         </div>
       </div>
 
-      {/* Comune */}
+      {/* Comune — select nativo: scroll garantito dal browser */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1.5">
           <span className="flex items-center gap-1.5">
@@ -262,86 +227,33 @@ export function ItalianCityProvinceSelect({
             {required && <span className="text-red-500 ml-0.5">*</span>}
           </span>
         </label>
-        <div ref={cityRef} className="relative">
-          <button
-            type="button"
-            disabled={disabled || !province}
-            onClick={() => { if (!disabled && province) { setCityOpen(v => !v); setProvinceOpen(false); } }}
-            className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 border rounded-lg text-sm transition-all text-left bg-white ${
-              disabled || !province ? 'bg-gray-50 cursor-not-allowed opacity-60' : 'hover:border-blue-400 cursor-pointer'
-            } ${cityOpen ? 'border-blue-500 ring-2 ring-blue-100 shadow-sm' : 'border-gray-300'}`}
+        <div className="relative">
+          <select
+            value={city}
+            disabled={disabled || !province || loadingCities}
+            onChange={e => onCityChange(e.target.value)}
+            required={required}
+            className={`w-full appearance-none px-3 py-2.5 pr-9 border rounded-lg text-sm bg-white transition-all focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 ${
+              disabled || !province ? 'bg-gray-50 cursor-not-allowed opacity-60 border-gray-300' : 'border-gray-300 hover:border-blue-400 cursor-pointer'
+            } ${city ? 'text-gray-900 font-medium' : 'text-gray-400'}`}
           >
-            <span className={`flex-1 min-w-0 truncate ${city ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
-              {city || (province ? 'Seleziona comune...' : 'Prima scegli la provincia')}
-            </span>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              {city && !disabled && (
-                <span onClick={clearCity} className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
-                  <X className="w-3.5 h-3.5" />
-                </span>
-              )}
-              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${cityOpen ? 'rotate-180' : ''}`} />
-            </div>
-          </button>
-
-          {cityOpen && province && (
-            <div className="absolute z-[300] left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl" style={dropdownStyle}>
-              <div className="p-2.5 border-b border-gray-100 bg-gray-50 rounded-t-xl flex-shrink-0">
-                <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5">
-                  <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                  <input
-                    ref={cityInputRef}
-                    type="text"
-                    placeholder={`Cerca in ${province}...`}
-                    value={citySearch}
-                    onChange={e => setCitySearch(e.target.value)}
-                    className="flex-1 bg-transparent text-sm outline-none text-gray-700 placeholder-gray-400 min-w-0"
-                    onKeyDown={e => {
-                      if (e.key === 'Escape') { setCityOpen(false); setCitySearch(''); }
-                      if (e.key === 'Enter' && filteredCities.length === 1) selectCity(filteredCities[0]);
-                    }}
-                  />
-                  {citySearch && (
-                    <button type="button" onClick={() => setCitySearch('')} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div style={listStyle}>
-                {loadingCities ? (
-                  <div className="px-4 py-6 text-sm text-gray-400 text-center flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                    Caricamento comuni...
-                  </div>
-                ) : filteredCities.length === 0 ? (
-                  <div className="px-4 py-6 text-sm text-gray-400 text-center">
-                    {citySearch ? 'Nessun comune trovato' : 'Nessun comune disponibile'}
-                  </div>
-                ) : (
-                  filteredCities.map(c => {
-                    const isSelected = c === city;
-                    return (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => selectCity(c)}
-                        className={`w-full text-left px-3.5 py-2.5 text-sm transition-colors whitespace-nowrap ${
-                          isSelected ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        {c}
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-              <div className="px-3 py-1.5 border-t border-gray-100 bg-gray-50 rounded-b-xl text-xs text-gray-400 text-right flex-shrink-0">
-                {loadingCities ? '...' : `${filteredCities.length} comuni`}
-              </div>
-            </div>
-          )}
+            <option value="" disabled>
+              {loadingCities ? 'Caricamento...' : province ? 'Seleziona comune...' : 'Prima scegli la provincia'}
+            </option>
+            {cities.map(c => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+            {loadingCities
+              ? <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+              : <ChevronDown className="w-4 h-4 text-gray-400" />
+            }
+          </div>
         </div>
+        {province && !loadingCities && cities.length > 0 && (
+          <p className="mt-1 text-xs text-gray-400">{cities.length} comuni disponibili</p>
+        )}
       </div>
     </div>
   );
