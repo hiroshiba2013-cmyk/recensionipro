@@ -906,8 +906,8 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
               <ItalianCityProvinceSelect
                 province={formData.province}
                 city={formData.city}
-                onProvinceChange={(prov, code) => setFormData({ ...formData, province: code || prov, city: '' })}
-                onCityChange={(c) => setFormData({ ...formData, city: c })}
+                onProvinceChange={(prov, code) => setFormData(prev => ({ ...prev, province: code || prov, city: '' }))}
+                onCityChange={(c) => setFormData(prev => ({ ...prev, city: c }))}
                 required
               />
 

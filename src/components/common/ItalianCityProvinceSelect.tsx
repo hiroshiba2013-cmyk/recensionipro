@@ -36,13 +36,12 @@ export function ItalianCityProvinceSelect({
     ? (PROVINCES_BY_REGION[region] ?? ITALIAN_PROVINCES)
     : ITALIAN_PROVINCES;
 
-  // When region changes, clear province/city if no longer valid
+  // When region changes, clear province if no longer valid (parent clears city via onProvinceChange)
   useEffect(() => {
     if (!region) return;
     const list = PROVINCES_BY_REGION[region] ?? [];
     if (province && list.length > 0 && !list.includes(province)) {
       onProvinceChange('', '');
-      onCityChange('');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [region]);
@@ -80,16 +79,14 @@ export function ItalianCityProvinceSelect({
 
   function selectProvince(p: string) {
     const code = PROVINCE_TO_CODE[p] || '';
-    onProvinceChange(p, code);
-    onCityChange('');
+    onProvinceChange(p, code); // parent is responsible for clearing city in this handler
     setProvinceOpen(false);
     setProvinceSearch('');
   }
 
   function clearProvince(e: React.MouseEvent) {
     e.stopPropagation();
-    onProvinceChange('', '');
-    onCityChange('');
+    onProvinceChange('', ''); // parent clears city too
     setCities([]);
   }
 

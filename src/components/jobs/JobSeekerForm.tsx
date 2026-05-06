@@ -197,8 +197,8 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
             province={formData.province}
             city={formData.city}
             region={formData.region}
-            onProvinceChange={(prov, code) => setFormData({ ...formData, province: prov, provinceCode: code, city: '' })}
-            onCityChange={(c) => setFormData({ ...formData, city: c })}
+            onProvinceChange={(prov, code) => setFormData(prev => ({ ...prev, province: prov, provinceCode: code, city: '' }))}
+            onCityChange={(c) => setFormData(prev => ({ ...prev, city: c }))}
           />
         </div>
 

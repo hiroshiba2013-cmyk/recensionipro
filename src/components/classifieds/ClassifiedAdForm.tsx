@@ -360,8 +360,8 @@ export function ClassifiedAdForm({ adId, businessLocationId, isRegisteredBusines
         <ItalianCityProvinceSelect
           province={formData.province}
           city={formData.city}
-          onProvinceChange={(prov, code) => setFormData({ ...formData, province: prov, city: '' })}
-          onCityChange={(c) => setFormData({ ...formData, city: c })}
+          onProvinceChange={(prov) => setFormData(prev => ({ ...prev, province: prov, city: '' }))}
+          onCityChange={(c) => setFormData(prev => ({ ...prev, city: c }))}
           required
         />
 
