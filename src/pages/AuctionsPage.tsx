@@ -96,10 +96,13 @@ export default function AuctionsPage() {
     }
   };
 
-  const filteredAuctions = auctions.filter(auction =>
-    auction.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    auction.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredAuctions = auctions.filter(auction => {
+    const term = searchTerm.toLowerCase();
+    return (
+      (auction.title || '').toLowerCase().includes(term) ||
+      (auction.description || '').toLowerCase().includes(term)
+    );
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">

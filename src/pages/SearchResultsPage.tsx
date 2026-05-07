@@ -40,15 +40,11 @@ interface BusinessLocation {
 }
 
 export function SearchResultsPage() {
-  console.log('🔵 SearchResultsPage montata');
   const [locations, setLocations] = useState<BusinessLocation[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [initialFilters, setInitialFilters] = useState<SearchFilters | null>(null);
   const [currentSearch, setCurrentSearch] = useState(window.location.search);
-
-  console.log('📍 URL corrente:', window.location.href);
-  console.log('🔍 Query string:', currentSearch);
 
   useEffect(() => {
     const handleLocationChange = () => {
@@ -65,11 +61,11 @@ export function SearchResultsPage() {
 
     return () => {
       window.removeEventListener('popstate', handleLocationChange);
+      window.history.pushState = originalPushState;
     };
   }, []);
 
   useEffect(() => {
-    console.log('🎯 useEffect chiamato con currentSearch:', currentSearch);
     const params = new URLSearchParams(currentSearch);
     const filters: SearchFilters = {
       category: params.get('category') || '',
@@ -86,9 +82,7 @@ export function SearchResultsPage() {
       minProblemRating: Number(params.get('r_problem')) || 0,
     };
 
-    console.log('🔎 Filtri estratti dai parametri URL:', filters);
     setInitialFilters(filters);
-    console.log('⚡ Chiamando applyFilters...');
     applyFilters(filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSearch]);
@@ -108,16 +102,12 @@ export function SearchResultsPage() {
   }, [loading, locations]);
 
   const applyFilters = async (filters: SearchFilters) => {
-    console.log('=== INIZIO RICERCA ===');
-    console.log('Filtri:', filters);
     setLoading(true);
     setHasSearched(true);
     try {
       const QUERY_LIMIT = 2000;
 
       const provinceCode = filters.province ? PROVINCE_TO_CODE[filters.province] : null;
-
-      console.log('Usando search_all_businesses RPC function...');
       const { data: businessesData, error: businessesError } = await supabase
         .rpc('search_all_businesses', {
           search_query: filters.businessName || '',
@@ -129,12 +119,7 @@ export function SearchResultsPage() {
           limit_count: QUERY_LIMIT
         });
 
-      if (businessesError) {
-        console.error('Errore ricerca businesses:', businessesError);
-        throw businessesError;
-      }
-
-      console.log('Risultati trovati:', businessesData?.length || 0);
+      if (businessesError) throw businessesError;
 
       const categoryIds = [...new Set((businessesData || []).map((l: any) => l.category_id).filter(Boolean))];
       const categoryMap: Record<string, { id: string; name: string; icon: string }> = {};
@@ -178,16 +163,12 @@ export function SearchResultsPage() {
         review_count: 0
       }));
 
-      console.log('TOTALE:', allLocations.length, 'locations');
-
       if (allLocations.length === 0) {
-        console.log('Nessun risultato trovato!');
         setLocations([]);
         return;
       }
 
       // Fetch ratings in bulk for all locations
-      console.log('Caricamento valutazioni...');
       const allIds = allLocations.map(loc => loc.id);
       const { data: ratingsData } = await supabase
         .from('reviews')
@@ -210,7 +191,6 @@ export function SearchResultsPage() {
 
       const MANAGEMENT_TYPES = ['booking_not_completed', 'quote_request', 'customer_service', 'problem_before_service'];
 
-      console.log('Preparazione risultati finali...');
       let locationsWithRatings = allLocations.map(loc => {
         const rid = loc.business_id || loc.id;
         const r = ratingMap[rid];
@@ -272,8 +252,6 @@ export function SearchResultsPage() {
         });
       }
 
-      console.log('Ordinamento...');
-
       // Ordina: claimed > rating > alfabetico
       locationsWithRatings.sort((a, b) => {
         const aIsClaimed = a.is_claimed ? 1 : 0;
@@ -289,16 +267,11 @@ export function SearchResultsPage() {
         return aName.localeCompare(bName);
       });
 
-      console.log('=== FINE RICERCA ===');
-      console.log('Mostro', locationsWithRatings.length, 'risultati');
-      console.log('Primi 3 risultati:', locationsWithRatings.slice(0, 3));
       setLocations(locationsWithRatings);
-      console.log('State aggiornato con', locationsWithRatings.length, 'locations');
     } catch (error) {
-      console.error('ERRORE durante la ricerca:', error);
+      console.error('Error during search:', error);
       setLocations([]);
     } finally {
-      console.log('Impostazione loading = false');
       setLoading(false);
     }
   };
@@ -412,9 +385,7 @@ export function SearchResultsPage() {
             <p className="text-gray-500 mt-2">Prova a modificare i filtri di ricerca</p>
           </div>
         ) : (
-          <>
-            {console.log('Renderizzando', locations.length, 'location cards')}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {locations.map((location) => (
                 <LocationCard
                   key={location.id}
@@ -422,7 +393,6 @@ export function SearchResultsPage() {
                 />
               ))}
             </div>
-          </>
         )}
 
         {hasSearched && locations.length > 0 && (

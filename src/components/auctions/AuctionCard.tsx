@@ -137,7 +137,7 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
           </div>
           <div className="flex items-center gap-1 text-xs text-gray-500">
             <Tag className="w-3 h-3" />
-            <span>{t('deposit')}: {auction.deposit_amount.toFixed(0)}€</span>
+            <span>{t('deposit')}: {Number(auction.deposit_amount || 0).toFixed(0)}€</span>
           </div>
         </div>
 

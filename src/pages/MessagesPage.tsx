@@ -178,7 +178,7 @@ export function MessagesPage() {
             .from('profiles')
             .select('full_name, nickname, avatar_url')
             .eq('id', otherUserId)
-            .single();
+            .maybeSingle();
 
           let referenceData = null;
 
@@ -342,7 +342,7 @@ export function MessagesPage() {
           .from('profiles')
           .select('full_name, nickname, avatar_url')
           .eq('id', otherUserId)
-          .single();
+          .maybeSingle();
 
         let referenceData: any = null;
         if (conv.conversation_type === 'classified_ad') {

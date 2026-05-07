@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Plus, Star, Building, MessageSquare, Check, Shield, TrendingUp,
   Heart, Gift, Users as UsersIcon, Package, Briefcase, Users,
@@ -198,6 +198,12 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
   const [locationForms, setLocationForms] = useState<Record<string, Record<string, string>>>({});
   const [locationSaving, setLocationSaving] = useState<string | null>(null);
   const [locationMsg, setLocationMsg] = useState<Record<string, string>>({});
+  const msgTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  useEffect(() => {
+    const timers = msgTimers.current;
+    return () => { Object.values(timers).forEach(clearTimeout); };
+  }, []);
 
   const startEditMember = (fm: any) => {
     setMemberForms(prev => ({ ...prev, [fm.id]: {
@@ -219,7 +225,8 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
       await onFamilyMemberSave(id, memberForms[id] || {});
       setMemberMsg(prev => ({ ...prev, [id]: 'ok' }));
       setEditingMemberId(null);
-      setTimeout(() => setMemberMsg(prev => ({ ...prev, [id]: '' })), 2500);
+      clearTimeout(msgTimers.current[`member_${id}`]);
+      msgTimers.current[`member_${id}`] = setTimeout(() => setMemberMsg(prev => ({ ...prev, [id]: '' })), 2500);
     } catch {
       setMemberMsg(prev => ({ ...prev, [id]: 'err' }));
     } finally {
@@ -254,7 +261,8 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
       await onLocationSave(id, locationForms[id] || {});
       setLocationMsg(prev => ({ ...prev, [id]: 'ok' }));
       setEditingLocationId(null);
-      setTimeout(() => setLocationMsg(prev => ({ ...prev, [id]: '' })), 2500);
+      clearTimeout(msgTimers.current[`loc_${id}`]);
+      msgTimers.current[`loc_${id}`] = setTimeout(() => setLocationMsg(prev => ({ ...prev, [id]: '' })), 2500);
     } catch {
       setLocationMsg(prev => ({ ...prev, [id]: 'err' }));
     } finally {
@@ -660,6 +668,7 @@ export function DashboardPage() {
   const [profileForm, setProfileForm] = useState<Record<string, string>>({});
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileSaveMsg, setProfileSaveMsg] = useState('');
+  const profileSaveMsgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startEditProfile = () => {
     if (!profile) return;
@@ -731,7 +740,8 @@ export function DashboardPage() {
       }
       setProfileSaveMsg('Dati salvati con successo!');
       setEditingProfile(false);
-      setTimeout(() => setProfileSaveMsg(''), 3000);
+      if (profileSaveMsgTimer.current) clearTimeout(profileSaveMsgTimer.current);
+      profileSaveMsgTimer.current = setTimeout(() => setProfileSaveMsg(''), 3000);
     } catch {
       setProfileSaveMsg('Errore durante il salvataggio.');
     } finally {
