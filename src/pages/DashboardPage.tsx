@@ -4,7 +4,7 @@ import {
   Heart, Gift, Users as UsersIcon, Package, Briefcase, Users,
   DollarSign, Trophy, Activity, Tag, ChevronDown, ChevronUp,
   User, Mail, Phone, MapPin, FileText, Globe, Pencil, Save, X, CreditCard, Hash, Building2,
-  Lock, Gavel
+  Lock, Gavel, LogOut
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Business, Review, FamilyMember } from '../lib/supabase';
@@ -22,6 +22,7 @@ import { UserAuctionsSection } from '../components/auctions/UserAuctionsSection'
 import { ProfileClassifiedAdCard } from '../components/classifieds/ProfileClassifiedAdCard';
 import { ClassifiedAdForm } from '../components/classifieds/ClassifiedAdForm';
 import { PinSetup } from '../components/profile/PinSetup';
+import { DeleteAccountButton } from '../components/profile/DeleteAccountButton';
 import { JobSeekerForm } from '../components/jobs/JobSeekerForm';
 import { JobSeekerCard } from '../components/jobs/JobSeekerCard';
 import { useNavigate } from '../components/Router';
@@ -610,7 +611,7 @@ function ProfileDataSection({ profile, isBiz, familyMembers = [], businessLocati
 }
 
 export function DashboardPage() {
-  const { profile, selectedBusinessLocationId, activeProfile } = useAuth();
+  const { profile, selectedBusinessLocationId, activeProfile, signOut } = useAuth();
   const navigate = useNavigate();
 
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -644,6 +645,11 @@ export function DashboardPage() {
 
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const toggle = (key: string) => setOpen(prev => ({ ...prev, [key]: !prev[key] }));
+
+  // Resetta le sezioni aperte quando cambia il profilo attivo o la sede selezionata
+  useEffect(() => {
+    setOpen({});
+  }, [activeProfile, selectedBusinessLocationId]);
 
   // ── profile edit state ─────────────────────────────────────────────────────
   const [editingProfile, setEditingProfile] = useState(false);
@@ -951,15 +957,24 @@ export function DashboardPage() {
                 <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
                 {isBiz ? 'Account Business' : 'Account Privato'}
               </div>
-              <div className="flex items-center gap-3 mb-1">
+              <div className="flex items-center gap-3 mb-1 flex-wrap">
                 <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight">Ciao, {displayName}</h1>
-                <button
-                  onClick={() => setShowPinModal(true)}
-                  className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white/80 hover:text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-all backdrop-blur"
-                  title="Imposta PIN di protezione"
-                >
-                  <Lock className="w-3.5 h-3.5" />PIN
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowPinModal(true)}
+                    className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white/80 hover:text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-all backdrop-blur"
+                    title="Imposta PIN di protezione"
+                  >
+                    <Lock className="w-3.5 h-3.5" />PIN
+                  </button>
+                  <button
+                    onClick={async () => { try { await signOut(); } catch {} }}
+                    className="flex items-center gap-1.5 bg-white/10 hover:bg-red-500/30 border border-white/20 hover:border-red-400/40 text-white/80 hover:text-red-200 text-xs font-semibold px-3 py-1.5 rounded-full transition-all backdrop-blur"
+                    title="Esci dall'account"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />Esci
+                  </button>
+                </div>
               </div>
               <p className="text-slate-400 text-base">{isBiz ? 'Gestisci la tua attivita e le sedi' : 'Gestisci il tuo profilo e le attivita'}</p>
             </div>
@@ -1014,20 +1029,23 @@ export function DashboardPage() {
 
                 {/* I Tuoi Dati - Business */}
                 {open.biz_dati && (
-                  <ProfileDataSection
-                    profile={profile}
-                    isBiz={true}
-                    businessLocations={fullBusinessLocations}
-                    editing={editingProfile}
-                    form={profileForm}
-                    saving={profileSaving}
-                    saveMsg={profileSaveMsg}
-                    onEdit={startEditProfile}
-                    onCancel={() => setEditingProfile(false)}
-                    onSave={saveProfile}
-                    onChange={(k, v) => setProfileForm(prev => ({ ...prev, [k]: v }))}
-                    onLocationSave={saveBusinessLocation}
-                  />
+                  <>
+                    <ProfileDataSection
+                      profile={profile}
+                      isBiz={true}
+                      businessLocations={fullBusinessLocations}
+                      editing={editingProfile}
+                      form={profileForm}
+                      saving={profileSaving}
+                      saveMsg={profileSaveMsg}
+                      onEdit={startEditProfile}
+                      onCancel={() => setEditingProfile(false)}
+                      onSave={saveProfile}
+                      onChange={(k, v) => setProfileForm(prev => ({ ...prev, [k]: v }))}
+                      onLocationSave={saveBusinessLocation}
+                    />
+                    <DeleteAccountButton onAccountDeleted={() => signOut()} />
+                  </>
                 )}
 
                 {/* I Miei Annunci */}
@@ -1247,20 +1265,23 @@ export function DashboardPage() {
 
                 {/* I Tuoi Dati - Customer */}
                 {open.cust_dati && (
-                  <ProfileDataSection
-                    profile={profile}
-                    isBiz={false}
-                    familyMembers={familyMembers}
-                    editing={editingProfile}
-                    form={profileForm}
-                    saving={profileSaving}
-                    saveMsg={profileSaveMsg}
-                    onEdit={startEditProfile}
-                    onCancel={() => setEditingProfile(false)}
-                    onSave={saveProfile}
-                    onChange={(k, v) => setProfileForm(prev => ({ ...prev, [k]: v }))}
-                    onFamilyMemberSave={saveFamilyMember}
-                  />
+                  <>
+                    <ProfileDataSection
+                      profile={profile}
+                      isBiz={false}
+                      familyMembers={familyMembers}
+                      editing={editingProfile}
+                      form={profileForm}
+                      saving={profileSaving}
+                      saveMsg={profileSaveMsg}
+                      onEdit={startEditProfile}
+                      onCancel={() => setEditingProfile(false)}
+                      onSave={saveProfile}
+                      onChange={(k, v) => setProfileForm(prev => ({ ...prev, [k]: v }))}
+                      onFamilyMemberSave={saveFamilyMember}
+                    />
+                    <DeleteAccountButton onAccountDeleted={() => signOut()} />
+                  </>
                 )}
 
                 {/* Classifica */}
