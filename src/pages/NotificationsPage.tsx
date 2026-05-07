@@ -29,7 +29,7 @@ type CategoryFilter =
   | 'leaderboard';
 
 const CATEGORY_TYPES: Record<Exclude<CategoryFilter, 'all' | 'unread'>, string[]> = {
-  reviews:     ['review_approved', 'review_rejected'],
+  reviews:     ['review_approved', 'review_rejected', 'review_received'],
   classifieds: ['classified_ad_approved', 'classified_ad_rejected'],
   auctions:    ['auction_approved', 'auction_rejected', 'auction_concluded', 'auction_won'],
   businesses:  ['business_approved', 'business_rejected'],
@@ -79,6 +79,8 @@ function getIconConfig(type: string): IconConfig {
       return { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100' };
     case 'review_rejected':
       return { icon: XCircle, color: 'text-red-600', bg: 'bg-red-100' };
+    case 'review_received':
+      return { icon: Star, color: 'text-yellow-600', bg: 'bg-yellow-100' };
     case 'admin_new_review':
       return { icon: Star, color: 'text-yellow-600', bg: 'bg-yellow-100' };
 
