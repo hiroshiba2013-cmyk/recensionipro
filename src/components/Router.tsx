@@ -2,7 +2,7 @@ import { useEffect, useState, createContext, useContext, lazy, Suspense } from '
 import { useAuth } from '../contexts/AuthContext';
 
 const HomePage = lazy(() => import('../pages/HomePage').then(m => ({ default: m.HomePage })));
-const DashboardPage = lazy(() => import('../pages/DashboardPageNew').then(m => ({ default: m.DashboardPageNew })));
+const DashboardPage = lazy(() => import('../pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
 const SubscriptionPage = lazy(() => import('../pages/SubscriptionPage').then(m => ({ default: m.SubscriptionPage })));
 const JobsPage = lazy(() => import('../pages/JobsPage').then(m => ({ default: m.JobsPage })));
 const ProfilePage = lazy(() => import('../pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
