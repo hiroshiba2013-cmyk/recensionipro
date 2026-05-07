@@ -430,11 +430,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     if (!confirm(`Approva l'attività "${business.name}"?\n\nL'attivita' sara' visibile nella ricerca e l'utente ricevera' i punti.`)) return;
 
     try {
-      const hasPhone = !!business.phone;
-      const hasEmail = !!business.email;
-      const hasExtraInfo = hasPhone || hasEmail;
-      const points = hasExtraInfo ? 25 : 10;
-
+      // The DB trigger handles points assignment, activity_log, and notifications automatically
       const { error } = await supabase
         .from('unclaimed_business_locations')
         .update({
@@ -445,29 +441,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
 
       if (error) throw error;
 
-      if (business.added_by) {
-        const familyMemberId = business.added_by_family_member_id || null;
-
-        await supabase.rpc('send_notification', {
-          target_user_id: business.added_by,
-          notif_type: 'business_approved',
-          notif_title: 'Attivita\' approvata',
-          notif_message: `La tua attivita\' "${business.name}" e\' stata approvata dallo staff. Hai guadagnato ${points} punti!`,
-          notif_data: { business_id: business.id },
-          target_family_member_id: familyMemberId,
-        });
-
-        await supabase.rpc('send_notification', {
-          target_user_id: business.added_by,
-          notif_type: 'points_earned',
-          notif_title: `+${points} punti guadagnati`,
-          notif_message: `Hai guadagnato ${points} punti per l\'aggiunta dell\'attivita\' "${business.name}" approvata dallo staff.`,
-          notif_data: { points, business_id: business.id },
-          target_family_member_id: familyMemberId,
-        });
-      }
-
-      alert(`Attivita' approvata! ${business.added_by ? `+${points} punti assegnati all'utente.` : ''}`);
+      alert(`Attivita' approvata!`);
       await loadBusinesses();
     } catch (error: any) {
       console.error('Error approving business:', error);

@@ -9,7 +9,8 @@ import {
   Gift,
   CreditCard,
   TrendingUp,
-  Award
+  Award,
+  Users
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -38,6 +39,7 @@ interface UserActivityStats {
   reviews_count: number;
   businesses_added_count: number;
   ads_posted_count: number;
+  referrals_count: number;
 }
 
 const iconMap: { [key: string]: any } = {
@@ -133,7 +135,7 @@ export function ActivityFeed() {
     try {
       let query = supabase
         .from('user_activity')
-        .select('total_points, reviews_count, businesses_added_count, ads_posted_count');
+        .select('total_points, reviews_count, businesses_added_count, ads_posted_count, referrals_count');
 
       if (isFamilyMember) {
         query = (query as any).eq('family_member_id', effectiveUserId);
@@ -152,7 +154,8 @@ export function ActivityFeed() {
           total_points: 0,
           reviews_count: 0,
           businesses_added_count: 0,
-          ads_posted_count: 0
+          ads_posted_count: 0,
+          referrals_count: 0,
         });
       }
     } catch (error) {
@@ -209,41 +212,50 @@ export function ActivityFeed() {
             <Award className="w-8 h-8 text-blue-600" />
             Riepilogo Completo della Tua Attività
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-6 border-2 border-yellow-300">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-5 border-2 border-yellow-300">
               <div className="flex items-center justify-between mb-2">
-                <Star className="w-8 h-8 text-yellow-600" />
+                <Star className="w-7 h-7 text-yellow-600" />
                 <span className="text-3xl font-bold text-yellow-700">{userStats.total_points}</span>
               </div>
               <p className="text-sm font-semibold text-gray-700">Punti Totali</p>
               <p className="text-xs text-gray-600 mt-1">Posizione in classifica</p>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-300">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 border-2 border-blue-300">
               <div className="flex items-center justify-between mb-2">
-                <FileText className="w-8 h-8 text-blue-600" />
+                <FileText className="w-7 h-7 text-blue-600" />
                 <span className="text-3xl font-bold text-blue-700">{userStats.reviews_count}</span>
               </div>
               <p className="text-sm font-semibold text-gray-700">Recensioni</p>
               <p className="text-xs text-gray-600 mt-1">25-50 punti ciascuna</p>
             </div>
 
-            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border-2 border-green-300">
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-5 border-2 border-green-300">
               <div className="flex items-center justify-between mb-2">
-                <Building className="w-8 h-8 text-green-600" />
+                <Building className="w-7 h-7 text-green-600" />
                 <span className="text-3xl font-bold text-green-700">{userStats.businesses_added_count}</span>
               </div>
               <p className="text-sm font-semibold text-gray-700">Attività Aggiunte</p>
               <p className="text-xs text-gray-600 mt-1">10-25 punti ciascuna</p>
             </div>
 
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border-2 border-gray-300">
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-5 border-2 border-gray-300">
               <div className="flex items-center justify-between mb-2">
-                <Package className="w-8 h-8 text-gray-600" />
+                <Package className="w-7 h-7 text-gray-600" />
                 <span className="text-3xl font-bold text-gray-700">{userStats.ads_posted_count}</span>
               </div>
               <p className="text-sm font-semibold text-gray-700">Annunci Pubblicati</p>
               <p className="text-xs text-gray-600 mt-1">5 punti ciascuno</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-5 border-2 border-teal-300">
+              <div className="flex items-center justify-between mb-2">
+                <Users className="w-7 h-7 text-teal-600" />
+                <span className="text-3xl font-bold text-teal-700">{userStats.referrals_count || 0}</span>
+              </div>
+              <p className="text-sm font-semibold text-gray-700">Amici Invitati</p>
+              <p className="text-xs text-gray-600 mt-1">30 punti ciascuno</p>
             </div>
           </div>
         </div>

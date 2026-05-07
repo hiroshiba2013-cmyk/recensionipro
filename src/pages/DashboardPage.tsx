@@ -855,8 +855,20 @@ export function DashboardPage() {
         const aq = supabase.from('user_activity').select('total_points, reviews_count').eq('user_id', profile.id);
         const { data: actData } = await (fmId ? aq.eq('family_member_id', fmId) : aq.is('family_member_id', null)).maybeSingle();
         const pts = actData?.total_points || 0;
-        const { count } = await supabase.from('user_activity').select('*', { count: 'exact', head: true }).gt('total_points', pts);
-        setUserRank({ points: pts, rank: (count || 0) + 1, reviews_count: actData?.reviews_count || 0 });
+        // Count owner rows (family_member_id IS NULL) with more points, excluding non-customer accounts
+        const { count: ownerCount } = await supabase
+          .from('user_activity')
+          .select('user_id', { count: 'exact', head: true })
+          .gt('total_points', pts)
+          .is('family_member_id', null)
+          .not('user_id', 'in', `(SELECT id FROM profiles WHERE user_type != 'customer')`);
+        // Count family member rows with more points
+        const { count: familyCount } = await supabase
+          .from('user_activity')
+          .select('family_member_id', { count: 'exact', head: true })
+          .gt('total_points', pts)
+          .not('family_member_id', 'is', null);
+        setUserRank({ points: pts, rank: (ownerCount || 0) + (familyCount || 0) + 1, reviews_count: actData?.reviews_count || 0 });
 
         // Attività aggiunte: unclaimed businesses inseriti dall'utente (o membro famiglia attivo)
         let abQuery = supabase.from('unclaimed_business_locations').select('id, name, city, province, category_id, created_at, business_categories(name)').eq('added_by', profile.id).order('created_at', { ascending: false });
