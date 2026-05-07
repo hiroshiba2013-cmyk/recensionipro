@@ -410,44 +410,70 @@ export function LeaderboardPage() {
             <div className="max-w-4xl mx-auto">
               {profile?.user_type === 'customer' && (
                 <div className="mt-8 bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">Come Guadagnare Punti - Utenti Privati e Membri Famiglia</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">Come Guadagnare Punti</h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    Tutti gli utenti (profilo principale e membri della famiglia) guadagnano punti allo stesso modo:
+                    La classifica è riservata agli utenti privati e ai loro familiari.
                   </p>
-                  <ul className="space-y-2 text-gray-700">
-                    <li className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-green-600" />
-                      <span><strong>50 punti</strong> per recensione completa (con valutazioni dettagliate)</span>
+                  <ul className="space-y-3 text-gray-700">
+                    <li className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <Star className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-gray-900">+50 punti</span>
+                        <span className="text-gray-600"> — recensione con prova documentale</span>
+                      </div>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <Award className="w-5 h-5 text-yellow-600" />
-                      <span><strong>30 punti</strong> quando un amico si abbona usando il tuo nickname</span>
+                    <li className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                        <Award className="w-5 h-5 text-yellow-600" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-gray-900">+30 punti</span>
+                        <span className="text-gray-600"> — porta un amico che si abbona</span>
+                      </div>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-blue-600" />
-                      <span><strong>25 punti</strong> per recensione base (solo voto finale)</span>
+                    <li className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                        <Star className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-gray-900">+25 punti</span>
+                        <span className="text-gray-600"> — recensione senza prova documentale</span>
+                      </div>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <Award className="w-5 h-5 text-orange-600" />
-                      <span><strong>10 punti</strong> per inserimento attività base (nome e indirizzo)</span>
+                    <li className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                        <Award className="w-5 h-5 text-emerald-600" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-gray-900">+25 punti</span>
+                        <span className="text-gray-600"> — aggiunta attività con contatto (email, telefono o sito)</span>
+                      </div>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <Award className="w-5 h-5 text-green-600" />
-                      <span><strong>25 punti</strong> per inserimento attività completa (con sito, email, telefono)</span>
+                    <li className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                        <Award className="w-5 h-5 text-orange-600" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-gray-900">+10 punti</span>
+                        <span className="text-gray-600"> — aggiunta attività senza contatto (solo nome e indirizzo)</span>
+                      </div>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <Award className="w-5 h-5 text-purple-600" />
-                      <span><strong>10 punti</strong> per ogni prodotto inserito</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Award className="w-5 h-5 text-gray-600" />
-                      <span><strong>5 punti</strong> per ogni annuncio pubblicato</span>
+                    <li className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <Award className="w-5 h-5 text-gray-600" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-gray-900">+5 punti</span>
+                        <span className="text-gray-600"> — annuncio pubblicato (vendita, regalo o cerco)</span>
+                      </div>
                     </li>
                   </ul>
 
                   <div className="mt-4 bg-amber-50 border border-amber-300 rounded-lg p-4">
                     <p className="text-sm text-gray-700">
-                      <strong>Nota:</strong> I punti delle recensioni vengono assegnati dopo l'approvazione dello staff. Ogni utente compete individualmente nella classifica, inclusi i membri della famiglia.
+                      <strong>Nota:</strong> I punti per recensioni e attività vengono assegnati dopo l'approvazione dello staff. Ogni utente compete individualmente nella classifica, inclusi i membri della famiglia.
                     </p>
                   </div>
                 </div>

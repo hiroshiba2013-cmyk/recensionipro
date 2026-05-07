@@ -237,10 +237,10 @@ export function ActivityFeed() {
               <p className="text-xs text-gray-600 mt-1">10-25 punti ciascuna</p>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border-2 border-purple-300">
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border-2 border-gray-300">
               <div className="flex items-center justify-between mb-2">
-                <Package className="w-8 h-8 text-purple-600" />
-                <span className="text-3xl font-bold text-purple-700">{userStats.ads_posted_count}</span>
+                <Package className="w-8 h-8 text-gray-600" />
+                <span className="text-3xl font-bold text-gray-700">{userStats.ads_posted_count}</span>
               </div>
               <p className="text-sm font-semibold text-gray-700">Annunci Pubblicati</p>
               <p className="text-xs text-gray-600 mt-1">5 punti ciascuno</p>
