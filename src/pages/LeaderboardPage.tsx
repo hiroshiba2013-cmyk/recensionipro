@@ -55,15 +55,26 @@ export function LeaderboardPage() {
       // Carica i top 20 utenti basati sul filtro
       await loadTopUsers();
 
-      // Funzione comune per calcolare il rank dato un punteggio
-      // Only counts non-business users
+      // Calcola il rank globale: conta quante righe di user_activity hanno più punti.
+      // Include sia account owner (family_member_id IS NULL) che family members separatamente,
+      // ma esclude gli utenti business.
       const calcRank = async (points: number): Promise<number> => {
-        const { count } = await supabase
+        // Count owner rows with more points (non-business)
+        const { count: ownerCount } = await supabase
           .from('user_activity')
           .select('user_id', { count: 'exact', head: true })
           .gt('total_points', points)
-          .not('user_id', 'in', `(SELECT id FROM profiles WHERE user_type = 'business')`);
-        return (count || 0) + 1;
+          .is('family_member_id', null)
+          .not('user_id', 'in', `(SELECT id FROM profiles WHERE user_type != 'customer')`);
+
+        // Count family member rows with more points
+        const { count: familyCount } = await supabase
+          .from('user_activity')
+          .select('family_member_id', { count: 'exact', head: true })
+          .gt('total_points', points)
+          .not('family_member_id', 'is', null);
+
+        return (ownerCount || 0) + (familyCount || 0) + 1;
       };
 
       // Se è un membro della famiglia, carica i suoi dati da user_activity
