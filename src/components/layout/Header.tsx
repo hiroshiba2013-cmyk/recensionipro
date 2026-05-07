@@ -201,7 +201,7 @@ export function Header() {
                 <nav className="hidden lg:flex items-center gap-2">
                   <ActiveProfileIndicator />
                   <a
-                    href="/profile"
+                    href="/dashboard"
                     className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium px-4 py-2 rounded-lg"
                     title={t('header.myProfile')}
                   >
@@ -412,7 +412,7 @@ export function Header() {
                       <span>{t('header.rules')}</span>
                     </a>
                     <a
-                      href="/profile"
+                      href="/dashboard"
                       className="flex items-center gap-3 bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium px-4 py-3 rounded-lg"
                       onClick={() => setShowMobileMenu(false)}
                     >
