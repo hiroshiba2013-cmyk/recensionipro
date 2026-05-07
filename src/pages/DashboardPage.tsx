@@ -133,8 +133,8 @@ interface ProfileDataSectionProps {
   onLocationSave?: (id: string, data: Record<string, string>) => Promise<void>;
 }
 
-function Field({ label, value, icon: Icon }: { label: string; value?: string | null; icon: React.ElementType }) {
-  if (!value) return null;
+function Field({ label, value, icon: Icon, hideIfEmpty = false }: { label: string; value?: string | null; icon: React.ElementType; hideIfEmpty?: boolean }) {
+  if (hideIfEmpty && !value) return null;
   return (
     <div className="flex items-start gap-3">
       <div className="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -142,7 +142,7 @@ function Field({ label, value, icon: Icon }: { label: string; value?: string | n
       </div>
       <div>
         <p className="text-xs text-gray-400 mb-0.5">{label}</p>
-        <p className="text-sm font-medium text-gray-900">{value}</p>
+        <p className={`text-sm font-medium ${value ? 'text-gray-900' : 'text-gray-300 italic'}`}>{value || 'Non inserito'}</p>
       </div>
     </div>
   );
@@ -312,14 +312,14 @@ function ProfileDataSection({ profile, isBiz, familyMembers = [], businessLocati
                     <Field label="Email PEC" value={p.pec_email} icon={Mail} />
                     <Field label="Telefono" value={p.phone} icon={Phone} />
                     <Field label="Sito Web" value={p.website_url} icon={Globe} />
-                    {p.description && <div className="sm:col-span-2"><Field label="Descrizione" value={p.description} icon={FileText} /></div>}
+                    <div className="sm:col-span-2"><Field label="Descrizione" value={p.description} icon={FileText} hideIfEmpty /></div>
                   </>
                 ) : (
                   <>
                     <Field label="Nome Completo" value={p.full_name} icon={User} />
-                    <Field label="Nickname" value={p.nickname} icon={User} />
-                    <Field label="Telefono" value={p.phone} icon={Phone} />
-                    <Field label="Codice Fiscale" value={p.fiscal_code} icon={CreditCard} />
+                    <Field label="Nickname" value={p.nickname} icon={User} hideIfEmpty />
+                    <Field label="Telefono" value={p.phone} icon={Phone} hideIfEmpty />
+                    <Field label="Codice Fiscale" value={p.fiscal_code} icon={CreditCard} hideIfEmpty />
                   </>
                 )}
               </div>
