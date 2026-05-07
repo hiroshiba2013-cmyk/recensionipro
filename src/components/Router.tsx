@@ -99,6 +99,15 @@ export function Router() {
     setCurrentPath('/select-profile');
   }, [needsProfileSelection, loading, currentPath, profile]);
 
+  // Redirect alla home quando l'utente fa logout
+  useEffect(() => {
+    if (loading) return;
+    if (!user && currentPath !== '/' && !currentPath.startsWith('/business/') && !currentPath.startsWith('/admin')) {
+      window.history.pushState({}, '', '/');
+      setCurrentPath('/');
+    }
+  }, [user, loading]);
+
   let page: React.ReactNode = null;
 
   if (currentPath === '/select-profile') {
