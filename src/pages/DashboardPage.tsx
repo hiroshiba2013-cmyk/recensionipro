@@ -312,6 +312,7 @@ export function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <div style={{background:'red',color:'white',padding:'20px',fontSize:'24px',fontWeight:'bold',textAlign:'center'}}>NUOVO DASHBOARD - SE VEDI QUESTO IL FILE E AGGIORNATO</div>
       <TrialExpirationModal />
 
       {/* Hero */}
