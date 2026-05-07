@@ -114,6 +114,8 @@ function BadgeBtn({
 interface ProfileDataSectionProps {
   profile: any;
   isBiz: boolean;
+  familyMembers?: any[];
+  businessLocations?: any[];
   editing: boolean;
   form: Record<string, string>;
   saving: boolean;
@@ -177,7 +179,9 @@ function EditTextarea({ label, fieldKey, form, icon: Icon, onChange }: {
   );
 }
 
-function ProfileDataSection({ profile, isBiz, editing, form, saving, saveMsg, onEdit, onCancel, onSave, onChange }: ProfileDataSectionProps) {
+function ProfileDataSection({ profile, isBiz, familyMembers = [], businessLocations = [], editing, form, saving, saveMsg, onEdit, onCancel, onSave, onChange }: ProfileDataSectionProps) {
+  const [expandedMember, setExpandedMember] = useState<string | null>(null);
+  const [expandedLocation, setExpandedLocation] = useState<string | null>(null);
   const p = profile as any;
   const billingAddress = [p.billing_street, p.billing_street_number, p.billing_postal_code, p.billing_city, p.billing_province].filter(Boolean).join(', ');
   const officeAddress = isBiz ? [p.office_street, p.office_street_number, p.office_postal_code, p.office_city, p.office_province].filter(Boolean).join(', ') : '';
@@ -274,6 +278,129 @@ function ProfileDataSection({ profile, isBiz, editing, form, saving, saveMsg, on
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Account</h3>
               <Field label="Email di accesso" value={p.email} icon={Mail} />
             </div>
+
+            {/* Membri della famiglia (solo customer) */}
+            {!isBiz && familyMembers.length > 0 && (
+              <div>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+                  Membri della Famiglia ({familyMembers.length})
+                </h3>
+                <div className="space-y-2">
+                  {familyMembers.map(fm => (
+                    <div key={fm.id} className="border border-gray-100 rounded-xl overflow-hidden">
+                      <button
+                        onClick={() => setExpandedMember(expandedMember === fm.id ? null : fm.id)}
+                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          {fm.avatar_url ? (
+                            <img src={fm.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-gray-200" />
+                          ) : (
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                              <User className="w-4 h-4 text-blue-600" />
+                            </div>
+                          )}
+                          <div className="text-left">
+                            <p className="text-sm font-semibold text-gray-900">{fm.first_name} {fm.last_name}</p>
+                            {fm.nickname && <p className="text-xs text-gray-400">@{fm.nickname}</p>}
+                          </div>
+                          {fm.relationship && (
+                            <span className="text-xs bg-blue-50 text-blue-600 font-medium px-2 py-0.5 rounded-full">{fm.relationship}</span>
+                          )}
+                        </div>
+                        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${expandedMember === fm.id ? 'rotate-180' : ''}`} />
+                      </button>
+                      {expandedMember === fm.id && (
+                        <div className="px-4 pb-4 pt-1 bg-gray-50 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <Field label="Nome" value={`${fm.first_name} ${fm.last_name}`} icon={User} />
+                          {fm.nickname && <Field label="Nickname" value={fm.nickname} icon={User} />}
+                          {fm.date_of_birth && <Field label="Data di Nascita" value={new Date(fm.date_of_birth).toLocaleDateString('it-IT')} icon={FileText} />}
+                          {fm.fiscal_code && <Field label="Codice Fiscale" value={fm.fiscal_code} icon={CreditCard} />}
+                          {fm.relationship && <Field label="Ruolo" value={fm.relationship} icon={UsersIcon} />}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Sedi / Filiali (solo business) */}
+            {isBiz && businessLocations.length > 0 && (
+              <div>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+                  Sedi ({businessLocations.length})
+                </h3>
+                <div className="space-y-2">
+                  {businessLocations.map((loc, idx) => {
+                    const locAddress = [loc.address, loc.street_number, loc.postal_code, loc.city, loc.province].filter(Boolean).join(', ');
+                    return (
+                      <div key={loc.id} className="border border-gray-100 rounded-xl overflow-hidden">
+                        <button
+                          onClick={() => setExpandedLocation(expandedLocation === loc.id ? null : loc.id)}
+                          className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            {loc.avatar_url ? (
+                              <img src={loc.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-gray-200" />
+                            ) : (
+                              <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                                <Building2 className="w-4 h-4 text-emerald-600" />
+                              </div>
+                            )}
+                            <div className="text-left">
+                              <p className="text-sm font-semibold text-gray-900">{loc.internal_name || loc.name || `Sede ${idx + 1}`}</p>
+                              {loc.city && <p className="text-xs text-gray-400">{loc.city}{loc.province ? ` (${loc.province})` : ''}</p>}
+                            </div>
+                          </div>
+                          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${expandedLocation === loc.id ? 'rotate-180' : ''}`} />
+                        </button>
+                        {expandedLocation === loc.id && (
+                          <div className="px-4 pb-4 pt-1 bg-gray-50 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {loc.name && <Field label="Nome Sede" value={loc.name} icon={Building2} />}
+                            {loc.description && <div className="sm:col-span-2"><Field label="Descrizione" value={loc.description} icon={FileText} /></div>}
+                            {locAddress && (
+                              <div className="sm:col-span-2">
+                                <Field label="Indirizzo" value={locAddress} icon={MapPin} />
+                              </div>
+                            )}
+                            {loc.phone && <Field label="Telefono" value={loc.phone} icon={Phone} />}
+                            {loc.email && <Field label="Email" value={loc.email} icon={Mail} />}
+                            {loc.vat_number && <Field label="Partita IVA Sede" value={loc.vat_number} icon={CreditCard} />}
+                            {loc.services && <div className="sm:col-span-2"><Field label="Servizi" value={loc.services} icon={FileText} /></div>}
+                            {loc.services_description && <div className="sm:col-span-2"><Field label="Descrizione Servizi" value={loc.services_description} icon={FileText} /></div>}
+                            {loc.business_hours && (() => {
+                              const days: Record<string, string> = { monday: 'Lunedi', tuesday: 'Martedi', wednesday: 'Mercoledi', thursday: 'Giovedi', friday: 'Venerdi', saturday: 'Sabato', sunday: 'Domenica' };
+                              const hours = loc.business_hours as Record<string, any>;
+                              const lines = Object.entries(days).map(([k, label]) => {
+                                const d = hours[k];
+                                if (!d || d.closed) return `${label}: Chiuso`;
+                                return `${label}: ${d.open || '--'} - ${d.close || '--'}`;
+                              });
+                              return (
+                                <div className="sm:col-span-2">
+                                  <div className="flex items-start gap-3">
+                                    <div className="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                      <FileText className="w-3.5 h-3.5 text-gray-500" />
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-gray-400 mb-1">Orari</p>
+                                      <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                                        {lines.map(l => <p key={l} className="text-xs text-gray-700">{l}</p>)}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           /* ── EDIT MODE ── */
@@ -367,6 +494,7 @@ export function DashboardPage() {
   const [editingCustomerAdId, setEditingCustomerAdId] = useState<string | undefined>(undefined);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
   const [isRegisteredBusiness, setIsRegisteredBusiness] = useState(false);
+  const [fullBusinessLocations, setFullBusinessLocations] = useState<any[]>([]);
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
   const [availablePlans, setAvailablePlans] = useState<SubscriptionPlan[]>([]);
   const [upgradeMessage, setUpgradeMessage] = useState('');
@@ -483,8 +611,10 @@ export function DashboardPage() {
           if (bizData.length > 0) {
             const ids = bizData.map((b: any) => b.id);
             if (isReg) {
-              const { data: locs } = await supabase.from('registered_business_locations').select('id').in('business_id', ids);
+              const { data: locs } = await supabase.from('registered_business_locations').select('*').in('business_id', ids);
+              if (locs) setFullBusinessLocations(locs);
               const locIds = locs ? locs.map((l: any) => l.id) : [];
+              // locs already set above
               if (locIds.length > 0) {
                 let q = supabase.from('reviews').select('*, customer:profiles!customer_id(full_name), responses:review_responses(*), business_location:registered_business_locations(internal_name, city)').in('business_location_id', locIds).eq('review_status', 'approved').order('created_at', { ascending: false });
                 if (selectedBusinessLocationId) q = q.eq('business_location_id', selectedBusinessLocationId);
@@ -670,6 +800,7 @@ export function DashboardPage() {
                   <ProfileDataSection
                     profile={profile}
                     isBiz={true}
+                    businessLocations={fullBusinessLocations}
                     editing={editingProfile}
                     form={profileForm}
                     saving={profileSaving}
@@ -901,6 +1032,7 @@ export function DashboardPage() {
                   <ProfileDataSection
                     profile={profile}
                     isBiz={false}
+                    familyMembers={familyMembers}
                     editing={editingProfile}
                     form={profileForm}
                     saving={profileSaving}
