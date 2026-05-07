@@ -3,7 +3,8 @@ import {
   Plus, Star, Building, MessageSquare, Check, Shield, TrendingUp,
   Heart, Gift, Users as UsersIcon, Package, Briefcase, Users,
   DollarSign, Trophy, Activity, Tag, ChevronDown, ChevronUp,
-  User, Mail, Phone, MapPin, FileText, Globe, Pencil, Save, X, CreditCard, Hash, Building2
+  User, Mail, Phone, MapPin, FileText, Globe, Pencil, Save, X, CreditCard, Hash, Building2,
+  Lock
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Business, Review, FamilyMember } from '../lib/supabase';
@@ -20,6 +21,9 @@ import { ActivityFeed } from '../components/activity/ActivityFeed';
 import { UserAuctionsSection } from '../components/auctions/UserAuctionsSection';
 import { ProfileClassifiedAdCard } from '../components/classifieds/ProfileClassifiedAdCard';
 import { ClassifiedAdForm } from '../components/classifieds/ClassifiedAdForm';
+import { PinSetup } from '../components/profile/PinSetup';
+import { JobSeekerForm } from '../components/jobs/JobSeekerForm';
+import { JobSeekerCard } from '../components/jobs/JobSeekerCard';
 import { useNavigate } from '../components/Router';
 
 interface SubscriptionPlan {
@@ -629,6 +633,10 @@ export function DashboardPage() {
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
   const [isRegisteredBusiness, setIsRegisteredBusiness] = useState(false);
   const [fullBusinessLocations, setFullBusinessLocations] = useState<any[]>([]);
+  const [addedBusinesses, setAddedBusinesses] = useState<any[]>([]);
+  const [myJobSeekers, setMyJobSeekers] = useState<any[]>([]);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [showJobSeekerForm, setShowJobSeekerForm] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
   const [availablePlans, setAvailablePlans] = useState<SubscriptionPlan[]>([]);
   const [upgradeMessage, setUpgradeMessage] = useState('');
@@ -798,6 +806,23 @@ export function DashboardPage() {
         const pts = actData?.total_points || 0;
         const { count } = await supabase.from('user_activity').select('*', { count: 'exact', head: true }).gt('total_points', pts);
         setUserRank({ points: pts, rank: (count || 0) + 1, reviews_count: actData?.reviews_count || 0 });
+
+        // Attività aggiunte: unclaimed businesses inseriti dall'utente (o membro famiglia attivo)
+        let abQuery = supabase.from('unclaimed_business_locations').select('id, name, city, province, category_id, created_at, business_categories(name)').eq('added_by', profile.id).order('created_at', { ascending: false });
+        if (fmId) {
+          abQuery = supabase.from('unclaimed_business_locations').select('id, name, city, province, category_id, created_at, business_categories(name)').eq('added_by', profile.id).eq('added_by_family_member_id', fmId).order('created_at', { ascending: false });
+        } else {
+          abQuery = supabase.from('unclaimed_business_locations').select('id, name, city, province, category_id, created_at, business_categories(name)').eq('added_by', profile.id).is('added_by_family_member_id', null).order('created_at', { ascending: false });
+        }
+        const { data: ab } = await abQuery;
+        if (ab) setAddedBusinesses(ab);
+
+        // Profili cerco lavoro dell'utente (o membro famiglia attivo)
+        let jsQuery = supabase.from('job_seekers').select('*').eq('user_id', profile.id).order('created_at', { ascending: false });
+        if (fmId) jsQuery = jsQuery.eq('family_member_id', fmId);
+        else jsQuery = jsQuery.is('family_member_id', null);
+        const { data: myJs } = await jsQuery;
+        if (myJs) setMyJobSeekers(myJs);
       }
       await loadAds();
     } catch (e) {
@@ -870,9 +895,9 @@ export function DashboardPage() {
   const custBadges = [
     { key: 'cust_dati',        label: 'I Tuoi Dati',             icon: User,     color: 'slate',  badge: null },
     { key: 'cust_leaderboard', label: 'La Tua Classifica',      icon: Trophy,   color: 'yellow', badge: userRank ? `#${userRank.rank}` : null },
-    { key: 'cust_activities',  label: 'Attivita Aggiunte',       icon: Activity, color: 'blue',   badge: null },
-    { key: 'cust_jobs',        label: 'Annunci Cerco Lavoro',    icon: Briefcase,color: 'sky',    badge: null },
-    { key: 'cust_reviews',     label: 'Le Tue Recensioni',       icon: Star,     color: 'amber',  badge: reviews.filter(r => !r.family_member_id).length > 0 ? String(reviews.filter(r => !r.family_member_id).length) : null },
+    { key: 'cust_activities',  label: 'Attivita Aggiunte',       icon: Activity, color: 'blue',   badge: addedBusinesses.length > 0 ? String(addedBusinesses.length) : null },
+    { key: 'cust_jobs',        label: 'Annunci Cerco Lavoro',    icon: Briefcase,color: 'sky',    badge: myJobSeekers.length > 0 ? String(myJobSeekers.length) : null },
+    { key: 'cust_reviews',     label: 'Le Tue Recensioni',       icon: Star,     color: 'amber',  badge: (() => { const fmId = activeProfile?.isOwner === false ? activeProfile.id : null; const mine = reviews.filter(r => fmId ? r.family_member_id === fmId : !r.family_member_id); return mine.length > 0 ? String(mine.length) : null; })() },
     { key: 'cust_ads',         label: 'I Tuoi Annunci',          icon: Tag,      color: 'green',  badge: customerClassifiedAds.length > 0 ? String(customerClassifiedAds.length) : null },
     { key: 'cust_auctions',    label: 'Le Mie Aste',             icon: TrendingUp,color:'orange', badge: null },
     { key: 'cust_fav_ads',     label: 'Annunci Preferiti',       icon: Heart,    color: 'red',    badge: null },
@@ -884,6 +909,37 @@ export function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
 <TrialExpirationModal />
 
+      {/* PIN Modal */}
+      {showPinModal && profile && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center">
+                  <Lock className="w-4 h-4 text-slate-600" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-gray-900 text-sm">PIN di Protezione</h2>
+                  <p className="text-xs text-gray-400">Proteggi il tuo profilo con un PIN</p>
+                </div>
+              </div>
+              <button onClick={() => setShowPinModal(false)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                <X className="w-4 h-4 text-gray-400" />
+              </button>
+            </div>
+            <div className="p-5">
+              <PinSetup
+                profileId={activeProfile ? activeProfile.id : profile.id}
+                profileName={displayName}
+                isOwner={!activeProfile || activeProfile.isOwner}
+                userType={profile.user_type as 'customer' | 'business'}
+                onSuccess={() => setShowPinModal(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero */}
       <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
@@ -893,7 +949,16 @@ export function DashboardPage() {
                 <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
                 {isBiz ? 'Account Business' : 'Account Privato'}
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-1">Ciao, {displayName}</h1>
+              <div className="flex items-center gap-3 mb-1">
+                <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight">Ciao, {displayName}</h1>
+                <button
+                  onClick={() => setShowPinModal(true)}
+                  className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white/80 hover:text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-all backdrop-blur"
+                  title="Imposta PIN di protezione"
+                >
+                  <Lock className="w-3.5 h-3.5" />PIN
+                </button>
+              </div>
               <p className="text-slate-400 text-base">{isBiz ? 'Gestisci la tua attivita e le sedi' : 'Gestisci il tuo profilo e le attivita'}</p>
             </div>
             {currentSubscription && (
@@ -1216,7 +1281,11 @@ export function DashboardPage() {
                           </div>
                         </div>
                       )}
-                      <button onClick={() => navigate('/leaderboard')} className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2.5 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all font-semibold text-sm text-center">Classifica Completa</button>
+                      <div className="border-t border-gray-100 mt-4 pt-4">
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Storico Attivita</p>
+                        <ActivityFeed />
+                      </div>
+                      <button onClick={() => navigate('/leaderboard')} className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2.5 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all font-semibold text-sm text-center mt-3">Classifica Completa</button>
                     </div>
                   </div>
                 )}
@@ -1227,74 +1296,114 @@ export function DashboardPage() {
                     <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
                       <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"><Activity className="w-4 h-4 text-blue-600" /></div>
                       <span className="font-semibold text-gray-900">Attivita Aggiunte</span>
+                      {addedBusinesses.length > 0 && <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">{addedBusinesses.length}</span>}
                     </div>
-                    <div className="border-t border-gray-100"><ActivityFeed /></div>
+                    <div className="px-5 pb-5 pt-4">
+                      {addedBusinesses.length === 0 ? (
+                        <div className="text-center py-8">
+                          <Building className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                          <p className="text-sm text-gray-500 mb-3">Non hai ancora aggiunto attivita</p>
+                          <button onClick={() => navigate('/search')} className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors text-sm font-semibold">Aggiungi un'attivita</button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {addedBusinesses.map(biz => (
+                            <div key={biz.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                  <Building className="w-4 h-4 text-blue-600" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-900">{biz.name}</p>
+                                  <p className="text-xs text-gray-400">{biz.city}{biz.province ? ` (${biz.province})` : ''}{(biz as any).business_categories?.name ? ` · ${(biz as any).business_categories.name}` : ''}</p>
+                                </div>
+                              </div>
+                              <span className="text-xs text-gray-400">{new Date(biz.created_at).toLocaleDateString('it-IT')}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
                 {/* Cerco Lavoro */}
                 {open.cust_jobs && (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
-                      <div className="w-8 h-8 bg-sky-100 rounded-lg flex items-center justify-center"><Briefcase className="w-4 h-4 text-sky-600" /></div>
-                      <span className="font-semibold text-gray-900">Annunci Cerco Lavoro</span>
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-sky-100 rounded-lg flex items-center justify-center"><Briefcase className="w-4 h-4 text-sky-600" /></div>
+                        <span className="font-semibold text-gray-900">Annunci Cerco Lavoro</span>
+                        {myJobSeekers.length > 0 && <span className="bg-sky-100 text-sky-700 text-xs font-bold px-2 py-0.5 rounded-full">{myJobSeekers.length}</span>}
+                      </div>
+                      <button onClick={() => setShowJobSeekerForm(true)} className="bg-sky-600 hover:bg-sky-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"><Plus className="w-3 h-3" />Nuovo</button>
                     </div>
                     <div className="px-5 pb-5 pt-4">
-                      <p className="text-sm text-gray-500 text-center py-4">Vai alla sezione lavoro per gestire il tuo profilo candidato.</p>
-                      <button onClick={() => navigate('/jobs')} className="w-full bg-sky-600 text-white py-2.5 rounded-xl hover:bg-sky-700 transition-colors font-semibold text-sm">Vai a Cerca Lavoro</button>
+                      {showJobSeekerForm && (
+                        <div className="mb-4">
+                          <JobSeekerForm
+                            onSuccess={() => {
+                              setShowJobSeekerForm(false);
+                              // reload
+                              const fmId = activeProfile?.isOwner === false ? activeProfile.id : null;
+                              let q = supabase.from('job_seekers').select('*').eq('user_id', profile!.id).order('created_at', { ascending: false });
+                              if (fmId) q = q.eq('family_member_id', fmId);
+                              else q = q.is('family_member_id', null);
+                              q.then(({ data }) => { if (data) setMyJobSeekers(data); });
+                            }}
+                            onCancel={() => setShowJobSeekerForm(false)}
+                          />
+                        </div>
+                      )}
+                      {myJobSeekers.length === 0 && !showJobSeekerForm ? (
+                        <div className="text-center py-8">
+                          <Briefcase className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                          <p className="text-sm text-gray-500 mb-3">Non hai ancora pubblicato annunci cerco lavoro</p>
+                          <button onClick={() => setShowJobSeekerForm(true)} className="bg-sky-600 text-white px-4 py-2 rounded-xl hover:bg-sky-700 transition-colors text-sm font-semibold">Crea annuncio</button>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {myJobSeekers.map(js => (
+                            <JobSeekerCard key={js.id} jobSeeker={js} />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
 
                 {/* Le Tue Recensioni */}
-                {open.cust_reviews && (
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
-                      <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center"><Star className="w-4 h-4 text-amber-600" /></div>
-                      <span className="font-semibold text-gray-900">Le Tue Recensioni</span>
-                      {reviews.filter(r => !r.family_member_id).length > 0 && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{reviews.filter(r => !r.family_member_id).length}</span>}
-                    </div>
-                    <div className="px-5 pb-5">
-                      {reviews.filter(r => !r.family_member_id).length === 0 ? (
-                        <p className="text-sm text-gray-500 text-center py-6">Non hai ancora scritto recensioni</p>
-                      ) : (
-                        <div className="space-y-3 pt-4">
-                          {reviews.filter(r => !r.family_member_id).map((review) => (
-                            <div key={review.id} className="border border-gray-100 rounded-xl p-4">
-                              <div className="flex items-start justify-between mb-1">
-                                <div className="flex">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />)}</div>
-                                <span className="text-xs text-gray-400">{new Date(review.created_at).toLocaleDateString('it-IT')}</span>
-                              </div>
-                              <h4 className="font-semibold text-sm mb-0.5">{review.title}</h4>
-                              <p className="text-gray-600 text-sm">{review.content}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {familyMembers.map((member) => {
-                        const mr = reviews.filter(r => r.family_member_id === member.id);
-                        if (mr.length === 0) return null;
-                        return (
-                          <div key={member.id} className="border-t border-gray-100 px-5 pb-5">
-                            <p className="text-xs font-semibold text-gray-500 pt-3 pb-2">Recensioni di {member.nickname || `${member.first_name} ${member.last_name}`}</p>
-                            <div className="space-y-3">
-                              {mr.map((review) => (
-                                <div key={review.id} className="border border-gray-100 rounded-xl p-4">
-                                  <div className="flex items-start justify-between mb-1">
-                                    <div className="flex">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />)}</div>
-                                    <span className="text-xs text-gray-400">{new Date(review.created_at).toLocaleDateString('it-IT')}</span>
-                                  </div>
-                                  <h4 className="font-semibold text-sm mb-0.5">{review.title}</h4>
-                                  <p className="text-gray-600 text-sm">{review.content}</p>
+                {open.cust_reviews && (() => {
+                  const activeFmId = activeProfile?.isOwner === false ? activeProfile.id : null;
+                  const myReviews = reviews.filter(r => activeFmId ? r.family_member_id === activeFmId : !r.family_member_id);
+                  return (
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                      <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
+                        <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center"><Star className="w-4 h-4 text-amber-600" /></div>
+                        <span className="font-semibold text-gray-900">Le Tue Recensioni</span>
+                        {myReviews.length > 0 && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{myReviews.length}</span>}
+                      </div>
+                      <div className="px-5 pb-5">
+                        {myReviews.length === 0 ? (
+                          <p className="text-sm text-gray-500 text-center py-6">Non hai ancora scritto recensioni</p>
+                        ) : (
+                          <div className="space-y-3 pt-4">
+                            {myReviews.map((review) => (
+                              <div key={review.id} className="border border-gray-100 rounded-xl p-4">
+                                <div className="flex items-start justify-between mb-1">
+                                  <div className="flex">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />)}</div>
+                                  <span className="text-xs text-gray-400">{new Date(review.created_at).toLocaleDateString('it-IT')}</span>
                                 </div>
-                              ))}
-                            </div>
+                                <h4 className="font-semibold text-sm mb-0.5">{review.title}</h4>
+                                <p className="text-gray-600 text-sm">{review.content}</p>
+                              </div>
+                            ))}
                           </div>
-                        );
-                      })}
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* I Tuoi Annunci */}
                 {open.cust_ads && (
