@@ -43,6 +43,7 @@ interface JobSeeker {
   desired_salary_max: number | null;
   location: string;
   status: string;
+  approval_status: string;
   contract_type: string;
   experience_years: number;
   education_level: string | null;
@@ -67,11 +68,13 @@ interface JobPostingsSectionProps {
 
 type JobType = 'all' | 'trova' | 'cerca';
 type ApprovalFilter = 'pending' | 'approved' | 'rejected' | 'all';
+type SeekerApprovalFilter = 'pending' | 'approved' | 'rejected' | 'all';
 
 export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }: JobPostingsSectionProps) {
   const { user } = useAuth();
   const [jobType, setJobType] = useState<JobType>('all');
   const [approvalFilter, setApprovalFilter] = useState<ApprovalFilter>('pending');
+  const [seekerApprovalFilter, setSeekerApprovalFilter] = useState<SeekerApprovalFilter>('pending');
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState({ region: '', province: '', city: '' });
   const [selectedJobPosting, setSelectedJobPosting] = useState<JobPosting | null>(null);
@@ -80,6 +83,7 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
   const [jobPostings, setJobPostings] = useState<JobPosting[]>(initialJobPostings);
   const [loading, setLoading] = useState(true);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectingSeekerId, setRejectingSeekerId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [processing, setProcessing] = useState<string | null>(null);
 
@@ -162,7 +166,7 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
         .from('job_seekers')
         .select(`
           id, title, description, desired_salary_min, desired_salary_max,
-          location, status, contract_type, experience_years, education_level,
+          location, status, approval_status, contract_type, experience_years, education_level,
           created_at, user_id, family_member_id, category_id
         `)
         .order('created_at', { ascending: false });
@@ -260,6 +264,43 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
     }
   };
 
+  const handleApproveSeeker = async (seekerId: string) => {
+    if (!user) return;
+    setProcessing(seekerId);
+    try {
+      const { error } = await supabase.rpc('approve_job_seeker', {
+        p_seeker_id: seekerId,
+        p_admin_id: user.id
+      });
+      if (error) throw error;
+      await loadJobSeekers();
+    } catch (err: any) {
+      alert('Errore durante l\'approvazione: ' + err.message);
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const handleRejectSeeker = async () => {
+    if (!rejectingSeekerId || !user) return;
+    setProcessing(rejectingSeekerId);
+    try {
+      const { error } = await supabase.rpc('reject_job_seeker', {
+        p_seeker_id: rejectingSeekerId,
+        p_admin_id: user.id,
+        p_reason: rejectReason
+      });
+      if (error) throw error;
+      setRejectingSeekerId(null);
+      setRejectReason('');
+      await loadJobSeekers();
+    } catch (err: any) {
+      alert('Errore durante il rifiuto: ' + err.message);
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   const handleUpdateJobSeekerStatus = async (seekerId: string, newStatus: string) => {
     try {
       const { error } = await supabase.from('job_seekers').update({ status: newStatus }).eq('id', seekerId);
@@ -297,12 +338,16 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
     const matchesSearch = searchTerm === '' ||
       username.toLowerCase().includes(searchTerm.toLowerCase()) ||
       seeker.title.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+    const matchesApproval = seekerApprovalFilter === 'all' || seeker.approval_status === seekerApprovalFilter;
+    return matchesSearch && matchesApproval;
   });
 
   const pendingCount = jobPostings.filter(j => j.approval_status === 'pending').length;
   const approvedCount = jobPostings.filter(j => j.approval_status === 'approved').length;
   const rejectedCount = jobPostings.filter(j => j.approval_status === 'rejected').length;
+  const seekerPendingCount = jobSeekers.filter(s => s.approval_status === 'pending').length;
+  const seekerApprovedCount = jobSeekers.filter(s => s.approval_status === 'approved').length;
+  const seekerRejectedCount = jobSeekers.filter(s => s.approval_status === 'rejected').length;
 
   const displayedJobPostings = jobType === 'cerca' ? [] : filteredJobPostings;
   const displayedJobSeekers = jobType === 'trova' ? [] : filteredJobSeekers;
@@ -341,10 +386,10 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
                 <Briefcase className="w-3.5 h-3.5" />
                 {jobPostings.length} annunci totali
               </span>
-              {pendingCount > 0 && (
+              {(pendingCount + seekerPendingCount) > 0 && (
                 <span className="inline-flex items-center gap-1.5 bg-orange-500/20 text-orange-300 text-xs font-semibold px-3 py-1.5 rounded-full border border-orange-500/30">
                   <AlertCircle className="w-3.5 h-3.5" />
-                  {pendingCount} in attesa
+                  {pendingCount + seekerPendingCount} in attesa
                 </span>
               )}
               <span className="inline-flex items-center gap-1.5 bg-white/10 text-gray-300 text-xs font-semibold px-3 py-1.5 rounded-full">
@@ -554,6 +599,33 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
             Cerca Lavoro - Annunci Utenti ({displayedJobSeekers.length})
           </h3>
 
+          {/* Seeker approval filter tabs */}
+          <div className="flex gap-2 overflow-x-auto pb-1 mb-4">
+            {[
+              { key: 'pending' as SeekerApprovalFilter, label: 'Da Approvare', count: seekerPendingCount },
+              { key: 'approved' as SeekerApprovalFilter, label: 'Approvati', count: seekerApprovedCount },
+              { key: 'rejected' as SeekerApprovalFilter, label: 'Rifiutati', count: seekerRejectedCount },
+              { key: 'all' as SeekerApprovalFilter, label: 'Tutti', count: jobSeekers.length },
+            ].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setSeekerApprovalFilter(tab.key)}
+                className={`relative rounded-xl px-4 py-2 text-sm font-medium transition-all whitespace-nowrap ${
+                  seekerApprovalFilter === tab.key
+                    ? 'bg-gray-900 text-white shadow-sm'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
+                }`}
+              >
+                {tab.label}
+                {tab.key === 'pending' && tab.count > 0 && seekerApprovalFilter !== 'pending' && (
+                  <span className="absolute -top-2 -right-2 min-w-[20px] h-[20px] flex items-center justify-center px-1 bg-red-600 text-white text-xs font-bold rounded-full">
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
           {loading ? (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
@@ -576,6 +648,7 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
+                          {getApprovalBadge(seeker.approval_status || 'pending')}
                           <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
                             seeker.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                           }`}>
@@ -624,25 +697,37 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
                       </span>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      {(seeker.approval_status === 'pending' || !seeker.approval_status) && (
+                        <>
+                          <button
+                            onClick={() => handleApproveSeeker(seeker.id)}
+                            disabled={processing === seeker.id}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
+                          >
+                            <ShieldCheck className="w-4 h-4" />
+                            {processing === seeker.id ? 'Approvando...' : 'Approva'}
+                          </button>
+                          <button
+                            onClick={() => setRejectingSeekerId(seeker.id)}
+                            disabled={processing === seeker.id}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 font-medium"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            Rifiuta
+                          </button>
+                        </>
+                      )}
                       <button
                         onClick={() => setSelectedJobSeeker(seeker)}
-                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 text-sm"
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm"
                       >
                         <Eye className="w-4 h-4" />
                         Dettagli
                       </button>
-                      <select
-                        value={seeker.status}
-                        onChange={(e) => handleUpdateJobSeekerStatus(seeker.id, e.target.value)}
-                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                      >
-                        <option value="active">Attivo</option>
-                        <option value="closed">Chiuso</option>
-                      </select>
                       <button
                         onClick={() => deleteJobSeeker(seeker.id)}
-                        className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+                        className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2 ml-auto"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -791,6 +876,39 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
               </button>
               <button
                 onClick={() => { setRejectingId(null); setRejectReason(''); }}
+                className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              >
+                Annulla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {rejectingSeekerId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Rifiuta Annuncio Cerca Lavoro</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Inserisci il motivo del rifiuto (opzionale). L'utente ricevera una notifica.
+            </p>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Motivo del rifiuto..."
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+              rows={3}
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={handleRejectSeeker}
+                disabled={processing !== null}
+                className="flex-1 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50"
+              >
+                {processing ? 'Rifiutando...' : 'Conferma Rifiuto'}
+              </button>
+              <button
+                onClick={() => { setRejectingSeekerId(null); setRejectReason(''); }}
                 className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-lg hover:bg-gray-200 transition-colors font-medium"
               >
                 Annulla

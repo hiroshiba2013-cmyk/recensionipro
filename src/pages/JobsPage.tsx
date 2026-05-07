@@ -268,6 +268,7 @@ export function JobsPage() {
           business_categories(name)
         `)
         .eq('status', 'active')
+        .eq('approval_status', 'approved')
         .order('created_at', { ascending: false });
 
       if (filters.position_type) {
