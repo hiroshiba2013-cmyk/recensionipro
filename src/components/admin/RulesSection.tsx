@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, FileEdit as Edit, Save, X, Plus, Trash2, HelpCircle, Shield, FileText } from 'lucide-react';
+import { Shield, HelpCircle, Cookie, FileText, ChevronDown, ChevronUp, Pencil, Save, X, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface FAQ {
@@ -24,47 +24,149 @@ interface RulesSectionProps {
   adminId: string;
 }
 
+const LAST_UPDATED = 'maggio 2026';
+const PLATFORM_NAME = 'Trovafacile';
+const CONTACT_EMAIL = 'privacy@trovafacile.it';
+const COMPANY_NAME = '[Ragione Sociale]';
+const COMPANY_ADDRESS = '[Indirizzo, CAP, Città]';
+const VAT_NUMBER = '[P.IVA]';
+
+const FAQ_CATEGORIES = [
+  'Iscrizione e Account',
+  'Punti e Classifica',
+  'Recensioni',
+  'Annunci',
+  'Lavoro',
+  'Solidarietà',
+  'Aziende',
+  'Abbonamenti',
+  'Aste',
+  'Privacy e Sicurezza',
+  'Generale',
+];
+
+function AccordionFAQ({
+  faq,
+  onEdit,
+  onDelete,
+}: {
+  faq: FAQ;
+  onEdit: (faq: FAQ) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border border-gray-200 rounded-xl overflow-hidden group relative">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition-colors"
+      >
+        <span className="font-semibold text-gray-900 text-sm pr-4">{faq.question}</span>
+        {open ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+      </button>
+      {open && (
+        <div className="px-5 pb-5 border-t border-gray-100">
+          <p className="text-gray-600 text-sm leading-relaxed pt-4">{faq.answer}</p>
+        </div>
+      )}
+      {/* Admin edit overlay */}
+      <div className="absolute top-2 right-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={(e) => { e.stopPropagation(); onEdit(faq); }}
+          className="flex items-center gap-1 bg-blue-600 text-white text-xs px-2 py-1 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+        >
+          <Pencil className="w-3 h-3" />
+          Modifica
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(faq.id); }}
+          className="flex items-center gap-1 bg-red-500 text-white text-xs px-2 py-1 rounded-lg hover:bg-red-600 transition-colors shadow-sm"
+        >
+          <Trash2 className="w-3 h-3" />
+        </button>
+      </div>
+      {!faq.is_active && (
+        <div className="absolute top-2 left-2">
+          <span className="bg-red-100 text-red-600 text-xs font-semibold px-2 py-0.5 rounded-full">Disattivata</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RulesSectionCard({
+  section,
+  index,
+  onEdit,
+  onDelete,
+}: {
+  section: RulesContent;
+  index: number;
+  onEdit: (rule: RulesContent) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden group relative">
+      <div className="flex items-center gap-4 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+        <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
+          {index + 1}
+        </div>
+        <h3 className="font-bold text-gray-900 flex-1">{section.section_title}</h3>
+        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={() => onEdit(section)}
+            className="flex items-center gap-1 bg-blue-600 text-white text-xs px-2.5 py-1.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            <Pencil className="w-3 h-3" />
+            Modifica
+          </button>
+          <button
+            onClick={() => onDelete(section.id)}
+            className="flex items-center gap-1 bg-red-500 text-white text-xs px-2 py-1.5 rounded-lg hover:bg-red-600 transition-colors shadow-sm"
+          >
+            <Trash2 className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+      <div className="px-6 py-5">
+        <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{section.content_text}</p>
+      </div>
+      {!section.is_active && (
+        <div className="absolute top-3 right-3">
+          <span className="bg-red-100 text-red-600 text-xs font-semibold px-2 py-0.5 rounded-full">Disattivata</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function RulesSection({ adminId }: RulesSectionProps) {
-  const [activeTab, setActiveTab] = useState<'faqs' | 'rules'>('rules');
+  const [activeTab, setActiveTab] = useState<'regolamento' | 'faq' | 'cookie' | 'termini'>('regolamento');
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [rulesContent, setRulesContent] = useState<RulesContent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingFAQ, setEditingFAQ] = useState<FAQ | null>(null);
-  const [editingRule, setEditingRule] = useState<RulesContent | null>(null);
-  const [isNewFAQ, setIsNewFAQ] = useState(false);
-  const [isNewRule, setIsNewRule] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('Tutte');
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  // Edit state
+  const [editingFAQ, setEditingFAQ] = useState<FAQ | null>(null);
+  const [isNewFAQ, setIsNewFAQ] = useState(false);
+  const [editingRule, setEditingRule] = useState<RulesContent | null>(null);
+  const [isNewRule, setIsNewRule] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-
-      // Load FAQs
-      const { data: faqsData, error: faqsError } = await supabase
-        .from('faqs')
-        .select('*')
-        .order('category')
-        .order('display_order');
-
-      if (faqsError) throw faqsError;
-      setFaqs(faqsData || []);
-
-      // Load Rules Content
-      const { data: rulesData, error: rulesError } = await supabase
-        .from('rules_content')
-        .select('*')
-        .order('display_order');
-
-      if (rulesError) throw rulesError;
-      setRulesContent(rulesData || []);
-    } catch (error: any) {
-      console.error('Error loading data:', error);
-      alert('Errore nel caricamento dei dati');
+      const [rulesResult, faqsResult] = await Promise.all([
+        supabase.from('rules_content').select('*').order('display_order'),
+        supabase.from('faqs').select('*').order('category').order('display_order'),
+      ]);
+      setRulesContent(rulesResult.data || []);
+      setFaqs(faqsResult.data || []);
+    } catch (err) {
+      console.error('Error loading rules data:', err);
     } finally {
       setLoading(false);
     }
@@ -72,484 +174,480 @@ export function RulesSection({ adminId }: RulesSectionProps) {
 
   const saveFAQ = async () => {
     if (!editingFAQ) return;
-
+    setSaving(true);
     try {
-      setSaving(true);
-
       if (isNewFAQ) {
-        const { error } = await supabase
-          .from('faqs')
-          .insert({
-            category: editingFAQ.category,
-            question: editingFAQ.question,
-            answer: editingFAQ.answer,
-            display_order: editingFAQ.display_order,
-            is_active: editingFAQ.is_active,
-            updated_by: adminId,
-          });
-
+        const { error } = await supabase.from('faqs').insert({
+          category: editingFAQ.category,
+          question: editingFAQ.question,
+          answer: editingFAQ.answer,
+          display_order: editingFAQ.display_order,
+          is_active: editingFAQ.is_active,
+          updated_by: adminId,
+        });
         if (error) throw error;
-        alert('FAQ aggiunta con successo!');
       } else {
-        const { error } = await supabase
-          .from('faqs')
-          .update({
-            category: editingFAQ.category,
-            question: editingFAQ.question,
-            answer: editingFAQ.answer,
-            display_order: editingFAQ.display_order,
-            is_active: editingFAQ.is_active,
-            updated_by: adminId,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', editingFAQ.id);
-
+        const { error } = await supabase.from('faqs').update({
+          category: editingFAQ.category,
+          question: editingFAQ.question,
+          answer: editingFAQ.answer,
+          display_order: editingFAQ.display_order,
+          is_active: editingFAQ.is_active,
+          updated_by: adminId,
+          updated_at: new Date().toISOString(),
+        }).eq('id', editingFAQ.id);
         if (error) throw error;
-        alert('FAQ aggiornata con successo!');
       }
-
       setEditingFAQ(null);
       setIsNewFAQ(false);
-      loadFAQs();
-    } catch (error: any) {
-      console.error('Error saving FAQ:', error);
-      alert(`Errore: ${error.message}`);
+      loadData();
+    } catch (err: any) {
+      alert(`Errore: ${err.message}`);
     } finally {
       setSaving(false);
     }
   };
 
   const deleteFAQ = async (id: string) => {
-    if (!confirm('Sei sicuro di voler eliminare questa FAQ?')) return;
-
-    try {
-      const { error } = await supabase
-        .from('faqs')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      alert('FAQ eliminata con successo!');
-      loadFAQs();
-    } catch (error: any) {
-      console.error('Error deleting FAQ:', error);
-      alert(`Errore: ${error.message}`);
-    }
-  };
-
-  const addNewFAQ = () => {
-    setEditingFAQ({
-      id: '',
-      category: 'Generale',
-      question: '',
-      answer: '',
-      display_order: faqs.length + 1,
-      is_active: true,
-    });
-    setIsNewFAQ(true);
+    if (!confirm('Eliminare questa FAQ?')) return;
+    const { error } = await supabase.from('faqs').delete().eq('id', id);
+    if (error) { alert(`Errore: ${error.message}`); return; }
+    loadData();
   };
 
   const saveRule = async () => {
     if (!editingRule) return;
-
+    setSaving(true);
     try {
-      setSaving(true);
-
       if (isNewRule) {
-        const { error } = await supabase
-          .from('rules_content')
-          .insert({
-            section_key: editingRule.section_key,
-            section_title: editingRule.section_title,
-            content_text: editingRule.content_text,
-            display_order: editingRule.display_order,
-            is_active: editingRule.is_active,
-            updated_by: adminId,
-          });
-
+        const { error } = await supabase.from('rules_content').insert({
+          section_key: editingRule.section_key,
+          section_title: editingRule.section_title,
+          content_text: editingRule.content_text,
+          display_order: editingRule.display_order,
+          is_active: editingRule.is_active,
+          updated_by: adminId,
+        });
         if (error) throw error;
-        alert('Contenuto aggiunto con successo!');
       } else {
-        const { error } = await supabase
-          .from('rules_content')
-          .update({
-            section_key: editingRule.section_key,
-            section_title: editingRule.section_title,
-            content_text: editingRule.content_text,
-            display_order: editingRule.display_order,
-            is_active: editingRule.is_active,
-            updated_by: adminId,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', editingRule.id);
-
+        const { error } = await supabase.from('rules_content').update({
+          section_key: editingRule.section_key,
+          section_title: editingRule.section_title,
+          content_text: editingRule.content_text,
+          display_order: editingRule.display_order,
+          is_active: editingRule.is_active,
+          updated_by: adminId,
+          updated_at: new Date().toISOString(),
+        }).eq('id', editingRule.id);
         if (error) throw error;
-        alert('Contenuto aggiornato con successo!');
       }
-
       setEditingRule(null);
       setIsNewRule(false);
       loadData();
-    } catch (error: any) {
-      console.error('Error saving rule:', error);
-      alert(`Errore: ${error.message}`);
+    } catch (err: any) {
+      alert(`Errore: ${err.message}`);
     } finally {
       setSaving(false);
     }
   };
 
   const deleteRule = async (id: string) => {
-    if (!confirm('Sei sicuro di voler eliminare questo contenuto?')) return;
-
-    try {
-      const { error } = await supabase
-        .from('rules_content')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      alert('Contenuto eliminato con successo!');
-      loadData();
-    } catch (error: any) {
-      console.error('Error deleting rule:', error);
-      alert(`Errore: ${error.message}`);
-    }
+    if (!confirm('Eliminare questa sezione del regolamento?')) return;
+    const { error } = await supabase.from('rules_content').delete().eq('id', id);
+    if (error) { alert(`Errore: ${error.message}`); return; }
+    loadData();
   };
 
-  const addNewRule = () => {
-    setEditingRule({
-      id: '',
-      section_key: '',
-      section_title: '',
-      content_text: '',
-      display_order: rulesContent.length + 1,
-      is_active: true,
-    });
-    setIsNewRule(true);
-  };
+  const categories = ['Tutte', ...Array.from(new Set(faqs.map(f => f.category)))];
+  const filteredFAQs = selectedCategory === 'Tutte' ? faqs : faqs.filter(f => f.category === selectedCategory);
+  const groupedFAQs = filteredFAQs.reduce((acc, faq) => {
+    if (!acc[faq.category]) acc[faq.category] = [];
+    acc[faq.category].push(faq);
+    return acc;
+  }, {} as Record<string, FAQ[]>);
 
-  const categories = ['Tutte', ...Array.from(new Set(faqs.map(faq => faq.category)))];
-  const filteredFAQs = selectedCategory === 'Tutte'
-    ? faqs
-    : faqs.filter(faq => faq.category === selectedCategory);
+  const tabs = [
+    { key: 'regolamento' as const, label: 'Regolamento', icon: Shield },
+    { key: 'faq' as const, label: 'FAQ', icon: HelpCircle },
+    { key: 'cookie' as const, label: 'Cookie Policy', icon: Cookie },
+    { key: 'termini' as const, label: 'Termini & Privacy', icon: FileText },
+  ];
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Hero Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-6 mb-6">
-        {/* Dot overlay */}
-        <div
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
-            backgroundSize: '20px 20px',
-          }}
-        />
-        <div className="relative flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">
-              Contenuti Piattaforma
-            </p>
-            <h2 className="text-2xl font-bold text-white">Regole e FAQ</h2>
-          </div>
-          <button
-            onClick={activeTab === 'rules' ? addNewRule : addNewFAQ}
-            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl px-4 py-2 transition-colors font-medium text-sm"
-          >
-            <Plus className="w-4 h-4" />
-            {activeTab === 'rules' ? 'Nuovo' : 'Nuovo'}
-          </button>
+      {/* Admin banner */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3">
+        <Pencil className="w-4 h-4 text-amber-600 flex-shrink-0" />
+        <p className="text-amber-800 text-sm font-medium">
+          Modalità admin — passa il mouse su una sezione per vedere il pulsante Modifica
+        </p>
+      </div>
+
+      {/* Tab bar — same as user-facing */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="flex overflow-x-auto">
+          {tabs.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-4 text-sm font-semibold border-b-2 transition-colors ${
+                activeTab === key
+                  ? 'border-blue-600 text-blue-600 bg-blue-50/50'
+                  : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              <span className="hidden sm:inline">{label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Tab switcher */}
-      <div className="flex gap-2">
-        <button
-          onClick={() => setActiveTab('rules')}
-          className={`flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-semibold transition-colors ${
-            activeTab === 'rules'
-              ? 'bg-gray-900 text-white'
-              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-          }`}
-        >
-          <Shield className="w-4 h-4" />
-          Regole ({rulesContent.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('faqs')}
-          className={`flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-semibold transition-colors ${
-            activeTab === 'faqs'
-              ? 'bg-gray-900 text-white'
-              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-          }`}
-        >
-          <HelpCircle className="w-4 h-4" />
-          FAQ ({faqs.length})
-        </button>
-      </div>
-
-      <div>
-        {activeTab === 'rules' ? (
-          <div className="space-y-3">
-            {rulesContent.map((rule) => (
-              <div key={rule.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between gap-4 mb-2">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="inline-block px-2 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded">
-                        Ordine: {rule.display_order}
-                      </span>
-                      <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
-                        {rule.section_key}
-                      </span>
-                      {rule.is_active ? (
-                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
-                          Attiva
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full">
-                          Disattivata
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="font-bold text-gray-900 mb-2 text-lg">{rule.section_title}</h3>
-                    <p className="text-gray-700 text-sm whitespace-pre-line line-clamp-4">{rule.content_text}</p>
-                  </div>
-                </div>
-                <div className="flex gap-2 mt-4">
-                  <button
-                    onClick={() => {
-                      setEditingRule(rule);
-                      setIsNewRule(false);
-                    }}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                  >
-                    <Edit className="w-4 h-4" />
-                    Modifica
-                  </button>
-                  <button
-                    onClick={() => deleteRule(rule.id)}
-                    className="flex items-center gap-2 bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Elimina
-                  </button>
-                </div>
+      {/* Regolamento */}
+      {activeTab === 'regolamento' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Shield className="w-5 h-5 text-blue-600" />
               </div>
-            ))}
-
-            {rulesContent.length === 0 && (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
-                <Shield className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-600 font-medium">Nessun contenuto presente</p>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Regolamento della Piattaforma</h2>
+                <p className="text-sm text-gray-500">Aggiornato il {LAST_UPDATED}</p>
               </div>
-            )}
+            </div>
+            <button
+              onClick={() => {
+                setEditingRule({ id: '', section_key: '', section_title: '', content_text: '', display_order: rulesContent.length + 1, is_active: true });
+                setIsNewRule(true);
+              }}
+              className="flex items-center gap-2 bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Aggiungi sezione
+            </button>
           </div>
-        ) : (
-          <>
-            {/* Category filter pills */}
-            <div className="mb-6">
+
+          {rulesContent.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center">
+              <Shield className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+              <p className="text-gray-500 text-sm">Nessun contenuto disponibile.</p>
+            </div>
+          ) : (
+            rulesContent.map((section, index) => (
+              <RulesSectionCard
+                key={section.id}
+                section={section}
+                index={index}
+                onEdit={(r) => { setEditingRule(r); setIsNewRule(false); }}
+                onDelete={deleteRule}
+              />
+            ))
+          )}
+        </div>
+      )}
+
+      {/* FAQ */}
+      {activeTab === 'faq' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-green-100 rounded-xl flex items-center justify-center">
+                <HelpCircle className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Domande Frequenti</h2>
+                <p className="text-sm text-gray-500">Trova risposta alle domande più comuni</p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setEditingFAQ({ id: '', category: 'Generale', question: '', answer: '', display_order: faqs.length + 1, is_active: true });
+                setIsNewFAQ(true);
+              }}
+              className="flex items-center gap-2 bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Aggiungi FAQ
+            </button>
+          </div>
+
+          {categories.length > 2 && (
+            <div className="bg-white rounded-2xl border border-gray-200 p-4">
               <div className="flex flex-wrap gap-2">
-                {categories.map((category) => (
+                {categories.map(cat => (
                   <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`rounded-xl px-3 py-1 text-sm font-medium transition ${
-                      selectedCategory === category
-                        ? 'bg-gray-900 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                      selectedCategory === cat ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
-                    {category}
+                    {cat}
                   </button>
                 ))}
               </div>
             </div>
+          )}
 
-            <div className="space-y-3">
-              {filteredFAQs.map((faq) => (
-                <div key={faq.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between gap-4 mb-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
-                          {faq.category}
-                        </span>
-                        {faq.is_active ? (
-                          <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
-                            Attiva
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full">
-                            Disattivata
-                          </span>
-                        )}
-                      </div>
-                      <h3 className="font-bold text-gray-900 mb-2">{faq.question}</h3>
-                      <p className="text-gray-700 text-sm">{faq.answer}</p>
+          {filteredFAQs.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center">
+              <HelpCircle className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+              <p className="text-gray-500 text-sm">Nessuna FAQ{selectedCategory !== 'Tutte' ? ' in questa categoria' : ''}.</p>
+            </div>
+          ) : (
+            Object.entries(groupedFAQs).map(([category, categoryFaqs]) => (
+              <div key={category}>
+                {selectedCategory === 'Tutte' && (
+                  <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3 pl-1">{category}</h3>
+                )}
+                <div className="space-y-2">
+                  {categoryFaqs.map(faq => (
+                    <AccordionFAQ
+                      key={faq.id}
+                      faq={faq}
+                      onEdit={(f) => { setEditingFAQ(f); setIsNewFAQ(false); }}
+                      onDelete={deleteFAQ}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Cookie Policy — read-only, same as user */}
+      {activeTab === 'cookie' && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-9 h-9 bg-amber-100 rounded-xl flex items-center justify-center">
+              <Cookie className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Cookie Policy</h2>
+              <p className="text-sm text-gray-500">Aggiornata il {LAST_UPDATED}</p>
+            </div>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
+            <p className="text-amber-900 font-semibold text-sm mb-1">Informativa trasparente</p>
+            <p className="text-amber-800 text-sm leading-relaxed">
+              {PLATFORM_NAME} utilizza esclusivamente cookie tecnici necessari al funzionamento della piattaforma.
+              Non utilizziamo cookie di profilazione, non facciamo pubblicità comportamentale e non vendiamo
+              né condividiamo i tuoi dati con terze parti a scopo commerciale.
+            </p>
+          </div>
+
+          {[
+            {
+              title: 'Cookie tecnici e di sessione',
+              items: [
+                { label: 'Autenticazione (Supabase)', desc: "Gestiti da Supabase, mantengono la tua sessione attiva dopo il login. Strettamente necessari al funzionamento del sito, non richiedono consenso. I server Supabase sono localizzati nell'Unione Europea." },
+                { label: 'Preferenze locali', desc: 'Memorizzano impostazioni locali come la lingua selezionata o il profilo attivo. Non contengono dati personali identificativi e sono salvati solo nel tuo browser (localStorage).' },
+              ]
+            },
+            {
+              title: 'Cookie di terze parti',
+              items: [
+                { label: 'Stripe (pagamenti)', desc: 'Durante il checkout per acquistare un piano, Stripe Inc. può impostare cookie propri necessari per la sicurezza della transazione. Stripe è certificato PCI-DSS Level 1.' },
+                { label: 'Brevo (email transazionali)', desc: 'Utilizziamo Brevo per invio email automatiche di servizio. Brevo non imposta cookie sul tuo browser ma riceve il tuo indirizzo email per la consegna.' },
+              ]
+            },
+            {
+              title: 'Cosa NON facciamo',
+              items: [
+                { label: 'Nessun tracciamento pubblicitario', desc: 'Non utilizziamo Google Ads, Meta Pixel, TikTok Pixel o sistemi analoghi.' },
+                { label: 'Nessuna vendita di dati', desc: 'I tuoi dati non vengono mai venduti o condivisi con terze parti per scopi commerciali.' },
+                { label: 'Nessuna analytics invasiva', desc: 'Non utilizziamo Google Analytics, Hotjar o sistemi di analisi comportamentale.' },
+              ]
+            },
+            {
+              title: 'Come gestire i cookie',
+              items: [
+                { label: 'Impostazioni del browser', desc: 'Puoi configurare il browser per bloccare o eliminare i cookie.' },
+                { label: 'Cancellazione', desc: 'Puoi eliminare i cookie salvati dal browser in qualsiasi momento dalle impostazioni.' },
+                { label: 'Revoca consenso', desc: `Scrivi a ${CONTACT_EMAIL} per revocare il consenso.` },
+              ]
+            },
+          ].map(({ title, items }) => (
+            <div key={title} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+                <h3 className="font-bold text-gray-900 text-sm">{title}</h3>
+              </div>
+              <div className="px-5 py-4 space-y-3">
+                {items.map(({ label, desc }) => (
+                  <div key={label} className="flex gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0 mt-2"></div>
+                    <div className="text-sm">
+                      <span className="font-semibold text-gray-800">{label}: </span>
+                      <span className="text-gray-600">{desc}</span>
                     </div>
                   </div>
-                  <div className="flex gap-2 mt-4">
-                    <button
-                      onClick={() => {
-                        setEditingFAQ(faq);
-                        setIsNewFAQ(false);
-                      }}
-                      className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                    >
-                      <Edit className="w-4 h-4" />
-                      Modifica
-                    </button>
-                    <button
-                      onClick={() => deleteFAQ(faq.id)}
-                      className="flex items-center gap-2 bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Elimina
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-              {filteredFAQs.length === 0 && (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
-                  <HelpCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600 font-medium">Nessuna FAQ presente in questa categoria</p>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-
-      {editingFAQ && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 text-white p-6 flex items-center justify-between rounded-t-xl">
-              <div>
-                <h3 className="text-2xl font-bold flex items-center gap-3">
-                  <HelpCircle className="w-8 h-8 text-gray-300" />
-                  {isNewFAQ ? 'Aggiungi Nuova FAQ' : 'Modifica FAQ'}
-                </h3>
+                ))}
               </div>
-              <button
-                onClick={() => {
-                  setEditingFAQ(null);
-                  setIsNewFAQ(false);
-                }}
-                className="text-gray-300 hover:text-white transition-colors"
-              >
-                <X className="w-6 h-6" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Termini & Privacy — read-only, same as user */}
+      {activeTab === 'termini' && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-9 h-9 bg-teal-100 rounded-xl flex items-center justify-center">
+              <FileText className="w-5 h-5 text-teal-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Termini di Servizio e Privacy</h2>
+              <p className="text-sm text-gray-500">Aggiornati il {LAST_UPDATED} · {COMPANY_NAME}</p>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl px-5 py-4">
+            <p className="text-blue-900 text-xs font-semibold mb-1">Titolare del Trattamento</p>
+            <p className="text-blue-800 text-sm">
+              <strong>{COMPANY_NAME}</strong> — {COMPANY_ADDRESS}<br />
+              P.IVA: {VAT_NUMBER} — Email: <strong>{CONTACT_EMAIL}</strong>
+            </p>
+          </div>
+
+          {[
+            {
+              title: 'Termini di Servizio',
+              items: [
+                { label: 'Accettazione dei termini', text: `Utilizzando ${PLATFORM_NAME} accetti integralmente i presenti Termini di Servizio.` },
+                { label: 'Descrizione del servizio', text: `${PLATFORM_NAME} è una piattaforma italiana che consente agli utenti di cercare, recensire e scoprire attività commerciali locali.` },
+                { label: 'Registrazione e account', text: 'Sei responsabile della sicurezza del tuo account e di tutte le attività svolte con esso.' },
+                { label: "Contenuti pubblicati dall'utente", text: 'Sei l\'unico responsabile dei contenuti che pubblichi.' },
+                { label: 'Sospensione e chiusura account', text: 'Ci riserviamo il diritto di sospendere account che violino i Termini o la normativa.' },
+                { label: 'Legge applicabile', text: 'I presenti Termini sono regolati dalla legge italiana.' },
+              ],
+            },
+            {
+              title: 'Privacy Policy',
+              items: [
+                { label: 'Base giuridica del trattamento', text: 'Il trattamento avviene sulla base del consenso (art. 6 lett. a GDPR) e dell\'esecuzione del contratto (art. 6 lett. b GDPR).' },
+                { label: 'Dati raccolti', text: 'Raccogliamo: dati di registrazione, contenuti pubblicati, dati tecnici necessari al servizio.' },
+                { label: 'Finalità del trattamento', text: 'I dati vengono utilizzati esclusivamente per erogare e migliorare il servizio.' },
+                { label: 'I tuoi diritti (GDPR)', text: `Hai diritto di accesso, rettifica, cancellazione e portabilità. Scrivi a ${CONTACT_EMAIL}.` },
+              ],
+            },
+            {
+              title: "Condizioni d'uso",
+              items: [
+                { label: 'Uso lecito', text: 'La piattaforma deve essere usata in conformità con la legislazione italiana ed europea.' },
+                { label: 'Recensioni', text: 'Le recensioni devono essere veritiere e basate su esperienze dirette.' },
+                { label: 'Annunci e aste', text: 'Gli annunci devono riguardare prodotti o servizi reali e legali.' },
+                { label: 'Rispetto della community', text: 'Sono vietati insulti, discriminazioni, molestie e spam.' },
+              ],
+            },
+          ].map(({ title, items }) => (
+            <div key={title} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+                <h3 className="font-bold text-gray-900">{title}</h3>
+              </div>
+              <div className="px-5 py-4 space-y-4">
+                {items.map(({ label, text }) => (
+                  <div key={label} className="flex gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-teal-400 flex-shrink-0 mt-2"></div>
+                    <div className="text-sm">
+                      <span className="font-semibold text-gray-800">{label}: </span>
+                      <span className="text-gray-600 leading-relaxed">{text}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Edit FAQ modal */}
+      {editingFAQ && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+              <h3 className="text-lg font-bold text-gray-900">
+                {isNewFAQ ? 'Aggiungi FAQ' : 'Modifica FAQ'}
+              </h3>
+              <button onClick={() => { setEditingFAQ(null); setIsNewFAQ(false); }} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
               </button>
             </div>
-
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Categoria *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
                 <select
                   value={editingFAQ.category}
                   onChange={(e) => setEditingFAQ({ ...editingFAQ, category: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="Iscrizione e Account">Iscrizione e Account</option>
-                  <option value="Punti e Classifica">Punti e Classifica</option>
-                  <option value="Recensioni">Recensioni</option>
-                  <option value="Annunci">Annunci</option>
-                  <option value="Lavoro">Lavoro</option>
-                  <option value="Solidarietà">Solidarietà</option>
-                  <option value="Aziende">Aziende</option>
-                  <option value="Abbonamenti">Abbonamenti</option>
-                  <option value="Privacy e Sicurezza">Privacy e Sicurezza</option>
-                  <option value="Generale">Generale</option>
+                  {FAQ_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Domanda *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Domanda</label>
                 <input
                   type="text"
                   value={editingFAQ.question}
                   onChange={(e) => setEditingFAQ({ ...editingFAQ, question: e.target.value })}
-                  placeholder="Inserisci la domanda..."
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Risposta *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Risposta</label>
                 <textarea
                   value={editingFAQ.answer}
                   onChange={(e) => setEditingFAQ({ ...editingFAQ, answer: e.target.value })}
-                  placeholder="Inserisci la risposta..."
                   rows={6}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Ordine di visualizzazione
-                  </label>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ordine</label>
                   <input
                     type="number"
                     value={editingFAQ.display_order}
                     onChange={(e) => setEditingFAQ({ ...editingFAQ, display_order: parseInt(e.target.value) || 0 })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Stato
-                  </label>
-                  <div className="flex items-center gap-4 h-10">
-                    <button
-                      type="button"
-                      onClick={() => setEditingFAQ({ ...editingFAQ, is_active: !editingFAQ.is_active })}
-                      className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
-                        editingFAQ.is_active
-                          ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                          : 'bg-red-100 text-red-700 hover:bg-red-200'
-                      }`}
-                    >
-                      {editingFAQ.is_active ? 'Attiva' : 'Disattivata'}
-                    </button>
-                  </div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Stato</label>
+                  <button
+                    onClick={() => setEditingFAQ({ ...editingFAQ, is_active: !editingFAQ.is_active })}
+                    className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+                      editingFAQ.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    }`}
+                  >
+                    {editingFAQ.is_active ? 'Attiva' : 'Disattivata'}
+                  </button>
                 </div>
               </div>
-
-              <div className="flex gap-3 pt-6 border-t">
+              <div className="flex gap-3 pt-2">
                 <button
-                  onClick={() => {
-                    setEditingFAQ(null);
-                    setIsNewFAQ(false);
-                  }}
-                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-semibold"
+                  onClick={() => { setEditingFAQ(null); setIsNewFAQ(false); }}
+                  className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-xl hover:bg-gray-50 font-semibold text-sm"
                 >
                   Annulla
                 </button>
                 <button
                   onClick={saveFAQ}
                   disabled={saving || !editingFAQ.question || !editingFAQ.answer}
-                  className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-semibold disabled:bg-gray-400"
+                  className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl hover:bg-blue-700 disabled:opacity-50 font-semibold text-sm flex items-center justify-center gap-2"
                 >
-                  <Save className="w-5 h-5" />
-                  {saving ? 'Salvataggio...' : isNewFAQ ? 'Aggiungi FAQ' : 'Salva Modifiche'}
+                  <Save className="w-4 h-4" />
+                  {saving ? 'Salvo...' : isNewFAQ ? 'Aggiungi' : 'Salva'}
                 </button>
               </div>
             </div>
@@ -557,121 +655,86 @@ export function RulesSection({ adminId }: RulesSectionProps) {
         </div>
       )}
 
+      {/* Edit Rule modal */}
       {editingRule && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 text-white p-6 flex items-center justify-between rounded-t-xl">
-              <div>
-                <h3 className="text-2xl font-bold flex items-center gap-3">
-                  <Shield className="w-8 h-8 text-gray-300" />
-                  {isNewRule ? 'Aggiungi Nuovo Contenuto' : 'Modifica Contenuto'}
-                </h3>
-              </div>
-              <button
-                onClick={() => {
-                  setEditingRule(null);
-                  setIsNewRule(false);
-                }}
-                className="text-gray-300 hover:text-white transition-colors"
-              >
-                <X className="w-6 h-6" />
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+              <h3 className="text-lg font-bold text-gray-900">
+                {isNewRule ? 'Aggiungi Sezione Regolamento' : 'Modifica Sezione'}
+              </h3>
+              <button onClick={() => { setEditingRule(null); setIsNewRule(false); }} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
               </button>
             </div>
-
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Chiave Sezione * (usata per identificazione interna)
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Chiave Sezione</label>
                 <input
                   type="text"
                   value={editingRule.section_key}
                   onChange={(e) => setEditingRule({ ...editingRule, section_key: e.target.value })}
-                  placeholder="es: intro, getting_started, reviews_rules"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="es: intro, reviews_rules, auctions"
+                  className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-                <p className="text-xs text-gray-500 mt-1">Usa underscore per separare le parole, tutto minuscolo</p>
+                <p className="text-xs text-gray-400 mt-1">Tutto minuscolo, underscore al posto degli spazi</p>
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Titolo Sezione *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Titolo Sezione</label>
                 <input
                   type="text"
                   value={editingRule.section_title}
                   onChange={(e) => setEditingRule({ ...editingRule, section_title: e.target.value })}
-                  placeholder="es: Recensioni - Regole Fondamentali"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="es: Regole sulle Recensioni"
+                  className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Contenuto * (supporta testo multilinea)
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Contenuto</label>
                 <textarea
                   value={editingRule.content_text}
                   onChange={(e) => setEditingRule({ ...editingRule, content_text: e.target.value })}
-                  placeholder="Inserisci il contenuto della sezione...&#10;&#10;Puoi usare più righe.&#10;Vai a capo per creare paragrafi.&#10;&#10;Esempio:&#10;TITOLO SEZIONE&#10;Testo descrittivo...&#10;&#10;SOTTOSEZIONE&#10;Altro testo..."
-                  rows={20}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-mono text-sm"
+                  rows={18}
+                  className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Usa righe vuote per separare paragrafi. Supporta testo formattato con simboli (✓, ❌, •, etc.)
-                </p>
+                <p className="text-xs text-gray-400 mt-1">Usa righe vuote per separare paragrafi. Supporta simboli (✓, ❌, •).</p>
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Ordine di visualizzazione
-                  </label>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ordine</label>
                   <input
                     type="number"
                     value={editingRule.display_order}
                     onChange={(e) => setEditingRule({ ...editingRule, display_order: parseInt(e.target.value) || 0 })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Stato
-                  </label>
-                  <div className="flex items-center gap-4 h-10">
-                    <button
-                      type="button"
-                      onClick={() => setEditingRule({ ...editingRule, is_active: !editingRule.is_active })}
-                      className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
-                        editingRule.is_active
-                          ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                          : 'bg-red-100 text-red-700 hover:bg-red-200'
-                      }`}
-                    >
-                      {editingRule.is_active ? 'Attiva' : 'Disattivata'}
-                    </button>
-                  </div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Stato</label>
+                  <button
+                    onClick={() => setEditingRule({ ...editingRule, is_active: !editingRule.is_active })}
+                    className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+                      editingRule.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    }`}
+                  >
+                    {editingRule.is_active ? 'Attiva' : 'Disattivata'}
+                  </button>
                 </div>
               </div>
-
-              <div className="flex gap-3 pt-6 border-t">
+              <div className="flex gap-3 pt-2">
                 <button
-                  onClick={() => {
-                    setEditingRule(null);
-                    setIsNewRule(false);
-                  }}
-                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-semibold"
+                  onClick={() => { setEditingRule(null); setIsNewRule(false); }}
+                  className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-xl hover:bg-gray-50 font-semibold text-sm"
                 >
                   Annulla
                 </button>
                 <button
                   onClick={saveRule}
                   disabled={saving || !editingRule.section_key || !editingRule.section_title || !editingRule.content_text}
-                  className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-semibold disabled:bg-gray-400"
+                  className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl hover:bg-blue-700 disabled:opacity-50 font-semibold text-sm flex items-center justify-center gap-2"
                 >
-                  <Save className="w-5 h-5" />
-                  {saving ? 'Salvataggio...' : isNewRule ? 'Aggiungi Contenuto' : 'Salva Modifiche'}
+                  <Save className="w-4 h-4" />
+                  {saving ? 'Salvo...' : isNewRule ? 'Aggiungi' : 'Salva'}
                 </button>
               </div>
             </div>
