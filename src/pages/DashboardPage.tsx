@@ -119,6 +119,7 @@ function BadgeBtn({
 interface ProfileDataSectionProps {
   profile: any;
   isBiz: boolean;
+  registeredBusiness?: any;
   familyMembers?: any[];
   businessLocations?: any[];
   editing: boolean;
@@ -186,7 +187,7 @@ function EditTextarea({ label, fieldKey, form, icon: Icon, onChange }: {
   );
 }
 
-function ProfileDataSection({ profile, isBiz, familyMembers = [], businessLocations = [], editing, form, saving, saveMsg, onEdit, onCancel, onSave, onChange, onFamilyMemberSave, onLocationSave }: ProfileDataSectionProps) {
+function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers = [], businessLocations = [], editing, form, saving, saveMsg, onEdit, onCancel, onSave, onChange, onFamilyMemberSave, onLocationSave }: ProfileDataSectionProps) {
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
   const [expandedLocation, setExpandedLocation] = useState<string | null>(null);
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
@@ -261,8 +262,11 @@ function ProfileDataSection({ profile, isBiz, familyMembers = [], businessLocati
     }
   };
   const p = profile as any;
-  const billingAddress = [p.billing_street, p.billing_street_number, p.billing_postal_code, p.billing_city, p.billing_province].filter(Boolean).join(', ');
-  const officeAddress = isBiz ? [p.office_street, p.office_street_number, p.office_postal_code, p.office_city, p.office_province].filter(Boolean).join(', ') : '';
+  // Per i business registrati, i dati aziendali sono in registered_businesses
+  const rb = registeredBusiness as any;
+  const bizData = isBiz && rb ? rb : p;
+  const billingAddress = [bizData.billing_street, bizData.billing_street_number, bizData.billing_postal_code, bizData.billing_city, bizData.billing_province].filter(Boolean).join(', ');
+  const officeAddress = isBiz ? [bizData.office_street, bizData.office_street_number, bizData.office_postal_code, bizData.office_city, bizData.office_province].filter(Boolean).join(', ') : '';
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -305,14 +309,14 @@ function ProfileDataSection({ profile, isBiz, familyMembers = [], businessLocati
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {isBiz ? (
                   <>
-                    <Field label="Ragione Sociale" value={p.company_name} icon={Building2} />
-                    <Field label="Partita IVA" value={p.vat_number} icon={CreditCard} />
-                    <Field label="Codice Univoco" value={p.unique_code} icon={Hash} />
-                    <Field label="Codice ATECO" value={p.ateco_code} icon={FileText} />
-                    <Field label="Email PEC" value={p.pec_email} icon={Mail} />
-                    <Field label="Telefono" value={p.phone} icon={Phone} />
-                    <Field label="Sito Web" value={p.website_url} icon={Globe} />
-                    <div className="sm:col-span-2"><Field label="Descrizione" value={p.description} icon={FileText} hideIfEmpty /></div>
+                    <Field label="Ragione Sociale" value={bizData.company_name || bizData.name} icon={Building2} />
+                    <Field label="Partita IVA" value={bizData.vat_number} icon={CreditCard} />
+                    <Field label="Codice Univoco" value={bizData.unique_code} icon={Hash} />
+                    <Field label="Codice ATECO" value={bizData.ateco_code} icon={FileText} />
+                    <Field label="Email PEC" value={bizData.pec_email} icon={Mail} />
+                    <Field label="Telefono" value={bizData.phone} icon={Phone} hideIfEmpty />
+                    <Field label="Sito Web" value={bizData.website_url || bizData.website} icon={Globe} hideIfEmpty />
+                    <div className="sm:col-span-2"><Field label="Descrizione" value={bizData.description} icon={FileText} hideIfEmpty /></div>
                   </>
                 ) : (
                   <>
@@ -659,29 +663,30 @@ export function DashboardPage() {
 
   const startEditProfile = () => {
     if (!profile) return;
+    const rb = isRegisteredBusiness && businesses[0] ? businesses[0] as any : null;
     setProfileForm({
       full_name: profile.full_name || '',
       nickname: (profile as any).nickname || '',
-      phone: (profile as any).phone || '',
+      phone: rb ? (rb.phone || '') : ((profile as any).phone || ''),
       fiscal_code: (profile as any).fiscal_code || '',
-      billing_street: (profile as any).billing_street || '',
-      billing_street_number: (profile as any).billing_street_number || '',
-      billing_postal_code: (profile as any).billing_postal_code || '',
-      billing_city: (profile as any).billing_city || '',
-      billing_province: (profile as any).billing_province || '',
-      // business-only
-      company_name: (profile as any).company_name || '',
-      vat_number: (profile as any).vat_number || '',
-      unique_code: (profile as any).unique_code || '',
-      ateco_code: (profile as any).ateco_code || '',
-      pec_email: (profile as any).pec_email || '',
-      website_url: (profile as any).website_url || '',
-      description: (profile as any).description || '',
-      office_street: (profile as any).office_street || '',
-      office_street_number: (profile as any).office_street_number || '',
-      office_postal_code: (profile as any).office_postal_code || '',
-      office_city: (profile as any).office_city || '',
-      office_province: (profile as any).office_province || '',
+      billing_street: rb ? (rb.billing_street || '') : ((profile as any).billing_street || ''),
+      billing_street_number: rb ? (rb.billing_street_number || '') : ((profile as any).billing_street_number || ''),
+      billing_postal_code: rb ? (rb.billing_postal_code || '') : ((profile as any).billing_postal_code || ''),
+      billing_city: rb ? (rb.billing_city || '') : ((profile as any).billing_city || ''),
+      billing_province: rb ? (rb.billing_province || '') : ((profile as any).billing_province || ''),
+      // business-only (da registered_businesses se disponibile)
+      company_name: rb ? (rb.name || '') : ((profile as any).company_name || ''),
+      vat_number: rb ? (rb.vat_number || '') : ((profile as any).vat_number || ''),
+      unique_code: rb ? (rb.unique_code || '') : ((profile as any).unique_code || ''),
+      ateco_code: rb ? (rb.ateco_code || '') : ((profile as any).ateco_code || ''),
+      pec_email: rb ? (rb.pec_email || '') : ((profile as any).pec_email || ''),
+      website_url: rb ? (rb.website || '') : ((profile as any).website_url || ''),
+      description: rb ? (rb.description || '') : ((profile as any).description || ''),
+      office_street: rb ? (rb.office_street || '') : ((profile as any).office_street || ''),
+      office_street_number: rb ? (rb.office_street_number || '') : ((profile as any).office_street_number || ''),
+      office_postal_code: rb ? (rb.office_postal_code || '') : ((profile as any).office_postal_code || ''),
+      office_city: rb ? (rb.office_city || '') : ((profile as any).office_city || ''),
+      office_province: rb ? (rb.office_province || '') : ((profile as any).office_province || ''),
     });
     setEditingProfile(true);
     setProfileSaveMsg('');
@@ -692,8 +697,38 @@ export function DashboardPage() {
     setProfileSaving(true);
     setProfileSaveMsg('');
     try {
-      const { error } = await supabase.from('profiles').update(profileForm).eq('id', profile.id);
-      if (error) throw error;
+      if (isRegisteredBusiness && businesses[0]) {
+        // Salva i dati aziendali su registered_businesses
+        const rbUpdate = {
+          name: profileForm.company_name,
+          vat_number: profileForm.vat_number,
+          unique_code: profileForm.unique_code,
+          ateco_code: profileForm.ateco_code,
+          pec_email: profileForm.pec_email,
+          website: profileForm.website_url,
+          description: profileForm.description,
+          phone: profileForm.phone,
+          billing_street: profileForm.billing_street,
+          billing_street_number: profileForm.billing_street_number,
+          billing_postal_code: profileForm.billing_postal_code,
+          billing_city: profileForm.billing_city,
+          billing_province: profileForm.billing_province,
+          office_street: profileForm.office_street,
+          office_street_number: profileForm.office_street_number,
+          office_postal_code: profileForm.office_postal_code,
+          office_city: profileForm.office_city,
+          office_province: profileForm.office_province,
+        };
+        const { error } = await supabase.from('registered_businesses').update(rbUpdate).eq('id', (businesses[0] as any).id);
+        if (error) throw error;
+        // Aggiorna il nome anche in profiles
+        await supabase.from('profiles').update({ full_name: profileForm.company_name }).eq('id', profile.id);
+        // Aggiorna lo stato locale
+        setBusinesses(prev => prev.map((b, i) => i === 0 ? { ...b, ...rbUpdate, name: profileForm.company_name } : b));
+      } else {
+        const { error } = await supabase.from('profiles').update(profileForm).eq('id', profile.id);
+        if (error) throw error;
+      }
       setProfileSaveMsg('Dati salvati con successo!');
       setEditingProfile(false);
       setTimeout(() => setProfileSaveMsg(''), 3000);
@@ -1033,6 +1068,7 @@ export function DashboardPage() {
                     <ProfileDataSection
                       profile={profile}
                       isBiz={true}
+                      registeredBusiness={isRegisteredBusiness && businesses[0] ? businesses[0] : undefined}
                       businessLocations={fullBusinessLocations}
                       editing={editingProfile}
                       form={profileForm}
