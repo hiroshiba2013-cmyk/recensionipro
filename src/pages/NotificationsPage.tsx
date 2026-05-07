@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Bell, Check, CheckCheck, Trash2, Heart, Briefcase, CreditCard, Store, ShoppingBag, CheckCircle, XCircle, Star, Gavel, AlertTriangle, Building2, Trophy } from 'lucide-react';
+// Note: Heart, Store are used for legacy favorite notification types
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -28,12 +29,12 @@ type CategoryFilter =
   | 'leaderboard';
 
 const CATEGORY_TYPES: Record<Exclude<CategoryFilter, 'all' | 'unread'>, string[]> = {
-  reviews:     ['review_approved', 'review_rejected', 'admin_new_review'],
-  classifieds: ['classified_ad_approved', 'classified_ad_rejected', 'admin_new_classified_ad'],
-  auctions:    ['auction_approved', 'auction_rejected', 'auction_concluded', 'auction_won', 'admin_new_auction'],
-  businesses:  ['business_approved', 'business_rejected', 'admin_new_business'],
-  jobs:        ['job_approved', 'job_rejected', 'admin_new_job_seeker', 'admin_new_job_posting'],
-  reports:     ['report_submitted', 'report_resolved'],
+  reviews:     ['review_approved', 'review_rejected'],
+  classifieds: ['classified_ad_approved', 'classified_ad_rejected'],
+  auctions:    ['auction_approved', 'auction_rejected', 'auction_concluded', 'auction_won'],
+  businesses:  ['business_approved', 'business_rejected'],
+  jobs:        ['job_posting_approved', 'job_posting_rejected', 'job_seeker_approved', 'job_seeker_rejected'],
+  reports:     ['report_submitted'],
   leaderboard: ['points_earned', 'leaderboard_rank', 'subscription_expiring'],
 };
 
@@ -86,8 +87,6 @@ function getIconConfig(type: string): IconConfig {
       return { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100' };
     case 'classified_ad_rejected':
       return { icon: XCircle, color: 'text-red-600', bg: 'bg-red-100' };
-    case 'admin_new_classified_ad':
-      return { icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-100' };
 
     // Auctions
     case 'auction_approved':
@@ -98,25 +97,20 @@ function getIconConfig(type: string): IconConfig {
       return { icon: Gavel, color: 'text-gray-600', bg: 'bg-gray-100' };
     case 'auction_won':
       return { icon: Trophy, color: 'text-yellow-600', bg: 'bg-yellow-100' };
-    case 'admin_new_auction':
-      return { icon: Gavel, color: 'text-orange-600', bg: 'bg-orange-100' };
 
     // Businesses
     case 'business_approved':
       return { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100' };
     case 'business_rejected':
       return { icon: XCircle, color: 'text-red-600', bg: 'bg-red-100' };
-    case 'admin_new_business':
-      return { icon: Building2, color: 'text-teal-600', bg: 'bg-teal-100' };
 
     // Jobs
-    case 'job_approved':
+    case 'job_posting_approved':
+    case 'job_seeker_approved':
       return { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100' };
-    case 'job_rejected':
+    case 'job_posting_rejected':
+    case 'job_seeker_rejected':
       return { icon: XCircle, color: 'text-red-600', bg: 'bg-red-100' };
-    case 'admin_new_job_seeker':
-    case 'admin_new_job_posting':
-      return { icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-100' };
 
     // Reports
     case 'report_submitted':
