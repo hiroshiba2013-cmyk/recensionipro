@@ -59,6 +59,7 @@ interface PendingCounts {
   reports: number;
   auctions: number;
   jobs: number;
+  jobSeekers: number;
   newUsers: number;
   newSubscriptions: number;
   newMessages: number;
@@ -267,7 +268,7 @@ export function AdminDashboardPage() {
   const [businesses, setBusinesses] = useState<RegisteredBusiness[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pendingCounts, setPendingCounts] = useState<PendingCounts>({ reviews: 0, ads: 0, businesses: 0, reports: 0, auctions: 0, jobs: 0, newUsers: 0, newSubscriptions: 0, newMessages: 0, unreadPlatformMessages: 0 });
+  const [pendingCounts, setPendingCounts] = useState<PendingCounts>({ reviews: 0, ads: 0, businesses: 0, reports: 0, auctions: 0, jobs: 0, jobSeekers: 0, newUsers: 0, newSubscriptions: 0, newMessages: 0, unreadPlatformMessages: 0 });
   const [selectedReview, setSelectedReview] = useState<PendingReview | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
@@ -328,6 +329,27 @@ export function AdminDashboardPage() {
     }
   }, [checkingAdmin, isAdmin, activeTab]);
 
+  // Realtime subscriptions: refresh badge counts when pending items change
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const channel = supabase
+      .channel('admin_pending_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reviews' }, () => loadPendingCounts())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'classified_ads' }, () => loadPendingCounts())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'unclaimed_business_locations' }, () => loadPendingCounts())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reports' }, () => loadPendingCounts())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'auctions' }, () => loadPendingCounts())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'job_postings' }, () => loadPendingCounts())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'job_seekers' }, () => loadPendingCounts())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'platform_messages' }, () => loadPendingCounts())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profiles' }, () => loadPendingCounts())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'subscriptions' }, () => loadPendingCounts())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [isAdmin]);
+
   useEffect(() => {
     if (!checkingAdmin && isAdmin && activeTab === 'dashboard') {
       loadStats(statsPeriod);
@@ -337,16 +359,16 @@ export function AdminDashboardPage() {
   const loadPendingCounts = async () => {
     try {
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const [reviewsRes, adsRes, businessesRes, reportsRes, auctionsRes, jobsRes, newUsersRes, newSubsRes, newMsgsRes, unreadPlatformMsgsRes] = await Promise.all([
+      const [reviewsRes, adsRes, businessesRes, reportsRes, auctionsRes, jobsRes, jobSeekersRes, newUsersRes, newSubsRes, unreadPlatformMsgsRes] = await Promise.all([
         supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('review_status', 'pending'),
         supabase.from('classified_ads').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
         supabase.from('unclaimed_business_locations').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
         supabase.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('auctions').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
         supabase.from('job_postings').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
+        supabase.from('job_seekers').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
         supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', oneDayAgo),
         supabase.from('subscriptions').select('id', { count: 'exact', head: true }).gte('created_at', oneDayAgo),
-        supabase.from('conversations').select('id', { count: 'exact', head: true }).gte('updated_at', oneDayAgo),
         supabase.from('platform_messages').select('id', { count: 'exact', head: true }).eq('status', 'unread'),
       ]);
       setPendingCounts({
@@ -356,9 +378,10 @@ export function AdminDashboardPage() {
         reports: reportsRes.count || 0,
         auctions: auctionsRes.count || 0,
         jobs: jobsRes.count || 0,
+        jobSeekers: jobSeekersRes.count || 0,
         newUsers: newUsersRes.count || 0,
         newSubscriptions: newSubsRes.count || 0,
-        newMessages: newMsgsRes.count || 0,
+        newMessages: 0,
         unreadPlatformMessages: unreadPlatformMsgsRes.count || 0,
       });
     } catch (error) {
@@ -1174,9 +1197,9 @@ export function AdminDashboardPage() {
               >
                 <Briefcase className="w-4 h-4" />
                 Lavoro
-                {pendingCounts.jobs > 0 && (
+                {(pendingCounts.jobs + pendingCounts.jobSeekers) > 0 && (
                   <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
-                    {pendingCounts.jobs}
+                    {pendingCounts.jobs + pendingCounts.jobSeekers}
                   </span>
                 )}
               </button>
@@ -1231,7 +1254,7 @@ export function AdminDashboardPage() {
               </button>
               <button
                 onClick={() => setActiveTab('contact')}
-                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'contact'
                     ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-md'
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
@@ -1239,6 +1262,11 @@ export function AdminDashboardPage() {
               >
                 <Mail className="w-4 h-4" />
                 Contatti
+                {pendingCounts.unreadPlatformMessages > 0 && (
+                  <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
+                    {pendingCounts.unreadPlatformMessages}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setActiveTab('platform_messages')}
@@ -1751,7 +1779,7 @@ export function AdminDashboardPage() {
 
             {activeTab === 'businesses' && <BusinessesSection onReload={async () => { await loadBusinesses(); await loadPendingCounts(); }} />}
 
-            {activeTab === 'jobs' && <JobPostingsSection jobPostings={jobPostings} onReload={loadJobPostings} />}
+            {activeTab === 'jobs' && <JobPostingsSection jobPostings={jobPostings} onReload={loadJobPostings} pendingJobSeekers={pendingCounts.jobSeekers} />}
 
             {activeTab === 'solidarity' && <SolidaritySection onReload={loadData} />}
 

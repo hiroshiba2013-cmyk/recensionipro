@@ -64,13 +64,14 @@ interface JobSeeker {
 interface JobPostingsSectionProps {
   jobPostings: JobPosting[];
   onReload: () => Promise<void>;
+  pendingJobSeekers?: number;
 }
 
 type JobType = 'all' | 'trova' | 'cerca';
 type ApprovalFilter = 'pending' | 'approved' | 'rejected' | 'all';
 type SeekerApprovalFilter = 'pending' | 'approved' | 'rejected' | 'all';
 
-export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }: JobPostingsSectionProps) {
+export function JobPostingsSection({ jobPostings: initialJobPostings, onReload, pendingJobSeekers = 0 }: JobPostingsSectionProps) {
   const { user } = useAuth();
   const [jobType, setJobType] = useState<JobType>('all');
   const [approvalFilter, setApprovalFilter] = useState<ApprovalFilter>('pending');
@@ -425,20 +426,25 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload }
         {/* Job Type Tabs */}
         <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
           {([
-            { key: 'all' as JobType, label: 'Tutti gli annunci' },
-            { key: 'trova' as JobType, label: 'Trova lavoro (aziende)' },
-            { key: 'cerca' as JobType, label: 'Cerca lavoro (utenti)' },
-          ] as { key: JobType; label: string }[]).map(tab => (
+            { key: 'all' as JobType, label: 'Tutti gli annunci', badge: 0 },
+            { key: 'trova' as JobType, label: 'Trova lavoro (aziende)', badge: 0 },
+            { key: 'cerca' as JobType, label: 'Cerca lavoro (utenti)', badge: pendingJobSeekers },
+          ]).map(tab => (
             <button
               key={tab.key}
               onClick={() => setJobType(tab.key)}
-              className={`rounded-xl px-4 py-2 text-sm font-medium transition-all whitespace-nowrap ${
+              className={`relative rounded-xl px-4 py-2 text-sm font-medium transition-all whitespace-nowrap ${
                 jobType === tab.key
                   ? 'bg-gray-900 text-white shadow-sm'
                   : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
               }`}
             >
               {tab.label}
+              {tab.badge > 0 && (
+                <span className="absolute -top-2 -right-2 min-w-[20px] h-[20px] flex items-center justify-center px-1 bg-red-600 text-white text-xs font-bold rounded-full shadow ring-2 ring-white">
+                  {tab.badge}
+                </span>
+              )}
             </button>
           ))}
         </div>
