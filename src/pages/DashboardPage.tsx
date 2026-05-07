@@ -124,6 +124,8 @@ interface ProfileDataSectionProps {
   onCancel: () => void;
   onSave: () => void;
   onChange: (key: string, value: string) => void;
+  onFamilyMemberSave?: (id: string, data: Record<string, string>) => Promise<void>;
+  onLocationSave?: (id: string, data: Record<string, string>) => Promise<void>;
 }
 
 function Field({ label, value, icon: Icon }: { label: string; value?: string | null; icon: React.ElementType }) {
@@ -179,9 +181,80 @@ function EditTextarea({ label, fieldKey, form, icon: Icon, onChange }: {
   );
 }
 
-function ProfileDataSection({ profile, isBiz, familyMembers = [], businessLocations = [], editing, form, saving, saveMsg, onEdit, onCancel, onSave, onChange }: ProfileDataSectionProps) {
+function ProfileDataSection({ profile, isBiz, familyMembers = [], businessLocations = [], editing, form, saving, saveMsg, onEdit, onCancel, onSave, onChange, onFamilyMemberSave, onLocationSave }: ProfileDataSectionProps) {
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
   const [expandedLocation, setExpandedLocation] = useState<string | null>(null);
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [memberForms, setMemberForms] = useState<Record<string, Record<string, string>>>({});
+  const [memberSaving, setMemberSaving] = useState<string | null>(null);
+  const [memberMsg, setMemberMsg] = useState<Record<string, string>>({});
+  const [editingLocationId, setEditingLocationId] = useState<string | null>(null);
+  const [locationForms, setLocationForms] = useState<Record<string, Record<string, string>>>({});
+  const [locationSaving, setLocationSaving] = useState<string | null>(null);
+  const [locationMsg, setLocationMsg] = useState<Record<string, string>>({});
+
+  const startEditMember = (fm: any) => {
+    setMemberForms(prev => ({ ...prev, [fm.id]: {
+      first_name: fm.first_name || '',
+      last_name: fm.last_name || '',
+      nickname: fm.nickname || '',
+      relationship: fm.relationship || '',
+      date_of_birth: fm.date_of_birth || '',
+      fiscal_code: fm.fiscal_code || '',
+    }}));
+    setEditingMemberId(fm.id);
+    setMemberMsg(prev => ({ ...prev, [fm.id]: '' }));
+  };
+
+  const saveMember = async (id: string) => {
+    if (!onFamilyMemberSave) return;
+    setMemberSaving(id);
+    try {
+      await onFamilyMemberSave(id, memberForms[id] || {});
+      setMemberMsg(prev => ({ ...prev, [id]: 'ok' }));
+      setEditingMemberId(null);
+      setTimeout(() => setMemberMsg(prev => ({ ...prev, [id]: '' })), 2500);
+    } catch {
+      setMemberMsg(prev => ({ ...prev, [id]: 'err' }));
+    } finally {
+      setMemberSaving(null);
+    }
+  };
+
+  const startEditLocation = (loc: any) => {
+    setLocationForms(prev => ({ ...prev, [loc.id]: {
+      name: loc.name || '',
+      internal_name: loc.internal_name || '',
+      description: loc.description || '',
+      address: loc.address || '',
+      street_number: loc.street_number || '',
+      postal_code: loc.postal_code || '',
+      city: loc.city || '',
+      province: loc.province || '',
+      phone: loc.phone || '',
+      email: loc.email || '',
+      vat_number: loc.vat_number || '',
+      services: loc.services || '',
+      services_description: loc.services_description || '',
+    }}));
+    setEditingLocationId(loc.id);
+    setLocationMsg(prev => ({ ...prev, [loc.id]: '' }));
+  };
+
+  const saveLocation = async (id: string) => {
+    if (!onLocationSave) return;
+    setLocationSaving(id);
+    try {
+      await onLocationSave(id, locationForms[id] || {});
+      setLocationMsg(prev => ({ ...prev, [id]: 'ok' }));
+      setEditingLocationId(null);
+      setTimeout(() => setLocationMsg(prev => ({ ...prev, [id]: '' })), 2500);
+    } catch {
+      setLocationMsg(prev => ({ ...prev, [id]: 'err' }));
+    } finally {
+      setLocationSaving(null);
+    }
+  };
   const p = profile as any;
   const billingAddress = [p.billing_street, p.billing_street_number, p.billing_postal_code, p.billing_city, p.billing_province].filter(Boolean).join(', ');
   const officeAddress = isBiz ? [p.office_street, p.office_street_number, p.office_postal_code, p.office_city, p.office_province].filter(Boolean).join(', ') : '';
@@ -286,41 +359,71 @@ function ProfileDataSection({ profile, isBiz, familyMembers = [], businessLocati
                   Membri della Famiglia ({familyMembers.length})
                 </h3>
                 <div className="space-y-2">
-                  {familyMembers.map(fm => (
-                    <div key={fm.id} className="border border-gray-100 rounded-xl overflow-hidden">
-                      <button
-                        onClick={() => setExpandedMember(expandedMember === fm.id ? null : fm.id)}
-                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          {fm.avatar_url ? (
-                            <img src={fm.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-gray-200" />
-                          ) : (
-                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <User className="w-4 h-4 text-blue-600" />
+                  {familyMembers.map(fm => {
+                    const isEditingThis = editingMemberId === fm.id;
+                    const mf = memberForms[fm.id] || {};
+                    const isExpanded = expandedMember === fm.id || isEditingThis;
+                    return (
+                      <div key={fm.id} className="border border-gray-100 rounded-xl overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-3">
+                          <button
+                            onClick={() => { setExpandedMember(isExpanded && !isEditingThis ? null : fm.id); }}
+                            className="flex items-center gap-3 flex-1 text-left"
+                          >
+                            {fm.avatar_url ? (
+                              <img src={fm.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-gray-200 flex-shrink-0" />
+                            ) : (
+                              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <User className="w-4 h-4 text-blue-600" />
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">{fm.first_name} {fm.last_name}</p>
+                              {fm.nickname && <p className="text-xs text-gray-400">@{fm.nickname}</p>}
                             </div>
-                          )}
-                          <div className="text-left">
-                            <p className="text-sm font-semibold text-gray-900">{fm.first_name} {fm.last_name}</p>
-                            {fm.nickname && <p className="text-xs text-gray-400">@{fm.nickname}</p>}
+                            {fm.relationship && (
+                              <span className="text-xs bg-blue-50 text-blue-600 font-medium px-2 py-0.5 rounded-full">{fm.relationship}</span>
+                            )}
+                          </button>
+                          <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
+                            {memberMsg[fm.id] === 'ok' && <span className="text-xs text-green-600 font-medium">Salvato!</span>}
+                            {memberMsg[fm.id] === 'err' && <span className="text-xs text-red-600 font-medium">Errore</span>}
+                            {isEditingThis ? (
+                              <>
+                                <button onClick={() => setEditingMemberId(null)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors" title="Annulla"><X className="w-3.5 h-3.5 text-gray-500" /></button>
+                                <button onClick={() => saveMember(fm.id)} disabled={memberSaving === fm.id} className="p-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 transition-colors" title="Salva"><Save className="w-3.5 h-3.5 text-white" /></button>
+                              </>
+                            ) : (
+                              <button onClick={() => { setExpandedMember(fm.id); startEditMember(fm); }} className="p-1.5 rounded-lg bg-gray-100 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Modifica"><Pencil className="w-3.5 h-3.5 text-gray-500" /></button>
+                            )}
+                            <ChevronDown onClick={() => setExpandedMember(isExpanded ? null : fm.id)} className={`w-4 h-4 text-gray-400 transition-transform cursor-pointer ${isExpanded ? 'rotate-180' : ''}`} />
                           </div>
-                          {fm.relationship && (
-                            <span className="text-xs bg-blue-50 text-blue-600 font-medium px-2 py-0.5 rounded-full">{fm.relationship}</span>
-                          )}
                         </div>
-                        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${expandedMember === fm.id ? 'rotate-180' : ''}`} />
-                      </button>
-                      {expandedMember === fm.id && (
-                        <div className="px-4 pb-4 pt-1 bg-gray-50 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <Field label="Nome" value={`${fm.first_name} ${fm.last_name}`} icon={User} />
-                          {fm.nickname && <Field label="Nickname" value={fm.nickname} icon={User} />}
-                          {fm.date_of_birth && <Field label="Data di Nascita" value={new Date(fm.date_of_birth).toLocaleDateString('it-IT')} icon={FileText} />}
-                          {fm.fiscal_code && <Field label="Codice Fiscale" value={fm.fiscal_code} icon={CreditCard} />}
-                          {fm.relationship && <Field label="Ruolo" value={fm.relationship} icon={UsersIcon} />}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                        {isExpanded && (
+                          <div className="px-4 pb-4 pt-1 bg-gray-50 border-t border-gray-100">
+                            {isEditingThis ? (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <EditField label="Nome" fieldKey="first_name" form={mf} icon={User} onChange={(k, v) => setMemberForms(prev => ({ ...prev, [fm.id]: { ...prev[fm.id], [k]: v } }))} />
+                                <EditField label="Cognome" fieldKey="last_name" form={mf} icon={User} onChange={(k, v) => setMemberForms(prev => ({ ...prev, [fm.id]: { ...prev[fm.id], [k]: v } }))} />
+                                <EditField label="Nickname" fieldKey="nickname" form={mf} icon={User} onChange={(k, v) => setMemberForms(prev => ({ ...prev, [fm.id]: { ...prev[fm.id], [k]: v } }))} />
+                                <EditField label="Ruolo" fieldKey="relationship" form={mf} icon={UsersIcon} onChange={(k, v) => setMemberForms(prev => ({ ...prev, [fm.id]: { ...prev[fm.id], [k]: v } }))} />
+                                <EditField label="Data di Nascita" fieldKey="date_of_birth" form={mf} icon={FileText} onChange={(k, v) => setMemberForms(prev => ({ ...prev, [fm.id]: { ...prev[fm.id], [k]: v } }))} type="date" />
+                                <EditField label="Codice Fiscale" fieldKey="fiscal_code" form={mf} icon={CreditCard} onChange={(k, v) => setMemberForms(prev => ({ ...prev, [fm.id]: { ...prev[fm.id], [k]: v } }))} />
+                              </div>
+                            ) : (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <Field label="Nome" value={`${fm.first_name} ${fm.last_name}`} icon={User} />
+                                {fm.nickname && <Field label="Nickname" value={fm.nickname} icon={User} />}
+                                {fm.date_of_birth && <Field label="Data di Nascita" value={new Date(fm.date_of_birth).toLocaleDateString('it-IT')} icon={FileText} />}
+                                {fm.fiscal_code && <Field label="Codice Fiscale" value={fm.fiscal_code} icon={CreditCard} />}
+                                {fm.relationship && <Field label="Ruolo" value={fm.relationship} icon={UsersIcon} />}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -333,66 +436,97 @@ function ProfileDataSection({ profile, isBiz, familyMembers = [], businessLocati
                 </h3>
                 <div className="space-y-2">
                   {businessLocations.map((loc, idx) => {
+                    const isEditingThis = editingLocationId === loc.id;
+                    const lf = locationForms[loc.id] || {};
+                    const isExpanded = expandedLocation === loc.id || isEditingThis;
                     const locAddress = [loc.address, loc.street_number, loc.postal_code, loc.city, loc.province].filter(Boolean).join(', ');
                     return (
                       <div key={loc.id} className="border border-gray-100 rounded-xl overflow-hidden">
-                        <button
-                          onClick={() => setExpandedLocation(expandedLocation === loc.id ? null : loc.id)}
-                          className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-between px-4 py-3">
+                          <button
+                            onClick={() => setExpandedLocation(isExpanded && !isEditingThis ? null : loc.id)}
+                            className="flex items-center gap-3 flex-1 text-left"
+                          >
                             {loc.avatar_url ? (
-                              <img src={loc.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-gray-200" />
+                              <img src={loc.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-gray-200 flex-shrink-0" />
                             ) : (
-                              <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                              <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
                                 <Building2 className="w-4 h-4 text-emerald-600" />
                               </div>
                             )}
-                            <div className="text-left">
+                            <div>
                               <p className="text-sm font-semibold text-gray-900">{loc.internal_name || loc.name || `Sede ${idx + 1}`}</p>
                               {loc.city && <p className="text-xs text-gray-400">{loc.city}{loc.province ? ` (${loc.province})` : ''}</p>}
                             </div>
-                          </div>
-                          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${expandedLocation === loc.id ? 'rotate-180' : ''}`} />
-                        </button>
-                        {expandedLocation === loc.id && (
-                          <div className="px-4 pb-4 pt-1 bg-gray-50 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {loc.name && <Field label="Nome Sede" value={loc.name} icon={Building2} />}
-                            {loc.description && <div className="sm:col-span-2"><Field label="Descrizione" value={loc.description} icon={FileText} /></div>}
-                            {locAddress && (
-                              <div className="sm:col-span-2">
-                                <Field label="Indirizzo" value={locAddress} icon={MapPin} />
-                              </div>
+                          </button>
+                          <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
+                            {locationMsg[loc.id] === 'ok' && <span className="text-xs text-green-600 font-medium">Salvato!</span>}
+                            {locationMsg[loc.id] === 'err' && <span className="text-xs text-red-600 font-medium">Errore</span>}
+                            {isEditingThis ? (
+                              <>
+                                <button onClick={() => setEditingLocationId(null)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors" title="Annulla"><X className="w-3.5 h-3.5 text-gray-500" /></button>
+                                <button onClick={() => saveLocation(loc.id)} disabled={locationSaving === loc.id} className="p-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 transition-colors" title="Salva"><Save className="w-3.5 h-3.5 text-white" /></button>
+                              </>
+                            ) : (
+                              <button onClick={() => { setExpandedLocation(loc.id); startEditLocation(loc); }} className="p-1.5 rounded-lg bg-gray-100 hover:bg-blue-50 transition-colors" title="Modifica"><Pencil className="w-3.5 h-3.5 text-gray-500" /></button>
                             )}
-                            {loc.phone && <Field label="Telefono" value={loc.phone} icon={Phone} />}
-                            {loc.email && <Field label="Email" value={loc.email} icon={Mail} />}
-                            {loc.vat_number && <Field label="Partita IVA Sede" value={loc.vat_number} icon={CreditCard} />}
-                            {loc.services && <div className="sm:col-span-2"><Field label="Servizi" value={loc.services} icon={FileText} /></div>}
-                            {loc.services_description && <div className="sm:col-span-2"><Field label="Descrizione Servizi" value={loc.services_description} icon={FileText} /></div>}
-                            {loc.business_hours && (() => {
-                              const days: Record<string, string> = { monday: 'Lunedi', tuesday: 'Martedi', wednesday: 'Mercoledi', thursday: 'Giovedi', friday: 'Venerdi', saturday: 'Sabato', sunday: 'Domenica' };
-                              const hours = loc.business_hours as Record<string, any>;
-                              const lines = Object.entries(days).map(([k, label]) => {
-                                const d = hours[k];
-                                if (!d || d.closed) return `${label}: Chiuso`;
-                                return `${label}: ${d.open || '--'} - ${d.close || '--'}`;
-                              });
-                              return (
-                                <div className="sm:col-span-2">
-                                  <div className="flex items-start gap-3">
-                                    <div className="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                                      <FileText className="w-3.5 h-3.5 text-gray-500" />
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-gray-400 mb-1">Orari</p>
-                                      <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-                                        {lines.map(l => <p key={l} className="text-xs text-gray-700">{l}</p>)}
+                            <ChevronDown onClick={() => setExpandedLocation(isExpanded ? null : loc.id)} className={`w-4 h-4 text-gray-400 transition-transform cursor-pointer ${isExpanded ? 'rotate-180' : ''}`} />
+                          </div>
+                        </div>
+                        {isExpanded && (
+                          <div className="px-4 pb-4 pt-1 bg-gray-50 border-t border-gray-100">
+                            {isEditingThis ? (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <EditField label="Nome Sede" fieldKey="name" form={lf} icon={Building2} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
+                                <EditField label="Nome Interno" fieldKey="internal_name" form={lf} icon={Building2} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
+                                <EditTextarea label="Descrizione" fieldKey="description" form={lf} icon={FileText} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
+                                <EditField label="Via" fieldKey="address" form={lf} icon={MapPin} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
+                                <EditField label="Civico" fieldKey="street_number" form={lf} icon={MapPin} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
+                                <EditField label="CAP" fieldKey="postal_code" form={lf} icon={MapPin} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
+                                <EditField label="Citta" fieldKey="city" form={lf} icon={MapPin} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
+                                <EditField label="Provincia" fieldKey="province" form={lf} icon={MapPin} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
+                                <EditField label="Telefono" fieldKey="phone" form={lf} icon={Phone} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} type="tel" />
+                                <EditField label="Email" fieldKey="email" form={lf} icon={Mail} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} type="email" />
+                                <EditField label="P.IVA Sede" fieldKey="vat_number" form={lf} icon={CreditCard} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
+                                <EditField label="Servizi" fieldKey="services" form={lf} icon={FileText} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
+                                <EditTextarea label="Descrizione Servizi" fieldKey="services_description" form={lf} icon={FileText} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
+                              </div>
+                            ) : (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {loc.name && <Field label="Nome Sede" value={loc.name} icon={Building2} />}
+                                {loc.description && <div className="sm:col-span-2"><Field label="Descrizione" value={loc.description} icon={FileText} /></div>}
+                                {locAddress && <div className="sm:col-span-2"><Field label="Indirizzo" value={locAddress} icon={MapPin} /></div>}
+                                {loc.phone && <Field label="Telefono" value={loc.phone} icon={Phone} />}
+                                {loc.email && <Field label="Email" value={loc.email} icon={Mail} />}
+                                {loc.vat_number && <Field label="P.IVA Sede" value={loc.vat_number} icon={CreditCard} />}
+                                {loc.services && <div className="sm:col-span-2"><Field label="Servizi" value={loc.services} icon={FileText} /></div>}
+                                {loc.services_description && <div className="sm:col-span-2"><Field label="Descrizione Servizi" value={loc.services_description} icon={FileText} /></div>}
+                                {loc.business_hours && (() => {
+                                  const days: Record<string, string> = { monday: 'Lunedi', tuesday: 'Martedi', wednesday: 'Mercoledi', thursday: 'Giovedi', friday: 'Venerdi', saturday: 'Sabato', sunday: 'Domenica' };
+                                  const hours = loc.business_hours as Record<string, any>;
+                                  const lines = Object.entries(days).map(([k, label]) => {
+                                    const d = hours[k];
+                                    if (!d || d.closed) return `${label}: Chiuso`;
+                                    return `${label}: ${d.open || '--'} - ${d.close || '--'}`;
+                                  });
+                                  return (
+                                    <div className="sm:col-span-2">
+                                      <div className="flex items-start gap-3">
+                                        <div className="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                          <FileText className="w-3.5 h-3.5 text-gray-500" />
+                                        </div>
+                                        <div>
+                                          <p className="text-xs text-gray-400 mb-1">Orari</p>
+                                          <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                                            {lines.map(l => <p key={l} className="text-xs text-gray-700">{l}</p>)}
+                                          </div>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                </div>
-                              );
-                            })()}
+                                  );
+                                })()}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -554,6 +688,22 @@ export function DashboardPage() {
     } finally {
       setProfileSaving(false);
     }
+  };
+
+  const saveFamilyMember = async (id: string, data: Record<string, string>) => {
+    const { error } = await supabase.from('customer_family_members').update(data).eq('id', id);
+    if (error) throw error;
+    const { data: fm } = await supabase.from('customer_family_members').select('*').eq('customer_id', profile!.id).order('created_at', { ascending: true });
+    if (fm) setFamilyMembers(fm);
+  };
+
+  const saveBusinessLocation = async (id: string, data: Record<string, string>) => {
+    const table = isRegisteredBusiness ? 'registered_business_locations' : 'business_locations';
+    const { error } = await supabase.from(table).update(data).eq('id', id);
+    if (error) throw error;
+    const bizIds = businesses.map((b: any) => b.id);
+    const { data: locs } = await supabase.from(table).select('*').in('business_id', bizIds);
+    if (locs) setFullBusinessLocations(locs);
   };
 
   // ── data loading ───────────────────────────────────────────────────────────
@@ -809,6 +959,7 @@ export function DashboardPage() {
                     onCancel={() => setEditingProfile(false)}
                     onSave={saveProfile}
                     onChange={(k, v) => setProfileForm(prev => ({ ...prev, [k]: v }))}
+                    onLocationSave={saveBusinessLocation}
                   />
                 )}
 
@@ -1041,6 +1192,7 @@ export function DashboardPage() {
                     onCancel={() => setEditingProfile(false)}
                     onSave={saveProfile}
                     onChange={(k, v) => setProfileForm(prev => ({ ...prev, [k]: v }))}
+                    onFamilyMemberSave={saveFamilyMember}
                   />
                 )}
 
