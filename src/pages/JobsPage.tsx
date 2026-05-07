@@ -5,7 +5,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { SearchableSelect } from '../components/common/SearchableSelect';
 import { JobSeekerForm } from '../components/jobs/JobSeekerForm';
 import { JobSeekerCard } from '../components/jobs/JobSeekerCard';
-import { JobConversation } from '../components/jobs/JobConversation';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
 import { ItalianCityProvinceSelect } from '../components/common/ItalianCityProvinceSelect';
 import { ITALIAN_REGIONS } from '../lib/cities';
@@ -92,11 +91,6 @@ export function JobsPage() {
   const [viewedJobs, setViewedJobs] = useState<string[]>([]);
   const [appliedJobId, setAppliedJobId] = useState<string | null>(null);
   const [markingAsViewed, setMarkingAsViewed] = useState<string | null>(null);
-  const [conversationData, setConversationData] = useState<{
-    conversationId: string;
-    type: 'job_seeker' | 'job_offer';
-    otherUserName: string;
-  } | null>(null);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const { user, profile, selectedBusinessLocationId, activeProfile } = useAuth();
@@ -909,15 +903,6 @@ export function JobsPage() {
           )
         )}
       </div>
-
-      {conversationData && (
-        <JobConversation
-          conversationId={conversationData.conversationId}
-          conversationType={conversationData.type}
-          otherUserName={conversationData.otherUserName}
-          onClose={() => setConversationData(null)}
-        />
-      )}
 
       {selectedJobId && (
         <JobDetailModal

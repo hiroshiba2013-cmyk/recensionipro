@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from '../components/Router';
-import { Clock, MapPin, Tag, TrendingUp, User, AlertCircle, CheckCircle, Euro, Shield, Trophy, AlertTriangle } from 'lucide-react';
+import { Clock, MapPin, Tag, TrendingUp, User, AlertCircle, CheckCircle, Euro, Shield, Trophy, AlertTriangle, MessageCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -32,6 +32,7 @@ export default function AuctionDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [completion, setCompletion] = useState<any>(null);
   const [hasPlacedBid, setHasPlacedBid] = useState(false);
+  const [contactingAuction, setContactingAuction] = useState(false);
 
   useEffect(() => {
     loadAuction();
@@ -216,6 +217,26 @@ export default function AuctionDetailPage() {
       setError(err.message);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleContactAuction = async (otherUserId: string) => {
+    if (!user) { navigate('/'); return; }
+    setContactingAuction(true);
+    try {
+      const familyMemberId = getFamilyMemberId();
+      const { data: conversationId, error } = await supabase.rpc('get_or_create_conversation', {
+        p_user1_id: user.id,
+        p_user2_id: otherUserId,
+        p_conversation_type: 'classified_ad',
+        p_reference_id: id,
+        p_user1_family_member_id: familyMemberId,
+      });
+      if (error) throw error;
+      window.location.href = `/messages?conversation=${conversationId}`;
+    } catch (err: any) {
+      setError(err.message || 'Errore nell\'apertura della chat');
+      setContactingAuction(false);
     }
   };
 
@@ -496,11 +517,31 @@ export default function AuctionDetailPage() {
                   </div>
 
                   {isWinner && (
-                    <div className="bg-white border border-amber-200 rounded-lg p-3 mb-3">
+                    <div className="bg-white border border-amber-200 rounded-lg p-3 mb-3 space-y-2">
                       <p className="text-sm font-semibold text-green-700">Sei il vincitore con {Number(auction.current_price).toFixed(2)} €</p>
-                      <p className="text-xs text-gray-600 mt-1">
+                      <p className="text-xs text-gray-600">
                         Contatta il venditore per organizzare il pagamento e il ritiro/spedizione dell'oggetto.
                       </p>
+                      <button
+                        onClick={() => handleContactAuction(auction.user_id)}
+                        disabled={contactingAuction}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        {contactingAuction ? 'Apertura chat...' : 'Contatta il Venditore'}
+                      </button>
+                    </div>
+                  )}
+                  {isOwner && auction.winner_id && (
+                    <div className="bg-white border border-amber-200 rounded-lg p-3 mb-3">
+                      <button
+                        onClick={() => handleContactAuction(auction.winner_id)}
+                        disabled={contactingAuction}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        {contactingAuction ? 'Apertura chat...' : 'Contatta il Vincitore'}
+                      </button>
                     </div>
                   )}
 

@@ -66,18 +66,28 @@ export function MessagesPage() {
       }
     });
 
+    // Subscribe to conversation-level changes (last_message_at updates) filtered for this user
     const channel = supabase
-      .channel('messages-changes')
+      .channel('conversations-changes')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'messages',
+          table: 'conversations',
+          filter: `participant1_id=eq.${user.id}`,
         },
-        () => {
-          loadConversations();
-        }
+        () => { loadConversations(); }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversations',
+          filter: `participant2_id=eq.${user.id}`,
+        },
+        () => { loadConversations(); }
       )
       .subscribe();
 
@@ -279,6 +289,12 @@ export function MessagesPage() {
       ]);
 
       if (messageError) throw messageError;
+
+      // Update last_message_at so conversation list re-sorts correctly
+      await supabase
+        .from('conversations')
+        .update({ last_message_at: new Date().toISOString() })
+        .eq('id', selectedConversation);
 
       setNewMessage('');
       loadMessages(selectedConversation);
