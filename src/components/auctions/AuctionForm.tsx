@@ -169,7 +169,8 @@ export default function AuctionForm({ onSuccess, onCancel, businessLocationId, i
     }
   };
 
-  const depositAmount = parseFloat(formData.base_price) <= 500 ? 5 : 10;
+  const basePriceNum = parseFloat(formData.base_price) || 0;
+  const depositAmount = Math.round(basePriceNum * 0.10 * 100) / 100;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -223,9 +224,10 @@ export default function AuctionForm({ onSuccess, onCancel, businessLocationId, i
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="0.00"
           />
-          {formData.base_price && (
+          {formData.base_price && basePriceNum > 0 && (
             <p className="mt-1 text-sm text-gray-600">
-              Deposito richiesto: <span className="font-semibold">{depositAmount}€</span>
+              Ticket partecipanti: <span className="font-semibold text-blue-700">{depositAmount.toFixed(2)} €</span>
+              <span className="text-gray-400 ml-1">(10% della base d'asta)</span>
             </p>
           )}
         </div>
@@ -354,10 +356,12 @@ export default function AuctionForm({ onSuccess, onCancel, businessLocationId, i
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h4 className="font-semibold text-blue-900 mb-2">Informazioni Importanti</h4>
         <ul className="text-sm text-blue-800 space-y-1">
-          <li>• Gli utenti dovranno pagare un deposito di {depositAmount}€ per partecipare</li>
-          <li>• Il deposito verrà restituito alla fine dell'asta</li>
-          <li>• Dopo la chiusura, avrai 48 ore per confermare la transazione</li>
-          <li>• La piattaforma non gestisce pagamenti o spedizioni</li>
+          <li>• Gli acquirenti pagano un <strong>ticket del 10%</strong> della base d'asta per partecipare{basePriceNum > 0 ? ` (${depositAmount.toFixed(2)} €)` : ''}</li>
+          <li>• Il ticket viene trattenuto dalla piattaforma se il vincitore conferma l'affare</li>
+          <li>• Se il vincitore non conferma entro 48 ore, <strong>perde il ticket</strong> e l'asta passa al secondo classificato</li>
+          <li>• Le offerte sono <strong>irrevocabili</strong>: una volta inviata non può essere ritirata</li>
+          <li>• Dopo la chiusura, venditore e acquirente hanno <strong>48 ore</strong> per confermare l'affare</li>
+          <li>• La piattaforma non gestisce pagamenti o spedizioni dirette</li>
         </ul>
       </div>
 
