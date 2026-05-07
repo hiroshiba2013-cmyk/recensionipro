@@ -4,7 +4,7 @@ import {
   Heart, Gift, Users as UsersIcon, Package, Briefcase, Users,
   DollarSign, Trophy, Activity, Tag, ChevronDown, ChevronUp,
   User, Mail, Phone, MapPin, FileText, Globe, Pencil, Save, X, CreditCard, Hash, Building2,
-  Lock
+  Lock, Gavel
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Business, Review, FamilyMember } from '../lib/supabase';
@@ -880,29 +880,31 @@ export function DashboardPage() {
 
   // ── sections config ────────────────────────────────────────────────────────
   const bizBadges = [
-    { key: 'biz_dati',      label: 'I Tuoi Dati',           icon: User,     color: 'slate',   badge: null },
+    ...(!selectedBusinessLocationId ? [{ key: 'biz_dati', label: 'I Tuoi Dati', icon: User, color: 'slate', badge: null }] : []),
     { key: 'biz_ads',       label: 'I Miei Annunci',        icon: Tag,      color: 'green',   badge: businessClassifiedAds.length > 0 ? String(businessClassifiedAds.length) : null },
     { key: 'biz_jobs',      label: 'Offerte di Lavoro',     icon: Briefcase,color: 'blue',    badge: jobPostings.length > 0 ? String(jobPostings.length) : null },
     { key: 'biz_reviews',   label: 'Recensioni Ricevute',   icon: Star,     color: 'amber',   badge: reviews.length > 0 ? String(reviews.length) : null },
-    { key: 'biz_auctions',  label: 'Le Mie Aste',           icon: TrendingUp,color:'orange',  badge: null },
+    { key: 'biz_auctions',  label: 'Le Mie Aste',           icon: Gavel,    color: 'orange',  badge: null },
     { key: 'biz_favorites', label: 'Preferiti',             icon: Heart,    color: 'red',     badge: null },
     ...(!selectedBusinessLocationId ? [{ key: 'biz_activities', label: 'Le Mie Attivita', icon: Building, color: 'sky', badge: businesses.length > 0 ? String(businesses.length) : null }] : []),
     { key: 'biz_seekers',   label: 'Profili Cerco Lavoro',  icon: Users,    color: 'teal',    badge: jobSeekers.length > 0 ? String(jobSeekers.length) : null },
     ...(solidarityStats ? [{ key: 'biz_solidarity', label: 'Solidarieta', icon: Gift, color: 'emerald', badge: null }] : []),
-    ...(currentSubscription && availablePlans.length > 0 ? [{ key: 'biz_plans', label: 'Cambia Piano', icon: Shield, color: 'slate', badge: currentSubscription.plan.name }] : []),
+    ...(!selectedBusinessLocationId && currentSubscription && availablePlans.length > 0 ? [{ key: 'biz_plans', label: 'Cambia Piano', icon: Shield, color: 'slate', badge: currentSubscription.plan.name }] : []),
   ];
 
+  const isOwnerProfile = !activeProfile || activeProfile.isOwner === true;
+
   const custBadges = [
-    { key: 'cust_dati',        label: 'I Tuoi Dati',             icon: User,     color: 'slate',  badge: null },
+    ...(isOwnerProfile ? [{ key: 'cust_dati', label: 'I Tuoi Dati', icon: User, color: 'slate', badge: null }] : []),
     { key: 'cust_leaderboard', label: 'La Tua Classifica',      icon: Trophy,   color: 'yellow', badge: userRank ? `#${userRank.rank}` : null },
     { key: 'cust_activities',  label: 'Attivita Aggiunte',       icon: Activity, color: 'blue',   badge: addedBusinesses.length > 0 ? String(addedBusinesses.length) : null },
     { key: 'cust_jobs',        label: 'Annunci Cerco Lavoro',    icon: Briefcase,color: 'sky',    badge: myJobSeekers.length > 0 ? String(myJobSeekers.length) : null },
     { key: 'cust_reviews',     label: 'Le Tue Recensioni',       icon: Star,     color: 'amber',  badge: (() => { const fmId = activeProfile?.isOwner === false ? activeProfile.id : null; const mine = reviews.filter(r => fmId ? r.family_member_id === fmId : !r.family_member_id); return mine.length > 0 ? String(mine.length) : null; })() },
     { key: 'cust_ads',         label: 'I Tuoi Annunci',          icon: Tag,      color: 'green',  badge: customerClassifiedAds.length > 0 ? String(customerClassifiedAds.length) : null },
-    { key: 'cust_auctions',    label: 'Le Mie Aste',             icon: TrendingUp,color:'orange', badge: null },
+    { key: 'cust_auctions',    label: 'Le Mie Aste',             icon: Gavel,    color: 'orange', badge: null },
     { key: 'cust_fav_ads',     label: 'Annunci Preferiti',       icon: Heart,    color: 'red',    badge: null },
     { key: 'cust_fav_biz',     label: 'Attivita Preferite',      icon: Building, color: 'rose',   badge: null },
-    ...(currentSubscription && availablePlans.length > 0 ? [{ key: 'cust_plans', label: 'Cambia Piano', icon: Shield, color: 'slate', badge: currentSubscription.plan.name }] : []),
+    ...(isOwnerProfile && currentSubscription && availablePlans.length > 0 ? [{ key: 'cust_plans', label: 'Cambia Piano', icon: Shield, color: 'slate', badge: currentSubscription.plan.name }] : []),
   ];
 
   return (
