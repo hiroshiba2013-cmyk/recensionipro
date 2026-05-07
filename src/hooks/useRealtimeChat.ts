@@ -91,7 +91,7 @@ export function useRealtimeChat({ conversationId, table, userId }: UseRealtimeCh
       });
 
     return () => {
-      supabase.removeChannel(channel);
+      channel.unsubscribe().then(() => supabase.removeChannel(channel));
     };
   }, [conversationId, table, userId]);
 

@@ -88,7 +88,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [needsProfileSelection, setNeedsProfileSelection] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
       setUser(session?.user ?? null);
       if (session?.user) {
         loadProfile(session.user.id);
@@ -98,7 +101,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
       (async () => {
+        if (!mounted) return;
         if (event === 'SIGNED_OUT' || !session?.user) {
           setUser(null);
           setProfile(null);
@@ -114,7 +119,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })();
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const loadProfile = async (userId: string) => {

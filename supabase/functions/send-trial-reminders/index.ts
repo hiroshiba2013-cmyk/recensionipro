@@ -21,8 +21,10 @@ Deno.serve(async (req: Request) => {
 
     const sevenDaysFromNow = new Date();
     sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-    const startOfDay = new Date(sevenDaysFromNow.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(sevenDaysFromNow.setHours(23, 59, 59, 999));
+    const startOfDay = new Date(sevenDaysFromNow);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(sevenDaysFromNow);
+    endOfDay.setHours(23, 59, 59, 999);
 
     const { data: subscriptions, error } = await supabase
       .from('subscriptions')

@@ -15,10 +15,10 @@ export function LoginForm({ onSuccess }: { onSuccess?: () => void }) {
 
   useEffect(() => {
     const savedEmail = localStorage.getItem('savedEmail');
-    const savedPassword = localStorage.getItem('savedPassword');
-    if (savedEmail && savedPassword) {
+    // Rimuovi password salvate in chiaro da versioni precedenti
+    localStorage.removeItem('savedPassword');
+    if (savedEmail) {
       setEmail(savedEmail);
-      setPassword(savedPassword);
       setRememberMe(true);
     }
   }, []);
@@ -33,10 +33,8 @@ export function LoginForm({ onSuccess }: { onSuccess?: () => void }) {
 
       if (rememberMe) {
         localStorage.setItem('savedEmail', email);
-        localStorage.setItem('savedPassword', password);
       } else {
         localStorage.removeItem('savedEmail');
-        localStorage.removeItem('savedPassword');
       }
 
       onSuccess?.();

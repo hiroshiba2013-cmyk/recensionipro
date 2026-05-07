@@ -67,7 +67,7 @@ Deno.serve(async (req: Request) => {
       }
 
       // Notify the auction owner that it's concluded
-      await supabase.from("notifications").insert({
+      const { error: ownerNotifError } = await supabase.from("notifications").insert({
         user_id: auction.user_id,
         family_member_id: auction.family_member_id,
         type: "auction_concluded",
@@ -81,20 +81,26 @@ Deno.serve(async (req: Request) => {
           final_price: topBid?.bid_amount ?? null,
         },
       });
+      if (ownerNotifError) {
+        console.error(`Failed to notify owner for auction ${auction.id}:`, ownerNotifError);
+      }
 
       // Notify the winner (if different from owner)
-      if (winnerId && winnerId !== auction.user_id) {
-        await supabase.from("notifications").insert({
+      if (winnerId && winnerId !== auction.user_id && topBid) {
+        const { error: winnerNotifError } = await supabase.from("notifications").insert({
           user_id: winnerId,
           family_member_id: winnerFamilyMemberId,
           type: "auction_won",
           title: "Hai Vinto l'Asta!",
-          message: `Congratulazioni! Hai vinto l'asta "${auction.title}" con un'offerta di ${Number(topBid!.bid_amount).toFixed(2)} EUR.`,
+          message: `Congratulazioni! Hai vinto l'asta "${auction.title}" con un'offerta di ${Number(topBid.bid_amount).toFixed(2)} EUR.`,
           data: {
             auction_id: auction.id,
-            final_price: topBid!.bid_amount,
+            final_price: topBid.bid_amount,
           },
         });
+        if (winnerNotifError) {
+          console.error(`Failed to notify winner for auction ${auction.id}:`, winnerNotifError);
+        }
       }
 
       closed++;

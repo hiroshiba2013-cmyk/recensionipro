@@ -101,9 +101,10 @@ export async function claimImportedBusiness(businessId: string, userId: string) 
     .from('imported_businesses')
     .select('*')
     .eq('id', businessId)
-    .single();
+    .maybeSingle();
 
   if (fetchError) throw fetchError;
+  if (!importedBusiness) throw new Error('Business importato non trovato');
 
   const { data: newBusiness, error: insertError } = await supabase
     .from('registered_businesses')
@@ -117,9 +118,10 @@ export async function claimImportedBusiness(businessId: string, userId: string) 
       verification_badge: 'claimed'
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (insertError) throw insertError;
+  if (!newBusiness) throw new Error('Errore nella creazione del business registrato');
 
   const { error: locationError } = await supabase
     .from('registered_business_locations')
@@ -142,8 +144,8 @@ export async function claimImportedBusiness(businessId: string, userId: string) 
 
   if (locationError) throw locationError;
 
-  // Sposta le recensioni
-  await supabase
+  // Sposta le recensioni — solo dopo che la location è stata creata
+  const { error: reviewsError } = await supabase
     .from('reviews')
     .update({
       business_type: 'registered',
@@ -152,11 +154,15 @@ export async function claimImportedBusiness(businessId: string, userId: string) 
     })
     .eq('imported_business_id', businessId);
 
-  // Elimina il business importato
-  await supabase
+  if (reviewsError) throw reviewsError;
+
+  // Elimina il business importato — solo se tutto il resto è andato a buon fine
+  const { error: deleteError } = await supabase
     .from('imported_businesses')
     .delete()
     .eq('id', businessId);
+
+  if (deleteError) throw deleteError;
 
   return newBusiness;
 }
@@ -166,9 +172,10 @@ export async function claimUserAddedBusiness(businessId: string, userId: string)
     .from('user_added_businesses')
     .select('*')
     .eq('id', businessId)
-    .single();
+    .maybeSingle();
 
   if (fetchError) throw fetchError;
+  if (!userAddedBusiness) throw new Error('Business non trovato');
 
   const { data: newBusiness, error: insertError } = await supabase
     .from('registered_businesses')
@@ -182,9 +189,10 @@ export async function claimUserAddedBusiness(businessId: string, userId: string)
       verification_badge: 'claimed'
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (insertError) throw insertError;
+  if (!newBusiness) throw new Error('Errore nella creazione del business registrato');
 
   const { error: locationError } = await supabase
     .from('registered_business_locations')
@@ -206,8 +214,8 @@ export async function claimUserAddedBusiness(businessId: string, userId: string)
 
   if (locationError) throw locationError;
 
-  // Sposta le recensioni
-  await supabase
+  // Sposta le recensioni — solo dopo che la location è stata creata
+  const { error: reviewsError } = await supabase
     .from('reviews')
     .update({
       business_type: 'registered',
@@ -216,11 +224,15 @@ export async function claimUserAddedBusiness(businessId: string, userId: string)
     })
     .eq('user_added_business_id', businessId);
 
-  // Elimina il business aggiunto dall'utente
-  await supabase
+  if (reviewsError) throw reviewsError;
+
+  // Elimina il business aggiunto — solo se tutto il resto è andato a buon fine
+  const { error: deleteError } = await supabase
     .from('user_added_businesses')
     .delete()
     .eq('id', businessId);
+
+  if (deleteError) throw deleteError;
 
   return newBusiness;
 }
