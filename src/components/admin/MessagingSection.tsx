@@ -196,6 +196,8 @@ export function MessagingSection({ adminId }: MessagingSectionProps) {
         return 'Offerta Lavoro';
       case 'job_seeker':
         return 'Cerca Lavoro';
+      case 'auction':
+        return 'Asta';
       default:
         return contextType || 'Sconosciuto';
     }
@@ -274,6 +276,7 @@ export function MessagingSection({ adminId }: MessagingSectionProps) {
                 <option value="classified_ad">Annunci</option>
                 <option value="job_posting">Offerte Lavoro</option>
                 <option value="job_seeker">Cerca Lavoro</option>
+                <option value="auction">Aste</option>
               </select>
             </div>
           </div>

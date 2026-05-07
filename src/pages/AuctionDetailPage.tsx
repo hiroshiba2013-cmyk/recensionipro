@@ -228,7 +228,7 @@ export default function AuctionDetailPage() {
       const { data: conversationId, error } = await supabase.rpc('get_or_create_conversation', {
         p_user1_id: user.id,
         p_user2_id: otherUserId,
-        p_conversation_type: 'classified_ad',
+        p_conversation_type: 'auction',
         p_reference_id: id,
         p_user1_family_member_id: familyMemberId,
       });

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, ArrowLeft, MessageCircle, Tag, Briefcase, Building2 } from 'lucide-react';
+import { Send, ArrowLeft, MessageCircle, Tag, Briefcase, Building2, Gavel } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -35,6 +35,9 @@ interface Conversation {
   job_postings?: {
     title: string;
     company_name: string | null;
+  };
+  auctions?: {
+    title: string;
   };
   unread_count?: number;
 }
@@ -216,6 +219,14 @@ export function MessagesPage() {
               .maybeSingle();
 
             referenceData = { job_postings: jobPostingData };
+          } else if (conv.conversation_type === 'auction') {
+            const { data: auctionData } = await supabase
+              .from('auctions')
+              .select('title')
+              .eq('id', conv.reference_id)
+              .maybeSingle();
+
+            referenceData = { auctions: auctionData };
           }
 
           const { count } = await supabase
@@ -326,7 +337,7 @@ export function MessagesPage() {
   };
 
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
-  const [filter, setFilter] = useState<'all' | 'classified_ad' | 'job_seeker' | 'job_posting'>('all');
+  const [filter, setFilter] = useState<'all' | 'classified_ad' | 'job_seeker' | 'job_posting' | 'auction'>('all');
 
   useEffect(() => {
     if (!selectedConversation) {
@@ -382,6 +393,13 @@ export function MessagesPage() {
             .eq('id', conv.reference_id)
             .maybeSingle();
           referenceData = { job_postings: jpData };
+        } else if (conv.conversation_type === 'auction') {
+          const { data: auctionData } = await supabase
+            .from('auctions')
+            .select('title')
+            .eq('id', conv.reference_id)
+            .maybeSingle();
+          referenceData = { auctions: auctionData };
         }
 
         const displayName = profileData?.nickname || profileData?.full_name || 'Utente';
@@ -438,6 +456,7 @@ export function MessagesPage() {
               { key: 'classified_ad', label: 'Annunci', icon: Tag },
               { key: 'job_seeker', label: 'Candidature', icon: Briefcase },
               { key: 'job_posting', label: 'Offerte', icon: Building2 },
+              { key: 'auction', label: 'Aste', icon: Gavel },
             ] as const).map(({ key, label, icon: Icon }) => {
               const count = key === 'all'
                 ? conversations.length
@@ -544,6 +563,11 @@ export function MessagesPage() {
                         {conv.job_postings.title}
                       </div>
                     )}
+                    {conv.auctions && (
+                      <div className={`text-sm truncate ${hasUnread ? 'text-gray-800 font-medium' : 'text-gray-600'}`}>
+                        {conv.auctions.title}
+                      </div>
+                    )}
                     <div className={`text-xs mt-1 ${hasUnread ? 'text-blue-600 font-semibold' : 'text-gray-500'}`}>
                       {formatMessageTime(conv.last_message_at)}
                     </div>
@@ -607,6 +631,12 @@ export function MessagesPage() {
                   <div className="flex items-center gap-1 text-sm text-gray-600">
                     <Building2 className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
                     <span className="truncate">{selectedConv.job_postings.title}</span>
+                  </div>
+                )}
+                {selectedConv.auctions && (
+                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <Gavel className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                    <span className="truncate">{selectedConv.auctions.title}</span>
                   </div>
                 )}
               </div>
