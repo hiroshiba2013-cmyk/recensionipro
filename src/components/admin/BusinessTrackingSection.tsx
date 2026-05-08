@@ -48,7 +48,7 @@ export function BusinessTrackingSection({ onReload }: Props) {
           .limit(100);
 
         if (locationFilter.city) q = q.ilike('billing_city', `%${locationFilter.city}%`);
-        if (locationFilter.provinceCode) q = q.ilike('billing_province', `%${locationFilter.provinceCode}%`);
+        if (locationFilter.provinceCode) q = q.eq('billing_province', locationFilter.provinceCode);
 
         const { data: registered } = await q;
         if (registered) {
@@ -65,9 +65,10 @@ export function BusinessTrackingSection({ onReload }: Props) {
             const city = loc?.city || biz.billing_city || '';
             const province = loc?.province || biz.billing_province || '';
 
-            // Apply location filter on actual location data if billing didn't match
-            if (locationFilter.region) {
-              // region filter not directly filterable here, skip non-matching
+            // Skip if city filter active and neither billing nor location city matches
+            if (locationFilter.city) {
+              const cityMatch = (city || '').toLowerCase().includes(locationFilter.city.toLowerCase());
+              if (!cityMatch) continue;
             }
 
             all.push({
@@ -91,7 +92,7 @@ export function BusinessTrackingSection({ onReload }: Props) {
           .order('created_at', { ascending: false })
           .limit(100);
 
-        if (locationFilter.city) q = q.ilike('city', `%${locationFilter.city}%`);
+        if (locationFilter.city) q = q.eq('city', locationFilter.city);
         if (locationFilter.provinceCode) q = q.eq('province', locationFilter.provinceCode);
         if (locationFilter.region) q = q.eq('region', locationFilter.region);
 
@@ -122,7 +123,7 @@ export function BusinessTrackingSection({ onReload }: Props) {
           .order('created_at', { ascending: false })
           .limit(100);
 
-        if (locationFilter.city) q = q.ilike('city', `%${locationFilter.city}%`);
+        if (locationFilter.city) q = q.eq('city', locationFilter.city);
         if (locationFilter.provinceCode) q = q.eq('province', locationFilter.provinceCode);
         if (locationFilter.region) q = q.eq('region', locationFilter.region);
 
@@ -145,7 +146,7 @@ export function BusinessTrackingSection({ onReload }: Props) {
           .order('created_at', { ascending: false })
           .limit(100);
 
-        if (locationFilter.city) q = q.ilike('city', `%${locationFilter.city}%`);
+        if (locationFilter.city) q = q.eq('city', locationFilter.city);
         if (locationFilter.provinceCode) q = q.eq('province', locationFilter.provinceCode);
         if (locationFilter.region) q = q.eq('region', locationFilter.region);
 

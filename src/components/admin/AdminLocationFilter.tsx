@@ -16,20 +16,35 @@ interface Props {
 }
 
 export function AdminLocationFilter({ value, onChange, accentColor = 'blue' }: Props) {
-  const [provinces, setProvinces] = useState<{ provincia: string; sigla: string }[]>([]);
+  const [allProvinces, setAllProvinces] = useState<{ provincia: string; sigla: string }[]>([]);
+  const [filteredProvinces, setFilteredProvinces] = useState<{ provincia: string; sigla: string }[]>([]);
   const [cities, setCities] = useState<string[]>([]);
   const [loadingProvinces, setLoadingProvinces] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
 
-  // Load provinces when region changes
+  // Load ALL provinces once on mount
   useEffect(() => {
-    if (!value.region) { setProvinces([]); return; }
     setLoadingProvinces(true);
-    supabase.rpc('get_province_by_regione', { p_regione: value.region }).then(({ data }) => {
-      setProvinces(data || []);
+    supabase.rpc('get_all_province').then(({ data }) => {
+      const provinces = data || [];
+      setAllProvinces(provinces);
+      setFilteredProvinces(provinces);
       setLoadingProvinces(false);
     });
-  }, [value.region]);
+  }, []);
+
+  // Filter provinces when region changes
+  useEffect(() => {
+    if (!value.region) {
+      setFilteredProvinces(allProvinces);
+      return;
+    }
+    setLoadingProvinces(true);
+    supabase.rpc('get_province_by_regione', { p_regione: value.region }).then(({ data }) => {
+      setFilteredProvinces(data || []);
+      setLoadingProvinces(false);
+    });
+  }, [value.region, allProvinces]);
 
   // Load cities when province changes
   useEffect(() => {
@@ -58,27 +73,27 @@ export function AdminLocationFilter({ value, onChange, accentColor = 'blue' }: P
         </select>
       </div>
 
-      {/* Provincia */}
+      {/* Provincia — always enabled */}
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">Provincia</label>
         <select
           value={value.provinceCode}
           onChange={e => {
             const sigla = e.target.value;
-            const found = provinces.find(p => p.sigla === sigla);
+            const found = filteredProvinces.find(p => p.sigla === sigla);
             onChange({ ...value, province: found?.provincia || '', provinceCode: sigla, city: '' });
           }}
-          disabled={!value.region || loadingProvinces}
+          disabled={loadingProvinces}
           className={`w-full px-3 py-2 border rounded-lg text-sm bg-white ${borderClass} disabled:bg-gray-100 disabled:cursor-not-allowed`}
         >
           <option value="">{loadingProvinces ? 'Caricamento...' : 'Tutte le province'}</option>
-          {provinces.map(p => (
+          {filteredProvinces.map(p => (
             <option key={p.sigla} value={p.sigla}>{p.provincia} ({p.sigla})</option>
           ))}
         </select>
       </div>
 
-      {/* Comune */}
+      {/* Comune — enabled when province selected */}
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">Comune</label>
         <select
@@ -87,7 +102,7 @@ export function AdminLocationFilter({ value, onChange, accentColor = 'blue' }: P
           disabled={!value.provinceCode || loadingCities}
           className={`w-full px-3 py-2 border rounded-lg text-sm bg-white ${borderClass} disabled:bg-gray-100 disabled:cursor-not-allowed`}
         >
-          <option value="">{loadingCities ? 'Caricamento...' : 'Tutti i comuni'}</option>
+          <option value="">{loadingCities ? 'Caricamento...' : !value.provinceCode ? 'Seleziona prima la provincia' : 'Tutti i comuni'}</option>
           {cities.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
