@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Building2, CheckCircle, MapPin, Mail, Phone, FileEdit as Edit2, Search, Filter, Download, Upload, UserPlus, X, FileText, Briefcase, Clock, ShieldCheck, ShieldX, XCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { AdminLocationFilter } from './AdminLocationFilter';
@@ -119,14 +119,21 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     verified: 'all' as 'all' | 'verified' | 'unverified' | 'rejected'
   });
 
-  useEffect(() => {
-    setCurrentPage(1);
-    loadBusinesses();
-  }, [activeTab, filters]);
+  const isFirstMount = useRef(true);
+  const prevKeyRef = useRef(`${activeTab}|${JSON.stringify(filters)}`);
 
   useEffect(() => {
+    const key = `${activeTab}|${JSON.stringify(filters)}`;
+    if (isFirstMount.current || prevKeyRef.current !== key) {
+      isFirstMount.current = false;
+      prevKeyRef.current = key;
+      if (currentPage !== 1) {
+        setCurrentPage(1); // triggers re-render -> this effect fires again with page=1
+        return;
+      }
+    }
     loadBusinesses();
-  }, [currentPage]);
+  }, [activeTab, filters, currentPage]);
 
   const loadBusinesses = async () => {
     setLoading(true);
@@ -335,20 +342,12 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
 
         // Filter by source_type
         if (activeTab === 'claimed') {
-          // Claimed: businesses that were originally unclaimed and then claimed
           query = query.or('source_type.eq.claimed_imported,source_type.eq.claimed_user_added');
         } else {
-          // Self-registered: businesses registered directly by the owner
           query = query.eq('source_type', 'direct_registration');
         }
 
-        // Apply advanced filters
-        if (filters.city) {
-          query = query.ilike('billing_city', `%${filters.city}%`);
-        }
-        if (filters.provinceCode) {
-          query = query.ilike('billing_province', `%${filters.provinceCode}%`);
-        }
+        // Apply verified filter
         if (filters.verified === 'verified') {
           query = query.eq('verified', true);
         } else if (filters.verified === 'unverified') {
@@ -367,30 +366,27 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
         if (claimedError) throw claimedError;
 
         count = totalCount || 0;
-        // Flatten businesses with their locations
+        // Flatten businesses with their locations, applying location filters client-side
         allBusinesses = (claimedData || []).flatMap(business => {
           const primaryLocation = business.locations?.find((l: any) => l.is_primary) || business.locations?.[0];
-
-          // Use business name as the main name for self-registered businesses
           const displayName = activeTab === 'self_registered' ? business.name : (primaryLocation?.name || business.name);
-
-          // Always use the business ID for proper location loading
           const displayLocation = primaryLocation || {
-            name: business.name,
-            street: business.billing_street || '',
-            city: business.billing_city || '',
-            province: business.billing_province || '',
-            region: '',
-            postal_code: business.billing_postal_code,
-            phone: null,
-            email: null,
-            website: business.website,
-            description: business.description,
-            business_hours: null,
-            services: null,
-            services_description: null,
-            is_primary: true
+            name: business.name, street: business.billing_street || '',
+            city: business.billing_city || '', province: business.billing_province || '',
+            region: '', postal_code: business.billing_postal_code,
+            phone: null, email: null, website: business.website,
+            description: business.description, business_hours: null,
+            services: null, services_description: null, is_primary: true
           };
+
+          const city = displayLocation.city || '';
+          const province = displayLocation.province || '';
+          const region = displayLocation.region || '';
+
+          // Apply location filters client-side
+          if (filters.city && !city.toLowerCase().includes(filters.city.toLowerCase())) return [];
+          if (filters.provinceCode && province.toUpperCase() !== filters.provinceCode.toUpperCase()) return [];
+          if (filters.region && region !== filters.region) return [];
 
           return [{
             id: primaryLocation?.id || business.id,
@@ -399,9 +395,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
             name: displayName,
             business_name: business.name,
             address: displayLocation.street || '',
-            city: displayLocation.city || '',
-            province: displayLocation.province || '',
-            region: displayLocation.region || '',
+            city, province, region,
             postal_code: displayLocation.postal_code,
             phone: displayLocation.phone,
             email: displayLocation.email,
@@ -415,10 +409,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
             services: displayLocation.services,
             services_description: displayLocation.services_description,
             category: business.category,
-            business: business.owner ? {
-              owner_id: business.owner_id,
-              owner: business.owner
-            } : undefined,
+            business: business.owner ? { owner_id: business.owner_id, owner: business.owner } : undefined,
             source: (business.source_type === 'claimed_imported' || business.source_type === 'claimed_user_added') ? 'claimed' as const : 'self_registered' as const
           }];
         });
