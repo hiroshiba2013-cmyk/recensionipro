@@ -164,67 +164,99 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
   const loadClaimedLocationsData = async () => {
     try {
       const claimLocationIdsJson = sessionStorage.getItem('claimLocationIds');
+      const claimLocationsWithSourceJson = sessionStorage.getItem('claimLocationsWithSource');
       if (!claimLocationIdsJson) return;
 
-      const locationIds = JSON.parse(claimLocationIdsJson);
+      const locationIds: string[] = JSON.parse(claimLocationIdsJson);
       if (!Array.isArray(locationIds) || locationIds.length === 0) return;
 
-      const { data: locations, error } = await supabase
-        .from('unclaimed_business_locations')
-        .select('*')
-        .in('id', locationIds);
+      // Parse source map: [{id, source: 'imported'|'user_added'}]
+      const locationsWithSource: { id: string; source: string }[] = claimLocationsWithSourceJson
+        ? JSON.parse(claimLocationsWithSourceJson)
+        : locationIds.map(id => ({ id, source: 'imported' }));
 
-      if (error || !locations || locations.length === 0) {
-        console.error('Error loading claimed locations:', error);
+      const importedIds = locationsWithSource.filter(l => l.source === 'imported').map(l => l.id);
+      const userAddedIds = locationsWithSource.filter(l => l.source === 'user_added').map(l => l.id);
+
+      const defaultHours: DayHours = { open: '09:00', close: '18:00', closed: false };
+      const defaultBusinessHours = {
+        monday: defaultHours,
+        tuesday: defaultHours,
+        wednesday: defaultHours,
+        thursday: defaultHours,
+        friday: defaultHours,
+        saturday: { ...defaultHours, closed: true },
+        sunday: { ...defaultHours, closed: true },
+      };
+
+      const allFetched: any[] = [];
+
+      if (importedIds.length > 0) {
+        const { data, error } = await supabase
+          .from('imported_businesses')
+          .select('id, name, description, street, street_number, city, province, postal_code, phone, email, website, business_hours')
+          .in('id', importedIds);
+        if (!error && data) allFetched.push(...data.map(d => ({ ...d, _source: 'imported' })));
+        else console.error('Error loading imported locations:', error);
+      }
+
+      if (userAddedIds.length > 0) {
+        const { data, error } = await supabase
+          .from('user_added_businesses')
+          .select('id, name, description, street, street_number, city, province, postal_code, phone, email, website')
+          .in('id', userAddedIds);
+        if (!error && data) allFetched.push(...data.map(d => ({ ...d, _source: 'user_added' })));
+        else console.error('Error loading user_added locations:', error);
+      }
+
+      if (allFetched.length === 0) {
+        console.error('No locations found for selected IDs');
         return;
       }
 
-      setNumberOfLocations(locations.length.toString());
+      // Preserve the original selection order
+      const ordered = locationIds
+        .map(id => allFetched.find(l => l.id === id))
+        .filter(Boolean);
+
+      setNumberOfLocations(ordered.length.toString());
       setHasClaimedLocations(true);
 
-      const defaultHours: DayHours = { open: '09:00', close: '18:00', closed: false };
-      const newLocations: BusinessLocation[] = locations.map((loc, index) => ({
+      const newLocations: BusinessLocation[] = ordered.map((loc, index) => ({
         name: loc.name || `Sede ${index + 1}`,
         description: loc.description || '',
         services: [],
         address: loc.street || '',
-        streetNumber: '',
+        streetNumber: loc.street_number || '',
         city: loc.city || '',
         province: loc.province || '',
         postalCode: loc.postal_code || '',
         phone: loc.phone || '',
         email: loc.email || '',
         vatNumber: '',
-        businessHours: typeof loc.business_hours === 'string' ? JSON.parse(loc.business_hours) : (loc.business_hours || {
-          monday: defaultHours,
-          tuesday: defaultHours,
-          wednesday: defaultHours,
-          thursday: defaultHours,
-          friday: defaultHours,
-          saturday: { ...defaultHours, closed: true },
-          sunday: { ...defaultHours, closed: true },
-        }),
+        businessHours: typeof loc.business_hours === 'string'
+          ? JSON.parse(loc.business_hours)
+          : (loc.business_hours || defaultBusinessHours),
       }));
 
       setBusinessLocations(newLocations);
 
       const claimBusinessName = sessionStorage.getItem('claimBusinessName');
-      if (claimBusinessName && locations.length > 0) {
-        setBusinessForm(prev => ({
-          ...prev,
-          companyName: claimBusinessName,
-        }));
+      if (claimBusinessName) {
+        setBusinessForm(prev => ({ ...prev, companyName: claimBusinessName }));
       }
 
-      const { data: plans, error: plansError } = await supabase
-        .from('business_subscription_plans')
-        .select('*')
-        .eq('max_locations', locations.length)
+      // Pre-select the matching subscription plan
+      const { data: plan } = await supabase
+        .from('subscription_plans')
+        .select('id')
+        .eq('max_persons', ordered.length)
         .eq('billing_period', 'monthly')
+        .like('name', 'Piano Business%')
         .maybeSingle();
 
-      if (!plansError && plans) {
-        setPreselectedPlanId(plans.id);
+      if (plan) {
+        setPreselectedPlanId(plan.id);
       }
     } catch (error) {
       console.error('Error loading claimed locations data:', error);
@@ -815,57 +847,72 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
           }
 
           console.log('✅ Sedi create:', registeredLocationsToInsert.length);
-        }
-      }
 
-      const claimBusinessId = sessionStorage.getItem('claimBusinessId');
-      const claimLocationIdsJson = sessionStorage.getItem('claimLocationIds');
+          // Mark source locations as claimed in the correct source tables
+          const claimLocationsWithSourceJson = sessionStorage.getItem('claimLocationsWithSource');
+          const claimLocationIdsJson = sessionStorage.getItem('claimLocationIds');
 
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', user.id)
-          .maybeSingle();
+          if (claimLocationsWithSourceJson) {
+            try {
+              const locationsWithSource: { id: string; source: string }[] = JSON.parse(claimLocationsWithSourceJson);
+              const claimedAt = new Date().toISOString();
+              const businessId = registeredBusiness.id;
 
-        if (profile) {
-          if (claimLocationIdsJson) {
+              const importedIds = locationsWithSource.filter(l => l.source === 'imported').map(l => l.id);
+              const userAddedIds = locationsWithSource.filter(l => l.source === 'user_added').map(l => l.id);
+
+              if (importedIds.length > 0) {
+                await supabase
+                  .from('imported_businesses')
+                  .update({ is_claimed: true, claimed_at: claimedAt, claimed_by_business_id: businessId })
+                  .in('id', importedIds)
+                  .eq('is_claimed', false);
+              }
+
+              if (userAddedIds.length > 0) {
+                await supabase
+                  .from('user_added_businesses')
+                  .update({ is_claimed: true, claimed_at: claimedAt, claimed_by_business_id: businessId })
+                  .in('id', userAddedIds)
+                  .eq('is_claimed', false);
+              }
+
+              // Update source_type on registered_business to reflect claim origin
+              if (locationsWithSource.length > 0) {
+                const dominantSource = importedIds.length >= userAddedIds.length ? 'claimed_imported' : 'claimed_user_added';
+                await supabase
+                  .from('registered_businesses')
+                  .update({ source_type: dominantSource, source_id: locationsWithSource[0].id })
+                  .eq('id', businessId);
+              }
+
+              console.log(`Marked ${importedIds.length} imported + ${userAddedIds.length} user_added locations as claimed`);
+            } catch (e) {
+              console.error('Error marking locations as claimed:', e);
+            }
+          } else if (claimLocationIdsJson) {
+            // Fallback: no source info, try imported_businesses
             try {
               const locationIds = JSON.parse(claimLocationIdsJson);
               if (Array.isArray(locationIds) && locationIds.length > 0) {
                 await supabase
-                  .from('unclaimed_business_locations')
-                  .update({
-                    claimed_by: profile.id,
-                    is_claimed: true,
-                    claimed_at: new Date().toISOString(),
-                  })
+                  .from('imported_businesses')
+                  .update({ is_claimed: true, claimed_at: new Date().toISOString(), claimed_by_business_id: registeredBusiness.id })
                   .in('id', locationIds)
                   .eq('is_claimed', false);
-
-                console.log(`Claimed ${locationIds.length} locations for user ${profile.id}`);
               }
-              sessionStorage.removeItem('claimLocationIds');
-              sessionStorage.removeItem('claimBusinessName');
-              sessionStorage.removeItem('claimBusinessId');
             } catch (e) {
-              console.error('Error parsing claimLocationIds:', e);
+              console.error('Error in fallback claim:', e);
             }
-          } else if (claimBusinessId) {
-            await supabase
-              .from('unclaimed_business_locations')
-              .update({
-                claimed_by: profile.id,
-                is_claimed: true,
-                claimed_at: new Date().toISOString(),
-              })
-              .eq('id', claimBusinessId)
-              .eq('is_claimed', false);
-
-            sessionStorage.removeItem('claimBusinessId');
           }
         }
       }
+
+      sessionStorage.removeItem('claimLocationIds');
+      sessionStorage.removeItem('claimLocationsWithSource');
+      sessionStorage.removeItem('claimBusinessName');
+      sessionStorage.removeItem('claimBusinessKey');
+      sessionStorage.removeItem('claimBusinessId');
 
       setRegistrationSuccess(true);
     } catch (err: any) {

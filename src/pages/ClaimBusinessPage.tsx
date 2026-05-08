@@ -16,7 +16,7 @@ interface LocationResult {
   category_id: string | null;
   region: string | null;
   website: string | null;
-  source: 'unclaimed' | 'claimed';
+  source: 'imported' | 'user_added' | 'claimed';
 }
 
 interface GroupedBusiness {
@@ -67,6 +67,7 @@ export function ClaimBusinessPage() {
           website,
           category_id
         `)
+        .eq('is_claimed', false)
         .limit(200);
 
       // Query 2: user_added_businesses (aggiunte da utenti - non reclamate)
@@ -85,6 +86,7 @@ export function ClaimBusinessPage() {
           website,
           category_id
         `)
+        .eq('is_claimed', false)
         .limit(200);
 
       // Query 3: registered_business_locations (già reclamate)
@@ -154,7 +156,7 @@ export function ClaimBusinessPage() {
           website: loc.website,
           is_claimed: false,
           category_id: loc.category_id,
-          source: 'unclaimed' as const
+          source: 'imported' as const
         })),
         ...(userAddedResult.data || []).map(loc => ({
           id: loc.id,
@@ -169,7 +171,7 @@ export function ClaimBusinessPage() {
           website: loc.website,
           is_claimed: false,
           category_id: loc.category_id,
-          source: 'unclaimed' as const
+          source: 'user_added' as const
         })),
         ...(registeredResult.data || []).map(loc => ({
           id: loc.id,
@@ -244,7 +246,13 @@ export function ClaimBusinessPage() {
       return;
     }
 
+    // Build a map of id -> source for each selected location
+    const selectedWithSource = business.locations
+      .filter(loc => selectedLocations.has(loc.id) && !loc.is_claimed)
+      .map(loc => ({ id: loc.id, source: loc.source }));
+
     sessionStorage.setItem('claimLocationIds', JSON.stringify(Array.from(selectedLocations)));
+    sessionStorage.setItem('claimLocationsWithSource', JSON.stringify(selectedWithSource));
     sessionStorage.setItem('claimBusinessName', business.business_name);
     sessionStorage.setItem('claimBusinessKey', business.business_key);
     window.location.href = '/?register=business';
