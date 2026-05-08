@@ -102,7 +102,11 @@ export function Router() {
   // Redirect alla home quando l'utente fa logout
   useEffect(() => {
     if (loading) return;
-    if (!user && currentPath !== '/' && !currentPath.startsWith('/business/') && !currentPath.startsWith('/admin')) {
+    const publicPaths = ['/', '/claim-business', '/rivendica-attivita', '/contact', '/contatti', '/rules', '/regolamento', '/solidarity', '/leaderboard'];
+    const isPublic = publicPaths.includes(currentPath)
+      || currentPath.startsWith('/business/')
+      || currentPath.startsWith('/admin');
+    if (!user && !isPublic) {
       window.history.pushState({}, '', '/');
       setCurrentPath('/');
     }
