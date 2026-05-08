@@ -1,6 +1,6 @@
 /**
  * Importazione mirata per categorie con 0 o pochi record
- * Tag OSM molto specifici per ogni categoria
+ * Una query per tag alla volta per evitare timeout
  */
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
@@ -9,9 +9,7 @@ import https from 'https';
 config();
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
 
-// Copertura nazionale: tutte le province italiane
 const CITIES = [
-  // NORD-OVEST
   { name: 'Torino', region: 'Piemonte', province: 'TO', bbox: [44.94, 7.56, 45.18, 7.80] },
   { name: 'Milano', region: 'Lombardia', province: 'MI', bbox: [45.34, 9.04, 45.58, 9.32] },
   { name: 'Genova', region: 'Liguria', province: 'GE', bbox: [44.32, 8.82, 44.52, 9.04] },
@@ -34,7 +32,6 @@ const CITIES = [
   { name: 'La Spezia', region: 'Liguria', province: 'SP', bbox: [44.04, 9.74, 44.24, 9.94] },
   { name: 'Savona', region: 'Liguria', province: 'SV', bbox: [44.26, 8.42, 44.46, 8.62] },
   { name: 'Imperia', region: 'Liguria', province: 'IM', bbox: [43.86, 7.96, 44.06, 8.16] },
-  // NORD-EST
   { name: 'Venezia', region: 'Veneto', province: 'VE', bbox: [45.34, 12.24, 45.54, 12.44] },
   { name: 'Verona', region: 'Veneto', province: 'VR', bbox: [45.34, 10.90, 45.54, 11.10] },
   { name: 'Padova', region: 'Veneto', province: 'PD', bbox: [45.32, 11.78, 45.52, 11.98] },
@@ -58,8 +55,7 @@ const CITIES = [
   { name: 'Piacenza', region: 'Emilia-Romagna', province: 'PC', bbox: [44.98, 9.62, 45.18, 9.82] },
   { name: 'Forlì', region: 'Emilia-Romagna', province: 'FC', bbox: [44.18, 12.00, 44.38, 12.20] },
   { name: 'Cesena', region: 'Emilia-Romagna', province: 'FC', bbox: [44.10, 12.20, 44.30, 12.40] },
-  // CENTRO
-  { name: 'Roma', region: 'Lazio', province: 'RM', bbox: [41.74, 12.34, 41.02, 12.62] },
+  { name: 'Roma', region: 'Lazio', province: 'RM', bbox: [41.74, 12.34, 42.02, 12.62] },
   { name: 'Firenze', region: 'Toscana', province: 'FI', bbox: [43.68, 11.16, 43.88, 11.36] },
   { name: 'Ancona', region: 'Marche', province: 'AN', bbox: [43.52, 13.44, 43.72, 13.64] },
   { name: 'Perugia', region: 'Umbria', province: 'PG', bbox: [43.02, 12.30, 43.22, 12.50] },
@@ -85,7 +81,6 @@ const CITIES = [
   { name: 'Pescara', region: 'Abruzzo', province: 'PE', bbox: [42.38, 14.14, 42.58, 14.34] },
   { name: 'Chieti', region: 'Abruzzo', province: 'CH', bbox: [42.30, 14.10, 42.50, 14.30] },
   { name: 'Teramo', region: 'Abruzzo', province: 'TE', bbox: [42.61, 13.66, 42.76, 13.82] },
-  // SUD
   { name: 'Napoli', region: 'Campania', province: 'NA', bbox: [40.74, 14.14, 40.94, 14.34] },
   { name: 'Salerno', region: 'Campania', province: 'SA', bbox: [40.60, 14.68, 40.80, 14.88] },
   { name: 'Caserta', region: 'Campania', province: 'CE', bbox: [41.00, 14.26, 41.20, 14.46] },
@@ -105,7 +100,6 @@ const CITIES = [
   { name: 'Vibo Valentia', region: 'Calabria', province: 'VV', bbox: [38.63, 16.04, 38.83, 16.24] },
   { name: 'Campobasso', region: 'Molise', province: 'CB', bbox: [41.49, 14.58, 41.69, 14.78] },
   { name: 'Isernia', region: 'Molise', province: 'IS', bbox: [41.55, 14.18, 41.65, 14.28] },
-  // SICILIA
   { name: 'Palermo', region: 'Sicilia', province: 'PA', bbox: [38.02, 13.26, 38.22, 13.46] },
   { name: 'Catania', region: 'Sicilia', province: 'CT', bbox: [37.42, 15.00, 37.62, 15.20] },
   { name: 'Messina', region: 'Sicilia', province: 'ME', bbox: [38.10, 15.46, 38.30, 15.66] },
@@ -115,7 +109,6 @@ const CITIES = [
   { name: 'Trapani', region: 'Sicilia', province: 'TP', bbox: [37.94, 12.46, 38.14, 12.66] },
   { name: 'Caltanissetta', region: 'Sicilia', province: 'CL', bbox: [37.42, 13.98, 37.62, 14.18] },
   { name: 'Enna', region: 'Sicilia', province: 'EN', bbox: [37.50, 14.22, 37.70, 14.42] },
-  // SARDEGNA
   { name: 'Cagliari', region: 'Sardegna', province: 'CA', bbox: [39.14, 9.02, 39.34, 9.22] },
   { name: 'Sassari', region: 'Sardegna', province: 'SS', bbox: [40.66, 8.48, 40.86, 8.68] },
   { name: 'Nuoro', region: 'Sardegna', province: 'NU', bbox: [40.25, 9.26, 40.45, 9.46] },
@@ -123,285 +116,126 @@ const CITIES = [
   { name: 'Olbia', region: 'Sardegna', province: 'OT', bbox: [40.87, 9.45, 41.07, 9.65] },
 ];
 
-// Tag OSM specifici per categorie mancanti/carenti
-// Costruisce query separate per gruppi di tag
-const BATCHES = [
-  {
-    label: 'Pizzerie, Panifici, Birrerie, Pastifici, Distillerie',
-    tags: [
-      // Pizzerie: amenity=restaurant + cuisine=pizza
-      `node["amenity"="restaurant"]["cuisine"~"pizza|Pizza"](BBOX);`,
-      `node["amenity"="fast_food"]["cuisine"~"pizza|Pizza"](BBOX);`,
-      // Panifici/Pasticcerie con nomi comuni
-      `node["shop"="bakery"](BBOX);`,
-      `node["shop"="pastry"](BBOX);`,
-      `node["craft"="bakery"](BBOX);`,
-      `node["craft"="distillery"](BBOX);`,
-      `node["craft"="brewery"](BBOX);`,
-      `node["craft"="winery"](BBOX);`,
-      `node["amenity"="pub"](BBOX);`,
-      `node["amenity"="biergarten"](BBOX);`,
-    ],
-    catMap: {
-      'restaurant_pizza': 'Pizzerie',
-      'fast_food_pizza': 'Pizzerie',
-      'bakery': 'Panifici',
-      'pastry': 'Pasticcerie',
-      'craft_bakery': 'Panifici',
-      'craft_distillery': 'Distillerie',
-      'craft_brewery': 'Birrifici',
-      'craft_winery': 'Cantine',
-      'pub': 'Pub e Locali',
-      'biergarten': 'Pub e Locali',
-    }
-  },
-  {
-    label: 'Yoga, Massaggi, Saune, Sub, Golf, Arti Marziali',
-    tags: [
-      `node["leisure"="yoga"](BBOX);`,
-      `node["sport"="yoga"](BBOX);`,
-      `node["leisure"="sauna"](BBOX);`,
-      `node["amenity"="sauna"](BBOX);`,
-      `node["leisure"="golf_course"](BBOX);`,
-      `node["sport"="golf"](BBOX);`,
-      `node["sport"="9pin"](BBOX);`,
-      `node["sport"="10pin"](BBOX);`,
-      `node["leisure"="bowling_alley"](BBOX);`,
-      `node["sport"="diving"](BBOX);`,
-      `node["shop"="diving"](BBOX);`,
-      `node["sport"="martial_arts"](BBOX);`,
-      `node["sport"="judo"](BBOX);`,
-      `node["sport"="karate"](BBOX);`,
-      `node["sport"="taekwondo"](BBOX);`,
-      `node["amenity"="massage"](BBOX);`,
-      `node["shop"="massage"](BBOX);`,
-      `node["leisure"="spa"](BBOX);`,
-    ],
-    catMap: {
-      'yoga': 'Centri Yoga',
-      'sauna': 'Saune',
-      'golf_course': 'Golf',
-      'golf': 'Golf',
-      'bowling': 'Bowling',
-      'diving': 'Sub e Diving',
-      'martial_arts': 'Arti Marziali',
-      'massage': 'Centri Massaggi',
-      'spa': 'Centri Benessere',
-    }
-  },
-  {
-    label: 'Onoranze Funebri, Toelettatura, Taxi, Sartorie, Università',
-    tags: [
-      `node["amenity"="funeral_directors"](BBOX);`,
-      `node["shop"="funeral_directors"](BBOX);`,
-      `node["amenity"="veterinary"](BBOX);`,
-      `node["shop"="pet_grooming"](BBOX);`,
-      `node["shop"="pet"](BBOX);`,
-      `node["amenity"="taxi"](BBOX);`,
-      `node["shop"="tailor"](BBOX);`,
-      `node["craft"="tailor"](BBOX);`,
-      `node["amenity"="university"](BBOX);`,
-      `node["amenity"="college"](BBOX);`,
-      `node["shop"="hifi"](BBOX);`,
-      `node["shop"="camera"](BBOX);`,
-      `node["shop"="photo"](BBOX);`,
-      `node["craft"="photographer"](BBOX);`,
-    ],
-    catMap: {
-      'funeral_directors': 'Onoranze Funebri',
-      'pet_grooming': 'Toelettatura Animali',
-      'pet': 'Animali',
-      'taxi': 'Taxi',
-      'tailor': 'Sartorie',
-      'university': 'Università',
-      'college': 'Istituti Formativi',
-      'hifi': 'Hi-Fi',
-      'camera': 'Fotocamere',
-      'photo': 'Fotografia',
-      'photographer': 'Fotografi',
-    }
-  },
-  {
-    label: 'Pneumatici, Revisioni, Costruttori, Idraulici, Elettricisti',
-    tags: [
-      `node["shop"="tyres"](BBOX);`,
-      `node["amenity"="vehicle_inspection"](BBOX);`,
-      `node["craft"="plumber"](BBOX);`,
-      `node["craft"="electrician"](BBOX);`,
-      `node["craft"="builder"](BBOX);`,
-      `node["craft"="construction"](BBOX);`,
-      `node["craft"="hvac"](BBOX);`,
-      `node["craft"="painter"](BBOX);`,
-      `node["craft"="carpenter"](BBOX);`,
-      `node["craft"="stonemason"](BBOX);`,
-      `node["craft"="roofer"](BBOX);`,
-      `node["craft"="scaffolder"](BBOX);`,
-      `node["craft"="tiler"](BBOX);`,
-      `node["craft"="floorer"](BBOX);`,
-      `node["craft"="glazier"](BBOX);`,
-      `node["craft"="locksmith"](BBOX);`,
-      `node["craft"="blacksmith"](BBOX);`,
-      `node["craft"="shoemaker"](BBOX);`,
-      `node["craft"="jeweller"](BBOX);`,
-      `node["craft"="watchmaker"](BBOX);`,
-      `node["craft"="optician"](BBOX);`,
-      `node["craft"="gardener"](BBOX);`,
-      `node["craft"="beekeeper"](BBOX);`,
-    ],
-    catMap: {
-      'tyres': 'Pneumatici',
-      'vehicle_inspection': 'Revisioni Auto',
-      'plumber': 'Idraulici',
-      'electrician': 'Elettricisti',
-      'builder': 'Costruttori',
-      'construction': 'Imprese Edili',
-      'hvac': 'Climatizzazione',
-      'painter': 'Imbianchini',
-      'carpenter': 'Falegnami',
-      'stonemason': 'Scalpellini',
-      'roofer': 'Costruttori',
-      'scaffolder': 'Ponteggiatori',
-      'tiler': 'Piastrellisti',
-      'floorer': 'Posatori Parquet',
-      'glazier': 'Vetrai',
-      'locksmith': 'Duplicazione Chiavi',
-      'blacksmith': 'Fabbri',
-      'shoemaker': 'Calzolai',
-      'jeweller': 'Orefici',
-      'watchmaker': 'Orologiai',
-      'optician': 'Ottici',
-      'gardener': 'Giardinieri',
-      'beekeeper': 'Apicoltori',
-    }
-  },
-  {
-    label: 'Moto, Infissi, Illuminazione, Materassi, Tendaggi, Bazar',
-    tags: [
-      `node["shop"="motorcycle"](BBOX);`,
-      `node["shop"="windows"](BBOX);`,
-      `node["shop"="door"](BBOX);`,
-      `node["shop"="lighting"](BBOX);`,
-      `node["shop"="bed"](BBOX);`,
-      `node["shop"="curtain"](BBOX);`,
-      `node["shop"="variety_store"](BBOX);`,
-      `node["shop"="newsagent"](BBOX);`,
-      `node["shop"="kiosk"](BBOX);`,
-      `node["shop"="tobacco"](BBOX);`,
-      `node["shop"="e-cigarette"](BBOX);`,
-      `node["shop"="model"](BBOX);`,
-      `node["shop"="garden_centre"](BBOX);`,
-      `node["shop"="garden"](BBOX);`,
-      `node["shop"="fishing"](BBOX);`,
-      `node["shop"="hunting"](BBOX);`,
-      `node["shop"="weapons"](BBOX);`,
-      `node["shop"="frame"](BBOX);`,
-    ],
-    catMap: {
-      'motorcycle': 'Moto',
-      'windows': 'Infissi',
-      'door': 'Infissi',
-      'lighting': 'Illuminazione',
-      'bed': 'Materassi e Letti',
-      'curtain': 'Tendaggi',
-      'variety_store': 'Bazar',
-      'newsagent': 'Giornali',
-      'kiosk': 'Edicole',
-      'tobacco': 'Tabaccherie',
-      'e-cigarette': 'Sigarette Elettroniche',
-      'model': 'Modellismo',
-      'garden_centre': 'Giardinaggio',
-      'garden': 'Giardinaggio',
-      'fishing': 'Pesca e Caccia',
-      'hunting': 'Pesca e Caccia',
-      'weapons': 'Armerie',
-      'frame': 'Cornici',
-    }
-  },
-  {
-    label: 'Agenzie Lavoro, Pubblicità, Logistica, ONG, Associazioni',
-    tags: [
-      `node["office"="employment_agency"](BBOX);`,
-      `node["office"="advertising_agency"](BBOX);`,
-      `node["office"="logistics"](BBOX);`,
-      `node["office"="ngo"](BBOX);`,
-      `node"office"="association"](BBOX);`,
-      `node["office"="foundation"](BBOX);`,
-      `node["office"="company"](BBOX);`,
-      `node["office"="graphic_design"](BBOX);`,
-      `node["office"="signage"](BBOX);`,
-      `node["office"="research"](BBOX);`,
-      `node["amenity"="research_institute"](BBOX);`,
-      `node["shop"="farm"](BBOX);`,
-      `node["shop"="agrarian"](BBOX);`,
-      `node["shop"="dairy"](BBOX);`,
-      `node["craft"="pasta"](BBOX);`,
-      `node["shop"="food_court"](BBOX);`,
-      `node["amenity"="food_court"](BBOX);`,
-    ],
-    catMap: {
-      'employment_agency': 'Agenzie del Lavoro',
-      'advertising_agency': 'Agenzie Pubblicitarie',
-      'logistics': 'Logistica',
-      'ngo': 'ONG',
-      'association': 'Associazioni',
-      'foundation': 'Fondazioni',
-      'company': 'Aziende',
-      'graphic_design': 'Grafici',
-      'signage': 'Insegne',
-      'research': 'Centri di Ricerca',
-      'research_institute': 'Centri di Ricerca',
-      'farm': 'Prodotti Agricoli',
-      'agrarian': 'Consorzi Agrari',
-      'dairy': 'Latterie',
-      'pasta': 'Pastifici',
-      'food_court': 'Food Court',
-    }
-  },
-  {
-    label: 'Centri Commerciali, Sci, Boutique, Moda, Articoli Sportivi',
-    tags: [
-      `node["shop"="mall"](BBOX);`,
-      `node["shop"="department_store"](BBOX);`,
-      `node["shop"="fashion"](BBOX);`,
-      `node["shop"="boutique"](BBOX);`,
-      `node["shop"="ski"](BBOX);`,
-      `node["shop"="sports"](BBOX);`,
-      `node["shop"="outdoor"](BBOX);`,
-      `node["shop"="golf"](BBOX);`,
-      `node["shop"="diving"](BBOX);`,
-      `node["shop"="surf"](BBOX);`,
-      `node["shop"="erotic"](BBOX);`,
-      `node["shop"="video_games"](BBOX);`,
-      `node["shop"="video"](BBOX);`,
-      `node["shop"="music"](BBOX);`,
-      `node["shop"="musical_instrument"](BBOX);`,
-      `node["shop"="beverages"](BBOX);`,
-      `node["shop"="tea"](BBOX);`,
-      `node["shop"="spices"](BBOX);`,
-      `node["shop"="hairdresser_supply"](BBOX);`,
-    ],
-    catMap: {
-      'mall': 'Centri Commerciali',
-      'department_store': 'Grandi Magazzini',
-      'fashion': 'Moda',
-      'boutique': 'Boutique',
-      'ski': 'Sci e Snowboard',
-      'sports': 'Articoli Sportivi',
-      'outdoor': 'Outdoor e Camping',
-      'golf': 'Golf',
-      'diving': 'Sub e Diving',
-      'surf': 'Surf e Windsurf',
-      'erotic': 'Sexy Shop',
-      'video_games': 'Videogiochi',
-      'video': 'Videonoleggi',
-      'music': 'Negozi di Musica',
-      'musical_instrument': 'Strumenti Musicali',
-      'beverages': 'Negozi di Bevande',
-      'tea': "Negozi di Tè",
-      'spices': 'Spezierie',
-      'hairdresser_supply': 'Forniture Parrucchieri',
-    }
-  },
+// Ogni TAG_QUERY e' una singola query OSM -> categoria
+const TAG_QUERIES = [
+  // Pizzerie
+  { key: 'amenity', val: 'restaurant', filter: 'cuisine~"pizza"', cat: 'Pizzerie' },
+  { key: 'amenity', val: 'fast_food', filter: 'cuisine~"pizza"', cat: 'Pizzerie' },
+  // Panifici
+  { key: 'shop', val: 'bakery', cat: 'Panifici' },
+  { key: 'craft', val: 'bakery', cat: 'Panifici' },
+  // Pastifici
+  { key: 'craft', val: 'pasta', cat: 'Pastifici' },
+  // Distillerie
+  { key: 'craft', val: 'distillery', cat: 'Distillerie' },
+  // Birrifici
+  { key: 'craft', val: 'brewery', cat: 'Birrifici' },
+  // Cantine
+  { key: 'craft', val: 'winery', cat: 'Cantine' },
+  { key: 'amenity', val: 'winery', cat: 'Cantine' },
+  // Pub
+  { key: 'amenity', val: 'pub', cat: 'Pub e Locali' },
+  { key: 'amenity', val: 'biergarten', cat: 'Pub e Locali' },
+  // Yoga
+  { key: 'sport', val: 'yoga', cat: 'Centri Yoga' },
+  { key: 'leisure', val: 'yoga', cat: 'Centri Yoga' },
+  // Saune
+  { key: 'leisure', val: 'sauna', cat: 'Saune' },
+  { key: 'amenity', val: 'sauna', cat: 'Saune' },
+  // Golf
+  { key: 'leisure', val: 'golf_course', cat: 'Golf' },
+  { key: 'sport', val: 'golf', cat: 'Golf' },
+  // Sub
+  { key: 'sport', val: 'diving', cat: 'Sub e Diving' },
+  { key: 'shop', val: 'diving', cat: 'Sub e Diving' },
+  // Arti marziali
+  { key: 'sport', val: 'martial_arts', cat: 'Arti Marziali' },
+  { key: 'sport', val: 'judo', cat: 'Arti Marziali' },
+  { key: 'sport', val: 'karate', cat: 'Arti Marziali' },
+  // Massaggi
+  { key: 'amenity', val: 'massage', cat: 'Centri Massaggi' },
+  { key: 'shop', val: 'massage', cat: 'Centri Massaggi' },
+  // Onoranze funebri
+  { key: 'amenity', val: 'funeral_directors', cat: 'Onoranze Funebri' },
+  { key: 'shop', val: 'funeral_directors', cat: 'Onoranze Funebri' },
+  // Toelettatura
+  { key: 'shop', val: 'pet_grooming', cat: 'Toelettatura Animali' },
+  // Taxi
+  { key: 'amenity', val: 'taxi', cat: 'Taxi' },
+  // Sartorie
+  { key: 'shop', val: 'tailor', cat: 'Sartorie' },
+  { key: 'craft', val: 'tailor', cat: 'Sartorie' },
+  // Università
+  { key: 'amenity', val: 'university', cat: 'Università' },
+  { key: 'amenity', val: 'college', cat: 'Istituti Formativi' },
+  // Fotografi
+  { key: 'craft', val: 'photographer', cat: 'Fotografi' },
+  { key: 'shop', val: 'photo', cat: 'Fotografi' },
+  { key: 'shop', val: 'camera', cat: 'Fotocamere' },
+  { key: 'shop', val: 'hifi', cat: 'Hi-Fi' },
+  // Pneumatici
+  { key: 'shop', val: 'tyres', cat: 'Pneumatici' },
+  // Revisioni
+  { key: 'amenity', val: 'vehicle_inspection', cat: 'Revisioni Auto' },
+  // Artigiani edili
+  { key: 'craft', val: 'plumber', cat: 'Idraulici' },
+  { key: 'craft', val: 'electrician', cat: 'Elettricisti' },
+  { key: 'craft', val: 'builder', cat: 'Costruttori' },
+  { key: 'craft', val: 'hvac', cat: 'Climatizzazione' },
+  { key: 'craft', val: 'painter', cat: 'Imbianchini' },
+  { key: 'craft', val: 'carpenter', cat: 'Falegnami' },
+  { key: 'craft', val: 'stonemason', cat: 'Scalpellini' },
+  { key: 'craft', val: 'scaffolder', cat: 'Ponteggiatori' },
+  { key: 'craft', val: 'tiler', cat: 'Piastrellisti' },
+  { key: 'craft', val: 'floorer', cat: 'Posatori Parquet' },
+  { key: 'craft', val: 'glazier', cat: 'Vetrai' },
+  { key: 'craft', val: 'locksmith', cat: 'Duplicazione Chiavi' },
+  { key: 'craft', val: 'blacksmith', cat: 'Fabbri' },
+  { key: 'craft', val: 'watchmaker', cat: 'Orologiai' },
+  { key: 'craft', val: 'gardener', cat: 'Giardinieri' },
+  { key: 'craft', val: 'beekeeper', cat: 'Apicoltori' },
+  { key: 'craft', val: 'jeweller', cat: 'Orefici' },
+  { key: 'craft', val: 'shoemaker', cat: 'Calzolai' },
+  // Shop vari
+  { key: 'shop', val: 'motorcycle', cat: 'Moto' },
+  { key: 'shop', val: 'windows', cat: 'Infissi' },
+  { key: 'shop', val: 'lighting', cat: 'Illuminazione' },
+  { key: 'shop', val: 'bed', cat: 'Materassi e Letti' },
+  { key: 'shop', val: 'curtain', cat: 'Tendaggi' },
+  { key: 'shop', val: 'variety_store', cat: 'Bazar' },
+  { key: 'shop', val: 'newsagent', cat: 'Giornali' },
+  { key: 'shop', val: 'tobacco', cat: 'Tabaccherie' },
+  { key: 'shop', val: 'e-cigarette', cat: 'Sigarette Elettroniche' },
+  { key: 'shop', val: 'model', cat: 'Modellismo' },
+  { key: 'shop', val: 'garden_centre', cat: 'Giardinaggio' },
+  { key: 'shop', val: 'fishing', cat: 'Pesca e Caccia' },
+  { key: 'shop', val: 'weapons', cat: 'Armerie' },
+  { key: 'shop', val: 'frame', cat: 'Cornici' },
+  { key: 'shop', val: 'mall', cat: 'Centri Commerciali' },
+  { key: 'shop', val: 'department_store', cat: 'Grandi Magazzini' },
+  { key: 'shop', val: 'fashion', cat: 'Moda' },
+  { key: 'shop', val: 'ski', cat: 'Sci e Snowboard' },
+  { key: 'shop', val: 'sports', cat: 'Articoli Sportivi' },
+  { key: 'shop', val: 'outdoor', cat: 'Outdoor e Camping' },
+  { key: 'shop', val: 'erotic', cat: 'Sexy Shop' },
+  { key: 'shop', val: 'video_games', cat: 'Videogiochi' },
+  { key: 'shop', val: 'video', cat: 'Videonoleggi' },
+  { key: 'shop', val: 'musical_instrument', cat: 'Strumenti Musicali' },
+  { key: 'shop', val: 'beverages', cat: 'Negozi di Bevande' },
+  { key: 'shop', val: 'tea', cat: "Negozi di Tè" },
+  { key: 'shop', val: 'spices', cat: 'Spezierie' },
+  { key: 'shop', val: 'hairdresser_supply', cat: 'Forniture Parrucchieri' },
+  { key: 'shop', val: 'dairy', cat: 'Latterie' },
+  { key: 'shop', val: 'agrarian', cat: 'Consorzi Agrari' },
+  { key: 'shop', val: 'farm', cat: 'Prodotti Agricoli' },
+  // Uffici
+  { key: 'office', val: 'employment_agency', cat: 'Agenzie del Lavoro' },
+  { key: 'office', val: 'advertising_agency', cat: 'Agenzie Pubblicitarie' },
+  { key: 'office', val: 'ngo', cat: 'ONG' },
+  { key: 'office', val: 'association', cat: 'Associazioni' },
+  { key: 'office', val: 'foundation', cat: 'Fondazioni' },
+  { key: 'office', val: 'graphic_design', cat: 'Grafici' },
+  { key: 'office', val: 'research', cat: 'Centri di Ricerca' },
 ];
 
 let categoryCache = {};
@@ -433,48 +267,52 @@ function fetchOverpass(query) {
       });
     });
     req.on('error', reject);
-    req.setTimeout(150000, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.setTimeout(90000, () => { req.destroy(); reject(new Error('Timeout')); });
     req.write(body); req.end();
   });
 }
 
-function buildBatchQuery(batch, city) {
-  const bboxStr = `${city.bbox[0]},${city.bbox[1]},${city.bbox[2]},${city.bbox[3]}`;
-  const lines = batch.tags
-    .filter(t => !t.includes('node"office"')) // fix typo guard
-    .map(t => {
-      const base = t.replace(/\(BBOX\)/g, `(${bboxStr})`);
-      // also add way version
-      return base + '\n  ' + base.replace(/^node/, 'way');
-    });
-  return `[out:json][timeout:120];\n(\n  ${lines.join('\n  ')}\n);\nout center tags;`;
+function buildQuery(tagQuery, city) {
+  const [s, w, n, e] = city.bbox;
+  const bbox = `${s},${w},${n},${e}`;
+  let filter = '';
+  if (tagQuery.filter) filter = `[${tagQuery.filter}]`;
+  return `[out:json][timeout:60];(\n  node["${tagQuery.key}"="${tagQuery.val}"]${filter}(${bbox});\n  way["${tagQuery.key}"="${tagQuery.val}"]${filter}(${bbox});\n);\nout center tags;`;
 }
 
-function getCategory(tags, batch) {
-  // Try amenity, shop, leisure, sport, craft, office
-  const checkKeys = ['shop', 'craft', 'amenity', 'leisure', 'sport', 'office', 'tourism'];
-  for (const k of checkKeys) {
-    const v = tags[k];
-    if (!v) continue;
-    // direct match
-    if (batch.catMap[v]) {
-      const id = categoryCache[batch.catMap[v]];
-      if (id) return id;
-    }
-    // prefix match (e.g. restaurant_pizza)
-    if (tags.cuisine) {
-      const cusineKey = `${v}_${tags.cuisine.split(';')[0].trim().toLowerCase()}`;
-      if (batch.catMap[cusineKey]) {
-        const id = categoryCache[batch.catMap[cusineKey]];
-        if (id) return id;
-      }
-    }
-  }
-  return null;
+function makeRecord(el, city, catId) {
+  const tags = el.tags || {};
+  if (!tags.name) return null;
+  const lat = el.lat ?? el.center?.lat;
+  const lon = el.lon ?? el.center?.lon;
+  if (!lat || !lon) return null;
+  const street = tags['addr:street'] || '';
+  const hnum = tags['addr:housenumber'] || '';
+  return {
+    name: tags.name.substring(0, 200),
+    category_id: catId,
+    street: street ? (hnum ? `${street}, ${hnum}` : street) : null,
+    city: (tags['addr:city'] || tags['addr:town'] || tags['addr:village'] || city.name).substring(0, 100),
+    province: city.province,
+    region: city.region,
+    postal_code: tags['addr:postcode'] || null,
+    country: 'Italia',
+    latitude: lat,
+    longitude: lon,
+    phone: (tags.phone || tags['contact:phone'] || '').replace(/\s+/g, '').substring(0, 50) || null,
+    email: (tags.email || tags['contact:email'] || '').substring(0, 200) || null,
+    website: (tags.website || tags['contact:website'] || '').substring(0, 500) || null,
+    business_hours: tags.opening_hours || null,
+    is_claimed: false,
+    approval_status: 'approved',
+  };
 }
 
-async function importCityBatch(city, batch, batchIdx, cityIdx, totalCities) {
-  const query = buildBatchQuery(batch, city);
+async function runTagQuery(tagQuery, city) {
+  const catId = categoryCache[tagQuery.cat];
+  if (!catId) return 0;
+
+  const query = buildQuery(tagQuery, city);
   let elements = [];
   for (let retry = 0; retry < 3; retry++) {
     try {
@@ -482,52 +320,22 @@ async function importCityBatch(city, batch, batchIdx, cityIdx, totalCities) {
       elements = data.elements || [];
       break;
     } catch (err) {
-      if (err.message === 'RATE_LIMIT') { process.stdout.write(' [RL60s]'); await sleep(60000); retry--; continue; }
-      if (retry < 2) await sleep((retry + 1) * 10000);
-      else return 0;
+      if (err.message === 'RATE_LIMIT') { await sleep(60000); retry--; continue; }
+      if (retry < 2) { await sleep((retry + 1) * 8000); continue; }
+      return 0;
     }
   }
 
   const records = [];
   const seen = new Set();
-
   for (const el of elements) {
-    const tags = el.tags || {};
-    if (!tags.name) continue;
-    const categoryId = getCategory(tags, batch);
-    if (!categoryId) continue;
-    const lat = el.lat || el.center?.lat;
-    const lon = el.lon || el.center?.lon;
-    if (!lat || !lon) continue;
-
-    const cityName = (tags['addr:city'] || tags['addr:town'] || tags['addr:village'] || city.name).substring(0, 100);
-    const street = tags['addr:street'] || '';
-    const houseNum = tags['addr:housenumber'] || '';
-    const streetFull = street ? (houseNum ? `${street}, ${houseNum}` : street) : null;
-    const key = `${tags.name}|${cityName}|${lat.toFixed(4)}|${lon.toFixed(4)}`;
+    const r = makeRecord(el, city, catId);
+    if (!r) continue;
+    const key = `${r.name}|${r.city}|${r.latitude?.toFixed(4)}|${r.longitude?.toFixed(4)}`;
     if (seen.has(key)) continue;
     seen.add(key);
-
-    records.push({
-      name: tags.name.substring(0, 200),
-      category_id: categoryId,
-      street: streetFull,
-      city: cityName,
-      province: city.province,
-      region: city.region,
-      postal_code: tags['addr:postcode'] || null,
-      country: 'Italia',
-      latitude: lat,
-      longitude: lon,
-      phone: (tags.phone || tags['contact:phone'] || '').replace(/\s+/g, '').substring(0, 50) || null,
-      email: (tags.email || tags['contact:email'] || '').substring(0, 200) || null,
-      website: (tags.website || tags['contact:website'] || '').substring(0, 500) || null,
-      business_hours: tags.opening_hours || null,
-      is_claimed: false,
-      approval_status: 'approved',
-    });
+    records.push(r);
   }
-
   if (!records.length) return 0;
 
   let inserted = 0;
@@ -541,27 +349,23 @@ async function importCityBatch(city, batch, batchIdx, cityIdx, totalCities) {
 
 async function main() {
   console.log(`\n=== IMPORTAZIONE CATEGORIE MANCANTI ===`);
-  console.log(`${CITIES.length} citta' x ${BATCHES.length} batch tematici\n`);
+  console.log(`${TAG_QUERIES.length} tag OSM x ${CITIES.length} citta'\n`);
   await loadCategories();
 
-  let batchTotal = 0;
-  for (let b = 0; b < BATCHES.length; b++) {
-    const batch = BATCHES[b];
-    console.log(`\n--- Batch ${b+1}/${BATCHES.length}: ${batch.label} ---`);
-    batchTotal = 0;
+  for (let t = 0; t < TAG_QUERIES.length; t++) {
+    const tq = TAG_QUERIES[t];
+    const tagTotal = { count: 0 };
+    process.stdout.write(`[${t+1}/${TAG_QUERIES.length}] ${tq.key}=${tq.val} -> ${tq.cat}: `);
 
-    for (let c = 0; c < CITIES.length; c++) {
-      const city = CITIES[c];
-      process.stdout.write(`  ${city.name}... `);
-      const n = await importCityBatch(city, batch, b, c, CITIES.length);
-      if (n > 0) process.stdout.write(`+${n} `);
-      batchTotal += n;
-      await sleep(3500);
+    for (const city of CITIES) {
+      const n = await runTagQuery(tq, city);
+      if (n > 0) { process.stdout.write(`${city.name}(+${n}) `); tagTotal.count += n; }
+      await sleep(2000);
     }
 
     const mins = ((Date.now() - startTime) / 60000).toFixed(1);
-    console.log(`\n  Batch completato: +${batchTotal} | Totale sessione: ${totalImported.toLocaleString()} (${mins}min)`);
-    await sleep(5000);
+    console.log(`\n   Totale tag: +${tagTotal.count} | Sessione: ${totalImported.toLocaleString()} (${mins}min)`);
+    await sleep(3000);
   }
 
   const { count } = await supabase.from('unclaimed_business_locations').select('*', { count: 'exact', head: true });
