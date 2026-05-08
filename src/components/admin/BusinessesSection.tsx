@@ -853,6 +853,9 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                           <Building2 className="w-5 h-5 text-gray-400 flex-shrink-0" />
                           <div>
                             <div className="text-sm font-medium text-gray-900">{business.name}</div>
+                            {business.category?.name && (
+                              <div className="text-xs text-blue-600 font-medium mt-0.5">{business.category.name}</div>
+                            )}
                             {business.vat_number && (
                               <div className="text-xs text-gray-500">P.IVA: {business.vat_number}</div>
                             )}
