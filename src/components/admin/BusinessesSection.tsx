@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Building2, CheckCircle, MapPin, Mail, Phone, FileEdit as Edit2, Search, Filter, Download, Upload, UserPlus, X, FileText, Briefcase, Clock, ShieldCheck, ShieldX, XCircle } from 'lucide-react';
+import { Building2, CheckCircle, MapPin, Mail, Phone, FileEdit as Edit2, Search, Filter, Download, Upload, UserPlus, X, FileText, Briefcase, Clock, ShieldCheck, ShieldX, XCircle, Hash } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { AdminLocationFilter } from './AdminLocationFilter';
 
@@ -99,7 +99,6 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [businesses, setBusinesses] = useState<BusinessLocation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessLocation | null>(null);
   const [editingBusiness, setEditingBusiness] = useState<BusinessLocation | null>(null);
   const [allLocations, setAllLocations] = useState<BusinessLocation[]>([]);
@@ -111,6 +110,9 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
 
   // Advanced filters — province is display name, provinceCode is the 2-letter code stored in DB
   const [filters, setFilters] = useState({
+    name: '',
+    address: '',
+    postalCode: '',
     city: '',
     province: '',
     provinceCode: '',
@@ -136,17 +138,19 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           .from('unclaimed_business_locations')
           .select(`*, category:category_id(name)`, { count: 'exact' })
           .order('created_at', { ascending: false });
+        if (filters.name) unclaimedQ = unclaimedQ.ilike('name', `%${filters.name}%`);
+        if (filters.address) unclaimedQ = unclaimedQ.ilike('street', `%${filters.address}%`);
+        if (filters.postalCode) unclaimedQ = unclaimedQ.ilike('postal_code', `%${filters.postalCode}%`);
         if (filters.city) unclaimedQ = unclaimedQ.ilike('city', `%${filters.city}%`);
         if (filters.provinceCode) unclaimedQ = unclaimedQ.eq('province', filters.provinceCode);
         if (filters.region) unclaimedQ = unclaimedQ.eq('region', filters.region);
-        if (searchTerm) unclaimedQ = unclaimedQ.ilike('name', `%${searchTerm}%`);
 
         // Build registered query with filters
         let registeredQ = supabase
           .from('registered_businesses')
           .select(`*, category:category_id(name), owner:owner_id(full_name, email), locations:registered_business_locations(*)`, { count: 'exact' })
           .order('created_at', { ascending: false });
-        if (searchTerm) registeredQ = registeredQ.ilike('name', `%${searchTerm}%`);
+        if (filters.name) registeredQ = registeredQ.ilike('name', `%${filters.name}%`);
 
         const [unclaimedResult, claimedResult] = await Promise.all([
           unclaimedQ.range(from, to),
@@ -254,26 +258,18 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
         }
 
         // Apply advanced filters
-        if (filters.city) {
-          query = query.ilike('city', `%${filters.city}%`);
-        }
-        if (filters.provinceCode) {
-          query = query.eq('province', filters.provinceCode);
-        }
-        if (filters.region) {
-          query = query.eq('region', filters.region);
-        }
+        if (filters.name) query = query.ilike('name', `%${filters.name}%`);
+        if (filters.address) query = query.ilike('street', `%${filters.address}%`);
+        if (filters.postalCode) query = query.ilike('postal_code', `%${filters.postalCode}%`);
+        if (filters.city) query = query.ilike('city', `%${filters.city}%`);
+        if (filters.provinceCode) query = query.eq('province', filters.provinceCode);
+        if (filters.region) query = query.eq('region', filters.region);
         if (filters.verified === 'verified') {
           query = query.eq('approval_status', 'approved');
         } else if (filters.verified === 'unverified') {
           query = query.eq('approval_status', 'pending');
         } else if (filters.verified === 'rejected') {
           query = query.eq('approval_status', 'rejected');
-        }
-
-        // Apply search
-        if (searchTerm) {
-          query = query.or(`name.ilike.%${searchTerm}%,city.ilike.%${searchTerm}%,street.ilike.%${searchTerm}%`);
         }
 
         const { data: unclaimedData, error: unclaimedError, count: totalCount } = await query
@@ -337,10 +333,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           query = query.eq('verified', false);
         }
 
-        // Apply search
-        if (searchTerm) {
-          query = query.or(`name.ilike.%${searchTerm}%`);
-        }
+        if (filters.name) query = query.ilike('name', `%${filters.name}%`);
 
         const { data: claimedData, error: claimedError, count: totalCount } = await query
           .order('created_at', { ascending: false })
@@ -367,6 +360,10 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           const region = displayLocation.region || '';
 
           // Apply location filters client-side
+          const street = displayLocation.street || '';
+          const postalCode = displayLocation.postal_code || '';
+          if (filters.address && !street.toLowerCase().includes(filters.address.toLowerCase())) return [];
+          if (filters.postalCode && !postalCode.includes(filters.postalCode)) return [];
           if (filters.city && !city.toLowerCase().includes(filters.city.toLowerCase())) return [];
           if (filters.provinceCode && province.toUpperCase() !== filters.provinceCode.toUpperCase()) return [];
           if (filters.region && region !== filters.region) return [];
@@ -413,7 +410,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
   // Single effect — always calls via ref so it gets the latest filters/state
   const prevFiltersKey = useRef('');
   useEffect(() => {
-    const key = `${activeTab}|${JSON.stringify(filters)}|${searchTerm}`;
+    const key = `${activeTab}|${JSON.stringify(filters)}`;
     const filtersChanged = prevFiltersKey.current !== key;
     prevFiltersKey.current = key;
 
@@ -426,7 +423,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     } else {
       loadBusinessesRef.current(currentPage);
     }
-  }, [activeTab, filters, searchTerm, currentPage]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeTab, filters, currentPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleApproveUserBusiness = async (business: BusinessLocation) => {
     if (!confirm(`Approva l'attività "${business.name}"?\n\nL'attivita' sara' visibile nella ricerca e l'utente ricevera' i punti.`)) return;
@@ -746,18 +743,41 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
 
         {/* Search Bar and Filters */}
         <div className="p-4 border-b border-gray-200 space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Cerca per nome, città o indirizzo..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+          {/* Text search filters */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Cerca per nome..."
+                value={filters.name}
+                onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Cerca per indirizzo..."
+                value={filters.address}
+                onChange={(e) => setFilters({ ...filters, address: e.target.value })}
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+            <div className="relative">
+              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="CAP..."
+                value={filters.postalCode}
+                onChange={(e) => setFilters({ ...filters, postalCode: e.target.value })}
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
           </div>
 
-          {/* Advanced Filters */}
+          {/* Location + status filters */}
           <div className="space-y-3">
             <AdminLocationFilter
               value={{ region: filters.region, province: filters.province, provinceCode: filters.provinceCode, city: filters.city }}
@@ -787,9 +807,9 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
             <div className="text-gray-600">
               Visualizzazione {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, totalCount)} di {totalCount.toLocaleString()} attività
             </div>
-            {(filters.city || filters.province || filters.region || filters.provinceCode || filters.verified !== 'all') && (
+            {(filters.name || filters.address || filters.postalCode || filters.city || filters.province || filters.region || filters.provinceCode || filters.verified !== 'all') && (
               <button
-                onClick={() => setFilters({ city: '', province: '', provinceCode: '', region: '', category: '', verified: 'all' })}
+                onClick={() => setFilters({ name: '', address: '', postalCode: '', city: '', province: '', provinceCode: '', region: '', category: '', verified: 'all' })}
                 className="text-blue-600 hover:text-blue-700 font-medium"
               >
                 Ripristina filtri
