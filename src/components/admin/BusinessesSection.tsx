@@ -119,6 +119,8 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     verified: 'all' as 'all' | 'verified' | 'unverified' | 'rejected'
   });
 
+  const loadBusinessesRef = useRef<(page?: number) => Promise<void>>(async () => {});
+
   const loadBusinesses = async (page = currentPage) => {
     setLoading(true);
     try {
@@ -405,7 +407,10 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     }
   };
 
-  // Single effect — reset page when tab/filters change, load on every relevant change
+  // Keep ref always pointing to latest loadBusinesses (avoids stale closure in effects)
+  loadBusinessesRef.current = loadBusinesses;
+
+  // Single effect — always calls via ref so it gets the latest filters/state
   const prevFiltersKey = useRef('');
   useEffect(() => {
     const key = `${activeTab}|${JSON.stringify(filters)}|${searchTerm}`;
@@ -416,11 +421,10 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
       if (currentPage !== 1) {
         setCurrentPage(1); // triggers this effect again with page=1
       } else {
-        loadBusinesses(1);
+        loadBusinessesRef.current(1);
       }
     } else {
-      // Only page changed
-      loadBusinesses(currentPage);
+      loadBusinessesRef.current(currentPage);
     }
   }, [activeTab, filters, searchTerm, currentPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
