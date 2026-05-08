@@ -190,7 +190,7 @@ function LandingPage() {
                   Inizia Gratis <ArrowRight className="w-5 h-5" />
                 </button>
                 <button
-                  onClick={() => navigate('/login')}
+                  onClick={() => window.location.href = '/?login=true'}
                   className="inline-flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 px-7 py-3.5 rounded-xl font-semibold text-base border border-gray-300 transition-colors"
                 >
                   Accedi
