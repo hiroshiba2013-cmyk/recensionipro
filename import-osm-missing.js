@@ -1,155 +1,299 @@
 /**
- * Importa le regioni ancora mancanti o con pochi dati
+ * Importazione massiva di tutte le categorie mancanti o con pochi record
+ * Copre: parrucchieri, pizzerie, panifici, lavanderie, parcheggi, taxi, poste,
+ *        bar, ristoranti, negozi vari, sanitaria, servizi, leisure, turismo ecc.
  */
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
 import https from 'https';
 
 config();
-
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
 
-const MISSING_CITIES = [
-  // === MOLISE (0 attivita') ===
-  { name: 'Campobasso', region: 'Molise', province: 'CB', bbox: [41.55, 14.64, 41.63, 14.72] },
-  { name: 'Isernia', region: 'Molise', province: 'IS', bbox: [41.59, 14.22, 41.67, 14.30] },
-  { name: 'Termoli', region: 'Molise', province: 'CB', bbox: [42.00, 14.99, 42.08, 15.07] },
-  { name: 'Venafro', region: 'Molise', province: 'IS', bbox: [41.48, 14.03, 41.56, 14.11] },
-  { name: 'Bojano', region: 'Molise', province: 'CB', bbox: [41.48, 14.47, 41.56, 14.55] },
-  { name: 'Larino', region: 'Molise', province: 'CB', bbox: [41.79, 14.90, 41.87, 14.98] },
-  { name: 'Agnone', region: 'Molise', province: 'IS', bbox: [41.80, 14.35, 41.88, 14.43] },
-
-  // === VALLE D'AOSTA (0 attivita') ===
-  { name: 'Aosta', region: "Valle d'Aosta", province: 'AO', bbox: [45.72, 7.29, 45.80, 7.37] },
-  { name: 'Courmayeur', region: "Valle d'Aosta", province: 'AO', bbox: [45.78, 6.97, 45.86, 7.05] },
-  { name: 'Saint-Vincent', region: "Valle d'Aosta", province: 'AO', bbox: [45.74, 7.63, 45.82, 7.71] },
-  { name: 'Chatillon', region: "Valle d'Aosta", province: 'AO', bbox: [45.74, 7.60, 45.82, 7.68] },
-  { name: 'Pont-Saint-Martin', region: "Valle d'Aosta", province: 'AO', bbox: [45.59, 7.79, 45.67, 7.87] },
-  { name: 'Morgex', region: "Valle d'Aosta", province: 'AO', bbox: [45.75, 7.02, 45.83, 7.10] },
-
-  // === MARCHE extra (solo 2 citta' coperte) ===
-  { name: 'Macerata', region: 'Marche', province: 'MC', bbox: [43.29, 13.45, 43.37, 13.53] },
-  { name: 'Fermo', region: 'Marche', province: 'FM', bbox: [43.15, 13.71, 43.23, 13.79] },
-  { name: 'Senigallia', region: 'Marche', province: 'AN', bbox: [43.70, 13.20, 43.78, 13.28] },
-  { name: 'Civitanova Marche', region: 'Marche', province: 'MC', bbox: [43.29, 13.72, 43.37, 13.80] },
-  { name: 'San Benedetto del Tronto', region: 'Marche', province: 'AP', bbox: [42.94, 13.86, 43.02, 13.94] },
-  { name: 'Jesi', region: 'Marche', province: 'AN', bbox: [43.52, 13.24, 43.60, 13.32] },
-  { name: 'Ascoli Piceno', region: 'Marche', province: 'AP', bbox: [42.84, 13.57, 42.92, 13.65] },
-  { name: 'Fabriano', region: 'Marche', province: 'AN', bbox: [43.33, 12.89, 43.41, 12.97] },
-  { name: 'Porto San Giorgio', region: 'Marche', province: 'FM', bbox: [43.18, 13.78, 43.26, 13.86] },
-  { name: 'Osimo', region: 'Marche', province: 'AN', bbox: [43.47, 13.47, 43.55, 13.55] },
-  { name: 'Tolentino', region: 'Marche', province: 'MC', bbox: [43.20, 13.27, 43.28, 13.35] },
-  { name: 'Recanati', region: 'Marche', province: 'MC', bbox: [43.39, 13.54, 43.47, 13.62] },
-  { name: 'Potenza Picena', region: 'Marche', province: 'MC', bbox: [43.36, 13.68, 43.44, 13.76] },
-
-  // === UMBRIA extra (solo 4 citta') ===
-  { name: 'Foligno', region: 'Umbria', province: 'PG', bbox: [42.94, 12.69, 43.02, 12.77] },
-  { name: 'Spoleto', region: 'Umbria', province: 'PG', bbox: [42.73, 12.73, 42.81, 12.81] },
-  { name: 'Citta di Castello', region: 'Umbria', province: 'PG', bbox: [43.45, 12.24, 43.53, 12.32] },
-  { name: 'Gubbio', region: 'Umbria', province: 'PG', bbox: [43.35, 12.56, 43.43, 12.64] },
-  { name: 'Orvieto', region: 'Umbria', province: 'TR', bbox: [42.71, 12.10, 42.79, 12.18] },
-  { name: 'Narni', region: 'Umbria', province: 'TR', bbox: [42.51, 12.51, 42.59, 12.59] },
-  { name: 'Corciano', region: 'Umbria', province: 'PG', bbox: [43.09, 12.28, 43.17, 12.36] },
-  { name: 'Bastia Umbra', region: 'Umbria', province: 'PG', bbox: [43.06, 12.53, 43.14, 12.61] },
-  { name: 'Assisi', region: 'Umbria', province: 'PG', bbox: [43.07, 12.61, 43.15, 12.69] },
-  { name: 'Citta della Pieve', region: 'Umbria', province: 'PG', bbox: [42.95, 12.00, 43.03, 12.08] },
-
-  // === BASILICATA extra (solo 3 citta') ===
-  { name: 'Melfi', region: 'Basilicata', province: 'PZ', bbox: [40.99, 15.64, 41.07, 15.72] },
-  { name: 'Pisticci', region: 'Basilicata', province: 'MT', bbox: [40.38, 16.55, 40.46, 16.63] },
-  { name: 'Policoro', region: 'Basilicata', province: 'MT', bbox: [40.19, 16.66, 40.27, 16.74] },
-  { name: 'Venosa', region: 'Basilicata', province: 'PZ', bbox: [40.95, 15.81, 41.03, 15.89] },
-  { name: 'Lavello', region: 'Basilicata', province: 'PZ', bbox: [40.98, 15.78, 41.06, 15.86] },
-  { name: 'Rionero in Vulture', region: 'Basilicata', province: 'PZ', bbox: [40.91, 15.66, 40.99, 15.74] },
-  { name: 'Senise', region: 'Basilicata', province: 'PZ', bbox: [40.14, 16.27, 40.22, 16.35] },
-  { name: 'Lauria', region: 'Basilicata', province: 'PZ', bbox: [40.04, 15.83, 40.12, 15.91] },
-  { name: 'Lagonegro', region: 'Basilicata', province: 'PZ', bbox: [40.12, 15.76, 40.20, 15.84] },
-
-  // === SARDEGNA extra ===
-  { name: 'Nuoro', region: 'Sardegna', province: 'NU', bbox: [40.31, 9.32, 40.39, 9.40] },
-  { name: 'Olbia', region: 'Sardegna', province: 'SS', bbox: [40.91, 9.49, 40.99, 9.57] },
-  { name: 'Oristano', region: 'Sardegna', province: 'OR', bbox: [39.89, 8.58, 39.97, 8.66] },
-  { name: 'Quartu Sant Elena', region: 'Sardegna', province: 'CA', bbox: [39.24, 9.17, 39.32, 9.25] },
-  { name: 'Alghero', region: 'Sardegna', province: 'SS', bbox: [40.55, 8.29, 40.63, 8.37] },
-  { name: 'Iglesias', region: 'Sardegna', province: 'SU', bbox: [39.30, 8.52, 39.38, 8.60] },
-  { name: 'Carbonia', region: 'Sardegna', province: 'SU', bbox: [39.16, 8.51, 39.24, 8.59] },
-  { name: 'Tempio Pausania', region: 'Sardegna', province: 'SS', bbox: [40.89, 9.09, 40.97, 9.17] },
-  { name: 'Selargius', region: 'Sardegna', province: 'CA', bbox: [39.24, 9.13, 39.32, 9.21] },
-
-  // === CALABRIA extra ===
-  { name: 'Palmi', region: 'Calabria', province: 'RC', bbox: [38.35, 15.84, 38.43, 15.92] },
-  { name: 'Gioia Tauro', region: 'Calabria', province: 'RC', bbox: [38.42, 15.89, 38.50, 15.97] },
-  { name: 'Locri', region: 'Calabria', province: 'RC', bbox: [38.23, 16.25, 38.31, 16.33] },
-  { name: 'Scalea', region: 'Calabria', province: 'CS', bbox: [39.81, 15.78, 39.89, 15.86] },
-  { name: 'Soverato', region: 'Calabria', province: 'CZ', bbox: [38.68, 16.53, 38.76, 16.61] },
-  { name: 'Cirò Marina', region: 'Calabria', province: 'KR', bbox: [39.36, 17.12, 39.44, 17.20] },
-  { name: 'Trebisacce', region: 'Calabria', province: 'CS', bbox: [39.86, 16.52, 39.94, 16.60] },
-
-  // === ABRUZZO extra ===
+const CITIES = [
+  { name: 'Roma', region: 'Lazio', province: 'RM', bbox: [41.78, 12.38, 41.98, 12.58] },
+  { name: 'Milano', region: 'Lombardia', province: 'MI', bbox: [45.38, 9.08, 45.54, 9.28] },
+  { name: 'Napoli', region: 'Campania', province: 'NA', bbox: [40.78, 14.18, 40.90, 14.32] },
+  { name: 'Torino', region: 'Piemonte', province: 'TO', bbox: [44.98, 7.60, 45.14, 7.76] },
+  { name: 'Palermo', region: 'Sicilia', province: 'PA', bbox: [38.06, 13.30, 38.18, 13.42] },
+  { name: 'Genova', region: 'Liguria', province: 'GE', bbox: [44.36, 8.86, 44.48, 9.00] },
+  { name: 'Bologna', region: 'Emilia-Romagna', province: 'BO', bbox: [44.44, 11.28, 44.56, 11.40] },
+  { name: 'Firenze', region: 'Toscana', province: 'FI', bbox: [43.72, 11.20, 43.84, 11.32] },
+  { name: 'Bari', region: 'Puglia', province: 'BA', bbox: [41.06, 16.82, 41.18, 16.94] },
+  { name: 'Catania', region: 'Sicilia', province: 'CT', bbox: [37.46, 15.04, 37.58, 15.16] },
+  { name: 'Verona', region: 'Veneto', province: 'VR', bbox: [45.38, 10.94, 45.50, 11.06] },
+  { name: 'Venezia', region: 'Veneto', province: 'VE', bbox: [45.38, 12.28, 45.50, 12.40] },
+  { name: 'Padova', region: 'Veneto', province: 'PD', bbox: [45.36, 11.82, 45.48, 11.94] },
+  { name: 'Trieste', region: 'Friuli-Venezia Giulia', province: 'TS', bbox: [45.60, 13.72, 45.72, 13.84] },
+  { name: 'Brescia', region: 'Lombardia', province: 'BS', bbox: [45.50, 10.18, 45.62, 10.30] },
+  { name: 'Parma', region: 'Emilia-Romagna', province: 'PR', bbox: [44.74, 10.28, 44.86, 10.40] },
+  { name: 'Modena', region: 'Emilia-Romagna', province: 'MO', bbox: [44.60, 10.88, 44.72, 11.00] },
+  { name: 'Reggio Emilia', region: 'Emilia-Romagna', province: 'RE', bbox: [44.64, 10.58, 44.76, 10.70] },
+  { name: 'Perugia', region: 'Umbria', province: 'PG', bbox: [43.06, 12.34, 43.18, 12.46] },
+  { name: 'Cagliari', region: 'Sardegna', province: 'CA', bbox: [39.18, 9.06, 39.30, 9.18] },
+  { name: 'Salerno', region: 'Campania', province: 'SA', bbox: [40.64, 14.72, 40.76, 14.84] },
+  { name: 'Rimini', region: 'Emilia-Romagna', province: 'RN', bbox: [44.02, 12.52, 44.14, 12.64] },
+  { name: 'Pescara', region: 'Abruzzo', province: 'PE', bbox: [42.42, 14.18, 42.54, 14.30] },
+  { name: 'Bergamo', region: 'Lombardia', province: 'BG', bbox: [45.66, 9.64, 45.78, 9.76] },
+  { name: 'Trento', region: 'Trentino-Alto Adige', province: 'TN', bbox: [46.04, 11.10, 46.16, 11.22] },
+  { name: 'Vicenza', region: 'Veneto', province: 'VI', bbox: [45.52, 11.50, 45.64, 11.62] },
+  { name: 'Bolzano', region: 'Trentino-Alto Adige', province: 'BZ', bbox: [46.46, 11.30, 46.58, 11.42] },
+  { name: 'Novara', region: 'Piemonte', province: 'NO', bbox: [45.42, 8.58, 45.54, 8.70] },
+  { name: 'Ancona', region: 'Marche', province: 'AN', bbox: [43.56, 13.48, 43.68, 13.60] },
+  { name: 'Udine', region: 'Friuli-Venezia Giulia', province: 'UD', bbox: [46.04, 13.20, 46.16, 13.32] },
+  { name: 'Lecce', region: 'Puglia', province: 'LE', bbox: [40.32, 18.14, 40.44, 18.26] },
+  { name: 'Pisa', region: 'Toscana', province: 'PI', bbox: [43.68, 10.36, 43.80, 10.48] },
+  { name: 'Siena', region: 'Toscana', province: 'SI', bbox: [43.30, 11.28, 43.42, 11.40] },
+  { name: 'Como', region: 'Lombardia', province: 'CO', bbox: [45.78, 9.06, 45.90, 9.18] },
+  { name: 'Treviso', region: 'Veneto', province: 'TV', bbox: [45.64, 12.22, 45.76, 12.34] },
+  { name: 'Varese', region: 'Lombardia', province: 'VA', bbox: [45.78, 8.78, 45.90, 8.90] },
+  { name: 'Caserta', region: 'Campania', province: 'CE', bbox: [41.04, 14.30, 41.16, 14.42] },
+  { name: 'Foggia', region: 'Puglia', province: 'FG', bbox: [41.42, 15.52, 41.54, 15.64] },
+  { name: 'Cosenza', region: 'Calabria', province: 'CS', bbox: [39.26, 16.22, 39.38, 16.34] },
+  { name: 'Ferrara', region: 'Emilia-Romagna', province: 'FE', bbox: [44.80, 11.58, 44.92, 11.70] },
+  { name: 'Sassari', region: 'Sardegna', province: 'SS', bbox: [40.70, 8.52, 40.82, 8.64] },
+  { name: 'Taranto', region: 'Puglia', province: 'TA', bbox: [40.42, 17.20, 40.54, 17.32] },
+  { name: 'Reggio Calabria', region: 'Calabria', province: 'RC', bbox: [38.06, 15.60, 38.18, 15.72] },
+  { name: 'Messina', region: 'Sicilia', province: 'ME', bbox: [38.14, 15.50, 38.26, 15.62] },
+  { name: 'Livorno', region: 'Toscana', province: 'LI', bbox: [43.50, 10.28, 43.62, 10.40] },
+  { name: 'Latina', region: 'Lazio', province: 'LT', bbox: [41.42, 12.86, 41.54, 12.98] },
+  { name: 'Monza', region: 'Lombardia', province: 'MB', bbox: [45.56, 9.24, 45.68, 9.36] },
+  { name: 'Pavia', region: 'Lombardia', province: 'PV', bbox: [45.16, 9.12, 45.28, 9.24] },
+  { name: 'Brindisi', region: 'Puglia', province: 'BR', bbox: [40.60, 17.90, 40.72, 18.02] },
+  { name: 'Catanzaro', region: 'Calabria', province: 'CZ', bbox: [38.86, 16.56, 38.98, 16.68] },
+  { name: 'Lucca', region: 'Toscana', province: 'LU', bbox: [43.80, 10.46, 43.92, 10.58] },
+  { name: 'Arezzo', region: 'Toscana', province: 'AR', bbox: [43.44, 11.84, 43.56, 11.96] },
+  { name: 'Piacenza', region: 'Emilia-Romagna', province: 'PC', bbox: [45.02, 9.66, 45.14, 9.78] },
+  { name: 'Ravenna', region: 'Emilia-Romagna', province: 'RA', bbox: [44.36, 12.16, 44.48, 12.28] },
+  { name: 'Asti', region: 'Piemonte', province: 'AT', bbox: [44.86, 8.16, 44.98, 8.28] },
+  { name: 'Mantova', region: 'Lombardia', province: 'MN', bbox: [45.14, 10.74, 45.26, 10.86] },
+  { name: 'Cremona', region: 'Lombardia', province: 'CR', bbox: [45.10, 10.00, 45.22, 10.12] },
+  { name: 'Alessandria', region: 'Piemonte', province: 'AL', bbox: [44.88, 8.58, 45.00, 8.70] },
+  { name: 'Siracusa', region: 'Sicilia', province: 'SR', bbox: [37.04, 15.26, 37.16, 15.38] },
+  { name: 'Agrigento', region: 'Sicilia', province: 'AG', bbox: [37.28, 13.56, 37.40, 13.68] },
+  { name: 'Trapani', region: 'Sicilia', province: 'TP', bbox: [37.98, 12.50, 38.10, 12.62] },
+  { name: 'Ragusa', region: 'Sicilia', province: 'RG', bbox: [36.90, 14.70, 37.02, 14.82] },
+  { name: 'Matera', region: 'Basilicata', province: 'MT', bbox: [40.62, 16.56, 40.74, 16.68] },
+  { name: 'Potenza', region: 'Basilicata', province: 'PZ', bbox: [40.61, 15.77, 40.73, 15.89] },
+  { name: 'Campobasso', region: 'Molise', province: 'CB', bbox: [41.53, 14.62, 41.65, 14.74] },
+  { name: "L'Aquila", region: 'Abruzzo', province: 'AQ', bbox: [42.33, 13.33, 42.45, 13.45] },
+  { name: 'Avellino', region: 'Campania', province: 'AV', bbox: [40.89, 14.77, 41.01, 14.89] },
+  { name: 'Benevento', region: 'Campania', province: 'BN', bbox: [41.10, 14.76, 41.22, 14.88] },
+  { name: 'Frosinone', region: 'Lazio', province: 'FR', bbox: [41.61, 13.31, 41.73, 13.43] },
+  { name: 'Viterbo', region: 'Lazio', province: 'VT', bbox: [42.38, 12.04, 42.50, 12.16] },
+  { name: 'Rieti', region: 'Lazio', province: 'RI', bbox: [42.38, 12.82, 42.50, 12.94] },
+  { name: 'Aosta', region: "Valle d'Aosta", province: 'AO', bbox: [45.70, 7.27, 45.82, 7.39] },
+  { name: 'Cuneo', region: 'Piemonte', province: 'CN', bbox: [44.36, 7.52, 44.48, 7.64] },
+  { name: 'Pesaro', region: 'Marche', province: 'PU', bbox: [43.88, 12.88, 44.00, 13.00] },
+  { name: 'La Spezia', region: 'Liguria', province: 'SP', bbox: [44.08, 9.78, 44.20, 9.90] },
+  { name: 'Macerata', region: 'Marche', province: 'MC', bbox: [43.27, 13.43, 43.39, 13.55] },
   { name: 'Chieti', region: 'Abruzzo', province: 'CH', bbox: [42.34, 14.14, 42.42, 14.22] },
-  { name: 'Avezzano', region: 'Abruzzo', province: 'AQ', bbox: [42.02, 13.41, 42.10, 13.49] },
-  { name: 'Sulmona', region: 'Abruzzo', province: 'AQ', bbox: [42.04, 13.92, 42.12, 14.00] },
-  { name: 'Montesilvano', region: 'Abruzzo', province: 'PE', bbox: [42.50, 14.14, 42.58, 14.22] },
-  { name: 'Francavilla al Mare', region: 'Abruzzo', province: 'CH', bbox: [42.41, 14.27, 42.49, 14.35] },
-  { name: 'Ortona', region: 'Abruzzo', province: 'CH', bbox: [42.35, 14.40, 42.43, 14.48] },
-  { name: 'Alba Adriatica', region: 'Abruzzo', province: 'TE', bbox: [42.82, 13.93, 42.90, 14.01] },
-  { name: 'Giulianova', region: 'Abruzzo', province: 'TE', bbox: [42.75, 13.95, 42.83, 14.03] },
-  { name: 'Roseto degli Abruzzi', region: 'Abruzzo', province: 'TE', bbox: [42.66, 14.01, 42.74, 14.09] },
-  { name: 'Pineto', region: 'Abruzzo', province: 'TE', bbox: [42.60, 14.06, 42.68, 14.14] },
+  { name: 'Teramo', region: 'Abruzzo', province: 'TE', bbox: [42.64, 13.68, 42.72, 13.76] },
+  { name: 'Nuoro', region: 'Sardegna', province: 'NU', bbox: [40.29, 9.30, 40.41, 9.42] },
+  { name: 'Terni', region: 'Umbria', province: 'TR', bbox: [42.52, 12.60, 42.64, 12.72] },
+  { name: 'Pordenone', region: 'Friuli-Venezia Giulia', province: 'PN', bbox: [45.94, 12.62, 46.06, 12.74] },
+  { name: 'Lecco', region: 'Lombardia', province: 'LC', bbox: [45.82, 9.36, 45.94, 9.48] },
+  { name: 'Lodi', region: 'Lombardia', province: 'LO', bbox: [45.30, 9.48, 45.42, 9.60] },
+  { name: 'Biella', region: 'Piemonte', province: 'BI', bbox: [45.54, 8.04, 45.66, 8.16] },
+  { name: 'Verbania', region: 'Piemonte', province: 'VB', bbox: [45.92, 8.50, 46.04, 8.62] },
+  { name: 'Vercelli', region: 'Piemonte', province: 'VC', bbox: [45.30, 8.38, 45.42, 8.50] },
+  { name: 'Belluno', region: 'Veneto', province: 'BL', bbox: [46.12, 12.20, 46.24, 12.32] },
+  { name: 'Rovigo', region: 'Veneto', province: 'RO', bbox: [44.98, 11.78, 45.10, 11.90] },
+  { name: 'Crotone', region: 'Calabria', province: 'KR', bbox: [38.97, 17.08, 39.09, 17.20] },
+  { name: 'Caltanissetta', region: 'Sicilia', province: 'CL', bbox: [37.46, 14.02, 37.58, 14.14] },
+  { name: 'Enna', region: 'Sicilia', province: 'EN', bbox: [37.54, 14.26, 37.66, 14.38] },
+  { name: 'Grosseto', region: 'Toscana', province: 'GR', bbox: [42.74, 11.06, 42.86, 11.18] },
+  { name: 'Pistoia', region: 'Toscana', province: 'PT', bbox: [43.90, 10.88, 44.02, 11.00] },
+  { name: 'Massa', region: 'Toscana', province: 'MS', bbox: [44.00, 10.10, 44.12, 10.22] },
 ];
 
-const BATCH_QUERY_TEMPLATE = (bboxStr) => `
-[out:json][timeout:180];
-(
-  node["amenity"~"restaurant|cafe|bar|pub|fast_food|ice_cream|nightclub|bank|pharmacy|dentist|doctors|clinic|hospital|veterinary|fuel|post_office|car_wash|car_rental|laundry|driving_school|language_school|music_school|school|kindergarten|library"](${bboxStr});
-  way["amenity"~"restaurant|cafe|bar|pub|fast_food|ice_cream|nightclub|bank|pharmacy|dentist|doctors|clinic|hospital|veterinary|fuel|post_office|car_wash|car_rental|laundry|driving_school|language_school|music_school|school|kindergarten|library"](${bboxStr});
-  node["shop"~"supermarket|convenience|bakery|butcher|greengrocer|clothes|shoes|jewelry|hairdresser|beauty|cosmetics|hardware|furniture|florist|electronics|computer|mobile_phone|books|stationery|newsagent|pharmacy|optician|sports|bicycle|pet|car|car_repair|tobacco|alcohol|seafood|cheese|deli|gift|toys|antiques|second_hand|fabric|tailor|watches|bag|photo|music|art|medical_supply"](${bboxStr});
-  way["shop"~"supermarket|convenience|bakery|butcher|greengrocer|clothes|shoes|jewelry|hairdresser|beauty|cosmetics|hardware|furniture|florist|electronics|computer|mobile_phone|books|stationery|newsagent|pharmacy|optician|sports|bicycle|pet|car|car_repair|tobacco|alcohol|seafood|cheese|deli|gift|toys|antiques|second_hand|fabric|tailor|watches|bag|photo|music|art|medical_supply"](${bboxStr});
-  node["tourism"~"hotel|guest_house|hostel|motel|apartment|camp_site"](${bboxStr});
-  way["tourism"~"hotel|guest_house|hostel|motel|apartment|camp_site"](${bboxStr});
-  node["leisure"~"fitness_centre|sports_centre|swimming_pool|dance"](${bboxStr});
-  node["office"~"lawyer|accountant|architect|engineer|estate_agent|insurance|notary|travel_agent|it"](${bboxStr});
-  node["craft"~"carpenter|electrician|plumber|painter|shoemaker|bakery|jeweller|printing"](${bboxStr});
-  node["healthcare"~"laboratory|physiotherapist|psychotherapist"](${bboxStr});
-);
-out center tags;
-`;
-
-const OSM_CATEGORY_MAP = {
-  'restaurant':'Ristoranti','cafe':'Bar e Caffè','bar':'Bar e Caffè','pub':'Pub e Locali',
-  'fast_food':'Fast Food','ice_cream':'Gelaterie','nightclub':'Discoteche','bank':'Banche',
-  'pharmacy':'Farmacie','dentist':'Dentisti','doctors':'Medici','clinic':'Cliniche',
-  'hospital':'Ospedali','veterinary':'Veterinari','fuel':'Benzinai','post_office':'Uffici Postali',
-  'car_wash':'Autolavaggi','car_rental':'Autonoleggi','laundry':'Lavanderie',
-  'driving_school':'Autoscuole','language_school':'Scuole di Lingue','music_school':'Scuole di Musica',
-  'school':'Scuole','kindergarten':'Asili','library':'Biblioteche',
-  'supermarket':'Supermercati','convenience':'Alimentari','bakery':'Panifici e Pasticcerie',
-  'butcher':'Macellerie','greengrocer':'Frutta e Verdura','clothes':'Abbigliamento',
-  'shoes':'Calzature','jewelry':'Gioiellerie','hairdresser':'Parrucchieri e Barbieri',
-  'beauty':'Centri Estetici','cosmetics':'Profumerie','hardware':'Ferramenta',
-  'furniture':'Arredamento','florist':'Fioristi','electronics':'Elettronica',
-  'computer':'Negozi di Computer','mobile_phone':'Negozi di Telefonia','books':'Librerie',
-  'stationery':'Cartolerie','newsagent':'Edicole','optician':'Ottici',
-  'sports':'Negozi di Sport','bicycle':'Negozi di Biciclette','pet':'Negozi per Animali',
-  'car':'Concessionarie Auto','car_repair':'Autofficine','tobacco':'Tabaccherie',
-  'alcohol':'Enoteche','seafood':'Pescherie','cheese':'Formaggerie','deli':'Gastronomie',
-  'gift':'Regali','toys':'Giocattoli','antiques':'Antiquari','second_hand':'Usato',
-  'fabric':'Tessuti','tailor':'Sarti','watches':'Orologerie','bag':'Pelletterie',
-  'photo':'Fotografia','music':'Negozi di Musica','art':"Gallerie d'Arte",'medical_supply':'Sanitaria',
-  'hotel':'Hotel','guest_house':'B&B','hostel':'Ostelli','motel':'Motel',
-  'apartment':'Appartamenti','camp_site':'Campeggi',
-  'fitness_centre':'Palestre','sports_centre':'Centri Sportivi','swimming_pool':'Piscine','dance':'Scuole di Danza',
-  'lawyer':'Avvocati','accountant':'Commercialisti','architect':'Architetti',
-  'engineer':'Ingegneri','estate_agent':'Agenzie Immobiliari','insurance':'Assicurazioni',
-  'notary':'Notai','travel_agent':'Agenzie di Viaggio','it':'Informatica',
-  'carpenter':'Falegnami','electrician':'Elettricisti','plumber':'Idraulici',
-  'painter':'Imbianchini','shoemaker':'Calzolai','jeweller':'Orefici','printing':'Tipografie',
-  'laboratory':'Laboratori Analisi','physiotherapist':'Fisioterapisti','psychotherapist':'Psicologi',
+const TAG_CATEGORY_MAP = {
+  amenity: {
+    'hairdresser': 'Parrucchieri',
+    'beauty': 'Centri Estetici',
+    'laundry': 'Lavanderie',
+    'dry_cleaning': 'Lavanderie',
+    'parking': 'Parcheggi',
+    'taxi': 'Taxi',
+    'post_office': 'Poste',
+    'atm': 'Bancomat',
+    'nightclub': 'Discoteche',
+    'bar': 'Bar e Caffe',
+    'cafe': 'Bar e Caffe',
+    'restaurant': 'Ristoranti',
+    'fast_food': 'Fast Food',
+    'ice_cream': 'Gelaterie',
+    'fuel': 'Stazioni di Servizio',
+    'car_wash': 'Autolavaggi',
+    'car_rental': 'Autonoleggi',
+    'driving_school': 'Autoscuole',
+    'gym': 'Palestre',
+    'swimming_pool': 'Piscine',
+    'spa': 'Centri Benessere',
+    'charging_station': 'Colonnine Ricarica',
+    'bicycle_parking': 'Parcheggi Biciclette',
+    'bicycle_rental': 'Noleggio Biciclette',
+    'vending_machine': 'Distributori Automatici',
+    'gambling': 'Ricevitorie',
+    'music_school': 'Scuole di Musica',
+    'language_school': 'Scuole di Lingue',
+    'tattoo': 'Tatuatori',
+    'funeral_directors': 'Onoranze Funebri',
+    'marketplace': 'Mercati',
+    'bureau_de_change': 'Cambio Valute',
+  },
+  shop: {
+    'hairdresser': 'Parrucchieri',
+    'beauty': 'Centri Estetici',
+    'bakery': 'Panifici e Pasticcerie',
+    'pastry': 'Pasticcerie',
+    'confectionery': 'Pasticcerie',
+    'butcher': 'Macellerie',
+    'fishmonger': 'Pescherie',
+    'greengrocer': 'Fruttivendoli',
+    'deli': 'Gastronomie',
+    'cheese': 'Formaggerie',
+    'dairy': 'Latterie',
+    'wine': 'Enoteche',
+    'alcohol': 'Enoteche',
+    'beverages': 'Negozi di Bevande',
+    'tea': "Negozi di Te",
+    'coffee': 'Torrefazioni',
+    'chocolate': 'Cioccolaterie',
+    'spices': 'Spezierie',
+    'supermarket': 'Supermercati',
+    'department_store': 'Grandi Magazzini',
+    'convenience': 'Minimarket',
+    'kiosk': 'Edicole',
+    'newsagent': 'Edicole',
+    'books': 'Librerie',
+    'stationery': 'Cartolerie',
+    'toys': 'Giocattoli',
+    'games': 'Videogiochi',
+    'electronics': 'Elettronica',
+    'computer': 'Negozi di Computer',
+    'mobile_phone': 'Negozi di Telefonia',
+    'hifi': 'Hi-Fi',
+    'music': 'Negozi di Musica',
+    'musical_instrument': 'Negozi di Musica',
+    'photo': 'Fotografia',
+    'camera': 'Fotocamere',
+    'clothes': 'Abbigliamento',
+    'shoes': 'Calzature',
+    'bags': 'Pelletterie',
+    'leather': 'Articoli in Pelle',
+    'jewelry': 'Gioiellerie',
+    'watches': 'Orologerie',
+    'optician': 'Ottici',
+    'hearing_aids': 'Apparecchi Acustici',
+    'medical_supply': 'Sanitaria',
+    'cosmetics': 'Profumerie e Cosmetici',
+    'perfumery': 'Profumerie e Cosmetici',
+    'hairdresser_supply': 'Forniture Parrucchieri',
+    'furniture': 'Arredamento',
+    'kitchen': 'Cucine',
+    'bathroom_furnishing': 'Arredo Bagno',
+    'carpet': 'Tappeti',
+    'fabric': 'Tessuti',
+    'hardware': 'Ferramenta',
+    'tools': 'Ferramenta',
+    'paint': 'Colorifici',
+    'tiles': 'Piastrelle',
+    'flooring': 'Pavimenti',
+    'doityourself': 'Hobby e Bricolage',
+    'garden': 'Giardinaggio',
+    'sports': 'Negozi di Sport',
+    'outdoor': 'Outdoor e Camping',
+    'bicycle': 'Biciclette',
+    'car': 'Concessionarie Auto',
+    'car_parts': 'Ricambi Auto',
+    'motorcycle': 'Moto e Scooter',
+    'pet': 'Animali',
+    'agrarian': 'Consorzi Agrari',
+    'gift': 'Articoli da Regalo',
+    'souvenir': 'Articoli da Regalo',
+    'second_hand': 'Usato',
+    'antiques': 'Antiquari',
+    'art': "Gallerie d'Arte",
+    'frame': 'Cornici',
+    'tattoo': 'Tatuatori',
+    'tobacco': 'Tabaccherie',
+    'lottery': 'Ricevitorie',
+    'travel_agency': 'Agenzie di Viaggio',
+    'laundry': 'Lavanderie',
+    'dry_cleaning': 'Lavanderie',
+    'e-cigarette': 'Sigarette Elettroniche',
+    'pyrotechnics': "Fuochi d'Artificio",
+    'weapons': 'Armerie',
+    'hunting': 'Armerie',
+    'fishing': 'Pesca Sportiva',
+    'diving': 'Sub e Diving',
+    'golf': 'Golf',
+    'copyshop': 'Tipografie',
+    'printing': 'Tipografie',
+    'telecommunication': 'Telecomunicazioni',
+    'model': 'Modellismo',
+    'baby_goods': 'Articoli per Bambini',
+    'children': 'Abbigliamento Bambini',
+    'wedding': 'Abiti da Sposa',
+    'massage': 'Massaggi',
+    'variety_store': 'Negozi Vari',
+    'pizza': 'Pizzerie',
+    'bakehouse': 'Panifici e Pasticcerie',
+    'organic': 'Negozi Biologici',
+  },
+  leisure: {
+    'fitness_centre': 'Palestre',
+    'sports_centre': 'Centri Sportivi',
+    'swimming_pool': 'Piscine',
+    'golf_course': 'Golf',
+    'dance': 'Scuole di Danza',
+    'yoga': 'Centri Yoga',
+    'sauna': 'Saune',
+    'spa': 'Centri Benessere',
+    'bowling_alley': 'Bowling',
+    'marina': 'Porti e Marine',
+    'stadium': 'Stadi',
+    'amusement_arcade': 'Sale Giochi',
+  },
+  tourism: {
+    'hotel': 'Hotel',
+    'motel': 'Motel',
+    'hostel': 'Ostelli',
+    'guest_house': 'Bed & Breakfast',
+    'chalet': 'Chalet',
+    'camp_site': 'Campeggi',
+    'caravan_site': 'Aree Camper',
+    'museum': 'Musei',
+    'gallery': "Gallerie d'Arte",
+    'information': 'Informazioni Turistiche',
+  },
+  healthcare: {
+    'audiologist': 'Apparecchi Acustici',
+    'optometrist': 'Optometristi',
+    'podiatrist': 'Podologi',
+    'speech_therapist': 'Logopedisti',
+    'alternative': 'Medicine Alternative',
+    'midwife': 'Ostetriche',
+    'physiotherapist': 'Fisioterapisti',
+    'psychotherapist': 'Psicologi',
+  },
 };
+
+// Build Overpass query per una bounding box
+function buildQuery(bboxStr) {
+  const lines = [];
+  for (const [tagKey, tagValues] of Object.entries(TAG_CATEGORY_MAP)) {
+    const vals = Object.keys(tagValues).join('|');
+    lines.push(`  node["${tagKey}"~"^(${vals})$"](${bboxStr});`);
+    lines.push(`  way["${tagKey}"~"^(${vals})$"](${bboxStr});`);
+  }
+  return `[out:json][timeout:200];\n(\n${lines.join('\n')}\n);\nout center tags;`;
+}
 
 let categoryCache = {};
 let totalImported = 0;
-let startTime = Date.now();
+const startTime = Date.now();
 
 async function loadCategories() {
   const { data } = await supabase.from('business_categories').select('id, name');
@@ -157,22 +301,25 @@ async function loadCategories() {
   console.log(`Caricate ${Object.keys(categoryCache).length} categorie`);
 }
 
-function getCategory(tags) {
-  for (const f of ['amenity','shop','tourism','leisure','office','craft','healthcare']) {
-    const v = tags[f];
-    if (v && OSM_CATEGORY_MAP[v] && categoryCache[OSM_CATEGORY_MAP[v]])
-      return categoryCache[OSM_CATEGORY_MAP[v]];
+function extractCategoryId(tags) {
+  for (const [tagKey, tagValues] of Object.entries(TAG_CATEGORY_MAP)) {
+    const val = tags[tagKey];
+    if (val && tagValues[val]) {
+      const id = categoryCache[tagValues[val]];
+      if (id) return id;
+    }
   }
   return null;
 }
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 function fetchOverpass(query) {
   return new Promise((resolve, reject) => {
+    const body = `data=${encodeURIComponent(query)}`;
     const opts = {
       hostname: 'overpass-api.de', path: '/api/interpreter', method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(query), 'User-Agent': 'ItalianBizDir/2.2' }
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body), 'User-Agent': 'ItalianBizDir/4.0' }
     };
     const req = https.request(opts, res => {
       let data = '';
@@ -184,24 +331,26 @@ function fetchOverpass(query) {
       });
     });
     req.on('error', reject);
-    req.setTimeout(150000, () => { req.destroy(); reject(new Error('Timeout')); });
-    req.write(query); req.end();
+    req.setTimeout(180000, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.write(body); req.end();
   });
 }
 
 async function importCity(city, idx, total) {
   process.stdout.write(`[${idx}/${total}] ${city.name} (${city.region})... `);
   const bboxStr = `${city.bbox[0]},${city.bbox[1]},${city.bbox[2]},${city.bbox[3]}`;
+  const query = buildQuery(bboxStr);
 
   let elements = [];
   for (let retry = 0; retry < 3; retry++) {
     try {
-      const data = await fetchOverpass(BATCH_QUERY_TEMPLATE(bboxStr));
+      const data = await fetchOverpass(query);
       elements = data.elements || [];
       break;
     } catch (err) {
-      if (err.message === 'RATE_LIMIT') { console.log('\n   Rate limit - attendo 90s...'); await sleep(90000); retry--; continue; }
-      if (retry < 2) await sleep((retry + 1) * 20000);
+      if (err.message === 'RATE_LIMIT') { process.stdout.write('\n   Rate limit 90s...'); await sleep(90000); retry--; continue; }
+      if (retry < 2) { await sleep((retry + 1) * 20000); }
+      else { console.log('ERRORE:', err.message); return 0; }
     }
   }
 
@@ -209,57 +358,74 @@ async function importCity(city, idx, total) {
 
   const records = [];
   const seen = new Set();
+
   for (const el of elements) {
     const tags = el.tags || {};
     if (!tags.name) continue;
-    const categoryId = getCategory(tags);
+    const categoryId = extractCategoryId(tags);
     if (!categoryId) continue;
     const lat = el.lat || el.center?.lat;
     const lon = el.lon || el.center?.lon;
     if (!lat || !lon) continue;
-    const cityName = (tags['addr:city'] || tags['addr:town'] || city.name).substring(0, 100);
+
+    const cityName = (tags['addr:city'] || tags['addr:town'] || tags['addr:village'] || city.name).substring(0, 100);
     const street = tags['addr:street'] || '';
     const houseNum = tags['addr:housenumber'] || '';
     const streetFull = street ? (houseNum ? `${street}, ${houseNum}` : street) : null;
-    const key = `${tags.name}|${cityName}|${streetFull || ''}|${lat.toFixed(4)}`;
+    const key = `${tags.name}|${cityName}|${lat.toFixed(4)}|${lon.toFixed(4)}`;
     if (seen.has(key)) continue;
     seen.add(key);
+
     records.push({
-      name: tags.name.substring(0, 200), category_id: categoryId,
-      street: streetFull, city: cityName, province: city.province, region: city.region,
-      postal_code: tags['addr:postcode'] || null, country: 'Italia',
-      latitude: lat, longitude: lon,
+      name: tags.name.substring(0, 200),
+      category_id: categoryId,
+      street: streetFull,
+      city: cityName,
+      province: city.province,
+      region: city.region,
+      postal_code: tags['addr:postcode'] || null,
+      country: 'Italia',
+      latitude: lat,
+      longitude: lon,
       phone: (tags.phone || tags['contact:phone'] || '').replace(/\s+/g, '').substring(0, 50) || null,
       email: (tags.email || tags['contact:email'] || '').substring(0, 200) || null,
       website: (tags.website || tags['contact:website'] || '').substring(0, 500) || null,
       business_hours: tags.opening_hours || null,
-      is_claimed: false, approval_status: 'approved',
+      is_claimed: false,
+      approval_status: 'approved',
     });
   }
 
-  if (!records.length) { console.log('0 cat valide'); return 0; }
+  if (!records.length) { console.log('0 categorie valide'); return 0; }
 
   let inserted = 0;
   for (let i = 0; i < records.length; i += 200) {
     const { error } = await supabase.from('unclaimed_business_locations').insert(records.slice(i, i + 200));
     if (!error) inserted += Math.min(200, records.length - i);
+    else console.error(`\n  Insert error:`, error.message);
   }
 
   totalImported += inserted;
   const mins = ((Date.now() - startTime) / 60000).toFixed(1);
-  console.log(`${inserted} inseriti | Totale sessione: ${totalImported.toLocaleString()} (${mins}min)`);
+  console.log(`${inserted} | Totale: ${totalImported.toLocaleString()} (${mins}min)`);
   return inserted;
 }
 
 async function main() {
-  console.log(`\n=== IMPORTAZIONE REGIONI MANCANTI (${MISSING_CITIES.length} citta') ===\n`);
+  console.log(`\n=== IMPORTAZIONE MASSIVA TUTTE CATEGORIE (${CITIES.length} città) ===\n`);
   await loadCategories();
-  for (let i = 0; i < MISSING_CITIES.length; i++) {
-    await importCity(MISSING_CITIES[i], i + 1, MISSING_CITIES.length);
-    await sleep(4000);
+
+  for (let i = 0; i < CITIES.length; i++) {
+    await importCity(CITIES[i], i + 1, CITIES.length);
+    await sleep(6000);
+    if ((i + 1) % 15 === 0) {
+      const mins = ((Date.now() - startTime) / 60000).toFixed(0);
+      console.log(`\n--- Checkpoint ${i+1}/${CITIES.length}: ${totalImported.toLocaleString()} in ${mins}min ---\n`);
+    }
   }
-  const mins = ((Date.now() - startTime) / 60000).toFixed(0);
-  console.log(`\n=== FINE: ${totalImported.toLocaleString()} attivita' aggiunte in ${mins} minuti ===\n`);
+
+  const { count } = await supabase.from('unclaimed_business_locations').select('*', { count: 'exact', head: true });
+  console.log(`\n=== COMPLETATO === Sessione: ${totalImported.toLocaleString()} | DB totale: ${count?.toLocaleString()}`);
 }
 
 main().catch(console.error);
