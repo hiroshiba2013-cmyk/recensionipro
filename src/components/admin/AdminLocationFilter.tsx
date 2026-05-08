@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
-import { ITALIAN_REGIONS, PROVINCES_BY_REGION, ITALIAN_PROVINCES } from '../../lib/cities';
+import { ITALIAN_REGIONS, PROVINCES_BY_REGION, ITALIAN_PROVINCES, PROVINCE_TO_CODE } from '../../lib/cities';
 
 export interface LocationFilterState {
   region: string;
-  province: string;
+  province: string; // display name, e.g. "Milano"
+  provinceCode: string; // short code, e.g. "MI"
   city: string;
 }
 
@@ -22,15 +23,21 @@ export function AdminLocationFilter({ value, onChange, accentColor = 'blue' }: P
     ? (PROVINCES_BY_REGION[value.region] ?? ITALIAN_PROVINCES)
     : ITALIAN_PROVINCES;
 
-  const loadCities = useCallback(async (prov: string) => {
-    if (!prov) { setCities([]); return; }
+  const loadCities = useCallback(async (provCode: string) => {
+    if (!provCode) { setCities([]); return; }
     setLoadingCities(true);
-    const { data } = await supabase.rpc('get_comuni_by_provincia', { p_provincia: prov });
-    setCities(data ? data.map((r: { comune: string }) => r.comune) : []);
+    // Query distinct cities from DB using the province code
+    const { data } = await supabase
+      .from('unclaimed_business_locations')
+      .select('city')
+      .eq('province', provCode)
+      .order('city');
+    const unique = [...new Set((data || []).map((r: { city: string }) => r.city).filter(Boolean))].sort();
+    setCities(unique);
     setLoadingCities(false);
   }, []);
 
-  useEffect(() => { loadCities(value.province); }, [value.province, loadCities]);
+  useEffect(() => { loadCities(value.provinceCode); }, [value.provinceCode, loadCities]);
 
   const ring = `focus:ring-${accentColor}-500`;
 
@@ -41,7 +48,7 @@ export function AdminLocationFilter({ value, onChange, accentColor = 'blue' }: P
         <label className="block text-sm font-medium text-gray-700 mb-1">Regione</label>
         <select
           value={value.region}
-          onChange={e => onChange({ region: e.target.value, province: '', city: '' })}
+          onChange={e => onChange({ region: e.target.value, province: '', provinceCode: '', city: '' })}
           className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 ${ring} focus:border-transparent bg-white`}
         >
           <option value="">Tutte le regioni</option>
@@ -54,7 +61,11 @@ export function AdminLocationFilter({ value, onChange, accentColor = 'blue' }: P
         <label className="block text-sm font-medium text-gray-700 mb-1">Provincia</label>
         <select
           value={value.province}
-          onChange={e => onChange({ ...value, province: e.target.value, city: '' })}
+          onChange={e => {
+            const name = e.target.value;
+            const code = PROVINCE_TO_CODE[name] || '';
+            onChange({ ...value, province: name, provinceCode: code, city: '' });
+          }}
           disabled={!value.region}
           className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 ${ring} focus:border-transparent bg-white disabled:bg-gray-100 disabled:cursor-not-allowed`}
         >

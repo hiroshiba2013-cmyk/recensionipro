@@ -109,10 +109,11 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
   const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 50;
 
-  // Advanced filters
+  // Advanced filters — province is display name, provinceCode is the 2-letter code stored in DB
   const [filters, setFilters] = useState({
     city: '',
     province: '',
+    provinceCode: '',
     region: '',
     category: '',
     verified: 'all' as 'all' | 'verified' | 'unverified' | 'rejected'
@@ -266,11 +267,11 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
         if (filters.city) {
           query = query.ilike('city', `%${filters.city}%`);
         }
-        if (filters.province) {
-          query = query.ilike('province', `%${filters.province}%`);
+        if (filters.provinceCode) {
+          query = query.eq('province', filters.provinceCode);
         }
         if (filters.region) {
-          query = query.ilike('region', `%${filters.region}%`);
+          query = query.eq('region', filters.region);
         }
         if (filters.verified === 'verified') {
           query = query.eq('approval_status', 'approved');
@@ -342,6 +343,12 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
         }
 
         // Apply advanced filters
+        if (filters.city) {
+          query = query.ilike('billing_city', `%${filters.city}%`);
+        }
+        if (filters.provinceCode) {
+          query = query.ilike('billing_province', `%${filters.provinceCode}%`);
+        }
         if (filters.verified === 'verified') {
           query = query.eq('verified', true);
         } else if (filters.verified === 'unverified') {
@@ -758,8 +765,8 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           {/* Advanced Filters */}
           <div className="space-y-3">
             <AdminLocationFilter
-              value={{ region: filters.region, province: filters.province, city: filters.city }}
-              onChange={loc => setFilters({ ...filters, region: loc.region, province: loc.province, city: loc.city })}
+              value={{ region: filters.region, province: filters.province, provinceCode: filters.provinceCode, city: filters.city }}
+              onChange={loc => setFilters({ ...filters, region: loc.region, province: loc.province, provinceCode: loc.provinceCode, city: loc.city })}
             />
             {activeTab === 'user_added' && (
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -785,9 +792,9 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
             <div className="text-gray-600">
               Visualizzazione {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, totalCount)} di {totalCount.toLocaleString()} attività
             </div>
-            {(filters.city || filters.province || filters.region || filters.verified !== 'all') && (
+            {(filters.city || filters.province || filters.region || filters.provinceCode || filters.verified !== 'all') && (
               <button
-                onClick={() => setFilters({ city: '', province: '', region: '', category: '', verified: 'all' })}
+                onClick={() => setFilters({ city: '', province: '', provinceCode: '', region: '', category: '', verified: 'all' })}
                 className="text-blue-600 hover:text-blue-700 font-medium"
               >
                 Ripristina filtri

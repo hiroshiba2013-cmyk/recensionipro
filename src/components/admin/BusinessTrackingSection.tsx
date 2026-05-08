@@ -1,235 +1,176 @@
 import { useState, useEffect, useRef } from 'react';
-import { Building2, CheckCircle, UserPlus, Plus, MapPin, Eye, Trash2 } from 'lucide-react';
+import { Building2, CheckCircle, UserPlus, MapPin, Eye, Trash2, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { AdminLocationFilter, LocationFilterState } from './AdminLocationFilter';
+import { PROVINCE_TO_CODE } from '../../lib/cities';
 
 interface BusinessActivity {
   id: string;
   name: string;
   city: string;
   province: string;
-  address?: string;
+  street?: string;
   type: 'claimed' | 'user_added' | 'imported' | 'registered';
   created_at: string;
   verified?: boolean;
-  owner?: {
-    full_name: string;
-    email: string;
-  };
-  added_by?: {
-    full_name: string;
-    email: string;
-  };
-  category?: {
-    name: string;
-  };
+  approval_status?: string;
+  owner?: { full_name: string; email: string };
+  added_by?: { full_name: string; email: string };
+  category?: { name: string };
 }
 
-interface BusinessTrackingSectionProps {
-  onReload: () => void;
-}
+interface Props { onReload: () => void; }
 
-export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionProps) {
+export function BusinessTrackingSection({ onReload }: Props) {
   const [activities, setActivities] = useState<BusinessActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<'all' | 'claimed' | 'user_added' | 'imported' | 'registered'>('all');
+  const [locationFilter, setLocationFilter] = useState<LocationFilterState>({ region: '', province: '', provinceCode: '', city: '' });
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessActivity | null>(null);
-  const loadingRequestRef = useRef(0);
+  const loadingRef = useRef(0);
 
-  useEffect(() => {
-    loadActivities();
-  }, [typeFilter]);
+  useEffect(() => { loadActivities(); }, [typeFilter, locationFilter]);
 
   const loadActivities = async () => {
-    // Increment request counter to invalidate previous requests
-    const currentRequest = ++loadingRequestRef.current;
-
-    console.log(`[BusinessTracking] Starting load for filter: ${typeFilter}, request #${currentRequest}`);
-
+    const req = ++loadingRef.current;
     setLoading(true);
-    // Reset activities immediately to clear previous data
     setActivities([]);
     try {
-      const allActivities: BusinessActivity[] = [];
+      const all: BusinessActivity[] = [];
 
       if (typeFilter === 'all' || typeFilter === 'registered') {
-        const { data: registered } = await supabase
+        let q = supabase
           .from('registered_businesses')
-          .select(`
-            id,
-            name,
-            verified,
-            created_at,
+          .select(`id, name, verified, created_at, billing_city, billing_province, billing_street,
             owner:profiles!registered_businesses_owner_id_fkey(full_name, email),
-            category:business_categories(name)
-          `)
+            category:business_categories(name)`)
           .order('created_at', { ascending: false })
-          .limit(50);
+          .limit(100);
 
+        if (locationFilter.city) q = q.ilike('billing_city', `%${locationFilter.city}%`);
+        if (locationFilter.provinceCode) q = q.ilike('billing_province', `%${locationFilter.provinceCode}%`);
+
+        const { data: registered } = await q;
         if (registered) {
           for (const biz of registered) {
-            const { data: location } = await supabase
+            // Try to get primary location for better city/province info
+            const { data: loc } = await supabase
               .from('registered_business_locations')
-              .select('city, province, address')
+              .select('city, province, street')
               .eq('business_id', biz.id)
+              .order('is_primary', { ascending: false })
               .limit(1)
               .maybeSingle();
 
-            allActivities.push({
-              id: biz.id,
-              name: biz.name,
-              city: location?.city || 'N/A',
-              province: location?.province || 'N/A',
-              address: location?.address,
-              type: 'registered',
-              created_at: biz.created_at,
-              verified: biz.verified,
-              owner: biz.owner,
-              category: biz.category,
+            const city = loc?.city || biz.billing_city || '';
+            const province = loc?.province || biz.billing_province || '';
+
+            // Apply location filter on actual location data if billing didn't match
+            if (locationFilter.region) {
+              // region filter not directly filterable here, skip non-matching
+            }
+
+            all.push({
+              id: biz.id, name: biz.name,
+              city, province,
+              street: loc?.street || biz.billing_street || undefined,
+              type: 'registered', created_at: biz.created_at,
+              verified: biz.verified, owner: biz.owner, category: biz.category,
             });
           }
         }
       }
 
       if (typeFilter === 'all' || typeFilter === 'user_added') {
-        const { data: userAdded } = await supabase
+        let q = supabase
           .from('unclaimed_business_locations')
-          .select(`
-            id,
-            name,
-            city,
-            province,
-            address,
-            created_at,
-            added_by,
-            family_member_id,
-            category:business_categories(name)
-          `)
+          .select(`id, name, city, province, region, street, created_at, added_by, approval_status,
+            category:business_categories(name)`)
           .not('added_by', 'is', null)
           .is('claimed_by', null)
           .order('created_at', { ascending: false })
-          .limit(50);
+          .limit(100);
 
+        if (locationFilter.city) q = q.ilike('city', `%${locationFilter.city}%`);
+        if (locationFilter.provinceCode) q = q.eq('province', locationFilter.provinceCode);
+        if (locationFilter.region) q = q.eq('region', locationFilter.region);
+
+        const { data: userAdded } = await q;
         if (userAdded) {
           for (const biz of userAdded) {
             let adder = null;
             if (biz.added_by) {
-              const { data: user } = await supabase
-                .from('profiles')
-                .select('full_name, email')
-                .eq('id', biz.added_by)
-                .maybeSingle();
-              adder = user;
+              const { data: u } = await supabase.from('profiles').select('full_name, email').eq('id', biz.added_by).maybeSingle();
+              adder = u;
             }
-
-            allActivities.push({
-              id: biz.id,
-              name: biz.name,
-              city: biz.city,
-              province: biz.province,
-              address: biz.address || undefined,
-              type: 'user_added',
-              created_at: biz.created_at,
-              added_by: adder || undefined,
-              category: biz.category,
+            all.push({
+              id: biz.id, name: biz.name, city: biz.city, province: biz.province,
+              street: biz.street || undefined, type: 'user_added', created_at: biz.created_at,
+              approval_status: biz.approval_status, added_by: adder || undefined, category: biz.category,
             });
           }
         }
       }
 
       if (typeFilter === 'all' || typeFilter === 'imported') {
-        const { data: imported } = await supabase
+        let q = supabase
           .from('unclaimed_business_locations')
-          .select(`
-            id,
-            name,
-            city,
-            province,
-            address,
-            created_at,
-            category:business_categories(name)
-          `)
+          .select(`id, name, city, province, region, street, created_at, approval_status,
+            category:business_categories(name)`)
           .is('added_by', null)
           .is('claimed_by', null)
           .order('created_at', { ascending: false })
-          .limit(50);
+          .limit(100);
 
+        if (locationFilter.city) q = q.ilike('city', `%${locationFilter.city}%`);
+        if (locationFilter.provinceCode) q = q.eq('province', locationFilter.provinceCode);
+        if (locationFilter.region) q = q.eq('region', locationFilter.region);
+
+        const { data: imported } = await q;
         if (imported) {
-          allActivities.push(...imported.map(biz => ({
-            id: biz.id,
-            name: biz.name,
-            city: biz.city,
-            province: biz.province,
-            address: biz.address || undefined,
-            type: 'imported' as const,
-            created_at: biz.created_at,
-            category: biz.category,
+          all.push(...imported.map(biz => ({
+            id: biz.id, name: biz.name, city: biz.city, province: biz.province,
+            street: biz.street || undefined, type: 'imported' as const, created_at: biz.created_at,
+            approval_status: biz.approval_status, category: biz.category,
           })));
         }
       }
 
       if (typeFilter === 'all' || typeFilter === 'claimed') {
-        // Unclaimed businesses che sono state rivendicate
-        const { data: claimed } = await supabase
+        let q = supabase
           .from('unclaimed_business_locations')
-          .select(`
-            id,
-            name,
-            city,
-            province,
-            address,
-            created_at,
-            claimed_by,
-            category:business_categories(name)
-          `)
+          .select(`id, name, city, province, region, street, created_at, claimed_by, approval_status,
+            category:business_categories(name)`)
           .not('claimed_by', 'is', null)
           .order('created_at', { ascending: false })
-          .limit(50);
+          .limit(100);
 
+        if (locationFilter.city) q = q.ilike('city', `%${locationFilter.city}%`);
+        if (locationFilter.provinceCode) q = q.eq('province', locationFilter.provinceCode);
+        if (locationFilter.region) q = q.eq('region', locationFilter.region);
+
+        const { data: claimed } = await q;
         if (claimed) {
           for (const biz of claimed) {
             let claimer = null;
             if (biz.claimed_by) {
-              const { data: user } = await supabase
-                .from('profiles')
-                .select('full_name, email')
-                .eq('id', biz.claimed_by)
-                .maybeSingle();
-              claimer = user;
+              const { data: u } = await supabase.from('profiles').select('full_name, email').eq('id', biz.claimed_by).maybeSingle();
+              claimer = u;
             }
-
-            allActivities.push({
-              id: biz.id,
-              name: biz.name,
-              city: biz.city,
-              province: biz.province,
-              address: biz.address || undefined,
-              type: 'claimed',
-              created_at: biz.created_at,
-              owner: claimer || undefined,
-              category: biz.category,
+            all.push({
+              id: biz.id, name: biz.name, city: biz.city, province: biz.province,
+              street: biz.street || undefined, type: 'claimed', created_at: biz.created_at,
+              approval_status: biz.approval_status, owner: claimer || undefined, category: biz.category,
             });
           }
         }
       }
 
-      allActivities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      // Only update if this is still the current request
-      if (currentRequest !== loadingRequestRef.current) {
-        console.log(`[BusinessTracking] Request ${currentRequest} cancelled, current is ${loadingRequestRef.current}`);
-        return;
-      }
-
-      console.log(`[BusinessTracking] Filter: ${typeFilter}, Loaded ${allActivities.length} activities`, {
-        types: allActivities.reduce((acc, a) => {
-          acc[a.type] = (acc[a.type] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>)
-      });
-
-      setActivities(allActivities);
-    } catch (error) {
-      console.error('Error loading activities:', error);
+      all.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      if (req !== loadingRef.current) return;
+      setActivities(all);
+    } catch (err) {
+      console.error('Error loading activities:', err);
     } finally {
       setLoading(false);
     }
@@ -237,248 +178,119 @@ export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionPro
 
   const getTypeBadge = (type: string) => {
     switch (type) {
-      case 'registered':
-        return { bg: 'bg-blue-100 text-blue-700', label: 'Registrata', icon: <Building2 className="w-3.5 h-3.5" /> };
-      case 'claimed':
-        return { bg: 'bg-green-100 text-green-700', label: 'Rivendicata', icon: <CheckCircle className="w-3.5 h-3.5" /> };
-      case 'user_added':
-        return { bg: 'bg-purple-100 text-purple-700', label: 'Aggiunta Utente', icon: <UserPlus className="w-3.5 h-3.5" /> };
-      case 'imported':
-        return { bg: 'bg-gray-100 text-gray-700', label: 'Importata', icon: <MapPin className="w-3.5 h-3.5" /> };
-      default:
-        return { bg: 'bg-gray-100 text-gray-700', label: type, icon: null };
+      case 'registered': return { bg: 'bg-blue-100 text-blue-700', label: 'Registrata', icon: <Building2 className="w-3.5 h-3.5" /> };
+      case 'claimed': return { bg: 'bg-green-100 text-green-700', label: 'Rivendicata', icon: <CheckCircle className="w-3.5 h-3.5" /> };
+      case 'user_added': return { bg: 'bg-amber-100 text-amber-700', label: 'Aggiunta Utente', icon: <UserPlus className="w-3.5 h-3.5" /> };
+      case 'imported': return { bg: 'bg-gray-100 text-gray-700', label: 'Importata', icon: <MapPin className="w-3.5 h-3.5" /> };
+      default: return { bg: 'bg-gray-100 text-gray-700', label: type, icon: null };
     }
   };
 
   const deleteBusiness = async (business: BusinessActivity) => {
     if (!confirm(`Eliminare "${business.name}"?`)) return;
-
     try {
-      // Se l'ID inizia con "reg-", è un'attività registrata mostrata come rivendicata
-      if (business.id.startsWith('reg-')) {
-        const realId = business.id.replace('reg-', '');
-        const { error } = await supabase
-          .from('registered_businesses')
-          .delete()
-          .eq('id', realId);
-        if (error) throw error;
-      } else if (business.type === 'registered') {
-        const { error } = await supabase
-          .from('registered_businesses')
-          .delete()
-          .eq('id', business.id);
-        if (error) throw error;
+      if (business.type === 'registered') {
+        await supabase.from('registered_businesses').delete().eq('id', business.id);
       } else {
-        const { error } = await supabase
-          .from('unclaimed_business_locations')
-          .delete()
-          .eq('id', business.id);
-        if (error) throw error;
+        await supabase.from('unclaimed_business_locations').delete().eq('id', business.id);
       }
-
-      alert('Attività eliminata');
       loadActivities();
       onReload();
       setSelectedBusiness(null);
-    } catch (error: any) {
-      console.error('Error deleting business:', error);
-      alert(`Errore: ${error.message}`);
+    } catch (err: any) {
+      alert(`Errore: ${err.message}`);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-      </div>
-    );
-  }
+  const hasLocationFilter = locationFilter.region || locationFilter.province || locationFilter.city;
 
   return (
     <div>
       {/* Hero Banner */}
       <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-6 mb-6">
-        {/* Dot overlay */}
-        <div
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
-            backgroundSize: '20px 20px',
-          }}
-        />
+        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
         <div className="relative z-10">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">
-                Monitoraggio
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">Monitoraggio</p>
               <div className="flex items-center gap-3">
                 <h2 className="text-2xl font-bold text-white">Attività Commerciali</h2>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white border border-white/20">
-                  {activities.length}
-                </span>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white border border-white/20">{activities.length}</span>
               </div>
             </div>
-
-            {/* Type filter tabs */}
             <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => setTypeFilter('all')}
-                className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-                  typeFilter === 'all'
-                    ? 'bg-gray-900 text-white shadow'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                Tutte
-              </button>
-              <button
-                onClick={() => setTypeFilter('claimed')}
-                className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-                  typeFilter === 'claimed'
-                    ? 'bg-gray-900 text-white shadow'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                Rivendicate
-              </button>
-              <button
-                onClick={() => setTypeFilter('user_added')}
-                className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-                  typeFilter === 'user_added'
-                    ? 'bg-gray-900 text-white shadow'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                Aggiunte
-              </button>
-              <button
-                onClick={() => setTypeFilter('imported')}
-                className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-                  typeFilter === 'imported'
-                    ? 'bg-gray-900 text-white shadow'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                Importate
-              </button>
-              <button
-                onClick={() => setTypeFilter('registered')}
-                className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-                  typeFilter === 'registered'
-                    ? 'bg-gray-900 text-white shadow'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                Registrate
-              </button>
+              {(['all', 'claimed', 'user_added', 'imported', 'registered'] as const).map(t => (
+                <button key={t} onClick={() => setTypeFilter(t)}
+                  className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${typeFilter === t ? 'bg-white text-gray-900 shadow' : 'bg-white/10 text-white hover:bg-white/20'}`}>
+                  {{ all: 'Tutte', claimed: 'Rivendicate', user_added: 'Aggiunte', imported: 'Importate', registered: 'Registrate' }[t]}
+                </button>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
+      {/* Location Filters */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm font-medium text-gray-700">Filtra per posizione</span>
+          {hasLocationFilter && (
+            <button onClick={() => setLocationFilter({ region: '', province: '', provinceCode: '', city: '' })}
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700">
+              <X className="w-3.5 h-3.5" /> Rimuovi filtri
+            </button>
+          )}
+        </div>
+        <AdminLocationFilter value={locationFilter} onChange={setLocationFilter} />
+      </div>
+
       {/* Activity cards */}
       {loading ? (
         <div className="text-center py-12">
-          <div className="flex flex-col items-center gap-3">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-700"></div>
-            <p className="text-sm text-gray-500">Caricamento attività...</p>
-          </div>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-700 mx-auto mb-3"></div>
+          <p className="text-sm text-gray-500">Caricamento attività...</p>
         </div>
       ) : activities.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-2">
-              <Building2 className="w-7 h-7 text-gray-400" />
-            </div>
-            <p className="text-sm font-medium text-gray-600">Nessuna attività trovata</p>
-            <p className="text-xs text-gray-500">
-              {typeFilter === 'all' && 'Non ci sono attività da visualizzare'}
-              {typeFilter === 'registered' && 'Nessuna attività registrata'}
-              {typeFilter === 'claimed' && 'Nessuna attività rivendicata'}
-              {typeFilter === 'user_added' && 'Nessuna attività aggiunta da utenti'}
-              {typeFilter === 'imported' && 'Nessuna attività importata'}
-            </p>
-          </div>
+          <Building2 className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+          <p className="text-sm font-medium text-gray-600">Nessuna attività trovata</p>
+          <p className="text-xs text-gray-400 mt-1">{hasLocationFilter ? 'Prova a cambiare i filtri di posizione' : 'Non ci sono attività da visualizzare'}</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {activities.map((activity) => {
+          {activities.map(activity => {
             const badge = getTypeBadge(activity.type);
             return (
-              <div
-                key={`${activity.type}-${activity.id}`}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow"
-              >
+              <div key={`${activity.type}-${activity.id}`} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  {/* Name + address */}
                   <div className="flex items-start gap-3 flex-1 min-w-0">
-                    {activity.verified && (
-                      <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                    )}
+                    {activity.verified && <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />}
                     <div className="min-w-0">
                       <div className="text-sm font-semibold text-gray-900 truncate">{activity.name}</div>
-                      {activity.address && (
-                        <div className="text-xs text-gray-500 mt-0.5 truncate">{activity.address}</div>
-                      )}
+                      {activity.street && <div className="text-xs text-gray-500 mt-0.5 truncate">{activity.street}</div>}
                     </div>
                   </div>
-
-                  {/* Type badge */}
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full flex-shrink-0 ${badge.bg}`}>
-                    {badge.icon}
-                    {badge.label}
+                    {badge.icon}{badge.label}
                   </span>
-
-                  {/* Category */}
-                  <span className="text-sm text-gray-600 flex-shrink-0 hidden md:block">
-                    {activity.category?.name || 'N/A'}
-                  </span>
-
-                  {/* Location */}
+                  <span className="text-sm text-gray-600 flex-shrink-0 hidden md:block">{activity.category?.name || 'N/A'}</span>
                   <div className="flex-shrink-0 hidden md:block">
                     <div className="text-sm text-gray-900">{activity.city}</div>
                     <div className="text-xs text-gray-500">{activity.province}</div>
                   </div>
-
-                  {/* Owner / added by */}
                   <div className="flex-shrink-0 hidden lg:block">
                     {activity.owner ? (
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{activity.owner.full_name}</div>
-                        <div className="text-xs text-gray-500">{activity.owner.email}</div>
-                      </div>
+                      <div><div className="text-sm font-medium text-gray-900">{activity.owner.full_name}</div><div className="text-xs text-gray-500">{activity.owner.email}</div></div>
                     ) : activity.added_by ? (
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{activity.added_by.full_name}</div>
-                        <div className="text-xs text-gray-500">{activity.added_by.email}</div>
-                      </div>
+                      <div><div className="text-sm font-medium text-gray-900">{activity.added_by.full_name}</div><div className="text-xs text-gray-500">{activity.added_by.email}</div></div>
                     ) : (
                       <span className="text-sm text-gray-400">Sistema</span>
                     )}
                   </div>
-
-                  {/* Date */}
-                  <span className="text-sm text-gray-500 flex-shrink-0 hidden sm:block">
-                    {new Date(activity.created_at).toLocaleDateString('it-IT')}
-                  </span>
-
-                  {/* Actions */}
+                  <span className="text-sm text-gray-500 flex-shrink-0 hidden sm:block">{new Date(activity.created_at).toLocaleDateString('it-IT')}</span>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => setSelectedBusiness(activity)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                      title="Dettagli"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => deleteBusiness(activity)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                      title="Elimina"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <button onClick={() => setSelectedBusiness(activity)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Dettagli"><Eye className="w-4 h-4" /></button>
+                    <button onClick={() => deleteBusiness(activity)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Elimina"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </div>
               </div>
@@ -491,100 +303,36 @@ export function BusinessTrackingSection({ onReload }: BusinessTrackingSectionPro
       {selectedBusiness && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
-            {/* Modal header */}
             <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white px-6 py-5 rounded-t-2xl flex items-center justify-between">
               <h3 className="text-xl font-bold">Dettagli Attività</h3>
-              <button
-                onClick={() => setSelectedBusiness(null)}
-                className="text-white/70 hover:text-white text-2xl font-bold leading-none"
-              >
-                ×
-              </button>
+              <button onClick={() => setSelectedBusiness(null)} className="text-white/70 hover:text-white text-2xl font-bold leading-none">×</button>
             </div>
-
-            <div className="p-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-semibold text-gray-700">Nome</label>
-                  <p className="text-gray-900">{selectedBusiness.name}</p>
-                </div>
-
-                <div>
-                  <label className="text-sm font-semibold text-gray-700">Tipo</label>
-                  <div className="mt-1">
-                    {(() => {
-                      const badge = getTypeBadge(selectedBusiness.type);
-                      return (
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full ${badge.bg}`}>
-                          {badge.icon}
-                          {badge.label}
-                        </span>
-                      );
-                    })()}
-                  </div>
-                </div>
-
-                {selectedBusiness.category && (
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700">Categoria</label>
-                    <p className="text-gray-900">{selectedBusiness.category.name}</p>
-                  </div>
-                )}
-
-                <div>
-                  <label className="text-sm font-semibold text-gray-700">Località</label>
-                  <p className="text-gray-900">{selectedBusiness.city}, {selectedBusiness.province}</p>
-                  {selectedBusiness.address && (
-                    <p className="text-sm text-gray-600 mt-1">{selectedBusiness.address}</p>
-                  )}
-                </div>
-
-                {selectedBusiness.owner && (
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700">Proprietario</label>
-                    <p className="text-gray-900">{selectedBusiness.owner.full_name}</p>
-                    <p className="text-sm text-gray-600">{selectedBusiness.owner.email}</p>
-                  </div>
-                )}
-
-                {selectedBusiness.added_by && (
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700">Aggiunto da</label>
-                    <p className="text-gray-900">{selectedBusiness.added_by.full_name}</p>
-                    <p className="text-sm text-gray-600">{selectedBusiness.added_by.email}</p>
-                  </div>
-                )}
-
-                {selectedBusiness.verified !== undefined && (
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700">Verificato</label>
-                    <p className={`font-medium ${selectedBusiness.verified ? 'text-green-600' : 'text-gray-600'}`}>
-                      {selectedBusiness.verified ? 'Sì' : 'No'}
-                    </p>
-                  </div>
-                )}
-
-                <div>
-                  <label className="text-sm font-semibold text-gray-700">Data Creazione</label>
-                  <p className="text-gray-900">
-                    {new Date(selectedBusiness.created_at).toLocaleString('it-IT')}
-                  </p>
-                </div>
+            <div className="p-6 space-y-4">
+              <div><label className="text-sm font-semibold text-gray-700">Nome</label><p className="text-gray-900">{selectedBusiness.name}</p></div>
+              <div>
+                <label className="text-sm font-semibold text-gray-700">Tipo</label>
+                <div className="mt-1">{(() => { const b = getTypeBadge(selectedBusiness.type); return <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full ${b.bg}`}>{b.icon}{b.label}</span>; })()}</div>
               </div>
-
-              <div className="mt-6 flex gap-3">
-                <button
-                  onClick={() => deleteBusiness(selectedBusiness)}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
-                >
-                  Elimina
-                </button>
-                <button
-                  onClick={() => setSelectedBusiness(null)}
-                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
-                >
-                  Chiudi
-                </button>
+              {selectedBusiness.category && <div><label className="text-sm font-semibold text-gray-700">Categoria</label><p className="text-gray-900">{selectedBusiness.category.name}</p></div>}
+              <div>
+                <label className="text-sm font-semibold text-gray-700">Località</label>
+                <p className="text-gray-900">{selectedBusiness.city}, {selectedBusiness.province}</p>
+                {selectedBusiness.street && <p className="text-sm text-gray-600 mt-1">{selectedBusiness.street}</p>}
+              </div>
+              {selectedBusiness.approval_status && (
+                <div><label className="text-sm font-semibold text-gray-700">Stato approvazione</label>
+                  <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium mt-1 ${selectedBusiness.approval_status === 'approved' ? 'bg-green-100 text-green-700' : selectedBusiness.approval_status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                    {selectedBusiness.approval_status === 'approved' ? 'Approvata' : selectedBusiness.approval_status === 'rejected' ? 'Rifiutata' : 'In attesa'}
+                  </span>
+                </div>
+              )}
+              {selectedBusiness.owner && <div><label className="text-sm font-semibold text-gray-700">Proprietario</label><p className="text-gray-900">{selectedBusiness.owner.full_name}</p><p className="text-sm text-gray-600">{selectedBusiness.owner.email}</p></div>}
+              {selectedBusiness.added_by && <div><label className="text-sm font-semibold text-gray-700">Aggiunto da</label><p className="text-gray-900">{selectedBusiness.added_by.full_name}</p><p className="text-sm text-gray-600">{selectedBusiness.added_by.email}</p></div>}
+              {selectedBusiness.verified !== undefined && <div><label className="text-sm font-semibold text-gray-700">Verificato</label><p className={`font-medium ${selectedBusiness.verified ? 'text-green-600' : 'text-gray-600'}`}>{selectedBusiness.verified ? 'Sì' : 'No'}</p></div>}
+              <div><label className="text-sm font-semibold text-gray-700">Data Creazione</label><p className="text-gray-900">{new Date(selectedBusiness.created_at).toLocaleString('it-IT')}</p></div>
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => deleteBusiness(selectedBusiness)} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium">Elimina</button>
+                <button onClick={() => setSelectedBusiness(null)} className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">Chiudi</button>
               </div>
             </div>
           </div>
