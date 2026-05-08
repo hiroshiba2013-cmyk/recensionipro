@@ -149,8 +149,8 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
         if (searchTerm) registeredQ = registeredQ.ilike('name', `%${searchTerm}%`);
 
         const [unclaimedResult, claimedResult] = await Promise.all([
-          unclaimedQ.range(from, Math.floor(to / 2)),
-          registeredQ.range(from, Math.floor(to / 2))
+          unclaimedQ.range(from, to),
+          registeredQ.range(from, to)
         ]);
 
         const unclaimedBusinesses = (unclaimedResult.data || []).map(business => ({
