@@ -954,46 +954,32 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                         </td>
                       )}
                       <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
-                            activeTab === 'self_registered' || activeTab === 'claimed'
-                              ? 'bg-green-100 text-green-800'
-                              : activeTab === 'imported'
-                              ? 'bg-blue-100 text-blue-800'
-                              : business.approval_status === 'approved'
-                              ? 'bg-green-100 text-green-800'
-                              : business.approval_status === 'rejected'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-yellow-100 text-yellow-700'
-                          }`}
-                        >
-                          {activeTab === 'self_registered' || activeTab === 'claimed' ? (
-                            <>
-                              <CheckCircle className="w-3 h-3" />
-                              Verificata
-                            </>
-                          ) : activeTab === 'imported' ? (
-                            <>
-                              <Download className="w-3 h-3" />
-                              Importata
-                            </>
-                          ) : business.approval_status === 'approved' ? (
-                            <>
-                              <ShieldCheck className="w-3 h-3" />
-                              Approvata
-                            </>
-                          ) : business.approval_status === 'rejected' ? (
-                            <>
-                              <XCircle className="w-3 h-3" />
-                              Rifiutata
-                            </>
-                          ) : (
-                            <>
-                              <Clock className="w-3 h-3" />
-                              In Attesa
-                            </>
-                          )}
-                        </span>
+                        {business.source === 'imported' ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                            <Download className="w-3 h-3" />
+                            Importata
+                          </span>
+                        ) : business.source === 'claimed' || business.source === 'self_registered' ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                            <CheckCircle className="w-3 h-3" />
+                            Verificata
+                          </span>
+                        ) : business.approval_status === 'approved' ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                            <ShieldCheck className="w-3 h-3" />
+                            Approvata
+                          </span>
+                        ) : business.approval_status === 'rejected' ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                            <XCircle className="w-3 h-3" />
+                            Rifiutata
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-700">
+                            <Clock className="w-3 h-3" />
+                            In Attesa
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
