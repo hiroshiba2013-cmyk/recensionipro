@@ -175,9 +175,6 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
         ? JSON.parse(claimLocationsWithSourceJson)
         : locationIds.map(id => ({ id, source: 'imported' }));
 
-      const importedIds = locationsWithSource.filter(l => l.source === 'imported').map(l => l.id);
-      const userAddedIds = locationsWithSource.filter(l => l.source === 'user_added').map(l => l.id);
-
       const defaultHours: DayHours = { open: '09:00', close: '18:00', closed: false };
       const defaultBusinessHours = {
         monday: defaultHours,
@@ -191,23 +188,13 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
 
       const allFetched: any[] = [];
 
-      if (importedIds.length > 0) {
-        const { data, error } = await supabase
-          .from('imported_businesses')
-          .select('id, name, description, street, street_number, city, province, postal_code, phone, email, website, business_hours')
-          .in('id', importedIds);
-        if (!error && data) allFetched.push(...data.map(d => ({ ...d, _source: 'imported' })));
-        else console.error('Error loading imported locations:', error);
-      }
-
-      if (userAddedIds.length > 0) {
-        const { data, error } = await supabase
-          .from('user_added_businesses')
-          .select('id, name, description, street, street_number, city, province, postal_code, phone, email, website')
-          .in('id', userAddedIds);
-        if (!error && data) allFetched.push(...data.map(d => ({ ...d, _source: 'user_added' })));
-        else console.error('Error loading user_added locations:', error);
-      }
+      // Carica da unclaimed_business_locations (tutti i tipi: imported + user_added)
+      const { data, error } = await supabase
+        .from('unclaimed_business_locations')
+        .select('id, name, description, street, city, province, postal_code, phone, email, website, business_hours, added_by')
+        .in('id', locationIds);
+      if (!error && data) allFetched.push(...data.map(d => ({ ...d, _source: d.added_by ? 'user_added' : 'imported' })));
+      else console.error('Error loading unclaimed locations:', error);
 
       if (allFetched.length === 0) {
         console.error('No locations found for selected IDs');
@@ -852,57 +839,34 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
           const claimLocationsWithSourceJson = sessionStorage.getItem('claimLocationsWithSource');
           const claimLocationIdsJson = sessionStorage.getItem('claimLocationIds');
 
-          if (claimLocationsWithSourceJson) {
+          if (claimLocationsWithSourceJson || claimLocationIdsJson) {
             try {
-              const locationsWithSource: { id: string; source: string }[] = JSON.parse(claimLocationsWithSourceJson);
+              const locationsWithSource: { id: string; source: string }[] = claimLocationsWithSourceJson
+                ? JSON.parse(claimLocationsWithSourceJson)
+                : JSON.parse(claimLocationIdsJson!).map((id: string) => ({ id, source: 'imported' }));
+
+              const allIds = locationsWithSource.map(l => l.id);
               const claimedAt = new Date().toISOString();
               const businessId = registeredBusiness.id;
 
-              const importedIds = locationsWithSource.filter(l => l.source === 'imported').map(l => l.id);
-              const userAddedIds = locationsWithSource.filter(l => l.source === 'user_added').map(l => l.id);
-
-              if (importedIds.length > 0) {
+              if (allIds.length > 0) {
                 await supabase
-                  .from('imported_businesses')
-                  .update({ is_claimed: true, claimed_at: claimedAt, claimed_by_business_id: businessId })
-                  .in('id', importedIds)
+                  .from('unclaimed_business_locations')
+                  .update({ is_claimed: true, claimed_by: userId, claimed_at: claimedAt })
+                  .in('id', allIds)
                   .eq('is_claimed', false);
-              }
 
-              if (userAddedIds.length > 0) {
-                await supabase
-                  .from('user_added_businesses')
-                  .update({ is_claimed: true, claimed_at: claimedAt, claimed_by_business_id: businessId })
-                  .in('id', userAddedIds)
-                  .eq('is_claimed', false);
-              }
-
-              // Update source_type on registered_business to reflect claim origin
-              if (locationsWithSource.length > 0) {
-                const dominantSource = importedIds.length >= userAddedIds.length ? 'claimed_imported' : 'claimed_user_added';
+                const dominantSource = locationsWithSource.some(l => l.source === 'user_added')
+                  ? 'claimed_user_added' : 'claimed_imported';
                 await supabase
                   .from('registered_businesses')
-                  .update({ source_type: dominantSource, source_id: locationsWithSource[0].id })
+                  .update({ source_type: dominantSource, source_id: allIds[0] })
                   .eq('id', businessId);
               }
 
-              console.log(`Marked ${importedIds.length} imported + ${userAddedIds.length} user_added locations as claimed`);
+              console.log(`Marked ${allIds.length} locations as claimed in unclaimed_business_locations`);
             } catch (e) {
               console.error('Error marking locations as claimed:', e);
-            }
-          } else if (claimLocationIdsJson) {
-            // Fallback: no source info, try imported_businesses
-            try {
-              const locationIds = JSON.parse(claimLocationIdsJson);
-              if (Array.isArray(locationIds) && locationIds.length > 0) {
-                await supabase
-                  .from('imported_businesses')
-                  .update({ is_claimed: true, claimed_at: new Date().toISOString(), claimed_by_business_id: registeredBusiness.id })
-                  .in('id', locationIds)
-                  .eq('is_claimed', false);
-              }
-            } catch (e) {
-              console.error('Error in fallback claim:', e);
             }
           }
         }

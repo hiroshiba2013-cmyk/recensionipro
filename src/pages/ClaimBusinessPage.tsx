@@ -51,45 +51,28 @@ export function ClaimBusinessPage() {
     setSelectedLocations(new Set());
 
     try {
-      // Query 1: imported_businesses (da OSM - non reclamate)
-      let importedQuery = supabase
-        .from('imported_businesses')
+      // Query 1: unclaimed_business_locations (tutte le attività OSM + aggiunte da utenti)
+      let unclaimedQuery = supabase
+        .from('unclaimed_business_locations')
         .select(`
           id,
           name,
           street,
-          street_number,
           city,
           province,
           region,
           phone,
           email,
           website,
-          category_id
+          category_id,
+          is_claimed,
+          added_by
         `)
         .eq('is_claimed', false)
+        .eq('approval_status', 'approved')
         .limit(200);
 
-      // Query 2: user_added_businesses (aggiunte da utenti - non reclamate)
-      let userAddedQuery = supabase
-        .from('user_added_businesses')
-        .select(`
-          id,
-          name,
-          street,
-          street_number,
-          city,
-          province,
-          region,
-          phone,
-          email,
-          website,
-          category_id
-        `)
-        .eq('is_claimed', false)
-        .limit(200);
-
-      // Query 3: registered_business_locations (già reclamate)
+      // Query 2: registered_business_locations (già reclamate)
       let registeredQuery = supabase
         .from('registered_business_locations')
         .select(`
@@ -109,45 +92,39 @@ export function ClaimBusinessPage() {
         .limit(200);
 
       if (formData.businessName && formData.businessName.trim()) {
-        importedQuery = importedQuery.ilike('name', `%${formData.businessName.trim()}%`);
-        userAddedQuery = userAddedQuery.ilike('name', `%${formData.businessName.trim()}%`);
+        unclaimedQuery = unclaimedQuery.ilike('name', `%${formData.businessName.trim()}%`);
         registeredQuery = registeredQuery.or(`internal_name.ilike.%${formData.businessName.trim()}%`);
       }
 
       if (formData.city && formData.city.trim()) {
-        importedQuery = importedQuery.ilike('city', `%${formData.city.trim()}%`);
-        userAddedQuery = userAddedQuery.ilike('city', `%${formData.city.trim()}%`);
+        unclaimedQuery = unclaimedQuery.ilike('city', `%${formData.city.trim()}%`);
         registeredQuery = registeredQuery.ilike('city', `%${formData.city.trim()}%`);
       }
 
       if (formData.province && formData.province.trim()) {
-        importedQuery = importedQuery.ilike('province', `%${formData.province.trim()}%`);
-        userAddedQuery = userAddedQuery.ilike('province', `%${formData.province.trim()}%`);
+        unclaimedQuery = unclaimedQuery.ilike('province', `%${formData.province.trim()}%`);
         registeredQuery = registeredQuery.ilike('province', `%${formData.province.trim()}%`);
       }
 
       if (formData.address && formData.address.trim()) {
-        importedQuery = importedQuery.ilike('street', `%${formData.address.trim()}%`);
-        userAddedQuery = userAddedQuery.ilike('street', `%${formData.address.trim()}%`);
+        unclaimedQuery = unclaimedQuery.ilike('street', `%${formData.address.trim()}%`);
         registeredQuery = registeredQuery.ilike('street', `%${formData.address.trim()}%`);
       }
 
-      const [importedResult, userAddedResult, registeredResult] = await Promise.all([
-        importedQuery,
-        userAddedQuery,
+      const [unclaimedResult, registeredResult] = await Promise.all([
+        unclaimedQuery,
         registeredQuery
       ]);
 
-      if (importedResult.error) throw importedResult.error;
-      if (userAddedResult.error) throw userAddedResult.error;
+      if (unclaimedResult.error) throw unclaimedResult.error;
       if (registeredResult.error) throw registeredResult.error;
 
       const allLocations: LocationResult[] = [
-        ...(importedResult.data || []).map(loc => ({
+        ...(unclaimedResult.data || []).map(loc => ({
           id: loc.id,
           business_id: null,
           name: loc.name,
-          street: `${loc.street}${loc.street_number ? ', ' + loc.street_number : ''}`,
+          street: loc.street || '',
           city: loc.city,
           province: loc.province,
           region: loc.region,
@@ -156,28 +133,13 @@ export function ClaimBusinessPage() {
           website: loc.website,
           is_claimed: false,
           category_id: loc.category_id,
-          source: 'imported' as const
-        })),
-        ...(userAddedResult.data || []).map(loc => ({
-          id: loc.id,
-          business_id: null,
-          name: loc.name,
-          street: `${loc.street}${loc.street_number ? ', ' + loc.street_number : ''}`,
-          city: loc.city,
-          province: loc.province,
-          region: loc.region,
-          phone: loc.phone,
-          email: loc.email,
-          website: loc.website,
-          is_claimed: false,
-          category_id: loc.category_id,
-          source: 'user_added' as const
+          source: (loc.added_by ? 'user_added' : 'imported') as const
         })),
         ...(registeredResult.data || []).map(loc => ({
           id: loc.id,
           business_id: loc.business_id,
           name: loc.internal_name || (loc.business as any)?.name,
-          street: `${loc.street}${loc.street_number ? ', ' + loc.street_number : ''}`,
+          street: `${loc.street || ''}${loc.street_number ? ', ' + loc.street_number : ''}`,
           city: loc.city,
           province: loc.province,
           region: loc.region,

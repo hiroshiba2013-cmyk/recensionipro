@@ -96,24 +96,24 @@ export async function getBusinessReviews(businessId: string, businessType: 'impo
   return data || [];
 }
 
-export async function claimImportedBusiness(businessId: string, userId: string) {
-  const { data: importedBusiness, error: fetchError } = await supabase
-    .from('imported_businesses')
+export async function claimUnclaimedBusiness(businessId: string, userId: string) {
+  const { data: business, error: fetchError } = await supabase
+    .from('unclaimed_business_locations')
     .select('*')
     .eq('id', businessId)
     .maybeSingle();
 
   if (fetchError) throw fetchError;
-  if (!importedBusiness) throw new Error('Business importato non trovato');
+  if (!business) throw new Error('Attività non trovata');
 
   const { data: newBusiness, error: insertError } = await supabase
     .from('registered_businesses')
     .insert({
       owner_id: userId,
-      name: importedBusiness.name,
-      category_id: importedBusiness.category_id,
-      description: importedBusiness.description,
-      source_type: 'claimed_imported',
+      name: business.name,
+      category_id: business.category_id,
+      description: business.description,
+      source_type: business.added_by ? 'claimed_user_added' : 'claimed_imported',
       source_id: businessId,
       verification_badge: 'claimed'
     })
@@ -127,112 +127,41 @@ export async function claimImportedBusiness(businessId: string, userId: string) 
     .from('registered_business_locations')
     .insert({
       business_id: newBusiness.id,
-      street: importedBusiness.street,
-      street_number: importedBusiness.street_number,
-      city: importedBusiness.city,
-      province: importedBusiness.province,
-      region: importedBusiness.region,
-      postal_code: importedBusiness.postal_code,
-      phone: importedBusiness.phone,
-      email: importedBusiness.email,
-      website: importedBusiness.website,
-      business_hours: importedBusiness.business_hours,
-      latitude: importedBusiness.latitude,
-      longitude: importedBusiness.longitude,
+      street: business.street,
+      city: business.city,
+      province: business.province,
+      region: business.region,
+      postal_code: business.postal_code,
+      phone: business.phone,
+      email: business.email,
+      website: business.website,
+      business_hours: business.business_hours,
+      latitude: business.latitude,
+      longitude: business.longitude,
       is_primary: true
     });
 
   if (locationError) throw locationError;
 
-  // Sposta le recensioni — solo dopo che la location è stata creata
-  const { error: reviewsError } = await supabase
+  // Sposta le recensioni
+  await supabase
     .from('reviews')
-    .update({
-      business_type: 'registered',
-      business_id: newBusiness.id,
-      imported_business_id: null
-    })
-    .eq('imported_business_id', businessId);
+    .update({ business_type: 'registered', business_id: newBusiness.id, unclaimed_business_id: null })
+    .eq('unclaimed_business_id', businessId);
 
-  if (reviewsError) throw reviewsError;
-
-  // Elimina il business importato — solo se tutto il resto è andato a buon fine
-  const { error: deleteError } = await supabase
-    .from('imported_businesses')
-    .delete()
+  // Marca come reclamata
+  await supabase
+    .from('unclaimed_business_locations')
+    .update({ is_claimed: true, claimed_by: userId, claimed_at: new Date().toISOString() })
     .eq('id', businessId);
-
-  if (deleteError) throw deleteError;
 
   return newBusiness;
 }
 
+export async function claimImportedBusiness(businessId: string, userId: string) {
+  return claimUnclaimedBusiness(businessId, userId);
+}
+
 export async function claimUserAddedBusiness(businessId: string, userId: string) {
-  const { data: userAddedBusiness, error: fetchError } = await supabase
-    .from('user_added_businesses')
-    .select('*')
-    .eq('id', businessId)
-    .maybeSingle();
-
-  if (fetchError) throw fetchError;
-  if (!userAddedBusiness) throw new Error('Business non trovato');
-
-  const { data: newBusiness, error: insertError } = await supabase
-    .from('registered_businesses')
-    .insert({
-      owner_id: userId,
-      name: userAddedBusiness.name,
-      category_id: userAddedBusiness.category_id,
-      description: userAddedBusiness.description,
-      source_type: 'claimed_user_added',
-      source_id: businessId,
-      verification_badge: 'claimed'
-    })
-    .select()
-    .maybeSingle();
-
-  if (insertError) throw insertError;
-  if (!newBusiness) throw new Error('Errore nella creazione del business registrato');
-
-  const { error: locationError } = await supabase
-    .from('registered_business_locations')
-    .insert({
-      business_id: newBusiness.id,
-      street: userAddedBusiness.street,
-      street_number: userAddedBusiness.street_number,
-      city: userAddedBusiness.city,
-      province: userAddedBusiness.province,
-      region: userAddedBusiness.region,
-      postal_code: userAddedBusiness.postal_code,
-      phone: userAddedBusiness.phone,
-      email: userAddedBusiness.email,
-      website: userAddedBusiness.website,
-      latitude: userAddedBusiness.latitude,
-      longitude: userAddedBusiness.longitude,
-      is_primary: true
-    });
-
-  if (locationError) throw locationError;
-
-  // Sposta le recensioni — solo dopo che la location è stata creata
-  const { error: reviewsError } = await supabase
-    .from('reviews')
-    .update({
-      business_type: 'registered',
-      business_id: newBusiness.id,
-      user_added_business_id: null
-    })
-    .eq('user_added_business_id', businessId);
-
-  if (reviewsError) throw reviewsError;
-
-  // Elimina il business aggiunto — solo se tutto il resto è andato a buon fine
-  const { error: deleteError } = await supabase
-    .from('user_added_businesses')
-    .delete()
-    .eq('id', businessId);
-
-  if (deleteError) throw deleteError;
-
-  return newBusiness;
+  return claimUnclaimedBusiness(businessId, userId);
 }
