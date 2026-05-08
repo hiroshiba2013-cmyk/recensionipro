@@ -119,55 +119,36 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     verified: 'all' as 'all' | 'verified' | 'unverified' | 'rejected'
   });
 
-  const isFirstMount = useRef(true);
-  const prevKeyRef = useRef(`${activeTab}|${JSON.stringify(filters)}`);
-
-  useEffect(() => {
-    const key = `${activeTab}|${JSON.stringify(filters)}`;
-    if (isFirstMount.current || prevKeyRef.current !== key) {
-      isFirstMount.current = false;
-      prevKeyRef.current = key;
-      if (currentPage !== 1) {
-        setCurrentPage(1); // triggers re-render -> this effect fires again with page=1
-        return;
-      }
-    }
-    loadBusinesses();
-  }, [activeTab, filters, currentPage]);
-
-  const loadBusinesses = async () => {
+  const loadBusinesses = async (page = currentPage) => {
     setLoading(true);
     try {
       let allBusinesses: BusinessLocation[] = [];
       let count = 0;
 
-      const from = (currentPage - 1) * itemsPerPage;
+      const from = (page - 1) * itemsPerPage;
       const to = from + itemsPerPage - 1;
 
       if (activeTab === 'all') {
-        // Load all businesses from both tables
-        const [unclaimedResult, claimedResult] = await Promise.all([
-          // Get unclaimed businesses (imported + user added)
-          supabase
-            .from('unclaimed_business_locations')
-            .select(`
-              *,
-              category:category_id(name)
-            `, { count: 'exact' })
-            .order('created_at', { ascending: false })
-            .range(from, Math.floor(to / 2)),
+        // Build unclaimed query with filters
+        let unclaimedQ = supabase
+          .from('unclaimed_business_locations')
+          .select(`*, category:category_id(name)`, { count: 'exact' })
+          .order('created_at', { ascending: false });
+        if (filters.city) unclaimedQ = unclaimedQ.ilike('city', `%${filters.city}%`);
+        if (filters.provinceCode) unclaimedQ = unclaimedQ.eq('province', filters.provinceCode);
+        if (filters.region) unclaimedQ = unclaimedQ.eq('region', filters.region);
+        if (searchTerm) unclaimedQ = unclaimedQ.ilike('name', `%${searchTerm}%`);
 
-          // Get registered businesses (claimed + self-registered)
-          supabase
-            .from('registered_businesses')
-            .select(`
-              *,
-              category:category_id(name),
-              owner:owner_id(full_name, email),
-              locations:registered_business_locations(*)
-            `, { count: 'exact' })
-            .order('created_at', { ascending: false })
-            .range(from, Math.floor(to / 2))
+        // Build registered query with filters
+        let registeredQ = supabase
+          .from('registered_businesses')
+          .select(`*, category:category_id(name), owner:owner_id(full_name, email), locations:registered_business_locations(*)`, { count: 'exact' })
+          .order('created_at', { ascending: false });
+        if (searchTerm) registeredQ = registeredQ.ilike('name', `%${searchTerm}%`);
+
+        const [unclaimedResult, claimedResult] = await Promise.all([
+          unclaimedQ.range(from, Math.floor(to / 2)),
+          registeredQ.range(from, Math.floor(to / 2))
         ]);
 
         const unclaimedBusinesses = (unclaimedResult.data || []).map(business => ({
@@ -423,6 +404,25 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
       setLoading(false);
     }
   };
+
+  // Single effect — reset page when tab/filters change, load on every relevant change
+  const prevFiltersKey = useRef('');
+  useEffect(() => {
+    const key = `${activeTab}|${JSON.stringify(filters)}|${searchTerm}`;
+    const filtersChanged = prevFiltersKey.current !== key;
+    prevFiltersKey.current = key;
+
+    if (filtersChanged) {
+      if (currentPage !== 1) {
+        setCurrentPage(1); // triggers this effect again with page=1
+      } else {
+        loadBusinesses(1);
+      }
+    } else {
+      // Only page changed
+      loadBusinesses(currentPage);
+    }
+  }, [activeTab, filters, searchTerm, currentPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleApproveUserBusiness = async (business: BusinessLocation) => {
     if (!confirm(`Approva l'attività "${business.name}"?\n\nL'attivita' sara' visibile nella ricerca e l'utente ricevera' i punti.`)) return;
