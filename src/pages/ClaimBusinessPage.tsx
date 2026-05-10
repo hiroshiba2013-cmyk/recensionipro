@@ -32,7 +32,8 @@ export function ClaimBusinessPage() {
     businessName: '',
     address: '',
     city: '',
-    province: ''
+    province: '',      // nome completo es. "Varese" (solo per display)
+    provinceCode: ''   // sigla es. "VA" (usata per la query)
   });
   const [groupedResults, setGroupedResults] = useState<GroupedBusiness[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set());
@@ -41,7 +42,7 @@ export function ClaimBusinessPage() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.businessName && !formData.address && !formData.city) {
+    if (!formData.businessName && !formData.address && !formData.city && !formData.provinceCode) {
       alert('Inserisci almeno un campo per effettuare la ricerca');
       return;
     }
@@ -101,9 +102,9 @@ export function ClaimBusinessPage() {
         registeredQuery = registeredQuery.ilike('city', `%${formData.city.trim()}%`);
       }
 
-      if (formData.province && formData.province.trim()) {
-        unclaimedQuery = unclaimedQuery.ilike('province', `%${formData.province.trim()}%`);
-        registeredQuery = registeredQuery.ilike('province', `%${formData.province.trim()}%`);
+      if (formData.provinceCode && formData.provinceCode.trim()) {
+        unclaimedQuery = unclaimedQuery.eq('province', formData.provinceCode.trim().toUpperCase());
+        registeredQuery = registeredQuery.eq('province', formData.provinceCode.trim().toUpperCase());
       }
 
       if (formData.address && formData.address.trim()) {
@@ -261,7 +262,7 @@ export function ClaimBusinessPage() {
             <ItalianCityProvinceSelect
               province={formData.province}
               city={formData.city}
-              onProvinceChange={(prov) => setFormData(prev => ({ ...prev, province: prov, city: '' }))}
+              onProvinceChange={(prov, code) => setFormData(prev => ({ ...prev, province: prov, provinceCode: code, city: '' }))}
               onCityChange={(c) => setFormData(prev => ({ ...prev, city: c }))}
             />
 
