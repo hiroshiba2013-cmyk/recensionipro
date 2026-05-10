@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, Flag, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../common/Toast';
 
 interface ReportModalProps {
   entityType: string;
@@ -60,6 +61,7 @@ const REPORT_REASONS: Record<string, Array<{ value: string; label: string }>> = 
 };
 
 export default function ReportModal({ entityType, entityId, onClose }: ReportModalProps) {
+  const { showToast } = useToast();
   const { user, profile, activeProfile } = useAuth();
   const activeFamilyMemberId = activeProfile && !activeProfile.isOwner && profile?.user_type === 'customer'
     ? activeProfile.id
@@ -95,7 +97,7 @@ export default function ReportModal({ entityType, entityId, onClose }: ReportMod
       }, 2000);
     } catch (error) {
       console.error('Error submitting report:', error);
-      alert('Errore durante l\'invio della segnalazione');
+      showToast('Errore durante l\'invio della segnalazione', 'error');
     } finally {
       setSubmitting(false);
     }

@@ -3,6 +3,7 @@ import { FavoriteButton } from '../favorites/FavoriteButton';
 import ReportButton from '../moderation/ReportButton';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../common/Toast';
 
 interface ClassifiedAd {
   id: string;
@@ -36,6 +37,7 @@ interface FavoriteClassifiedAdCardProps {
 }
 
 export function FavoriteClassifiedAdCard({ ad, familyMemberId = null, onRemove }: FavoriteClassifiedAdCardProps) {
+  const { showToast } = useToast();
   const { user } = useAuth();
 
   const startConversation = async (e: React.MouseEvent) => {
@@ -48,7 +50,7 @@ export function FavoriteClassifiedAdCard({ ad, familyMemberId = null, onRemove }
     }
 
     if (user.id === ad.user_id) {
-      alert('Non puoi contattarti da solo');
+      showToast('Non puoi contattarti da solo', 'error');
       return;
     }
 
@@ -67,7 +69,7 @@ export function FavoriteClassifiedAdCard({ ad, familyMemberId = null, onRemove }
       window.location.href = `/messages?conversation=${conversationId}`;
     } catch (error) {
       console.error('Error creating conversation:', error);
-      alert('Errore nell\'avvio della conversazione');
+      showToast('Errore nell\'avvio della conversazione', 'error');
     }
   };
 

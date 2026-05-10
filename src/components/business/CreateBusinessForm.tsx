@@ -5,6 +5,7 @@ import { SearchableSelect } from '../common/SearchableSelect';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { ClaimBusinessLocationsForm } from './ClaimBusinessLocationsForm';
 import { getPlanDisplayName } from '../../lib/subscription-helper';
+import { useToast } from '../common/Toast';
 
 const businessCategories = [
   'Ristorante',
@@ -63,6 +64,7 @@ interface ExistingBusinessInfo {
 }
 
 export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusinessFormProps) {
+  const { showToast } = useToast();
   const [step, setStep] = useState<'choice' | 'claim' | 'form' | 'existing'>('choice');
   const [claimedLocations, setClaimedLocations] = useState<UnclaimedLocation[]>([]);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
@@ -108,7 +110,7 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
 
       if (existingBiz) {
         if (existingBiz.owner_id === ownerId) {
-          alert('Hai già registrato un\'attività con questa Partita IVA!');
+          showToast('Hai già registrato un\'attività con questa Partita IVA!', 'info');
           setCheckingVat(false);
           return;
         }
@@ -380,7 +382,7 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
       onSuccess();
     } catch (error) {
       console.error('Error creating business:', error);
-      alert('Errore durante la creazione dell\'attività');
+      showToast('Errore durante la creazione dell\'attività', 'error');
     } finally {
       setSaving(false);
     }

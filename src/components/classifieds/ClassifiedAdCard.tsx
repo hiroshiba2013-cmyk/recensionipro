@@ -3,6 +3,7 @@ import { FavoriteButton } from '../favorites/FavoriteButton';
 import ReportButton from '../moderation/ReportButton';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../common/Toast';
 
 interface ClassifiedAd {
   id: string;
@@ -41,6 +42,7 @@ interface ClassifiedAdCardProps {
 }
 
 export function ClassifiedAdCard({ ad }: ClassifiedAdCardProps) {
+  const { showToast } = useToast();
   const { user, activeProfile } = useAuth();
 
   const startConversation = async (e: React.MouseEvent) => {
@@ -53,7 +55,7 @@ export function ClassifiedAdCard({ ad }: ClassifiedAdCardProps) {
     }
 
     if (user.id === ad.user_id) {
-      alert('Non puoi contattarti da solo');
+      showToast('Non puoi contattarti da solo', 'error');
       return;
     }
 
@@ -76,7 +78,7 @@ export function ClassifiedAdCard({ ad }: ClassifiedAdCardProps) {
       window.location.href = `/messages?conversation=${conversationId}`;
     } catch (error) {
       console.error('Error starting conversation:', error);
-      alert('Errore nell\'avvio della conversazione');
+      showToast('Errore nell\'avvio della conversazione', 'error');
     }
   };
 

@@ -5,6 +5,7 @@ import { MapPin, Calendar, Eye, Phone, Mail, MessageCircle, FileEdit as Edit, Tr
 import { ClassifiedAdForm } from '../components/classifieds/ClassifiedAdForm';
 import ReportButton from '../components/moderation/ReportButton';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
+import { useToast } from '../components/common/Toast';
 
 interface ClassifiedAd {
   id: string;
@@ -35,6 +36,7 @@ interface ClassifiedAd {
 }
 
 export function ClassifiedAdDetailPage() {
+  const { showToast } = useToast();
   const { user, activeProfile } = useAuth();
   const [ad, setAd] = useState<ClassifiedAd | null>(null);
   const [loading, setLoading] = useState(true);
@@ -131,7 +133,7 @@ export function ClassifiedAdDetailPage() {
       window.location.href = '/classified';
     } catch (error) {
       console.error('Error deleting ad:', error);
-      alert('Errore nell\'eliminazione dell\'annuncio');
+      showToast('Errore nell\'eliminazione dell\'annuncio', 'error');
     }
   };
 
@@ -162,7 +164,7 @@ export function ClassifiedAdDetailPage() {
       window.location.href = `/messages?conversation=${conversationId}`;
     } catch (error) {
       console.error('Error starting conversation:', error);
-      alert('Errore nell\'avvio della conversazione');
+      showToast('Errore nell\'avvio della conversazione', 'error');
     }
   };
 

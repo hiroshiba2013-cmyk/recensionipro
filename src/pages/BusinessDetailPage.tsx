@@ -12,6 +12,7 @@ import ReportButton from '../components/moderation/ReportButton';
 import ReportModal from '../components/moderation/ReportModal';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
 import { VerificationBadge } from '../components/business/VerificationBadge';
+import { ConfirmModal, AlertModal } from '../components/common/ConfirmModal';
 
 interface BusinessDetailPageProps {
   businessId: string;
@@ -33,6 +34,8 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
   const [claimingBusiness, setClaimingBusiness] = useState(false);
   const [filterLocationId, setFilterLocationId] = useState<string | null>(null);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
+  const [alertModal, setAlertModal] = useState<{ title: string; message: string; variant: 'success' | 'error' | 'info'; actionLabel?: string; onAction?: () => void } | null>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -348,30 +351,30 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
     }
   };
 
-  const handleClaimBusiness = async () => {
+  const handleClaimBusiness = () => {
     if (!profile || profile.user_type !== 'business') {
-      alert('Solo gli utenti business possono rivendicare un\'attività');
+      setAlertModal({ title: 'Accesso negato', message: "Solo gli utenti business possono rivendicare un'attività.", variant: 'error' });
       return;
     }
-
     if (!business) return;
-
     if (business.is_claimed || business.owner_id) {
-      alert('Questa attività è già stata rivendicata');
+      setAlertModal({ title: 'Già rivendicata', message: 'Questa attività è già stata rivendicata da un altro utente.', variant: 'info' });
       return;
     }
 
-    const confirmed = confirm(
-      `Vuoi rivendicare l'attività "${business.name}"?\n\n` +
-      'Una volta rivendicata, dovrai fornire la documentazione necessaria per la verifica.\n\n' +
-      'Confermi di essere il proprietario legittimo di questa attività?'
-    );
+    setConfirmModal({
+      title: `Rivendica "${business.name}"`,
+      message: 'Una volta rivendicata, dovrai fornire la documentazione necessaria per la verifica.\n\nConfermi di essere il proprietario legittimo di questa attività?',
+      onConfirm: () => { setConfirmModal(null); performClaimBusiness(); },
+    });
+  };
 
-    if (!confirmed) return;
+  const performClaimBusiness = async () => {
+    if (!business || !profile) return;
 
     setClaimingBusiness(true);
     try {
-      const businessType = (business as any).business_type;
+      const businessType = business.business_type as string | undefined;
 
       if (businessType === 'imported') {
         // Recupera i dati dall'imported_businesses
@@ -511,17 +514,16 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           .eq('id', businessId);
       }
 
-      alert(
-        'Rivendicazione completata!\n\n' +
-        'La tua richiesta è stata registrata. Il nostro team verificherà i tuoi dati e ' +
-        'ti contatterà per completare il processo di verifica.\n\n' +
-        'Nel frattempo, puoi gestire l\'attività dalla tua dashboard.'
-      );
-
-      window.location.href = '/dashboard';
+      setAlertModal({
+        title: 'Rivendicazione completata',
+        message: 'La tua richiesta è stata registrata. Il nostro team verificherà i tuoi dati e ti contatterà per completare il processo di verifica.\n\nNel frattempo, puoi gestire l\'attività dalla tua dashboard.',
+        variant: 'success',
+        actionLabel: 'Vai alla Dashboard',
+        onAction: () => { window.location.href = '/dashboard'; },
+      });
     } catch (error) {
       console.error('Error claiming business:', error);
-      alert('Errore durante la rivendicazione dell\'attività');
+      setAlertModal({ title: 'Errore', message: "Errore durante la rivendicazione dell'attività. Riprova.", variant: 'error' });
     } finally {
       setClaimingBusiness(false);
     }
@@ -1327,6 +1329,30 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           entityType="business"
           entityId={businessId}
           onClose={() => setShowReportModal(false)}
+        />
+      )}
+
+      {confirmModal && (
+        <ConfirmModal
+          isOpen={true}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          confirmLabel="Conferma rivendicazione"
+          variant="info"
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(null)}
+        />
+      )}
+
+      {alertModal && (
+        <AlertModal
+          isOpen={true}
+          title={alertModal.title}
+          message={alertModal.message}
+          variant={alertModal.variant}
+          actionLabel={alertModal.actionLabel}
+          onAction={alertModal.onAction}
+          onClose={() => setAlertModal(null)}
         />
       )}
     </div>

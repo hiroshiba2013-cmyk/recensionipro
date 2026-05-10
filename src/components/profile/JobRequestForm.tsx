@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Briefcase, Plus, X, Edit, Trash2, User, Users } from 'lucide-react';
+import { Briefcase, Plus, X, FileEdit as Edit, Trash2, User, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
+import { useToast } from '../common/Toast';
 
 interface JobSeeker {
   id: string;
@@ -47,6 +48,7 @@ interface JobRequestFormProps {
 }
 
 export function JobRequestForm({ customerId, familyMemberId }: JobRequestFormProps) {
+  const { showToast } = useToast();
   const [jobSeekers, setJobSeekers] = useState<JobSeeker[]>([]);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -173,10 +175,10 @@ export function JobRequestForm({ customerId, familyMemberId }: JobRequestFormPro
 
       resetForm();
       loadJobSeekers();
-      alert('Annuncio salvato con successo!');
+      showToast('Annuncio salvato con successo!', 'success');
     } catch (error: any) {
       console.error('Error saving job seeker:', error);
-      alert(`Errore durante il salvataggio: ${error.message || 'Errore sconosciuto'}`);
+      showToast(`Errore durante il salvataggio: ${error.message || 'Errore sconosciuto'}`, 'error');
     }
   };
 

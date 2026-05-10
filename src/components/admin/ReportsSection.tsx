@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AlertTriangle, CheckCircle, XCircle, Eye, Filter, Search, FileText, MessageSquare, Store, Star, ShoppingBag, Briefcase } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../common/Toast';
 
 interface Report {
   id: string;
@@ -65,6 +66,7 @@ interface ReportsSectionProps {
 type FilterType = 'all' | 'classified_ad' | 'review' | 'business';
 
 export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
+  const { showToast } = useToast();
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -84,12 +86,12 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
 
       if (error) throw error;
 
-      alert('Segnalazione risolta');
+      showToast('Segnalazione risolta', 'info');
       setSelectedReport(null);
       await onReload();
     } catch (error: any) {
       console.error('Error resolving report:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -105,12 +107,12 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
 
       if (error) throw error;
 
-      alert('Segnalazione respinta');
+      showToast('Segnalazione respinta', 'info');
       setSelectedReport(null);
       await onReload();
     } catch (error: any) {
       console.error('Error dismissing report:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -183,7 +185,7 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
       }
     } catch (error: any) {
       console.error('Error loading entity details:', error);
-      alert(`Errore nel caricamento dei dettagli: ${error.message}`);
+      showToast(`Errore nel caricamento dei dettagli: ${error.message}`, 'error');
     } finally {
       setLoadingDetails(false);
     }

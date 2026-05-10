@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { ITALIAN_REGIONS } from '../../lib/cities';
+import { useToast } from '../common/Toast';
 
 interface Category {
   id: string;
@@ -19,6 +20,7 @@ interface ClassifiedAdFormProps {
 }
 
 export function ClassifiedAdForm({ adId, businessLocationId, isRegisteredBusiness, onSuccess, onCancel }: ClassifiedAdFormProps) {
+  const { showToast } = useToast();
   const { user, activeProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -94,14 +96,14 @@ export function ClassifiedAdForm({ adId, businessLocationId, isRegisteredBusines
       }
     } catch (error) {
       console.error('Error loading ad:', error);
-      alert('Errore nel caricamento dell\'annuncio');
+      showToast('Errore nel caricamento dell\'annuncio', 'error');
     }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length + imagePreviews.length > 5) {
-      alert('Puoi caricare massimo 5 immagini');
+      showToast('Puoi caricare massimo 5 immagini', 'info');
       return;
     }
 
@@ -163,7 +165,7 @@ export function ClassifiedAdForm({ adId, businessLocationId, isRegisteredBusines
       }
 
       if (!formData.category_id) {
-        alert('Seleziona una categoria');
+        showToast('Seleziona una categoria', 'info');
         setLoading(false);
         return;
       }
@@ -212,20 +214,20 @@ export function ClassifiedAdForm({ adId, businessLocationId, isRegisteredBusines
           .eq('id', adId);
 
         if (error) throw error;
-        alert('Annuncio aggiornato con successo!');
+        showToast('Annuncio aggiornato con successo!', 'success');
       } else {
         const { error } = await supabase
           .from('classified_ads')
           .insert([adData]);
 
         if (error) throw error;
-        alert('Annuncio inviato con successo! Sarà visibile dopo l\'approvazione da parte dell\'amministratore.');
+        showToast('Annuncio inviato con successo! Sarà visibile dopo l\'approvazione da parte dell\'amministratore.', 'success');
       }
       onSuccess();
     } catch (error: any) {
       console.error('Error saving ad:', error);
       console.error('Error details:', JSON.stringify(error, null, 2));
-      alert('Errore nel salvataggio: ' + (error?.message || error?.details || JSON.stringify(error)));
+      showToast('Errore nel salvataggio: ' + (error?.message || error?.details || JSON.stringify(error, 'error')));
     } finally {
       setLoading(false);
     }

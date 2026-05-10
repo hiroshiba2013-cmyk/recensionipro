@@ -5,6 +5,7 @@ import { SearchableSelect } from '../common/SearchableSelect';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { ITALIAN_REGIONS } from '../../lib/cities';
 import { X } from 'lucide-react';
+import { useToast } from '../common/Toast';
 
 interface JobSeekerFormProps {
   onSuccess: () => void;
@@ -17,6 +18,7 @@ interface Category {
 }
 
 export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
+  const { showToast } = useToast();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -96,11 +98,11 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
 
       if (error) throw error;
 
-      alert('Annuncio pubblicato con successo!');
+      showToast('Annuncio pubblicato con successo!', 'success');
       onSuccess();
     } catch (error: any) {
       console.error('Error creating job seeker ad:', error);
-      alert(`Errore nella creazione dell'annuncio: ${error.message || 'Errore sconosciuto'}`);
+      showToast(`Errore nella creazione dell'annuncio: ${error.message || 'Errore sconosciuto'}`, 'error');
     } finally {
       setLoading(false);
     }

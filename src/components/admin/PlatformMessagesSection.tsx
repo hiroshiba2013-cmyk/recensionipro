@@ -3,6 +3,7 @@ import { Mail, MailOpen, Archive, Reply, Search, ChevronDown, ChevronUp, Send, C
 import { supabase } from '../../lib/supabase';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
+import { useToast } from '../common/Toast';
 
 const SUBJECT_FILTERS = [
   'Informazioni generali',
@@ -45,6 +46,7 @@ interface Props {
 }
 
 export function PlatformMessagesSection({ adminId }: Props) {
+  const { showToast } = useToast();
   const [messages, setMessages] = useState<PlatformMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
@@ -112,7 +114,7 @@ export function PlatformMessagesSection({ adminId }: Props) {
     }).eq('id', msg.id);
 
     setReplying(null);
-    if (error) { alert('Errore durante il salvataggio della risposta.'); return; }
+    if (error) { showToast('Errore durante il salvataggio della risposta.', 'error'); return; }
 
     setMessages(prev => prev.map(m => m.id === msg.id
       ? { ...m, status: 'replied', admin_reply: text, replied_at: new Date().toISOString() }

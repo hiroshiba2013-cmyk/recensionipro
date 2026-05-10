@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Send, ArrowLeft, MessageCircle, Tag, Briefcase, Building2, Gavel, Paperclip, X, FileText, Image, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../components/common/Toast';
 
 interface Profile {
   full_name: string;
@@ -45,6 +46,7 @@ function isClassifiedConversation(type: string) {
 }
 
 export function MessagesPage() {
+  const { showToast } = useToast();
   const { user, loading: authLoading, activeProfile, profile, selectedBusinessLocationId } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
@@ -262,7 +264,7 @@ export function MessagesPage() {
       loadConversations();
     } catch (error) {
       console.error('Error sending message:', error);
-      alert('Errore nell\'invio del messaggio');
+      showToast('Errore nell\'invio del messaggio', 'error');
     } finally {
       setSending(false);
       setUploadingAttachment(false);
@@ -273,8 +275,8 @@ export function MessagesPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     const allowed = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    if (!allowed.includes(file.type)) { alert('Formato non supportato. Usa PDF o DOCX.'); return; }
-    if (file.size > 10 * 1024 * 1024) { alert('Il file supera i 10MB.'); return; }
+    if (!allowed.includes(file.type)) { showToast('Formato non supportato. Usa PDF o DOCX.', 'info'); return; }
+    if (file.size > 10 * 1024 * 1024) { showToast('Il file supera i 10MB.', 'info'); return; }
     setCvFile(file);
     e.target.value = '';
   };
@@ -282,12 +284,12 @@ export function MessagesPage() {
   const handleImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const remaining = MAX_IMAGES - imageFiles.length;
-    if (remaining <= 0) { alert(`Puoi allegare massimo ${MAX_IMAGES} immagini.`); return; }
+    if (remaining <= 0) { showToast(`Puoi allegare massimo ${MAX_IMAGES} immagini.`, 'info'); return; }
     const toAdd = files.slice(0, remaining);
     const invalid = toAdd.filter(f => !f.type.startsWith('image/'));
-    if (invalid.length > 0) { alert('Sono supportati solo file immagine.'); return; }
+    if (invalid.length > 0) { showToast('Sono supportati solo file immagine.', 'info'); return; }
     const tooBig = toAdd.filter(f => f.size > 5 * 1024 * 1024);
-    if (tooBig.length > 0) { alert('Ogni immagine deve essere inferiore a 5MB.'); return; }
+    if (tooBig.length > 0) { showToast('Ogni immagine deve essere inferiore a 5MB.', 'info'); return; }
     setImageFiles(prev => [...prev, ...toAdd]);
     e.target.value = '';
   };

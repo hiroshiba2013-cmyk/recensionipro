@@ -3,6 +3,7 @@ import { Briefcase, MapPin, Trash2, Filter, Calendar, Euro, Eye, Search, Users, 
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { AdminLocationFilter } from './AdminLocationFilter';
+import { useToast } from '../common/Toast';
 
 interface JobPosting {
   id: string;
@@ -72,6 +73,7 @@ type ApprovalFilter = 'pending' | 'approved' | 'rejected' | 'all';
 type SeekerApprovalFilter = 'pending' | 'approved' | 'rejected' | 'all';
 
 export function JobPostingsSection({ jobPostings: initialJobPostings, onReload, pendingJobSeekers = 0 }: JobPostingsSectionProps) {
+  const { showToast } = useToast();
   const { user } = useAuth();
   const [jobType, setJobType] = useState<JobType>('all');
   const [approvalFilter, setApprovalFilter] = useState<ApprovalFilter>('pending');
@@ -228,7 +230,7 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload, 
       if (error) throw error;
       await loadJobPostings();
     } catch (err: any) {
-      alert('Errore durante l\'approvazione: ' + err.message);
+      showToast('Errore durante l\'approvazione: ' + err.message, 'error');
     } finally {
       setProcessing(null);
     }
@@ -248,7 +250,7 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload, 
       setRejectReason('');
       await loadJobPostings();
     } catch (err: any) {
-      alert('Errore durante il rifiuto: ' + err.message);
+      showToast('Errore durante il rifiuto: ' + err.message, 'error');
     } finally {
       setProcessing(null);
     }
@@ -261,7 +263,7 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload, 
       if (error) throw error;
       await loadJobPostings();
     } catch (error: any) {
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -276,7 +278,7 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload, 
       if (error) throw error;
       await loadJobSeekers();
     } catch (err: any) {
-      alert('Errore durante l\'approvazione: ' + err.message);
+      showToast('Errore durante l\'approvazione: ' + err.message, 'error');
     } finally {
       setProcessing(null);
     }
@@ -296,7 +298,7 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload, 
       setRejectReason('');
       await loadJobSeekers();
     } catch (err: any) {
-      alert('Errore durante il rifiuto: ' + err.message);
+      showToast('Errore durante il rifiuto: ' + err.message, 'error');
     } finally {
       setProcessing(null);
     }
@@ -308,7 +310,7 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload, 
       if (error) throw error;
       await loadJobSeekers();
     } catch (error: any) {
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -319,7 +321,7 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload, 
       if (error) throw error;
       await loadJobSeekers();
     } catch (error: any) {
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 

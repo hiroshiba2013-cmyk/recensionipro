@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Building2, CheckCircle, MapPin, Mail, Phone, FileEdit as Edit2, Search, Filter, Download, Upload, UserPlus, X, FileText, Briefcase, Clock, ShieldCheck, ShieldX, XCircle, Hash } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { AdminLocationFilter } from './AdminLocationFilter';
+import { useToast } from '../common/Toast';
 
 const DAYS_IT: { [key: string]: string } = {
   monday: 'Lunedì',
@@ -96,6 +97,7 @@ interface BusinessesSectionProps {
 type TabType = 'all' | 'imported' | 'user_added' | 'claimed' | 'self_registered';
 
 export function BusinessesSection({ onReload }: BusinessesSectionProps) {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [businesses, setBusinesses] = useState<BusinessLocation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -440,11 +442,11 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
 
       if (error) throw error;
 
-      alert(`Attivita' approvata!`);
+      showToast(`Attivita' approvata!`, 'info');
       await loadBusinesses();
     } catch (error: any) {
       console.error('Error approving business:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -478,11 +480,11 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
         });
       }
 
-      alert(`Attivita' rifiutata.`);
+      showToast(`Attivita' rifiutata.`, 'info');
       await loadBusinesses();
     } catch (error: any) {
       console.error('Error rejecting business:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -512,11 +514,11 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
 
       if (error) throw error;
 
-      alert(`Attività ${!currentStatus ? 'approvata e ora visibile' : 'nascosta dalla ricerca'}!`);
+      showToast(`Attività ${!currentStatus ? 'approvata e ora visibile' : 'nascosta dalla ricerca'}!`, 'info');
       await loadBusinesses();
     } catch (error: any) {
       console.error('Error updating verification:', error);
-      alert(`Errore nell'aggiornamento: ${error.message}`);
+      showToast(`Errore nell'aggiornamento: ${error.message}`, 'error');
     }
   };
 
@@ -558,12 +560,12 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
 
       if (error) throw error;
 
-      alert('Attività aggiornata con successo');
+      showToast('Attività aggiornata con successo', 'success');
       setEditingBusiness(null);
       await loadBusinesses();
     } catch (error: any) {
       console.error('Error updating business:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -582,11 +584,11 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
 
       if (error) throw error;
 
-      alert('Attività eliminata con successo');
+      showToast('Attività eliminata con successo', 'success');
       await loadBusinesses();
     } catch (error: any) {
       console.error('Error deleting business:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 

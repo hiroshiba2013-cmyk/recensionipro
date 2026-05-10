@@ -1425,12 +1425,14 @@ export function DashboardPage() {
                           <JobSeekerForm
                             onSuccess={() => {
                               setShowJobSeekerForm(false);
-                              // reload
                               const fmId = activeProfile?.isOwner === false ? activeProfile.id : null;
                               let q = supabase.from('job_seekers').select('*').eq('user_id', profile!.id).order('created_at', { ascending: false });
                               if (fmId) q = q.eq('family_member_id', fmId);
                               else q = q.is('family_member_id', null);
-                              q.then(({ data }) => { if (data) setMyJobSeekers(data); });
+                              q.then(({ data, error }) => {
+                                if (error) console.error('Error reloading job seekers:', error);
+                                else if (data) setMyJobSeekers(data);
+                              });
                             }}
                             onCancel={() => setShowJobSeekerForm(false)}
                           />

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, MapPin, DollarSign, Calendar, Briefcase, GraduationCap, Tag, MessageCircle, Phone, Mail } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../components/common/Toast';
 
 interface JobSeeker {
   id: string;
@@ -35,6 +36,7 @@ interface JobSeeker {
 }
 
 export function JobSeekerDetailPage() {
+  const { showToast } = useToast();
   const { user, profile, activeProfile, selectedBusinessLocationId } = useAuth();
   const [jobSeeker, setJobSeeker] = useState<JobSeeker | null>(null);
   const [loading, setLoading] = useState(true);
@@ -103,7 +105,7 @@ export function JobSeekerDetailPage() {
       window.location.href = `/messages?conversation=${conversationId}`;
     } catch (error) {
       console.error('Error starting conversation:', error);
-      alert('Errore nell\'avvio della conversazione');
+      showToast('Errore nell\'avvio della conversazione', 'error');
     }
   };
 

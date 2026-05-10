@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Star, X, Upload, FileText, ChevronRight, ChevronLeft } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../common/Toast';
 
 interface ReviewFormProps {
   businessId?: string;
@@ -31,6 +32,7 @@ export function ReviewForm({
   onClose,
   onSuccess
 }: ReviewFormProps) {
+  const { showToast } = useToast();
   const { profile, activeProfile } = useAuth();
 
   const [step, setStep] = useState(1);
@@ -261,7 +263,7 @@ export function ReviewForm({
 
       if (insertError) throw insertError;
 
-      alert('Recensione inviata con successo! Sarà visibile dopo l\'approvazione da parte dell\'amministratore.');
+      showToast('Recensione inviata con successo! Sarà visibile dopo l\'approvazione da parte dell\'amministratore.', 'success');
       onSuccess();
     } catch (err: any) {
       console.error('Error submitting review:', err);

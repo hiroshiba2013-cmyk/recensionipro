@@ -3,6 +3,7 @@ import { Trash2, Eye, Filter, Tag, Calendar, User, MapPin, Euro, Search, FileEdi
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { AdminLocationFilter } from './AdminLocationFilter';
+import { useToast } from '../common/Toast';
 
 interface ClassifiedAd {
   id: string;
@@ -34,6 +35,7 @@ interface ClassifiedAdsSectionProps {
 }
 
 export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProps) {
+  const { showToast } = useToast();
   const { user } = useAuth();
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterApproval, setFilterApproval] = useState<string>('all');
@@ -75,11 +77,11 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
         staff_id_param: user.id,
       });
       if (error) throw error;
-      alert('Annuncio approvato e punti assegnati!');
+      showToast('Annuncio approvato e punti assegnati!', 'info');
       onReload();
     } catch (error: any) {
       console.error('Error approving ad:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     } finally {
       setProcessingId(null);
     }
@@ -95,11 +97,11 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
         staff_id_param: user.id,
       });
       if (error) throw error;
-      alert('Annuncio rifiutato.');
+      showToast('Annuncio rifiutato.', 'info');
       onReload();
     } catch (error: any) {
       console.error('Error rejecting ad:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     } finally {
       setProcessingId(null);
     }
@@ -112,11 +114,11 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
         .update({ status: newStatus })
         .eq('id', adId);
       if (error) throw error;
-      alert('Stato annuncio aggiornato con successo');
+      showToast('Stato annuncio aggiornato con successo', 'success');
       onReload();
     } catch (error: any) {
       console.error('Error updating ad:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -130,11 +132,11 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
         .delete()
         .eq('id', adId);
       if (error) throw error;
-      alert('Annuncio eliminato con successo');
+      showToast('Annuncio eliminato con successo', 'success');
       onReload();
     } catch (error: any) {
       console.error('Error deleting ad:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -161,7 +163,7 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
   const saveAdEdit = async () => {
     if (!editingAd || !editForm) return;
     if (!editForm.title || !editForm.description || !editForm.category || !editForm.city) {
-      alert('Compila tutti i campi obbligatori');
+      showToast('Compila tutti i campi obbligatori', 'info');
       return;
     }
     try {
@@ -180,7 +182,7 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
         })
         .eq('id', editingAd.id);
       if (error) throw error;
-      alert('Annuncio aggiornato con successo');
+      showToast('Annuncio aggiornato con successo', 'success');
       setEditingAd(null);
       setEditForm(null);
       onReload();
@@ -189,7 +191,7 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
       }
     } catch (error: any) {
       console.error('Error updating ad:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MessageSquare, Search, AlertTriangle, Eye, Trash2, Filter, User, Calendar, Clock, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../common/Toast';
 
 interface Message {
   id: string;
@@ -36,6 +37,7 @@ interface MessagingSectionProps {
 }
 
 export function MessagingSection({ adminId }: MessagingSectionProps) {
+  const { showToast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -105,7 +107,7 @@ export function MessagingSection({ adminId }: MessagingSectionProps) {
       setMessages(messagesWithDetails);
     } catch (error: any) {
       console.error('Error loading messages:', error);
-      alert('Errore nel caricamento dei messaggi');
+      showToast('Errore nel caricamento dei messaggi', 'error');
     } finally {
       setLoading(false);
     }
@@ -140,12 +142,12 @@ export function MessagingSection({ adminId }: MessagingSectionProps) {
 
       if (error) throw error;
 
-      alert('Messaggio eliminato con successo');
+      showToast('Messaggio eliminato con successo', 'success');
       loadMessages();
       setSelectedMessage(null);
     } catch (error: any) {
       console.error('Error deleting message:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -164,10 +166,10 @@ export function MessagingSection({ adminId }: MessagingSectionProps) {
 
       if (error) throw error;
 
-      alert('Messaggio segnalato con successo');
+      showToast('Messaggio segnalato con successo', 'success');
     } catch (error: any) {
       console.error('Error reporting message:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 

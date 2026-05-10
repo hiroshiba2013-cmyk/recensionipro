@@ -1,5 +1,6 @@
 import { Package } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../common/Toast';
 
 interface Product {
   id: string;
@@ -19,6 +20,7 @@ interface ProductsSectionProps {
 }
 
 export function ProductsSection({ products, onReload }: ProductsSectionProps) {
+  const { showToast } = useToast();
   const handleUpdateStock = async (productId: string, newStock: number) => {
     try {
       const { error } = await supabase
@@ -28,11 +30,11 @@ export function ProductsSection({ products, onReload }: ProductsSectionProps) {
 
       if (error) throw error;
 
-      alert('Giacenza aggiornata');
+      showToast('Giacenza aggiornata', 'info');
       await onReload();
     } catch (error: any) {
       console.error('Error updating product:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 

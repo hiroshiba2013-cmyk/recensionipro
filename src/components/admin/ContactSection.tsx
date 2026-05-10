@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Mail, Phone, MapPin, Facebook, Instagram, Twitter, MessageCircle, Clock, Save, FileEdit as Edit } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../common/Toast';
 
 interface ContactSettings {
   email: string;
@@ -23,6 +24,7 @@ interface ContactSectionProps {
 }
 
 export function ContactSection({ adminId }: ContactSectionProps) {
+  const { showToast } = useToast();
   const [settings, setSettings] = useState<ContactSettings>({
     email: '',
     phone: '',
@@ -94,7 +96,7 @@ export function ContactSection({ adminId }: ContactSectionProps) {
       setSettings(settingsObj);
     } catch (error: any) {
       console.error('Error loading settings:', error);
-      alert('Errore nel caricamento delle impostazioni');
+      showToast('Errore nel caricamento delle impostazioni', 'error');
     } finally {
       setLoading(false);
     }
@@ -128,12 +130,12 @@ export function ContactSection({ adminId }: ContactSectionProps) {
         if (error) throw error;
       }
 
-      alert('Impostazioni salvate con successo!');
+      showToast('Impostazioni salvate con successo!', 'success');
       setEditing(false);
       loadSettings();
     } catch (error: any) {
       console.error('Error saving settings:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     } finally {
       setSaving(false);
     }

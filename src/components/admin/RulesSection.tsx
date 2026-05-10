@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Shield, HelpCircle, Cookie, FileText, ChevronDown, ChevronUp, Pencil, Save, X, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../common/Toast';
 
 interface FAQ {
   id: string;
@@ -141,6 +142,7 @@ function RulesSectionCard({
 }
 
 export function RulesSection({ adminId }: RulesSectionProps) {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'regolamento' | 'faq' | 'cookie' | 'termini'>('regolamento');
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [rulesContent, setRulesContent] = useState<RulesContent[]>([]);
@@ -202,7 +204,7 @@ export function RulesSection({ adminId }: RulesSectionProps) {
       setIsNewFAQ(false);
       loadData();
     } catch (err: any) {
-      alert(`Errore: ${err.message}`);
+      showToast(`Errore: ${err.message}`, 'error');
     } finally {
       setSaving(false);
     }
@@ -211,7 +213,7 @@ export function RulesSection({ adminId }: RulesSectionProps) {
   const deleteFAQ = async (id: string) => {
     if (!confirm('Eliminare questa FAQ?')) return;
     const { error } = await supabase.from('faqs').delete().eq('id', id);
-    if (error) { alert(`Errore: ${error.message}`); return; }
+    if (error) { showToast(`Errore: ${error.message}`, 'error'); return; }
     loadData();
   };
 
@@ -245,7 +247,7 @@ export function RulesSection({ adminId }: RulesSectionProps) {
       setIsNewRule(false);
       loadData();
     } catch (err: any) {
-      alert(`Errore: ${err.message}`);
+      showToast(`Errore: ${err.message}`, 'error');
     } finally {
       setSaving(false);
     }
@@ -254,7 +256,7 @@ export function RulesSection({ adminId }: RulesSectionProps) {
   const deleteRule = async (id: string) => {
     if (!confirm('Eliminare questa sezione del regolamento?')) return;
     const { error } = await supabase.from('rules_content').delete().eq('id', id);
-    if (error) { alert(`Errore: ${error.message}`); return; }
+    if (error) { showToast(`Errore: ${error.message}`, 'error'); return; }
     loadData();
   };
 

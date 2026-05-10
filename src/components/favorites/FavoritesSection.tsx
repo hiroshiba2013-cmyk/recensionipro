@@ -3,6 +3,7 @@ import { Heart, Building2, ShoppingBag, Briefcase, User, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from '../Router';
+import { useToast } from '../common/Toast';
 
 interface FavoriteItem {
   id: string;
@@ -19,6 +20,7 @@ interface FamilyMember {
 }
 
 export function FavoritesSection() {
+  const { showToast } = useToast();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'businesses' | 'ads' | 'jobs'>('businesses');
@@ -238,7 +240,7 @@ export function FavoritesSection() {
       loadFavorites();
     } catch (error) {
       console.error('Error removing favorite:', error);
-      alert('Errore durante la rimozione');
+      showToast('Errore durante la rimozione', 'error');
     }
   };
 

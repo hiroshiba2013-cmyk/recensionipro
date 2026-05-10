@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CheckCircle, XCircle, Eye, Star, Filter, MapPin, Building2, Calendar, Clock, User, Search, X, FileEdit as Edit, Save, X as CloseIcon, ChevronDown, ChevronUp, Image, FileText, Upload } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { AdminLocationFilter } from './AdminLocationFilter';
+import { useToast } from '../common/Toast';
 
 interface Review {
   id: string;
@@ -101,6 +102,7 @@ interface ReviewsSectionProps {
 }
 
 export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionProps) {
+  const { showToast } = useToast();
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterReviewType, setFilterReviewType] = useState<string>('');
@@ -277,12 +279,12 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
 
       if (error) throw error;
 
-      alert(`Recensione approvata con successo! ${pointsAwarded} punti assegnati.`);
+      showToast(`Recensione approvata con successo! ${pointsAwarded} punti assegnati.`, 'success');
       onReload();
       setSelectedReview(null);
     } catch (error: any) {
       console.error('Error approving review:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -303,12 +305,12 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
 
       if (error) throw error;
 
-      alert('Recensione approvata con 25 punti (prova rifiutata).');
+      showToast('Recensione approvata con 25 punti (prova rifiutata).', 'success');
       onReload();
       setSelectedReview(null);
     } catch (error: any) {
       console.error('Error approving review without proof:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -353,7 +355,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
 
       if (error) throw error;
 
-      alert('Recensione aggiornata con successo');
+      showToast('Recensione aggiornata con successo', 'success');
       setEditingReview(null);
       setEditForm(null);
       onReload();
@@ -362,7 +364,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
       }
     } catch (error: any) {
       console.error('Error updating review:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -370,7 +372,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
     if (!reviewToReject) return;
 
     if (!rejectReason.trim()) {
-      alert('Inserisci la motivazione del rifiuto');
+      showToast('Inserisci la motivazione del rifiuto', 'info');
       return;
     }
 
@@ -398,7 +400,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
         }
       }
 
-      alert('Recensione rifiutata.');
+      showToast('Recensione rifiutata.', 'info');
       setShowRejectModal(false);
       setRejectReason('');
       setReviewToReject(null);
@@ -406,7 +408,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
       setSelectedReview(null);
     } catch (error: any) {
       console.error('Error rejecting review:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 

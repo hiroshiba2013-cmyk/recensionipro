@@ -20,6 +20,7 @@ import { PlatformMessagesSection } from '../components/admin/PlatformMessagesSec
 import { PlansSection } from '../components/admin/PlansSection';
 import { RulesSection } from '../components/admin/RulesSection';
 import AuctionsSection from '../components/admin/AuctionsSection';
+import { useToast } from '../components/common/Toast';
 
 interface DashboardStats {
   totalUsers: number;
@@ -226,6 +227,7 @@ interface Product {
 }
 
 export function AdminDashboardPage() {
+  const { showToast } = useToast();
   const { profile, user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [statsPeriod, setStatsPeriod] = useState<number | null>(null); // null = tutti i tempi
@@ -308,7 +310,7 @@ export function AdminDashboardPage() {
         console.log('User is not an admin, redirecting to admin login');
         // Sign out the user first
         await supabase.auth.signOut();
-        alert('Non hai i permessi di amministratore. Effettua il logout e accedi con un account admin.');
+        showToast('Non hai i permessi di amministratore. Effettua il logout e accedi con un account admin.', 'info');
         window.location.href = '/admin-login';
         return;
       }
@@ -837,13 +839,13 @@ export function AdminDashboardPage() {
 
       if (error) throw error;
 
-      alert('Recensione approvata con successo!');
+      showToast('Recensione approvata con successo!', 'success');
       await loadPendingReviews();
       await loadPendingCounts();
       setSelectedReview(null);
     } catch (error: any) {
       console.error('Error approving review:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -856,13 +858,13 @@ export function AdminDashboardPage() {
 
       if (error) throw error;
 
-      alert('Recensione rifiutata');
+      showToast('Recensione rifiutata', 'info');
       await loadPendingReviews();
       await loadPendingCounts();
       setSelectedReview(null);
     } catch (error: any) {
       console.error('Error rejecting review:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -881,11 +883,11 @@ export function AdminDashboardPage() {
 
       if (error) throw error;
 
-      alert(`Stato admin ${!currentStatus ? 'abilitato' : 'disabilitato'} con successo`);
+      showToast(`Stato admin ${!currentStatus ? 'abilitato' : 'disabilitato'} con successo`, 'success');
       await loadUsers();
     } catch (error: any) {
       console.error('Error updating admin status:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -901,11 +903,11 @@ export function AdminDashboardPage() {
 
       if (error) throw error;
 
-      alert('Utente eliminato con successo');
+      showToast('Utente eliminato con successo', 'success');
       await loadUsers();
     } catch (error: any) {
       console.error('Error deleting user:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -918,11 +920,11 @@ export function AdminDashboardPage() {
 
       if (error) throw error;
 
-      alert('Stato abbonamento aggiornato con successo');
+      showToast('Stato abbonamento aggiornato con successo', 'success');
       await loadSubscriptions();
     } catch (error: any) {
       console.error('Error updating subscription:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -965,7 +967,7 @@ export function AdminDashboardPage() {
       }
     } catch (error: any) {
       console.error('Error loading subscription details:', error);
-      alert(`Errore nel caricamento dei dettagli: ${error.message}`);
+      showToast(`Errore nel caricamento dei dettagli: ${error.message}`, 'error');
     } finally {
       setLoadingDetails(false);
     }
@@ -986,11 +988,11 @@ export function AdminDashboardPage() {
 
       if (error) throw error;
 
-      alert('Stato annuncio aggiornato con successo');
+      showToast('Stato annuncio aggiornato con successo', 'success');
       await loadClassifiedAds();
     } catch (error: any) {
       console.error('Error updating ad:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 

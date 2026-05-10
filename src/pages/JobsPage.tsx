@@ -8,6 +8,7 @@ import { JobSeekerCard } from '../components/jobs/JobSeekerCard';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
 import { ItalianCityProvinceSelect } from '../components/common/ItalianCityProvinceSelect';
 import { ITALIAN_REGIONS } from '../lib/cities';
+import { useToast } from '../components/common/Toast';
 
 interface JobPosting {
   id: string;
@@ -81,6 +82,7 @@ interface SearchFilters {
 }
 
 export function JobsPage() {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'offers' | 'seekers'>('offers');
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [jobSeekers, setJobSeekers] = useState<JobSeeker[]>([]);
@@ -371,12 +373,12 @@ export function JobsPage() {
 
   const handleContactJobSeeker = async (jobSeekerId: string) => {
     if (!user) {
-      alert('Devi accedere per contattare');
+      showToast('Devi accedere per contattare', 'info');
       return;
     }
 
     if (profile?.user_type !== 'business') {
-      alert('Solo gli utenti professionali possono contattare chi cerca lavoro');
+      showToast('Solo gli utenti professionali possono contattare chi cerca lavoro', 'info');
       return;
     }
 
@@ -402,18 +404,18 @@ export function JobsPage() {
       window.location.href = `/messages?conversation=${conversationId}`;
     } catch (error) {
       console.error('Error creating conversation:', error);
-      alert('Errore nell\'apertura della chat');
+      showToast('Errore nell\'apertura della chat', 'error');
     }
   };
 
   const handleContactEmployer = async (jobId: string) => {
     if (!user) {
-      alert('Devi accedere per contattare');
+      showToast('Devi accedere per contattare', 'info');
       return;
     }
 
     if (profile?.user_type === 'business') {
-      alert('Solo gli utenti privati possono contattare per offerte di lavoro');
+      showToast('Solo gli utenti privati possono contattare per offerte di lavoro', 'info');
       return;
     }
 
@@ -421,7 +423,7 @@ export function JobsPage() {
       const job = jobs.find(j => j.id === jobId);
       const jobOwner = job?.business ?? job?.registered_business;
       if (!job || !jobOwner) {
-        alert('Informazioni sul datore di lavoro non disponibili');
+        showToast('Informazioni sul datore di lavoro non disponibili', 'info');
         return;
       }
 
@@ -443,7 +445,7 @@ export function JobsPage() {
       window.location.href = `/messages?conversation=${conversationId}`;
     } catch (error) {
       console.error('Error creating conversation:', error);
-      alert('Errore nell\'apertura della chat');
+      showToast('Errore nell\'apertura della chat', 'error');
     }
   };
 

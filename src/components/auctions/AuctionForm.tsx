@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ITALIAN_REGIONS } from '../../lib/cities';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
+import { useToast } from '../common/Toast';
 
 interface AuctionFormProps {
   onSuccess?: () => void;
@@ -44,6 +45,7 @@ const durations = [
 ];
 
 export default function AuctionForm({ onSuccess, onCancel, businessLocationId, isRegisteredBusiness }: AuctionFormProps) {
+  const { showToast } = useToast();
   const { user, profile, activeProfile } = useAuth();
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
@@ -160,7 +162,7 @@ export default function AuctionForm({ onSuccess, onCancel, businessLocationId, i
 
       if (insertError) throw insertError;
 
-      alert('Asta creata con successo! Sarà visibile dopo l\'approvazione da parte dell\'amministratore.');
+      showToast('Asta creata con successo! Sarà visibile dopo l\'approvazione da parte dell\'amministratore.', 'success');
       onSuccess?.();
     } catch (err: any) {
       setError(err.message);

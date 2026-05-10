@@ -21,6 +21,7 @@ import { DeleteAccountButton } from '../components/profile/DeleteAccountButton';
 import { PinSetup } from '../components/profile/PinSetup';
 import { ReviewForm } from '../components/reviews/ReviewForm';
 import { UserAuctionsSection } from '../components/auctions/UserAuctionsSection';
+import { useToast } from '../components/common/Toast';
 
 interface Profile {
   id: string;
@@ -190,6 +191,7 @@ interface FamilyMember {
 }
 
 export function ProfilePage() {
+  const { showToast } = useToast();
   const { user, signOut, activeProfile, selectedBusinessLocationId, setActiveProfile } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -281,21 +283,11 @@ export function ProfilePage() {
     const { data: reviewsData } = await reviewsQuery;
 
     if (reviewsData) {
-      console.log('📝 Loading customer reviews:', reviewsData.length);
-      const reviewsWithBusinessNames = await Promise.all(
+      const reviewsWithBusinessNames = await Promise.allSettled(
         reviewsData.map(async (review) => {
           let businessName = 'Attività';
           let locationInfo = null;
 
-          console.log('🔍 Review IDs:', {
-            business_id: review.business_id,
-            imported_business_id: review.imported_business_id,
-            user_added_business_id: review.user_added_business_id,
-            unclaimed_business_location_id: review.unclaimed_business_location_id,
-            business_location_id: review.business_location_id
-          });
-
-          // Prova prima con unclaimed_business_location_id (nuovo sistema)
           if (review.unclaimed_business_location_id) {
             const { data: location } = await supabase
               .from('unclaimed_business_locations')
@@ -314,9 +306,7 @@ export function ProfilePage() {
               .maybeSingle();
             if (business) {
               businessName = business.name;
-              if (business.city) {
-                locationInfo = { city: business.city };
-              }
+              if (business.city) locationInfo = { city: business.city };
             }
           } else if (review.imported_business_id) {
             const { data: business } = await supabase
@@ -326,9 +316,7 @@ export function ProfilePage() {
               .maybeSingle();
             if (business) {
               businessName = business.name;
-              if (business.city) {
-                locationInfo = { city: business.city };
-              }
+              if (business.city) locationInfo = { city: business.city };
             }
           } else if (review.user_added_business_id) {
             const { data: business } = await supabase
@@ -338,13 +326,10 @@ export function ProfilePage() {
               .maybeSingle();
             if (business) {
               businessName = business.name;
-              if (business.city) {
-                locationInfo = { city: business.city };
-              }
+              if (business.city) locationInfo = { city: business.city };
             }
           }
 
-          // Recupera info sulla sede specifica se disponibile
           if (review.business_location_id) {
             const { data: location } = await supabase
               .from('business_locations')
@@ -352,27 +337,19 @@ export function ProfilePage() {
               .eq('id', review.business_location_id)
               .maybeSingle();
             if (location) {
-              // Usa il nome del business se disponibile
-              if (location.business && location.business.name) {
-                businessName = location.business.name;
-              }
-              locationInfo = {
-                name: location.internal_name || location.name,
-                city: location.city
-              };
+              const biz = location.business as { name?: string } | null;
+              if (biz?.name) businessName = biz.name;
+              locationInfo = { name: location.internal_name || location.name, city: location.city };
             }
           }
 
-          console.log('✅ Business name resolved:', businessName);
-
-          return {
-            ...review,
-            business: { name: businessName },
-            location_info: locationInfo
-          };
+          return { ...review, business: { name: businessName }, location_info: locationInfo };
         })
       );
-      setReviews(reviewsWithBusinessNames);
+      const resolved = reviewsWithBusinessNames
+        .filter((r): r is PromiseFulfilledResult<typeof r extends PromiseFulfilledResult<infer T> ? T : never> => r.status === 'fulfilled')
+        .map(r => r.value);
+      setReviews(resolved);
     }
 
     await loadClassifiedAds();
@@ -1044,11 +1021,11 @@ export function ProfilePage() {
 
       if (error) throw error;
 
-      alert('Recensione eliminata con successo!');
+      showToast('Recensione eliminata con successo!', 'success');
       loadProfileData();
     } catch (error) {
       console.error('Error deleting review:', error);
-      alert('Errore durante l\'eliminazione della recensione');
+      showToast('Errore durante l\'eliminazione della recensione', 'error');
     }
   };
 
@@ -1066,11 +1043,11 @@ export function ProfilePage() {
 
       if (error) throw error;
 
-      alert('Annuncio eliminato con successo!');
+      showToast('Annuncio eliminato con successo!', 'success');
       loadClassifiedAds();
     } catch (error) {
       console.error('Error deleting ad:', error);
-      alert('Errore durante l\'eliminazione dell\'annuncio');
+      showToast('Errore durante l\'eliminazione dell\'annuncio', 'error');
     }
   };
 

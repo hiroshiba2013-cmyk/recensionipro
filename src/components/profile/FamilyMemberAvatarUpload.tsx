@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Camera, Upload, Loader } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../common/Toast';
 
 interface FamilyMemberAvatarUploadProps {
   memberId: string;
@@ -13,6 +14,7 @@ export function FamilyMemberAvatarUpload({
   currentAvatarUrl,
   onAvatarUpdate
 }: FamilyMemberAvatarUploadProps) {
+  const { showToast } = useToast();
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -22,12 +24,12 @@ export function FamilyMemberAvatarUpload({
       if (!file) return;
 
       if (!file.type.startsWith('image/')) {
-        alert('Per favore seleziona un file immagine');
+        showToast('Per favore seleziona un file immagine', 'info');
         return;
       }
 
       if (file.size > 5 * 1024 * 1024) {
-        alert('Il file è troppo grande. Massimo 5MB');
+        showToast('Il file è troppo grande. Massimo 5MB', 'info');
         return;
       }
 
@@ -56,7 +58,7 @@ export function FamilyMemberAvatarUpload({
       onAvatarUpdate(publicUrl);
     } catch (error) {
       console.error('Error uploading avatar:', error);
-      alert('Errore durante il caricamento dell\'immagine');
+      showToast('Errore durante il caricamento dell\'immagine', 'error');
     } finally {
       setUploading(false);
     }

@@ -1,10 +1,11 @@
-// build: 20260506-v3
+// build: 20260510-v4
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { Router } from './components/Router';
 import { CookieBanner } from './components/common/CookieBanner';
+import { ToastProvider } from './components/common/Toast';
 
 function AppContent() {
   const { user, profile } = useAuth();
@@ -28,7 +29,9 @@ function App() {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <AppContent />
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
       </AuthProvider>
     </LanguageProvider>
   );

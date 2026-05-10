@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Trash2, AlertTriangle, Shield } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../common/Toast';
 
 interface DeleteAdminAccountButtonProps {
   adminId: string;
@@ -8,6 +9,7 @@ interface DeleteAdminAccountButtonProps {
 }
 
 export function DeleteAdminAccountButton({ adminId, adminEmail }: DeleteAdminAccountButtonProps) {
+  const { showToast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState('');
   const [confirmText, setConfirmText] = useState('');
@@ -37,7 +39,7 @@ export function DeleteAdminAccountButton({ adminId, adminEmail }: DeleteAdminAcc
 
       if (deleteError) throw deleteError;
 
-      alert('Account admin eliminato con successo');
+      showToast('Account admin eliminato con successo', 'success');
 
       await supabase.auth.signOut();
       localStorage.clear();

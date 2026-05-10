@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Upload, X, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../common/Toast';
 
 interface SolidaryDocumentUploadFormProps {
   onDocumentUploaded: () => void;
@@ -12,6 +13,7 @@ export function SolidaryDocumentUploadForm({
   onDocumentUploaded,
   onCancel,
 }: SolidaryDocumentUploadFormProps) {
+  const { showToast } = useToast();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -28,7 +30,7 @@ export function SolidaryDocumentUploadForm({
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       if (selectedFile.size > 10 * 1024 * 1024) {
-        alert('Il file non può superare i 10MB');
+        showToast('Il file non può superare i 10MB', 'info');
         return;
       }
       setFile(selectedFile);
@@ -71,11 +73,11 @@ export function SolidaryDocumentUploadForm({
 
       if (insertError) throw insertError;
 
-      alert('Documento caricato con successo!');
+      showToast('Documento caricato con successo!', 'success');
       onDocumentUploaded();
     } catch (error: any) {
       console.error('Error uploading document:', error);
-      alert(error.message || 'Errore durante il caricamento del documento');
+      showToast(error.message || 'Errore durante il caricamento del documento', 'error');
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,7 @@ import { Plus, X, Award, MapPin, Phone, Mail, Globe, User, FileEdit as Edit2, Tr
 import { supabase, BusinessCategory } from '../../lib/supabase';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { ITALIAN_REGIONS } from '../../lib/cities';
+import { useToast } from '../common/Toast';
 
 const PROVINCE_NAMES: Record<string, string> = {
   'AG': 'Agrigento', 'AL': 'Alessandria', 'AN': 'Ancona', 'AR': 'Arezzo',
@@ -59,6 +60,7 @@ interface UserAddedBusiness {
 }
 
 export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onSuccess }: AddUnclaimedBusinessFormProps) {
+  const { showToast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<BusinessCategory[]>([]);
@@ -214,7 +216,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
         .maybeSingle();
 
       if (existingBusiness) {
-        alert(`L'attività "${existingBusiness.name}" è già presente nel database!`);
+        showToast(`L'attività "${existingBusiness.name}" è già presente nel database!`, 'info');
         setLoading(false);
         return;
       }
@@ -229,7 +231,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
         .maybeSingle();
 
       if (claimedBusiness) {
-        alert(`L'attività "${claimedBusiness.name}" è già stata rivendicata ed è presente nel sistema!`);
+        showToast(`L'attività "${claimedBusiness.name}" è già stata rivendicata ed è presente nel sistema!`, 'info');
         setLoading(false);
         return;
       }
@@ -290,7 +292,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
       onSuccess();
     } catch (error) {
       console.error('Error adding business:', error);
-      alert('Errore durante l\'aggiunta dell\'attività');
+      showToast('Errore durante l\'aggiunta dell\'attività', 'error');
     } finally {
       setLoading(false);
     }
@@ -375,7 +377,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
       onSuccess();
     } catch (error) {
       console.error('Error updating business:', error);
-      alert('Errore durante l\'aggiornamento dell\'attività');
+      showToast('Errore durante l\'aggiornamento dell\'attività', 'error');
     } finally {
       setLoading(false);
     }
@@ -408,7 +410,7 @@ export function AddUnclaimedBusinessForm({ customerId, activeFamilyMemberId, onS
       onSuccess();
     } catch (error) {
       console.error('Error deleting business:', error);
-      alert('Errore durante l\'eliminazione dell\'attività');
+      showToast('Errore durante l\'eliminazione dell\'attività', 'error');
     }
   };
 

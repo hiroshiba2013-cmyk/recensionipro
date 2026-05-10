@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FileEdit as Edit, Save, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
+import { useToast } from '../common/Toast';
 
 interface ProfileData {
   id: string;
@@ -47,6 +48,7 @@ interface Category {
 }
 
 export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
+  const { showToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -156,7 +158,7 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
       onUpdate();
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Errore durante il salvataggio');
+      showToast('Errore durante il salvataggio', 'error');
     } finally {
       setSaving(false);
     }

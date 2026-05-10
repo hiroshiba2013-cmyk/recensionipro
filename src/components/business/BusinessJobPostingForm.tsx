@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Briefcase, Plus, X, FileEdit as Edit, Trash2, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
+import { useToast } from '../common/Toast';
 
 interface JobPosting {
   id: string;
@@ -38,6 +39,7 @@ interface BusinessJobPostingFormProps {
 }
 
 export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegisteredBusiness: isRegisteredProp = false }: BusinessJobPostingFormProps) {
+  const { showToast } = useToast();
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -186,14 +188,14 @@ export function BusinessJobPostingForm({ businessId, selectedLocationId, isRegis
           });
 
         if (error) throw error;
-        alert('Annuncio di lavoro inviato con successo! Sarà visibile dopo l\'approvazione da parte dell\'amministratore.');
+        showToast('Annuncio di lavoro inviato con successo! Sarà visibile dopo l\'approvazione da parte dell\'amministratore.', 'success');
       }
 
       resetForm();
       loadJobPostings();
     } catch (error) {
       console.error('Error saving job posting:', error);
-      alert('Errore durante il salvataggio');
+      showToast('Errore durante il salvataggio', 'error');
     }
   };
 

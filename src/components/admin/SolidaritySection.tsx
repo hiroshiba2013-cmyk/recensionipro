@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Heart, Upload, FileText, Download, Euro, Users, TrendingUp, Calendar, Plus, FileEdit as Edit2, Trash2, X, Building, Globe, Mail, Phone, MapPin } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../common/Toast';
 
 interface SolidarityDocument {
   id: string;
@@ -44,6 +45,7 @@ interface SolidaritySectionProps {
 }
 
 export function SolidaritySection({ onReload }: SolidaritySectionProps) {
+  const { showToast } = useToast();
   const [documents, setDocuments] = useState<SolidarityDocument[]>([]);
   const [organizations, setOrganizations] = useState<CharityOrganization[]>([]);
   const [totalRevenue, setTotalRevenue] = useState<number>(0);
@@ -161,7 +163,7 @@ export function SolidaritySection({ onReload }: SolidaritySectionProps) {
   const handleDocumentUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!documentForm.file) {
-      alert('Seleziona un file');
+      showToast('Seleziona un file', 'info');
       return;
     }
 
@@ -198,7 +200,7 @@ export function SolidaritySection({ onReload }: SolidaritySectionProps) {
 
       if (insertError) throw insertError;
 
-      alert('Documento caricato con successo!');
+      showToast('Documento caricato con successo!', 'success');
       setShowDocumentForm(false);
       setDocumentForm({
         document_type: 'revenue',
@@ -213,7 +215,7 @@ export function SolidaritySection({ onReload }: SolidaritySectionProps) {
       onReload();
     } catch (error: any) {
       console.error('Error uploading document:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     } finally {
       setUploadingDocument(false);
     }
@@ -230,12 +232,12 @@ export function SolidaritySection({ onReload }: SolidaritySectionProps) {
 
       if (error) throw error;
 
-      alert('Documento eliminato');
+      showToast('Documento eliminato', 'success');
       loadDocuments();
       onReload();
     } catch (error: any) {
       console.error('Error deleting document:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -250,14 +252,14 @@ export function SolidaritySection({ onReload }: SolidaritySectionProps) {
           .eq('id', editingOrg.id);
 
         if (error) throw error;
-        alert('Organizzazione aggiornata!');
+        showToast('Organizzazione aggiornata!', 'info');
       } else {
         const { error } = await supabase
           .from('charity_organizations')
           .insert(orgForm);
 
         if (error) throw error;
-        alert('Organizzazione aggiunta!');
+        showToast('Organizzazione aggiunta!', 'info');
       }
 
       setShowOrgForm(false);
@@ -276,7 +278,7 @@ export function SolidaritySection({ onReload }: SolidaritySectionProps) {
       onReload();
     } catch (error: any) {
       console.error('Error saving organization:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -291,12 +293,12 @@ export function SolidaritySection({ onReload }: SolidaritySectionProps) {
 
       if (error) throw error;
 
-      alert('Organizzazione eliminata');
+      showToast('Organizzazione eliminata', 'info');
       loadOrganizations();
       onReload();
     } catch (error: any) {
       console.error('Error deleting organization:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 

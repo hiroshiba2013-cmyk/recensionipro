@@ -3,6 +3,7 @@ import { Users, FileEdit as Edit, Save, X, Plus, Trash2, TrendingUp, AlertTriang
 import { supabase } from '../../lib/supabase';
 import { FamilyMemberAvatarUpload } from './FamilyMemberAvatarUpload';
 import { SearchableSelect } from '../common/SearchableSelect';
+import { useToast } from '../common/Toast';
 
 interface FamilyMember {
   id: string;
@@ -36,6 +37,7 @@ interface EditFamilyMembersFormProps {
 }
 
 export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMembersFormProps) {
+  const { showToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
@@ -184,7 +186,7 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
 
       if (error) {
         console.error('Error deleting family member:', error);
-        alert('Errore durante l\'eliminazione');
+        showToast('Errore durante l\'eliminazione', 'error');
       } else {
         setFamilyMembers(familyMembers.filter(m => m.id !== id));
         const newTotal = familyMembers.filter(m => m.id !== id).length + 1;
@@ -247,7 +249,7 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
       onUpdate();
     } catch (error) {
       console.error('Error updating family members:', error);
-      alert('Errore durante il salvataggio');
+      showToast('Errore durante il salvataggio', 'error');
     } finally {
       setSaving(false);
     }
@@ -288,11 +290,11 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
 
       if (profileError) throw profileError;
 
-      alert('Piano aggiornato con successo! La pagina verrà ricaricata.');
+      showToast('Piano aggiornato con successo! La pagina verrà ricaricata.', 'success');
       window.location.reload();
     } catch (error) {
       console.error('Error upgrading plan:', error);
-      alert('Errore durante l\'aggiornamento del piano');
+      showToast('Errore durante l\'aggiornamento del piano', 'error');
     }
   };
 

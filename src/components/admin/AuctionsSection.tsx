@@ -3,6 +3,7 @@ import { Gavel, Search, Filter, Eye, Trash2, CheckCircle, XCircle, Clock, Trendi
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { AdminLocationFilter } from './AdminLocationFilter';
+import { useToast } from '../common/Toast';
 
 const AUCTION_CATEGORIES = [
   'Elettronica',
@@ -48,6 +49,7 @@ interface Auction {
 }
 
 export default function AuctionsSection() {
+  const { showToast } = useToast();
   const { user } = useAuth();
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -151,7 +153,7 @@ export default function AuctionsSection() {
       loadAuctions();
       loadStats();
     } catch (err: any) {
-      alert('Errore durante l\'approvazione: ' + err.message);
+      showToast('Errore durante l\'approvazione: ' + err.message, 'error');
     } finally {
       setProcessing(null);
     }
@@ -172,7 +174,7 @@ export default function AuctionsSection() {
       loadAuctions();
       loadStats();
     } catch (err: any) {
-      alert('Errore durante il rifiuto: ' + err.message);
+      showToast('Errore durante il rifiuto: ' + err.message, 'error');
     } finally {
       setProcessing(null);
     }
@@ -186,7 +188,7 @@ export default function AuctionsSection() {
       loadAuctions();
       loadStats();
     } catch (err: any) {
-      alert('Errore durante l\'eliminazione: ' + err.message);
+      showToast('Errore durante l\'eliminazione: ' + err.message, 'error');
     }
   };
 

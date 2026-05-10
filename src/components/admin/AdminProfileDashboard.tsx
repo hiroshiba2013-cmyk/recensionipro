@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { User, Calendar, Mail, Shield, Clock, Activity, CheckCircle, MessageSquare, Star, Tag, Briefcase, MapPin, Camera, Upload } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../common/Toast';
 
 interface AdminProfileData {
   id: string;
@@ -40,6 +41,7 @@ interface Props {
 }
 
 export function AdminProfileDashboard({ adminId }: Props) {
+  const { showToast } = useToast();
   const [profileData, setProfileData] = useState<AdminProfileData | null>(null);
   const [adminData, setAdminData] = useState<AdminData | null>(null);
   const [loginLogs, setLoginLogs] = useState<AdminLoginLog[]>([]);
@@ -115,12 +117,12 @@ export function AdminProfileDashboard({ adminId }: Props) {
       if (!file) return;
 
       if (!file.type.startsWith('image/')) {
-        alert('Seleziona un file immagine valido');
+        showToast('Seleziona un file immagine valido', 'info');
         return;
       }
 
       if (file.size > 5 * 1024 * 1024) {
-        alert('Il file deve essere inferiore a 5MB');
+        showToast('Il file deve essere inferiore a 5MB', 'info');
         return;
       }
 
@@ -147,10 +149,10 @@ export function AdminProfileDashboard({ adminId }: Props) {
       if (updateError) throw updateError;
 
       setAdminData(prev => prev ? { ...prev, avatar_url: publicUrl } : null);
-      alert('Avatar aggiornato con successo!');
+      showToast('Avatar aggiornato con successo!', 'success');
     } catch (error) {
       console.error('Error uploading avatar:', error);
-      alert('Errore durante il caricamento dell\'avatar');
+      showToast('Errore durante il caricamento dell\'avatar', 'error');
     } finally {
       setUploading(false);
     }
@@ -158,7 +160,7 @@ export function AdminProfileDashboard({ adminId }: Props) {
 
   const handleNicknameUpdate = async () => {
     if (!newNickname.trim()) {
-      alert('Inserisci un nickname valido');
+      showToast('Inserisci un nickname valido', 'info');
       return;
     }
 
@@ -172,10 +174,10 @@ export function AdminProfileDashboard({ adminId }: Props) {
 
       setAdminData(prev => prev ? { ...prev, nickname: newNickname.trim() } : null);
       setEditingNickname(false);
-      alert('Nickname aggiornato con successo!');
+      showToast('Nickname aggiornato con successo!', 'success');
     } catch (error) {
       console.error('Error updating nickname:', error);
-      alert('Errore durante l\'aggiornamento del nickname');
+      showToast('Errore durante l\'aggiornamento del nickname', 'error');
     }
   };
 

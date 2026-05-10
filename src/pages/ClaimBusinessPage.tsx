@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Building2, MapPin, CheckCircle, XCircle, ArrowRight, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { ITALIAN_PROVINCES, PROVINCE_TO_CODE } from '../lib/cities';
+import { useToast } from '../components/common/Toast';
 
 interface LocationResult {
   id: string;
@@ -23,6 +24,7 @@ interface LocationResult {
 const PAGE_SIZE = 50;
 
 export function ClaimBusinessPage() {
+  const { showToast } = useToast();
   const [businessName, setBusinessName] = useState('');
   const [address, setAddress] = useState('');
   const [province, setProvince] = useState('');       // nome completo es. "Varese"
@@ -51,7 +53,7 @@ export function ClaimBusinessPage() {
 
   const doSearch = async (p: number) => {
     if (!businessName && !address && !city && !provinceCode) {
-      alert('Inserisci almeno un campo per effettuare la ricerca');
+      showToast('Inserisci almeno un campo per effettuare la ricerca', 'info');
       return;
     }
     setLoading(true);
@@ -69,7 +71,7 @@ export function ClaimBusinessPage() {
 
     if (error) {
       console.error(error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
       setLoading(false);
       return;
     }
@@ -95,7 +97,7 @@ export function ClaimBusinessPage() {
   };
 
   const handleProceed = () => {
-    if (selectedIds.size === 0) { alert('Seleziona almeno una sede da rivendicare'); return; }
+    if (selectedIds.size === 0) { showToast('Seleziona almeno una sede da rivendicare', 'info'); return; }
     const selected = results.filter(r => selectedIds.has(r.id));
     const withSource = selected.map(r => ({ id: r.id, source: r.added_by ? 'user_added' : 'imported' }));
     sessionStorage.setItem('claimLocationIds', JSON.stringify(Array.from(selectedIds)));

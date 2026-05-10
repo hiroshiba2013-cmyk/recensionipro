@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Users, Trash2, Eye, X as CloseIcon, FilterX, Save, FileEdit as Edit, CircleUser as UserCircle, MapPin } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../common/Toast';
 
 interface User {
   id: string;
@@ -61,6 +62,7 @@ interface BusinessLocation {
 }
 
 export default function UsersManagementSection() {
+  const { showToast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
@@ -280,13 +282,13 @@ export default function UsersManagementSection() {
 
       if (error) throw error;
 
-      alert('Membro della famiglia aggiornato con successo!');
+      showToast('Membro della famiglia aggiornato con successo!', 'success');
       setEditingMemberId(null);
       setEditedMember(null);
       await loadFamilyMembers(viewingUser.id);
     } catch (error) {
       console.error('[UsersManagement] Error updating family member:', error);
-      alert('Errore durante l\'aggiornamento del membro della famiglia');
+      showToast('Errore durante l\'aggiornamento del membro della famiglia', 'error');
     }
   };
 
@@ -320,13 +322,13 @@ export default function UsersManagementSection() {
 
       if (error) throw error;
 
-      alert('Sede aggiornata con successo!');
+      showToast('Sede aggiornata con successo!', 'success');
       setEditingLocationId(null);
       setEditedLocation(null);
       await loadBusinessLocations(viewingUser.id);
     } catch (error) {
       console.error('[UsersManagement] Error updating location:', error);
-      alert('Errore durante l\'aggiornamento della sede');
+      showToast('Errore durante l\'aggiornamento della sede', 'error');
     }
   };
 
@@ -365,13 +367,13 @@ export default function UsersManagementSection() {
 
       if (error) throw error;
 
-      alert('Utente aggiornato con successo!');
+      showToast('Utente aggiornato con successo!', 'success');
       setViewingUser(editedUser);
       setIsEditing(false);
       await loadUsers();
     } catch (error) {
       console.error('[UsersManagement] Error updating user:', error);
-      alert('Errore durante l\'aggiornamento dell\'utente');
+      showToast('Errore durante l\'aggiornamento dell\'utente', 'error');
     } finally {
       setSaving(false);
     }
@@ -389,12 +391,12 @@ export default function UsersManagementSection() {
 
       if (error) throw error;
 
-      alert('Utente eliminato con successo!');
+      showToast('Utente eliminato con successo!', 'success');
       setViewingUser(null);
       await loadUsers();
     } catch (error: any) {
       console.error('[UsersManagement] Error deleting user:', error);
-      alert(`Errore durante l'eliminazione: ${error.message}`);
+      showToast(`Errore durante l'eliminazione: ${error.message}`, 'error');
     }
   };
 

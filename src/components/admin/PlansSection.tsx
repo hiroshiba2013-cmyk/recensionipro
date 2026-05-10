@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CreditCard, FileEdit as Edit, Save, X, CheckCircle, Users, Clock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../common/Toast';
 
 interface Plan {
   id: string;
@@ -37,6 +38,7 @@ interface PlansSectionProps {
 }
 
 export function PlansSection({ adminId }: PlansSectionProps) {
+  const { showToast } = useToast();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +63,7 @@ export function PlansSection({ adminId }: PlansSectionProps) {
       setPlans(data || []);
     } catch (error: any) {
       console.error('Error loading plans:', error);
-      alert('Errore nel caricamento dei piani');
+      showToast('Errore nel caricamento dei piani', 'error');
     } finally {
       setLoading(false);
     }
@@ -188,7 +190,7 @@ export function PlansSection({ adminId }: PlansSectionProps) {
       console.log('=== FINE CARICAMENTO ABBONAMENTI ===');
     } catch (error: any) {
       console.error('❌ ERRORE FINALE:', error);
-      alert(`Errore caricamento abbonamenti: ${error.message}`);
+      showToast(`Errore caricamento abbonamenti: ${error.message}`, 'error');
     }
   };
 
@@ -209,12 +211,12 @@ export function PlansSection({ adminId }: PlansSectionProps) {
 
       if (error) throw error;
 
-      alert('Piano aggiornato con successo!');
+      showToast('Piano aggiornato con successo!', 'success');
       setEditingPlan(null);
       loadPlans();
     } catch (error: any) {
       console.error('Error saving plan:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     } finally {
       setSaving(false);
     }

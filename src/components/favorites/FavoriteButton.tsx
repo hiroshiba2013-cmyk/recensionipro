@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../common/Toast';
 
 interface FavoriteButtonProps {
   type: 'business' | 'ad' | 'job';
@@ -24,6 +25,7 @@ export function FavoriteButton({
   isUnclaimedBusiness = false,
   isClaimedBusinessLocation = false
 }: FavoriteButtonProps) {
+  const { showToast } = useToast();
   const { user } = useAuth();
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -78,7 +80,7 @@ export function FavoriteButton({
     e.stopPropagation();
 
     if (!user) {
-      alert('Devi effettuare il login per aggiungere ai preferiti');
+      showToast('Devi effettuare il login per aggiungere ai preferiti', 'info');
       return;
     }
 
@@ -145,7 +147,7 @@ export function FavoriteButton({
       }
     } catch (error: any) {
       console.error('Error toggling favorite:', error);
-      alert('Errore durante l\'operazione. Riprova.');
+      showToast('Errore durante l\'operazione. Riprova.', 'error');
     } finally {
       setLoading(false);
     }

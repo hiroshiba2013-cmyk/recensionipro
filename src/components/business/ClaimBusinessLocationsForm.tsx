@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, MapPin, CheckCircle2, Building2, X, CreditCard, TrendingUp } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { getPlanSummary } from '../../lib/subscription-helper';
+import { useToast } from '../common/Toast';
 
 interface UnclaimedLocation {
   id: string;
@@ -26,6 +27,7 @@ export function ClaimBusinessLocationsForm({
   onLocationsSelected,
   onCancel
 }: ClaimBusinessLocationsFormProps) {
+  const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<UnclaimedLocation[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<UnclaimedLocation[]>([]);
@@ -48,7 +50,7 @@ export function ClaimBusinessLocationsForm({
       setSearchResults(data || []);
     } catch (error) {
       console.error('Error searching locations:', error);
-      alert('Errore durante la ricerca delle sedi');
+      showToast('Errore durante la ricerca delle sedi', 'error');
     } finally {
       setSearching(false);
     }
@@ -71,7 +73,7 @@ export function ClaimBusinessLocationsForm({
 
   const handleConfirm = () => {
     if (selectedLocations.length === 0) {
-      alert('Seleziona almeno una sede da rivendicare');
+      showToast('Seleziona almeno una sede da rivendicare', 'info');
       return;
     }
     onLocationsSelected(selectedLocations, billingPeriod);

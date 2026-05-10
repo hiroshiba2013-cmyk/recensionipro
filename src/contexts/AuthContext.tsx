@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase, Profile, FamilyMember } from '../lib/supabase';
+import { storageGet, storageSet, storageRemove } from '../lib/storage';
 
 export interface CustomerData {
   firstName: string;
@@ -86,12 +87,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [activeProfile, setActiveProfileState] = useState<ActiveProfile | null>(null);
   const [needsProfileSelection, setNeedsProfileSelection] = useState(false);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    let mounted = true;
+    mountedRef.current = true;
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
+      if (!mountedRef.current) return;
       setUser(session?.user ?? null);
       if (session?.user) {
         loadProfile(session.user.id);
@@ -101,10 +103,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return;
+      if (!mountedRef.current) return;
       (async () => {
-        if (!mounted) return;
+        if (!mountedRef.current) return;
         if (event === 'SIGNED_OUT' || !session?.user) {
+          if (!mountedRef.current) return;
           setUser(null);
           setProfile(null);
           setFamilyMembers([]);
@@ -113,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setNeedsProfileSelection(false);
           setLoading(false);
         } else {
+          if (!mountedRef.current) return;
           setUser(session.user);
           await loadProfile(session.user.id);
         }
@@ -120,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => {
-      mounted = false;
+      mountedRef.current = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -149,8 +153,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const ownerProfile: ActiveProfile = {
           id: userId,
           name: data?.full_name || '',
-          nickname: (data as any)?.nickname,
-          avatarUrl: (data as any)?.avatar_url,
+          nickname: data?.nickname,
+          avatarUrl: data?.avatar_url,
           isOwner: true,
         };
         setActiveProfileState(ownerProfile);
@@ -171,16 +175,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setFamilyMembers(members || []);
 
-      const savedProfileId = localStorage.getItem(`activeProfile_${userId}`);
-      const savedIsOwner = localStorage.getItem(`activeProfileIsOwner_${userId}`) === 'true';
+      const savedProfileId = storageGet(`activeProfile_${userId}`);
+      const savedIsOwner = storageGet(`activeProfileIsOwner_${userId}`) === 'true';
 
       if (savedProfileId) {
         if (savedIsOwner) {
           setActiveProfileState({
             id: userId,
             name: profileData.full_name,
-            nickname: (profileData as any)?.nickname,
-            avatarUrl: (profileData as any)?.avatar_url,
+            nickname: profileData?.nickname,
+            avatarUrl: profileData?.avatar_url,
             isOwner: true,
           });
           setNeedsProfileSelection(false);
@@ -206,8 +210,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setActiveProfileState({
             id: userId,
             name: profileData.full_name,
-            nickname: (profileData as any)?.nickname,
-            avatarUrl: (profileData as any)?.avatar_url,
+            nickname: profileData?.nickname,
+            avatarUrl: profileData?.avatar_url,
             isOwner: true,
           });
         }
@@ -251,8 +255,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const ownerProfile: ActiveProfile = {
           id: userId,
           name: profileData.full_name,
-          nickname: (profileData as any)?.nickname,
-          avatarUrl: (profileData as any)?.avatar_url,
+          nickname: profileData?.nickname,
+          avatarUrl: profileData?.avatar_url,
           isOwner: true,
         };
         setActiveProfileState(ownerProfile);
@@ -279,24 +283,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setActiveProfileState({
           id: userId,
           name: profileData.full_name,
-          nickname: (profileData as any)?.nickname,
-          avatarUrl: (profileData as any)?.avatar_url,
+          nickname: profileData?.nickname,
+          avatarUrl: profileData?.avatar_url,
           isOwner: true,
         });
-        localStorage.setItem(`activeLocation_${userId}`, userId);
-        localStorage.setItem(`activeLocationIsOwner_${userId}`, 'true');
+        storageSet(`activeLocation_${userId}`, userId);
+        storageSet(`activeLocationIsOwner_${userId}`, 'true');
         setNeedsProfileSelection(false);
       } else if ((locations?.length || 0) > 1) {
-        const savedLocationId = localStorage.getItem(`activeLocation_${userId}`);
-        const savedIsOwner = localStorage.getItem(`activeLocationIsOwner_${userId}`) === 'true';
+        const savedLocationId = storageGet(`activeLocation_${userId}`);
+        const savedIsOwner = storageGet(`activeLocationIsOwner_${userId}`) === 'true';
 
         if (savedLocationId) {
           if (savedIsOwner) {
             setActiveProfileState({
               id: userId,
               name: profileData.full_name,
-              nickname: (profileData as any)?.nickname,
-              avatarUrl: (profileData as any)?.avatar_url,
+              nickname: profileData?.nickname,
+              avatarUrl: profileData?.avatar_url,
               isOwner: true,
             });
             setNeedsProfileSelection(false);
@@ -323,8 +327,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setActiveProfileState({
           id: userId,
           name: profileData.full_name,
-          nickname: (profileData as any)?.nickname,
-          avatarUrl: (profileData as any)?.avatar_url,
+          nickname: profileData?.nickname,
+          avatarUrl: profileData?.avatar_url,
           isOwner: true,
         });
       }
@@ -420,10 +424,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     if (user?.id) {
-      localStorage.removeItem(`activeProfile_${user.id}`);
-      localStorage.removeItem(`activeProfileIsOwner_${user.id}`);
-      localStorage.removeItem(`activeLocation_${user.id}`);
-      localStorage.removeItem(`activeLocationIsOwner_${user.id}`);
+      storageRemove(`activeProfile_${user.id}`);
+      storageRemove(`activeProfileIsOwner_${user.id}`);
+      storageRemove(`activeLocation_${user.id}`);
+      storageRemove(`activeLocationIsOwner_${user.id}`);
     }
   };
 
@@ -439,18 +443,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const ownerProfile: ActiveProfile = {
         id: user.id,
         name: profile.full_name,
-        nickname: (profile as any)?.nickname,
-        avatarUrl: (profile as any)?.avatar_url,
+        nickname: profile?.nickname,
+        avatarUrl: profile?.avatar_url,
         isOwner: true,
       };
       setActiveProfileState(ownerProfile);
 
       if (profile.user_type === 'customer') {
-        localStorage.setItem(`activeProfile_${user.id}`, user.id);
-        localStorage.setItem(`activeProfileIsOwner_${user.id}`, 'true');
+        storageSet(`activeProfile_${user.id}`, user.id);
+        storageSet(`activeProfileIsOwner_${user.id}`, 'true');
       } else if (profile.user_type === 'business') {
-        localStorage.setItem(`activeLocation_${user.id}`, user.id);
-        localStorage.setItem(`activeLocationIsOwner_${user.id}`, 'true');
+        storageSet(`activeLocation_${user.id}`, user.id);
+        storageSet(`activeLocationIsOwner_${user.id}`, 'true');
       }
     } else {
       if (profile.user_type === 'customer') {
@@ -465,8 +469,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
           setActiveProfileState(memberProfile);
         }
-        localStorage.setItem(`activeProfile_${user.id}`, profileId);
-        localStorage.setItem(`activeProfileIsOwner_${user.id}`, String(isOwner));
+        storageSet(`activeProfile_${user.id}`, profileId);
+        storageSet(`activeProfileIsOwner_${user.id}`, String(isOwner));
       } else if (profile.user_type === 'business') {
         const location = businessLocations.find(l => l.id === profileId);
         if (location) {
@@ -480,8 +484,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
           setActiveProfileState(locationProfile);
         }
-        localStorage.setItem(`activeLocation_${user.id}`, profileId);
-        localStorage.setItem(`activeLocationIsOwner_${user.id}`, String(isOwner));
+        storageSet(`activeLocation_${user.id}`, profileId);
+        storageSet(`activeLocationIsOwner_${user.id}`, String(isOwner));
       }
     }
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Building2, CheckCircle, UserPlus, MapPin, Eye, Trash2, X, Search } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { AdminLocationFilter, LocationFilterState } from './AdminLocationFilter';
+import { useToast } from '../common/Toast';
 
 interface BusinessActivity {
   id: string;
@@ -24,6 +25,7 @@ interface BusinessActivity {
 interface Props { onReload: () => void; }
 
 export function BusinessTrackingSection({ onReload }: Props) {
+  const { showToast } = useToast();
   const [activities, setActivities] = useState<BusinessActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<'all' | 'claimed' | 'user_added' | 'imported' | 'registered'>('all');
@@ -87,7 +89,7 @@ export function BusinessTrackingSection({ onReload }: Props) {
       onReload();
       setSelectedBusiness(null);
     } catch (err: any) {
-      alert(`Errore: ${err.message}`);
+      showToast(`Errore: ${err.message}`, 'error');
     }
   };
 

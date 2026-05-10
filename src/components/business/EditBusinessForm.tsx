@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FileEdit as Edit, Save, X, Building2, User } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../common/Toast';
 
 interface BusinessData {
   id: string;
@@ -62,6 +63,7 @@ interface EditBusinessFormProps {
 }
 
 export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: EditBusinessFormProps) {
+  const { showToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -162,7 +164,7 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
       const { data: { user: currentUser } } = await supabase.auth.getUser();
 
       if (!currentUser || !business || business.owner_id !== currentUser.id) {
-        alert('Non hai i permessi per modificare questa attività');
+        showToast('Non hai i permessi per modificare questa attività', 'info');
         setSaving(false);
         return;
       }
@@ -302,7 +304,7 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
       onUpdate();
     } catch (error) {
       console.error('Error updating business:', error);
-      alert('Errore durante il salvataggio');
+      showToast('Errore durante il salvataggio', 'error');
     } finally {
       setSaving(false);
     }

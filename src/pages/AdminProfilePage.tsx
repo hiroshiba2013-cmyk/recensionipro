@@ -3,6 +3,7 @@ import { User, Calendar, Mail, Shield, Clock, LogOut, CheckCircle, XCircle, File
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { DeleteAdminAccountButton } from '../components/admin/DeleteAdminAccountButton';
+import { useToast } from '../components/common/Toast';
 
 interface AdminProfileData {
   id: string;
@@ -27,6 +28,7 @@ interface AdminLoginLog {
 }
 
 export function AdminProfilePage() {
+  const { showToast } = useToast();
   const { user, profile } = useAuth();
   const [profileData, setProfileData] = useState<AdminProfileData | null>(null);
   const [loginLogs, setLoginLogs] = useState<AdminLoginLog[]>([]);
@@ -144,12 +146,12 @@ export function AdminProfilePage() {
 
       if (error) throw error;
 
-      alert('Profilo aggiornato con successo!');
+      showToast('Profilo aggiornato con successo!', 'success');
       setIsEditing(false);
       await loadAdminData();
     } catch (error: any) {
       console.error('Error updating profile:', error);
-      alert(`Errore: ${error.message}`);
+      showToast(`Errore: ${error.message}`, 'error');
     }
   };
 
@@ -158,12 +160,12 @@ export function AdminProfilePage() {
     if (!file || !user) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('Per favore seleziona un file immagine');
+      showToast('Per favore seleziona un file immagine', 'info');
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('Il file è troppo grande. Massimo 5MB');
+      showToast('Il file è troppo grande. Massimo 5MB', 'info');
       return;
     }
 
@@ -192,10 +194,10 @@ export function AdminProfilePage() {
       if (updateError) throw updateError;
 
       await loadAdminData();
-      alert('Avatar aggiornato con successo!');
+      showToast('Avatar aggiornato con successo!', 'success');
     } catch (error: any) {
       console.error('Error uploading avatar:', error);
-      alert(`Errore durante il caricamento: ${error.message}`);
+      showToast(`Errore durante il caricamento: ${error.message}`, 'error');
     } finally {
       setUploading(false);
     }

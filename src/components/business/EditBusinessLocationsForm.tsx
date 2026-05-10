@@ -5,6 +5,7 @@ import { SearchableSelect } from '../common/SearchableSelect';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { BusinessLocationAvatarUpload } from './BusinessLocationAvatarUpload';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../common/Toast';
 
 interface DayHours {
   open: string;
@@ -47,6 +48,7 @@ interface EditBusinessLocationsFormProps {
 }
 
 export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUpdate }: EditBusinessLocationsFormProps) {
+  const { showToast } = useToast();
   const { refreshBusinessLocations } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -193,7 +195,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
     const location = locations.find(l => l.id === id);
 
     if (location?.is_primary && locations.length > 1) {
-      alert('Non puoi rimuovere la sede principale. Imposta prima un\'altra sede come principale.');
+      showToast('Non puoi rimuovere la sede principale. Imposta prima un\'altra sede come principale.', 'error');
       return;
     }
 
@@ -219,7 +221,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
 
       if (error) {
         console.error('Error deleting location:', error);
-        alert('Errore durante l\'eliminazione');
+        showToast('Errore durante l\'eliminazione', 'error');
       } else {
         setLocations(locations.filter(l => l.id !== id));
         onUpdate();
@@ -291,7 +293,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
     }
 
     if (!businessCheck || businessCheck.owner_id !== user?.id) {
-      alert('Non hai i permessi per modificare questa attività');
+      showToast('Non hai i permessi per modificare questa attività', 'info');
       setSaving(false);
       return;
     }
@@ -307,27 +309,27 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
         const email = location.email ?? '';
 
         if (!address.trim()) {
-          alert('Compila l\'indirizzo per tutte le sedi');
+          showToast('Compila l\'indirizzo per tutte le sedi', 'info');
           setSaving(false);
           return;
         }
         if (!city.trim()) {
-          alert('Seleziona la città per tutte le sedi');
+          showToast('Seleziona la città per tutte le sedi', 'info');
           setSaving(false);
           return;
         }
         if (!province.trim()) {
-          alert('Seleziona la provincia per tutte le sedi');
+          showToast('Seleziona la provincia per tutte le sedi', 'info');
           setSaving(false);
           return;
         }
         if (!/^[A-Z]{2}$/.test(province.trim())) {
-          alert('Formato provincia non valido. Seleziona la città dal menu per impostare automaticamente la provincia.');
+          showToast('Formato provincia non valido. Seleziona la città dal menu per impostare automaticamente la provincia.', 'info');
           setSaving(false);
           return;
         }
         if (!postalCode.trim()) {
-          alert('Compila il CAP per tutte le sedi');
+          showToast('Compila il CAP per tutte le sedi', 'info');
           setSaving(false);
           return;
         }
@@ -401,7 +403,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
     } catch (error: any) {
       console.error('Error updating locations:', error);
       const errorMessage = error?.message || 'Errore durante il salvataggio';
-      alert(`Errore durante il salvataggio: ${errorMessage}\n\nAssicurati di aver compilato tutti i campi obbligatori (indirizzo, città, CAP).`);
+      showToast(`Errore durante il salvataggio: ${errorMessage}\n\nAssicurati di aver compilato tutti i campi obbligatori (indirizzo, città, CAP, 'error').`);
     } finally {
       setSaving(false);
     }
