@@ -8,14 +8,17 @@ interface BusinessActivity {
   name: string;
   city: string;
   province: string;
+  region?: string;
   street?: string;
   type: 'claimed' | 'user_added' | 'imported' | 'registered';
   created_at: string;
   verified?: boolean;
   approval_status?: string;
-  owner?: { full_name: string; email: string };
-  added_by?: { full_name: string; email: string };
-  category?: { name: string };
+  category_name?: string;
+  owner_name?: string;
+  owner_email?: string;
+  added_by_name?: string;
+  added_by_email?: string;
 }
 
 interface Props { onReload: () => void; }
@@ -27,192 +30,56 @@ export function BusinessTrackingSection({ onReload }: Props) {
   const [locationFilter, setLocationFilter] = useState<LocationFilterState>({ region: '', province: '', provinceCode: '', city: '' });
   const [nameSearch, setNameSearch] = useState('');
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessActivity | null>(null);
-  const loadingRef = useRef(0);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => { loadActivities(); }, [typeFilter, locationFilter, nameSearch]);
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => { loadActivities(); }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [typeFilter, locationFilter, nameSearch]);
 
   const loadActivities = async () => {
-    const req = ++loadingRef.current;
     setLoading(true);
-    setActivities([]);
     try {
-      const all: BusinessActivity[] = [];
+      const { data, error } = await supabase.rpc('search_business_tracking', {
+        p_type: typeFilter,
+        p_province: locationFilter.provinceCode || null,
+        p_city: locationFilter.city || null,
+        p_region: locationFilter.region || null,
+        p_name: nameSearch || null,
+        p_limit: 300,
+      });
 
-      if (typeFilter === 'all' || typeFilter === 'registered') {
-        let q = supabase
-          .from('registered_businesses')
-          .select(`id, name, verified, created_at, billing_city, billing_province, billing_street,
-            owner:profiles!registered_businesses_owner_id_fkey(full_name, email),
-            category:business_categories(name)`)
-          .order('created_at', { ascending: false })
-          .limit(200);
-
-        if (nameSearch) q = q.ilike('name', `%${nameSearch}%`);
-        if (locationFilter.provinceCode) q = q.eq('billing_province', locationFilter.provinceCode);
-        if (locationFilter.city) q = q.ilike('billing_city', `%${locationFilter.city}%`);
-
-        const { data: registered } = await q;
-        if (registered) {
-          for (const biz of registered) {
-            // Try primary location for better address data
-            const { data: loc } = await supabase
-              .from('registered_business_locations')
-              .select('city, province, street')
-              .eq('business_id', biz.id)
-              .order('is_primary', { ascending: false })
-              .limit(1)
-              .maybeSingle();
-
-            const city = loc?.city || biz.billing_city || '';
-            const province = loc?.province || biz.billing_province || '';
-
-            // If city filter is set, check actual location too
-            if (locationFilter.city) {
-              const matches = city.toLowerCase().includes(locationFilter.city.toLowerCase())
-                || (biz.billing_city || '').toLowerCase().includes(locationFilter.city.toLowerCase());
-              if (!matches) continue;
-            }
-
-            if (locationFilter.region) {
-              // region stored in registered_business_locations
-              if (loc) {
-                const { data: locFull } = await supabase
-                  .from('registered_business_locations')
-                  .select('region')
-                  .eq('business_id', biz.id)
-                  .limit(1)
-                  .maybeSingle();
-                if (locFull?.region && locFull.region !== locationFilter.region) continue;
-              }
-            }
-
-            all.push({
-              id: biz.id, name: biz.name,
-              city, province,
-              street: loc?.street || biz.billing_street || undefined,
-              type: 'registered', created_at: biz.created_at,
-              verified: biz.verified, owner: biz.owner, category: biz.category,
-            });
-          }
-        }
+      if (error) {
+        console.error('search_business_tracking error:', error);
+        setActivities([]);
+      } else {
+        setActivities(data || []);
       }
-
-      if (typeFilter === 'all' || typeFilter === 'user_added') {
-        let q = supabase
-          .from('unclaimed_business_locations')
-          .select(`id, name, city, province, region, street, created_at, added_by, approval_status,
-            category:business_categories(name)`)
-          .not('added_by', 'is', null)
-          .is('claimed_by', null)
-          .order('created_at', { ascending: false })
-          .limit(200);
-
-        if (nameSearch) q = q.ilike('name', `%${nameSearch}%`);
-        if (locationFilter.city) q = q.ilike('city', `%${locationFilter.city}%`);
-        if (locationFilter.provinceCode) q = q.eq('province', locationFilter.provinceCode);
-        if (locationFilter.region) q = q.eq('region', locationFilter.region);
-
-        const { data: userAdded } = await q;
-        if (userAdded) {
-          for (const biz of userAdded) {
-            let adder = null;
-            if (biz.added_by) {
-              const { data: u } = await supabase.from('profiles').select('full_name, email').eq('id', biz.added_by).maybeSingle();
-              adder = u;
-            }
-            all.push({
-              id: biz.id, name: biz.name, city: biz.city, province: biz.province,
-              street: biz.street || undefined, type: 'user_added', created_at: biz.created_at,
-              approval_status: biz.approval_status, added_by: adder || undefined, category: biz.category,
-            });
-          }
-        }
-      }
-
-      if (typeFilter === 'all' || typeFilter === 'imported') {
-        let q = supabase
-          .from('unclaimed_business_locations')
-          .select(`id, name, city, province, region, street, created_at, approval_status,
-            category:business_categories(name)`)
-          .is('added_by', null)
-          .is('claimed_by', null)
-          .order('created_at', { ascending: false })
-          .limit(200);
-
-        if (nameSearch) q = q.ilike('name', `%${nameSearch}%`);
-        if (locationFilter.city) q = q.ilike('city', `%${locationFilter.city}%`);
-        if (locationFilter.provinceCode) q = q.eq('province', locationFilter.provinceCode);
-        if (locationFilter.region) q = q.eq('region', locationFilter.region);
-
-        const { data: imported } = await q;
-        if (imported) {
-          all.push(...imported.map(biz => ({
-            id: biz.id, name: biz.name, city: biz.city, province: biz.province,
-            street: biz.street || undefined, type: 'imported' as const, created_at: biz.created_at,
-            approval_status: biz.approval_status, category: biz.category,
-          })));
-        }
-      }
-
-      if (typeFilter === 'all' || typeFilter === 'claimed') {
-        let q = supabase
-          .from('unclaimed_business_locations')
-          .select(`id, name, city, province, region, street, created_at, claimed_by, approval_status,
-            category:business_categories(name)`)
-          .not('claimed_by', 'is', null)
-          .order('created_at', { ascending: false })
-          .limit(200);
-
-        if (nameSearch) q = q.ilike('name', `%${nameSearch}%`);
-        if (locationFilter.city) q = q.ilike('city', `%${locationFilter.city}%`);
-        if (locationFilter.provinceCode) q = q.eq('province', locationFilter.provinceCode);
-        if (locationFilter.region) q = q.eq('region', locationFilter.region);
-
-        const { data: claimed } = await q;
-        if (claimed) {
-          for (const biz of claimed) {
-            let claimer = null;
-            if (biz.claimed_by) {
-              const { data: u } = await supabase.from('profiles').select('full_name, email').eq('id', biz.claimed_by).maybeSingle();
-              claimer = u;
-            }
-            all.push({
-              id: biz.id, name: biz.name, city: biz.city, province: biz.province,
-              street: biz.street || undefined, type: 'claimed', created_at: biz.created_at,
-              approval_status: biz.approval_status, owner: claimer || undefined, category: biz.category,
-            });
-          }
-        }
-      }
-
-      all.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      if (req !== loadingRef.current) return;
-      setActivities(all);
     } catch (err) {
       console.error('Error loading activities:', err);
+      setActivities([]);
     } finally {
-      if (req === loadingRef.current) setLoading(false);
+      setLoading(false);
     }
   };
 
   const getTypeBadge = (type: string) => {
     switch (type) {
       case 'registered': return { bg: 'bg-blue-100 text-blue-700', label: 'Registrata', icon: <Building2 className="w-3.5 h-3.5" /> };
-      case 'claimed': return { bg: 'bg-green-100 text-green-700', label: 'Rivendicata', icon: <CheckCircle className="w-3.5 h-3.5" /> };
+      case 'claimed':    return { bg: 'bg-green-100 text-green-700', label: 'Rivendicata', icon: <CheckCircle className="w-3.5 h-3.5" /> };
       case 'user_added': return { bg: 'bg-amber-100 text-amber-700', label: 'Aggiunta Utente', icon: <UserPlus className="w-3.5 h-3.5" /> };
-      case 'imported': return { bg: 'bg-gray-100 text-gray-700', label: 'Importata', icon: <MapPin className="w-3.5 h-3.5" /> };
-      default: return { bg: 'bg-gray-100 text-gray-700', label: type, icon: null };
+      case 'imported':   return { bg: 'bg-gray-100 text-gray-700', label: 'Importata', icon: <MapPin className="w-3.5 h-3.5" /> };
+      default:           return { bg: 'bg-gray-100 text-gray-700', label: type, icon: null };
     }
   };
 
   const deleteBusiness = async (business: BusinessActivity) => {
     if (!confirm(`Eliminare "${business.name}"?`)) return;
     try {
-      if (business.type === 'registered') {
-        await supabase.from('registered_businesses').delete().eq('id', business.id);
-      } else {
-        await supabase.from('unclaimed_business_locations').delete().eq('id', business.id);
-      }
+      const table = business.type === 'registered' ? 'registered_businesses' : 'unclaimed_business_locations';
+      const { error } = await supabase.from(table).delete().eq('id', business.id);
+      if (error) throw error;
       loadActivities();
       onReload();
       setSelectedBusiness(null);
@@ -221,12 +88,12 @@ export function BusinessTrackingSection({ onReload }: Props) {
     }
   };
 
-  const hasActiveFilter = locationFilter.region || locationFilter.province || locationFilter.city || nameSearch;
-
   const resetFilters = () => {
     setLocationFilter({ region: '', province: '', provinceCode: '', city: '' });
     setNameSearch('');
   };
+
+  const hasActiveFilter = !!(locationFilter.region || locationFilter.provinceCode || locationFilter.city || nameSearch);
 
   return (
     <div>
@@ -239,7 +106,9 @@ export function BusinessTrackingSection({ onReload }: Props) {
               <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">Monitoraggio</p>
               <div className="flex items-center gap-3">
                 <h2 className="text-2xl font-bold text-white">Attività Commerciali</h2>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white border border-white/20">{activities.length}</span>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white border border-white/20">
+                  {loading ? '...' : activities.length}
+                </span>
               </div>
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -259,12 +128,11 @@ export function BusinessTrackingSection({ onReload }: Props) {
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-gray-700">Filtri di ricerca</span>
           {hasActiveFilter && (
-            <button onClick={resetFilters} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700">
-              <X className="w-3.5 h-3.5" /> Rimuovi tutti i filtri
+            <button onClick={resetFilters} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors">
+              <X className="w-3.5 h-3.5" /> Rimuovi filtri
             </button>
           )}
         </div>
-        {/* Name search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
@@ -275,14 +143,13 @@ export function BusinessTrackingSection({ onReload }: Props) {
             className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
-        {/* Location dropdowns */}
         <AdminLocationFilter value={locationFilter} onChange={setLocationFilter} />
       </div>
 
-      {/* Activity cards */}
+      {/* Results */}
       {loading ? (
         <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-700 mx-auto mb-3"></div>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-700 mx-auto mb-3" />
           <p className="text-sm text-gray-500">Caricamento attività...</p>
         </div>
       ) : activities.length === 0 ? (
@@ -297,39 +164,43 @@ export function BusinessTrackingSection({ onReload }: Props) {
         <div className="space-y-3">
           {activities.map(activity => {
             const badge = getTypeBadge(activity.type);
+            const person = activity.owner_name || activity.added_by_name;
+            const personEmail = activity.owner_email || activity.added_by_email;
             return (
               <div key={`${activity.type}-${activity.id}`} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                   <div className="flex items-start gap-3 flex-1 min-w-0">
                     {activity.verified && <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />}
                     <div className="min-w-0">
                       <div className="text-sm font-semibold text-gray-900 truncate">{activity.name}</div>
-                      {activity.category?.name && (
-                        <div className="text-xs text-blue-600 font-medium mt-0.5">{activity.category.name}</div>
-                      )}
+                      {activity.category_name && <div className="text-xs text-blue-600 font-medium mt-0.5">{activity.category_name}</div>}
                       {activity.street && <div className="text-xs text-gray-500 mt-0.5 truncate">{activity.street}</div>}
                     </div>
                   </div>
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full flex-shrink-0 ${badge.bg}`}>
                     {badge.icon}{badge.label}
                   </span>
-                  <div className="flex-shrink-0 hidden md:block">
-                    <div className="text-sm text-gray-900">{activity.city}</div>
-                    <div className="text-xs text-gray-500">{activity.province}</div>
+                  <div className="flex-shrink-0 hidden md:block text-right">
+                    <div className="text-sm text-gray-900">{activity.city || '—'}</div>
+                    <div className="text-xs text-gray-500">{activity.province || '—'}</div>
                   </div>
-                  <div className="flex-shrink-0 hidden lg:block">
-                    {activity.owner ? (
-                      <div><div className="text-sm font-medium text-gray-900">{activity.owner.full_name}</div><div className="text-xs text-gray-500">{activity.owner.email}</div></div>
-                    ) : activity.added_by ? (
-                      <div><div className="text-sm font-medium text-gray-900">{activity.added_by.full_name}</div><div className="text-xs text-gray-500">{activity.added_by.email}</div></div>
-                    ) : (
-                      <span className="text-sm text-gray-400">Sistema</span>
-                    )}
-                  </div>
-                  <span className="text-sm text-gray-500 flex-shrink-0 hidden sm:block">{new Date(activity.created_at).toLocaleDateString('it-IT')}</span>
+                  {person && (
+                    <div className="flex-shrink-0 hidden lg:block">
+                      <div className="text-sm font-medium text-gray-900">{person}</div>
+                      <div className="text-xs text-gray-500">{personEmail}</div>
+                    </div>
+                  )}
+                  {!person && <span className="text-sm text-gray-400 hidden lg:block flex-shrink-0">Sistema</span>}
+                  <span className="text-sm text-gray-500 flex-shrink-0 hidden sm:block">
+                    {new Date(activity.created_at).toLocaleDateString('it-IT')}
+                  </span>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <button onClick={() => setSelectedBusiness(activity)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Dettagli"><Eye className="w-4 h-4" /></button>
-                    <button onClick={() => deleteBusiness(activity)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Elimina"><Trash2 className="w-4 h-4" /></button>
+                    <button onClick={() => setSelectedBusiness(activity)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Dettagli">
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => deleteBusiness(activity)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Elimina">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -347,28 +218,33 @@ export function BusinessTrackingSection({ onReload }: Props) {
               <button onClick={() => setSelectedBusiness(null)} className="text-white/70 hover:text-white text-2xl font-bold leading-none">×</button>
             </div>
             <div className="p-6 space-y-4">
-              <div><label className="text-sm font-semibold text-gray-700">Nome</label><p className="text-gray-900">{selectedBusiness.name}</p></div>
+              <div><label className="text-sm font-semibold text-gray-700">Nome</label><p className="text-gray-900 mt-0.5">{selectedBusiness.name}</p></div>
               <div>
                 <label className="text-sm font-semibold text-gray-700">Tipo</label>
-                <div className="mt-1">{(() => { const b = getTypeBadge(selectedBusiness.type); return <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full ${b.bg}`}>{b.icon}{b.label}</span>; })()}</div>
+                <div className="mt-1">
+                  {(() => { const b = getTypeBadge(selectedBusiness.type); return <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full ${b.bg}`}>{b.icon}{b.label}</span>; })()}
+                </div>
               </div>
-              {selectedBusiness.category && <div><label className="text-sm font-semibold text-gray-700">Categoria</label><p className="text-gray-900">{selectedBusiness.category.name}</p></div>}
+              {selectedBusiness.category_name && <div><label className="text-sm font-semibold text-gray-700">Categoria</label><p className="text-gray-900 mt-0.5">{selectedBusiness.category_name}</p></div>}
               <div>
-                <label className="text-sm font-semibold text-gray-700">Località</label>
-                <p className="text-gray-900">{selectedBusiness.city}, {selectedBusiness.province}</p>
+                <label className="text-sm font-semibold text-gray-700">Localita</label>
+                <p className="text-gray-900 mt-0.5">{[selectedBusiness.city, selectedBusiness.province].filter(Boolean).join(', ') || '—'}</p>
                 {selectedBusiness.street && <p className="text-sm text-gray-600 mt-1">{selectedBusiness.street}</p>}
               </div>
               {selectedBusiness.approval_status && (
-                <div><label className="text-sm font-semibold text-gray-700">Stato approvazione</label>
+                <div>
+                  <label className="text-sm font-semibold text-gray-700">Stato approvazione</label>
                   <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium mt-1 ${selectedBusiness.approval_status === 'approved' ? 'bg-green-100 text-green-700' : selectedBusiness.approval_status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
                     {selectedBusiness.approval_status === 'approved' ? 'Approvata' : selectedBusiness.approval_status === 'rejected' ? 'Rifiutata' : 'In attesa'}
                   </span>
                 </div>
               )}
-              {selectedBusiness.owner && <div><label className="text-sm font-semibold text-gray-700">Proprietario</label><p className="text-gray-900">{selectedBusiness.owner.full_name}</p><p className="text-sm text-gray-600">{selectedBusiness.owner.email}</p></div>}
-              {selectedBusiness.added_by && <div><label className="text-sm font-semibold text-gray-700">Aggiunto da</label><p className="text-gray-900">{selectedBusiness.added_by.full_name}</p><p className="text-sm text-gray-600">{selectedBusiness.added_by.email}</p></div>}
-              {selectedBusiness.verified !== undefined && <div><label className="text-sm font-semibold text-gray-700">Verificato</label><p className={`font-medium ${selectedBusiness.verified ? 'text-green-600' : 'text-gray-600'}`}>{selectedBusiness.verified ? 'Sì' : 'No'}</p></div>}
-              <div><label className="text-sm font-semibold text-gray-700">Data Creazione</label><p className="text-gray-900">{new Date(selectedBusiness.created_at).toLocaleString('it-IT')}</p></div>
+              {selectedBusiness.owner_name && <div><label className="text-sm font-semibold text-gray-700">Proprietario</label><p className="text-gray-900 mt-0.5">{selectedBusiness.owner_name}</p><p className="text-sm text-gray-600">{selectedBusiness.owner_email}</p></div>}
+              {selectedBusiness.added_by_name && <div><label className="text-sm font-semibold text-gray-700">Aggiunto da</label><p className="text-gray-900 mt-0.5">{selectedBusiness.added_by_name}</p><p className="text-sm text-gray-600">{selectedBusiness.added_by_email}</p></div>}
+              {selectedBusiness.verified !== undefined && selectedBusiness.verified !== null && (
+                <div><label className="text-sm font-semibold text-gray-700">Verificato</label><p className={`font-medium mt-0.5 ${selectedBusiness.verified ? 'text-green-600' : 'text-gray-600'}`}>{selectedBusiness.verified ? 'Sì' : 'No'}</p></div>
+              )}
+              <div><label className="text-sm font-semibold text-gray-700">Data Creazione</label><p className="text-gray-900 mt-0.5">{new Date(selectedBusiness.created_at).toLocaleString('it-IT')}</p></div>
               <div className="flex gap-3 pt-2">
                 <button onClick={() => deleteBusiness(selectedBusiness)} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium">Elimina</button>
                 <button onClick={() => setSelectedBusiness(null)} className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">Chiudi</button>
