@@ -1,223 +1,106 @@
-import { useState } from 'react';
-import { Search, Building2, MapPin, CheckCircle, XCircle, ArrowRight, Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Building2, MapPin, CheckCircle, XCircle, ArrowRight, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { ItalianCityProvinceSelect } from '../components/common/ItalianCityProvinceSelect';
+import { ITALIAN_PROVINCES, PROVINCE_TO_CODE } from '../lib/cities';
 
 interface LocationResult {
   id: string;
-  business_id: string | null;
-  name: string | null;
+  name: string;
   street: string | null;
   city: string;
   province: string;
+  region: string | null;
+  postal_code: string | null;
   phone: string | null;
   email: string | null;
-  is_claimed: boolean;
-  category_id: string | null;
-  region: string | null;
   website: string | null;
-  source: 'imported' | 'user_added' | 'claimed';
+  category_id: string | null;
+  is_claimed: boolean;
+  added_by: string | null;
+  total_count: number;
 }
 
-interface GroupedBusiness {
-  business_key: string;
-  business_name: string;
-  locations: LocationResult[];
-  total_locations: number;
-  unclaimed_count: number;
-}
+const PAGE_SIZE = 50;
 
 export function ClaimBusinessPage() {
-  const [formData, setFormData] = useState({
-    businessName: '',
-    address: '',
-    city: '',
-    province: '',      // nome completo es. "Varese" (solo per display)
-    provinceCode: ''   // sigla es. "VA" (usata per la query)
-  });
-  const [groupedResults, setGroupedResults] = useState<GroupedBusiness[]>([]);
-  const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set());
+  const [businessName, setBusinessName] = useState('');
+  const [address, setAddress] = useState('');
+  const [province, setProvince] = useState('');       // nome completo es. "Varese"
+  const [provinceCode, setProvinceCode] = useState(''); // sigla es. "VA"
+  const [city, setCity] = useState('');
+  const [cities, setCities] = useState<string[]>([]);
+  const [loadingCities, setLoadingCities] = useState(false);
+
+  const [results, setResults] = useState<LocationResult[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.businessName && !formData.address && !formData.city && !formData.provinceCode) {
+  // Load cities when province code changes
+  useEffect(() => {
+    if (!provinceCode) { setCities([]); setCity(''); return; }
+    setLoadingCities(true);
+    setCity('');
+    supabase.rpc('get_cities_by_province', { p_province: provinceCode }).then(({ data }) => {
+      setCities((data || []).map((r: { city: string }) => r.city));
+      setLoadingCities(false);
+    });
+  }, [provinceCode]);
+
+  const doSearch = async (p: number) => {
+    if (!businessName && !address && !city && !provinceCode) {
       alert('Inserisci almeno un campo per effettuare la ricerca');
       return;
     }
-
     setLoading(true);
     setSearched(true);
-    setSelectedLocations(new Set());
+    setSelectedIds(new Set());
 
-    try {
-      // Query 1: unclaimed_business_locations (tutte le attività OSM + aggiunte da utenti)
-      let unclaimedQuery = supabase
-        .from('unclaimed_business_locations')
-        .select(`
-          id,
-          name,
-          street,
-          city,
-          province,
-          region,
-          phone,
-          email,
-          website,
-          category_id,
-          is_claimed,
-          added_by
-        `)
-        .eq('is_claimed', false)
-        .eq('approval_status', 'approved')
-        .limit(200);
+    const { data, error } = await supabase.rpc('search_unclaimed_businesses', {
+      p_name: businessName || null,
+      p_province: provinceCode || null,
+      p_city: city || null,
+      p_address: address || null,
+      p_page: p,
+      p_page_size: PAGE_SIZE,
+    });
 
-      // Query 2: registered_business_locations (già reclamate)
-      let registeredQuery = supabase
-        .from('registered_business_locations')
-        .select(`
-          id,
-          business_id,
-          internal_name,
-          street,
-          street_number,
-          city,
-          province,
-          region,
-          phone,
-          email,
-          website,
-          business:registered_businesses(name)
-        `)
-        .limit(200);
-
-      if (formData.businessName && formData.businessName.trim()) {
-        unclaimedQuery = unclaimedQuery.ilike('name', `%${formData.businessName.trim()}%`);
-        registeredQuery = registeredQuery.or(`internal_name.ilike.%${formData.businessName.trim()}%`);
-      }
-
-      if (formData.city && formData.city.trim()) {
-        unclaimedQuery = unclaimedQuery.ilike('city', `%${formData.city.trim()}%`);
-        registeredQuery = registeredQuery.ilike('city', `%${formData.city.trim()}%`);
-      }
-
-      if (formData.provinceCode && formData.provinceCode.trim()) {
-        unclaimedQuery = unclaimedQuery.eq('province', formData.provinceCode.trim().toUpperCase());
-        registeredQuery = registeredQuery.eq('province', formData.provinceCode.trim().toUpperCase());
-      }
-
-      if (formData.address && formData.address.trim()) {
-        unclaimedQuery = unclaimedQuery.ilike('street', `%${formData.address.trim()}%`);
-        registeredQuery = registeredQuery.ilike('street', `%${formData.address.trim()}%`);
-      }
-
-      const [unclaimedResult, registeredResult] = await Promise.all([
-        unclaimedQuery,
-        registeredQuery
-      ]);
-
-      if (unclaimedResult.error) throw unclaimedResult.error;
-      if (registeredResult.error) throw registeredResult.error;
-
-      const allLocations: LocationResult[] = [
-        ...(unclaimedResult.data || []).map(loc => ({
-          id: loc.id,
-          business_id: null,
-          name: loc.name,
-          street: loc.street || '',
-          city: loc.city,
-          province: loc.province,
-          region: loc.region,
-          phone: loc.phone,
-          email: loc.email,
-          website: loc.website,
-          is_claimed: false,
-          category_id: loc.category_id,
-          source: (loc.added_by ? 'user_added' : 'imported') as const
-        })),
-        ...(registeredResult.data || []).map(loc => ({
-          id: loc.id,
-          business_id: loc.business_id,
-          name: loc.internal_name || (loc.business as any)?.name,
-          street: `${loc.street || ''}${loc.street_number ? ', ' + loc.street_number : ''}`,
-          city: loc.city,
-          province: loc.province,
-          region: loc.region,
-          phone: loc.phone,
-          email: loc.email,
-          website: loc.website,
-          is_claimed: true,
-          category_id: null,
-          source: 'claimed' as const
-        }))
-      ];
-
-      const businessMap = new Map<string, GroupedBusiness>();
-
-      allLocations.forEach(location => {
-        const businessName = location.name || 'Attività senza nome';
-        const normalizedName = businessName.toLowerCase().trim();
-        const key = location.business_id ? `business_${location.business_id}` : `name_${normalizedName}`;
-
-        if (!businessMap.has(key)) {
-          businessMap.set(key, {
-            business_key: key,
-            business_name: businessName,
-            locations: [],
-            total_locations: 0,
-            unclaimed_count: 0
-          });
-        }
-
-        const group = businessMap.get(key)!;
-        group.locations.push(location);
-        group.total_locations++;
-        if (!location.is_claimed) {
-          group.unclaimed_count++;
-        }
-      });
-
-      const grouped = Array.from(businessMap.values())
-        .sort((a, b) => b.unclaimed_count - a.unclaimed_count || a.business_name.localeCompare(b.business_name));
-
-      console.log('Search results:', grouped.length, 'businesses found with', allLocations.length, 'total locations');
-      setGroupedResults(grouped);
-    } catch (error: any) {
-      console.error('Error searching businesses:', error);
-      alert(`Errore durante la ricerca: ${error.message || 'Errore sconosciuto'}`);
-    } finally {
+    if (error) {
+      console.error(error);
+      alert(`Errore: ${error.message}`);
       setLoading(false);
-    }
-  };
-
-  const toggleLocationSelection = (locationId: string, isClaimed: boolean) => {
-    if (isClaimed) return;
-
-    const newSelection = new Set(selectedLocations);
-    if (newSelection.has(locationId)) {
-      newSelection.delete(locationId);
-    } else {
-      newSelection.add(locationId);
-    }
-    setSelectedLocations(newSelection);
-  };
-
-  const handleProceedWithSelection = (business: GroupedBusiness) => {
-    if (selectedLocations.size === 0) {
-      alert('Seleziona almeno una sede da rivendicare');
       return;
     }
 
-    // Build a map of id -> source for each selected location
-    const selectedWithSource = business.locations
-      .filter(loc => selectedLocations.has(loc.id) && !loc.is_claimed)
-      .map(loc => ({ id: loc.id, source: loc.source }));
+    const rows: LocationResult[] = data || [];
+    setResults(rows);
+    setTotalCount(rows.length > 0 ? Number(rows[0].total_count) : 0);
+    setPage(p);
+    setLoading(false);
+  };
 
-    sessionStorage.setItem('claimLocationIds', JSON.stringify(Array.from(selectedLocations)));
-    sessionStorage.setItem('claimLocationsWithSource', JSON.stringify(selectedWithSource));
-    sessionStorage.setItem('claimBusinessName', business.business_name);
-    sessionStorage.setItem('claimBusinessKey', business.business_key);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    doSearch(1);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const handleProceed = () => {
+    if (selectedIds.size === 0) { alert('Seleziona almeno una sede da rivendicare'); return; }
+    const selected = results.filter(r => selectedIds.has(r.id));
+    const withSource = selected.map(r => ({ id: r.id, source: r.added_by ? 'user_added' : 'imported' }));
+    sessionStorage.setItem('claimLocationIds', JSON.stringify(Array.from(selectedIds)));
+    sessionStorage.setItem('claimLocationsWithSource', JSON.stringify(withSource));
+    sessionStorage.setItem('claimBusinessName', selected[0]?.name || '');
     window.location.href = '/?register=business';
   };
 
@@ -229,253 +112,219 @@ export function ClaimBusinessPage() {
     window.location.href = '/?register=business';
   };
 
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
+
+        {/* Header */}
+        <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
             <Building2 className="w-8 h-8 text-blue-600" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Verifica la Tua Attività
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Cerca la tua attività per nome, città o indirizzo. Se è già nel nostro database, puoi rivendicarla per gestirla
+          <h1 className="text-4xl font-bold text-gray-900 mb-3">Verifica la Tua Attività</h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Cerca la tua attività per nome, provincia, comune o indirizzo. Se è già nel nostro database puoi rivendicarla e gestirla.
           </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
-          <form onSubmit={handleSearch} className="space-y-6">
+        {/* Search form */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8">
+          <form onSubmit={handleSearch} className="space-y-5">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Nome Attività
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nome Attività</label>
               <input
                 type="text"
-                value={formData.businessName}
-                onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                placeholder="es. Bar Centrale"
+                value={businessName}
+                onChange={e => setBusinessName(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                placeholder="es. Bar Centrale, Pizzeria da Mario..."
               />
             </div>
 
-            <ItalianCityProvinceSelect
-              province={formData.province}
-              city={formData.city}
-              onProvinceChange={(prov, code) => setFormData(prev => ({ ...prev, province: prov, provinceCode: code, city: '' }))}
-              onCityChange={(c) => setFormData(prev => ({ ...prev, city: c }))}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Provincia */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Provincia</label>
+                <select
+                  value={province}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setProvince(val);
+                    setProvinceCode(val ? (PROVINCE_TO_CODE[val] || '') : '');
+                  }}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+                >
+                  <option value="">Tutte le province</option>
+                  {ITALIAN_PROVINCES.map(p => (
+                    <option key={p} value={p}>{p} ({PROVINCE_TO_CODE[p] || ''})</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Comune */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Comune</label>
+                <select
+                  value={city}
+                  onChange={e => setCity(e.target.value)}
+                  disabled={!provinceCode || loadingCities}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white disabled:bg-gray-50 disabled:cursor-not-allowed"
+                >
+                  <option value="">
+                    {loadingCities ? 'Caricamento comuni...' : !provinceCode ? 'Seleziona prima la provincia' : `Tutti i comuni (${cities.length})`}
+                  </option>
+                  {cities.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Indirizzo
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Indirizzo</label>
               <input
                 type="text"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                placeholder="es. Via Roma"
+                value={address}
+                onChange={e => setAddress(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                placeholder="es. Via Roma, Corso Italia..."
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-4 rounded-xl hover:bg-blue-700 transition-colors font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Ricerca in corso...
-                </>
+                <><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />Ricerca in corso...</>
               ) : (
-                <>
-                  <Search className="w-5 h-5" />
-                  Cerca Attività
-                </>
+                <><Search className="w-5 h-5" />Cerca Attività</>
               )}
             </button>
           </form>
         </div>
 
+        {/* Results */}
         {searched && !loading && (
-          <div className="space-y-6">
-            {groupedResults.length === 0 ? (
-              <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+          <div className="space-y-4">
+            {results.length === 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-4">
-                  <XCircle className="w-8 h-8 text-orange-600" />
+                  <XCircle className="w-8 h-8 text-orange-500" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                  Nessuna Attività Trovata
-                </h3>
-                <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  Non abbiamo trovato la tua attività nel database. Registrati per aggiungerla!
-                </p>
-                <button
-                  onClick={handleRegisterNew}
-                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-                >
-                  Registrati e Aggiungi Attività
-                  <ArrowRight className="w-5 h-5" />
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Nessuna Attività Trovata</h3>
+                <p className="text-gray-500 mb-6">Non abbiamo trovato la tua attività. Registrati per aggiungerla!</p>
+                <button onClick={handleRegisterNew} className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 font-semibold">
+                  Registrati e Aggiungi Attività <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             ) : (
               <>
-                <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900">
-                    {groupedResults.length} {groupedResults.length === 1 ? 'Attività Trovata' : 'Attività Trovate'}
-                  </h3>
-                  <p className="text-gray-600 mt-2">
-                    Seleziona le sedi che vuoi rivendicare per la tua attività
-                  </p>
+                {/* Result header */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">
+                      {totalCount.toLocaleString('it-IT')} {totalCount === 1 ? 'attività trovata' : 'attività trovate'}
+                    </h3>
+                    {totalPages > 1 && (
+                      <p className="text-sm text-gray-500 mt-0.5">Pagina {page} di {totalPages} — {PAGE_SIZE} risultati per pagina</p>
+                    )}
+                  </div>
+                  {selectedIds.size > 0 && (
+                    <button onClick={handleProceed} className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 font-semibold text-sm">
+                      Rivendica {selectedIds.size} {selectedIds.size === 1 ? 'sede' : 'sedi'} <ArrowRight className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
 
-                <div className="grid gap-8">
-                  {groupedResults.map((business) => {
-                    const selectedCount = business.locations.filter(loc => selectedLocations.has(loc.id)).length;
-
+                {/* List */}
+                <div className="space-y-3">
+                  {results.map(loc => {
+                    const selected = selectedIds.has(loc.id);
                     return (
                       <div
-                        key={business.business_key}
-                        className="bg-white rounded-xl shadow-sm overflow-hidden border-2 border-blue-200"
+                        key={loc.id}
+                        onClick={() => toggleSelect(loc.id)}
+                        className={`bg-white rounded-xl border-2 p-5 cursor-pointer transition-all hover:shadow-md ${selected ? 'border-blue-500 bg-blue-50' : 'border-gray-100 hover:border-blue-200'}`}
                       >
-                        <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 border-b-2 border-blue-200">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-400 rounded-lg flex items-center justify-center">
-                                <Building2 className="w-8 h-8 text-white" />
-                              </div>
-                              <div>
-                                <h4 className="text-2xl font-bold text-gray-900">
-                                  {business.business_name}
-                                </h4>
-                                <p className="text-gray-600 mt-1">
-                                  {business.total_locations} {business.total_locations === 1 ? 'sede' : 'sedi'} totali • {' '}
-                                  {business.unclaimed_count} disponibili da rivendicare
-                                </p>
-                              </div>
+                        <div className="flex items-start gap-4">
+                          <div className={`flex-shrink-0 w-5 h-5 mt-0.5 rounded border-2 flex items-center justify-center transition-colors ${selected ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}`}>
+                            {selected && <CheckCircle className="w-3.5 h-3.5 text-white" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-3">
+                              <h4 className="font-semibold text-gray-900">{loc.name}</h4>
+                              <span className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                                Disponibile
+                              </span>
                             </div>
-                            {selectedCount > 0 && (
-                              <div className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">
-                                {selectedCount} {selectedCount === 1 ? 'selezionata' : 'selezionate'}
+                            <div className="flex items-center gap-1.5 text-sm text-gray-600 mt-1.5">
+                              <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
+                              <span>
+                                {[loc.street, loc.city, loc.province ? `(${loc.province})` : ''].filter(Boolean).join(', ')}
+                              </span>
+                            </div>
+                            {(loc.phone || loc.email || loc.website) && (
+                              <div className="mt-1.5 text-xs text-gray-500 space-x-3">
+                                {loc.phone && <span>Tel: {loc.phone}</span>}
+                                {loc.email && <span>Email: {loc.email}</span>}
+                                {loc.website && <span>Web: {loc.website}</span>}
                               </div>
                             )}
                           </div>
                         </div>
-
-                        <div className="p-6 space-y-4">
-                          {business.locations.map((location) => (
-                            <div
-                              key={location.id}
-                              onClick={() => toggleLocationSelection(location.id, location.is_claimed)}
-                              className={`p-4 rounded-lg border-2 transition-all ${
-                                location.is_claimed
-                                  ? 'border-gray-200 bg-gray-50 opacity-60'
-                                  : selectedLocations.has(location.id)
-                                  ? 'border-blue-500 bg-blue-50 cursor-pointer'
-                                  : 'border-gray-300 hover:border-blue-300 cursor-pointer hover:bg-gray-50'
-                              }`}
-                            >
-                              <div className="flex items-start gap-4">
-                                <div className="flex-shrink-0 pt-1">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedLocations.has(location.id)}
-                                    disabled={location.is_claimed}
-                                    onChange={() => {}}
-                                    className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                                  />
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-start justify-between gap-4 mb-2">
-                                    <div className="flex items-center gap-2">
-                                      <MapPin className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                                      <span className="font-semibold text-gray-900">
-                                        {location.city} ({location.province})
-                                      </span>
-                                    </div>
-                                    {location.is_claimed ? (
-                                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold">
-                                        <CheckCircle className="w-4 h-4" />
-                                        Già Rivendicata
-                                      </span>
-                                    ) : (
-                                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-semibold">
-                                        Disponibile
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  <div className="space-y-1 text-sm text-gray-600">
-                                    {location.street && (
-                                      <div>{location.street}</div>
-                                    )}
-                                    {location.region && (
-                                      <div className="text-gray-500">Regione: {location.region}</div>
-                                    )}
-                                    {location.phone && (
-                                      <div><span className="font-semibold">Tel:</span> {location.phone}</div>
-                                    )}
-                                    {location.email && (
-                                      <div><span className="font-semibold">Email:</span> {location.email}</div>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        {business.unclaimed_count > 0 && (
-                          <div className="p-6 bg-gray-50 border-t-2 border-gray-200">
-                            <button
-                              onClick={() => handleProceedWithSelection(business)}
-                              disabled={selectedCount === 0}
-                              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {selectedCount > 0 ? (
-                                <>
-                                  Rivendica {selectedCount} {selectedCount === 1 ? 'sede' : 'sedi'} e Registrati
-                                  <ArrowRight className="w-5 h-5" />
-                                </>
-                              ) : (
-                                <>
-                                  Seleziona almeno una sede per continuare
-                                </>
-                              )}
-                            </button>
-                            <p className="text-center text-sm text-gray-600 mt-3">
-                              Dopo la registrazione potrai aggiungere altre sedi
-                            </p>
-                          </div>
-                        )}
                       </div>
                     );
                   })}
                 </div>
 
-                <div className="mt-8 bg-blue-50 rounded-xl p-6 border-2 border-blue-200">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0">
-                      <Plus className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-gray-900 mb-2">
-                        Non vedi tutte le tue sedi?
-                      </h3>
-                      <p className="text-gray-700 mb-4">
-                        Seleziona le sedi esistenti e dopo la registrazione potrai aggiungere le sedi mancanti tramite il pannello di gestione.
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-3 pt-4">
+                    <button
+                      onClick={() => doSearch(page - 1)}
+                      disabled={page === 1 || loading}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft className="w-4 h-4" /> Precedente
+                    </button>
+                    <span className="text-sm text-gray-600 font-medium">
+                      {page} / {totalPages}
+                    </span>
+                    <button
+                      onClick={() => doSearch(page + 1)}
+                      disabled={page === totalPages || loading}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Successiva <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Sticky CTA */}
+                {selectedIds.size > 0 && (
+                  <div className="sticky bottom-4 z-10">
+                    <div className="bg-blue-600 text-white rounded-2xl p-4 shadow-2xl flex items-center justify-between gap-4">
+                      <p className="font-semibold">
+                        {selectedIds.size} {selectedIds.size === 1 ? 'sede selezionata' : 'sedi selezionate'}
                       </p>
-                      <button
-                        onClick={handleRegisterNew}
-                        className="inline-flex items-center gap-2 bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-semibold border-2 border-blue-200"
-                      >
-                        <Plus className="w-5 h-5" />
-                        Oppure Registra Nuova Attività
+                      <button onClick={handleProceed} className="flex items-center gap-2 bg-white text-blue-600 px-5 py-2 rounded-xl font-bold hover:bg-blue-50 transition-colors flex-shrink-0">
+                        Rivendica e Registrati <ArrowRight className="w-4 h-4" />
                       </button>
                     </div>
+                  </div>
+                )}
+
+                {/* Register new */}
+                <div className="bg-blue-50 rounded-2xl p-6 border border-blue-100 flex items-start gap-4">
+                  <Plus className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-bold text-gray-900 mb-1">Non vedi la tua attività?</h4>
+                    <p className="text-sm text-gray-600 mb-3">Puoi registrarti e aggiungere la tua attività manualmente.</p>
+                    <button onClick={handleRegisterNew} className="inline-flex items-center gap-2 bg-white text-blue-600 px-4 py-2 rounded-lg border-2 border-blue-200 hover:bg-blue-50 font-semibold text-sm transition-colors">
+                      <Plus className="w-4 h-4" /> Registra Nuova Attività
+                    </button>
                   </div>
                 </div>
               </>
@@ -483,27 +332,22 @@ export function ClaimBusinessPage() {
           </div>
         )}
 
-        <div className="mt-12 bg-blue-50 rounded-xl p-8">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">
-            Perché Rivendicare la Tua Attività?
-          </h3>
-          <ul className="space-y-3 text-gray-700">
-            <li className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <span>Gestisci le informazioni della tua attività</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <span>Rispondi alle recensioni dei clienti</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <span>Pubblica offerte di lavoro</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <span>Ottieni il badge di verifica</span>
-            </li>
+        {/* Benefits */}
+        <div className="mt-10 bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Perche Rivendicare la Tua Attivita?</h3>
+          <ul className="space-y-2.5 text-sm text-gray-600">
+            {[
+              'Gestisci le informazioni della tua attivita',
+              'Rispondi alle recensioni dei clienti',
+              'Pubblica offerte di lavoro',
+              'Ottieni il badge di verifica',
+              'Accedi alle statistiche e analitiche',
+            ].map(t => (
+              <li key={t} className="flex items-center gap-2.5">
+                <CheckCircle className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                <span>{t}</span>
+              </li>
+            ))}
           </ul>
         </div>
       </div>
