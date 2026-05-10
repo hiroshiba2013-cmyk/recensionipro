@@ -30,6 +30,7 @@ export function BusinessTrackingSection({ onReload }: Props) {
   const [locationFilter, setLocationFilter] = useState<LocationFilterState>({ region: '', province: '', provinceCode: '', city: '' });
   const [nameSearch, setNameSearch] = useState('');
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessActivity | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string>('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -40,24 +41,26 @@ export function BusinessTrackingSection({ onReload }: Props) {
 
   const loadActivities = async () => {
     setLoading(true);
+    const params = {
+      p_type: typeFilter,
+      p_province: locationFilter.provinceCode || null,
+      p_city: locationFilter.city || null,
+      p_region: locationFilter.region || null,
+      p_name: nameSearch || null,
+      p_limit: 300,
+    };
+    setDebugInfo(`Chiamata RPC con: ${JSON.stringify(params)}`);
     try {
-      const { data, error } = await supabase.rpc('search_business_tracking', {
-        p_type: typeFilter,
-        p_province: locationFilter.provinceCode || null,
-        p_city: locationFilter.city || null,
-        p_region: locationFilter.region || null,
-        p_name: nameSearch || null,
-        p_limit: 300,
-      });
-
+      const { data, error } = await supabase.rpc('search_business_tracking', params);
       if (error) {
-        console.error('search_business_tracking error:', error);
+        setDebugInfo(`ERRORE RPC: ${error.message} | codice: ${error.code} | dettaglio: ${error.details}`);
         setActivities([]);
       } else {
+        setDebugInfo(`OK - ${(data || []).length} risultati | params: ${JSON.stringify(params)}`);
         setActivities(data || []);
       }
-    } catch (err) {
-      console.error('Error loading activities:', err);
+    } catch (err: any) {
+      setDebugInfo(`ECCEZIONE: ${err?.message}`);
       setActivities([]);
     } finally {
       setLoading(false);
@@ -122,6 +125,13 @@ export function BusinessTrackingSection({ onReload }: Props) {
           </div>
         </div>
       </div>
+
+      {/* DEBUG PANEL - rimuovere dopo il fix */}
+      {debugInfo && (
+        <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-3 mb-4 text-xs font-mono text-yellow-900 break-all">
+          {debugInfo}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4 space-y-3">
