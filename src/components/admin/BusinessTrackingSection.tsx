@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Building2, CheckCircle, UserPlus, MapPin, Eye, Trash2, X } from 'lucide-react';
+import { Building2, CheckCircle, UserPlus, MapPin, Eye, Trash2, X, Search } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { AdminLocationFilter, LocationFilterState } from './AdminLocationFilter';
-import { PROVINCE_TO_CODE } from '../../lib/cities';
 
 interface BusinessActivity {
   id: string;
@@ -26,10 +25,11 @@ export function BusinessTrackingSection({ onReload }: Props) {
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<'all' | 'claimed' | 'user_added' | 'imported' | 'registered'>('all');
   const [locationFilter, setLocationFilter] = useState<LocationFilterState>({ region: '', province: '', provinceCode: '', city: '' });
+  const [nameSearch, setNameSearch] = useState('');
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessActivity | null>(null);
   const loadingRef = useRef(0);
 
-  useEffect(() => { loadActivities(); }, [typeFilter, locationFilter]);
+  useEffect(() => { loadActivities(); }, [typeFilter, locationFilter, nameSearch]);
 
   const loadActivities = async () => {
     const req = ++loadingRef.current;
@@ -45,15 +45,16 @@ export function BusinessTrackingSection({ onReload }: Props) {
             owner:profiles!registered_businesses_owner_id_fkey(full_name, email),
             category:business_categories(name)`)
           .order('created_at', { ascending: false })
-          .limit(100);
+          .limit(200);
 
-        if (locationFilter.city) q = q.ilike('billing_city', `%${locationFilter.city}%`);
+        if (nameSearch) q = q.ilike('name', `%${nameSearch}%`);
         if (locationFilter.provinceCode) q = q.eq('billing_province', locationFilter.provinceCode);
+        if (locationFilter.city) q = q.ilike('billing_city', `%${locationFilter.city}%`);
 
         const { data: registered } = await q;
         if (registered) {
           for (const biz of registered) {
-            // Try to get primary location for better city/province info
+            // Try primary location for better address data
             const { data: loc } = await supabase
               .from('registered_business_locations')
               .select('city, province, street')
@@ -65,10 +66,24 @@ export function BusinessTrackingSection({ onReload }: Props) {
             const city = loc?.city || biz.billing_city || '';
             const province = loc?.province || biz.billing_province || '';
 
-            // Skip if city filter active and neither billing nor location city matches
+            // If city filter is set, check actual location too
             if (locationFilter.city) {
-              const cityMatch = (city || '').toLowerCase().includes(locationFilter.city.toLowerCase());
-              if (!cityMatch) continue;
+              const matches = city.toLowerCase().includes(locationFilter.city.toLowerCase())
+                || (biz.billing_city || '').toLowerCase().includes(locationFilter.city.toLowerCase());
+              if (!matches) continue;
+            }
+
+            if (locationFilter.region) {
+              // region stored in registered_business_locations
+              if (loc) {
+                const { data: locFull } = await supabase
+                  .from('registered_business_locations')
+                  .select('region')
+                  .eq('business_id', biz.id)
+                  .limit(1)
+                  .maybeSingle();
+                if (locFull?.region && locFull.region !== locationFilter.region) continue;
+              }
             }
 
             all.push({
@@ -90,9 +105,10 @@ export function BusinessTrackingSection({ onReload }: Props) {
           .not('added_by', 'is', null)
           .is('claimed_by', null)
           .order('created_at', { ascending: false })
-          .limit(100);
+          .limit(200);
 
-        if (locationFilter.city) q = q.eq('city', locationFilter.city);
+        if (nameSearch) q = q.ilike('name', `%${nameSearch}%`);
+        if (locationFilter.city) q = q.ilike('city', `%${locationFilter.city}%`);
         if (locationFilter.provinceCode) q = q.eq('province', locationFilter.provinceCode);
         if (locationFilter.region) q = q.eq('region', locationFilter.region);
 
@@ -121,9 +137,10 @@ export function BusinessTrackingSection({ onReload }: Props) {
           .is('added_by', null)
           .is('claimed_by', null)
           .order('created_at', { ascending: false })
-          .limit(100);
+          .limit(200);
 
-        if (locationFilter.city) q = q.eq('city', locationFilter.city);
+        if (nameSearch) q = q.ilike('name', `%${nameSearch}%`);
+        if (locationFilter.city) q = q.ilike('city', `%${locationFilter.city}%`);
         if (locationFilter.provinceCode) q = q.eq('province', locationFilter.provinceCode);
         if (locationFilter.region) q = q.eq('region', locationFilter.region);
 
@@ -144,9 +161,10 @@ export function BusinessTrackingSection({ onReload }: Props) {
             category:business_categories(name)`)
           .not('claimed_by', 'is', null)
           .order('created_at', { ascending: false })
-          .limit(100);
+          .limit(200);
 
-        if (locationFilter.city) q = q.eq('city', locationFilter.city);
+        if (nameSearch) q = q.ilike('name', `%${nameSearch}%`);
+        if (locationFilter.city) q = q.ilike('city', `%${locationFilter.city}%`);
         if (locationFilter.provinceCode) q = q.eq('province', locationFilter.provinceCode);
         if (locationFilter.region) q = q.eq('region', locationFilter.region);
 
@@ -173,7 +191,7 @@ export function BusinessTrackingSection({ onReload }: Props) {
     } catch (err) {
       console.error('Error loading activities:', err);
     } finally {
-      setLoading(false);
+      if (req === loadingRef.current) setLoading(false);
     }
   };
 
@@ -203,7 +221,12 @@ export function BusinessTrackingSection({ onReload }: Props) {
     }
   };
 
-  const hasLocationFilter = locationFilter.region || locationFilter.province || locationFilter.city;
+  const hasActiveFilter = locationFilter.region || locationFilter.province || locationFilter.city || nameSearch;
+
+  const resetFilters = () => {
+    setLocationFilter({ region: '', province: '', provinceCode: '', city: '' });
+    setNameSearch('');
+  };
 
   return (
     <div>
@@ -231,17 +254,28 @@ export function BusinessTrackingSection({ onReload }: Props) {
         </div>
       </div>
 
-      {/* Location Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-medium text-gray-700">Filtra per posizione</span>
-          {hasLocationFilter && (
-            <button onClick={() => setLocationFilter({ region: '', province: '', provinceCode: '', city: '' })}
-              className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700">
-              <X className="w-3.5 h-3.5" /> Rimuovi filtri
+      {/* Filters */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-gray-700">Filtri di ricerca</span>
+          {hasActiveFilter && (
+            <button onClick={resetFilters} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700">
+              <X className="w-3.5 h-3.5" /> Rimuovi tutti i filtri
             </button>
           )}
         </div>
+        {/* Name search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Cerca per nome attività..."
+            value={nameSearch}
+            onChange={e => setNameSearch(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        {/* Location dropdowns */}
         <AdminLocationFilter value={locationFilter} onChange={setLocationFilter} />
       </div>
 
@@ -255,7 +289,9 @@ export function BusinessTrackingSection({ onReload }: Props) {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
           <Building2 className="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p className="text-sm font-medium text-gray-600">Nessuna attività trovata</p>
-          <p className="text-xs text-gray-400 mt-1">{hasLocationFilter ? 'Prova a cambiare i filtri di posizione' : 'Non ci sono attività da visualizzare'}</p>
+          <p className="text-xs text-gray-400 mt-1">
+            {hasActiveFilter ? 'Prova a modificare o rimuovere i filtri' : 'Non ci sono attività da visualizzare'}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -268,13 +304,15 @@ export function BusinessTrackingSection({ onReload }: Props) {
                     {activity.verified && <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />}
                     <div className="min-w-0">
                       <div className="text-sm font-semibold text-gray-900 truncate">{activity.name}</div>
+                      {activity.category?.name && (
+                        <div className="text-xs text-blue-600 font-medium mt-0.5">{activity.category.name}</div>
+                      )}
                       {activity.street && <div className="text-xs text-gray-500 mt-0.5 truncate">{activity.street}</div>}
                     </div>
                   </div>
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full flex-shrink-0 ${badge.bg}`}>
                     {badge.icon}{badge.label}
                   </span>
-                  <span className="text-sm text-gray-600 flex-shrink-0 hidden md:block">{activity.category?.name || 'N/A'}</span>
                   <div className="flex-shrink-0 hidden md:block">
                     <div className="text-sm text-gray-900">{activity.city}</div>
                     <div className="text-xs text-gray-500">{activity.province}</div>
