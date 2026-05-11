@@ -34,6 +34,7 @@ interface BusinessLocation {
     };
   };
   added_by?: string | null;
+  category_name?: string | null;
   avg_rating?: number;
   review_count?: number;
   service_avg_rating?: number;
@@ -158,10 +159,10 @@ export function LocationCard({ location }: LocationCardProps) {
           />
         </div>
 
-        {location.business?.category && (
+        {(location.category_name || location.business?.category?.name) && (
           <div className="mb-3">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 border border-blue-200 text-blue-700 text-sm rounded-full font-semibold">
-              {location.business.category.name}
+              {location.category_name || location.business?.category?.name}
             </span>
           </div>
         )}

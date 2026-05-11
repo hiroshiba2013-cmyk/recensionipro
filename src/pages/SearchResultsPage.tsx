@@ -31,6 +31,8 @@ interface BusinessLocation {
     verified: boolean;
     category?: BusinessCategory;
   };
+  added_by?: string | null;
+  category_name?: string | null;
   avg_rating?: number;
   review_count?: number;
   service_avg_rating?: number;
@@ -179,6 +181,7 @@ export function SearchResultsPage() {
           category: location.category_id ? categoryMap[location.category_id] || null : null
         },
         added_by: location.added_by || null,
+        category_name: location.category_id ? (categoryMap[location.category_id]?.name || null) : null,
         avg_rating: 0,
         review_count: 0
       }));
