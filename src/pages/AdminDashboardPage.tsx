@@ -350,11 +350,16 @@ export function AdminDashboardPage() {
 
   useEffect(() => {
     if (!checkingAdmin && isAdmin) {
-      loadPendingCounts();
       loadData();
       loadSubscriptionPlans();
     }
   }, [checkingAdmin, isAdmin, activeTab]);
+
+  useEffect(() => {
+    if (!checkingAdmin && isAdmin) {
+      loadPendingCounts();
+    }
+  }, [checkingAdmin, isAdmin]);
 
   // Realtime subscriptions: refresh badge counts when pending items change
   useEffect(() => {
