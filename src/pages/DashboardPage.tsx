@@ -1103,7 +1103,7 @@ export function DashboardPage() {
                 {isBiz ? 'Account Business' : 'Account Privato'}
               </div>
               <div className="flex items-center gap-4 mb-1 flex-wrap">
-                {/* Avatar upload — solo per il profilo principale del titolare */}
+                {/* Avatar upload — titolare */}
                 {profile && (!activeProfile || activeProfile.isOwner) && (
                   <div className="relative flex-shrink-0">
                     <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/30 bg-slate-700 flex items-center justify-center">
@@ -1150,6 +1150,58 @@ export function DashboardPage() {
                     </label>
                   </div>
                 )}
+                {/* Avatar upload — membro famiglia attivo */}
+                {profile && activeProfile && !activeProfile.isOwner && !isBiz && (() => {
+                  const activeFm = familyMembers.find(fm => fm.id === activeProfile.id);
+                  if (!activeFm) return null;
+                  const currentAvatar = memberAvatars[activeFm.id] || activeFm.avatar_url;
+                  return (
+                    <div className="relative flex-shrink-0">
+                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/30 bg-slate-700 flex items-center justify-center">
+                        {currentAvatar ? (
+                          <img src={currentAvatar} alt={displayName} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-2xl font-bold text-white/70">
+                            {displayName.charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <label
+                        htmlFor={`dashboard-fm-avatar-${activeFm.id}`}
+                        className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 hover:bg-blue-400 rounded-full flex items-center justify-center cursor-pointer border-2 border-slate-800 transition-colors"
+                        title="Cambia foto profilo"
+                      >
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <input
+                          id={`dashboard-fm-avatar-${activeFm.id}`}
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 5 * 1024 * 1024) { showToast('Immagine troppo grande (max 5MB)', 'error'); return; }
+                            try {
+                              const ext = file.name.split('.').pop();
+                              const path = `family/${activeFm.id}/avatar.${ext}`;
+                              const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+                              if (upErr) throw upErr;
+                              const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+                              const url = `${publicUrl}?t=${Date.now()}`;
+                              await supabase.from('customer_family_members').update({ avatar_url: url }).eq('id', activeFm.id);
+                              setMemberAvatars(prev => ({ ...prev, [activeFm.id]: url }));
+                              showToast('Foto aggiornata!', 'success');
+                            } catch { showToast('Errore durante il caricamento', 'error'); }
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
+                    </div>
+                  );
+                })()}
                 <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight">Ciao, {displayName}</h1>
                 <div className="flex items-center gap-2">
                   <button
