@@ -303,7 +303,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
             customer:profiles!customer_id(full_name, nickname),
             responses:review_responses(*),
             family_member:customer_family_members(first_name, last_name, nickname),
-            business_location:business_locations(id, name, internal_name, address, city, category:category_id(name))
+            business_location:business_locations(id, name, internal_name, address, city)
           `)
           .eq('review_status', 'approved')
           .order('created_at', { ascending: false });

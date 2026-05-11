@@ -129,22 +129,24 @@ export function ReviewCard({ review }: ReviewCardProps) {
           <span className="text-sm font-medium text-gray-500">{getRatingLabel(review.overall_rating)}</span>
         </div>
 
+        {/* Category badge */}
+        {(review as any).category_name && (
+          <div className="flex items-center gap-1.5 mb-3">
+            <Tag className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">
+              {(review as any).category_name}
+            </span>
+          </div>
+        )}
+
         {/* Business / location info */}
         {((review as any).business?.name || (review as any).location_info) && (
-          <div className="flex items-start gap-1.5 mb-3">
-            <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-xs text-gray-500">
-                {(review as any).business?.name && <span className="font-medium">{(review as any).business.name}</span>}
-                {(review as any).location_info?.city && <span> &mdash; {(review as any).location_info.city}</span>}
-              </p>
-              {(review as any).category_name && (
-                <span className="inline-flex items-center gap-1 mt-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                  <Tag className="w-3 h-3" />
-                  {(review as any).category_name}
-                </span>
-              )}
-            </div>
+          <div className="flex items-center gap-1.5 mb-3">
+            <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            <p className="text-xs text-gray-500 truncate">
+              {(review as any).business?.name && <span className="font-medium">{(review as any).business.name}</span>}
+              {(review as any).location_info?.city && <span> &mdash; {(review as any).location_info.city}</span>}
+            </p>
           </div>
         )}
 
