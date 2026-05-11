@@ -49,7 +49,8 @@ export function ItalianCityProvinceSelect({
   const loadCities = useCallback(async (prov: string) => {
     if (!prov) { setCities([]); return; }
     setLoadingCities(true);
-    const { data } = await supabase.rpc('get_comuni_by_provincia', { p_provincia: prov });
+    const sigla = PROVINCE_TO_CODE[prov] || prov;
+    const { data } = await supabase.rpc('get_comuni_by_provincia', { p_provincia: sigla });
     setCities(data ? data.map((r: { comune: string }) => r.comune) : []);
     setLoadingCities(false);
   }, []);
@@ -92,7 +93,45 @@ export function ItalianCityProvinceSelect({
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-      {/* Provincia — custom dropdown */}
+      {/* Comune — select nativo (first) */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <span className="flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-gray-400" />
+            Comune
+            {required && <span className="text-red-500 ml-0.5">*</span>}
+          </span>
+        </label>
+        <div className="relative">
+          <select
+            value={city}
+            disabled={disabled || !province || loadingCities}
+            onChange={e => onCityChange(e.target.value)}
+            required={required}
+            className={`w-full appearance-none px-3 py-2.5 pr-9 border rounded-lg text-sm bg-white transition-all focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 ${
+              disabled || !province ? 'bg-gray-50 cursor-not-allowed opacity-60 border-gray-300' : 'border-gray-300 hover:border-blue-400 cursor-pointer'
+            } ${city ? 'text-gray-900 font-medium' : 'text-gray-400'}`}
+          >
+            <option value="" disabled>
+              {loadingCities ? 'Caricamento...' : province ? 'Seleziona comune...' : 'Prima scegli la provincia'}
+            </option>
+            {cities.map(c => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+            {loadingCities
+              ? <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+              : <ChevronDown className="w-4 h-4 text-gray-400" />
+            }
+          </div>
+        </div>
+        {province && !loadingCities && cities.length > 0 && (
+          <p className="mt-1 text-xs text-gray-400">{cities.length} comuni disponibili</p>
+        )}
+      </div>
+
+      {/* Provincia — custom dropdown (second) */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1.5">
           <span className="flex items-center gap-1.5">
@@ -187,43 +226,6 @@ export function ItalianCityProvinceSelect({
         </div>
       </div>
 
-      {/* Comune — select nativo */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-          <span className="flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-gray-400" />
-            Comune
-            {required && <span className="text-red-500 ml-0.5">*</span>}
-          </span>
-        </label>
-        <div className="relative">
-          <select
-            value={city}
-            disabled={disabled || !province || loadingCities}
-            onChange={e => onCityChange(e.target.value)}
-            required={required}
-            className={`w-full appearance-none px-3 py-2.5 pr-9 border rounded-lg text-sm bg-white transition-all focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 ${
-              disabled || !province ? 'bg-gray-50 cursor-not-allowed opacity-60 border-gray-300' : 'border-gray-300 hover:border-blue-400 cursor-pointer'
-            } ${city ? 'text-gray-900 font-medium' : 'text-gray-400'}`}
-          >
-            <option value="" disabled>
-              {loadingCities ? 'Caricamento...' : province ? 'Seleziona comune...' : 'Prima scegli la provincia'}
-            </option>
-            {cities.map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-            {loadingCities
-              ? <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-              : <ChevronDown className="w-4 h-4 text-gray-400" />
-            }
-          </div>
-        </div>
-        {province && !loadingCities && cities.length > 0 && (
-          <p className="mt-1 text-xs text-gray-400">{cities.length} comuni disponibili</p>
-        )}
-      </div>
     </div>
   );
 }
