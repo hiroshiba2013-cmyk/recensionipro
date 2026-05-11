@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Trash2, Eye, X as CloseIcon, FilterX, Save, FileEdit as Edit, CircleUser as UserCircle, MapPin } from 'lucide-react';
+import { Users, Trash2, Eye, X as CloseIcon, FilterX, Save, FileEdit as Edit, CircleUser as UserCircle, MapPin, UserPlus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
 
@@ -47,6 +47,17 @@ interface FamilyMember {
   date_of_birth: string;
   relationship: string;
   fiscal_code: string;
+  customer_id?: string;
+}
+
+interface FamilyMemberRow {
+  id: string;
+  customer_id: string;
+  owner_name: string;
+  first_name: string;
+  last_name: string;
+  nickname: string;
+  relationship: string;
 }
 
 interface BusinessLocation {
@@ -64,6 +75,7 @@ interface BusinessLocation {
 export default function UsersManagementSection() {
   const { showToast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
+  const [allFamilyRows, setAllFamilyRows] = useState<FamilyMemberRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -87,15 +99,11 @@ export default function UsersManagementSection() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      console.log('[UsersManagement] Loading users with filter:', filterType);
-
-      // Carica tutti i profili con tutti i campi
       let query = supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      // Applica filtri
       if (filterType !== 'all') {
         if (filterType === 'admin') {
           query = query.eq('is_admin', true);
@@ -104,21 +112,42 @@ export default function UsersManagementSection() {
         }
       }
 
-      query = query.limit(500);
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('[UsersManagement] Error loading profiles:', error);
-        console.error('[UsersManagement] Error:', error.message);
-        throw error;
-      }
-
-      console.log('[UsersManagement] Loaded profiles:', data?.length || 0);
-      if (data && data.length > 0) {
-        console.log('[UsersManagement] Sample user data:', data[0]);
-      }
+      const { data, error } = await query.limit(500);
+      if (error) throw error;
       setUsers(data || []);
+
+      // Carica tutti i membri famiglia per gli utenti customer visibili
+      const customerIds = (data || [])
+        .filter(u => u.user_type === 'customer')
+        .map(u => u.id);
+
+      if (customerIds.length > 0 && (filterType === 'all' || filterType === 'customer')) {
+        const { data: fmData } = await supabase
+          .from('customer_family_members')
+          .select('id, customer_id, first_name, last_name, nickname, relationship')
+          .in('customer_id', customerIds)
+          .order('first_name');
+
+        if (fmData && fmData.length > 0) {
+          const rows: FamilyMemberRow[] = fmData.map(fm => {
+            const owner = (data || []).find(u => u.id === fm.customer_id);
+            return {
+              id: fm.id,
+              customer_id: fm.customer_id,
+              owner_name: owner?.full_name || owner?.nickname || '—',
+              first_name: fm.first_name,
+              last_name: fm.last_name,
+              nickname: fm.nickname || '',
+              relationship: fm.relationship || '',
+            };
+          });
+          setAllFamilyRows(rows);
+        } else {
+          setAllFamilyRows([]);
+        }
+      } else {
+        setAllFamilyRows([]);
+      }
     } catch (error) {
       console.error('[UsersManagement] Error:', error);
     } finally {
@@ -456,10 +485,21 @@ export default function UsersManagementSection() {
     }
   };
 
+  const relationshipLabel = (r: string) => {
+    switch (r) {
+      case 'spouse': return 'Coniuge';
+      case 'child': return 'Figlio/a';
+      case 'parent': return 'Genitore';
+      case 'sibling': return 'Fratello/Sorella';
+      default: return r || 'Familiare';
+    }
+  };
+
   // Derived counts for hero stats
   const customerCount = users.filter(u => u.user_type === 'customer').length;
   const businessCount = users.filter(u => u.user_type === 'business').length;
   const adminCount = users.filter(u => u.is_admin).length;
+  const totalWithFamily = users.length + allFamilyRows.length;
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -485,10 +525,14 @@ export default function UsersManagementSection() {
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-sm font-medium border border-white/20">
                 <Users className="w-3.5 h-3.5" />
-                {users.length} {users.length === 1 ? 'utente' : 'utenti'}
+                {totalWithFamily} {totalWithFamily === 1 ? 'profilo' : 'profili'}
               </span>
               <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 text-gray-300 text-sm font-medium border border-white/20">
                 Privati: {customerCount}
+              </span>
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/10 text-gray-300 text-sm font-medium border border-white/20">
+                <UserPlus className="w-3.5 h-3.5" />
+                Familiari: {allFamilyRows.length}
               </span>
               <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 text-gray-300 text-sm font-medium border border-white/20">
                 Business: {businessCount}
@@ -584,59 +628,94 @@ export default function UsersManagementSection() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                          {user.full_name?.charAt(0).toUpperCase() || 'U'}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">{user.full_name}</p>
-                          {user.nickname && (
-                            <p className="text-sm text-gray-500">@{user.nickname}</p>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-700">{user.email}</td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                        user.user_type === 'customer' ? 'bg-green-100 text-green-800' :
-                        user.user_type === 'business' ? 'bg-orange-100 text-orange-800' :
-                        'bg-purple-100 text-purple-800'
-                      }`}>
-                        {getUserTypeLabel(user.user_type)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(user.subscription_status)}`}>
-                        {getStatusLabel(user.subscription_status)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-gray-700 text-sm">
-                      {new Date(user.created_at).toLocaleDateString('it-IT')}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleViewUser(user)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Visualizza dettagli"
-                        >
-                          <Eye className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteUser(user.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Elimina utente"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {users.map((user) => {
+                  const userFamilyRows = allFamilyRows.filter(fm => fm.customer_id === user.id);
+                  return (
+                    <>
+                      <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold flex-shrink-0">
+                              {user.full_name?.charAt(0).toUpperCase() || 'U'}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-900">{user.full_name}</p>
+                              {user.nickname && (
+                                <p className="text-sm text-gray-500">@{user.nickname}</p>
+                              )}
+                              {userFamilyRows.length > 0 && (
+                                <p className="text-xs text-blue-600 font-medium mt-0.5">
+                                  {userFamilyRows.length} {userFamilyRows.length === 1 ? 'familiare' : 'familiari'}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-gray-700">{user.email}</td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                            user.user_type === 'customer' ? 'bg-green-100 text-green-800' :
+                            user.user_type === 'business' ? 'bg-orange-100 text-orange-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {getUserTypeLabel(user.user_type)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(user.subscription_status)}`}>
+                            {getStatusLabel(user.subscription_status)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-gray-700 text-sm">
+                          {new Date(user.created_at).toLocaleDateString('it-IT')}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleViewUser(user)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Visualizza dettagli"
+                            >
+                              <Eye className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(user.id)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Elimina utente"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {userFamilyRows.map(fm => (
+                        <tr key={`fm-${fm.id}`} className="bg-blue-50/40 hover:bg-blue-50 transition-colors">
+                          <td className="px-6 py-3 pl-16">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                {fm.first_name?.charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-800 text-sm">{fm.first_name} {fm.last_name}</p>
+                                {fm.nickname && <p className="text-xs text-gray-500">"{fm.nickname}"</p>}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-3 text-xs text-gray-500 italic">membro di {fm.owner_name}</td>
+                          <td className="px-6 py-3">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                              <UserPlus className="w-3 h-3" />
+                              {relationshipLabel(fm.relationship)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3 text-xs text-gray-400">—</td>
+                          <td className="px-6 py-3 text-xs text-gray-400">—</td>
+                          <td className="px-6 py-3" />
+                        </tr>
+                      ))}
+                    </>
+                  );
+                })}
               </tbody>
             </table>
           </div>
