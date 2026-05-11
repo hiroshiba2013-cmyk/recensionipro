@@ -734,9 +734,12 @@ export function DashboardPage() {
     return `${publicUrl}?t=${Date.now()}`;
   };
 
-  // Resetta le sezioni aperte quando cambia il profilo attivo o la sede selezionata
+  // Resetta le sezioni aperte e il profilo professionale quando cambia il profilo attivo o la sede selezionata
   useEffect(() => {
     setOpen({});
+    setProfessionalProfile(null);
+    setProfessionalProfileLoaded(false);
+    setShowProfessionalProfileForm(false);
   }, [activeProfile, selectedBusinessLocationId]);
 
   // ── profile edit state ─────────────────────────────────────────────────────
@@ -963,13 +966,12 @@ export function DashboardPage() {
         const { data: myJs } = await jsQuery;
         if (myJs) setMyJobSeekers(myJs);
 
-        // Profilo professionale (solo owner, non per membro famiglia)
-        if (!fmId) {
-          const { data: pp } = await supabase
-            .from('professional_profiles')
-            .select('*')
-            .eq('user_id', profile.id)
-            .maybeSingle();
+        // Profilo professionale (owner o membro famiglia attivo)
+        {
+          let ppQuery = supabase.from('professional_profiles').select('*').eq('user_id', profile.id);
+          if (fmId) ppQuery = ppQuery.eq('family_member_id', fmId);
+          else ppQuery = ppQuery.is('family_member_id', null);
+          const { data: pp } = await ppQuery.maybeSingle();
           setProfessionalProfile(pp || null);
           setProfessionalProfileLoaded(true);
         }
@@ -1046,7 +1048,7 @@ export function DashboardPage() {
 
   const custBadges = [
     ...(isOwnerProfile ? [{ key: 'cust_dati', label: 'I Tuoi Dati', icon: User, color: 'slate', badge: null }] : []),
-    ...(isOwnerProfile ? [{ key: 'cust_prof', label: 'Profilo Professionale', icon: Briefcase, color: 'blue', badge: professionalProfile ? 'Attivo' : null }] : []),
+    { key: 'cust_prof', label: 'Profilo Professionale', icon: Briefcase, color: 'blue', badge: professionalProfile ? 'Attivo' : null },
     { key: 'cust_leaderboard', label: 'La Tua Classifica',      icon: Trophy,   color: 'yellow', badge: userRank ? `#${userRank.rank}` : null },
     { key: 'cust_activities',  label: 'Attivita Aggiunte',       icon: Activity, color: 'blue',   badge: addedBusinesses.length > 0 ? String(addedBusinesses.length) : null },
     { key: 'cust_jobs',        label: 'Annunci Cerco Lavoro',    icon: Briefcase,color: 'sky',    badge: myJobSeekers.length > 0 ? String(myJobSeekers.length) : null },
@@ -1618,6 +1620,8 @@ export function DashboardPage() {
                       {showProfessionalProfileForm ? (
                         <ProfessionalProfileForm
                           existingProfile={professionalProfile}
+                          familyMemberId={activeProfile?.isOwner === false ? activeProfile.id : null}
+                          familyMemberName={activeProfile?.isOwner === false ? (activeProfile as any).nickname || (activeProfile as any).name : undefined}
                           onSaved={(saved) => {
                             setProfessionalProfile(saved);
                             setShowProfessionalProfileForm(false);

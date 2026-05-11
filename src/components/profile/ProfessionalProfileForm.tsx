@@ -9,6 +9,7 @@ import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 interface ProfessionalProfile {
   id?: string;
   user_id: string;
+  family_member_id?: string | null;
   profession: string;
   city: string;
   province: string;
@@ -22,9 +23,11 @@ interface ProfessionalProfileFormProps {
   onSaved: (profile: ProfessionalProfile) => void;
   onCancel?: () => void;
   existingProfile?: ProfessionalProfile | null;
+  familyMemberId?: string | null;
+  familyMemberName?: string;
 }
 
-export function ProfessionalProfileForm({ onSaved, onCancel, existingProfile }: ProfessionalProfileFormProps) {
+export function ProfessionalProfileForm({ onSaved, onCancel, existingProfile, familyMemberId, familyMemberName }: ProfessionalProfileFormProps) {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [saving, setSaving] = useState(false);
@@ -79,6 +82,7 @@ export function ProfessionalProfileForm({ onSaved, onCancel, existingProfile }: 
     try {
       const payload = {
         user_id: user.id,
+        family_member_id: familyMemberId ?? null,
         profession: form.profession.trim(),
         city: form.city.trim(),
         province: form.province.trim(),
@@ -120,6 +124,7 @@ export function ProfessionalProfileForm({ onSaved, onCancel, existingProfile }: 
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-gray-900">
           {existingProfile ? 'Modifica Profilo Professionale' : 'Crea Profilo Professionale'}
+          {familyMemberName && <span className="text-blue-600"> — {familyMemberName}</span>}
         </h3>
         {onCancel && (
           <button type="button" onClick={onCancel} className="text-gray-400 hover:text-gray-600 transition-colors">
