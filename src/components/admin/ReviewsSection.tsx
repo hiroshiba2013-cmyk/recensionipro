@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle, XCircle, Eye, Star, Filter, MapPin, Building2, Calendar, Clock, User, Search, X, FileEdit as Edit, Save, X as CloseIcon, ChevronDown, ChevronUp, Image, FileText, Upload } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Star, Filter, MapPin, Building2, Calendar, Clock, User, Search, X, FileEdit as Edit, Save, X as CloseIcon, ChevronDown, ChevronUp, Image, FileText, Upload, Tag } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { AdminLocationFilter } from './AdminLocationFilter';
 import { useToast } from '../common/Toast';
@@ -64,6 +64,7 @@ interface Review {
     province: string | null;
     region: string | null;
     address: string;
+    category: { name: string } | null;
   } | null;
   unclaimed_business_location?: {
     name: string;
@@ -71,6 +72,7 @@ interface Review {
     province: string | null;
     region: string | null;
     street: string;
+    category: { name: string } | null;
   } | null;
   businesses?: {
     name: string;
@@ -237,6 +239,12 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
       return `${review.unclaimed_business_location.street}, ${review.unclaimed_business_location.city}`;
     }
     return 'Sede non specificata';
+  };
+
+  const getCategoryName = (review: Review): string | null => {
+    if (review.business_location?.category?.name) return review.business_location.category.name;
+    if (review.unclaimed_business_location?.category?.name) return review.unclaimed_business_location.category.name;
+    return null;
   };
 
   const reviewHasProof = (review: Review): boolean => {
@@ -654,6 +662,12 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                         <MapPin className="w-3 h-3" />
                         <span>{getLocationInfo(review)}</span>
                       </div>
+                      {getCategoryName(review) && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <Tag className="w-3 h-3 text-gray-400" />
+                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{getCategoryName(review)}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -785,6 +799,11 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                       <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
                         <MapPin className="w-3 h-3" />{getLocationInfo(selectedReview)}
                       </p>
+                      {getCategoryName(selectedReview) && (
+                        <p className="text-xs text-blue-700 flex items-center gap-1 mt-1">
+                          <Tag className="w-3 h-3" />{getCategoryName(selectedReview)}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
