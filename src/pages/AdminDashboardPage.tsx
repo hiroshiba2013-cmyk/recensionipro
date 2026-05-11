@@ -232,12 +232,18 @@ export function AdminDashboardPage() {
   const { profile, user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Tabs visited this session — used to suppress informational badges after first visit
-  const [visitedTabs, setVisitedTabs] = useState<Set<string>>(new Set());
+  // Persistent tab-seen timestamps: badge hidden after admin visits the tab
+  const STORAGE_KEY = 'admin_tab_seen';
+  const getSeenTabs = (): Record<string, number> => {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
+  };
+  const [seenTabs, setSeenTabs] = useState<Record<string, number>>(getSeenTabs);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    setVisitedTabs(prev => new Set(prev).add(tab));
+    const updated = { ...seenTabs, [tab]: Date.now() };
+    setSeenTabs(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   };
 
   const [statsPeriod, setStatsPeriod] = useState<number | null>(null); // null = tutti i tempi
@@ -282,16 +288,8 @@ export function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [pendingCounts, setPendingCounts] = useState<PendingCounts>({ reviews: 0, ads: 0, businesses: 0, reports: 0, auctions: 0, jobs: 0, jobSeekers: 0, newUsers: 0, newSubscriptions: 0, newMessages: 0, unreadPlatformMessages: 0 });
 
-  // Informational badges hidden once the admin visits the tab; approval badges always reflect DB
-  const displayCounts = {
-    ...pendingCounts,
-    newUsers: visitedTabs.has('users') ? 0 : pendingCounts.newUsers,
-    newSubscriptions: visitedTabs.has('subscriptions') ? 0 : pendingCounts.newSubscriptions,
-    unreadPlatformMessages:
-      visitedTabs.has('contact') || visitedTabs.has('platform_messages')
-        ? 0
-        : pendingCounts.unreadPlatformMessages,
-  };
+  // Counts already reflect last-seen timestamps from loadPendingCounts; use directly
+  const displayCounts = { ...pendingCounts };
   const [selectedReview, setSelectedReview] = useState<PendingReview | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
@@ -357,6 +355,11 @@ export function AdminDashboardPage() {
     }
   }, [checkingAdmin, isAdmin]);
 
+  // Re-run counts when tab seen timestamps change so badges update immediately
+  useEffect(() => {
+    if (isAdmin) loadPendingCounts();
+  }, [seenTabs]);
+
   // Realtime subscriptions: refresh badge counts when pending items change
   useEffect(() => {
     if (!isAdmin) return;
@@ -386,7 +389,12 @@ export function AdminDashboardPage() {
 
   const loadPendingCounts = async () => {
     try {
+      const seen = getSeenTabs();
+      // For informational tabs, count items created AFTER the last visit (or last 24h if never visited)
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const usersSince = seen['users'] ? new Date(seen['users']).toISOString() : oneDayAgo;
+      const subsSince = seen['subscriptions'] ? new Date(seen['subscriptions']).toISOString() : oneDayAgo;
+
       const [reviewsRes, adsRes, businessesRes, reportsRes, auctionsRes, jobsRes, jobSeekersRes, newUsersRes, newSubsRes, unreadPlatformMsgsRes] = await Promise.all([
         supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('review_status', 'pending'),
         supabase.from('classified_ads').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
@@ -395,8 +403,8 @@ export function AdminDashboardPage() {
         supabase.from('auctions').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
         supabase.from('job_postings').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
         supabase.from('job_seekers').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
-        supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', oneDayAgo),
-        supabase.from('subscriptions').select('id', { count: 'exact', head: true }).gte('created_at', oneDayAgo),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', usersSince),
+        supabase.from('subscriptions').select('id', { count: 'exact', head: true }).gte('created_at', subsSince),
         supabase.from('platform_messages').select('id', { count: 'exact', head: true }).eq('status', 'unread'),
       ]);
       setPendingCounts({
