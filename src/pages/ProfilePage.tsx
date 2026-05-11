@@ -7,6 +7,7 @@ import { ProfileClassifiedAdCard } from '../components/classifieds/ProfileClassi
 import { FavoriteClassifiedAdCard } from '../components/classifieds/FavoriteClassifiedAdCard';
 import { ClassifiedAdForm } from '../components/classifieds/ClassifiedAdForm';
 import { AvatarUpload } from '../components/profile/AvatarUpload';
+import { FamilyMemberAvatarUpload } from '../components/profile/FamilyMemberAvatarUpload';
 import { EditProfileForm } from '../components/profile/EditProfileForm';
 import { JobRequestForm } from '../components/profile/JobRequestForm';
 import { EditFamilyMembersForm } from '../components/profile/EditFamilyMembersForm';
@@ -1124,17 +1125,11 @@ export function ProfilePage() {
             <div className="flex items-center gap-6">
               {isFamilyMember && selectedFamilyMember ? (
                 <>
-                  {selectedFamilyMember.avatar_url ? (
-                    <img
-                      src={selectedFamilyMember.avatar_url}
-                      alt={selectedFamilyMember.nickname || `${selectedFamilyMember.first_name} ${selectedFamilyMember.last_name}`}
-                      className="w-24 h-24 rounded-full object-cover border-4 border-blue-200"
-                    />
-                  ) : (
-                    <div className="w-24 h-24 rounded-full bg-blue-600 text-white flex items-center justify-center text-4xl font-bold border-4 border-blue-200">
-                      {selectedFamilyMember.first_name.charAt(0)}
-                    </div>
-                  )}
+                  <FamilyMemberAvatarUpload
+                    memberId={selectedFamilyMember.id}
+                    currentAvatarUrl={selectedFamilyMember.avatar_url ?? null}
+                    onAvatarUpdate={(url) => setSelectedFamilyMember(prev => prev ? { ...prev, avatar_url: url } : prev)}
+                  />
                   <div>
                     <h1 className="text-3xl font-bold text-gray-900">
                       {selectedFamilyMember.nickname || `${selectedFamilyMember.first_name} ${selectedFamilyMember.last_name}`}
