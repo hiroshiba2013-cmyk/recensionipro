@@ -144,7 +144,7 @@ export function LocationCard({ location }: LocationCardProps) {
       </div>
 
       <div className="p-6">
-        <div className="flex items-start justify-between mb-2 gap-2">
+        <div className="flex items-start justify-between mb-1 gap-2">
           <div className="flex-1">
             <h3 className="text-xl font-semibold text-gray-900">{displayName}</h3>
             {locationLabel && (
@@ -158,12 +158,15 @@ export function LocationCard({ location }: LocationCardProps) {
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          {location.business?.category && (
-            <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full font-medium">
+        {location.business?.category && (
+          <div className="mb-3">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 border border-blue-200 text-blue-700 text-sm rounded-full font-semibold">
               {location.business.category.name}
             </span>
-          )}
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2 mb-3">
           {(location.review_count || 0) > 0 ? (
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 rounded-full border border-yellow-300">
               <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
