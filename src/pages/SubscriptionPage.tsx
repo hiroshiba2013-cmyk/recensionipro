@@ -242,8 +242,10 @@ export function SubscriptionPage() {
           .from('subscriptions')
           .update({
             plan_id: planId,
+            start_date: new Date().toISOString(),
             end_date: endDate.toISOString(),
             status: 'active',
+            payment_method_added: true,
           })
           .eq('id', currentSubscription.id);
 
@@ -255,7 +257,10 @@ export function SubscriptionPage() {
             customer_id: profile.id,
             plan_id: planId,
             status: 'active',
+            start_date: new Date().toISOString(),
             end_date: endDate.toISOString(),
+            payment_method_added: true,
+            reminder_sent: false,
           });
 
         if (insertError) throw insertError;
@@ -264,7 +269,7 @@ export function SubscriptionPage() {
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          subscription_type: selectedPlan.billing_period === 'monthly' ? 'monthly' : 'annual',
+          subscription_type: selectedPlan.name,
           subscription_status: 'active',
           subscription_expires_at: endDate.toISOString(),
         })
