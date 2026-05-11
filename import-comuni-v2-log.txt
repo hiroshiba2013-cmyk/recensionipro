@@ -1,0 +1,9 @@
+[dotenv@17.3.1] injecting env (2) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+
+=== IMPORTAZIONE COMUNI v2 - COPERTURA TOTALE ===
+216 tag x 116 zone
+
+(node:729) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Caricate 230 categorie
+[1/216] amenity=restaurant (Ristoranti): AO+742 AV+951 EN+168 NU+500 
