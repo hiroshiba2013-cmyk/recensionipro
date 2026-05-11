@@ -232,28 +232,25 @@ export function AdminDashboardPage() {
   const { profile, user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
 
+  // Tabs visited this session — used to suppress informational badges after first visit
+  const [visitedTabs, setVisitedTabs] = useState<Set<string>>(new Set());
+
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    // Clear informational badges when the admin visits the relevant tab
-    if (tab === 'users') {
-      setPendingCounts(prev => ({ ...prev, newUsers: 0 }));
-    } else if (tab === 'subscriptions') {
-      setPendingCounts(prev => ({ ...prev, newSubscriptions: 0 }));
-    } else if (tab === 'contact' || tab === 'platform_messages') {
-      setPendingCounts(prev => ({ ...prev, unreadPlatformMessages: 0 }));
-    } else if (tab === 'reports') {
-      setPendingCounts(prev => ({ ...prev, reports: 0 }));
-    } else if (tab === 'reviews') {
-      setPendingCounts(prev => ({ ...prev, reviews: 0 }));
-    } else if (tab === 'ads') {
-      setPendingCounts(prev => ({ ...prev, ads: 0 }));
-    } else if (tab === 'businesses') {
-      setPendingCounts(prev => ({ ...prev, businesses: 0 }));
-    } else if (tab === 'auctions') {
-      setPendingCounts(prev => ({ ...prev, auctions: 0 }));
-    } else if (tab === 'jobs') {
-      setPendingCounts(prev => ({ ...prev, jobs: 0, jobSeekers: 0 }));
-    }
+    setVisitedTabs(prev => new Set(prev).add(tab));
+  };
+
+  // Compute display counts: approval-pending badges always show real DB count;
+  // informational badges (newUsers, newSubscriptions, unreadPlatformMessages)
+  // are hidden once the admin has visited the relevant tab this session.
+  const displayCounts = {
+    ...pendingCounts,
+    newUsers: visitedTabs.has('users') ? 0 : pendingCounts.newUsers,
+    newSubscriptions: visitedTabs.has('subscriptions') ? 0 : pendingCounts.newSubscriptions,
+    unreadPlatformMessages:
+      visitedTabs.has('contact') || visitedTabs.has('platform_messages')
+        ? 0
+        : pendingCounts.unreadPlatformMessages,
   };
   const [statsPeriod, setStatsPeriod] = useState<number | null>(null); // null = tutti i tempi
   const [stats, setStats] = useState<DashboardStats>({
@@ -1117,9 +1114,9 @@ export function AdminDashboardPage() {
               >
                 <FileText className="w-4 h-4" />
                 Recensioni
-                {pendingCounts.reviews > 0 && (
+                {displayCounts.reviews > 0 && (
                   <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
-                    {pendingCounts.reviews}
+                    {displayCounts.reviews}
                   </span>
                 )}
               </button>
@@ -1133,9 +1130,9 @@ export function AdminDashboardPage() {
               >
                 <Users className="w-4 h-4" />
                 Utenti
-                {pendingCounts.newUsers > 0 && (
+                {displayCounts.newUsers > 0 && (
                   <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
-                    {pendingCounts.newUsers}
+                    {displayCounts.newUsers}
                   </span>
                 )}
               </button>
@@ -1149,9 +1146,9 @@ export function AdminDashboardPage() {
               >
                 <Activity className="w-4 h-4" />
                 Abbonamenti
-                {pendingCounts.newSubscriptions > 0 && (
+                {displayCounts.newSubscriptions > 0 && (
                   <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
-                    {pendingCounts.newSubscriptions}
+                    {displayCounts.newSubscriptions}
                   </span>
                 )}
               </button>
@@ -1165,9 +1162,9 @@ export function AdminDashboardPage() {
               >
                 <ShoppingBag className="w-4 h-4" />
                 Annunci
-                {pendingCounts.ads > 0 && (
+                {displayCounts.ads > 0 && (
                   <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
-                    {pendingCounts.ads}
+                    {displayCounts.ads}
                   </span>
                 )}
               </button>
@@ -1181,9 +1178,9 @@ export function AdminDashboardPage() {
               >
                 <Gavel className="w-4 h-4" />
                 Aste
-                {pendingCounts.auctions > 0 && (
+                {displayCounts.auctions > 0 && (
                   <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
-                    {pendingCounts.auctions}
+                    {displayCounts.auctions}
                   </span>
                 )}
               </button>
@@ -1197,9 +1194,9 @@ export function AdminDashboardPage() {
               >
                 <AlertTriangle className="w-4 h-4" />
                 Segnalazioni
-                {pendingCounts.reports > 0 && (
+                {displayCounts.reports > 0 && (
                   <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
-                    {pendingCounts.reports}
+                    {displayCounts.reports}
                   </span>
                 )}
               </button>
@@ -1213,9 +1210,9 @@ export function AdminDashboardPage() {
               >
                 <Building2 className="w-4 h-4" />
                 Attività
-                {pendingCounts.businesses > 0 && (
+                {displayCounts.businesses > 0 && (
                   <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
-                    {pendingCounts.businesses}
+                    {displayCounts.businesses}
                   </span>
                 )}
               </button>
@@ -1229,9 +1226,9 @@ export function AdminDashboardPage() {
               >
                 <Briefcase className="w-4 h-4" />
                 Lavoro
-                {(pendingCounts.jobs + pendingCounts.jobSeekers) > 0 && (
+                {(displayCounts.jobs + displayCounts.jobSeekers) > 0 && (
                   <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
-                    {pendingCounts.jobs + pendingCounts.jobSeekers}
+                    {displayCounts.jobs + displayCounts.jobSeekers}
                   </span>
                 )}
               </button>
@@ -1289,9 +1286,9 @@ export function AdminDashboardPage() {
               >
                 <MessageSquare className="w-4 h-4" />
                 Messaggi
-                {pendingCounts.newMessages > 0 && (
+                {displayCounts.newMessages > 0 && (
                   <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
-                    {pendingCounts.newMessages}
+                    {displayCounts.newMessages}
                   </span>
                 )}
               </button>
@@ -1305,9 +1302,9 @@ export function AdminDashboardPage() {
               >
                 <Mail className="w-4 h-4" />
                 Contatti
-                {pendingCounts.unreadPlatformMessages > 0 && (
+                {displayCounts.unreadPlatformMessages > 0 && (
                   <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] flex items-center justify-center px-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg ring-2 ring-white">
-                    {pendingCounts.unreadPlatformMessages}
+                    {displayCounts.unreadPlatformMessages}
                   </span>
                 )}
               </button>
@@ -1321,9 +1318,9 @@ export function AdminDashboardPage() {
               >
                 <MessageSquare className="w-4 h-4" />
                 Messaggi Utenti
-                {pendingCounts.unreadPlatformMessages > 0 && (
+                {displayCounts.unreadPlatformMessages > 0 && (
                   <span className="ml-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                    {pendingCounts.unreadPlatformMessages}
+                    {displayCounts.unreadPlatformMessages}
                   </span>
                 )}
               </button>
