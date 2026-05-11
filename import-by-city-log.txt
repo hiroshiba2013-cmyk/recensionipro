@@ -1,23 +1,9 @@
+[dotenv@17.3.1] injecting env (2) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
 
-> vite-react-typescript-starter@0.0.0 import:by-city
-> node import-by-city-major.js
+=== IMPORTAZIONE COMUNI VUOTI - PROVINCE INTERE ===
+168 tag OSM x 63 province/zone
 
-[dotenv@17.2.3] injecting env (2) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
-
-╔════════════════════════════════════════════════════════════════════╗
-║      IMPORTAZIONE OSM PER CATEGORIA - CITTÀ PRINCIPALI            ║
-║                                                                    ║
-║ Categorie:  40  Città: 491                                        ║
-╚════════════════════════════════════════════════════════════════════╝
-
-
-======================================================================
-📦 CATEGORIA [1/40]: Supermercati
-======================================================================
-   [  1/491] Roma                           ✅ 765
-   [  2/491] Milano                         ✅ 330
-   [  3/491] Napoli                         ✅ 136
-   [  4/491] Torino                         ⏭️  SKIP (HTTP 504)
-   [  5/491] Palermo                        ✅ 262
-   [  6/491] Genova                         ✅ 241
-   [  7/491] Bologna                        ✅ 110
+(node:587) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Caricate 230 categorie
+[1/168] amenity=restaurant -> Ristoranti: RO(+422) PN(+438) GO(+367) IM(+692) MS(+675) AP(+533) 
