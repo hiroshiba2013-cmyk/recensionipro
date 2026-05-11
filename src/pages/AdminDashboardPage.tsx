@@ -231,6 +231,30 @@ export function AdminDashboardPage() {
   const { showToast } = useToast();
   const { profile, user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    // Clear informational badges when the admin visits the relevant tab
+    if (tab === 'users') {
+      setPendingCounts(prev => ({ ...prev, newUsers: 0 }));
+    } else if (tab === 'subscriptions') {
+      setPendingCounts(prev => ({ ...prev, newSubscriptions: 0 }));
+    } else if (tab === 'contact' || tab === 'platform_messages') {
+      setPendingCounts(prev => ({ ...prev, unreadPlatformMessages: 0 }));
+    } else if (tab === 'reports') {
+      setPendingCounts(prev => ({ ...prev, reports: 0 }));
+    } else if (tab === 'reviews') {
+      setPendingCounts(prev => ({ ...prev, reviews: 0 }));
+    } else if (tab === 'ads') {
+      setPendingCounts(prev => ({ ...prev, ads: 0 }));
+    } else if (tab === 'businesses') {
+      setPendingCounts(prev => ({ ...prev, businesses: 0 }));
+    } else if (tab === 'auctions') {
+      setPendingCounts(prev => ({ ...prev, auctions: 0 }));
+    } else if (tab === 'jobs') {
+      setPendingCounts(prev => ({ ...prev, jobs: 0, jobSeekers: 0 }));
+    }
+  };
   const [statsPeriod, setStatsPeriod] = useState<number | null>(null); // null = tutti i tempi
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
@@ -1068,7 +1092,7 @@ export function AdminDashboardPage() {
 
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               <button
-                onClick={() => setActiveTab('dashboard')}
+                onClick={() => handleTabChange('dashboard')}
                 className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'dashboard'
                     ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
@@ -1079,7 +1103,7 @@ export function AdminDashboardPage() {
                 Dashboard
               </button>
               <button
-                onClick={() => setActiveTab('reviews')}
+                onClick={() => handleTabChange('reviews')}
                 className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'reviews'
                     ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md'
@@ -1095,7 +1119,7 @@ export function AdminDashboardPage() {
                 )}
               </button>
               <button
-                onClick={() => setActiveTab('users')}
+                onClick={() => handleTabChange('users')}
                 className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'users'
                     ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
@@ -1111,7 +1135,7 @@ export function AdminDashboardPage() {
                 )}
               </button>
               <button
-                onClick={() => setActiveTab('subscriptions')}
+                onClick={() => handleTabChange('subscriptions')}
                 className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'subscriptions'
                     ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-md'
@@ -1127,7 +1151,7 @@ export function AdminDashboardPage() {
                 )}
               </button>
               <button
-                onClick={() => setActiveTab('ads')}
+                onClick={() => handleTabChange('ads')}
                 className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'ads'
                     ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-md'
@@ -1143,7 +1167,7 @@ export function AdminDashboardPage() {
                 )}
               </button>
               <button
-                onClick={() => setActiveTab('auctions')}
+                onClick={() => handleTabChange('auctions')}
                 className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'auctions'
                     ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md'
@@ -1159,7 +1183,7 @@ export function AdminDashboardPage() {
                 )}
               </button>
               <button
-                onClick={() => setActiveTab('reports')}
+                onClick={() => handleTabChange('reports')}
                 className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'reports'
                     ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md'
@@ -1175,7 +1199,7 @@ export function AdminDashboardPage() {
                 )}
               </button>
               <button
-                onClick={() => setActiveTab('businesses')}
+                onClick={() => handleTabChange('businesses')}
                 className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'businesses'
                     ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md'
@@ -1191,7 +1215,7 @@ export function AdminDashboardPage() {
                 )}
               </button>
               <button
-                onClick={() => setActiveTab('jobs')}
+                onClick={() => handleTabChange('jobs')}
                 className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'jobs'
                     ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-md'
@@ -1207,7 +1231,7 @@ export function AdminDashboardPage() {
                 )}
               </button>
               <button
-                onClick={() => setActiveTab('professional_profiles')}
+                onClick={() => handleTabChange('professional_profiles')}
                 className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'professional_profiles'
                     ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
@@ -1218,7 +1242,7 @@ export function AdminDashboardPage() {
                 Profili Prof.
               </button>
               <button
-                onClick={() => setActiveTab('solidarity')}
+                onClick={() => handleTabChange('solidarity')}
                 className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'solidarity'
                     ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-md'
@@ -1229,7 +1253,7 @@ export function AdminDashboardPage() {
                 Solidarietà
               </button>
               <button
-                onClick={() => setActiveTab('leaderboard')}
+                onClick={() => handleTabChange('leaderboard')}
                 className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'leaderboard'
                     ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md'
@@ -1240,7 +1264,7 @@ export function AdminDashboardPage() {
                 Classifica
               </button>
               <button
-                onClick={() => setActiveTab('tracking')}
+                onClick={() => handleTabChange('tracking')}
                 className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'tracking'
                     ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-md'
@@ -1251,7 +1275,7 @@ export function AdminDashboardPage() {
                 Tracking
               </button>
               <button
-                onClick={() => setActiveTab('messaging')}
+                onClick={() => handleTabChange('messaging')}
                 className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'messaging'
                     ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
@@ -1267,7 +1291,7 @@ export function AdminDashboardPage() {
                 )}
               </button>
               <button
-                onClick={() => setActiveTab('contact')}
+                onClick={() => handleTabChange('contact')}
                 className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'contact'
                     ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-md'
@@ -1283,7 +1307,7 @@ export function AdminDashboardPage() {
                 )}
               </button>
               <button
-                onClick={() => setActiveTab('platform_messages')}
+                onClick={() => handleTabChange('platform_messages')}
                 className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'platform_messages'
                     ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
@@ -1299,7 +1323,7 @@ export function AdminDashboardPage() {
                 )}
               </button>
               <button
-                onClick={() => setActiveTab('plans')}
+                onClick={() => handleTabChange('plans')}
                 className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'plans'
                     ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-md'
@@ -1310,7 +1334,7 @@ export function AdminDashboardPage() {
                 Piani
               </button>
               <button
-                onClick={() => setActiveTab('rules')}
+                onClick={() => handleTabChange('rules')}
                 className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'rules'
                     ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-md'
