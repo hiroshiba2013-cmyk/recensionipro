@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Trash2, Eye, X as CloseIcon, FilterX, Save, FileEdit as Edit, CircleUser as UserCircle, MapPin, UserPlus, CreditCard, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Users, Trash2, Eye, X as CloseIcon, FilterX, Save, FileEdit as Edit, CircleUser as UserCircle, MapPin, UserPlus, CreditCard, CheckCircle, Clock, AlertCircle, ChevronDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
 
@@ -97,6 +97,7 @@ export default function UsersManagementSection() {
   const [editedMember, setEditedMember] = useState<FamilyMember | null>(null);
   const [editingLocationId, setEditingLocationId] = useState<string | null>(null);
   const [editedLocation, setEditedLocation] = useState<BusinessLocation | null>(null);
+  const [expandedFamilyUserId, setExpandedFamilyUserId] = useState<string | null>(null);
   const [showAddMemberForm, setShowAddMemberForm] = useState(false);
   const [newMember, setNewMember] = useState<Omit<FamilyMember, 'id'>>({ first_name: '', last_name: '', nickname: '', date_of_birth: '', relationship: '', fiscal_code: '' });
 
@@ -667,9 +668,19 @@ export default function UsersManagementSection() {
                                 <p className="text-sm text-gray-500">@{user.nickname}</p>
                               )}
                               {userFamilyRows.length > 0 && (
-                                <p className="text-xs text-blue-600 font-medium mt-0.5">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setExpandedFamilyUserId(
+                                      expandedFamilyUserId === user.id ? null : user.id
+                                    );
+                                  }}
+                                  className="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 font-medium hover:text-blue-800 transition-colors group"
+                                >
+                                  <UserPlus className="w-3 h-3" />
                                   {userFamilyRows.length} {userFamilyRows.length === 1 ? 'familiare' : 'familiari'}
-                                </p>
+                                  <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${expandedFamilyUserId === user.id ? 'rotate-180' : ''}`} />
+                                </button>
                               )}
                             </div>
                           </div>
@@ -711,7 +722,7 @@ export default function UsersManagementSection() {
                           </div>
                         </td>
                       </tr>
-                      {userFamilyRows.map(fm => (
+                      {expandedFamilyUserId === user.id && userFamilyRows.map(fm => (
                         <tr key={`fm-${fm.id}`} className="bg-blue-50/40 hover:bg-blue-50 transition-colors">
                           <td className="px-6 py-3 pl-16">
                             <div className="flex items-center gap-3">
