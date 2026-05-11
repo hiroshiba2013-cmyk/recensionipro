@@ -20,6 +20,7 @@ import { PlatformMessagesSection } from '../components/admin/PlatformMessagesSec
 import { PlansSection } from '../components/admin/PlansSection';
 import { RulesSection } from '../components/admin/RulesSection';
 import AuctionsSection from '../components/admin/AuctionsSection';
+import { ProfessionalProfilesSection } from '../components/admin/ProfessionalProfilesSection';
 import { useToast } from '../components/common/Toast';
 
 interface DashboardStats {
@@ -1206,6 +1207,17 @@ export function AdminDashboardPage() {
                 )}
               </button>
               <button
+                onClick={() => setActiveTab('professional_profiles')}
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'professional_profiles'
+                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <UserCheck className="w-4 h-4" />
+                Profili Prof.
+              </button>
+              <button
                 onClick={() => setActiveTab('solidarity')}
                 className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'solidarity'
@@ -1782,6 +1794,8 @@ export function AdminDashboardPage() {
             {activeTab === 'businesses' && <BusinessesSection onReload={async () => { await loadBusinesses(); await loadPendingCounts(); }} />}
 
             {activeTab === 'jobs' && <JobPostingsSection jobPostings={jobPostings} onReload={loadJobPostings} pendingJobSeekers={pendingCounts.jobSeekers} />}
+
+            {activeTab === 'professional_profiles' && <ProfessionalProfilesSection />}
 
             {activeTab === 'solidarity' && <SolidaritySection onReload={loadData} />}
 
