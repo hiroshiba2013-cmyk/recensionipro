@@ -143,16 +143,6 @@ export function SearchResultsPage() {
 
       if (businessesError) throw businessesError;
 
-      const categoryIds = [...new Set((businessesData || []).map((l: any) => l.category_id).filter(Boolean))];
-      const categoryMap: Record<string, { id: string; name: string; icon: string }> = {};
-      if (categoryIds.length > 0) {
-        const { data: categoriesData } = await supabase
-          .from('business_categories')
-          .select('id, name, icon')
-          .in('id', categoryIds);
-        (categoriesData || []).forEach((c: any) => { categoryMap[c.id] = c; });
-      }
-
       let allLocations: BusinessLocation[] = (businessesData || []).map((location: any) => ({
         id: location.id,
         business_id: location.business_id || location.id,
@@ -178,10 +168,10 @@ export function SearchResultsPage() {
           name: location.name,
           category_id: location.category_id,
           verified: location.is_verified || false,
-          category: location.category_id ? categoryMap[location.category_id] || null : null
+          category: location.category_id && location.category_name ? { id: location.category_id, name: location.category_name, icon: '' } : null
         },
         added_by: location.added_by || null,
-        category_name: location.category_id ? (categoryMap[location.category_id]?.name || null) : null,
+        category_name: location.category_name || null,
         avg_rating: 0,
         review_count: 0
       }));
