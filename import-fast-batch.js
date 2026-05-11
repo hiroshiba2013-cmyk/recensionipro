@@ -1,6 +1,6 @@
 /**
- * Import veloce - una provincia + un tag alla volta
- * Feedback immediato dopo ogni inserimento
+ * Import veloce - 1 tag + 1 provincia alla volta
+ * Feedback immediato, nessun blocco su query pesanti
  */
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
@@ -9,7 +9,6 @@ import https from 'https';
 config();
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
 
-// Province da importare (inizia dalle più vuote)
 const PROVINCES = [
   { province: 'AO', region: "Valle d'Aosta", bbox: [45.45, 6.80, 45.90, 7.90] },
   { province: 'AV', region: 'Campania', bbox: [40.60, 14.50, 41.30, 15.40] },
@@ -120,152 +119,91 @@ const PROVINCES = [
   { province: 'LI', region: 'Toscana', bbox: [42.60, 10.15, 43.55, 10.85] },
 ];
 
-// Tag raggruppati in batch piccoli (5 tag per gruppo)
-const TAG_BATCHES = [
-  // Batch 1: Ristorazione
-  [
-    { key: 'amenity', val: 'restaurant', cat: 'Ristoranti' },
-    { key: 'amenity', val: 'cafe', cat: 'Bar e Caffè' },
-    { key: 'amenity', val: 'bar', cat: 'Bar e Caffè' },
-    { key: 'amenity', val: 'fast_food', cat: 'Fast Food' },
-    { key: 'amenity', val: 'pub', cat: 'Pub e Locali' },
-  ],
-  // Batch 2: Cibo
-  [
-    { key: 'amenity', val: 'ice_cream', cat: 'Gelaterie' },
-    { key: 'amenity', val: 'nightclub', cat: 'Discoteche' },
-    { key: 'shop', val: 'supermarket', cat: 'Supermercati' },
-    { key: 'shop', val: 'convenience', cat: 'Alimentari' },
-    { key: 'shop', val: 'bakery', cat: 'Panifici' },
-  ],
-  // Batch 3: Alimentari
-  [
-    { key: 'shop', val: 'butcher', cat: 'Macellerie' },
-    { key: 'shop', val: 'greengrocer', cat: 'Frutta e Verdura' },
-    { key: 'shop', val: 'pastry', cat: 'Pasticcerie' },
-    { key: 'shop', val: 'fishmonger', cat: 'Pescherie' },
-    { key: 'shop', val: 'deli', cat: 'Gastronomie' },
-  ],
-  // Batch 4: Bevande e tabacco
-  [
-    { key: 'shop', val: 'wine', cat: 'Enoteche' },
-    { key: 'shop', val: 'alcohol', cat: 'Enoteche' },
-    { key: 'shop', val: 'tobacco', cat: 'Tabaccherie' },
-    { key: 'shop', val: 'coffee', cat: 'Torrefazioni' },
-    { key: 'shop', val: 'beverages', cat: 'Negozi di Bevande' },
-  ],
-  // Batch 5: Salute
-  [
-    { key: 'amenity', val: 'pharmacy', cat: 'Farmacie' },
-    { key: 'amenity', val: 'dentist', cat: 'Dentisti' },
-    { key: 'amenity', val: 'doctors', cat: 'Medici' },
-    { key: 'amenity', val: 'hospital', cat: 'Ospedali' },
-    { key: 'amenity', val: 'veterinary', cat: 'Veterinari' },
-  ],
-  // Batch 6: Bellezza
-  [
-    { key: 'shop', val: 'hairdresser', cat: 'Parrucchieri' },
-    { key: 'shop', val: 'beauty', cat: 'Estetisti' },
-    { key: 'shop', val: 'optician', cat: 'Ottici' },
-    { key: 'amenity', val: 'spa', cat: 'Centri Estetici' },
-    { key: 'leisure', val: 'fitness_centre', cat: 'Palestre' },
-  ],
-  // Batch 7: Sport
-  [
-    { key: 'leisure', val: 'swimming_pool', cat: 'Piscine' },
-    { key: 'shop', val: 'sports', cat: 'Articoli Sportivi' },
-    { key: 'shop', val: 'bicycle', cat: 'Cicli e Moto' },
-    { key: 'amenity', val: 'gym', cat: 'Palestre' },
-    { key: 'leisure', val: 'sports_centre', cat: 'Palestre' },
-  ],
-  // Batch 8: Moda
-  [
-    { key: 'shop', val: 'clothes', cat: 'Abbigliamento' },
-    { key: 'shop', val: 'shoes', cat: 'Calzature' },
-    { key: 'shop', val: 'jewelry', cat: 'Gioiellerie' },
-    { key: 'shop', val: 'accessories', cat: 'Accessori Moda' },
-    { key: 'shop', val: 'bag', cat: 'Pelletterie' },
-  ],
-  // Batch 9: Casa
-  [
-    { key: 'shop', val: 'furniture', cat: 'Arredamento' },
-    { key: 'shop', val: 'hardware', cat: 'Ferramenta' },
-    { key: 'shop', val: 'doityourself', cat: 'Bricolage' },
-    { key: 'shop', val: 'florist', cat: 'Fiorai' },
-    { key: 'shop', val: 'garden_centre', cat: 'Garden Center' },
-  ],
-  // Batch 10: Elettronica
-  [
-    { key: 'shop', val: 'electronics', cat: 'Elettronica' },
-    { key: 'shop', val: 'mobile_phone', cat: 'Telefonia' },
-    { key: 'shop', val: 'computer', cat: 'Computer e Informatica' },
-    { key: 'shop', val: 'hifi', cat: 'Elettrodomestici' },
-    { key: 'shop', val: 'appliance', cat: 'Elettrodomestici' },
-  ],
-  // Batch 11: Auto
-  [
-    { key: 'shop', val: 'car', cat: 'Concessionarie Auto' },
-    { key: 'shop', val: 'car_repair', cat: 'Autofficine' },
-    { key: 'amenity', val: 'fuel', cat: 'Distributori Carburante' },
-    { key: 'shop', val: 'car_parts', cat: 'Ricambi Auto' },
-    { key: 'amenity', val: 'car_wash', cat: 'Autolavaggi' },
-  ],
-  // Batch 12: Finanza e servizi
-  [
-    { key: 'amenity', val: 'bank', cat: 'Banche' },
-    { key: 'amenity', val: 'atm', cat: 'Banche' },
-    { key: 'office', val: 'insurance', cat: 'Assicurazioni' },
-    { key: 'amenity', val: 'post_office', cat: 'Poste' },
-    { key: 'office', val: 'lawyer', cat: 'Avvocati' },
-  ],
-  // Batch 13: Professionisti
-  [
-    { key: 'office', val: 'accountant', cat: 'Commercialisti' },
-    { key: 'office', val: 'notary', cat: 'Notai' },
-    { key: 'office', val: 'architect', cat: 'Architetti' },
-    { key: 'office', val: 'engineer', cat: 'Ingegneri' },
-    { key: 'office', val: 'estate_agent', cat: 'Agenzie Immobiliari' },
-  ],
-  // Batch 14: Hotel e turismo
-  [
-    { key: 'tourism', val: 'hotel', cat: 'Hotel' },
-    { key: 'tourism', val: 'guest_house', cat: 'B&B' },
-    { key: 'tourism', val: 'hostel', cat: 'Ostelli' },
-    { key: 'tourism', val: 'motel', cat: 'Motel' },
-    { key: 'tourism', val: 'camp_site', cat: 'Campeggi' },
-  ],
-  // Batch 15: Artigiani
-  [
-    { key: 'craft', val: 'plumber', cat: 'Idraulici' },
-    { key: 'craft', val: 'electrician', cat: 'Elettricisti' },
-    { key: 'craft', val: 'carpenter', cat: 'Falegnami' },
-    { key: 'craft', val: 'painter', cat: 'Imbianchini' },
-    { key: 'craft', val: 'locksmith', cat: 'Duplicazione Chiavi' },
-  ],
-  // Batch 16: Istruzione
-  [
-    { key: 'amenity', val: 'school', cat: 'Scuole' },
-    { key: 'amenity', val: 'kindergarten', cat: 'Asili Nido' },
-    { key: 'amenity', val: 'university', cat: 'Università' },
-    { key: 'amenity', val: 'language_school', cat: 'Scuole di Lingue' },
-    { key: 'amenity', val: 'driving_school', cat: 'Autoscuole' },
-  ],
-  // Batch 17: Varie
-  [
-    { key: 'shop', val: 'books', cat: 'Librerie' },
-    { key: 'shop', val: 'newsagent', cat: 'Giornali' },
-    { key: 'shop', val: 'gift', cat: 'Articoli da Regalo' },
-    { key: 'shop', val: 'toys', cat: 'Giocattoli' },
-    { key: 'shop', val: 'pet', cat: 'Negozi per Animali' },
-  ],
-  // Batch 18: Cultura e svago
-  [
-    { key: 'amenity', val: 'cinema', cat: 'Cinema' },
-    { key: 'amenity', val: 'theatre', cat: 'Teatri' },
-    { key: 'shop', val: 'photo', cat: 'Fotografia' },
-    { key: 'shop', val: 'musical_instrument', cat: 'Strumenti Musicali' },
-    { key: 'shop', val: 'antiques', cat: 'Antiquari' },
-  ],
+const TAGS = [
+  { key: 'amenity', val: 'restaurant', cat: 'Ristoranti' },
+  { key: 'amenity', val: 'cafe', cat: 'Bar e Caffè' },
+  { key: 'amenity', val: 'bar', cat: 'Bar e Caffè' },
+  { key: 'amenity', val: 'fast_food', cat: 'Fast Food' },
+  { key: 'amenity', val: 'pub', cat: 'Pub e Locali' },
+  { key: 'amenity', val: 'ice_cream', cat: 'Gelaterie' },
+  { key: 'amenity', val: 'nightclub', cat: 'Discoteche' },
+  { key: 'shop', val: 'supermarket', cat: 'Supermercati' },
+  { key: 'shop', val: 'convenience', cat: 'Alimentari' },
+  { key: 'shop', val: 'bakery', cat: 'Panifici' },
+  { key: 'shop', val: 'butcher', cat: 'Macellerie' },
+  { key: 'shop', val: 'greengrocer', cat: 'Frutta e Verdura' },
+  { key: 'shop', val: 'pastry', cat: 'Pasticcerie' },
+  { key: 'shop', val: 'fishmonger', cat: 'Pescherie' },
+  { key: 'shop', val: 'deli', cat: 'Gastronomie' },
+  { key: 'shop', val: 'wine', cat: 'Enoteche' },
+  { key: 'shop', val: 'alcohol', cat: 'Enoteche' },
+  { key: 'shop', val: 'tobacco', cat: 'Tabaccherie' },
+  { key: 'shop', val: 'coffee', cat: 'Torrefazioni' },
+  { key: 'amenity', val: 'pharmacy', cat: 'Farmacie' },
+  { key: 'amenity', val: 'dentist', cat: 'Dentisti' },
+  { key: 'amenity', val: 'doctors', cat: 'Medici' },
+  { key: 'amenity', val: 'veterinary', cat: 'Veterinari' },
+  { key: 'shop', val: 'hairdresser', cat: 'Parrucchieri' },
+  { key: 'shop', val: 'beauty', cat: 'Estetisti' },
+  { key: 'shop', val: 'optician', cat: 'Ottici' },
+  { key: 'amenity', val: 'spa', cat: 'Centri Estetici' },
+  { key: 'leisure', val: 'fitness_centre', cat: 'Palestre' },
+  { key: 'leisure', val: 'swimming_pool', cat: 'Piscine' },
+  { key: 'shop', val: 'sports', cat: 'Articoli Sportivi' },
+  { key: 'shop', val: 'bicycle', cat: 'Cicli e Moto' },
+  { key: 'shop', val: 'clothes', cat: 'Abbigliamento' },
+  { key: 'shop', val: 'shoes', cat: 'Calzature' },
+  { key: 'shop', val: 'jewelry', cat: 'Gioiellerie' },
+  { key: 'shop', val: 'furniture', cat: 'Arredamento' },
+  { key: 'shop', val: 'hardware', cat: 'Ferramenta' },
+  { key: 'shop', val: 'doityourself', cat: 'Bricolage' },
+  { key: 'shop', val: 'florist', cat: 'Fiorai' },
+  { key: 'shop', val: 'garden_centre', cat: 'Garden Center' },
+  { key: 'shop', val: 'electronics', cat: 'Elettronica' },
+  { key: 'shop', val: 'mobile_phone', cat: 'Telefonia' },
+  { key: 'shop', val: 'computer', cat: 'Computer e Informatica' },
+  { key: 'shop', val: 'car', cat: 'Concessionarie Auto' },
+  { key: 'shop', val: 'car_repair', cat: 'Autofficine' },
+  { key: 'amenity', val: 'fuel', cat: 'Distributori Carburante' },
+  { key: 'shop', val: 'car_parts', cat: 'Ricambi Auto' },
+  { key: 'amenity', val: 'bank', cat: 'Banche' },
+  { key: 'amenity', val: 'post_office', cat: 'Poste' },
+  { key: 'office', val: 'insurance', cat: 'Assicurazioni' },
+  { key: 'office', val: 'lawyer', cat: 'Avvocati' },
+  { key: 'office', val: 'accountant', cat: 'Commercialisti' },
+  { key: 'office', val: 'notary', cat: 'Notai' },
+  { key: 'office', val: 'architect', cat: 'Architetti' },
+  { key: 'office', val: 'estate_agent', cat: 'Agenzie Immobiliari' },
+  { key: 'tourism', val: 'hotel', cat: 'Hotel' },
+  { key: 'tourism', val: 'guest_house', cat: 'B&B' },
+  { key: 'tourism', val: 'hostel', cat: 'Ostelli' },
+  { key: 'tourism', val: 'camp_site', cat: 'Campeggi' },
+  { key: 'craft', val: 'plumber', cat: 'Idraulici' },
+  { key: 'craft', val: 'electrician', cat: 'Elettricisti' },
+  { key: 'craft', val: 'carpenter', cat: 'Falegnami' },
+  { key: 'craft', val: 'painter', cat: 'Imbianchini' },
+  { key: 'amenity', val: 'school', cat: 'Scuole' },
+  { key: 'amenity', val: 'kindergarten', cat: 'Asili Nido' },
+  { key: 'amenity', val: 'language_school', cat: 'Scuole di Lingue' },
+  { key: 'amenity', val: 'driving_school', cat: 'Autoscuole' },
+  { key: 'shop', val: 'books', cat: 'Librerie' },
+  { key: 'shop', val: 'newsagent', cat: 'Giornali' },
+  { key: 'shop', val: 'gift', cat: 'Articoli da Regalo' },
+  { key: 'shop', val: 'toys', cat: 'Giocattoli' },
+  { key: 'shop', val: 'pet', cat: 'Negozi per Animali' },
+  { key: 'amenity', val: 'cinema', cat: 'Cinema' },
+  { key: 'amenity', val: 'theatre', cat: 'Teatri' },
+  { key: 'shop', val: 'photo', cat: 'Fotografia' },
+  { key: 'shop', val: 'musical_instrument', cat: 'Strumenti Musicali' },
+  { key: 'amenity', val: 'laundry', cat: 'Lavanderie' },
+  { key: 'shop', val: 'dry_cleaning', cat: 'Lavanderie' },
+  { key: 'shop', val: 'stationery', cat: 'Cartolerie' },
+  { key: 'shop', val: 'antiques', cat: 'Antiquari' },
+  { key: 'craft', val: 'gardener', cat: 'Giardinieri' },
+  { key: 'craft', val: 'tailor', cat: 'Sartorie' },
+  { key: 'craft', val: 'watchmaker', cat: 'Orologiai' },
+  { key: 'craft', val: 'photographer', cat: 'Fotografi' },
+  { key: 'craft', val: 'winery', cat: 'Cantine' },
 ];
 
 let categoryCache = {};
@@ -288,7 +226,7 @@ function fetchOverpass(query) {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Content-Length': Buffer.byteLength(body),
-        'User-Agent': 'ItalianBizDir/10.0'
+        'User-Agent': 'ItalianBizDir/11.0'
       }
     };
     const req = https.request(opts, res => {
@@ -301,82 +239,69 @@ function fetchOverpass(query) {
       });
     });
     req.on('error', reject);
-    req.setTimeout(60000, () => { req.destroy(); reject(new Error('Timeout')); });
+    // Timeout breve: 30s per query singola, nessun blocco
+    req.setTimeout(30000, () => { req.destroy(); reject(new Error('Timeout')); });
     req.write(body); req.end();
   });
 }
 
-// Costruisce una query multi-tag per una singola provincia (bbox piccola = veloce)
-function buildBatchQuery(tags, province) {
+async function runOne(tag, province) {
+  const catId = categoryCache[tag.cat];
+  if (!catId) return 0;
+
   const [s, w, n, e] = province.bbox;
   const bbox = `${s},${w},${n},${e}`;
-  const parts = tags.map(tq =>
-    `  node["${tq.key}"="${tq.val}"](${bbox});\n  way["${tq.key}"="${tq.val}"](${bbox});`
-  ).join('\n');
-  return `[out:json][timeout:60];\n(\n${parts}\n);\nout center tags;`;
-}
+  const query = `[out:json][timeout:25];\n(\n  node["${tag.key}"="${tag.val}"](${bbox});\n  way["${tag.key}"="${tag.val}"](${bbox});\n);\nout center tags;`;
 
-function makeRecord(el, province, tq, catId) {
-  const tags = el.tags || {};
-  if (!tags.name) return null;
-  const lat = el.lat ?? el.center?.lat;
-  const lon = el.lon ?? el.center?.lon;
-  if (!lat || !lon) return null;
-  // Determina la categoria dal tag dell'elemento
-  const elKey = Object.keys(tags).find(k => ['amenity','shop','craft','tourism','office','leisure'].includes(k));
-  const elVal = elKey ? tags[elKey] : null;
-  const matchedTag = tq.find(t => t.key === elKey && t.val === elVal);
-  const resolvedCatId = matchedTag ? (categoryCache[matchedTag.cat] || catId) : catId;
-
-  const street = tags['addr:street'] || '';
-  const hnum = tags['addr:housenumber'] || '';
-  const city = tags['addr:city'] || tags['addr:town'] || tags['addr:village'] || tags['addr:municipality'] || tags['addr:suburb'] || '';
-  return {
-    name: tags.name.substring(0, 200),
-    category_id: resolvedCatId,
-    street: street ? (hnum ? `${street}, ${hnum}` : street) : null,
-    city: city ? city.substring(0, 100) : province.province,
-    province: province.province,
-    region: province.region,
-    postal_code: tags['addr:postcode'] || null,
-    country: 'Italia',
-    latitude: lat,
-    longitude: lon,
-    phone: (tags.phone || tags['contact:phone'] || '').replace(/\s+/g, '').substring(0, 50) || null,
-    email: (tags.email || tags['contact:email'] || '').substring(0, 200) || null,
-    website: (tags.website || tags['contact:website'] || '').substring(0, 500) || null,
-    business_hours: tags.opening_hours || null,
-    is_claimed: false,
-    approval_status: 'approved',
-  };
-}
-
-async function runBatchProvince(batchTags, province, batchNum) {
-  const defaultCat = categoryCache[batchTags[0].cat];
-  const query = buildBatchQuery(batchTags, province);
   let elements = [];
-  for (let retry = 0; retry < 3; retry++) {
+  for (let retry = 0; retry < 2; retry++) {
     try {
       const data = await fetchOverpass(query);
       elements = data.elements || [];
       break;
     } catch (err) {
-      if (err.message === 'RATE_LIMIT') { await sleep(60000); retry--; continue; }
-      if (retry < 2) { await sleep((retry + 1) * 5000); continue; }
+      if (err.message === 'RATE_LIMIT') { await sleep(45000); retry--; continue; }
+      if (retry < 1) { await sleep(3000); continue; }
       return 0;
     }
   }
+
   const records = [];
   const seen = new Set();
   for (const el of elements) {
-    const r = makeRecord(el, province, batchTags, defaultCat);
-    if (!r) continue;
-    const key = `${r.name}|${r.province}|${r.latitude?.toFixed(4)}|${r.longitude?.toFixed(4)}`;
+    const tags = el.tags || {};
+    if (!tags.name) continue;
+    const lat = el.lat ?? el.center?.lat;
+    const lon = el.lon ?? el.center?.lon;
+    if (!lat || !lon) continue;
+    const key = `${tags.name}|${province.province}|${lat.toFixed(4)}|${lon.toFixed(4)}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    records.push(r);
+    const street = tags['addr:street'] || '';
+    const hnum = tags['addr:housenumber'] || '';
+    const city = tags['addr:city'] || tags['addr:town'] || tags['addr:village'] || tags['addr:municipality'] || '';
+    records.push({
+      name: tags.name.substring(0, 200),
+      category_id: catId,
+      street: street ? (hnum ? `${street}, ${hnum}` : street) : null,
+      city: city ? city.substring(0, 100) : province.province,
+      province: province.province,
+      region: province.region,
+      postal_code: tags['addr:postcode'] || null,
+      country: 'Italia',
+      latitude: lat,
+      longitude: lon,
+      phone: (tags.phone || tags['contact:phone'] || '').replace(/\s+/g, '').substring(0, 50) || null,
+      email: (tags.email || tags['contact:email'] || '').substring(0, 200) || null,
+      website: (tags.website || tags['contact:website'] || '').substring(0, 500) || null,
+      business_hours: tags.opening_hours || null,
+      is_claimed: false,
+      approval_status: 'approved',
+    });
   }
+
   if (!records.length) return 0;
+
   let inserted = 0;
   for (let i = 0; i < records.length; i += 100) {
     const batch = records.slice(i, i + 100);
@@ -394,31 +319,33 @@ async function runBatchProvince(batchTags, province, batchNum) {
 }
 
 async function main() {
-  console.log(`\n=== IMPORT VELOCE - ${TAG_BATCHES.length} batch x ${PROVINCES.length} province ===\n`);
+  const total = TAGS.length * PROVINCES.length;
+  console.log(`\n=== IMPORT VELOCE: ${TAGS.length} tag x ${PROVINCES.length} province = ${total} query ===\n`);
   await loadCategories();
 
-  let grandTotal = 0;
+  let step = 0;
+  for (const tag of TAGS) {
+    let tagTotal = 0;
+    process.stdout.write(`\n[${tag.key}=${tag.val}] `);
 
-  for (let b = 0; b < TAG_BATCHES.length; b++) {
-    const batch = TAG_BATCHES[b];
-    const batchName = batch.map(t => t.cat).join(', ');
-    console.log(`\n[Batch ${b+1}/${TAG_BATCHES.length}] ${batchName}`);
-
-    let batchTotal = 0;
-    for (let p = 0; p < PROVINCES.length; p++) {
-      const province = PROVINCES[p];
-      const n = await runBatchProvince(batch, province, b+1);
+    for (const province of PROVINCES) {
+      step++;
+      const n = await runOne(tag, province);
       if (n > 0) {
-        batchTotal += n;
-        grandTotal += n;
+        tagTotal += n;
         totalImported += n;
         const elapsed = ((Date.now() - startTime) / 60000).toFixed(1);
-        console.log(`  [${b+1}.${p+1}] ${province.province} +${n} | Batch: ${batchTotal} | Totale sessione: ${grandTotal} | ${elapsed}min`);
+        process.stdout.write(`${province.province}+${n} `);
+        // Stampa riga di riepilogo ogni volta che inserisce
+        console.log(`  => +${n} ${tag.cat} in ${province.province} | Totale sessione: ${totalImported.toLocaleString()} | ${elapsed}min`);
+        process.stdout.write(`[${tag.key}=${tag.val}] `);
       }
-      await sleep(800);
+      await sleep(600);
     }
-    console.log(`  => Batch ${b+1} completato: +${batchTotal}`);
-    await sleep(2000);
+
+    const elapsed = ((Date.now() - startTime) / 60000).toFixed(1);
+    console.log(`\n  [FINE TAG] ${tag.cat}: +${tagTotal} | Sessione: ${totalImported.toLocaleString()} | ${elapsed}min`);
+    await sleep(1000);
   }
 
   console.log(`\n=== COMPLETATO ===`);
