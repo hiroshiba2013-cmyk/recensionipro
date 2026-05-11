@@ -25,6 +25,7 @@ const AdminLoginPage = lazy(() => import('../pages/AdminLoginPage').then(m => ({
 const AuctionsPage = lazy(() => import('../pages/AuctionsPage'));
 const AuctionDetailPage = lazy(() => import('../pages/AuctionDetailPage'));
 const JobSeekerDetailPage = lazy(() => import('../pages/JobSeekerDetailPage').then(m => ({ default: m.JobSeekerDetailPage })));
+const ProfessionalProfilePage = lazy(() => import('../pages/ProfessionalProfilePage').then(m => ({ default: m.ProfessionalProfilePage })));
 
 const RouterContext = createContext<{ params: Record<string, string> }>({ params: {} });
 
@@ -126,6 +127,11 @@ export function Router() {
     page = <JobsPage />;
   } else if (currentPath.startsWith('/jobs/seekers/')) {
     page = <JobSeekerDetailPage />;
+  } else if (currentPath.startsWith('/professional-profile/')) {
+    const userId = currentPath.split('/')[2];
+    if (userId) {
+      page = <ProfessionalProfilePage />;
+    }
   } else if (currentPath === '/profile') {
     page = <ProfilePage />;
   } else if (currentPath === '/leaderboard') {

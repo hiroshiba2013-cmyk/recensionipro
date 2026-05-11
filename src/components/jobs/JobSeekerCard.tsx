@@ -3,6 +3,7 @@ import { MapPin, DollarSign, Calendar, MessageCircle, Phone, Mail, Tag } from 'l
 interface JobSeekerCardProps {
   jobSeeker: {
     id: string;
+    user_id: string;
     title: string;
     description: string;
     skills: string[];
@@ -38,7 +39,13 @@ export function JobSeekerCard({ jobSeeker, onContact, showContactButton = true }
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
           <h3 className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">{jobSeeker.title}</h3>
-          <p className="text-gray-600 font-medium">{jobSeeker.profiles.nickname || jobSeeker.profiles.full_name}</p>
+          <a
+            href={`/professional-profile/${jobSeeker.user_id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="text-gray-600 font-medium hover:text-blue-600 hover:underline transition-colors"
+          >
+            {jobSeeker.profiles.nickname || jobSeeker.profiles.full_name}
+          </a>
           {jobSeeker.business_categories && (
             <div className="flex items-center gap-1 mt-1">
               <Tag className="w-3 h-3 text-gray-500" />

@@ -25,6 +25,8 @@ import { PinSetup } from '../components/profile/PinSetup';
 import { DeleteAccountButton } from '../components/profile/DeleteAccountButton';
 import { JobSeekerForm } from '../components/jobs/JobSeekerForm';
 import { JobSeekerCard } from '../components/jobs/JobSeekerCard';
+import { ProfessionalProfileForm } from '../components/profile/ProfessionalProfileForm';
+import { useToast } from '../components/common/Toast';
 import { useNavigate } from '../components/Router';
 
 interface SubscriptionPlan {
@@ -624,6 +626,7 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
 
 export function DashboardPage() {
   const { profile, selectedBusinessLocationId, activeProfile, signOut } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -648,6 +651,9 @@ export function DashboardPage() {
   const [fullBusinessLocations, setFullBusinessLocations] = useState<any[]>([]);
   const [addedBusinesses, setAddedBusinesses] = useState<any[]>([]);
   const [myJobSeekers, setMyJobSeekers] = useState<any[]>([]);
+  const [professionalProfile, setProfessionalProfile] = useState<any | null>(null);
+  const [professionalProfileLoaded, setProfessionalProfileLoaded] = useState(false);
+  const [showProfessionalProfileForm, setShowProfessionalProfileForm] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [showJobSeekerForm, setShowJobSeekerForm] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
@@ -886,6 +892,17 @@ export function DashboardPage() {
         else jsQuery = jsQuery.is('family_member_id', null);
         const { data: myJs } = await jsQuery;
         if (myJs) setMyJobSeekers(myJs);
+
+        // Profilo professionale (solo owner, non per membro famiglia)
+        if (!fmId) {
+          const { data: pp } = await supabase
+            .from('professional_profiles')
+            .select('*')
+            .eq('user_id', profile.id)
+            .maybeSingle();
+          setProfessionalProfile(pp || null);
+          setProfessionalProfileLoaded(true);
+        }
       }
       await loadAds();
     } catch (e) {
@@ -959,6 +976,7 @@ export function DashboardPage() {
 
   const custBadges = [
     ...(isOwnerProfile ? [{ key: 'cust_dati', label: 'I Tuoi Dati', icon: User, color: 'slate', badge: null }] : []),
+    ...(isOwnerProfile ? [{ key: 'cust_prof', label: 'Profilo Professionale', icon: Briefcase, color: 'blue', badge: professionalProfile ? 'Attivo' : null }] : []),
     { key: 'cust_leaderboard', label: 'La Tua Classifica',      icon: Trophy,   color: 'yellow', badge: userRank ? `#${userRank.rank}` : null },
     { key: 'cust_activities',  label: 'Attivita Aggiunte',       icon: Activity, color: 'blue',   badge: addedBusinesses.length > 0 ? String(addedBusinesses.length) : null },
     { key: 'cust_jobs',        label: 'Annunci Cerco Lavoro',    icon: Briefcase,color: 'sky',    badge: myJobSeekers.length > 0 ? String(myJobSeekers.length) : null },
@@ -1408,6 +1426,89 @@ export function DashboardPage() {
                   </div>
                 )}
 
+                {/* Profilo Professionale */}
+                {open.cust_prof && (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"><Briefcase className="w-4 h-4 text-blue-600" /></div>
+                        <span className="font-semibold text-gray-900">Profilo Professionale</span>
+                        {professionalProfile && <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">Attivo</span>}
+                      </div>
+                      {professionalProfile && !showProfessionalProfileForm && (
+                        <button
+                          onClick={() => setShowProfessionalProfileForm(true)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"
+                        >
+                          <Pencil className="w-3 h-3" />Modifica
+                        </button>
+                      )}
+                    </div>
+                    <div className="px-5 pb-5 pt-4">
+                      {showProfessionalProfileForm ? (
+                        <ProfessionalProfileForm
+                          existingProfile={professionalProfile}
+                          onSaved={(saved) => {
+                            setProfessionalProfile(saved);
+                            setShowProfessionalProfileForm(false);
+                          }}
+                          onCancel={() => setShowProfessionalProfileForm(false)}
+                        />
+                      ) : professionalProfile ? (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="bg-gray-50 rounded-xl px-4 py-3">
+                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Professione</p>
+                              <p className="text-sm font-semibold text-gray-900">{professionalProfile.profession}</p>
+                            </div>
+                            <div className="bg-gray-50 rounded-xl px-4 py-3">
+                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Esperienza</p>
+                              <p className="text-sm font-semibold text-gray-900">{professionalProfile.experience_years} {professionalProfile.experience_years === 1 ? 'anno' : 'anni'}</p>
+                            </div>
+                            {(professionalProfile.city || professionalProfile.region) && (
+                              <div className="bg-gray-50 rounded-xl px-4 py-3">
+                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Localita</p>
+                                <p className="text-sm font-semibold text-gray-900">{[professionalProfile.city, professionalProfile.province, professionalProfile.region].filter(Boolean).join(', ')}</p>
+                              </div>
+                            )}
+                          </div>
+                          {professionalProfile.summary && (
+                            <div>
+                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Descrizione</p>
+                              <p className="text-sm text-gray-700 leading-relaxed">{professionalProfile.summary}</p>
+                            </div>
+                          )}
+                          {professionalProfile.skills?.length > 0 && (
+                            <div>
+                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Competenze</p>
+                              <div className="flex flex-wrap gap-2">
+                                {professionalProfile.skills.map((s: string) => (
+                                  <span key={s} className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full border border-blue-100">{s}</span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          <div className="pt-2 border-t border-gray-100">
+                            <p className="text-xs text-gray-400">Visibile solo agli account business. Gli utenti business possono visualizzare il tuo profilo cliccando il tuo nome negli annunci cerco lavoro.</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <Briefcase className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                          <p className="text-sm text-gray-500 mb-1 font-medium">Nessun profilo professionale</p>
+                          <p className="text-xs text-gray-400 mb-4 max-w-xs mx-auto">Il profilo e facoltativo, ma e richiesto per pubblicare annunci "Cerco Lavoro". Visibile solo agli utenti business.</p>
+                          <button
+                            onClick={() => setShowProfessionalProfileForm(true)}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors text-sm font-semibold"
+                          >
+                            Crea Profilo Professionale
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Cerco Lavoro */}
                 {open.cust_jobs && (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -1417,7 +1518,19 @@ export function DashboardPage() {
                         <span className="font-semibold text-gray-900">Annunci Cerco Lavoro</span>
                         {myJobSeekers.length > 0 && <span className="bg-sky-100 text-sky-700 text-xs font-bold px-2 py-0.5 rounded-full">{myJobSeekers.length}</span>}
                       </div>
-                      <button onClick={() => setShowJobSeekerForm(true)} className="bg-sky-600 hover:bg-sky-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"><Plus className="w-3 h-3" />Nuovo</button>
+                      <button
+                        onClick={() => {
+                          if (!professionalProfile) {
+                            showToast('Devi prima creare un profilo professionale per pubblicare annunci cerco lavoro', 'info');
+                            setOpen(prev => ({ ...prev, cust_prof: true }));
+                          } else {
+                            setShowJobSeekerForm(true);
+                          }
+                        }}
+                        className="bg-sky-600 hover:bg-sky-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" />Nuovo
+                      </button>
                     </div>
                     <div className="px-5 pb-5 pt-4">
                       {showJobSeekerForm && (
@@ -1442,7 +1555,19 @@ export function DashboardPage() {
                         <div className="text-center py-8">
                           <Briefcase className="w-10 h-10 text-gray-200 mx-auto mb-3" />
                           <p className="text-sm text-gray-500 mb-3">Non hai ancora pubblicato annunci cerco lavoro</p>
-                          <button onClick={() => setShowJobSeekerForm(true)} className="bg-sky-600 text-white px-4 py-2 rounded-xl hover:bg-sky-700 transition-colors text-sm font-semibold">Crea annuncio</button>
+                          <button
+                          onClick={() => {
+                            if (!professionalProfile) {
+                              showToast('Devi prima creare un profilo professionale per pubblicare annunci cerco lavoro', 'info');
+                              setOpen(prev => ({ ...prev, cust_prof: true }));
+                            } else {
+                              setShowJobSeekerForm(true);
+                            }
+                          }}
+                          className="bg-sky-600 text-white px-4 py-2 rounded-xl hover:bg-sky-700 transition-colors text-sm font-semibold"
+                        >
+                          Crea annuncio
+                        </button>
                         </div>
                       ) : (
                         <div className="space-y-3">

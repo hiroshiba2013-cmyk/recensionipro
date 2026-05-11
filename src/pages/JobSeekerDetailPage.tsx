@@ -237,7 +237,16 @@ export function JobSeekerDetailPage() {
                   </div>
                 )}
                 <div>
-                  <div className="font-semibold text-gray-900">{displayName}</div>
+                  {profile?.user_type === 'business' ? (
+                    <a
+                      href={`/professional-profile/${jobSeeker.user_id}`}
+                      className="font-semibold text-blue-600 hover:underline transition-colors"
+                    >
+                      {displayName}
+                    </a>
+                  ) : (
+                    <div className="font-semibold text-gray-900">{displayName}</div>
+                  )}
                   <div className="text-sm text-gray-500">
                     Pubblicato il {new Date(jobSeeker.created_at).toLocaleDateString('it-IT')}
                   </div>
