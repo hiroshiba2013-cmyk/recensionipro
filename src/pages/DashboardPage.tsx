@@ -390,13 +390,32 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                             onClick={() => { setExpandedMember(isExpanded && !isEditingThis ? null : fm.id); }}
                             className="flex items-center gap-3 flex-1 text-left"
                           >
-                            {fm.avatar_url ? (
-                              <img src={fm.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-gray-200 flex-shrink-0" />
-                            ) : (
-                              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                <User className="w-4 h-4 text-blue-600" />
+                            <label htmlFor={`fm-avatar-${fm.id}`} className="relative flex-shrink-0 cursor-pointer group" onClick={e => e.stopPropagation()}>
+                              <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200 bg-blue-100 flex items-center justify-center">
+                                {(memberAvatars[fm.id] || fm.avatar_url) ? (
+                                  <img src={memberAvatars[fm.id] || fm.avatar_url!} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <User className="w-4 h-4 text-blue-600" />
+                                )}
                               </div>
-                            )}
+                              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center border border-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                              </div>
+                              <input id={`fm-avatar-${fm.id}`} type="file" accept="image/*" className="sr-only"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  try {
+                                    const ext = file.name.split('.').pop();
+                                    const url = await uploadAvatar('avatars', `family/${fm.id}/avatar.${ext}`, file);
+                                    await supabase.from('customer_family_members').update({ avatar_url: url }).eq('id', fm.id);
+                                    setMemberAvatars(prev => ({ ...prev, [fm.id]: url }));
+                                    showToast('Foto aggiornata!', 'success');
+                                  } catch { showToast('Errore durante il caricamento', 'error'); }
+                                  e.target.value = '';
+                                }}
+                              />
+                            </label>
                             <div>
                               <p className="text-sm font-semibold text-gray-900">{fm.first_name} {fm.last_name}</p>
                               {fm.nickname && <p className="text-xs text-gray-400">@{fm.nickname}</p>}
@@ -467,13 +486,32 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                             onClick={() => setExpandedLocation(isExpanded && !isEditingThis ? null : loc.id)}
                             className="flex items-center gap-3 flex-1 text-left"
                           >
-                            {loc.avatar_url ? (
-                              <img src={loc.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-gray-200 flex-shrink-0" />
-                            ) : (
-                              <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                <Building2 className="w-4 h-4 text-emerald-600" />
+                            <label htmlFor={`loc-avatar-${loc.id}`} className="relative flex-shrink-0 cursor-pointer group" onClick={e => e.stopPropagation()}>
+                              <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200 bg-emerald-100 flex items-center justify-center">
+                                {(locationAvatars[loc.id] || loc.avatar_url) ? (
+                                  <img src={locationAvatars[loc.id] || loc.avatar_url!} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <Building2 className="w-4 h-4 text-emerald-600" />
+                                )}
                               </div>
-                            )}
+                              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center border border-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                              </div>
+                              <input id={`loc-avatar-${loc.id}`} type="file" accept="image/*" className="sr-only"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  try {
+                                    const ext = file.name.split('.').pop();
+                                    const url = await uploadAvatar('avatars', `locations/${loc.id}/avatar.${ext}`, file);
+                                    await supabase.from('business_locations').update({ avatar_url: url }).eq('id', loc.id);
+                                    setLocationAvatars(prev => ({ ...prev, [loc.id]: url }));
+                                    showToast('Foto sede aggiornata!', 'success');
+                                  } catch { showToast('Errore durante il caricamento', 'error'); }
+                                  e.target.value = '';
+                                }}
+                              />
+                            </label>
                             <div>
                               <p className="text-sm font-semibold text-gray-900">{loc.internal_name || loc.name || `Sede ${idx + 1}`}</p>
                               {loc.city && <p className="text-xs text-gray-400">{loc.city}{loc.province ? ` (${loc.province})` : ''}</p>}
@@ -669,6 +707,18 @@ export function DashboardPage() {
   useEffect(() => {
     setLocalAvatarUrl(activeProfile?.avatarUrl ?? profile?.avatar_url ?? null);
   }, [activeProfile, profile]);
+
+  // Avatar locali per family members e sedi
+  const [memberAvatars, setMemberAvatars] = useState<Record<string, string>>({});
+  const [locationAvatars, setLocationAvatars] = useState<Record<string, string>>({});
+
+  const uploadAvatar = async (bucket: string, path: string, file: File): Promise<string> => {
+    if (file.size > 5 * 1024 * 1024) throw new Error('Immagine troppo grande (max 5MB)');
+    const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+    if (error) throw error;
+    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(path);
+    return `${publicUrl}?t=${Date.now()}`;
+  };
 
   // Resetta le sezioni aperte quando cambia il profilo attivo o la sede selezionata
   useEffect(() => {
