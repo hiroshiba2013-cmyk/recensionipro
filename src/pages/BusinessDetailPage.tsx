@@ -303,7 +303,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
             customer:profiles!customer_id(full_name, nickname),
             responses:review_responses(*),
             family_member:customer_family_members(first_name, last_name, nickname),
-            business_location:business_locations(id, name, internal_name, address, city)
+            business_location:business_locations(id, name, internal_name, address, city, category:category_id(name))
           `)
           .eq('review_status', 'approved')
           .order('created_at', { ascending: false });
@@ -319,10 +319,10 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
         const { data: fullReviewsData } = await fullReviewsQuery;
 
         if (fullReviewsData) {
-          // Aggiungi il nome dell'attività a ciascuna recensione
           const reviewsWithBusinessName = fullReviewsData.map(review => ({
             ...review,
             business: { name: businessData.name },
+            category_name: review.business_location?.category?.name ?? businessData.category?.name ?? null,
             location_info: review.business_location ? {
               name: review.business_location.internal_name || review.business_location.name,
               city: review.business_location.city

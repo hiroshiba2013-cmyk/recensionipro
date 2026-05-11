@@ -1,4 +1,4 @@
-import { Star, Clock, CheckCircle, MapPin, FileText, User } from 'lucide-react';
+import { Star, Clock, CheckCircle, MapPin, FileText, User, Tag } from 'lucide-react';
 import { Review } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import ReportButton from '../moderation/ReportButton';
@@ -131,12 +131,20 @@ export function ReviewCard({ review }: ReviewCardProps) {
 
         {/* Business / location info */}
         {((review as any).business?.name || (review as any).location_info) && (
-          <div className="flex items-center gap-1.5 mb-3">
-            <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-            <p className="text-xs text-gray-500 truncate">
-              {(review as any).business?.name && <span className="font-medium">{(review as any).business.name}</span>}
-              {(review as any).location_info?.city && <span> &mdash; {(review as any).location_info.city}</span>}
-            </p>
+          <div className="flex items-start gap-1.5 mb-3">
+            <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs text-gray-500">
+                {(review as any).business?.name && <span className="font-medium">{(review as any).business.name}</span>}
+                {(review as any).location_info?.city && <span> &mdash; {(review as any).location_info.city}</span>}
+              </p>
+              {(review as any).category_name && (
+                <span className="inline-flex items-center gap-1 mt-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                  <Tag className="w-3 h-3" />
+                  {(review as any).category_name}
+                </span>
+              )}
+            </div>
           </div>
         )}
 
