@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Plus, Search, MapPin, Euro, Calendar } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Plus, Search, MapPin, Euro, Calendar, ArrowUpDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ClassifiedAdCard } from '../components/classifieds/ClassifiedAdCard';
@@ -64,6 +64,7 @@ export function ClassifiedAdsPage() {
   const [selectedCity, setSelectedCity] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
+  const [sortBy, setSortBy] = useState<string>('recent_desc');
 
   useEffect(() => {
     loadCategories();
@@ -186,6 +187,19 @@ export function ClassifiedAdsPage() {
       setLoading(false);
     }
   };
+
+  const sortedAds = useMemo(() => {
+    const arr = [...ads];
+    switch (sortBy) {
+      case 'recent_desc': return arr.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      case 'recent_asc': return arr.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      case 'price_asc': return arr.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+      case 'price_desc': return arr.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+      case 'name_asc': return arr.sort((a, b) => a.title.localeCompare(b.title, 'it'));
+      case 'views_desc': return arr.sort((a, b) => (b.views_count || 0) - (a.views_count || 0));
+      default: return arr;
+    }
+  }, [ads, sortBy]);
 
   const handleAdCreated = () => {
     setShowCreateForm(false);
@@ -371,6 +385,28 @@ export function ClassifiedAdsPage() {
           )}
         </div>
 
+        {/* Sort + Count bar */}
+        {!loading && (
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-gray-500">{ads.length} annunci trovati</p>
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="w-4 h-4 text-gray-400" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+              >
+                <option value="recent_desc">Dal più recente</option>
+                <option value="recent_asc">Dal meno recente</option>
+                <option value="price_asc">Prezzo crescente</option>
+                <option value="price_desc">Prezzo decrescente</option>
+                <option value="name_asc">Titolo A→Z</option>
+                <option value="views_desc">Più visti</option>
+              </select>
+            </div>
+          </div>
+        )}
+
         {/* Ads Grid */}
         {loading ? (
           <div className="text-center py-12">
@@ -396,7 +432,7 @@ export function ClassifiedAdsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {ads.map((ad) => (
+            {sortedAds.map((ad) => (
               <ClassifiedAdCard key={ad.id} ad={ad} />
             ))}
           </div>

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ArrowLeft, CheckCircle, Search } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { ArrowLeft, CheckCircle, Search, ArrowUpDown } from 'lucide-react';
 import { supabase, BusinessCategory } from '../lib/supabase';
 import { LocationCard } from '../components/business/LocationCard';
 import { AdvancedSearch, SearchFilters } from '../components/search/AdvancedSearch';
@@ -39,12 +39,32 @@ interface BusinessLocation {
   management_review_count?: number;
 }
 
+type SortOption =
+  | 'default'
+  | 'rating_desc'
+  | 'rating_asc'
+  | 'reviews_desc'
+  | 'name_asc'
+  | 'name_desc'
+  | 'verified_first';
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: 'default', label: 'Rilevanza (default)' },
+  { value: 'rating_desc', label: 'Valutazione: dalla più alta' },
+  { value: 'rating_asc', label: 'Valutazione: dalla più bassa' },
+  { value: 'reviews_desc', label: 'Più recensite' },
+  { value: 'name_asc', label: 'Nome: A → Z' },
+  { value: 'name_desc', label: 'Nome: Z → A' },
+  { value: 'verified_first', label: 'Verificate prima' },
+];
+
 export function SearchResultsPage() {
   const [locations, setLocations] = useState<BusinessLocation[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [initialFilters, setInitialFilters] = useState<SearchFilters | null>(null);
   const [currentSearch, setCurrentSearch] = useState(window.location.search);
+  const [sortBy, setSortBy] = useState<SortOption>('default');
 
   useEffect(() => {
     const handleLocationChange = () => {
@@ -276,6 +296,26 @@ export function SearchResultsPage() {
     }
   };
 
+  const sortedLocations = useMemo(() => {
+    const sorted = [...locations];
+    switch (sortBy) {
+      case 'rating_desc':
+        return sorted.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
+      case 'rating_asc':
+        return sorted.sort((a, b) => (a.avg_rating || 0) - (b.avg_rating || 0));
+      case 'reviews_desc':
+        return sorted.sort((a, b) => (b.review_count || 0) - (a.review_count || 0));
+      case 'name_asc':
+        return sorted.sort((a, b) => (a.name || a.business?.name || '').localeCompare(b.name || b.business?.name || ''));
+      case 'name_desc':
+        return sorted.sort((a, b) => (b.name || b.business?.name || '').localeCompare(a.name || a.business?.name || ''));
+      case 'verified_first':
+        return sorted.sort((a, b) => Number(b.verification_badge) - Number(a.verification_badge) || Number(b.is_claimed) - Number(a.is_claimed));
+      default:
+        return sorted;
+    }
+  }, [locations, sortBy]);
+
   const handleBackToHome = () => {
     window.history.pushState({}, '', '/');
   };
@@ -342,18 +382,29 @@ export function SearchResultsPage() {
 
         {hasSearched && !loading && (
           <>
-            <div className="mb-6 flex items-center justify-between bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl shadow-lg p-8 border-4 border-blue-200">
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-gradient-to-r from-blue-50 to-sky-50 rounded-2xl shadow-lg p-6 border border-blue-100">
               <div>
-                <h2 className="text-3xl font-bold text-gray-900">Risultati della Ricerca</h2>
-                <p className="text-gray-600 mt-2 text-lg">Trova le sedi delle attività che corrispondono ai tuoi criteri</p>
+                <h2 className="text-2xl font-bold text-gray-900">Risultati della Ricerca</h2>
+                <p className="text-gray-500 mt-1">Trova le sedi delle attività che corrispondono ai tuoi criteri</p>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="bg-gradient-to-br from-blue-100 to-blue-200 px-8 py-5 rounded-xl border-4 border-blue-300 shadow-md">
-                  <div className="text-center">
-                    <div className="text-5xl font-bold text-blue-700">{locations.length}</div>
-                    <div className="text-sm text-blue-900 font-bold mt-2">
-                      {locations.length === 1 ? 'Sede Trovata' : 'Sedi Trovate'}
-                    </div>
+              <div className="flex items-center gap-3 flex-wrap">
+                {/* Sort selector */}
+                <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm">
+                  <ArrowUpDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <select
+                    value={sortBy}
+                    onChange={e => setSortBy(e.target.value as SortOption)}
+                    className="text-sm font-medium text-gray-700 bg-transparent border-none outline-none cursor-pointer pr-1"
+                  >
+                    {SORT_OPTIONS.map(o => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="bg-gradient-to-br from-blue-100 to-blue-200 px-5 py-3 rounded-xl border border-blue-300 shadow-sm text-center">
+                  <div className="text-3xl font-bold text-blue-700">{locations.length}</div>
+                  <div className="text-xs text-blue-900 font-semibold mt-0.5">
+                    {locations.length === 1 ? 'Sede' : 'Sedi'}
                   </div>
                 </div>
               </div>
@@ -386,13 +437,13 @@ export function SearchResultsPage() {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {locations.map((location) => (
-                <LocationCard
-                  key={location.id}
-                  location={location}
-                />
-              ))}
-            </div>
+            {sortedLocations.map((location) => (
+              <LocationCard
+                key={location.id}
+                location={location}
+              />
+            ))}
+          </div>
         )}
 
         {hasSearched && locations.length > 0 && (

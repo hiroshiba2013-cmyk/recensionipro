@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Briefcase, MapPin, DollarSign, Filter, X, Check, MessageCircle, Plus, Building2, CircleUser as UserCircle } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Briefcase, MapPin, DollarSign, Filter, X, Check, MessageCircle, Plus, Building2, CircleUser as UserCircle, ArrowUpDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { SearchableSelect } from '../components/common/SearchableSelect';
@@ -96,6 +96,8 @@ export function JobsPage() {
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const { user, profile, selectedBusinessLocationId, activeProfile } = useAuth();
+
+  const [sortBy, setSortBy] = useState<string>('recent_desc');
 
   const [filters, setFilters] = useState<SearchFilters>({
     position_type: '',
@@ -489,6 +491,32 @@ export function JobsPage() {
     });
   };
 
+  const sortedJobs = useMemo(() => {
+    const arr = [...jobs];
+    switch (sortBy) {
+      case 'recent_desc': return arr.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
+      case 'recent_asc': return arr.sort((a, b) => new Date(a.published_at).getTime() - new Date(b.published_at).getTime());
+      case 'salary_desc': return arr.sort((a, b) => (b.gross_annual_salary || 0) - (a.gross_annual_salary || 0));
+      case 'salary_asc': return arr.sort((a, b) => (a.gross_annual_salary || 0) - (b.gross_annual_salary || 0));
+      case 'name_asc': return arr.sort((a, b) => a.title.localeCompare(b.title, 'it'));
+      case 'name_desc': return arr.sort((a, b) => b.title.localeCompare(a.title, 'it'));
+      default: return arr;
+    }
+  }, [jobs, sortBy]);
+
+  const sortedJobSeekers = useMemo(() => {
+    const arr = [...jobSeekers];
+    switch (sortBy) {
+      case 'recent_desc': return arr.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      case 'recent_asc': return arr.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      case 'salary_desc': return arr.sort((a, b) => (b.desired_salary_max || 0) - (a.desired_salary_max || 0));
+      case 'salary_asc': return arr.sort((a, b) => (a.desired_salary_min || 0) - (b.desired_salary_min || 0));
+      case 'name_asc': return arr.sort((a, b) => a.title.localeCompare(b.title, 'it'));
+      case 'name_desc': return arr.sort((a, b) => b.title.localeCompare(a.title, 'it'));
+      default: return arr;
+    }
+  }, [jobSeekers, sortBy]);
+
   const hasActiveFilters =
     filters.position_type ||
     filters.experience_level ||
@@ -772,6 +800,38 @@ export function JobsPage() {
           )}
         </div>
 
+        {!loading && (
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-gray-500">
+              {activeTab === 'offers' ? `${jobs.length} offerte trovate` : `${jobSeekers.length} candidati trovati`}
+            </p>
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="w-4 h-4 text-gray-400" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+              >
+                <option value="recent_desc">Dal più recente</option>
+                <option value="recent_asc">Dal meno recente</option>
+                {activeTab === 'offers' ? (
+                  <>
+                    <option value="salary_desc">Stipendio più alto</option>
+                    <option value="salary_asc">Stipendio più basso</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="salary_desc">Retribuzione desiderata alta</option>
+                    <option value="salary_asc">Retribuzione desiderata bassa</option>
+                  </>
+                )}
+                <option value="name_asc">Titolo A→Z</option>
+                <option value="name_desc">Titolo Z→A</option>
+              </select>
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
@@ -784,7 +844,7 @@ export function JobsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {jobs.map((job) => (
+              {sortedJobs.map((job) => (
                 <div key={job.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
@@ -893,7 +953,7 @@ export function JobsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {jobSeekers.map((jobSeeker) => (
+              {sortedJobSeekers.map((jobSeeker) => (
                 <JobSeekerCard
                   key={jobSeeker.id}
                   jobSeeker={jobSeeker}
