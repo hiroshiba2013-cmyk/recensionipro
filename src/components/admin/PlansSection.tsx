@@ -20,16 +20,20 @@ interface Subscription {
   start_date: string;
   end_date: string;
   trial_end_date: string | null;
+  payment_method_added: boolean;
   customer: {
+    id: string;
     full_name: string;
     nickname: string | null;
     email: string;
-    subscription_status: string;
+    user_type: string;
   };
   plan: {
+    id: string;
     name: string;
     price: number;
     billing_period: string;
+    max_persons: number;
   };
 }
 
@@ -71,125 +75,32 @@ export function PlansSection({ adminId }: PlansSectionProps) {
 
   const loadSubscriptions = async () => {
     try {
-      console.log('=== INIZIO CARICAMENTO ABBONAMENTI ===');
-
-      // Debug: verifica lo stato di autenticazione
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log('1. Session:', session?.user?.email, 'ID:', session?.user?.id);
-
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        throw sessionError;
-      }
-
-      if (!session) {
-        console.error('No active session found');
-        throw new Error('Devi essere autenticato per vedere gli abbonamenti');
-      }
-
-      // Verifica se sei admin
-      const { data: adminCheck, error: adminError } = await supabase
-        .from('admins')
-        .select('user_id')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
-
-      console.log('2. Admin check:', adminCheck ? 'SI ✓' : 'NO ✗', 'Error:', adminError?.message || 'nessuno');
-
-      // Carica TUTTI gli abbonamenti (inclusi trial, active, expired)
-      console.log('3. Caricamento subscriptions...');
-      const { data: allSubscriptions, error: subsError } = await supabase
+      const { data, error } = await supabase
         .from('subscriptions')
-        .select('id, customer_id, plan_id, status, start_date, end_date, trial_end_date')
+        .select(`
+          id,
+          customer_id,
+          plan_id,
+          status,
+          start_date,
+          end_date,
+          trial_end_date,
+          payment_method_added,
+          customer:profiles!subscriptions_customer_id_fkey(
+            id, full_name, nickname, email, user_type
+          ),
+          plan:subscription_plans!subscriptions_plan_id_fkey(
+            id, name, price, billing_period, max_persons
+          )
+        `)
         .order('start_date', { ascending: false });
 
-      if (subsError) {
-        console.error('❌ Error loading subscriptions:', subsError);
-        console.error('Error details:', {
-          message: subsError.message,
-          code: subsError.code,
-          details: subsError.details,
-          hint: subsError.hint
-        });
-        throw subsError;
-      }
+      if (error) throw error;
 
-      console.log('✓ Subscriptions caricate:', allSubscriptions?.length || 0);
-      console.log('Subscriptions data:', allSubscriptions);
-
-      if (!allSubscriptions || allSubscriptions.length === 0) {
-        console.log('⚠️ No subscriptions found in database');
-        setSubscriptions([]);
-        return;
-      }
-
-      // Carica tutti i piani disponibili
-      console.log('4. Caricamento plans...');
-      const { data: allPlans, error: plansError } = await supabase
-        .from('subscription_plans')
-        .select('id, name, price, billing_period');
-
-      if (plansError) {
-        console.error('❌ Error loading plans:', plansError);
-      } else {
-        console.log('✓ Plans caricati:', allPlans?.length || 0);
-      }
-
-      // Carica i profili dei clienti
-      const customerIds = allSubscriptions.map(sub => sub.customer_id);
-      console.log('5. Caricamento profiles per customer IDs:', customerIds);
-
-      const { data: customers, error: customersError } = await supabase
-        .from('profiles')
-        .select('id, full_name, nickname, email, subscription_status')
-        .in('id', customerIds);
-
-      if (customersError) {
-        console.error('❌ Error loading customers:', customersError);
-        console.error('Error details:', {
-          message: customersError.message,
-          code: customersError.code,
-          details: customersError.details,
-          hint: customersError.hint
-        });
-      } else {
-        console.log('✓ Customers caricati:', customers?.length || 0);
-        console.log('Customers data:', customers);
-      }
-
-      // Combina i dati e filtra solo gli abbonamenti con customer esistenti
-      console.log('6. Combinazione dati...');
-      const enrichedSubscriptions = allSubscriptions
-        .map(sub => {
-          const customer = customers?.find(c => c.id === sub.customer_id);
-          const plan = allPlans?.find(p => p.id === sub.plan_id);
-
-          if (!customer) {
-            console.warn('⚠️ Customer non trovato per subscription:', sub.id, 'customer_id:', sub.customer_id);
-            return null; // Non includere abbonamenti senza customer
-          }
-          if (!plan) {
-            console.warn('⚠️ Plan non trovato per subscription:', sub.id, 'plan_id:', sub.plan_id);
-          }
-
-          return {
-            ...sub,
-            customer: customer,
-            plan: plan || {
-              name: 'Piano sconosciuto',
-              price: 0,
-              billing_period: 'monthly'
-            }
-          };
-        })
-        .filter(sub => sub !== null); // Rimuovi gli abbonamenti nulli (customer eliminati)
-
-      console.log('✓ Total subscriptions enriched:', enrichedSubscriptions.length);
-      console.log('Final enriched data:', enrichedSubscriptions);
-      setSubscriptions(enrichedSubscriptions as any);
-      console.log('=== FINE CARICAMENTO ABBONAMENTI ===');
+      // Filtra righe senza customer o piano (dati orfani)
+      const valid = (data || []).filter(s => s.customer && s.plan);
+      setSubscriptions(valid as any);
     } catch (error: any) {
-      console.error('❌ ERRORE FINALE:', error);
       showToast(`Errore caricamento abbonamenti: ${error.message}`, 'error');
     }
   };
@@ -303,7 +214,7 @@ export function PlansSection({ adminId }: PlansSectionProps) {
     return end < now;
   };
 
-  const activeSubscriptions = subscriptions.filter(s => s.customer?.subscription_status === 'active' || s.customer?.subscription_status === 'trial');
+  const activeSubscriptions = subscriptions.filter(s => s.status === 'active' || s.status === 'trial');
 
   return (
     <div className="space-y-6">
@@ -454,101 +365,90 @@ export function PlansSection({ adminId }: PlansSectionProps) {
             <table className="w-full">
               <thead className="bg-gray-900">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
-                    Utente
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
-                    Piano
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
-                    Stato
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
-                    Inizio
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
-                    Scadenza
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
-                    Prezzo
-                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Utente</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Piano</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Stato</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Inizio</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Scadenza</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Prezzo</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Pagamento</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {subscriptions.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
                       <Clock className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                      <p className="font-semibold">Nessun abbonamento attivo</p>
+                      <p className="font-semibold">Nessun abbonamento trovato</p>
                       <p className="text-sm">Gli abbonamenti appariranno qui una volta attivati</p>
                     </td>
                   </tr>
                 ) : (
                   subscriptions.map((sub) => {
-                    if (!sub.customer || !sub.plan) {
-                      console.error('Invalid subscription data:', sub);
-                      return null;
-                    }
-
-                    const expired = isExpired(sub.end_date);
-                    const expiringSoon = isExpiringSoon(sub.end_date);
-                    const isTrial = sub.customer.subscription_status === 'trial';
+                    const isTrial = sub.status === 'trial';
+                    const expiryDate = isTrial && sub.trial_end_date ? sub.trial_end_date : sub.end_date;
+                    const expired = isExpired(expiryDate);
+                    const expiringSoon = !expired && isExpiringSoon(expiryDate);
+                    const isBusiness = sub.customer.user_type === 'business';
 
                     return (
                       <tr key={sub.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4">
                           <div>
-                            <div className="font-semibold text-gray-900">
-                              {sub.customer.nickname || sub.customer.full_name}
+                            <div className="font-semibold text-gray-900 flex items-center gap-2">
+                              {sub.customer.full_name}
+                              <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${isBusiness ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}>
+                                {isBusiness ? 'Business' : 'Privato'}
+                              </span>
                             </div>
-                            <div className="text-sm text-gray-500">{sub.customer.email}</div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="font-medium text-gray-900">{sub.plan.name}</div>
-                          <div className="text-xs text-gray-500">
-                            {getPeriodLabel(sub.plan.billing_period)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
-                              isTrial
-                                ? 'bg-yellow-100 text-yellow-700'
-                                : expired
-                                ? 'bg-red-100 text-red-700'
-                                : expiringSoon
-                                ? 'bg-orange-100 text-orange-700'
-                                : 'bg-green-100 text-green-700'
-                            }`}
-                          >
-                            {isTrial ? (
-                              <>
-                                <Clock className="w-3.5 h-3.5" />
-                                In Prova
-                              </>
-                            ) : expired ? (
-                              'Scaduto'
-                            ) : expiringSoon ? (
-                              'In scadenza'
-                            ) : (
-                              'Attivo'
+                            <div className="text-xs text-gray-500 mt-0.5">{sub.customer.email}</div>
+                            {sub.customer.nickname && (
+                              <div className="text-xs text-gray-400">@{sub.customer.nickname}</div>
                             )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="font-medium text-gray-900 text-sm">{sub.plan.name}</div>
+                          <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5">
+                            <span>{getPeriodLabel(sub.plan.billing_period)}</span>
+                            <span className="text-gray-300">•</span>
+                            <span>
+                              {isBusiness
+                                ? sub.plan.max_persons === 999 ? 'Sedi illimitate' : `${sub.plan.max_persons} ${sub.plan.max_persons === 1 ? 'sede' : 'sedi'}`
+                                : `${sub.plan.max_persons} ${sub.plan.max_persons === 1 ? 'persona' : 'persone'}`}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+                            isTrial ? 'bg-yellow-100 text-yellow-800' :
+                            expired ? 'bg-red-100 text-red-700' :
+                            expiringSoon ? 'bg-orange-100 text-orange-700' :
+                            'bg-green-100 text-green-700'
+                          }`}>
+                            {isTrial ? <><Clock className="w-3 h-3" />In Prova</> :
+                             expired ? 'Scaduto' :
+                             expiringSoon ? 'In scadenza' : 'Attivo'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {formatDate(sub.start_date)}
-                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">{formatDate(sub.start_date)}</td>
                         <td className="px-6 py-4 text-sm">
                           <div className={expired ? 'text-red-600 font-semibold' : expiringSoon ? 'text-orange-600 font-semibold' : 'text-gray-700'}>
-                            {isTrial && sub.trial_end_date
-                              ? formatDate(sub.trial_end_date)
-                              : formatDate(sub.end_date)}
+                            {formatDate(expiryDate)}
                           </div>
+                          {isTrial && (
+                            <div className="text-xs text-gray-400 mt-0.5">fine prova</div>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <span className="font-semibold text-gray-900">
                             €{parseFloat(sub.plan.price.toString()).toFixed(2)}
+                            <span className="text-xs text-gray-400 font-normal">/{sub.plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${sub.payment_method_added ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                            {sub.payment_method_added ? <><CheckCircle className="w-3 h-3" />Aggiunto</> : 'Non aggiunto'}
                           </span>
                         </td>
                       </tr>

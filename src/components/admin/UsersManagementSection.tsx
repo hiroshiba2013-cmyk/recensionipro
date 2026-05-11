@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Trash2, Eye, X as CloseIcon, FilterX, Save, FileEdit as Edit, CircleUser as UserCircle, MapPin, UserPlus } from 'lucide-react';
+import { Users, Trash2, Eye, X as CloseIcon, FilterX, Save, FileEdit as Edit, CircleUser as UserCircle, MapPin, UserPlus, CreditCard, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
 
@@ -35,8 +35,16 @@ interface User {
 }
 
 interface SubscriptionPlan {
+  id: string;
   name: string;
   billing_period: string;
+  price: number;
+  max_persons: number;
+  status: string;
+  start_date: string;
+  end_date: string;
+  trial_end_date: string | null;
+  payment_method_added: boolean;
 }
 
 interface FamilyMember {
@@ -155,22 +163,37 @@ export default function UsersManagementSection() {
     }
   };
 
-  const loadSubscriptionPlan = async (userId: string, subscriptionType?: string) => {
-    if (!subscriptionType) {
-      setSubscriptionPlan(null);
-      return;
-    }
-
+  const loadSubscriptionPlan = async (userId: string) => {
     try {
       const { data, error } = await supabase
-        .from('subscription_plans')
-        .select('name, billing_period')
-        .eq('name', subscriptionType)
+        .from('subscriptions')
+        .select(`
+          id, status, start_date, end_date, trial_end_date, payment_method_added,
+          plan:subscription_plans!subscriptions_plan_id_fkey(id, name, billing_period, price, max_persons)
+        `)
+        .eq('customer_id', userId)
+        .order('start_date', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) throw error;
 
-      setSubscriptionPlan(data);
+      if (data && data.plan) {
+        setSubscriptionPlan({
+          id: (data.plan as any).id,
+          name: (data.plan as any).name,
+          billing_period: (data.plan as any).billing_period,
+          price: (data.plan as any).price,
+          max_persons: (data.plan as any).max_persons,
+          status: data.status,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          trial_end_date: data.trial_end_date,
+          payment_method_added: data.payment_method_added,
+        });
+      } else {
+        setSubscriptionPlan(null);
+      }
     } catch (error) {
       console.error('[UsersManagement] Error loading subscription plan:', error);
       setSubscriptionPlan(null);
@@ -272,7 +295,7 @@ export default function UsersManagementSection() {
     setEditedMember(null);
     setEditingLocationId(null);
     setEditedLocation(null);
-    await loadSubscriptionPlan(user.id, user.subscription_type);
+    await loadSubscriptionPlan(user.id);
 
     // Carica membri della famiglia se è un customer
     if (user.user_type === 'customer') {
@@ -1191,26 +1214,73 @@ export default function UsersManagementSection() {
                     </div>
                   </div>
 
-                  {/* Piano Abbonamento */}
-                  {subscriptionPlan && (
-                    <div className="bg-gray-50 rounded-xl border border-gray-100 p-6">
-                      <h3 className="text-lg font-bold text-gray-900 mb-4">Piano Selezionato</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-1">Piano</label>
-                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
-                            {subscriptionPlan.name}
-                          </div>
+                  {/* Abbonamento */}
+                  <div className="bg-gray-50 rounded-xl border border-gray-100 p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <CreditCard className="w-5 h-5 text-blue-600" />
+                      <h3 className="text-lg font-bold text-gray-900">Abbonamento</h3>
+                      {subscriptionPlan && (
+                        <span className={`ml-auto inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${
+                          subscriptionPlan.status === 'trial' ? 'bg-yellow-100 text-yellow-800' :
+                          subscriptionPlan.status === 'active' ? 'bg-green-100 text-green-800' :
+                          subscriptionPlan.status === 'expired' ? 'bg-red-100 text-red-700' :
+                          'bg-gray-100 text-gray-600'
+                        }`}>
+                          {subscriptionPlan.status === 'trial' ? <><Clock className="w-3 h-3" />In Prova</> :
+                           subscriptionPlan.status === 'active' ? <><CheckCircle className="w-3 h-3" />Attivo</> :
+                           subscriptionPlan.status === 'expired' ? <><AlertCircle className="w-3 h-3" />Scaduto</> :
+                           subscriptionPlan.status}
+                        </span>
+                      )}
+                    </div>
+                    {subscriptionPlan ? (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="md:col-span-2">
+                          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Piano</label>
+                          <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-900 font-medium">{subscriptionPlan.name}</div>
                         </div>
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-1">Fatturazione</label>
-                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Fatturazione</label>
+                          <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-900">
                             {subscriptionPlan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'}
                           </div>
                         </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Prezzo</label>
+                          <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-900 font-semibold">
+                            €{parseFloat(subscriptionPlan.price?.toString() || '0').toFixed(2)}
+                            <span className="text-xs text-gray-400 font-normal">/{subscriptionPlan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                            {subscriptionPlan.status === 'trial' ? 'Fine prova' : 'Scadenza'}
+                          </label>
+                          <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-900">
+                            {subscriptionPlan.status === 'trial' && subscriptionPlan.trial_end_date
+                              ? new Date(subscriptionPlan.trial_end_date).toLocaleDateString('it-IT')
+                              : new Date(subscriptionPlan.end_date).toLocaleDateString('it-IT')}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Inizio</label>
+                          <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-900">
+                            {new Date(subscriptionPlan.start_date).toLocaleDateString('it-IT')}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Pagamento</label>
+                          <div className={`bg-white border rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-1.5 ${subscriptionPlan.payment_method_added ? 'border-green-200 text-green-700' : 'border-gray-200 text-gray-500'}`}>
+                            {subscriptionPlan.payment_method_added
+                              ? <><CheckCircle className="w-4 h-4" />Metodo aggiunto</>
+                              : <><Clock className="w-4 h-4" />Non ancora aggiunto</>}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <p className="text-sm text-gray-500 text-center py-3">Nessun abbonamento attivo</p>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -1499,26 +1569,73 @@ export default function UsersManagementSection() {
                     </div>
                   </div>
 
-                  {/* Piano Abbonamento */}
-                  {subscriptionPlan && (
-                    <div className="bg-gray-50 rounded-xl border border-gray-100 p-6">
-                      <h3 className="text-lg font-bold text-gray-900 mb-4">Piano Selezionato</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-1">Piano</label>
-                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
-                            {subscriptionPlan.name}
-                          </div>
+                  {/* Abbonamento */}
+                  <div className="bg-gray-50 rounded-xl border border-gray-100 p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <CreditCard className="w-5 h-5 text-blue-600" />
+                      <h3 className="text-lg font-bold text-gray-900">Abbonamento</h3>
+                      {subscriptionPlan && (
+                        <span className={`ml-auto inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${
+                          subscriptionPlan.status === 'trial' ? 'bg-yellow-100 text-yellow-800' :
+                          subscriptionPlan.status === 'active' ? 'bg-green-100 text-green-800' :
+                          subscriptionPlan.status === 'expired' ? 'bg-red-100 text-red-700' :
+                          'bg-gray-100 text-gray-600'
+                        }`}>
+                          {subscriptionPlan.status === 'trial' ? <><Clock className="w-3 h-3" />In Prova</> :
+                           subscriptionPlan.status === 'active' ? <><CheckCircle className="w-3 h-3" />Attivo</> :
+                           subscriptionPlan.status === 'expired' ? <><AlertCircle className="w-3 h-3" />Scaduto</> :
+                           subscriptionPlan.status}
+                        </span>
+                      )}
+                    </div>
+                    {subscriptionPlan ? (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="md:col-span-2">
+                          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Piano</label>
+                          <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-900 font-medium">{subscriptionPlan.name}</div>
                         </div>
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-1">Fatturazione</label>
-                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Fatturazione</label>
+                          <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-900">
                             {subscriptionPlan.billing_period === 'monthly' ? 'Mensile' : 'Annuale'}
                           </div>
                         </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Prezzo</label>
+                          <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-900 font-semibold">
+                            €{parseFloat(subscriptionPlan.price?.toString() || '0').toFixed(2)}
+                            <span className="text-xs text-gray-400 font-normal">/{subscriptionPlan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                            {subscriptionPlan.status === 'trial' ? 'Fine prova' : 'Scadenza'}
+                          </label>
+                          <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-900">
+                            {subscriptionPlan.status === 'trial' && subscriptionPlan.trial_end_date
+                              ? new Date(subscriptionPlan.trial_end_date).toLocaleDateString('it-IT')
+                              : new Date(subscriptionPlan.end_date).toLocaleDateString('it-IT')}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Inizio</label>
+                          <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-900">
+                            {new Date(subscriptionPlan.start_date).toLocaleDateString('it-IT')}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Pagamento</label>
+                          <div className={`bg-white border rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-1.5 ${subscriptionPlan.payment_method_added ? 'border-green-200 text-green-700' : 'border-gray-200 text-gray-500'}`}>
+                            {subscriptionPlan.payment_method_added
+                              ? <><CheckCircle className="w-4 h-4" />Metodo aggiunto</>
+                              : <><Clock className="w-4 h-4" />Non ancora aggiunto</>}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <p className="text-sm text-gray-500 text-center py-3">Nessun abbonamento attivo</p>
+                    )}
+                  </div>
 
                   {/* Sedi Business */}
                   <div className="bg-gray-50 rounded-xl border border-gray-100 p-6">

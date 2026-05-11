@@ -109,6 +109,7 @@ export function SubscriptionManagement({
           .from('subscriptions')
           .update({
             plan_id: planId,
+            start_date: new Date().toISOString(),
             end_date: endDate.toISOString(),
             status: 'active',
             payment_method_added: true,
@@ -123,8 +124,10 @@ export function SubscriptionManagement({
             customer_id: userId,
             plan_id: planId,
             status: 'active',
+            start_date: new Date().toISOString(),
             end_date: endDate.toISOString(),
             payment_method_added: true,
+            reminder_sent: false,
           });
 
         if (insertError) throw insertError;
