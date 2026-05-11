@@ -582,8 +582,6 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
       }
 
       if (user) {
-        console.log('Creazione abbonamento con:', { numberOfPeople, billingPeriod });
-
         const { data: plan } = await supabase
           .from('subscription_plans')
           .select('id, name, price, billing_period, max_persons')
@@ -592,36 +590,45 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
           .not('name', 'like', '%Business%')
           .single();
 
-        console.log('Piano trovato:', plan);
-
         if (plan) {
           const startDate = new Date();
           const trialEndDate = new Date();
           trialEndDate.setMonth(trialEndDate.getMonth() + 1);
 
-          const { error: subscriptionError } = await supabase
+          // Check if a subscription already exists (created by a trigger) and update it,
+          // otherwise insert a new one with the correct plan the user selected.
+          const { data: existing } = await supabase
             .from('subscriptions')
-            .insert({
-              customer_id: user.id,
-              plan_id: plan.id,
-              status: 'trial',
-              start_date: startDate.toISOString(),
-              end_date: trialEndDate.toISOString(),
-              trial_end_date: trialEndDate.toISOString(),
-              payment_method_added: false,
-              reminder_sent: false,
-            });
+            .select('id')
+            .eq('customer_id', user.id)
+            .maybeSingle();
 
-          if (subscriptionError) {
-            console.error('Errore inserimento subscription:', subscriptionError);
-            throw subscriptionError;
+          if (existing) {
+            await supabase
+              .from('subscriptions')
+              .update({ plan_id: plan.id })
+              .eq('id', existing.id);
+          } else {
+            const { error: subscriptionError } = await supabase
+              .from('subscriptions')
+              .insert({
+                customer_id: user.id,
+                plan_id: plan.id,
+                status: 'trial',
+                start_date: startDate.toISOString(),
+                end_date: trialEndDate.toISOString(),
+                trial_end_date: trialEndDate.toISOString(),
+                payment_method_added: false,
+                reminder_sent: false,
+              });
+            if (subscriptionError) throw subscriptionError;
           }
 
-          // Il trigger sync_subscription_type_from_plan aggiornerà automaticamente
-          // subscription_type e subscription_status quando l'abbonamento viene creato
-          console.log('Abbonamento creato con successo, il trigger aggiornerà il profilo automaticamente');
-        } else {
-          console.error('Piano non trovato per:', { numberOfPeople, billingPeriod });
+          // Sync profile subscription_type with the selected plan name
+          await supabase
+            .from('profiles')
+            .update({ subscription_type: plan.name })
+            .eq('id', user.id);
         }
       }
 
@@ -752,25 +759,37 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
       const trialEndDate = new Date();
       trialEndDate.setMonth(trialEndDate.getMonth() + 1);
 
-      const { error: subscriptionError } = await supabase
+      const { data: existingBizSub } = await supabase
         .from('subscriptions')
-        .insert({
-          customer_id: user.id,
-          plan_id: plan.id,
-          status: 'trial',
-          start_date: startDate.toISOString(),
-          end_date: trialEndDate.toISOString(),
-          trial_end_date: trialEndDate.toISOString(),
-          payment_method_added: false,
-          reminder_sent: false,
-        });
+        .select('id')
+        .eq('customer_id', user.id)
+        .maybeSingle();
 
-      if (subscriptionError) {
-        console.error('❌ Errore inserimento subscription:', subscriptionError);
-        throw subscriptionError;
+      if (existingBizSub) {
+        await supabase
+          .from('subscriptions')
+          .update({ plan_id: plan.id })
+          .eq('id', existingBizSub.id);
+      } else {
+        const { error: subscriptionError } = await supabase
+          .from('subscriptions')
+          .insert({
+            customer_id: user.id,
+            plan_id: plan.id,
+            status: 'trial',
+            start_date: startDate.toISOString(),
+            end_date: trialEndDate.toISOString(),
+            trial_end_date: trialEndDate.toISOString(),
+            payment_method_added: false,
+            reminder_sent: false,
+          });
+        if (subscriptionError) throw subscriptionError;
       }
 
-      console.log('✅ Subscription creata con successo');
+      await supabase
+        .from('profiles')
+        .update({ subscription_type: plan.name })
+        .eq('id', user.id);
 
       // 2. Poi crea il business e le sedi
       if (businessLocations.length > 0) {
