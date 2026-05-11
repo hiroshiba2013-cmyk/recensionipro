@@ -159,13 +159,11 @@ export function LocationCard({ location }: LocationCardProps) {
           />
         </div>
 
-        {(location.category_name || location.business?.category?.name) && (
-          <div className="mb-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 border border-blue-200 text-blue-700 text-sm rounded-full font-semibold">
-              {location.category_name || location.business?.category?.name}
-            </span>
-          </div>
-        )}
+        <div className="mb-3">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 border border-blue-200 text-blue-700 text-sm rounded-full font-semibold">
+            {location.category_name || location.business?.category?.name || 'Categoria non disponibile'}
+          </span>
+        </div>
 
         <div className="flex flex-wrap items-center gap-2 mb-3">
           {(location.review_count || 0) > 0 ? (
