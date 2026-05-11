@@ -1,14 +1,14 @@
-[dotenv@17.3.1] injecting env (2) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+[dotenv@17.3.1] injecting env (2) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
 
-=== IMPORT PER COMUNE - 45 tag per comune ===
+=== IMPORT PER COMUNE (area OSM) ===
 
-(node:442) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(node:512) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
 (Use `node --trace-deprecation ...` to show where the warning was created)
 Caricate 230 categorie
-Comuni da processare: 1000
+Comuni caricati dal DB: 7827
 
-[1/1000] Abbateggio (PE) +98 | Totale: 98 | 0.1% | 0.4min
-[2/1000] Acciano (AQ) +21 | Totale: 119 | 0.2% | 0.4min
-[3/1000] Aielli (AQ) +18 | Totale: 137 | 0.3% | 0.9min
-[4/1000] Alanno (PE) +63 | Totale: 200 | 0.4% | 0.9min
-[5/1000] Alba Adriatica (TE) +195 | Totale: 395 | 0.5% | 1.1min
+[1/7827] Altino (CH) +3 | Totale: 3 | 0.0% | 0.1min
+[2/7827] Archi (CH) +4 | Totale: 7 | 0.0% | 0.3min
+[3/7827] Ari (CH) +4 | Totale: 11 | 0.0% | 0.4min
+[4/7827] Arielli (CH) +7 | Totale: 18 | 0.1% | 0.7min
+[5/7827] Atessa (CH) +15 | Totale: 33 | 0.1% | 0.9min

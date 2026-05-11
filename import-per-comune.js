@@ -1,7 +1,8 @@
 /**
- * Import per comune - query ultra-piccole su ogni comune italiano
- * Geocodifica il comune con Nominatim, poi query Overpass su bbox ~8km
- * Feedback immediato dopo ogni inserimento
+ * Import per comune - query Overpass con area nominale (niente geocoding)
+ * Usa "area[name=...][admin_level=8]" di Overpass per trovare il comune
+ * Poi cerca tutte le attivita' nell'area
+ * Feedback immediato dopo ogni comune
  */
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
@@ -10,7 +11,7 @@ import https from 'https';
 config();
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
 
-// Tag da cercare per ogni comune
+// Tutti i tag in una sola query per comune (area OSM = preciso, niente bbox)
 const TAGS = [
   { key: 'amenity', val: 'restaurant', cat: 'Ristoranti' },
   { key: 'amenity', val: 'cafe', cat: 'Bar e Caffè' },
@@ -61,11 +62,7 @@ const TAGS = [
 
 let categoryCache = {};
 let totalImported = 0;
-let totalSkipped = 0;
 const startTime = Date.now();
-
-// Cache geocoding per evitare chiamate ripetute
-const geoCache = {};
 
 async function loadCategories() {
   const { data } = await supabase.from('business_categories').select('id, name');
@@ -73,46 +70,25 @@ async function loadCategories() {
   console.log(`Caricate ${Object.keys(categoryCache).length} categorie`);
 }
 
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-function httpGet(hostname, path) {
-  return new Promise((resolve, reject) => {
-    const opts = {
-      hostname, path, method: 'GET',
-      headers: { 'User-Agent': 'ItalianBizDir/12.0 (import per comune)' }
-    };
-    const req = https.request(opts, res => {
-      let data = '';
-      res.on('data', c => data += c);
-      res.on('end', () => {
-        if (res.statusCode >= 400) { reject(new Error(`HTTP ${res.statusCode}`)); return; }
-        try { resolve(JSON.parse(data)); } catch { reject(new Error('JSON')); }
-      });
-    });
-    req.on('error', reject);
-    req.setTimeout(10000, () => { req.destroy(); reject(new Error('Timeout')); });
-    req.end();
-  });
-}
-
-async function geocodeComune(comune, provincia) {
-  const cacheKey = `${comune}|${provincia}`;
-  if (geoCache[cacheKey]) return geoCache[cacheKey];
-
-  try {
-    const q = encodeURIComponent(`${comune}, ${provincia}, Italy`);
-    const results = await httpGet('nominatim.openstreetmap.org', `/search?q=${q}&format=json&limit=1&countrycodes=it`);
-    if (results && results.length > 0) {
-      const lat = parseFloat(results[0].lat);
-      const lon = parseFloat(results[0].lon);
-      geoCache[cacheKey] = { lat, lon };
-      return { lat, lon };
-    }
-  } catch {
-    // ignore
+async function loadAllComuni() {
+  const all = [];
+  let from = 0;
+  const pageSize = 1000;
+  while (true) {
+    const { data, error } = await supabase
+      .from('comuni_italiani')
+      .select('id, comune, provincia, sigla, regione')
+      .order('id', { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error || !data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < pageSize) break;
+    from += pageSize;
   }
-  return null;
+  return all;
 }
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 function fetchOverpass(query) {
   return new Promise((resolve, reject) => {
@@ -122,7 +98,7 @@ function fetchOverpass(query) {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Content-Length': Buffer.byteLength(body),
-        'User-Agent': 'ItalianBizDir/12.0'
+        'User-Agent': 'ItalianBizDir/13.0'
       }
     };
     const req = https.request(opts, res => {
@@ -135,32 +111,27 @@ function fetchOverpass(query) {
       });
     });
     req.on('error', reject);
-    req.setTimeout(25000, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.setTimeout(30000, () => { req.destroy(); reject(new Error('Timeout')); });
     req.write(body); req.end();
   });
 }
 
-// Costruisce tutti i tag in una sola query per comune (query piccola = bbox ~8km)
-function buildComuneQuery(tags, lat, lon, radiusKm = 5) {
-  const deg = radiusKm / 111.0;
-  const s = (lat - deg).toFixed(5);
-  const n = (lat + deg).toFixed(5);
-  const w = (lon - deg / Math.cos(lat * Math.PI / 180)).toFixed(5);
-  const e = (lon + deg / Math.cos(lat * Math.PI / 180)).toFixed(5);
-  const bbox = `${s},${w},${n},${e}`;
-  const parts = tags.map(t =>
-    `  node["${t.key}"="${t.val}"](${bbox});\n  way["${t.key}"="${t.val}"](${bbox});`
+// Query Overpass usando area[name=COMUNE] - niente geocoding, usa i dati OSM direttamente
+function buildAreaQuery(comuneName) {
+  const escaped = comuneName.replace(/"/g, '\\"');
+  const parts = TAGS.map(t =>
+    `  node["${t.key}"="${t.val}"](area.a);\n  way["${t.key}"="${t.val}"](area.a);`
   ).join('\n');
-  return `[out:json][timeout:20];\n(\n${parts}\n);\nout center tags;`;
+  return `[out:json][timeout:25];
+area["name"="${escaped}"]["admin_level"="8"]["boundary"="administrative"]->.a;
+(
+${parts}
+);
+out center tags;`;
 }
 
-async function runComune(comune) {
-  const geo = await geocodeComune(comune.comune, comune.provincia);
-  if (!geo) { totalSkipped++; return 0; }
-
-  await sleep(200); // rispetta rate limit Nominatim
-
-  const query = buildComuneQuery(TAGS, geo.lat, geo.lon);
+async function runComune(comune, idx, total) {
+  const query = buildAreaQuery(comune.comune);
   let elements = [];
   for (let retry = 0; retry < 2; retry++) {
     try {
@@ -168,15 +139,19 @@ async function runComune(comune) {
       elements = data.elements || [];
       break;
     } catch (err) {
-      if (err.message === 'RATE_LIMIT') { await sleep(60000); retry--; continue; }
-      if (retry < 1) { await sleep(4000); continue; }
+      if (err.message === 'RATE_LIMIT') {
+        console.log(`  [RATE LIMIT] attendo 60s...`);
+        await sleep(60000);
+        retry--;
+        continue;
+      }
+      if (retry < 1) { await sleep(3000); continue; }
       return 0;
     }
   }
 
   if (!elements.length) return 0;
 
-  // Mappa ogni elemento alla categoria giusta
   const records = [];
   const seen = new Set();
   for (const el of elements) {
@@ -190,8 +165,7 @@ async function runComune(comune) {
     if (seen.has(key)) continue;
     seen.add(key);
 
-    // Trova la categoria del tag
-    const elKey = ['amenity','shop','craft','tourism','office','leisure'].find(k => tags[k]);
+    const elKey = ['amenity', 'shop', 'craft', 'tourism', 'office', 'leisure'].find(k => tags[k]);
     const elVal = elKey ? tags[elKey] : null;
     const matchedTag = TAGS.find(t => t.key === elKey && t.val === elVal);
     if (!matchedTag) continue;
@@ -240,39 +214,26 @@ async function runComune(comune) {
 }
 
 async function main() {
-  console.log(`\n=== IMPORT PER COMUNE - ${TAGS.length} tag per comune ===\n`);
+  console.log(`\n=== IMPORT PER COMUNE (area OSM) ===\n`);
   await loadCategories();
 
-  // Carica tutti i comuni dal DB
-  const { data: comuni, error } = await supabase
-    .from('comuni_italiani')
-    .select('id, comune, provincia, sigla, regione')
-    .order('regione', { ascending: true })
-    .order('comune', { ascending: true });
+  const comuni = await loadAllComuni();
+  console.log(`Comuni caricati dal DB: ${comuni.length}\n`);
 
-  if (error || !comuni) {
-    console.error('Errore caricamento comuni:', error);
-    return;
-  }
-  console.log(`Comuni da processare: ${comuni.length}\n`);
-
-  let idx = 0;
-  for (const comune of comuni) {
-    idx++;
-    const n = await runComune(comune);
+  for (let i = 0; i < comuni.length; i++) {
+    const comune = comuni[i];
+    const n = await runComune(comune, i + 1, comuni.length);
     if (n > 0) {
       totalImported += n;
       const elapsed = ((Date.now() - startTime) / 60000).toFixed(1);
-      const pct = ((idx / comuni.length) * 100).toFixed(1);
-      console.log(`[${idx}/${comuni.length}] ${comune.comune} (${comune.sigla}) +${n} | Totale: ${totalImported.toLocaleString()} | ${pct}% | ${elapsed}min`);
+      const pct = (((i + 1) / comuni.length) * 100).toFixed(1);
+      console.log(`[${i + 1}/${comuni.length}] ${comune.comune} (${comune.sigla}) +${n} | Totale: ${totalImported.toLocaleString()} | ${pct}% | ${elapsed}min`);
     }
-    // Pausa minima tra comuni per non sovraccaricare Overpass
-    await sleep(500);
+    await sleep(400);
   }
 
   console.log(`\n=== COMPLETATO ===`);
   console.log(`Importati: ${totalImported.toLocaleString()}`);
-  console.log(`Comuni saltati (no geo): ${totalSkipped}`);
 }
 
 main().catch(console.error);
