@@ -193,7 +193,7 @@ interface FamilyMember {
 
 export function ProfilePage() {
   const { showToast } = useToast();
-  const { user, signOut, activeProfile, selectedBusinessLocationId, setActiveProfile } = useAuth();
+  const { user, signOut, activeProfile, selectedBusinessLocationId, setActiveProfile, updateFamilyMemberAvatar } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [business, setBusiness] = useState<Business | null>(null);
@@ -1128,7 +1128,10 @@ export function ProfilePage() {
                   <FamilyMemberAvatarUpload
                     memberId={selectedFamilyMember.id}
                     currentAvatarUrl={selectedFamilyMember.avatar_url ?? null}
-                    onAvatarUpdate={(url) => setSelectedFamilyMember(prev => prev ? { ...prev, avatar_url: url } : prev)}
+                    onAvatarUpdate={(url) => {
+                      setSelectedFamilyMember(prev => prev ? { ...prev, avatar_url: url } : prev);
+                      updateFamilyMemberAvatar(selectedFamilyMember.id, url);
+                    }}
                   />
                   <div>
                     <h1 className="text-3xl font-bold text-gray-900">

@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { Camera, Upload, Loader } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface FamilyMemberAvatarUploadProps {
   memberId: string;
@@ -15,6 +16,7 @@ export function FamilyMemberAvatarUpload({
   onAvatarUpdate
 }: FamilyMemberAvatarUploadProps) {
   const { showToast } = useToast();
+  const { updateFamilyMemberAvatar } = useAuth();
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,7 +38,7 @@ export function FamilyMemberAvatarUpload({
       setUploading(true);
 
       const fileExt = file.name.split('.').pop();
-      const fileName = `family-members/${memberId}/${Date.now()}.${fileExt}`;
+      const fileName = `family/${memberId}/avatar.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -48,14 +50,17 @@ export function FamilyMemberAvatarUpload({
         .from('avatars')
         .getPublicUrl(fileName);
 
+      const url = `${publicUrl}?t=${Date.now()}`;
+
       const { error: updateError } = await supabase
         .from('customer_family_members')
-        .update({ avatar_url: publicUrl })
+        .update({ avatar_url: url })
         .eq('id', memberId);
 
       if (updateError) throw updateError;
 
-      onAvatarUpdate(publicUrl);
+      updateFamilyMemberAvatar(memberId, url);
+      onAvatarUpdate(url);
     } catch (error) {
       console.error('Error uploading avatar:', error);
       showToast('Errore durante il caricamento dell\'immagine', 'error');

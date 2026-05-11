@@ -75,6 +75,7 @@ interface AuthContextType {
   setActiveProfile: (profileId: string, isOwner: boolean) => void;
   loadFamilyMembers: () => Promise<void>;
   refreshBusinessLocations: () => Promise<void>;
+  updateFamilyMemberAvatar: (memberId: string, avatarUrl: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -497,6 +498,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ? activeProfile.id
       : null;
 
+  const updateFamilyMemberAvatar = (memberId: string, avatarUrl: string) => {
+    setFamilyMembers(prev => prev.map(m => m.id === memberId ? { ...m, avatar_url: avatarUrl } : m));
+    setActiveProfileState(prev => {
+      if (prev && !prev.isOwner && prev.id === memberId) {
+        return { ...prev, avatarUrl };
+      }
+      return prev;
+    });
+  };
+
   const value = {
     user,
     profile,
@@ -513,6 +524,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setActiveProfile,
     loadFamilyMembers,
     refreshBusinessLocations,
+    updateFamilyMemberAvatar,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

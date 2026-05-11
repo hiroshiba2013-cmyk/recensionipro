@@ -678,7 +678,7 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
 }
 
 export function DashboardPage() {
-  const { profile, selectedBusinessLocationId, activeProfile, signOut } = useAuth();
+  const { profile, selectedBusinessLocationId, activeProfile, signOut, updateFamilyMemberAvatar } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -1193,6 +1193,7 @@ export function DashboardPage() {
                               const url = `${publicUrl}?t=${Date.now()}`;
                               await supabase.from('customer_family_members').update({ avatar_url: url }).eq('id', activeFm.id);
                               setMemberAvatars(prev => ({ ...prev, [activeFm.id]: url }));
+                              updateFamilyMemberAvatar(activeFm.id, url);
                               showToast('Foto aggiornata!', 'success');
                             } catch { showToast('Errore durante il caricamento', 'error'); }
                             e.target.value = '';
