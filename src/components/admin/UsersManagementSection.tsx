@@ -77,6 +77,8 @@ export default function UsersManagementSection() {
   const [editedMember, setEditedMember] = useState<FamilyMember | null>(null);
   const [editingLocationId, setEditingLocationId] = useState<string | null>(null);
   const [editedLocation, setEditedLocation] = useState<BusinessLocation | null>(null);
+  const [showAddMemberForm, setShowAddMemberForm] = useState(false);
+  const [newMember, setNewMember] = useState<Omit<FamilyMember, 'id'>>({ first_name: '', last_name: '', nickname: '', date_of_birth: '', relationship: '', fiscal_code: '' });
 
   useEffect(() => {
     loadUsers();
@@ -289,6 +291,31 @@ export default function UsersManagementSection() {
     } catch (error) {
       console.error('[UsersManagement] Error updating family member:', error);
       showToast('Errore durante l\'aggiornamento del membro della famiglia', 'error');
+    }
+  };
+
+  const handleAddMember = async () => {
+    if (!viewingUser || !newMember.first_name.trim() || !newMember.last_name.trim()) return;
+    try {
+      const { error } = await supabase
+        .from('customer_family_members')
+        .insert({
+          customer_id: viewingUser.id,
+          first_name: newMember.first_name.trim(),
+          last_name: newMember.last_name.trim(),
+          nickname: newMember.nickname.trim() || null,
+          date_of_birth: newMember.date_of_birth || null,
+          relationship: newMember.relationship || null,
+          fiscal_code: newMember.fiscal_code.trim() || null,
+        });
+      if (error) throw error;
+      showToast('Membro della famiglia aggiunto con successo!', 'success');
+      setShowAddMemberForm(false);
+      setNewMember({ first_name: '', last_name: '', nickname: '', date_of_birth: '', relationship: '', fiscal_code: '' });
+      await loadFamilyMembers(viewingUser.id);
+    } catch (error) {
+      console.error('[UsersManagement] Error adding family member:', error);
+      showToast('Errore durante l\'aggiunta del membro della famiglia', 'error');
     }
   };
 
@@ -872,12 +899,66 @@ export default function UsersManagementSection() {
                   {/* Membri della Famiglia */}
                   <div className="bg-gray-50 rounded-xl border border-gray-100 p-6">
                     <div className="flex items-center gap-2 mb-4">
-                      <UserCircle className="w-6 h-6 text-purple-600" />
+                      <UserCircle className="w-6 h-6 text-blue-600" />
                       <h3 className="text-lg font-bold text-gray-900">Membri della Famiglia</h3>
-                      <span className="ml-auto bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                      <span className="ml-auto bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
                         {familyMembers.length}
                       </span>
+                      {viewingUser.user_type === 'customer' && (
+                        <button
+                          onClick={() => setShowAddMemberForm(v => !v)}
+                          className="ml-2 flex items-center gap-1 bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          {showAddMemberForm ? 'Annulla' : '+ Aggiungi'}
+                        </button>
+                      )}
                     </div>
+
+                    {showAddMemberForm && (
+                      <div className="mb-4 bg-white rounded-lg border border-blue-200 p-4 space-y-3">
+                        <p className="text-sm font-semibold text-blue-700">Nuovo membro</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-600 mb-1">Nome *</label>
+                            <input type="text" value={newMember.first_name} onChange={e => setNewMember(m => ({ ...m, first_name: e.target.value }))}
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-600 mb-1">Cognome *</label>
+                            <input type="text" value={newMember.last_name} onChange={e => setNewMember(m => ({ ...m, last_name: e.target.value }))}
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-600 mb-1">Nickname</label>
+                            <input type="text" value={newMember.nickname} onChange={e => setNewMember(m => ({ ...m, nickname: e.target.value }))}
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-600 mb-1">Relazione</label>
+                            <input type="text" value={newMember.relationship} onChange={e => setNewMember(m => ({ ...m, relationship: e.target.value }))}
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-600 mb-1">Data di nascita</label>
+                            <input type="date" value={newMember.date_of_birth} onChange={e => setNewMember(m => ({ ...m, date_of_birth: e.target.value }))}
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-600 mb-1">Codice Fiscale</label>
+                            <input type="text" value={newMember.fiscal_code} onChange={e => setNewMember(m => ({ ...m, fiscal_code: e.target.value.toUpperCase() }))}
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                          </div>
+                        </div>
+                        <button
+                          onClick={handleAddMember}
+                          disabled={!newMember.first_name.trim() || !newMember.last_name.trim()}
+                          className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Salva membro
+                        </button>
+                      </div>
+                    )}
+
                     <div className="space-y-3">
                       {familyMembers.length === 0 ? (
                         <p className="text-gray-600 text-sm text-center py-4">Nessun membro della famiglia aggiunto</p>
