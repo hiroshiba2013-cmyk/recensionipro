@@ -635,7 +635,12 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
             <div className="absolute bottom-0 left-0 right-0 p-8">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h1 className="text-5xl font-extrabold text-white mb-3 drop-shadow-lg">{business.name}</h1>
+                  <h1 className="text-5xl font-extrabold text-white mb-2 drop-shadow-lg">{business.name}</h1>
+                  {business.category && (
+                    <span className="inline-block mb-3 px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-sm font-semibold rounded-full">
+                      {(business.category as any).name}
+                    </span>
+                  )}
                   <div className="flex flex-wrap items-center gap-4">
                     {business.avg_rating && business.avg_rating > 0 ? (
                       <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full">
@@ -781,6 +786,15 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                         </div>
                       )}
                       <div className="space-y-3">
+                        {business.category && (
+                          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                            <Briefcase className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Categoria</p>
+                              <p className="text-gray-900 font-medium">{(business.category as any).name}</p>
+                            </div>
+                          </div>
+                        )}
                         {displayAddress && (
                           <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                             <MapPin className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
