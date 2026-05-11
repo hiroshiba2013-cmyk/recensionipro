@@ -240,18 +240,6 @@ export function AdminDashboardPage() {
     setVisitedTabs(prev => new Set(prev).add(tab));
   };
 
-  // Compute display counts: approval-pending badges always show real DB count;
-  // informational badges (newUsers, newSubscriptions, unreadPlatformMessages)
-  // are hidden once the admin has visited the relevant tab this session.
-  const displayCounts = {
-    ...pendingCounts,
-    newUsers: visitedTabs.has('users') ? 0 : pendingCounts.newUsers,
-    newSubscriptions: visitedTabs.has('subscriptions') ? 0 : pendingCounts.newSubscriptions,
-    unreadPlatformMessages:
-      visitedTabs.has('contact') || visitedTabs.has('platform_messages')
-        ? 0
-        : pendingCounts.unreadPlatformMessages,
-  };
   const [statsPeriod, setStatsPeriod] = useState<number | null>(null); // null = tutti i tempi
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
@@ -293,6 +281,17 @@ export function AdminDashboardPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingCounts, setPendingCounts] = useState<PendingCounts>({ reviews: 0, ads: 0, businesses: 0, reports: 0, auctions: 0, jobs: 0, jobSeekers: 0, newUsers: 0, newSubscriptions: 0, newMessages: 0, unreadPlatformMessages: 0 });
+
+  // Informational badges hidden once the admin visits the tab; approval badges always reflect DB
+  const displayCounts = {
+    ...pendingCounts,
+    newUsers: visitedTabs.has('users') ? 0 : pendingCounts.newUsers,
+    newSubscriptions: visitedTabs.has('subscriptions') ? 0 : pendingCounts.newSubscriptions,
+    unreadPlatformMessages:
+      visitedTabs.has('contact') || visitedTabs.has('platform_messages')
+        ? 0
+        : pendingCounts.unreadPlatformMessages,
+  };
   const [selectedReview, setSelectedReview] = useState<PendingReview | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
