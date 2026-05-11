@@ -1,0 +1,14 @@
+[dotenv@17.3.1] injecting env (2) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+
+=== IMPORT PER COMUNE - 45 tag per comune ===
+
+(node:442) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Caricate 230 categorie
+Comuni da processare: 1000
+
+[1/1000] Abbateggio (PE) +98 | Totale: 98 | 0.1% | 0.4min
+[2/1000] Acciano (AQ) +21 | Totale: 119 | 0.2% | 0.4min
+[3/1000] Aielli (AQ) +18 | Totale: 137 | 0.3% | 0.9min
+[4/1000] Alanno (PE) +63 | Totale: 200 | 0.4% | 0.9min
+[5/1000] Alba Adriatica (TE) +195 | Totale: 395 | 0.5% | 1.1min
