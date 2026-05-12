@@ -232,18 +232,21 @@ export function AdminDashboardPage() {
   const { profile, user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Persistent tab-seen timestamps: badge hidden after admin visits the tab
-  const STORAGE_KEY = 'admin_tab_seen';
-  const getSeenTabs = (): Record<string, number> => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
-  };
-  const [seenTabs, setSeenTabs] = useState<Record<string, number>>(getSeenTabs);
+  // DB-persisted tab-seen timestamps so badges survive browser/device changes
+  const [seenTabs, setSeenTabs] = useState<Record<string, string>>({});
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    const updated = { ...seenTabs, [tab]: Date.now() };
+    const now = new Date().toISOString();
+    const updated = { ...seenTabs, [tab]: now };
     setSeenTabs(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    if (user?.id) {
+      supabase.from('admin_tab_seen')
+        .upsert({ admin_id: user.id, tab, seen_at: now }, { onConflict: 'admin_id,tab' })
+        .then(() => {});
+    }
+    // Reload counts immediately with the updated seen map so badge disappears at once
+    loadPendingCounts(updated);
   };
 
   const [statsPeriod, setStatsPeriod] = useState<number | null>(null); // null = tutti i tempi
@@ -335,8 +338,18 @@ export function AdminDashboardPage() {
       }
 
       console.log('User is admin, loading dashboard');
+      // Load seen-tab timestamps from DB so badge counts are correct from the start
+      const { data: seenData } = await supabase
+        .from('admin_tab_seen')
+        .select('tab, seen_at')
+        .eq('admin_id', user.id);
+      const seenMap: Record<string, string> = {};
+      if (seenData) seenData.forEach(r => { seenMap[r.tab] = r.seen_at; });
+      setSeenTabs(seenMap);
       setIsAdmin(true);
       setCheckingAdmin(false);
+      // Pass seenMap directly to avoid stale state in subsequent loadPendingCounts call
+      setTimeout(() => loadPendingCounts(seenMap), 0);
     };
 
     checkAdminStatus();
@@ -354,11 +367,6 @@ export function AdminDashboardPage() {
       loadPendingCounts();
     }
   }, [checkingAdmin, isAdmin]);
-
-  // Re-run counts when tab seen timestamps change so badges update immediately
-  useEffect(() => {
-    if (isAdmin) loadPendingCounts();
-  }, [seenTabs]);
 
   // Realtime subscriptions: refresh badge counts when pending items change
   useEffect(() => {
@@ -387,13 +395,13 @@ export function AdminDashboardPage() {
     }
   }, [statsPeriod]);
 
-  const loadPendingCounts = async () => {
+  const loadPendingCounts = async (overrideSeen?: Record<string, string>) => {
     try {
-      const seen = getSeenTabs();
+      const seen = overrideSeen ?? seenTabs;
       // For informational tabs, count items created AFTER the last visit (or last 24h if never visited)
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const usersSince = seen['users'] ? new Date(seen['users']).toISOString() : oneDayAgo;
-      const subsSince = seen['subscriptions'] ? new Date(seen['subscriptions']).toISOString() : oneDayAgo;
+      const usersSince = seen['users'] ?? oneDayAgo;
+      const subsSince = seen['subscriptions'] ?? oneDayAgo;
 
       const [reviewsRes, adsRes, businessesRes, reportsRes, auctionsRes, jobsRes, jobSeekersRes, newUsersRes, newSubsRes, unreadPlatformMsgsRes] = await Promise.all([
         supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('review_status', 'pending'),
