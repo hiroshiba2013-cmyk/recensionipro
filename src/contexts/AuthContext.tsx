@@ -48,6 +48,7 @@ export interface BusinessLocation {
   province: string;
   avatar_url?: string | null;
   description?: string | null;
+  _table?: 'registered_business_locations' | 'business_locations';
 }
 
 export interface ActiveProfile {
@@ -265,12 +266,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      let locationsTable: 'registered_business_locations' | 'business_locations' = 'registered_business_locations';
       let { data: locations } = await supabase
         .from('registered_business_locations')
         .select('id, name, internal_name, street, city, province, avatar_url, description')
         .eq('business_id', business.id);
 
       if (!locations || locations.length === 0) {
+        locationsTable = 'business_locations';
         const result = await supabase
           .from('business_locations')
           .select('id, name, internal_name, address, city, province, avatar_url, description')
@@ -278,7 +281,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         locations = result.data;
       }
 
-      setBusinessLocations(locations || []);
+      setBusinessLocations((locations || []).map(l => ({ ...l, _table: locationsTable })));
 
       if (locations && locations.length === 1) {
         setActiveProfileState({

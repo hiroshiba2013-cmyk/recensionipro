@@ -125,6 +125,7 @@ export function ActiveProfileIndicator() {
       nickname: location.name,
       avatarUrl: location.avatar_url,
       isOwner: false,
+      _table: (location as any)._table ?? 'registered_business_locations',
     }))),
   ];
 
@@ -180,7 +181,7 @@ export function ActiveProfileIndicator() {
                     <BusinessLocationAvatarUpload
                       locationId={prof.id}
                       currentAvatarUrl={prof.avatarUrl ?? null}
-                      table="registered_business_locations"
+                      table={(prof as any)._table ?? 'registered_business_locations'}
                       size="sm"
                       onAvatarUpdate={async () => {
                         await refreshBusinessLocations();

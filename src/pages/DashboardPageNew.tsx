@@ -564,12 +564,13 @@ export function DashboardPageNew() {
       <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
           {(() => {
-            // Sede attiva: sede selezionata esplicitamente, oppure prima sede se l'utente è owner
+            // Sede attiva: sede selezionata esplicitamente, oppure prima sede se owner con una sola sede
             const activeSede = selectedBusinessLocationId
               ? businessLocations.find(l => l.id === selectedBusinessLocationId) ?? null
               : (profile.user_type === 'business' && businessLocations.length > 0 ? businessLocations[0] : null);
             const sedeAvatarUrl = activeSede?.avatar_url ?? null;
             const sedeLocationId = activeSede?.id ?? null;
+            const sedeTable = activeSede?._table ?? 'registered_business_locations';
             const sedeName = activeSede?.internal_name || activeSede?.name || null;
             const sedeCity = activeSede?.city ?? null;
             const sedeProv = activeSede?.province ?? null;
@@ -582,7 +583,7 @@ export function DashboardPageNew() {
                   <BusinessLocationAvatarUpload
                     locationId={sedeLocationId}
                     currentAvatarUrl={sedeAvatarUrl}
-                    table="registered_business_locations"
+                    table={sedeTable}
                     onAvatarUpdate={async () => { await refreshBusinessLocations(); }}
                   />
                 </div>

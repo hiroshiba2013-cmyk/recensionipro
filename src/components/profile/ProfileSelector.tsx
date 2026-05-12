@@ -11,6 +11,7 @@ export interface ProfileOption {
   nickname?: string;
   avatarUrl?: string | null;
   isOwner: boolean;
+  _table?: 'registered_business_locations' | 'business_locations';
 }
 
 interface ProfileSelectorProps {
@@ -62,6 +63,7 @@ export function ProfileSelector({
           nickname: location.name,
           avatarUrl: location.avatar_url,
           isOwner: false,
+          _table: (location as any)._table ?? 'registered_business_locations',
         }))),
   ];
 
@@ -185,7 +187,7 @@ export function ProfileSelector({
                       <BusinessLocationAvatarUpload
                         locationId={profile.id}
                         currentAvatarUrl={currentAvatar ?? null}
-                        table="registered_business_locations"
+                        table={profile._table ?? 'registered_business_locations'}
                         onAvatarUpdate={(url) => {
                           setLocationAvatars(prev => ({ ...prev, [profile.id]: url }));
                           onLocationAvatarUpdate?.(profile.id, url);
