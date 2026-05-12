@@ -80,6 +80,15 @@ interface BusinessLocation {
   email?: string;
 }
 
+interface BusinessLocationRow {
+  id: string;
+  owner_id: string;
+  name: string;
+  internal_name?: string;
+  city: string;
+  province: string;
+}
+
 export default function UsersManagementSection() {
   const { showToast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
@@ -98,6 +107,8 @@ export default function UsersManagementSection() {
   const [editingLocationId, setEditingLocationId] = useState<string | null>(null);
   const [editedLocation, setEditedLocation] = useState<BusinessLocation | null>(null);
   const [expandedFamilyUserId, setExpandedFamilyUserId] = useState<string | null>(null);
+  const [allBusinessLocationRows, setAllBusinessLocationRows] = useState<BusinessLocationRow[]>([]);
+  const [expandedBusinessLocationsUserId, setExpandedBusinessLocationsUserId] = useState<string | null>(null);
   const [showAddMemberForm, setShowAddMemberForm] = useState(false);
   const [newMember, setNewMember] = useState<Omit<FamilyMember, 'id'>>({ first_name: '', last_name: '', nickname: '', date_of_birth: '', relationship: '', fiscal_code: '' });
 
@@ -156,6 +167,48 @@ export default function UsersManagementSection() {
         }
       } else {
         setAllFamilyRows([]);
+      }
+
+      // Carica le sedi per gli utenti business visibili
+      const businessUserIds = (data || [])
+        .filter(u => u.user_type === 'business')
+        .map(u => u.id);
+
+      if (businessUserIds.length > 0 && (filterType === 'all' || filterType === 'business')) {
+        const { data: bizData } = await supabase
+          .from('registered_businesses')
+          .select('id, owner_id')
+          .in('owner_id', businessUserIds);
+
+        if (bizData && bizData.length > 0) {
+          const bizIds = bizData.map(b => b.id);
+          const { data: locData } = await supabase
+            .from('registered_business_locations')
+            .select('id, business_id, name, internal_name, city, province')
+            .in('business_id', bizIds)
+            .order('name');
+
+          if (locData && locData.length > 0) {
+            const rows: BusinessLocationRow[] = locData.map(loc => {
+              const biz = bizData.find(b => b.id === loc.business_id);
+              return {
+                id: loc.id,
+                owner_id: biz?.owner_id || '',
+                name: loc.name || loc.internal_name || 'Sede',
+                internal_name: loc.internal_name,
+                city: loc.city,
+                province: loc.province,
+              };
+            });
+            setAllBusinessLocationRows(rows);
+          } else {
+            setAllBusinessLocationRows([]);
+          }
+        } else {
+          setAllBusinessLocationRows([]);
+        }
+      } else {
+        setAllBusinessLocationRows([]);
       }
     } catch (error) {
       console.error('[UsersManagement] Error:', error);
@@ -654,6 +707,7 @@ export default function UsersManagementSection() {
               <tbody className="divide-y divide-gray-100">
                 {users.map((user) => {
                   const userFamilyRows = allFamilyRows.filter(fm => fm.customer_id === user.id);
+                  const userLocationRows = allBusinessLocationRows.filter(loc => loc.owner_id === user.id);
                   return (
                     <>
                       <tr key={user.id} className="hover:bg-gray-50 transition-colors">
@@ -680,6 +734,21 @@ export default function UsersManagementSection() {
                                   <UserPlus className="w-3 h-3" />
                                   {userFamilyRows.length} {userFamilyRows.length === 1 ? 'familiare' : 'familiari'}
                                   <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${expandedFamilyUserId === user.id ? 'rotate-180' : ''}`} />
+                                </button>
+                              )}
+                              {user.user_type === 'business' && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setExpandedBusinessLocationsUserId(
+                                      expandedBusinessLocationsUserId === user.id ? null : user.id
+                                    );
+                                  }}
+                                  className="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 font-medium hover:text-blue-800 transition-colors"
+                                >
+                                  <MapPin className="w-3 h-3" />
+                                  {userLocationRows.length} {userLocationRows.length === 1 ? 'sede' : 'sedi'}
+                                  <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${expandedBusinessLocationsUserId === user.id ? 'rotate-180' : ''}`} />
                                 </button>
                               )}
                             </div>
@@ -740,6 +809,38 @@ export default function UsersManagementSection() {
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
                               <UserPlus className="w-3 h-3" />
                               {relationshipLabel(fm.relationship)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3 text-xs text-gray-400">—</td>
+                          <td className="px-6 py-3 text-xs text-gray-400">—</td>
+                          <td className="px-6 py-3" />
+                        </tr>
+                      ))}
+                      {expandedBusinessLocationsUserId === user.id && userLocationRows.map((loc, idx) => (
+                        <tr key={`loc-${loc.id}`} className="bg-orange-50/40 hover:bg-orange-50 transition-colors">
+                          <td className="px-6 py-3 pl-16">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                {idx + 1}
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-800 text-sm">{loc.name}</p>
+                                {loc.internal_name && loc.internal_name !== loc.name && (
+                                  <p className="text-xs text-gray-500">"{loc.internal_name}"</p>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-3 text-xs text-gray-600">
+                            <span className="inline-flex items-center gap-1">
+                              <MapPin className="w-3 h-3 text-gray-400" />
+                              {loc.city} ({loc.province})
+                            </span>
+                          </td>
+                          <td className="px-6 py-3">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                              <MapPin className="w-3 h-3" />
+                              Sede
                             </span>
                           </td>
                           <td className="px-6 py-3 text-xs text-gray-400">—</td>
