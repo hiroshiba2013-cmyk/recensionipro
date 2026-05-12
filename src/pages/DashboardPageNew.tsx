@@ -87,7 +87,7 @@ interface SolidarityStats {
 }
 
 export function DashboardPageNew() {
-  const { profile, selectedBusinessLocationId, activeProfile, refreshBusinessLocations } = useAuth();
+  const { profile, selectedBusinessLocationId, activeProfile, refreshBusinessLocations, businessLocations } = useAuth();
   const navigate = useNavigate();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -563,14 +563,25 @@ export function DashboardPageNew() {
       {/* Hero */}
       <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
+          {(() => {
+            // Sede attiva: sede selezionata esplicitamente, oppure prima sede se l'utente è owner
+            const activeSede = selectedBusinessLocationId
+              ? businessLocations.find(l => l.id === selectedBusinessLocationId) ?? null
+              : (profile.user_type === 'business' && businessLocations.length > 0 ? businessLocations[0] : null);
+            const sedeAvatarUrl = activeSede?.avatar_url ?? null;
+            const sedeLocationId = activeSede?.id ?? null;
+            const sedeName = activeSede?.internal_name || activeSede?.name || null;
+            const sedeCity = activeSede?.city ?? null;
+            const sedeProv = activeSede?.province ?? null;
+            return (
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div className="flex items-center gap-5">
-              {/* Avatar sede — visibile solo quando è selezionata una sede business */}
-              {profile.user_type === 'business' && selectedBusinessLocationId && (
+              {/* Avatar sede — sempre visibile per utenti business con almeno una sede */}
+              {profile.user_type === 'business' && sedeLocationId && (
                 <div className="flex-shrink-0">
                   <BusinessLocationAvatarUpload
-                    locationId={selectedBusinessLocationId}
-                    currentAvatarUrl={activeProfile?.avatarUrl ?? null}
+                    locationId={sedeLocationId}
+                    currentAvatarUrl={sedeAvatarUrl}
                     table="registered_business_locations"
                     onAvatarUpdate={async () => { await refreshBusinessLocations(); }}
                   />
@@ -582,15 +593,15 @@ export function DashboardPageNew() {
                   {profile.user_type === 'business' ? 'Account Business' : 'Account Privato'}
                 </div>
                 <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-1">
-                  {selectedBusinessLocationId
-                    ? activeProfile?.name || 'Sede'
+                  {profile.user_type === 'business' && sedeName
+                    ? sedeName
                     : `Ciao, ${activeProfile ? (activeProfile.nickname || activeProfile.name.split(' ')[0]) : (profile.full_name?.split(' ')[0] || 'Utente')}`
                   }
                 </h1>
-                {selectedBusinessLocationId && activeProfile?.nickname && (
+                {profile.user_type === 'business' && sedeCity && (
                   <p className="text-slate-300 text-sm flex items-center gap-1.5 mb-1">
                     <MapPin className="w-3.5 h-3.5" />
-                    {activeProfile.nickname}
+                    {sedeCity}{sedeProv ? `, ${sedeProv}` : ''}
                   </p>
                 )}
                 <p className="text-slate-400 text-base">
@@ -616,6 +627,8 @@ export function DashboardPageNew() {
               </div>
             )}
           </div>
+            );
+          })()}
         </div>
       </section>
 
