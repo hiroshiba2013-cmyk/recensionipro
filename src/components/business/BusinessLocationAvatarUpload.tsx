@@ -7,12 +7,14 @@ interface BusinessLocationAvatarUploadProps {
   locationId: string;
   currentAvatarUrl: string | null;
   onAvatarUpdate: (url: string) => void;
+  table?: 'business_locations' | 'registered_business_locations';
 }
 
 export function BusinessLocationAvatarUpload({
   locationId,
   currentAvatarUrl,
-  onAvatarUpdate
+  onAvatarUpdate,
+  table = 'business_locations',
 }: BusinessLocationAvatarUploadProps) {
   const { showToast } = useToast();
   const [uploading, setUploading] = useState(false);
@@ -49,7 +51,7 @@ export function BusinessLocationAvatarUpload({
         .getPublicUrl(fileName);
 
       const { error: updateError } = await supabase
-        .from('business_locations')
+        .from(table)
         .update({ avatar_url: publicUrl })
         .eq('id', locationId);
 

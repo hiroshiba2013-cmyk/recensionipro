@@ -478,6 +478,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     <BusinessLocationAvatarUpload
                       locationId={location.id}
                       currentAvatarUrl={location.avatar_url}
+                      table={isRegisteredBusiness ? 'registered_business_locations' : 'business_locations'}
                       onAvatarUpdate={(url) => {
                         setLocations(locations.map(loc =>
                           loc.id === location.id ? { ...loc, avatar_url: url } : loc
@@ -610,6 +611,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     <BusinessLocationAvatarUpload
                       locationId={location.id}
                       currentAvatarUrl={location.avatar_url}
+                      table={isRegisteredBusiness ? 'registered_business_locations' : 'business_locations'}
                       onAvatarUpdate={(url) => {
                         setLocations(locations.map(loc =>
                           loc.id === location.id ? { ...loc, avatar_url: url } : loc
