@@ -238,21 +238,26 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
   };
 
   const startEditLocation = (loc: any) => {
-    setLocationForms(prev => ({ ...prev, [loc.id]: {
-      name: loc.name || '',
-      internal_name: loc.internal_name || '',
-      description: loc.description || '',
-      address: loc.address || '',
-      street_number: loc.street_number || '',
-      postal_code: loc.postal_code || '',
-      city: loc.city || '',
-      province: loc.province || '',
-      phone: loc.phone || '',
-      email: loc.email || '',
-      vat_number: loc.vat_number || '',
-      services: loc.services || '',
-      services_description: loc.services_description || '',
-    }}));
+    // registered_business_locations usa 'street', business_locations usa 'address'
+    const isReg = (loc._table || 'registered_business_locations') === 'registered_business_locations';
+    setLocationForms(prev => ({
+      ...prev,
+      [loc.id]: {
+        name: loc.name || '',
+        internal_name: loc.internal_name || '',
+        description: loc.description || '',
+        street: isReg ? (loc.street || '') : (loc.address || ''),
+        street_number: loc.street_number || '',
+        postal_code: loc.postal_code || '',
+        city: loc.city || '',
+        province: loc.province || '',
+        phone: loc.phone || '',
+        email: loc.email || '',
+        vat_number: loc.vat_number || '',
+        services: loc.services || '',
+        services_description: loc.services_description || '',
+      },
+    }));
     setEditingLocationId(loc.id);
     setLocationMsg(prev => ({ ...prev, [loc.id]: '' }));
   };
@@ -261,7 +266,14 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
     if (!onLocationSave) return;
     setLocationSaving(id);
     try {
-      await onLocationSave(id, locationForms[id] || {});
+      const loc = businessLocations.find(l => l.id === id);
+      const isReg = ((loc as any)?._table || 'registered_business_locations') === 'registered_business_locations';
+      const rawForm = locationForms[id] || {};
+      // Mappa 'street' -> 'address' per business_locations
+      const saveData = isReg
+        ? rawForm
+        : { ...rawForm, address: rawForm.street, street: undefined };
+      await onLocationSave(id, saveData);
       setLocationMsg(prev => ({ ...prev, [id]: 'ok' }));
       setEditingLocationId(null);
       clearTimeout(msgTimers.current[`loc_${id}`]);
@@ -272,8 +284,8 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
       setLocationSaving(null);
     }
   };
+
   const p = profile as any;
-  // Per i business registrati, i dati aziendali sono in registered_businesses
   const rb = registeredBusiness as any;
   const bizData = isBiz && rb ? rb : p;
   const billingAddress = [bizData.billing_street, bizData.billing_street_number, bizData.billing_postal_code, bizData.billing_city, bizData.billing_province].filter(Boolean).join(', ');
@@ -281,53 +293,63 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
-            <User className="w-4 h-4 text-slate-600" />
+          <div className="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center">
+            <Building2 className="w-4.5 h-4.5 text-slate-600" />
           </div>
-          <span className="font-semibold text-gray-900">I Tuoi Dati</span>
+          <div>
+            <span className="font-semibold text-gray-900 text-sm">I Tuoi Dati</span>
+            <p className="text-xs text-gray-400">{isBiz ? 'Dati aziendali e sedi' : 'Profilo e famiglia'}</p>
+          </div>
         </div>
         {!editing ? (
-          <button onClick={onEdit} className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
+          <button onClick={onEdit} className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-xl transition-colors">
             <Pencil className="w-3.5 h-3.5" />Modifica
           </button>
         ) : (
           <div className="flex items-center gap-2">
-            <button onClick={onCancel} className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors">
+            <button onClick={onCancel} className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl transition-colors">
               <X className="w-3.5 h-3.5" />Annulla
             </button>
-            <button onClick={onSave} disabled={saving} className="flex items-center gap-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 px-3 py-1.5 rounded-lg transition-colors">
+            <button onClick={onSave} disabled={saving} className="flex items-center gap-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 px-3 py-2 rounded-xl transition-colors">
               <Save className="w-3.5 h-3.5" />{saving ? 'Salvo...' : 'Salva'}
             </button>
           </div>
         )}
       </div>
 
-      <div className="px-5 pb-5 pt-4">
+      <div className="px-6 pb-6 pt-5 space-y-7">
         {saveMsg && (
-          <div className={`mb-4 px-4 py-2.5 rounded-xl text-sm font-medium ${saveMsg.includes('successo') ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+          <div className={`px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2 ${saveMsg.includes('successo') ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+            {saveMsg.includes('successo') ? <Check className="w-4 h-4 flex-shrink-0" /> : <X className="w-4 h-4 flex-shrink-0" />}
             {saveMsg}
           </div>
         )}
 
         {!editing ? (
           /* ── READ MODE ── */
-          <div className="space-y-6">
-            {/* Dati personali / aziendali */}
-            <div>
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{isBiz ? 'Dati Aziendali' : 'Dati Personali'}</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-7">
+
+            {/* Dati aziendali / personali */}
+            <section>
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span className="w-5 h-px bg-gray-200 inline-block" />
+                {isBiz ? 'Dati Aziendali' : 'Dati Personali'}
+                <span className="flex-1 h-px bg-gray-200 inline-block" />
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {isBiz ? (
                   <>
                     <Field label="Ragione Sociale" value={bizData.company_name || bizData.name} icon={Building2} />
                     <Field label="Partita IVA" value={bizData.vat_number} icon={CreditCard} />
-                    <Field label="Codice Univoco" value={bizData.unique_code} icon={Hash} />
-                    <Field label="Codice ATECO" value={bizData.ateco_code} icon={FileText} />
-                    <Field label="Email PEC" value={bizData.pec_email} icon={Mail} />
+                    <Field label="Codice Univoco" value={bizData.unique_code} icon={Hash} hideIfEmpty />
+                    <Field label="Codice ATECO" value={bizData.ateco_code} icon={FileText} hideIfEmpty />
+                    <Field label="Email PEC" value={bizData.pec_email} icon={Mail} hideIfEmpty />
                     <Field label="Telefono" value={bizData.phone} icon={Phone} hideIfEmpty />
                     <Field label="Sito Web" value={bizData.website_url || bizData.website} icon={Globe} hideIfEmpty />
-                    <div className="sm:col-span-2"><Field label="Descrizione" value={bizData.description} icon={FileText} hideIfEmpty /></div>
+                    {bizData.description && <div className="sm:col-span-2"><Field label="Descrizione" value={bizData.description} icon={FileText} /></div>}
                   </>
                 ) : (
                   <>
@@ -338,45 +360,57 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                   </>
                 )}
               </div>
-            </div>
+            </section>
 
-            {/* Indirizzo fatturazione */}
-            {billingAddress && (
-              <div>
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Indirizzo di Fatturazione</h3>
-                <div className="flex items-start gap-3">
-                  <div className="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <MapPin className="w-3.5 h-3.5 text-gray-500" />
-                  </div>
-                  <p className="text-sm font-medium text-gray-900">{billingAddress}</p>
+            {/* Indirizzi */}
+            {(billingAddress || (isBiz && officeAddress)) && (
+              <section>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <span className="w-5 h-px bg-gray-200 inline-block" />
+                  Indirizzi
+                  <span className="flex-1 h-px bg-gray-200 inline-block" />
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {billingAddress && (
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Fatturazione</p>
+                      <div className="flex items-start gap-2">
+                        <MapPin className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-gray-700">{billingAddress}</p>
+                      </div>
+                    </div>
+                  )}
+                  {isBiz && officeAddress && (
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Sede Legale</p>
+                      <div className="flex items-start gap-2">
+                        <Building className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-gray-700">{officeAddress}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-
-            {/* Sede legale (solo business) */}
-            {isBiz && officeAddress && (
-              <div>
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Sede Legale / Ufficio</h3>
-                <div className="flex items-start gap-3">
-                  <div className="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Building className="w-3.5 h-3.5 text-gray-500" />
-                  </div>
-                  <p className="text-sm font-medium text-gray-900">{officeAddress}</p>
-                </div>
-              </div>
+              </section>
             )}
 
             {/* Email account */}
-            <div>
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Account</h3>
+            <section>
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span className="w-5 h-px bg-gray-200 inline-block" />
+                Account
+                <span className="flex-1 h-px bg-gray-200 inline-block" />
+              </h3>
               <Field label="Email di accesso" value={p.email} icon={Mail} />
-            </div>
+            </section>
 
-            {/* Membri della famiglia (solo customer) */}
+            {/* Familiari (solo customer) */}
             {!isBiz && familyMembers.length > 0 && (
-              <div>
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
-                  Membri della Famiglia ({familyMembers.length})
+              <section>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <span className="w-5 h-px bg-gray-200 inline-block" />
+                  Membri della Famiglia
+                  <span className="bg-gray-200 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full">{familyMembers.length}</span>
+                  <span className="flex-1 h-px bg-gray-200 inline-block" />
                 </h3>
                 <div className="space-y-2">
                   {familyMembers.map(fm => {
@@ -384,69 +418,54 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                     const mf = memberForms[fm.id] || {};
                     const isExpanded = expandedMember === fm.id || isEditingThis;
                     return (
-                      <div key={fm.id} className="border border-gray-100 rounded-xl overflow-hidden">
+                      <div key={fm.id} className="border border-gray-100 rounded-xl overflow-hidden hover:border-gray-200 transition-colors">
                         <div className="flex items-center justify-between px-4 py-3">
                           <div className="flex items-center gap-3 flex-1 min-w-0">
-                            {/* Avatar membro famiglia */}
                             <div className="relative flex-shrink-0">
-                              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 bg-blue-100 flex items-center justify-center">
+                              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-100 bg-blue-50 flex items-center justify-center">
                                 {(memberAvatars[fm.id] || fm.avatar_url) ? (
                                   <img src={memberAvatars[fm.id] || fm.avatar_url!} alt="" className="w-full h-full object-cover" />
                                 ) : (
-                                  <User className="w-5 h-5 text-blue-500" />
+                                  <span className="text-sm font-bold text-blue-500">{fm.first_name?.[0]?.toUpperCase()}</span>
                                 )}
                               </div>
-                              <label
-                                htmlFor={`fm-avatar-${fm.id}`}
-                                className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center cursor-pointer border-2 border-white transition-colors"
-                                title="Cambia foto"
-                              >
+                              <label htmlFor={`fm-avatar-${fm.id}`} className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center cursor-pointer border-2 border-white transition-colors" title="Cambia foto">
                                 <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                <input id={`fm-avatar-${fm.id}`} type="file" accept="image/*" className="sr-only"
-                                  onChange={async (e) => {
-                                    const file = e.target.files?.[0];
-                                    if (!file) return;
-                                    try {
-                                      const ext = file.name.split('.').pop();
-                                      const url = await uploadAvatar('avatars', `family/${fm.id}/avatar.${ext}`, file);
-                                      await supabase.from('customer_family_members').update({ avatar_url: url }).eq('id', fm.id);
-                                      setMemberAvatars(prev => ({ ...prev, [fm.id]: url }));
-                                      showToast('Foto aggiornata!', 'success');
-                                    } catch { showToast('Errore durante il caricamento', 'error'); }
-                                    e.target.value = '';
-                                  }}
-                                />
+                                <input id={`fm-avatar-${fm.id}`} type="file" accept="image/*" className="sr-only" onChange={async (e) => {
+                                  const file = e.target.files?.[0]; if (!file) return;
+                                  try {
+                                    const ext = file.name.split('.').pop();
+                                    const url = await uploadAvatar('avatars', `family/${fm.id}/avatar.${ext}`, file);
+                                    await supabase.from('customer_family_members').update({ avatar_url: url }).eq('id', fm.id);
+                                    setMemberAvatars(prev => ({ ...prev, [fm.id]: url }));
+                                    showToast('Foto aggiornata!', 'success');
+                                  } catch { showToast('Errore durante il caricamento', 'error'); }
+                                  e.target.value = '';
+                                }} />
                               </label>
                             </div>
-                            <button
-                              onClick={() => { setExpandedMember(isExpanded && !isEditingThis ? null : fm.id); }}
-                              className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                            >
-                              <div className="min-w-0">
-                                <p className="text-sm font-semibold text-gray-900">{fm.first_name} {fm.last_name}</p>
-                                {fm.nickname && <p className="text-xs text-gray-400">@{fm.nickname}</p>}
-                              </div>
-                              {fm.relationship && (
-                                <span className="text-xs bg-blue-50 text-blue-600 font-medium px-2 py-0.5 rounded-full flex-shrink-0">{fm.relationship}</span>
-                              )}
+                            <button onClick={() => setExpandedMember(isExpanded && !isEditingThis ? null : fm.id)} className="flex-1 min-w-0 text-left">
+                              <p className="text-sm font-semibold text-gray-900">{fm.first_name} {fm.last_name}</p>
+                              <p className="text-xs text-gray-400">{fm.nickname ? `@${fm.nickname}` : fm.relationship || ''}</p>
                             </button>
+                            {fm.relationship && <span className="text-xs bg-blue-50 text-blue-600 font-medium px-2.5 py-1 rounded-full flex-shrink-0">{fm.relationship}</span>}
                           </div>
-                          <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
-                            {memberMsg[fm.id] === 'ok' && <span className="text-xs text-green-600 font-medium">Salvato!</span>}
+                          <div className="flex items-center gap-1.5 ml-3 flex-shrink-0">
+                            {memberMsg[fm.id] === 'ok' && <span className="text-xs text-green-600 font-medium">Salvato</span>}
                             {memberMsg[fm.id] === 'err' && <span className="text-xs text-red-600 font-medium">Errore</span>}
                             {isEditingThis ? (
                               <>
-                                <button onClick={() => setEditingMemberId(null)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors" title="Annulla"><X className="w-3.5 h-3.5 text-gray-500" /></button>
-                                <button onClick={() => saveMember(fm.id)} disabled={memberSaving === fm.id} className="p-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 transition-colors" title="Salva"><Save className="w-3.5 h-3.5 text-white" /></button>
+                                <button onClick={() => setEditingMemberId(null)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5 text-gray-500" /></button>
+                                <button onClick={() => saveMember(fm.id)} disabled={memberSaving === fm.id} className="p-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 transition-colors"><Save className="w-3.5 h-3.5 text-white" /></button>
                               </>
                             ) : (
-                              <button onClick={() => { setExpandedMember(fm.id); startEditMember(fm); }} className="p-1.5 rounded-lg bg-gray-100 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Modifica"><Pencil className="w-3.5 h-3.5 text-gray-500" /></button>
+                              <button onClick={() => { setExpandedMember(fm.id); startEditMember(fm); }} className="p-1.5 rounded-lg hover:bg-blue-50 transition-colors"><Pencil className="w-3.5 h-3.5 text-gray-400 hover:text-blue-600" /></button>
                             )}
                             <ChevronDown onClick={() => setExpandedMember(isExpanded ? null : fm.id)} className={`w-4 h-4 text-gray-400 transition-transform cursor-pointer ${isExpanded ? 'rotate-180' : ''}`} />
                           </div>
                         </div>
                         {isExpanded && (
-                          <div className="px-4 pb-4 pt-1 bg-gray-50 border-t border-gray-100">
+                          <div className="px-4 pb-4 pt-3 bg-gray-50/70 border-t border-gray-100">
                             {isEditingThis ? (
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <EditField label="Nome" fieldKey="first_name" form={mf} icon={User} onChange={(k, v) => setMemberForms(prev => ({ ...prev, [fm.id]: { ...prev[fm.id], [k]: v } }))} />
@@ -471,88 +490,80 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                     );
                   })}
                 </div>
-              </div>
+              </section>
             )}
 
-            {/* Sedi / Filiali (solo business) */}
+            {/* Sedi (solo business) */}
             {isBiz && businessLocations.length > 0 && (
-              <div>
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
-                  Sedi ({businessLocations.length})
+              <section>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <span className="w-5 h-px bg-gray-200 inline-block" />
+                  Sedi
+                  <span className="bg-gray-200 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full">{businessLocations.length}</span>
+                  <span className="flex-1 h-px bg-gray-200 inline-block" />
                 </h3>
                 <div className="space-y-2">
                   {businessLocations.map((loc, idx) => {
                     const isEditingThis = editingLocationId === loc.id;
                     const lf = locationForms[loc.id] || {};
                     const isExpanded = expandedLocation === loc.id || isEditingThis;
-                    const locAddress = [loc.address, loc.street_number, loc.postal_code, loc.city, loc.province].filter(Boolean).join(', ');
+                    const isReg = ((loc as any)._table || 'registered_business_locations') === 'registered_business_locations';
+                    const streetVal = isReg ? loc.street : loc.address;
+                    const locTable = isReg ? 'registered_business_locations' : 'business_locations';
+                    const locAddress = [streetVal, loc.street_number, loc.postal_code, loc.city, loc.province].filter(Boolean).join(', ');
                     return (
-                      <div key={loc.id} className="border border-gray-100 rounded-xl overflow-hidden">
+                      <div key={loc.id} className="border border-gray-100 rounded-xl overflow-hidden hover:border-gray-200 transition-colors">
                         <div className="flex items-center justify-between px-4 py-3">
                           <div className="flex items-center gap-3 flex-1 min-w-0">
-                            {/* Avatar sede */}
                             <div className="relative flex-shrink-0">
-                              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 bg-emerald-100 flex items-center justify-center">
+                              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-100 bg-emerald-50 flex items-center justify-center">
                                 {(locationAvatars[loc.id] || loc.avatar_url) ? (
                                   <img src={locationAvatars[loc.id] || loc.avatar_url!} alt="" className="w-full h-full object-cover" />
                                 ) : (
-                                  <Building2 className="w-5 h-5 text-emerald-600" />
+                                  <span className="text-sm font-bold text-emerald-600">{(loc.internal_name || loc.name || String(idx + 1))[0]?.toUpperCase()}</span>
                                 )}
                               </div>
-                              <label
-                                htmlFor={`loc-avatar-${loc.id}`}
-                                className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 hover:bg-emerald-600 rounded-full flex items-center justify-center cursor-pointer border-2 border-white transition-colors"
-                                title="Cambia foto sede"
-                              >
+                              <label htmlFor={`loc-avatar-${loc.id}`} className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 hover:bg-emerald-600 rounded-full flex items-center justify-center cursor-pointer border-2 border-white transition-colors" title="Cambia foto sede">
                                 <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                <input id={`loc-avatar-${loc.id}`} type="file" accept="image/*" className="sr-only"
-                                  onChange={async (e) => {
-                                    const file = e.target.files?.[0];
-                                    if (!file) return;
-                                    try {
-                                      const ext = file.name.split('.').pop();
-                                      const url = await uploadAvatar('avatars', `locations/${loc.id}/avatar.${ext}`, file);
-                                      await supabase.from('business_locations').update({ avatar_url: url }).eq('id', loc.id);
-                                      setLocationAvatars(prev => ({ ...prev, [loc.id]: url }));
-                                      showToast('Foto sede aggiornata!', 'success');
-                                    } catch { showToast('Errore durante il caricamento', 'error'); }
-                                    e.target.value = '';
-                                  }}
-                                />
+                                <input id={`loc-avatar-${loc.id}`} type="file" accept="image/*" className="sr-only" onChange={async (e) => {
+                                  const file = e.target.files?.[0]; if (!file) return;
+                                  try {
+                                    const ext = file.name.split('.').pop();
+                                    const url = await uploadAvatar('avatars', `locations/${loc.id}/avatar.${ext}`, file);
+                                    await supabase.from(locTable).update({ avatar_url: url }).eq('id', loc.id);
+                                    setLocationAvatars(prev => ({ ...prev, [loc.id]: url }));
+                                    showToast('Foto sede aggiornata!', 'success');
+                                  } catch { showToast('Errore durante il caricamento', 'error'); }
+                                  e.target.value = '';
+                                }} />
                               </label>
                             </div>
-                            <button
-                              onClick={() => setExpandedLocation(isExpanded && !isEditingThis ? null : loc.id)}
-                              className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                            >
-                              <div className="min-w-0">
-                                <p className="text-sm font-semibold text-gray-900">{loc.internal_name || loc.name || `Sede ${idx + 1}`}</p>
-                                {loc.city && <p className="text-xs text-gray-400">{loc.city}{loc.province ? ` (${loc.province})` : ''}</p>}
-                              </div>
+                            <button onClick={() => setExpandedLocation(isExpanded && !isEditingThis ? null : loc.id)} className="flex-1 min-w-0 text-left">
+                              <p className="text-sm font-semibold text-gray-900">{loc.internal_name || loc.name || `Sede ${idx + 1}`}</p>
+                              {loc.city && <p className="text-xs text-gray-400">{loc.city}{loc.province ? ` (${loc.province})` : ''}</p>}
                             </button>
                           </div>
-                          <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
-                            {locationMsg[loc.id] === 'ok' && <span className="text-xs text-green-600 font-medium">Salvato!</span>}
+                          <div className="flex items-center gap-1.5 ml-3 flex-shrink-0">
+                            {locationMsg[loc.id] === 'ok' && <span className="text-xs text-green-600 font-medium">Salvato</span>}
                             {locationMsg[loc.id] === 'err' && <span className="text-xs text-red-600 font-medium">Errore</span>}
                             {isEditingThis ? (
                               <>
-                                <button onClick={() => setEditingLocationId(null)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors" title="Annulla"><X className="w-3.5 h-3.5 text-gray-500" /></button>
-                                <button onClick={() => saveLocation(loc.id)} disabled={locationSaving === loc.id} className="p-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 transition-colors" title="Salva"><Save className="w-3.5 h-3.5 text-white" /></button>
+                                <button onClick={() => setEditingLocationId(null)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5 text-gray-500" /></button>
+                                <button onClick={() => saveLocation(loc.id)} disabled={locationSaving === loc.id} className="p-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 transition-colors"><Save className="w-3.5 h-3.5 text-white" /></button>
                               </>
                             ) : (
-                              <button onClick={() => { setExpandedLocation(loc.id); startEditLocation(loc); }} className="p-1.5 rounded-lg bg-gray-100 hover:bg-blue-50 transition-colors" title="Modifica"><Pencil className="w-3.5 h-3.5 text-gray-500" /></button>
+                              <button onClick={() => { setExpandedLocation(loc.id); startEditLocation(loc); }} className="p-1.5 rounded-lg hover:bg-blue-50 transition-colors"><Pencil className="w-3.5 h-3.5 text-gray-400 hover:text-blue-600" /></button>
                             )}
                             <ChevronDown onClick={() => setExpandedLocation(isExpanded ? null : loc.id)} className={`w-4 h-4 text-gray-400 transition-transform cursor-pointer ${isExpanded ? 'rotate-180' : ''}`} />
                           </div>
                         </div>
                         {isExpanded && (
-                          <div className="px-4 pb-4 pt-1 bg-gray-50 border-t border-gray-100">
+                          <div className="px-4 pb-4 pt-3 bg-gray-50/70 border-t border-gray-100">
                             {isEditingThis ? (
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <EditField label="Nome Sede" fieldKey="name" form={lf} icon={Building2} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
                                 <EditField label="Nome Interno" fieldKey="internal_name" form={lf} icon={Building2} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
-                                <EditTextarea label="Descrizione" fieldKey="description" form={lf} icon={FileText} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
-                                <EditField label="Via" fieldKey="address" form={lf} icon={MapPin} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
+                                <EditField label="Via" fieldKey="street" form={lf} icon={MapPin} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
                                 <EditField label="Civico" fieldKey="street_number" form={lf} icon={MapPin} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
                                 <EditField label="CAP" fieldKey="postal_code" form={lf} icon={MapPin} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
                                 <EditField label="Citta" fieldKey="city" form={lf} icon={MapPin} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
@@ -560,19 +571,17 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                                 <EditField label="Telefono" fieldKey="phone" form={lf} icon={Phone} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} type="tel" />
                                 <EditField label="Email" fieldKey="email" form={lf} icon={Mail} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} type="email" />
                                 <EditField label="P.IVA Sede" fieldKey="vat_number" form={lf} icon={CreditCard} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
-                                <EditField label="Servizi" fieldKey="services" form={lf} icon={FileText} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
-                                <EditTextarea label="Descrizione Servizi" fieldKey="services_description" form={lf} icon={FileText} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
+                                <EditTextarea label="Descrizione" fieldKey="description" form={lf} icon={FileText} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
+                                <EditTextarea label="Servizi offerti" fieldKey="services_description" form={lf} icon={FileText} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
                               </div>
                             ) : (
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {loc.name && <Field label="Nome Sede" value={loc.name} icon={Building2} />}
-                                {loc.description && <div className="sm:col-span-2"><Field label="Descrizione" value={loc.description} icon={FileText} /></div>}
                                 {locAddress && <div className="sm:col-span-2"><Field label="Indirizzo" value={locAddress} icon={MapPin} /></div>}
                                 {loc.phone && <Field label="Telefono" value={loc.phone} icon={Phone} />}
                                 {loc.email && <Field label="Email" value={loc.email} icon={Mail} />}
                                 {loc.vat_number && <Field label="P.IVA Sede" value={loc.vat_number} icon={CreditCard} />}
-                                {loc.services && <div className="sm:col-span-2"><Field label="Servizi" value={loc.services} icon={FileText} /></div>}
-                                {loc.services_description && <div className="sm:col-span-2"><Field label="Descrizione Servizi" value={loc.services_description} icon={FileText} /></div>}
+                                {loc.description && <div className="sm:col-span-2"><Field label="Descrizione" value={loc.description} icon={FileText} /></div>}
+                                {(loc.services_description || loc.services) && <div className="sm:col-span-2"><Field label="Servizi" value={loc.services_description || loc.services} icon={FileText} /></div>}
                                 {loc.business_hours && (() => {
                                   const days: Record<string, string> = { monday: 'Lunedi', tuesday: 'Martedi', wednesday: 'Mercoledi', thursday: 'Giovedi', friday: 'Venerdi', saturday: 'Sabato', sunday: 'Domenica' };
                                   const hours = loc.business_hours as Record<string, any>;
@@ -582,17 +591,10 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                                     return `${label}: ${d.open || '--'} - ${d.close || '--'}`;
                                   });
                                   return (
-                                    <div className="sm:col-span-2">
-                                      <div className="flex items-start gap-3">
-                                        <div className="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                                          <FileText className="w-3.5 h-3.5 text-gray-500" />
-                                        </div>
-                                        <div>
-                                          <p className="text-xs text-gray-400 mb-1">Orari</p>
-                                          <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-                                            {lines.map(l => <p key={l} className="text-xs text-gray-700">{l}</p>)}
-                                          </div>
-                                        </div>
+                                    <div className="sm:col-span-2 bg-white rounded-lg p-3 border border-gray-100">
+                                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Orari</p>
+                                      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                                        {lines.map(l => <p key={l} className="text-xs text-gray-700">{l}</p>)}
                                       </div>
                                     </div>
                                   );
@@ -605,16 +607,18 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                     );
                   })}
                 </div>
-              </div>
+              </section>
             )}
           </div>
         ) : (
           /* ── EDIT MODE ── */
-          <div className="space-y-6">
+          <div className="space-y-7">
             {isBiz ? (
               <>
-                <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Dati Aziendali</h3>
+                <section>
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <span className="w-5 h-px bg-gray-200 inline-block" />Dati Aziendali<span className="flex-1 h-px bg-gray-200 inline-block" />
+                  </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <EditField label="Ragione Sociale" fieldKey="company_name" form={form} icon={Building2} onChange={onChange} />
                     <EditField label="Partita IVA" fieldKey="vat_number" form={form} icon={CreditCard} onChange={onChange} />
@@ -625,9 +629,11 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                     <EditField label="Sito Web" fieldKey="website_url" form={form} icon={Globe} onChange={onChange} />
                     <EditTextarea label="Descrizione" fieldKey="description" form={form} icon={FileText} onChange={onChange} />
                   </div>
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Indirizzo di Fatturazione</h3>
+                </section>
+                <section>
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <span className="w-5 h-px bg-gray-200 inline-block" />Indirizzo di Fatturazione<span className="flex-1 h-px bg-gray-200 inline-block" />
+                  </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <EditField label="Via" fieldKey="billing_street" form={form} icon={MapPin} onChange={onChange} />
                     <EditField label="Civico" fieldKey="billing_street_number" form={form} icon={MapPin} onChange={onChange} />
@@ -635,9 +641,11 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                     <EditField label="Citta" fieldKey="billing_city" form={form} icon={MapPin} onChange={onChange} />
                     <EditField label="Provincia" fieldKey="billing_province" form={form} icon={MapPin} onChange={onChange} />
                   </div>
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Sede Legale / Ufficio</h3>
+                </section>
+                <section>
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <span className="w-5 h-px bg-gray-200 inline-block" />Sede Legale / Ufficio<span className="flex-1 h-px bg-gray-200 inline-block" />
+                  </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <EditField label="Via" fieldKey="office_street" form={form} icon={Building} onChange={onChange} />
                     <EditField label="Civico" fieldKey="office_street_number" form={form} icon={Building} onChange={onChange} />
@@ -645,21 +653,25 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                     <EditField label="Citta" fieldKey="office_city" form={form} icon={Building} onChange={onChange} />
                     <EditField label="Provincia" fieldKey="office_province" form={form} icon={Building} onChange={onChange} />
                   </div>
-                </div>
+                </section>
               </>
             ) : (
               <>
-                <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Dati Personali</h3>
+                <section>
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <span className="w-5 h-px bg-gray-200 inline-block" />Dati Personali<span className="flex-1 h-px bg-gray-200 inline-block" />
+                  </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <EditField label="Nome Completo" fieldKey="full_name" form={form} icon={User} onChange={onChange} />
                     <EditField label="Nickname" fieldKey="nickname" form={form} icon={User} onChange={onChange} />
                     <EditField label="Telefono" fieldKey="phone" form={form} icon={Phone} onChange={onChange} type="tel" />
                     <EditField label="Codice Fiscale" fieldKey="fiscal_code" form={form} icon={CreditCard} onChange={onChange} />
                   </div>
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Indirizzo di Fatturazione</h3>
+                </section>
+                <section>
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <span className="w-5 h-px bg-gray-200 inline-block" />Indirizzo di Fatturazione<span className="flex-1 h-px bg-gray-200 inline-block" />
+                  </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <EditField label="Via" fieldKey="billing_street" form={form} icon={MapPin} onChange={onChange} />
                     <EditField label="Civico" fieldKey="billing_street_number" form={form} icon={MapPin} onChange={onChange} />
@@ -667,7 +679,7 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                     <EditField label="Citta" fieldKey="billing_city" form={form} icon={MapPin} onChange={onChange} />
                     <EditField label="Provincia" fieldKey="billing_province" form={form} icon={MapPin} onChange={onChange} />
                   </div>
-                </div>
+                </section>
               </>
             )}
           </div>
