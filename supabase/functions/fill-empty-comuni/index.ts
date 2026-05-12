@@ -7,7 +7,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-// OSM tag → DB category name
 const OSM_CATEGORY_MAP: Record<string, string> = {
   restaurant:"Ristoranti",fast_food:"Fast Food",cafe:"Bar e Caffè",bar:"Bar e Caffè",
   pub:"Pub e Locali",biergarten:"Pub e Locali",food_court:"Food Court",ice_cream:"Gelaterie",
@@ -103,12 +102,12 @@ Deno.serve(async (req: Request) => {
       .from("admins").select("user_id").eq("user_id", user.id).maybeSingle();
     if (!adminRow) throw new Error("Not an admin");
 
+    // body: { city, province, region, osm_tag, businesses: BusinessRecord[] }
     const body = await req.json();
-    // body: { province, region, osm_tag, businesses: BusinessRecord[] }
-    const { province, region, osm_tag, businesses } = body;
+    const { city, province, region, osm_tag, businesses } = body;
 
-    if (!province || !region || !osm_tag || !Array.isArray(businesses)) {
-      throw new Error("province, region, osm_tag, and businesses[] are required");
+    if (!city || !province || !region || !osm_tag || !Array.isArray(businesses)) {
+      throw new Error("city, province, region, osm_tag and businesses[] are required");
     }
 
     const catName = OSM_CATEGORY_MAP[osm_tag];
@@ -126,31 +125,21 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Fetch existing osm_ids for this province+category to deduplicate
+    // Deduplicate by osm_id for this city+category
     const { data: existingRows } = await supabase
       .from("unclaimed_business_locations")
       .select("osm_id")
-      .eq("province", province)
+      .eq("city", city)
       .eq("category_id", catId)
       .not("osm_id", "is", null);
     const existingIds = new Set(existingRows?.map(r => r.osm_id) ?? []);
-
-    // Fallback city from province (for items with no addr:city)
-    const { data: capitalRow } = await supabase
-      .from("unclaimed_business_locations")
-      .select("city")
-      .eq("province", province)
-      .not("city", "is", null)
-      .limit(1)
-      .maybeSingle();
-    const fallbackCity = capitalRow?.city ?? province;
 
     const toInsert = businesses
       .filter(b => !existingIds.has(b.osm_id))
       .map(b => ({
         name: b.name,
         category_id: catId,
-        city: b.city || fallbackCity,
+        city: b.city || city,
         province,
         region,
         street: b.street || null,
@@ -168,13 +157,11 @@ Deno.serve(async (req: Request) => {
       }));
 
     let imported = 0;
-    const BATCH = 300;
-    for (let i = 0; i < toInsert.length; i += BATCH) {
-      const chunk = toInsert.slice(i, i + BATCH);
+    for (let i = 0; i < toInsert.length; i += 300) {
       const { error } = await supabase
         .from("unclaimed_business_locations")
-        .insert(chunk);
-      if (!error) imported += chunk.length;
+        .insert(toInsert.slice(i, i + 300));
+      if (!error) imported += Math.min(300, toInsert.length - i);
     }
 
     return new Response(
