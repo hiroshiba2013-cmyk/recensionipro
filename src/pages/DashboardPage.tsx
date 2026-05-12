@@ -841,7 +841,7 @@ export function DashboardPage() {
     if (error) throw error;
     const bizIds = businesses.map((b: any) => b.id);
     const { data: locs } = await supabase.from(table).select('*').in('business_id', bizIds);
-    if (locs) setFullBusinessLocations(locs);
+    if (locs) setFullBusinessLocations(locs.map(l => ({ ...l, _table: table })));
   };
 
   // ── data loading ───────────────────────────────────────────────────────────
@@ -900,7 +900,7 @@ export function DashboardPage() {
             const ids = bizData.map((b: any) => b.id);
             if (isReg) {
               const { data: locs } = await supabase.from('registered_business_locations').select('*').in('business_id', ids);
-              if (locs) setFullBusinessLocations(locs);
+              if (locs) setFullBusinessLocations(locs.map(l => ({ ...l, _table: 'registered_business_locations' })));
               const locIds = locs ? locs.map((l: any) => l.id) : [];
               // locs already set above
               if (locIds.length > 0) {
@@ -1197,6 +1197,59 @@ export function DashboardPage() {
                               setMemberAvatars(prev => ({ ...prev, [activeFm.id]: url }));
                               updateFamilyMemberAvatar(activeFm.id, url);
                               showToast('Foto aggiornata!', 'success');
+                            } catch { showToast('Errore durante il caricamento', 'error'); }
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
+                    </div>
+                  );
+                })()}
+                {/* Avatar upload — sede business attiva */}
+                {profile && isBiz && activeProfile && !activeProfile.isOwner && (() => {
+                  const activeLoc = fullBusinessLocations.find(l => l.id === activeProfile.id);
+                  if (!activeLoc) return null;
+                  const currentAvatar = locationAvatars[activeLoc.id] || activeLoc.avatar_url;
+                  const locTable = (activeLoc._table || 'registered_business_locations') as 'registered_business_locations' | 'business_locations';
+                  return (
+                    <div className="relative flex-shrink-0">
+                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/30 bg-slate-700 flex items-center justify-center">
+                        {currentAvatar ? (
+                          <img src={currentAvatar} alt={displayName} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-2xl font-bold text-white/70">
+                            {displayName.charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <label
+                        htmlFor={`dashboard-loc-avatar-${activeLoc.id}`}
+                        className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 hover:bg-blue-400 rounded-full flex items-center justify-center cursor-pointer border-2 border-slate-800 transition-colors"
+                        title="Cambia foto sede"
+                      >
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <input
+                          id={`dashboard-loc-avatar-${activeLoc.id}`}
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 5 * 1024 * 1024) { showToast('Immagine troppo grande (max 5MB)', 'error'); return; }
+                            try {
+                              const ext = file.name.split('.').pop();
+                              const path = `locations/${activeLoc.id}/avatar.${ext}`;
+                              const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+                              if (upErr) throw upErr;
+                              const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+                              const url = `${publicUrl}?t=${Date.now()}`;
+                              await supabase.from(locTable).update({ avatar_url: url }).eq('id', activeLoc.id);
+                              setLocationAvatars(prev => ({ ...prev, [activeLoc.id]: url }));
+                              showToast('Foto sede aggiornata!', 'success');
                             } catch { showToast('Errore durante il caricamento', 'error'); }
                             e.target.value = '';
                           }}

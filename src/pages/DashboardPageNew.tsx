@@ -1,6 +1,6 @@
 // v2 - badge navigation
 import React, { useState, useEffect } from 'react';
-import { Plus, Star, Building, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase, Users, DollarSign, Trophy, Activity, Tag, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
+import { Plus, Star, Building, Building2, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase, Users, DollarSign, Trophy, Activity, Tag, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Business, Review, FamilyMember } from '../lib/supabase';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
@@ -564,29 +564,36 @@ export function DashboardPageNew() {
       <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
           {(() => {
-            // Sede attiva: sede selezionata esplicitamente, oppure prima sede se owner con una sola sede
+            // Sede attiva: sede selezionata esplicitamente, oppure prima sede se owner
             const activeSede = selectedBusinessLocationId
               ? businessLocations.find(l => l.id === selectedBusinessLocationId) ?? null
               : (profile.user_type === 'business' && businessLocations.length > 0 ? businessLocations[0] : null);
             const sedeAvatarUrl = activeSede?.avatar_url ?? null;
             const sedeLocationId = activeSede?.id ?? null;
-            const sedeTable = activeSede?._table ?? 'registered_business_locations';
-            const sedeName = activeSede?.internal_name || activeSede?.name || null;
+            const sedeTable = (activeSede as any)?._table ?? 'registered_business_locations';
+            const sedeName = (activeSede as any)?.internal_name || activeSede?.name || null;
             const sedeCity = activeSede?.city ?? null;
             const sedeProv = activeSede?.province ?? null;
             return (
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div className="flex items-center gap-5">
-              {/* Avatar sede — sempre visibile per utenti business con almeno una sede */}
-              {profile.user_type === 'business' && sedeLocationId && (
-                <div className="flex-shrink-0">
-                  <BusinessLocationAvatarUpload
-                    locationId={sedeLocationId}
-                    currentAvatarUrl={sedeAvatarUrl}
-                    table={sedeTable}
-                    onAvatarUpdate={async () => { await refreshBusinessLocations(); }}
-                  />
-                </div>
+              {/* Avatar sede — visibile sempre per utenti business con sedi */}
+              {profile.user_type === 'business' && (
+                sedeLocationId ? (
+                  <div className="flex-shrink-0">
+                    <BusinessLocationAvatarUpload
+                      locationId={sedeLocationId}
+                      currentAvatarUrl={sedeAvatarUrl}
+                      table={sedeTable}
+                      onAvatarUpdate={async () => { await refreshBusinessLocations(); }}
+                    />
+                  </div>
+                ) : (
+                  /* Placeholder: nessuna sede ancora caricata */
+                  <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 ring-2 ring-white/20">
+                    <Building2 className="w-10 h-10 text-white/40" />
+                  </div>
+                )
               )}
               <div>
                 <div className="inline-flex items-center gap-2 bg-white/10 text-white/80 text-xs font-semibold px-3 py-1.5 rounded-full mb-4 backdrop-blur">
