@@ -1,6 +1,6 @@
 // v2 - badge navigation
 import React, { useState, useEffect } from 'react';
-import { Plus, Star, Building, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase, Users, DollarSign, Trophy, Activity, Tag, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Star, Building, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase, Users, DollarSign, Trophy, Activity, Tag, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Business, Review, FamilyMember } from '../lib/supabase';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
@@ -17,6 +17,7 @@ import { UserAuctionsSection } from '../components/auctions/UserAuctionsSection'
 import { ProfileClassifiedAdCard } from '../components/classifieds/ProfileClassifiedAdCard';
 import { ClassifiedAdForm } from '../components/classifieds/ClassifiedAdForm';
 import { useNavigate } from '../components/Router';
+import { BusinessLocationAvatarUpload } from '../components/business/BusinessLocationAvatarUpload';
 
 interface SubscriptionPlan {
   id: string;
@@ -86,7 +87,7 @@ interface SolidarityStats {
 }
 
 export function DashboardPageNew() {
-  const { profile, selectedBusinessLocationId, activeProfile } = useAuth();
+  const { profile, selectedBusinessLocationId, activeProfile, refreshBusinessLocations } = useAuth();
   const navigate = useNavigate();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -563,17 +564,39 @@ export function DashboardPageNew() {
       <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div>
-              <div className="inline-flex items-center gap-2 bg-white/10 text-white/80 text-xs font-semibold px-3 py-1.5 rounded-full mb-4 backdrop-blur">
-                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
-                {profile.user_type === 'business' ? 'Account Business' : 'Account Privato'}
+            <div className="flex items-center gap-5">
+              {/* Avatar sede — visibile solo quando è selezionata una sede business */}
+              {profile.user_type === 'business' && selectedBusinessLocationId && (
+                <div className="flex-shrink-0">
+                  <BusinessLocationAvatarUpload
+                    locationId={selectedBusinessLocationId}
+                    currentAvatarUrl={activeProfile?.avatarUrl ?? null}
+                    table="registered_business_locations"
+                    onAvatarUpdate={async () => { await refreshBusinessLocations(); }}
+                  />
+                </div>
+              )}
+              <div>
+                <div className="inline-flex items-center gap-2 bg-white/10 text-white/80 text-xs font-semibold px-3 py-1.5 rounded-full mb-4 backdrop-blur">
+                  <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
+                  {profile.user_type === 'business' ? 'Account Business' : 'Account Privato'}
+                </div>
+                <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-1">
+                  {selectedBusinessLocationId
+                    ? activeProfile?.name || 'Sede'
+                    : `Ciao, ${activeProfile ? (activeProfile.nickname || activeProfile.name.split(' ')[0]) : (profile.full_name?.split(' ')[0] || 'Utente')}`
+                  }
+                </h1>
+                {selectedBusinessLocationId && activeProfile?.nickname && (
+                  <p className="text-slate-300 text-sm flex items-center gap-1.5 mb-1">
+                    <MapPin className="w-3.5 h-3.5" />
+                    {activeProfile.nickname}
+                  </p>
+                )}
+                <p className="text-slate-400 text-base">
+                  {profile.user_type === 'business' ? 'Gestisci la tua attivita e le sedi' : 'Gestisci il tuo profilo e le attivita'}
+                </p>
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-1">
-                Ciao, {activeProfile ? (activeProfile.nickname || activeProfile.name.split(' ')[0]) : (profile.full_name?.split(' ')[0] || 'Utente')}
-              </h1>
-              <p className="text-slate-400 text-base">
-                {profile.user_type === 'business' ? 'Gestisci la tua attivita e le sedi' : 'Gestisci il tuo profilo e le attivita'}
-              </p>
             </div>
             {currentSubscription && (
               <div className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl px-5 py-4 flex items-center gap-4">
