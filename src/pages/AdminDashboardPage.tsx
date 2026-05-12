@@ -14,6 +14,7 @@ import UsersManagementSection from '../components/admin/UsersManagementSection';
 import { SolidaritySection } from '../components/admin/SolidaritySection';
 import { LeaderboardSection } from '../components/admin/LeaderboardSection';
 import { BusinessTrackingSection } from '../components/admin/BusinessTrackingSection';
+import { OsmImportSection } from '../components/admin/OsmImportSection';
 import { MessagingSection } from '../components/admin/MessagingSection';
 import { ContactSection } from '../components/admin/ContactSection';
 import { PlatformMessagesSection } from '../components/admin/PlatformMessagesSection';
@@ -1292,6 +1293,17 @@ export function AdminDashboardPage() {
                 Tracking
               </button>
               <button
+                onClick={() => handleTabChange('osm_import')}
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'osm_import'
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <MapPin className="w-4 h-4" />
+                Import OSM
+              </button>
+              <button
                 onClick={() => handleTabChange('messaging')}
                 className={`relative px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'messaging'
@@ -1843,6 +1855,8 @@ export function AdminDashboardPage() {
             {activeTab === 'leaderboard' && <LeaderboardSection />}
 
             {activeTab === 'tracking' && <BusinessTrackingSection onReload={loadData} />}
+
+            {activeTab === 'osm_import' && <OsmImportSection />}
 
             {activeTab === 'messaging' && <MessagingSection adminId={profile!.id} />}
 
