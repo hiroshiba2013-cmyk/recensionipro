@@ -135,6 +135,12 @@ interface ProfileDataSectionProps {
   onChange: (key: string, value: string) => void;
   onFamilyMemberSave?: (id: string, data: Record<string, string>) => Promise<void>;
   onLocationSave?: (id: string, data: Record<string, string>) => Promise<void>;
+  memberAvatars: Record<string, string>;
+  locationAvatars: Record<string, string>;
+  onMemberAvatarChange: (id: string, url: string) => void;
+  onLocationAvatarChange: (id: string, url: string) => void;
+  uploadAvatar: (bucket: string, path: string, file: File) => Promise<string>;
+  showToast: (msg: string, type: 'success' | 'error') => void;
 }
 
 function Field({ label, value, icon: Icon, hideIfEmpty = false }: { label: string; value?: string | null; icon: React.ElementType; hideIfEmpty?: boolean }) {
@@ -190,7 +196,7 @@ function EditTextarea({ label, fieldKey, form, icon: Icon, onChange }: {
   );
 }
 
-function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers = [], businessLocations = [], editing, form, saving, saveMsg, onEdit, onCancel, onSave, onChange, onFamilyMemberSave, onLocationSave }: ProfileDataSectionProps) {
+function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers = [], businessLocations = [], editing, form, saving, saveMsg, onEdit, onCancel, onSave, onChange, onFamilyMemberSave, onLocationSave, memberAvatars, locationAvatars, onMemberAvatarChange, onLocationAvatarChange, uploadAvatar, showToast }: ProfileDataSectionProps) {
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
   const [expandedLocation, setExpandedLocation] = useState<string | null>(null);
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
@@ -437,7 +443,7 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                                     const ext = file.name.split('.').pop();
                                     const url = await uploadAvatar('avatars', `family/${fm.id}/avatar.${ext}`, file);
                                     await supabase.from('customer_family_members').update({ avatar_url: url }).eq('id', fm.id);
-                                    setMemberAvatars(prev => ({ ...prev, [fm.id]: url }));
+                                    onMemberAvatarChange(fm.id, url);
                                     showToast('Foto aggiornata!', 'success');
                                   } catch { showToast('Errore durante il caricamento', 'error'); }
                                   e.target.value = '';
@@ -531,7 +537,7 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                                     const ext = file.name.split('.').pop();
                                     const url = await uploadAvatar('avatars', `locations/${loc.id}/avatar.${ext}`, file);
                                     await supabase.from(locTable).update({ avatar_url: url }).eq('id', loc.id);
-                                    setLocationAvatars(prev => ({ ...prev, [loc.id]: url }));
+                                    onLocationAvatarChange(loc.id, url);
                                     showToast('Foto sede aggiornata!', 'success');
                                   } catch { showToast('Errore durante il caricamento', 'error'); }
                                   e.target.value = '';
@@ -1356,6 +1362,12 @@ export function DashboardPage() {
                       onSave={saveProfile}
                       onChange={(k, v) => setProfileForm(prev => ({ ...prev, [k]: v }))}
                       onLocationSave={saveBusinessLocation}
+                      memberAvatars={memberAvatars}
+                      locationAvatars={locationAvatars}
+                      onMemberAvatarChange={(id, url) => setMemberAvatars(prev => ({ ...prev, [id]: url }))}
+                      onLocationAvatarChange={(id, url) => setLocationAvatars(prev => ({ ...prev, [id]: url }))}
+                      uploadAvatar={uploadAvatar}
+                      showToast={showToast}
                     />
                     <DeleteAccountButton onAccountDeleted={() => signOut()} />
                   </>
@@ -1592,6 +1604,12 @@ export function DashboardPage() {
                       onSave={saveProfile}
                       onChange={(k, v) => setProfileForm(prev => ({ ...prev, [k]: v }))}
                       onFamilyMemberSave={saveFamilyMember}
+                      memberAvatars={memberAvatars}
+                      locationAvatars={locationAvatars}
+                      onMemberAvatarChange={(id, url) => setMemberAvatars(prev => ({ ...prev, [id]: url }))}
+                      onLocationAvatarChange={(id, url) => setLocationAvatars(prev => ({ ...prev, [id]: url }))}
+                      uploadAvatar={uploadAvatar}
+                      showToast={showToast}
                     />
                     <DeleteAccountButton onAccountDeleted={() => signOut()} />
                   </>
