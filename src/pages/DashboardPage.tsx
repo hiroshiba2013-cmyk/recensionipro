@@ -1056,9 +1056,7 @@ export function DashboardPage() {
     { key: 'biz_reviews',   label: 'Recensioni Ricevute',   icon: Star,     color: 'amber',   badge: reviews.length > 0 ? String(reviews.length) : null },
     { key: 'biz_auctions',  label: 'Le Mie Aste',           icon: Gavel,    color: 'orange',  badge: null },
     { key: 'biz_favorites', label: 'Preferiti',             icon: Heart,    color: 'red',     badge: null },
-    ...(!selectedBusinessLocationId ? [{ key: 'biz_activities', label: 'Le Mie Attivita', icon: Building, color: 'sky', badge: businesses.length > 0 ? String(businesses.length) : null }] : []),
     { key: 'biz_seekers',   label: 'Profili Cerco Lavoro',  icon: Users,    color: 'teal',    badge: jobSeekers.length > 0 ? String(jobSeekers.length) : null },
-    ...(solidarityStats ? [{ key: 'biz_solidarity', label: 'Solidarieta', icon: Gift, color: 'emerald', badge: null }] : []),
     ...(!selectedBusinessLocationId && currentSubscription && availablePlans.length > 0 ? [{ key: 'biz_plans', label: 'Cambia Piano', icon: Shield, color: 'slate', badge: currentSubscription.plan.name }] : []),
   ];
 
@@ -1456,46 +1454,6 @@ export function DashboardPage() {
                 )}
 
                 {/* Le Mie Attivita */}
-                {open.biz_activities && !selectedBusinessLocationId && (
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-sky-100 rounded-lg flex items-center justify-center"><Building className="w-4 h-4 text-sky-600" /></div>
-                        <span className="font-semibold text-gray-900">Le Mie Attivita</span>
-                        {businesses.length > 0 && <span className="bg-sky-100 text-sky-700 text-xs font-bold px-2 py-0.5 rounded-full">{businesses.length}</span>}
-                      </div>
-                      <button onClick={() => setShowCreateBusinessForm(true)} className="bg-sky-600 hover:bg-sky-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"><Plus className="w-3 h-3" />Aggiungi</button>
-                    </div>
-                    <div className="px-5 pb-5 pt-4">
-                      {showCreateBusinessForm ? (
-                        <CreateBusinessForm ownerId={profile.id} onSuccess={() => { setShowCreateBusinessForm(false); loadData(); }} onCancel={() => setShowCreateBusinessForm(false)} />
-                      ) : (
-                        <>
-                          {businesses.length === 0 ? (
-                            <p className="text-sm text-gray-500 text-center py-4">Non hai ancora registrato nessuna attivita</p>
-                          ) : (
-                            <div className="grid gap-2 mb-4">
-                              {businesses.map((b) => (
-                                <div key={b.id} onClick={() => setSelectedBusinessId(b.id)} className={`border rounded-xl p-3 cursor-pointer transition-all flex items-center justify-between ${selectedBusinessId === b.id ? 'border-sky-500 bg-sky-50' : 'border-gray-200 hover:border-sky-300'}`}>
-                                  <div><h3 className="font-semibold text-gray-900 text-sm">{b.name}</h3><p className="text-gray-500 text-xs">{b.city}</p></div>
-                                  {b.verified ? <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">Verificato</span> : <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full font-medium">In Attesa</span>}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          {selectedBusinessId && (
-                            <>
-                              <EditBusinessForm businessId={selectedBusinessId} selectedLocationId={selectedBusinessLocationId} onUpdate={loadData} />
-                              <EditBusinessLocationsForm businessId={selectedBusinessId} selectedLocationId={selectedBusinessLocationId} onUpdate={loadData} />
-                            </>
-                          )}
-                          <ImportBusinessesForm onImportComplete={loadData} />
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
-
                 {/* Profili Cerco Lavoro */}
                 {open.biz_seekers && (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -1522,24 +1480,6 @@ export function DashboardPage() {
                         </div>
                       )}
                       <div className="mt-3 text-center"><button onClick={() => navigate('/jobs')} className="text-teal-600 text-sm font-semibold hover:underline">Vedi tutti i profili</button></div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Solidarieta */}
-                {open.biz_solidarity && solidarityStats && (
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
-                      <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center"><Gift className="w-4 h-4 text-emerald-600" /></div>
-                      <span className="font-semibold text-gray-900">Solidarieta</span>
-                      <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-0.5 rounded-full">€{solidarityStats.charity_amount.toLocaleString('it-IT', { maximumFractionDigits: 0 })}</span>
-                    </div>
-                    <div className="px-5 pb-5 pt-4">
-                      <div className="grid md:grid-cols-2 gap-3">
-                        <div className="bg-green-50 rounded-xl p-4 border border-green-100"><div className="flex items-center gap-2 mb-1"><DollarSign className="w-4 h-4 text-green-600" /><span className="text-xs font-semibold text-gray-600">Fatturato Totale</span></div><p className="text-xl font-bold text-green-600">€{solidarityStats.total_revenue.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</p></div>
-                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-100"><div className="flex items-center gap-2 mb-1"><Heart className="w-4 h-4 text-blue-600" /><span className="text-xs font-semibold text-gray-600">Donato in Beneficenza</span></div><p className="text-xl font-bold text-blue-600">€{solidarityStats.charity_amount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</p></div>
-                      </div>
-                      <div className="mt-3 text-center"><button onClick={() => navigate('/solidarity')} className="text-emerald-600 text-sm font-semibold hover:underline">Scopri di piu</button></div>
                     </div>
                   </div>
                 )}
