@@ -11,8 +11,9 @@ import { supabase, Business, Review, FamilyMember } from '../lib/supabase';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
 import { EditBusinessLocationsForm } from '../components/business/EditBusinessLocationsForm';
 import { EditBusinessForm } from '../components/business/EditBusinessForm';
-import { CreateBusinessForm } from '../components/business/CreateBusinessForm';
+import { UserAddBusinessModal } from '../components/business/UserAddBusinessModal';
 import { ReviewResponseForm } from '../components/reviews/ReviewResponseForm';
+import { ReviewCard } from '../components/reviews/ReviewCard';
 import { ImportBusinessesForm } from '../components/business/ImportBusinessesForm';
 import { FavoritesSection } from '../components/favorites/FavoritesSection';
 import TrialStatusBanner from '../components/subscription/TrialStatusBanner';
@@ -196,7 +197,36 @@ function EditTextarea({ label, fieldKey, form, icon: Icon, onChange }: {
   );
 }
 
+function EditSelect({ label, fieldKey, form, icon: Icon, onChange, options }: {
+  label: string; fieldKey: string; form: Record<string, string>;
+  icon: React.ElementType; onChange: (k: string, v: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <div>
+      <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1">
+        <Icon className="w-3.5 h-3.5" />{label}
+      </label>
+      <select
+        value={form[fieldKey] || ''}
+        onChange={e => onChange(fieldKey, e.target.value)}
+        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+      >
+        <option value="">-- Nessuna categoria --</option>
+        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+    </div>
+  );
+}
+
 function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers = [], businessLocations = [], editing, form, saving, saveMsg, onEdit, onCancel, onSave, onChange, onFamilyMemberSave, onLocationSave, memberAvatars, locationAvatars, onMemberAvatarChange, onLocationAvatarChange, uploadAvatar, showToast }: ProfileDataSectionProps) {
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    supabase.from('business_categories').select('id, name').order('name').then(({ data }) => {
+      if (data) setCategories(data);
+    });
+  }, []);
+
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
   const [expandedLocation, setExpandedLocation] = useState<string | null>(null);
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
@@ -207,12 +237,62 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
   const [locationForms, setLocationForms] = useState<Record<string, Record<string, string>>>({});
   const [locationSaving, setLocationSaving] = useState<string | null>(null);
   const [locationMsg, setLocationMsg] = useState<Record<string, string>>({});
+  const [editingPassword, setEditingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState('');
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [emailSaving, setEmailSaving] = useState(false);
+  const [emailMsg, setEmailMsg] = useState('');
   const msgTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   useEffect(() => {
     const timers = msgTimers.current;
     return () => { Object.values(timers).forEach(clearTimeout); };
   }, []);
+
+  const savePassword = async () => {
+    if (newPassword.length < 6) {
+      setPasswordMsg('La password deve essere di almeno 6 caratteri');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordMsg('Le password non coincidono');
+      return;
+    }
+    setPasswordSaving(true);
+    setPasswordMsg('');
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setPasswordSaving(false);
+    if (error) {
+      setPasswordMsg('Errore: ' + error.message);
+    } else {
+      setPasswordMsg('ok');
+      setNewPassword('');
+      setConfirmPassword('');
+      setEditingPassword(false);
+    }
+  };
+
+  const saveEmail = async () => {
+    if (!newEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail.trim())) {
+      setEmailMsg('Inserisci un indirizzo email valido');
+      return;
+    }
+    setEmailSaving(true);
+    setEmailMsg('');
+    const { error } = await supabase.auth.updateUser({ email: newEmail.trim() });
+    setEmailSaving(false);
+    if (error) {
+      setEmailMsg('Errore: ' + error.message);
+    } else {
+      setEmailMsg('ok');
+      setNewEmail('');
+      setEditingEmail(false);
+    }
+  };
 
   const startEditMember = (fm: any) => {
     setMemberForms(prev => ({ ...prev, [fm.id]: {
@@ -222,6 +302,7 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
       relationship: fm.relationship || '',
       date_of_birth: fm.date_of_birth || '',
       fiscal_code: fm.fiscal_code || '',
+      category_id: fm.category_id || '',
     }}));
     setEditingMemberId(fm.id);
     setMemberMsg(prev => ({ ...prev, [fm.id]: '' }));
@@ -231,7 +312,9 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
     if (!onFamilyMemberSave) return;
     setMemberSaving(id);
     try {
-      await onFamilyMemberSave(id, memberForms[id] || {});
+      const raw = memberForms[id] || {};
+      const clean = { ...raw, category_id: raw.category_id || null };
+      await onFamilyMemberSave(id, clean);
       setMemberMsg(prev => ({ ...prev, [id]: 'ok' }));
       setEditingMemberId(null);
       clearTimeout(msgTimers.current[`member_${id}`]);
@@ -259,8 +342,9 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
         province: loc.province || '',
         phone: loc.phone || '',
         email: loc.email || '',
-        vat_number: loc.vat_number || '',
-        services: loc.services || '',
+        vat_number: (loc as any).vat_number || '',
+        category_id: (loc as any).category_id || '',
+        services: Array.isArray(loc.services) ? loc.services.join(', ') : (loc.services || ''),
         services_description: loc.services_description || '',
       },
     }));
@@ -276,9 +360,18 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
       const isReg = ((loc as any)?._table || 'registered_business_locations') === 'registered_business_locations';
       const rawForm = locationForms[id] || {};
       // Mappa 'street' -> 'address' per business_locations
+      const servicesStr = (rawForm.services || '').trim();
+      const servicesArray = servicesStr.length > 0
+        ? servicesStr.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0)
+        : null;
+      const cleanForm = {
+        ...rawForm,
+        services: servicesArray,
+        category_id: rawForm.category_id || null,
+      };
       const saveData = isReg
-        ? rawForm
-        : { ...rawForm, address: rawForm.street, street: undefined };
+        ? cleanForm
+        : { ...cleanForm, address: rawForm.street, street: undefined };
       await onLocationSave(id, saveData);
       setLocationMsg(prev => ({ ...prev, [id]: 'ok' }));
       setEditingLocationId(null);
@@ -355,6 +448,7 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                     <Field label="Email PEC" value={bizData.pec_email} icon={Mail} hideIfEmpty />
                     <Field label="Telefono" value={bizData.phone} icon={Phone} hideIfEmpty />
                     <Field label="Sito Web" value={bizData.website_url || bizData.website} icon={Globe} hideIfEmpty />
+                    <Field label="Categoria" value={categories.find(c => c.id === bizData.category_id)?.name || null} icon={Tag} />
                     {bizData.description && <div className="sm:col-span-2"><Field label="Descrizione" value={bizData.description} icon={FileText} /></div>}
                   </>
                 ) : (
@@ -363,6 +457,7 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                     <Field label="Nickname" value={p.nickname} icon={User} hideIfEmpty />
                     <Field label="Telefono" value={p.phone} icon={Phone} hideIfEmpty />
                     <Field label="Codice Fiscale" value={p.fiscal_code} icon={CreditCard} hideIfEmpty />
+                    {p.category_id && <Field label="Categoria" value={categories.find(c => c.id === p.category_id)?.name} icon={Tag} hideIfEmpty />}
                   </>
                 )}
               </div>
@@ -399,14 +494,134 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
               </section>
             )}
 
-            {/* Email account */}
+            {/* Email + Password account */}
             <section>
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                 <span className="w-5 h-px bg-gray-200 inline-block" />
                 Account
                 <span className="flex-1 h-px bg-gray-200 inline-block" />
               </h3>
-              <Field label="Email di accesso" value={p.email} icon={Mail} />
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Mail className="w-3.5 h-3.5 text-gray-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-400 mb-0.5">Email di accesso</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium text-gray-900 truncate">{p.email}</p>
+                      <button
+                        onClick={() => { setEditingEmail(true); setNewEmail(p.email || ''); setEmailMsg(''); }}
+                        className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg transition-colors flex-shrink-0"
+                      >
+                        <Pencil className="w-3 h-3" />Modifica
+                      </button>
+                    </div>
+                    {editingEmail && (
+                      <div className="mt-3 space-y-2 border border-gray-100 rounded-xl p-3 bg-gray-50">
+                        <div>
+                          <label className="text-xs text-gray-500 mb-1 block">Nuova email</label>
+                          <input
+                            type="email"
+                            value={newEmail}
+                            onChange={e => setNewEmail(e.target.value)}
+                            placeholder="nuova@email.com"
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <p className="text-xs text-gray-400">Riceverai una email di conferma al nuovo indirizzo.</p>
+                        {emailMsg && emailMsg !== 'ok' && (
+                          <p className="text-xs text-red-600">{emailMsg}</p>
+                        )}
+                        <div className="flex gap-2 pt-1">
+                          <button
+                            onClick={saveEmail}
+                            disabled={emailSaving}
+                            className="flex items-center gap-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 px-3 py-1.5 rounded-lg transition-colors"
+                          >
+                            <Save className="w-3 h-3" />{emailSaving ? 'Salvo...' : 'Salva'}
+                          </button>
+                          <button
+                            onClick={() => { setEditingEmail(false); setNewEmail(''); setEmailMsg(''); }}
+                            className="text-xs font-semibold text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors"
+                          >
+                            Annulla
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {emailMsg === 'ok' && (
+                      <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                        <Check className="w-3 h-3" />Controlla la tua email per confermare il cambio
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Lock className="w-3.5 h-3.5 text-gray-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-400 mb-0.5">Password</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium text-gray-900 tracking-widest">••••••••</p>
+                      <button
+                        onClick={() => { setEditingPassword(true); setPasswordMsg(''); }}
+                        className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg transition-colors"
+                      >
+                        <Pencil className="w-3 h-3" />Modifica
+                      </button>
+                    </div>
+                    {editingPassword && (
+                      <div className="mt-3 space-y-2 border border-gray-100 rounded-xl p-3 bg-gray-50">
+                        <div>
+                          <label className="text-xs text-gray-500 mb-1 block">Nuova password</label>
+                          <input
+                            type="password"
+                            value={newPassword}
+                            onChange={e => setNewPassword(e.target.value)}
+                            placeholder="Minimo 6 caratteri"
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500 mb-1 block">Conferma password</label>
+                          <input
+                            type="password"
+                            value={confirmPassword}
+                            onChange={e => setConfirmPassword(e.target.value)}
+                            placeholder="Ripeti la password"
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        {passwordMsg && passwordMsg !== 'ok' && (
+                          <p className="text-xs text-red-600">{passwordMsg}</p>
+                        )}
+                        <div className="flex gap-2 pt-1">
+                          <button
+                            onClick={savePassword}
+                            disabled={passwordSaving}
+                            className="flex items-center gap-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 px-3 py-1.5 rounded-lg transition-colors"
+                          >
+                            <Save className="w-3 h-3" />{passwordSaving ? 'Salvo...' : 'Salva'}
+                          </button>
+                          <button
+                            onClick={() => { setEditingPassword(false); setNewPassword(''); setConfirmPassword(''); setPasswordMsg(''); }}
+                            className="text-xs font-semibold text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors"
+                          >
+                            Annulla
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {passwordMsg === 'ok' && (
+                      <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                        <Check className="w-3 h-3" />Password aggiornata
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
             </section>
 
             {/* Familiari (solo customer) */}
@@ -480,6 +695,7 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                                 <EditField label="Ruolo" fieldKey="relationship" form={mf} icon={UsersIcon} onChange={(k, v) => setMemberForms(prev => ({ ...prev, [fm.id]: { ...prev[fm.id], [k]: v } }))} />
                                 <EditField label="Data di Nascita" fieldKey="date_of_birth" form={mf} icon={FileText} onChange={(k, v) => setMemberForms(prev => ({ ...prev, [fm.id]: { ...prev[fm.id], [k]: v } }))} type="date" />
                                 <EditField label="Codice Fiscale" fieldKey="fiscal_code" form={mf} icon={CreditCard} onChange={(k, v) => setMemberForms(prev => ({ ...prev, [fm.id]: { ...prev[fm.id], [k]: v } }))} />
+                                <EditSelect label="Categoria" fieldKey="category_id" form={mf} icon={Tag} onChange={(k, v) => setMemberForms(prev => ({ ...prev, [fm.id]: { ...prev[fm.id], [k]: v } }))} options={categories.map(c => ({ value: c.id, label: c.name }))} />
                               </div>
                             ) : (
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -488,6 +704,7 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                                 {fm.date_of_birth && <Field label="Data di Nascita" value={new Date(fm.date_of_birth).toLocaleDateString('it-IT')} icon={FileText} />}
                                 {fm.fiscal_code && <Field label="Codice Fiscale" value={fm.fiscal_code} icon={CreditCard} />}
                                 {fm.relationship && <Field label="Ruolo" value={fm.relationship} icon={UsersIcon} />}
+                                {(fm as any).category_id && <Field label="Categoria" value={categories.find(c => c.id === (fm as any).category_id)?.name} icon={Tag} />}
                               </div>
                             )}
                           </div>
@@ -577,6 +794,7 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                                 <EditField label="Telefono" fieldKey="phone" form={lf} icon={Phone} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} type="tel" />
                                 <EditField label="Email" fieldKey="email" form={lf} icon={Mail} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} type="email" />
                                 <EditField label="P.IVA Sede" fieldKey="vat_number" form={lf} icon={CreditCard} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
+                                <EditSelect label="Categoria" fieldKey="category_id" form={lf} icon={Tag} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} options={categories.map(c => ({ value: c.id, label: c.name }))} />
                                 <EditTextarea label="Descrizione" fieldKey="description" form={lf} icon={FileText} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
                                 <EditTextarea label="Servizi offerti" fieldKey="services_description" form={lf} icon={FileText} onChange={(k, v) => setLocationForms(prev => ({ ...prev, [loc.id]: { ...prev[loc.id], [k]: v } }))} />
                               </div>
@@ -586,6 +804,7 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                                 {loc.phone && <Field label="Telefono" value={loc.phone} icon={Phone} />}
                                 {loc.email && <Field label="Email" value={loc.email} icon={Mail} />}
                                 {loc.vat_number && <Field label="P.IVA Sede" value={loc.vat_number} icon={CreditCard} />}
+                                {(loc as any).category_id && <Field label="Categoria" value={categories.find(c => c.id === (loc as any).category_id)?.name} icon={Tag} />}
                                 {loc.description && <div className="sm:col-span-2"><Field label="Descrizione" value={loc.description} icon={FileText} /></div>}
                                 {(loc.services_description || loc.services) && <div className="sm:col-span-2"><Field label="Servizi" value={loc.services_description || loc.services} icon={FileText} /></div>}
                                 {loc.business_hours && (() => {
@@ -633,6 +852,7 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                     <EditField label="Email PEC" fieldKey="pec_email" form={form} icon={Mail} onChange={onChange} type="email" />
                     <EditField label="Telefono" fieldKey="phone" form={form} icon={Phone} onChange={onChange} type="tel" />
                     <EditField label="Sito Web" fieldKey="website_url" form={form} icon={Globe} onChange={onChange} />
+                    <EditSelect label="Categoria" fieldKey="category_id" form={form} icon={Tag} onChange={onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} />
                     <EditTextarea label="Descrizione" fieldKey="description" form={form} icon={FileText} onChange={onChange} />
                   </div>
                 </section>
@@ -672,6 +892,7 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
                     <EditField label="Nickname" fieldKey="nickname" form={form} icon={User} onChange={onChange} />
                     <EditField label="Telefono" fieldKey="phone" form={form} icon={Phone} onChange={onChange} type="tel" />
                     <EditField label="Codice Fiscale" fieldKey="fiscal_code" form={form} icon={CreditCard} onChange={onChange} />
+                    <EditSelect label="Categoria" fieldKey="category_id" form={form} icon={Tag} onChange={onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} />
                   </div>
                 </section>
                 <section>
@@ -696,7 +917,7 @@ function ProfileDataSection({ profile, isBiz, registeredBusiness, familyMembers 
 }
 
 export function DashboardPage() {
-  const { profile, selectedBusinessLocationId, activeProfile, signOut, updateFamilyMemberAvatar } = useAuth();
+  const { user, profile, selectedBusinessLocationId, activeProfile, signOut, updateFamilyMemberAvatar } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -722,6 +943,8 @@ export function DashboardPage() {
   const [fullBusinessLocations, setFullBusinessLocations] = useState<any[]>([]);
   const [addedBusinesses, setAddedBusinesses] = useState<any[]>([]);
   const [myJobSeekers, setMyJobSeekers] = useState<any[]>([]);
+  const [myAuctionsCount, setMyAuctionsCount] = useState(0);
+  const [favBusinessesCount, setFavBusinessesCount] = useState(0);
   const [professionalProfile, setProfessionalProfile] = useState<any | null>(null);
   const [professionalProfileLoaded, setProfessionalProfileLoaded] = useState(false);
   const [showProfessionalProfileForm, setShowProfessionalProfileForm] = useState(false);
@@ -760,6 +983,20 @@ export function DashboardPage() {
     setShowProfessionalProfileForm(false);
   }, [activeProfile, selectedBusinessLocationId]);
 
+  // Apri sezione dalla query string (?open=reviews)
+  useEffect(() => {
+    if (loading || !profile) return;
+    const params = new URLSearchParams(window.location.search);
+    const openParam = params.get('open');
+    if (openParam === 'reviews') {
+      const key = profile.user_type === 'business' ? 'biz_reviews' : 'cust_reviews';
+      setOpen(prev => ({ ...prev, [key]: true }));
+      setTimeout(() => {
+        document.getElementById(key)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [loading, profile]);
+
   // ── profile edit state ─────────────────────────────────────────────────────
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState<Record<string, string>>({});
@@ -788,6 +1025,7 @@ export function DashboardPage() {
       pec_email: rb ? (rb.pec_email || '') : ((profile as any).pec_email || ''),
       website_url: rb ? (rb.website || '') : ((profile as any).website_url || ''),
       description: rb ? (rb.description || '') : ((profile as any).description || ''),
+      category_id: rb ? (rb.category_id || '') : ((profile as any).category_id || ''),
       office_street: rb ? (rb.office_street || '') : ((profile as any).office_street || ''),
       office_street_number: rb ? (rb.office_street_number || '') : ((profile as any).office_street_number || ''),
       office_postal_code: rb ? (rb.office_postal_code || '') : ((profile as any).office_postal_code || ''),
@@ -813,6 +1051,7 @@ export function DashboardPage() {
           pec_email: profileForm.pec_email,
           website: profileForm.website_url,
           description: profileForm.description,
+          category_id: profileForm.category_id || null,
           phone: profileForm.phone,
           billing_street: profileForm.billing_street,
           billing_street_number: profileForm.billing_street_number,
@@ -832,7 +1071,8 @@ export function DashboardPage() {
         // Aggiorna lo stato locale
         setBusinesses(prev => prev.map((b, i) => i === 0 ? { ...b, ...rbUpdate, name: profileForm.company_name } : b));
       } else {
-        const { error } = await supabase.from('profiles').update(profileForm).eq('id', profile.id);
+        const customerUpdate = { ...profileForm, category_id: profileForm.category_id || null };
+        const { error } = await supabase.from('profiles').update(customerUpdate).eq('id', profile.id);
         if (error) throw error;
       }
       setProfileSaveMsg('Dati salvati con successo!');
@@ -874,6 +1114,13 @@ export function DashboardPage() {
       q = familyMemberId ? q.eq('family_member_id', familyMemberId) : q.is('family_member_id', null);
       const { data } = await q;
       if (data) setCustomerClassifiedAds(data);
+
+      // Conteggio attività preferite
+      const { data: favData } = await supabase
+        .from('favorite_businesses')
+        .select('id')
+        .eq('user_id', profile.id);
+      setFavBusinessesCount(favData?.length ?? 0);
     }
   };
 
@@ -894,9 +1141,13 @@ export function DashboardPage() {
     setReviews([]); setProducts([]); setJobPostings([]); setJobSeekers([]);
     try {
       if (profile.user_type === 'business') {
-        // job seekers
+        // job seekers (other people looking for work — shown in biz_seekers section)
         const { data: js } = await supabase.from('job_seekers').select('*, profiles!inner(full_name, nickname, avatar_url)').eq('status', 'active').order('created_at', { ascending: false }).limit(10);
         if (js) setJobSeekers(js);
+
+        // own job seeker profiles (for biz_job_seeker section)
+        const { data: myJs } = await supabase.from('job_seekers').select('*, profiles(full_name, nickname)').eq('user_id', profile.id).is('family_member_id', null).order('created_at', { ascending: false });
+        if (myJs) setMyJobSeekers(myJs);
 
         // solidarity
         const { data: rev } = await supabase.rpc('get_total_revenue');
@@ -922,13 +1173,26 @@ export function DashboardPage() {
               const locIds = locs ? locs.map((l: any) => l.id) : [];
               // locs already set above
               if (locIds.length > 0) {
-                let q = supabase.from('reviews').select('*, customer:profiles!customer_id(full_name), responses:review_responses(*), business_location:registered_business_locations(internal_name, city)').in('business_location_id', locIds).eq('review_status', 'approved').order('created_at', { ascending: false });
-                if (selectedBusinessLocationId) q = q.eq('business_location_id', selectedBusinessLocationId);
-                const { data: rd } = await q;
-                if (rd) setReviews(rd);
+                const baseSelect = '*, customer:profiles!customer_id(full_name), responses:review_responses(*)';
+                // Reviews linked via registered_business_location_id (new path)
+                let q1 = supabase.from('reviews').select(baseSelect).in('registered_business_location_id', locIds).eq('review_status', 'approved').order('created_at', { ascending: false });
+                // Reviews linked via business_location_id (legacy path)
+                let q2 = supabase.from('reviews').select(baseSelect).in('business_location_id', locIds).eq('review_status', 'approved').order('created_at', { ascending: false });
+                if (selectedBusinessLocationId) {
+                  q1 = q1.eq('registered_business_location_id', selectedBusinessLocationId);
+                  q2 = q2.eq('business_location_id', selectedBusinessLocationId);
+                }
+                const [{ data: rd1 }, { data: rd2 }] = await Promise.all([q1, q2]);
+                const seen = new Set<string>();
+                const combined = [...(rd1 || []), ...(rd2 || [])].filter(r => {
+                  if (seen.has(r.id)) return false;
+                  seen.add(r.id);
+                  return true;
+                }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+                setReviews(combined);
               }
             } else {
-              let q = supabase.from('reviews').select('*, customer:profiles!customer_id(full_name), responses:review_responses(*), business_location:business_locations(internal_name, address)').in('business_id', ids).eq('review_status', 'approved').order('created_at', { ascending: false });
+              let q = supabase.from('reviews').select('*, customer:profiles!customer_id(full_name), responses:review_responses(*), business_location:business_locations(address, city)').in('business_id', ids).eq('review_status', 'approved').order('created_at', { ascending: false });
               if (selectedBusinessLocationId) q = q.eq('business_location_id', selectedBusinessLocationId);
               const { data: rd } = await q;
               if (rd) setReviews(rd);
@@ -946,7 +1210,14 @@ export function DashboardPage() {
       } else {
         const { data: fm } = await supabase.from('customer_family_members').select('*').eq('customer_id', profile.id).order('created_at', { ascending: true });
         if (fm) setFamilyMembers(fm);
-        const { data: rd } = await supabase.from('reviews').select('*, business:businesses(name), family_member:customer_family_members(*)').eq('customer_id', profile.id).order('created_at', { ascending: false });
+        const { data: rd } = await supabase.from('reviews').select(`
+          *,
+          business:businesses(name),
+          unclaimed_business:unclaimed_business_locations!unclaimed_business_location_id(name),
+          rbl:registered_business_locations!registered_business_location_id(name, rb:registered_businesses(name)),
+          registered_business:registered_businesses!registered_business_id(name),
+          family_member:customer_family_members(*)
+        `).eq('customer_id', profile.id).order('created_at', { ascending: false });
         if (rd) setReviews(rd);
         const fmId = activeProfile?.isOwner === false ? activeProfile.id : null;
         const aq = supabase.from('user_activity').select('total_points, reviews_count').eq('user_id', profile.id);
@@ -968,21 +1239,31 @@ export function DashboardPage() {
         setUserRank({ points: pts, rank: (ownerCount || 0) + (familyCount || 0) + 1, reviews_count: actData?.reviews_count || 0 });
 
         // Attività aggiunte: unclaimed businesses inseriti dall'utente (o membro famiglia attivo)
-        let abQuery = supabase.from('unclaimed_business_locations').select('id, name, city, province, category_id, created_at, business_categories(name)').eq('added_by', profile.id).order('created_at', { ascending: false });
+        const abSelect = 'id, name, city, province, created_at, approval_status, rejection_reason, phone, email, website, business_categories(name)';
+        let abQuery = supabase.from('unclaimed_business_locations').select(abSelect).eq('added_by', profile.id).order('created_at', { ascending: false });
         if (fmId) {
-          abQuery = supabase.from('unclaimed_business_locations').select('id, name, city, province, category_id, created_at, business_categories(name)').eq('added_by', profile.id).eq('added_by_family_member_id', fmId).order('created_at', { ascending: false });
+          abQuery = supabase.from('unclaimed_business_locations').select(abSelect).eq('added_by', profile.id).eq('added_by_family_member_id', fmId).order('created_at', { ascending: false });
         } else {
-          abQuery = supabase.from('unclaimed_business_locations').select('id, name, city, province, category_id, created_at, business_categories(name)').eq('added_by', profile.id).is('added_by_family_member_id', null).order('created_at', { ascending: false });
+          abQuery = supabase.from('unclaimed_business_locations').select(abSelect).eq('added_by', profile.id).is('added_by_family_member_id', null).order('created_at', { ascending: false });
         }
         const { data: ab } = await abQuery;
         if (ab) setAddedBusinesses(ab);
 
         // Profili cerco lavoro dell'utente (o membro famiglia attivo)
-        let jsQuery = supabase.from('job_seekers').select('*').eq('user_id', profile.id).order('created_at', { ascending: false });
+        let jsQuery = supabase.from('job_seekers').select('*, profiles(full_name, nickname)').eq('user_id', profile.id).order('created_at', { ascending: false });
         if (fmId) jsQuery = jsQuery.eq('family_member_id', fmId);
         else jsQuery = jsQuery.is('family_member_id', null);
         const { data: myJs } = await jsQuery;
         if (myJs) setMyJobSeekers(myJs);
+
+        // Conteggio aste dell'utente (incluse pending)
+        {
+          let aqQuery = supabase.from('auctions').select('id', { count: 'exact', head: true }).eq('user_id', profile.id);
+          if (fmId) aqQuery = aqQuery.eq('family_member_id', fmId);
+          else aqQuery = aqQuery.is('family_member_id', null);
+          const { count: aCount } = await aqQuery;
+          setMyAuctionsCount(aCount || 0);
+        }
 
         // Profilo professionale (owner o membro famiglia attivo)
         {
@@ -1048,16 +1329,18 @@ export function DashboardPage() {
   const isBiz = profile.user_type === 'business';
   const displayName = activeProfile ? (activeProfile.nickname || activeProfile.name.split(' ')[0]) : (profile.full_name?.split(' ')[0] || 'Utente');
 
+  // Single-location businesses don't need the location switch and always see all sections
+  const isSingleLocation = isBiz && fullBusinessLocations.length <= 1;
+
   // ── sections config ────────────────────────────────────────────────────────
   const bizBadges = [
-    ...(!selectedBusinessLocationId ? [{ key: 'biz_dati', label: 'I Tuoi Dati', icon: User, color: 'slate', badge: null }] : []),
+    ...(isSingleLocation || !selectedBusinessLocationId ? [{ key: 'biz_dati', label: 'I Tuoi Dati', icon: User, color: 'slate', badge: null }] : []),
     { key: 'biz_ads',       label: 'I Miei Annunci',        icon: Tag,      color: 'green',   badge: businessClassifiedAds.length > 0 ? String(businessClassifiedAds.length) : null },
     { key: 'biz_jobs',      label: 'Offerte di Lavoro',     icon: Briefcase,color: 'blue',    badge: jobPostings.length > 0 ? String(jobPostings.length) : null },
     { key: 'biz_reviews',   label: 'Recensioni Ricevute',   icon: Star,     color: 'amber',   badge: reviews.length > 0 ? String(reviews.length) : null },
     { key: 'biz_auctions',  label: 'Le Mie Aste',           icon: Gavel,    color: 'orange',  badge: null },
     { key: 'biz_favorites', label: 'Preferiti',             icon: Heart,    color: 'red',     badge: null },
-    { key: 'biz_seekers',   label: 'Profili Cerco Lavoro',  icon: Users,    color: 'teal',    badge: jobSeekers.length > 0 ? String(jobSeekers.length) : null },
-    ...(!selectedBusinessLocationId && currentSubscription && availablePlans.length > 0 ? [{ key: 'biz_plans', label: 'Cambia Piano', icon: Shield, color: 'slate', badge: currentSubscription.plan.name }] : []),
+    ...(currentSubscription && availablePlans.length > 0 && (isSingleLocation || !selectedBusinessLocationId) ? [{ key: 'biz_plans', label: 'Cambia Piano', icon: Shield, color: 'slate', badge: currentSubscription.plan.name }] : []),
   ];
 
   const isOwnerProfile = !activeProfile || activeProfile.isOwner === true;
@@ -1070,9 +1353,9 @@ export function DashboardPage() {
     { key: 'cust_jobs',        label: 'Annunci Cerco Lavoro',    icon: Briefcase,color: 'sky',    badge: myJobSeekers.length > 0 ? String(myJobSeekers.length) : null },
     { key: 'cust_reviews',     label: 'Le Tue Recensioni',       icon: Star,     color: 'amber',  badge: (() => { const fmId = activeProfile?.isOwner === false ? activeProfile.id : null; const mine = reviews.filter(r => fmId ? r.family_member_id === fmId : !r.family_member_id); return mine.length > 0 ? String(mine.length) : null; })() },
     { key: 'cust_ads',         label: 'I Tuoi Annunci',          icon: Tag,      color: 'green',  badge: customerClassifiedAds.length > 0 ? String(customerClassifiedAds.length) : null },
-    { key: 'cust_auctions',    label: 'Le Mie Aste',             icon: Gavel,    color: 'orange', badge: null },
+    { key: 'cust_auctions',    label: 'Le Mie Aste',             icon: Gavel,    color: 'orange', badge: myAuctionsCount > 0 ? String(myAuctionsCount) : null },
     { key: 'cust_fav_ads',     label: 'Annunci Preferiti',       icon: Heart,    color: 'red',    badge: null },
-    { key: 'cust_fav_biz',     label: 'Attivita Preferite',      icon: Building, color: 'rose',   badge: null },
+    { key: 'cust_fav_biz',     label: 'Attivita Preferite',      icon: Building, color: 'rose',   badge: favBusinessesCount > 0 ? String(favBusinessesCount) : null },
     ...(isOwnerProfile && currentSubscription && availablePlans.length > 0 ? [{ key: 'cust_plans', label: 'Cambia Piano', icon: Shield, color: 'slate', badge: currentSubscription.plan.name }] : []),
   ];
 
@@ -1323,8 +1606,8 @@ export function DashboardPage() {
             {/* ── BUSINESS ── */}
             {isBiz ? (
               <>
-                {/* Stats bar */}
-                {selectedBusinessLocationId && (
+                {/* Stats bar — visible for single-location or when a specific location is selected */}
+                {(isSingleLocation || selectedBusinessLocationId) && (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                     <div className="grid grid-cols-3 gap-3">
                       <div className="text-center"><p className="text-2xl font-bold text-yellow-600">{reviews.length}</p><p className="text-xs text-gray-500 mt-0.5 flex items-center justify-center gap-1"><Star className="w-3 h-3" />Recensioni</p></div>
@@ -1407,7 +1690,7 @@ export function DashboardPage() {
 
                 {/* Recensioni Ricevute */}
                 {open.biz_reviews && (
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <div id="biz_reviews" className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                     <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
                       <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center"><Star className="w-4 h-4 text-amber-600" /></div>
                       <span className="font-semibold text-gray-900">{selectedBusinessLocationId ? 'Recensioni Sede' : 'Recensioni Ricevute'}</span>
@@ -1417,19 +1700,14 @@ export function DashboardPage() {
                       {reviews.length === 0 ? (
                         <p className="text-gray-500 text-sm text-center py-6">Nessuna recensione</p>
                       ) : (
-                        <div className="space-y-3 pt-4">
+                        <div className="space-y-4 pt-4">
                           {reviews.map((review) => (
-                            <div key={review.id} className="border border-gray-100 rounded-xl p-4">
-                              <div className="flex items-start justify-between mb-1">
-                                <div className="flex">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />)}</div>
-                                <span className="text-xs text-gray-400">{new Date(review.created_at).toLocaleDateString('it-IT')}</span>
-                              </div>
-                              <h4 className="font-semibold text-sm mb-1">{review.title}</h4>
-                              <p className="text-gray-600 text-sm">{review.content}</p>
-                              {!review.responses || review.responses.length === 0 ? (
-                                <button onClick={() => setShowResponseForm(review.id)} className="mt-2 text-blue-600 text-xs hover:text-blue-700 flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5" />Rispondi</button>
-                              ) : (
-                                <div className="mt-2 pl-3 border-l-2 border-blue-200"><p className="text-xs font-medium text-gray-500 mb-0.5">La tua risposta:</p><p className="text-xs text-gray-700">{review.responses[0].content}</p></div>
+                            <div key={review.id}>
+                              <ReviewCard review={review as any} hideProof={true} />
+                              {(!review.responses || review.responses.length === 0) && (
+                                <div className="mt-1 flex justify-end">
+                                  <button onClick={() => setShowResponseForm(review.id)} className="text-blue-600 text-xs hover:text-blue-700 flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5" />Rispondi</button>
+                                </div>
                               )}
                             </div>
                           ))}
@@ -1455,35 +1733,6 @@ export function DashboardPage() {
 
                 {/* Le Mie Attivita */}
                 {/* Profili Cerco Lavoro */}
-                {open.biz_seekers && (
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
-                      <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center"><Users className="w-4 h-4 text-teal-600" /></div>
-                      <span className="font-semibold text-gray-900">Profili Cerco Lavoro</span>
-                      {jobSeekers.length > 0 && <span className="bg-teal-100 text-teal-700 text-xs font-bold px-2 py-0.5 rounded-full">{jobSeekers.length}</span>}
-                    </div>
-                    <div className="px-5 pb-5">
-                      {jobSeekers.length === 0 ? <p className="text-sm text-gray-500 text-center py-6">Nessun profilo disponibile</p> : (
-                        <div className="grid gap-2 pt-4">
-                          {jobSeekers.map((s) => (
-                            <div key={s.id} className="border border-gray-100 rounded-xl p-3 hover:border-teal-200 transition-all flex items-center gap-3">
-                              {s.profiles.avatar_url ? <img src={s.profiles.avatar_url} alt={s.profiles.full_name} className="w-9 h-9 rounded-full object-cover flex-shrink-0" /> : <div className="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 font-bold text-sm flex-shrink-0">{s.profiles.full_name.charAt(0)}</div>}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between gap-2">
-                                  <h3 className="font-semibold text-gray-900 text-sm truncate">{s.title}</h3>
-                                  <span className="px-2 py-0.5 bg-teal-100 text-teal-700 text-xs rounded-full font-medium flex-shrink-0">{s.category}</span>
-                                </div>
-                                <p className="text-xs text-gray-500">{s.profiles.nickname || s.profiles.full_name} · {s.city}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <div className="mt-3 text-center"><button onClick={() => navigate('/jobs')} className="text-teal-600 text-sm font-semibold hover:underline">Vedi tutti i profili</button></div>
-                    </div>
-                  </div>
-                )}
-
                 {/* Cambia Piano Business */}
                 {open.biz_plans && currentSubscription && availablePlans.length > 0 && (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -1587,34 +1836,64 @@ export function DashboardPage() {
                 {/* Attivita aggiunte */}
                 {open.cust_activities && (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"><Activity className="w-4 h-4 text-blue-600" /></div>
-                      <span className="font-semibold text-gray-900">Attivita Aggiunte</span>
-                      {addedBusinesses.length > 0 && <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">{addedBusinesses.length}</span>}
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"><Activity className="w-4 h-4 text-blue-600" /></div>
+                        <span className="font-semibold text-gray-900">Attivita Aggiunte</span>
+                        {addedBusinesses.length > 0 && <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">{addedBusinesses.length}</span>}
+                      </div>
+                      <button onClick={() => setShowCreateBusinessForm(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors">
+                        <Plus className="w-3 h-3" />Aggiungi
+                      </button>
                     </div>
                     <div className="px-5 pb-5 pt-4">
                       {addedBusinesses.length === 0 ? (
                         <div className="text-center py-8">
                           <Building className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-                          <p className="text-sm text-gray-500 mb-3">Non hai ancora aggiunto attivita</p>
-                          <button onClick={() => navigate('/search')} className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors text-sm font-semibold">Aggiungi un'attivita</button>
+                          <p className="text-sm text-gray-500 mb-1">Non hai ancora aggiunto attivita.</p>
+                          <p className="text-xs text-gray-400">Guadagna 10 o 25 punti per ogni attivita approvata.</p>
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          {addedBusinesses.map(biz => (
-                            <div key={biz.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
-                              <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                  <Building className="w-4 h-4 text-blue-600" />
+                          {addedBusinesses.map((biz: any) => {
+                            const status = biz.approval_status;
+                            const hasContact = !!(biz.phone || biz.email || biz.website);
+                            return (
+                              <div key={biz.id} className="p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                      <Building className="w-4 h-4 text-blue-600" />
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="text-sm font-semibold text-gray-900 truncate">{biz.name}</p>
+                                      <p className="text-xs text-gray-400">{biz.city}{biz.province ? ` (${biz.province})` : ''}{biz.business_categories?.name ? ` · ${biz.business_categories.name}` : ''}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex-shrink-0">
+                                    {status === 'pending' && (
+                                      <span className="inline-flex items-center gap-1 text-xs font-semibold bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full">
+                                        <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse" />In attesa
+                                      </span>
+                                    )}
+                                    {status === 'approved' && (
+                                      <span className="inline-flex items-center gap-1 text-xs font-semibold bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                                        <Check className="w-3 h-3" />{hasContact ? '25 pt' : '10 pt'}
+                                      </span>
+                                    )}
+                                    {status === 'rejected' && (
+                                      <span className="inline-flex items-center gap-1 text-xs font-semibold bg-red-100 text-red-700 px-2 py-1 rounded-full">
+                                        <X className="w-3 h-3" />Rifiutata
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="text-sm font-semibold text-gray-900">{biz.name}</p>
-                                  <p className="text-xs text-gray-400">{biz.city}{biz.province ? ` (${biz.province})` : ''}{(biz as any).business_categories?.name ? ` · ${(biz as any).business_categories.name}` : ''}</p>
-                                </div>
+                                {status === 'rejected' && biz.rejection_reason && (
+                                  <p className="text-xs text-red-600 mt-2 bg-red-50 px-2 py-1 rounded-lg">{biz.rejection_reason}</p>
+                                )}
                               </div>
-                              <span className="text-xs text-gray-400">{new Date(biz.created_at).toLocaleDateString('it-IT')}</span>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -1736,7 +2015,7 @@ export function DashboardPage() {
                             onSuccess={() => {
                               setShowJobSeekerForm(false);
                               const fmId = activeProfile?.isOwner === false ? activeProfile.id : null;
-                              let q = supabase.from('job_seekers').select('*').eq('user_id', profile!.id).order('created_at', { ascending: false });
+                              let q = supabase.from('job_seekers').select('*, profiles(full_name, nickname)').eq('user_id', profile!.id).order('created_at', { ascending: false });
                               if (fmId) q = q.eq('family_member_id', fmId);
                               else q = q.is('family_member_id', null);
                               q.then(({ data, error }) => {
@@ -1782,7 +2061,7 @@ export function DashboardPage() {
                   const activeFmId = activeProfile?.isOwner === false ? activeProfile.id : null;
                   const myReviews = reviews.filter(r => activeFmId ? r.family_member_id === activeFmId : !r.family_member_id);
                   return (
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div id="cust_reviews" className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                       <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
                         <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center"><Star className="w-4 h-4 text-amber-600" /></div>
                         <span className="font-semibold text-gray-900">Le Tue Recensioni</span>
@@ -1792,15 +2071,16 @@ export function DashboardPage() {
                         {myReviews.length === 0 ? (
                           <p className="text-sm text-gray-500 text-center py-6">Non hai ancora scritto recensioni</p>
                         ) : (
-                          <div className="space-y-3 pt-4">
+                          <div className="space-y-4 pt-4">
                             {myReviews.map((review) => (
-                              <div key={review.id} className="border border-gray-100 rounded-xl p-4">
-                                <div className="flex items-start justify-between mb-1">
-                                  <div className="flex">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />)}</div>
-                                  <span className="text-xs text-gray-400">{new Date(review.created_at).toLocaleDateString('it-IT')}</span>
-                                </div>
-                                <h4 className="font-semibold text-sm mb-0.5">{review.title}</h4>
-                                <p className="text-gray-600 text-sm">{review.content}</p>
+                              <div key={review.id}>
+                                <ReviewCard review={review as any} />
+                                {(review as any).review_status === 'pending' && (
+                                  <p className="text-xs text-amber-600 mt-2 px-1 italic">La recensione è visibile al pubblico solo dopo l'approvazione dell'amministratore.</p>
+                                )}
+                                {(review as any).review_status === 'rejected' && (
+                                  <p className="text-xs text-red-600 mt-2 px-1 italic">Questa recensione è stata rifiutata dall'amministratore.</p>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -1923,6 +2203,14 @@ export function DashboardPage() {
         )}
 
         {/* Modali */}
+        {showCreateBusinessForm && user && (
+          <UserAddBusinessModal
+            userId={user.id}
+            familyMemberId={activeProfile?.isOwner === false ? activeProfile.id : null}
+            onSuccess={() => { setShowCreateBusinessForm(false); loadData(); }}
+            onCancel={() => setShowCreateBusinessForm(false)}
+          />
+        )}
         {showClassifiedAdForm && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">

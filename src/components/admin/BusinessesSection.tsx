@@ -69,6 +69,7 @@ interface BusinessLocation {
   category: {
     name: string;
   } | null;
+  category_id?: string | null;
   business?: {
     owner_id: string;
     owner: {
@@ -83,6 +84,11 @@ interface BusinessLocation {
       email: string;
     };
   };
+  added_by_profile?: {
+    full_name: string;
+    nickname: string | null;
+    email: string;
+  } | null;
   source: 'imported' | 'user_added' | 'claimed' | 'self_registered';
   approval_status?: 'pending' | 'approved' | 'rejected' | null;
   points_awarded?: boolean;
@@ -96,6 +102,11 @@ interface BusinessesSectionProps {
 
 type TabType = 'all' | 'imported' | 'user_added' | 'claimed' | 'self_registered';
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 export function BusinessesSection({ onReload }: BusinessesSectionProps) {
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<TabType>('all');
@@ -104,6 +115,8 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessLocation | null>(null);
   const [editingBusiness, setEditingBusiness] = useState<BusinessLocation | null>(null);
   const [allLocations, setAllLocations] = useState<BusinessLocation[]>([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [pendingUserAddedCount, setPendingUserAddedCount] = useState(0);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -124,6 +137,18 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
   });
 
   const loadBusinessesRef = useRef<(page?: number) => Promise<void>>(async () => {});
+
+  useEffect(() => {
+    supabase.from('business_categories').select('id, name').order('name').then(({ data }) => {
+      if (data) setAllCategories(data);
+    });
+    supabase
+      .from('unclaimed_business_locations')
+      .select('id', { count: 'exact', head: true })
+      .not('added_by', 'is', null)
+      .eq('approval_status', 'pending')
+      .then(({ count }) => setPendingUserAddedCount(count || 0));
+  }, []);
 
   const loadBusinesses = async (page = currentPage) => {
     setLoading(true);
@@ -249,7 +274,8 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           .from('unclaimed_business_locations')
           .select(`
             *,
-            category:category_id(name)
+            category:category_id(name),
+            added_by_profile:added_by(full_name, nickname, email)
           `, { count: 'exact' });
 
         // Filter by source (imported vs user_added)
@@ -308,6 +334,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           points_awarded: business.points_awarded,
           added_by: business.added_by,
           added_by_family_member_id: business.added_by_family_member_id,
+          added_by_profile: business.added_by_profile ?? null,
         }));
 
       } else if (activeTab === 'claimed' || activeTab === 'self_registered') {
@@ -427,6 +454,15 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
     }
   }, [activeTab, filters, currentPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const refreshPendingCount = async () => {
+    const { count } = await supabase
+      .from('unclaimed_business_locations')
+      .select('id', { count: 'exact', head: true })
+      .not('added_by', 'is', null)
+      .eq('approval_status', 'pending');
+    setPendingUserAddedCount(count || 0);
+  };
+
   const handleApproveUserBusiness = async (business: BusinessLocation) => {
     if (!confirm(`Approva l'attività "${business.name}"?\n\nL'attivita' sara' visibile nella ricerca e l'utente ricevera' i punti.`)) return;
 
@@ -443,7 +479,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
       if (error) throw error;
 
       showToast(`Attivita' approvata!`, 'info');
-      await loadBusinesses();
+      await Promise.all([loadBusinesses(), refreshPendingCount()]);
     } catch (error: any) {
       console.error('Error approving business:', error);
       showToast(`Errore: ${error.message}`, 'error');
@@ -481,7 +517,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
       }
 
       showToast(`Attivita' rifiutata.`, 'info');
-      await loadBusinesses();
+      await Promise.all([loadBusinesses(), refreshPendingCount()]);
     } catch (error: any) {
       console.error('Error rejecting business:', error);
       showToast(`Errore: ${error.message}`, 'error');
@@ -547,10 +583,12 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
       if (tableName === 'unclaimed_business_locations') {
         updateData.name = editingBusiness.name;
         updateData.street = editingBusiness.address;
+        updateData.category_id = (editingBusiness as any).editing_category_id || null;
       } else {
-        updateData.business_name = editingBusiness.name;
+        updateData.name = editingBusiness.name;
         updateData.street = editingBusiness.address;
         updateData.vat_number = editingBusiness.vat_number;
+        updateData.category_id = (editingBusiness as any).editing_category_id || null;
       }
 
       const { error } = await supabase
@@ -705,11 +743,11 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   const tabs = [
-    { id: 'all' as TabType, label: 'Tutte le Attività', icon: Building2 },
-    { id: 'imported' as TabType, label: 'Importate', icon: Download },
-    { id: 'user_added' as TabType, label: 'Aggiunte da Utenti', icon: UserPlus },
-    { id: 'claimed' as TabType, label: 'Rivendicate', icon: CheckCircle },
-    { id: 'self_registered' as TabType, label: 'Iscritte da Sole', icon: Briefcase },
+    { id: 'all' as TabType, label: 'Tutte le Attività', icon: Building2, pendingBadge: null as number | null },
+    { id: 'imported' as TabType, label: 'Importate', icon: Download, pendingBadge: null as number | null },
+    { id: 'user_added' as TabType, label: 'Aggiunte da Utenti', icon: UserPlus, pendingBadge: pendingUserAddedCount > 0 ? pendingUserAddedCount : null },
+    { id: 'claimed' as TabType, label: 'Rivendicate', icon: CheckCircle, pendingBadge: null as number | null },
+    { id: 'self_registered' as TabType, label: 'Iscritte da Sole', icon: Briefcase, pendingBadge: null as number | null },
   ];
 
   return (
@@ -724,7 +762,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                  className={`relative flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === tab.id
                       ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -732,9 +770,19 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                 >
                   <Icon className="w-5 h-5" />
                   {tab.label}
-                  {activeTab === tab.id && (
+                  {tab.pendingBadge !== null && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 bg-red-600 text-white text-[10px] font-bold rounded-full">
+                      {tab.pendingBadge}
+                    </span>
+                  )}
+                  {activeTab === tab.id && tab.id !== 'user_added' && (
                     <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
                       {totalCount.toLocaleString()}
+                    </span>
+                  )}
+                  {activeTab === tab.id && tab.id === 'user_added' && (
+                    <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                      {totalCount.toLocaleString()} totali
                     </span>
                   )}
                 </button>
@@ -966,6 +1014,18 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                                 {business.business.owner.email}
                               </div>
                             </div>
+                          ) : activeTab === 'user_added' && business.added_by_profile ? (
+                            <div>
+                              {business.added_by_profile.nickname && (
+                                <div className="text-xs font-bold text-blue-600 mb-0.5">@{business.added_by_profile.nickname}</div>
+                              )}
+                              <div className="text-sm font-medium text-gray-900">
+                                {business.added_by_profile.full_name}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {business.added_by_profile.email}
+                              </div>
+                            </div>
                           ) : business.unclaimed_business?.added_by_profile ? (
                             <div>
                               <div className="text-sm font-medium text-gray-900">
@@ -1021,7 +1081,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                             <Search className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => setEditingBusiness(business)}
+                            onClick={() => setEditingBusiness({ ...business, ['editing_category_id' as any]: allCategories.find(c => c.name === business.category?.name)?.id ?? '' } as any)}
                             className="text-gray-600 hover:text-gray-800 p-1"
                             title="Modifica"
                           >
@@ -1400,7 +1460,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
               {allLocations.length === 1 && (
                 <button
                   onClick={() => {
-                    setEditingBusiness(selectedBusiness);
+                    setEditingBusiness({ ...selectedBusiness, ['editing_category_id' as any]: allCategories.find(c => c.name === selectedBusiness.category?.name)?.id ?? '' } as any);
                     setSelectedBusiness(null);
                     setAllLocations([]);
                   }}
@@ -1576,6 +1636,19 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Categoria Attivita</label>
+                  <select
+                    value={(editingBusiness as any).editing_category_id ?? ''}
+                    onChange={(e) => setEditingBusiness({ ...editingBusiness, ['editing_category_id' as any]: e.target.value } as any)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Nessuna categoria</option>
+                    {allCategories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

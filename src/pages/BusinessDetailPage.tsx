@@ -33,6 +33,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [claimingBusiness, setClaimingBusiness] = useState(false);
   const [filterLocationId, setFilterLocationId] = useState<string | null>(null);
+  const [isNewRegistered, setIsNewRegistered] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
   const [alertModal, setAlertModal] = useState<{ title: string; message: string; variant: 'success' | 'error' | 'info'; actionLabel?: string; onAction?: () => void } | null>(null);
@@ -53,6 +54,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
     try {
       let businessData: any = null;
       let businessType: 'imported' | 'user_added' | 'registered' | null = null;
+      let isNewRegistered = false; // true = registered_businesses table (uses location IDs), false = businesses table (uses business_id)
 
       // Cerca in businesses (attività rivendicate)
       const { data: claimedData } = await supabase
@@ -218,6 +220,8 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
             website: registeredData.website,
           };
           businessType = 'registered';
+          isNewRegistered = true;
+          setIsNewRegistered(true);
 
           if (registeredData.locations) {
             let allLocations = registeredData.locations.map((loc: any) => ({
@@ -268,24 +272,41 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
       }
 
       if (businessData && businessType) {
-        // Query per le recensioni
-        let reviewsQuery = supabase
-          .from('reviews')
-          .select('overall_rating')
-          .eq('review_status', 'approved');
-
-        if (businessType === 'imported') {
-          reviewsQuery = reviewsQuery.or(`imported_business_id.eq.${businessId},unclaimed_business_location_id.eq.${businessId}`);
-        } else if (businessType === 'user_added') {
-          reviewsQuery = reviewsQuery.eq('user_added_business_id', businessId);
-        } else if (businessType === 'registered') {
-          reviewsQuery = reviewsQuery.or(`registered_business_id.eq.${businessId},business_id.eq.${businessId}`);
+        // Raccoglie gli ID delle sedi per le query recensioni
+        let registeredLocationIds: string[] = [];
+        if (isNewRegistered) {
+          const { data: locIds } = await supabase
+            .from('registered_business_locations')
+            .select('id')
+            .eq('business_id', businessId);
+          registeredLocationIds = locIds ? locIds.map((l: any) => l.id) : [];
         }
 
-        const { data: reviewsData } = await reviewsQuery;
+        const buildReviewFilter = (q: any) => {
+          if (businessType === 'imported') {
+            return q.or(`imported_business_id.eq.${businessId},unclaimed_business_location_id.eq.${businessId}`);
+          } else if (businessType === 'user_added') {
+            return q.eq('user_added_business_id', businessId);
+          } else if (businessType === 'registered') {
+            if (isNewRegistered) {
+              if (registeredLocationIds.length > 0) {
+                return q.in('registered_business_location_id', registeredLocationIds);
+              }
+              return q.eq('business_id', 'no-match');
+            } else {
+              return q.eq('business_id', businessId);
+            }
+          }
+          return q;
+        };
+
+        // Query conteggio per avg_rating
+        const { data: reviewsData } = await buildReviewFilter(
+          supabase.from('reviews').select('overall_rating').eq('review_status', 'approved')
+        );
 
         const avg_rating = reviewsData && reviewsData.length > 0
-          ? reviewsData.reduce((sum, r) => sum + r.overall_rating, 0) / reviewsData.length
+          ? reviewsData.reduce((sum: number, r: any) => sum + r.overall_rating, 0) / reviewsData.length
           : 0;
 
         setBusiness({
@@ -295,39 +316,33 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           business_type: businessType,
         });
 
-        // Query per le recensioni complete
-        let fullReviewsQuery = supabase
-          .from('reviews')
-          .select(`
-            *,
-            customer:profiles!customer_id(full_name, nickname),
-            responses:review_responses(*),
-            family_member:customer_family_members(first_name, last_name, nickname),
-            business_location:business_locations(id, name, internal_name, address, city)
-          `)
-          .eq('review_status', 'approved')
-          .order('created_at', { ascending: false });
-
-        if (businessType === 'imported') {
-          fullReviewsQuery = fullReviewsQuery.or(`imported_business_id.eq.${businessId},unclaimed_business_location_id.eq.${businessId}`);
-        } else if (businessType === 'user_added') {
-          fullReviewsQuery = fullReviewsQuery.eq('user_added_business_id', businessId);
-        } else if (businessType === 'registered') {
-          fullReviewsQuery = fullReviewsQuery.or(`registered_business_id.eq.${businessId},business_id.eq.${businessId}`);
-        }
-
-        const { data: fullReviewsData } = await fullReviewsQuery;
+        // Query recensioni complete
+        const { data: fullReviewsData } = await buildReviewFilter(
+          supabase.from('reviews')
+            .select(`
+              *,
+              customer:profiles!customer_id(full_name, nickname),
+              responses:review_responses(*),
+              family_member:customer_family_members(first_name, last_name, nickname),
+              registered_business_location:registered_business_locations(id, name, internal_name, street, city)
+            `)
+            .eq('review_status', 'approved')
+            .order('created_at', { ascending: false })
+        );
 
         if (fullReviewsData) {
-          const reviewsWithBusinessName = fullReviewsData.map(review => ({
-            ...review,
-            business: { name: businessData.name },
-            category_name: review.business_location?.category?.name ?? businessData.category?.name ?? null,
-            location_info: review.business_location ? {
-              name: review.business_location.internal_name || review.business_location.name,
-              city: review.business_location.city
-            } : { city: businessData.city }
-          }));
+          const reviewsWithBusinessName = fullReviewsData.map((review: any) => {
+            const loc = review.business_location || review.registered_business_location;
+            return {
+              ...review,
+              business: { name: businessData.name },
+              category_name: businessData.category?.name ?? null,
+              location_info: loc ? {
+                name: loc.internal_name || loc.name,
+                city: loc.city
+              } : { city: businessData.city }
+            };
+          });
           setReviews(reviewsWithBusinessName);
         }
 
@@ -680,13 +695,18 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                         <FavoriteButton
                           type="business"
                           itemId={
-                            business.business_type === 'imported'
+                            (business.business_type === 'imported' || business.business_type === 'user_added')
                               ? businessId
                               : (filterLocationId || locations[0]?.id || businessId)
                           }
                           familyMemberId={activeProfile && !activeProfile.isOwner ? activeProfile.id : null}
-                          isUnclaimedBusiness={business.business_type === 'imported'}
-                          isClaimedBusinessLocation={business.business_type === 'registered'}
+                          businessColumn={
+                            (business.business_type === 'imported' || business.business_type === 'user_added')
+                              ? 'unclaimed'
+                              : isNewRegistered
+                              ? (locations.length > 0 ? 'registered' : 'registered_no_location')
+                              : 'legacy'
+                          }
                         />
                       </div>
                       <button
@@ -1330,6 +1350,11 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           businessId={businessId}
           businessName={business.name}
           businessType={(business as any).business_type}
+          registeredBusinessLocationId={
+            isNewRegistered && locations.length > 0
+              ? (filterLocationId || locations[0]?.id)
+              : undefined
+          }
           onClose={() => setShowReviewForm(false)}
           onSuccess={() => {
             setShowReviewForm(false);

@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Heart } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../common/Toast';
+
+type BusinessColumn = 'unclaimed' | 'registered' | 'registered_no_location' | 'legacy';
 
 interface FavoriteButtonProps {
   type: 'business' | 'ad' | 'job';
@@ -11,8 +13,17 @@ interface FavoriteButtonProps {
   showLabel?: boolean;
   className?: string;
   onToggle?: (isFavorite: boolean) => void;
-  isUnclaimedBusiness?: boolean;
-  isClaimedBusinessLocation?: boolean;
+  businessColumn?: BusinessColumn;
+  initialIsFavorite?: boolean;
+}
+
+function getBusinessColumnName(col: BusinessColumn): string {
+  switch (col) {
+    case 'unclaimed': return 'unclaimed_business_location_id';
+    case 'registered': return 'registered_business_location_id';
+    case 'registered_no_location': return 'registered_business_id';
+    case 'legacy': return 'business_location_id';
+  }
 }
 
 export function FavoriteButton({
@@ -22,13 +33,15 @@ export function FavoriteButton({
   showLabel = false,
   className = '',
   onToggle,
-  isUnclaimedBusiness = false,
-  isClaimedBusinessLocation = false
+  businessColumn = 'registered',
+  initialIsFavorite,
 }: FavoriteButtonProps) {
   const { showToast } = useToast();
   const { user } = useAuth();
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(initialIsFavorite ?? false);
+  const [pending, setPending] = useState(false);
+  // Tracks whether we've already fetched the real status from DB
+  const fetchedRef = useRef(false);
 
   const tableName = type === 'business'
     ? 'favorite_businesses'
@@ -37,43 +50,52 @@ export function FavoriteButton({
     : 'favorite_job_postings';
 
   const columnName = type === 'business'
-    ? (isUnclaimedBusiness
-        ? 'unclaimed_business_location_id'
-        : isClaimedBusinessLocation
-        ? 'business_location_id'
-        : 'business_id')
+    ? getBusinessColumnName(businessColumn)
     : type === 'ad'
     ? 'ad_id'
     : 'job_id';
 
+  // Sync when initialIsFavorite changes (e.g. batch load in SearchResultsPage)
   useEffect(() => {
-    if (user) {
-      checkFavoriteStatus();
+    if (initialIsFavorite !== undefined) {
+      setIsFavorite(initialIsFavorite);
+      fetchedRef.current = true;
     }
-  }, [user, itemId, familyMemberId, isUnclaimedBusiness, isClaimedBusinessLocation]);
+  }, [initialIsFavorite]);
 
-  const checkFavoriteStatus = async () => {
-    if (!user) return;
+  // Only fetch individually when initialIsFavorite is not provided
+  useEffect(() => {
+    if (!user || initialIsFavorite !== undefined) return;
+    if (fetchedRef.current) return;
+    let cancelled = false;
 
-    try {
-      let query = supabase
-        .from(tableName)
-        .select('id')
-        .eq('user_id', user.id)
-        .eq(columnName, itemId);
+    const fetchStatus = async () => {
+      try {
+        let query = supabase
+          .from(tableName)
+          .select('id')
+          .eq('user_id', user.id)
+          .eq(columnName, itemId);
 
-      if (familyMemberId) {
-        query = query.eq('family_member_id', familyMemberId);
-      } else {
-        query = query.is('family_member_id', null);
+        if (familyMemberId) {
+          query = query.eq('family_member_id', familyMemberId);
+        } else {
+          query = query.is('family_member_id', null);
+        }
+
+        const { data } = await query.maybeSingle();
+        if (!cancelled) {
+          setIsFavorite(!!data);
+          fetchedRef.current = true;
+        }
+      } catch {
+        // silently ignore — button will still work on click
       }
+    };
 
-      const { data } = await query.maybeSingle();
-      setIsFavorite(!!data);
-    } catch (error) {
-      console.error('Error checking favorite status:', error);
-    }
-  };
+    fetchStatus();
+    return () => { cancelled = true; };
+  }, [user, itemId, familyMemberId, businessColumn]);
 
   const toggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -84,21 +106,17 @@ export function FavoriteButton({
       return;
     }
 
-    setLoading(true);
+    // Block concurrent clicks
+    if (pending) return;
+    setPending(true);
 
-    console.log('⭐ TOGGLE FAVORITE');
-    console.log('Type:', type);
-    console.log('Item ID:', itemId);
-    console.log('Family Member ID:', familyMemberId);
-    console.log('Is Unclaimed Business:', isUnclaimedBusiness);
-    console.log('Is Claimed Business Location:', isClaimedBusinessLocation);
-    console.log('Table:', tableName);
-    console.log('Column:', columnName);
-    console.log('Current isFavorite:', isFavorite);
+    // Optimistic update immediately
+    const newValue = !isFavorite;
+    setIsFavorite(newValue);
 
     try {
-      if (isFavorite) {
-        console.log('🗑️ REMOVING FROM FAVORITES');
+      if (!newValue) {
+        // Remove from favorites
         let query = supabase
           .from(tableName)
           .delete()
@@ -112,44 +130,37 @@ export function FavoriteButton({
         }
 
         const { error } = await query;
-        console.log('Delete error:', error);
-
-        if (error) {
-          console.error('Delete error:', error);
-          throw error;
-        }
-
-        setIsFavorite(false);
+        if (error) throw error;
         onToggle?.(false);
       } else {
-        console.log('➕ ADDING TO FAVORITES');
-        const insertData: any = {
+        // Add to favorites — use upsert to avoid duplicate errors
+        const payload: Record<string, any> = {
           user_id: user.id,
           [columnName]: itemId,
-          family_member_id: familyMemberId
+          family_member_id: familyMemberId,
         };
-
-        console.log('Insert data:', insertData);
 
         const { error } = await supabase
           .from(tableName)
-          .insert(insertData);
-
-        console.log('Insert error:', error);
+          .insert(payload);
 
         if (error) {
-          console.error('Insert error:', error);
+          // Already exists — treat as success
+          if (error.code === '23505') {
+            onToggle?.(true);
+            return;
+          }
           throw error;
         }
-
-        setIsFavorite(true);
         onToggle?.(true);
       }
     } catch (error: any) {
+      // Revert optimistic update on real error
+      setIsFavorite(!newValue);
       console.error('Error toggling favorite:', error);
       showToast('Errore durante l\'operazione. Riprova.', 'error');
     } finally {
-      setLoading(false);
+      setPending(false);
     }
   };
 
@@ -158,7 +169,7 @@ export function FavoriteButton({
   return (
     <button
       onClick={toggleFavorite}
-      disabled={loading}
+      disabled={pending}
       className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
         isFavorite
           ? 'bg-red-50 text-red-600 hover:bg-red-100'
@@ -166,9 +177,7 @@ export function FavoriteButton({
       } disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
       title={isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
     >
-      <Heart
-        className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`}
-      />
+      <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
       {showLabel && (
         <span className="text-sm font-medium">
           {isFavorite ? 'Preferito' : 'Aggiungi ai preferiti'}

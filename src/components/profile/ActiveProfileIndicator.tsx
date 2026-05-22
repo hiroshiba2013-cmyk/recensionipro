@@ -103,8 +103,9 @@ export function ActiveProfileIndicator() {
   // Customer: nascondi se nessun familiare
   if (isCustomer && familyMembers.length === 0) return null;
 
-  // Business: mostra sempre (anche con 1 sola sede, perché serve per caricare l'avatar)
-  // Customer: mostra solo con familiari
+  // Business: nascondi il dropdown se c'è solo 1 sede (tutto gestito dal profilo principale)
+  if (isBusiness && businessLocations.length <= 1) return null;
+
   const profiles = [
     {
       id: profile.id,

@@ -3,6 +3,11 @@ import { FileEdit as Edit, Save, X, Building2, User } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 interface BusinessData {
   id: string;
   owner_id: string;
@@ -26,6 +31,8 @@ interface BusinessData {
   office_province: string;
   office_address: string;
   website_url: string;
+  category_id: string | null;
+  category?: { id: string; name: string } | null;
 }
 
 interface OwnerData {
@@ -69,6 +76,7 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
   const [loading, setLoading] = useState(true);
   const [business, setBusiness] = useState<BusinessData | null>(null);
   const [owner, setOwner] = useState<OwnerData | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     vat_number: '',
@@ -88,7 +96,18 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
     office_province: '',
     website_url: '',
     description: '',
+    category_id: '',
+    owner_first_name: '',
+    owner_last_name: '',
+    owner_phone: '',
+    owner_fiscal_code: '',
   });
+
+  useEffect(() => {
+    supabase.from('business_categories').select('id, name').order('name').then(({ data }) => {
+      if (data) setCategories(data);
+    });
+  }, []);
 
   useEffect(() => {
     const loadBusiness = async () => {
@@ -97,7 +116,7 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
       // Cerca prima in registered_businesses (nuovo sistema)
       let { data } = await supabase
         .from('registered_businesses')
-        .select('*')
+        .select('*, category:category_id(id, name)')
         .eq('id', businessId)
         .maybeSingle();
 
@@ -105,7 +124,7 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
       if (!data) {
         const result = await supabase
           .from('businesses')
-          .select('*')
+          .select('*, category:category_id(id, name)')
           .eq('id', businessId)
           .maybeSingle();
         data = result.data;
@@ -143,6 +162,11 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
           office_province: data.office_province || '',
           website_url: data.website || '',
           description: data.description || '',
+          category_id: data.category_id || '',
+          owner_first_name: ownerData?.first_name || '',
+          owner_last_name: ownerData?.last_name || '',
+          owner_phone: ownerData?.phone || '',
+          owner_fiscal_code: ownerData?.fiscal_code || '',
         });
       }
       setLoading(false);
@@ -233,6 +257,7 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
           office_province: formData.office_province ? formData.office_province.toUpperCase() : null,
           office_address: officeAddress,
           website_url: formData.website_url,
+          category_id: formData.category_id || null,
         })
         .eq('id', businessId);
 
@@ -272,6 +297,7 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
             office_province: formData.office_province ? formData.office_province.toUpperCase() : null,
             office_address: officeAddress,
             website_url: formData.website_url,
+            category_id: formData.category_id || null,
           })
           .eq('id', businessId);
 
@@ -331,6 +357,11 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
         office_province: business.office_province || '',
         website_url: business.website_url || '',
         description: business.description || '',
+        category_id: business.category_id || '',
+        owner_first_name: owner?.first_name || '',
+        owner_last_name: owner?.last_name || '',
+        owner_phone: owner?.phone || '',
+        owner_fiscal_code: owner?.fiscal_code || '',
       });
     }
     setIsEditing(false);
@@ -394,6 +425,12 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
               <p className="text-lg font-semibold text-gray-900">{business.ateco_code || '-'}</p>
             </div>
             <div>
+              <p className="text-sm text-gray-600 mb-1">Categoria Attivita</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {business.category?.name || (business.category_id ? categories.find(c => c.id === business.category_id)?.name : null) || '-'}
+              </p>
+            </div>
+            <div>
               <p className="text-sm text-gray-600 mb-1">PEC</p>
               <p className="text-lg font-semibold text-gray-900">{business.pec_email || '-'}</p>
             </div>
@@ -445,6 +482,33 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
             <p className="text-base text-gray-900 leading-relaxed whitespace-pre-line">
               {business.description}
             </p>
+          </div>
+        )}
+
+        {owner && (
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <User className="w-5 h-5 text-gray-600" />
+              Dati Titolare
+            </h3>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Nome</p>
+                <p className="text-lg font-semibold text-gray-900">{owner.first_name || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Cognome</p>
+                <p className="text-lg font-semibold text-gray-900">{owner.last_name || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Telefono</p>
+                <p className="text-lg font-semibold text-gray-900">{owner.phone || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Codice Fiscale</p>
+                <p className="text-lg font-semibold text-gray-900">{owner.fiscal_code || '-'}</p>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -528,6 +592,23 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Categoria Attivita
+            </label>
+            <select
+              name="category_id"
+              value={formData.category_id}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Nessuna categoria</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -739,6 +820,70 @@ export function EditBusinessForm({ businessId, selectedLocationId, onUpdate }: E
               onChange={handleChange}
               placeholder="Es. MI"
               maxLength={2}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 mb-4 border-b pb-2 mt-6">
+          <User className="w-5 h-5 text-gray-600" />
+          <h3 className="text-lg font-bold text-gray-900">Dati Titolare</h3>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Nome
+            </label>
+            <input
+              type="text"
+              name="owner_first_name"
+              value={formData.owner_first_name}
+              onChange={handleChange}
+              placeholder="Es. Mario"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Cognome
+            </label>
+            <input
+              type="text"
+              name="owner_last_name"
+              value={formData.owner_last_name}
+              onChange={handleChange}
+              placeholder="Es. Rossi"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Telefono Titolare
+            </label>
+            <input
+              type="tel"
+              name="owner_phone"
+              value={formData.owner_phone}
+              onChange={handleChange}
+              placeholder="Es. +39 333 1234567"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Codice Fiscale
+            </label>
+            <input
+              type="text"
+              name="owner_fiscal_code"
+              value={formData.owner_fiscal_code}
+              onChange={handleChange}
+              placeholder="Es. RSSMRA80A01H501Z"
+              maxLength={16}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
             />
           </div>

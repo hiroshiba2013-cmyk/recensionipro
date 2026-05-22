@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle, Heart, Building2, Shield, Tag, Briefcase, UserCog, Gavel, Trophy } from 'lucide-react';
+import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle, Heart, Building2, Shield, Tag, Briefcase, UserCog, Gavel, Trophy, Star } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { supabase } from '../../lib/supabase';
@@ -18,6 +18,7 @@ export function Header() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [adminData, setAdminData] = useState<{ avatar_url: string | null; nickname: string | null } | null>(null);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [pendingReviews, setPendingReviews] = useState(0);
 
   const selectedLocation = selectedBusinessLocationId
     ? businessLocations.find(loc => loc.id === selectedBusinessLocationId)
@@ -53,6 +54,35 @@ export function Header() {
   const activeFamilyMemberId = activeProfile && !activeProfile.isOwner && profile?.user_type === 'customer'
     ? activeProfile.id
     : null;
+
+  useEffect(() => {
+    if (!user || !profile || profile.user_type === 'admin') return;
+    loadPendingReviews();
+  }, [user, profile]);
+
+  const loadPendingReviews = async () => {
+    if (!user?.id || !profile) return;
+    try {
+      if (profile.user_type === 'business') {
+        const { count } = await supabase
+          .from('reviews')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'pending');
+        setPendingReviews(count || 0);
+      } else {
+        const fmId = profile.user_type === 'customer'
+          ? (activeFamilyMemberId ?? null)
+          : null;
+        const q = supabase
+          .from('reviews')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('status', 'approved');
+        const { count } = await (fmId ? q.eq('family_member_id', fmId) : q.is('family_member_id', null));
+        setPendingReviews(count || 0);
+      }
+    } catch { /* silent */ }
+  };
 
   useEffect(() => {
     if (!user || !profile || profile.user_type === 'admin') return;

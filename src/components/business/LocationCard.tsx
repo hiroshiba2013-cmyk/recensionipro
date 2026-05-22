@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Star, MapPin, ExternalLink, MessageSquare, Phone, Mail, Clock, Globe } from 'lucide-react';
+import { Star, MapPin, MessageSquare, Phone, Mail, Clock, Globe } from 'lucide-react';
 import { ReviewForm } from '../reviews/ReviewForm';
 import { useAuth } from '../../contexts/AuthContext';
 import { VerificationBadge } from './VerificationBadge';
+import { FavoriteButton } from '../favorites/FavoriteButton';
+import ReportButton from '../moderation/ReportButton';
 
 interface BusinessLocation {
   id: string;
@@ -34,6 +36,8 @@ interface BusinessLocation {
     };
   };
   added_by?: string | null;
+  source?: string | null;
+  location_type?: string | null;
   category_name?: string | null;
   avg_rating?: number;
   review_count?: number;
@@ -49,6 +53,8 @@ interface OpeningHours {
 
 interface LocationCardProps {
   location: BusinessLocation;
+  initialIsFavorite?: boolean;
+  onFavoriteToggle?: (locationId: string, isFavorite: boolean) => void;
 }
 
 const DAY_NAMES: { [key: string]: string } = {
@@ -91,11 +97,20 @@ function hasValidBusinessHours(hours: any): boolean {
   });
 }
 
-export function LocationCard({ location }: LocationCardProps) {
-  const { profile } = useAuth();
+export function LocationCard({ location, initialIsFavorite, onFavoriteToggle }: LocationCardProps) {
+  const { profile, activeProfile } = useAuth();
   const [showReviewForm, setShowReviewForm] = useState(false);
 
   const canWriteReview = profile && profile.user_type === 'customer' && (profile.subscription_status === 'active' || profile.subscription_status === 'trial');
+  const isCustomer = profile && profile.user_type === 'customer';
+  const familyMemberId = activeProfile?.isOwner === false ? activeProfile?.id : null;
+
+  const favoriteBusinessColumn: 'unclaimed' | 'registered' | 'registered_no_location' | 'legacy' =
+    (location.source === 'unclaimed' || location.source === 'user_added' || location.source === 'imported' || location.location_type === 'unclaimed')
+      ? 'unclaimed'
+      : location.location_type === 'registered_no_location'
+      ? 'registered_no_location'
+      : 'registered';
 
   const handleReviewClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -134,7 +149,7 @@ export function LocationCard({ location }: LocationCardProps) {
       onClick={handleCardClick}
       className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden border border-gray-100"
     >
-      <div className="h-48 bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center">
+      <div className="relative h-48 bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center">
         {location.avatar_url ? (
           <img src={location.avatar_url} alt={displayName} className="w-full h-full object-cover" />
         ) : (
@@ -142,6 +157,26 @@ export function LocationCard({ location }: LocationCardProps) {
             {displayName.charAt(0).toUpperCase()}
           </div>
         )}
+
+        {/* Quick-action overlay buttons */}
+        <div className="absolute top-2 right-2 flex flex-col gap-1.5" onClick={(e) => e.stopPropagation()}>
+          {isCustomer && (
+            <FavoriteButton
+              type="business"
+              itemId={location.id}
+              familyMemberId={familyMemberId}
+              businessColumn={favoriteBusinessColumn}
+              initialIsFavorite={initialIsFavorite}
+              onToggle={(isFav) => onFavoriteToggle?.(location.id, isFav)}
+              className="!px-2 !py-2 bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white border-0 rounded-lg"
+            />
+          )}
+          {profile && (
+            <div className="px-2 py-2 bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white rounded-lg transition-colors [&_button]:!text-gray-500 [&_button:hover]:!text-red-500">
+              <ReportButton entityType="business" entityId={location.id} compact={true} />
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="p-6">
@@ -167,13 +202,29 @@ export function LocationCard({ location }: LocationCardProps) {
 
         <div className="flex flex-wrap items-center gap-2 mb-3">
           {(location.review_count || 0) > 0 ? (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 rounded-full border border-yellow-300">
-              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-              <span className="font-bold text-sm text-gray-900">{(location.avg_rating || 0).toFixed(1)}</span>
-              <span className="text-xs text-gray-600 font-medium">
-                ({location.review_count} {location.review_count === 1 ? 'recensione' : 'recensioni'})
-              </span>
-            </div>
+            <>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 rounded-full border border-yellow-300">
+                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                <span className="font-bold text-sm text-gray-900">{(location.avg_rating || 0).toFixed(1)}</span>
+                <span className="text-xs text-gray-600 font-medium">
+                  ({location.review_count} {location.review_count === 1 ? 'rec.' : 'rec.'})
+                </span>
+              </div>
+              {(location.service_review_count || 0) > 0 && (
+                <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 rounded-full border border-blue-200" title="Valutazione servizio">
+                  <Star className="w-3 h-3 fill-blue-400 text-blue-400" />
+                  <span className="text-xs font-semibold text-blue-700">{(location.service_avg_rating || 0).toFixed(1)}</span>
+                  <span className="text-xs text-blue-500">serv.</span>
+                </div>
+              )}
+              {(location.management_review_count || 0) > 0 && (
+                <div className="flex items-center gap-1 px-2 py-1 bg-green-50 rounded-full border border-green-200" title="Valutazione gestione">
+                  <Star className="w-3 h-3 fill-green-400 text-green-400" />
+                  <span className="text-xs font-semibold text-green-700">{(location.management_avg_rating || 0).toFixed(1)}</span>
+                  <span className="text-xs text-green-500">gest.</span>
+                </div>
+              )}
+            </>
           ) : (
             <span className="text-xs text-gray-400 italic">Nessuna recensione</span>
           )}

@@ -84,10 +84,12 @@ export function ProfessionalProfilePage() {
       const { data: conversationId, error } = await supabase.rpc('get_or_create_conversation', {
         p_user1_id: user.id,
         p_user2_id: professionalProfile.user_id,
-        p_conversation_type: 'general',
+        p_conversation_type: 'professional_profile',
         p_reference_id: professionalProfile.id,
-        p_user1_location_id: null,
+        p_user1_family_member_id: null,
         p_user2_family_member_id: null,
+        p_user1_location_id: null,
+        p_user2_location_id: null,
       });
 
       if (error) throw error;

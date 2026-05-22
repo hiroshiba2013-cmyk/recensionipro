@@ -61,6 +61,7 @@ interface Profile {
   office_province?: string;
   office_address?: string;
   business_category_id?: string;
+  category_id?: string;
   description?: string;
 }
 

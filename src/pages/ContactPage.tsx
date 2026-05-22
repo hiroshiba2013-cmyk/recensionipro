@@ -93,7 +93,7 @@ export function ContactPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900 text-sm mb-0.5">Telefono</p>
-                  <p className="text-gray-600 text-sm">+39 02 1234 5678</p>
+                  <p className="text-gray-600 text-sm">da definire</p>
                   <p className="text-gray-500 text-xs">Lun-Ven: 9:00 - 18:00</p>
                 </div>
               </div>

@@ -22,10 +22,11 @@ interface FAQ {
 
 const LAST_UPDATED = 'maggio 2026';
 const PLATFORM_NAME = 'Trovafacile';
-const CONTACT_EMAIL = 'privacy@trovafacile.it'; // aggiornare con email reale
-const COMPANY_NAME = '[Ragione Sociale]'; // aggiornare con dati reali
-const COMPANY_ADDRESS = '[Indirizzo, CAP, Città]'; // aggiornare con dati reali
-const VAT_NUMBER = '[P.IVA]'; // aggiornare con dati reali
+const CONTACT_EMAIL = 'privacy@trovafacile.it';
+// TODO: sostituire con i dati legali reali prima del go-live
+const COMPANY_NAME = 'Trovafacile S.r.l.';
+const COMPANY_ADDRESS = 'da definire';
+const VAT_NUMBER = 'da definire';
 
 function AccordionItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);
@@ -319,7 +320,7 @@ export function RulesPage() {
                 items: [
                   { label: 'Impostazioni del browser', desc: 'Puoi configurare il browser per bloccare o eliminare i cookie. Disabilitare i cookie tecnici può compromettere il funzionamento del sito (es. impossibilità di restare connesso).' },
                   { label: 'Cancellazione', desc: 'Puoi eliminare i cookie salvati dal browser in qualsiasi momento dalle impostazioni del browser stesso (Chrome: Impostazioni > Privacy > Cancella dati di navigazione).' },
-                  { label: 'Revoca consenso', desc: 'Puoi revocare il consenso ai cookie non essenziali in qualsiasi momento utilizzando il banner cookie presente sul sito o scrivendo a ' + CONTACT_EMAIL + '.' },
+                  { label: 'Reclamo al Garante', desc: 'Se ritieni che il trattamento dei dati connessi ai cookie violi la normativa, puoi proporre reclamo al Garante per la Protezione dei Dati Personali (garante.privacy.it) o scrivere a ' + CONTACT_EMAIL + '.' },
                 ]
               },
             ].map(({ title, items }) => (
@@ -450,7 +451,7 @@ export function RulesPage() {
                 items: [
                   {
                     label: 'Uso lecito',
-                    text: 'La piattaforma deve essere utilizzata esclusivamente per scopi leciti e in conformità con la legislazione italiana ed europea vigente, inclusi il Codice del Consumo, il GDPR e il D.Lgs. 70/2003 sul commercio elettronico.',
+                    text: 'La piattaforma deve essere utilizzata esclusivamente per scopi leciti e in conformità con la legislazione italiana ed europea vigente, inclusi il Codice del Consumo (D.Lgs. 206/2005), il GDPR (Reg. UE 2016/679), il D.Lgs. 70/2003 sul commercio elettronico e il Digital Services Act (Reg. UE 2022/2065).',
                   },
                   {
                     label: 'Recensioni',
@@ -458,7 +459,7 @@ export function RulesPage() {
                   },
                   {
                     label: 'Annunci e aste',
-                    text: 'Gli annunci e le aste devono riguardare prodotti o servizi reali, legali e di proprietà del pubblicante. È vietato pubblicare offerte fraudolente, prodotti contraffatti, materiale illegale o utilizzare la piattaforma per truffe.',
+                    text: 'Gli annunci devono riguardare prodotti o servizi reali, legali e di proprietà del pubblicante. Per le aste, la partecipazione richiede l\'acquisto di un ticket (pari al 10% della base d\'asta): il ticket è rimborsato in caso di sconfitta, trattenuto dalla piattaforma in caso di aggiudicazione confermata. Le transazioni tra utenti avvengono direttamente tra le parti: la piattaforma non gestisce spedizioni né garantisce le transazioni. È vietato pubblicare offerte fraudolente, prodotti contraffatti o materiale illegale.',
                   },
                   {
                     label: 'Rispetto della community',
@@ -470,7 +471,11 @@ export function RulesPage() {
                   },
                   {
                     label: 'Limitazione di responsabilità',
-                    text: `${PLATFORM_NAME} non è responsabile per i contenuti pubblicati dagli utenti, per le transazioni tra utenti, per l'accuratezza delle informazioni sulle attività commerciali, o per eventuali danni derivanti dall'uso della piattaforma da parte di terzi. Il servizio è fornito "così com'è".`,
+                    text: `${PLATFORM_NAME} non è responsabile per i contenuti pubblicati dagli utenti, per le transazioni dirette tra utenti (incluse quelle originate dalle aste), per l'accuratezza delle informazioni sulle attività commerciali, o per eventuali danni derivanti dall'uso della piattaforma da parte di terzi. Il servizio è fornito "così com'è". Il sistema di ticket per le aste è gestito direttamente dalla piattaforma; l'esito della transazione successiva alla conclusione dell'asta è responsabilità esclusiva delle parti.`,
+                  },
+                  {
+                    label: 'Diritto di recesso',
+                    text: `Ai sensi degli artt. 52-59 del D.Lgs. 206/2005 (Codice del Consumo), hai diritto di recedere dall'abbonamento entro 14 giorni dalla sottoscrizione senza motivazione. Per esercitare il diritto di recesso scrivi a recesso@trovafacile.it indicando nome, email, data di sottoscrizione e numero abbonamento. Il rimborso avviene entro 14 giorni sulla stessa modalità di pagamento.`,
                   },
                 ],
               },

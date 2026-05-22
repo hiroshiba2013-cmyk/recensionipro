@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { VerificationBadge } from './VerificationBadge';
 import { useNavigate } from '../Router';
 import { FavoriteButton } from '../favorites/FavoriteButton';
+import ReportButton from '../moderation/ReportButton';
 
 interface BusinessCardProps {
   business: Business & {
@@ -21,6 +22,7 @@ interface BusinessCardProps {
     added_by?: string | null;
     source?: string | null;
     owner_id?: string | null;
+    location_type?: string | null;
   };
 }
 
@@ -32,6 +34,13 @@ export function BusinessCard({ business }: BusinessCardProps) {
   const canWriteReview = profile && profile.user_type === 'customer' && (profile.subscription_status === 'active' || profile.subscription_status === 'trial');
   const isCustomer = profile && profile.user_type === 'customer';
   const familyMemberId = activeProfile?.isOwner === false ? activeProfile?.id : null;
+
+  // Determine favorite column based on source/location_type from search results
+  const favoriteBusinessColumn = (business.source === 'imported' || business.source === 'user_added')
+    ? 'unclaimed'
+    : business.location_type === 'registered_no_location'
+    ? 'registered_no_location'
+    : 'registered';
 
   const handleReviewClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -57,7 +66,7 @@ export function BusinessCard({ business }: BusinessCardProps) {
       onClick={handleCardClick}
       className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden border border-gray-100"
     >
-      <div className="h-48 bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center">
+      <div className="relative h-48 bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center">
         {avatarUrl ? (
           <img src={avatarUrl} alt={business.name} className="w-full h-full object-cover" />
         ) : (
@@ -65,6 +74,24 @@ export function BusinessCard({ business }: BusinessCardProps) {
             {business.name.charAt(0).toUpperCase()}
           </div>
         )}
+
+        {/* Quick-action overlay buttons */}
+        <div className="absolute top-2 right-2 flex flex-col gap-1.5" onClick={(e) => e.stopPropagation()}>
+          {isCustomer && (
+            <FavoriteButton
+              type="business"
+              itemId={business.id}
+              familyMemberId={familyMemberId}
+              businessColumn={favoriteBusinessColumn as any}
+              className="!px-2 !py-2 bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white border-0 rounded-lg"
+            />
+          )}
+          {profile && (
+            <div className="px-2 py-2 bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white rounded-lg transition-colors [&_button]:!text-gray-500 [&_button:hover]:!text-red-500">
+              <ReportButton entityType="business" entityId={business.id} compact={true} />
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="p-6">
@@ -72,9 +99,9 @@ export function BusinessCard({ business }: BusinessCardProps) {
           <h3 className="text-xl font-semibold text-gray-900 flex-1">{business.name}</h3>
           <VerificationBadge
             isClaimed={!!business.is_claimed}
-            isUserAdded={!!business.added_by && !business.is_claimed && !business.source}
+            isUserAdded={business.source === 'user_added' || (!!business.added_by && !business.is_claimed && !business.source)}
             isImported={business.source === 'imported'}
-            isSelfRegistered={!!business.owner_id && !business.is_claimed}
+            isSelfRegistered={!!business.owner_id && !business.is_claimed && business.source !== 'user_added'}
             size="sm"
           />
         </div>
@@ -132,26 +159,15 @@ export function BusinessCard({ business }: BusinessCardProps) {
           )}
         </div>
 
-        {isCustomer && (
+        {canWriteReview && (
           <div className="mt-4 pt-4 border-t border-gray-100">
-            <div className="flex gap-2">
-              <FavoriteButton
-                type="business"
-                itemId={business.id}
-                familyMemberId={familyMemberId}
-                className="flex-1"
-                showLabel={true}
-              />
-              {canWriteReview && (
-                <button
-                  onClick={handleReviewClick}
-                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  Recensione
-                </button>
-              )}
-            </div>
+            <button
+              onClick={handleReviewClick}
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm"
+            >
+              <MessageSquare className="w-4 h-4" />
+              Scrivi una recensione
+            </button>
           </div>
         )}
       </div>
@@ -160,6 +176,16 @@ export function BusinessCard({ business }: BusinessCardProps) {
         <ReviewForm
           businessId={business.id}
           businessName={business.name}
+          businessType={
+            (business.source === 'imported' || business.source === 'user_added')
+              ? (business.source as 'imported' | 'user_added')
+              : 'registered'
+          }
+          registeredBusinessLocationId={
+            business.source !== 'imported' && business.source !== 'user_added' && business.location_type === 'registered'
+              ? business.id
+              : undefined
+          }
           onClose={() => setShowReviewForm(false)}
           onSuccess={() => {
             setShowReviewForm(false);

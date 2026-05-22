@@ -43,6 +43,7 @@ interface BusinessLocation {
   phone: string;
   email: string;
   vatNumber: string;
+  categoryId: string;
   businessHours: BusinessHours;
 }
 
@@ -104,6 +105,13 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
   const [businessLocations, setBusinessLocations] = useState<BusinessLocation[]>([]);
   const [businessBillingPeriod, setBusinessBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [hasClaimedLocations, setHasClaimedLocations] = useState(false);
+  const [businessCategories, setBusinessCategories] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    supabase.from('business_categories').select('id, name').order('name').then(({ data }) => {
+      if (data) setBusinessCategories(data);
+    });
+  }, []);
 
   useEffect(() => {
     if (userType === 'business' && businessLocations.length === 0) {
@@ -120,6 +128,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
         phone: '',
         email: '',
         vatNumber: '',
+        categoryId: '',
         businessHours: {
           monday: defaultHours,
           tuesday: defaultHours,
@@ -221,6 +230,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
         phone: loc.phone || '',
         email: loc.email || '',
         vatNumber: '',
+        categoryId: loc.category_id || '',
         businessHours: typeof loc.business_hours === 'string'
           ? JSON.parse(loc.business_hours)
           : (loc.business_hours || defaultBusinessHours),
@@ -287,6 +297,8 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
         for (let i = 0; i < locationCount; i++) {
           newLocations.push({
             name: i === 0 ? 'Sede Principale' : `Sede ${i + 1}`,
+            description: '',
+            services: [],
             address: '',
             streetNumber: '',
             city: '',
@@ -295,6 +307,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             phone: '',
             email: '',
             vatNumber: '',
+            categoryId: '',
             businessHours: {
               monday: defaultHours,
               tuesday: defaultHours,
@@ -372,6 +385,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     officePostalCode: '',
     officeCity: '',
     officeProvince: '',
+    categoryId: '',
   });
 
   const handleCustomerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -426,6 +440,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
       phone: '',
       email: '',
       vatNumber: '',
+      categoryId: '',
       businessHours: {
         monday: defaultHours,
         tuesday: defaultHours,
@@ -811,8 +826,10 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             billing_postal_code: businessForm.billingPostalCode,
             billing_city: businessForm.billingCity,
             billing_province: businessForm.billingProvince,
+            phone: businessForm.phone || null,
             verified: false,
             source_type: 'direct_registration',
+            category_id: businessForm.categoryId || null,
           })
           .select('id')
           .single();
@@ -841,6 +858,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             phone: location.phone || null,
             email: location.email || null,
             business_hours: location.businessHours,
+            category_id: location.categoryId || null,
           }));
 
           const { error: registeredLocationsError } = await supabase
@@ -1763,6 +1781,24 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             </div>
 
             <div className="mb-3">
+              <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 mb-1">
+                Categoria Attivita
+              </label>
+              <select
+                id="categoryId"
+                name="categoryId"
+                value={businessForm.categoryId}
+                onChange={(e) => setBusinessForm(prev => ({ ...prev, categoryId: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              >
+                <option value="">Seleziona una categoria</option>
+                {businessCategories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mb-3">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email
               </label>
@@ -1964,6 +2000,22 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />
+              </div>
+
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Categoria Sede (opzionale)
+                </label>
+                <select
+                  value={location.categoryId}
+                  onChange={(e) => updateBusinessLocation(index, 'categoryId', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                >
+                  <option value="">Stessa categoria dell'azienda</option>
+                  {businessCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="mb-3">

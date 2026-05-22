@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Save, Briefcase, MapPin, Star, FileText, Plus } from 'lucide-react';
+import { X, Save, Briefcase, MapPin, Star, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../common/Toast';
@@ -31,7 +31,6 @@ export function ProfessionalProfileForm({ onSaved, onCancel, existingProfile, fa
   const { user } = useAuth();
   const { showToast } = useToast();
   const [saving, setSaving] = useState(false);
-  const [skillInput, setSkillInput] = useState('');
 
   const [form, setForm] = useState({
     profession: existingProfile?.profession || '',
@@ -40,7 +39,7 @@ export function ProfessionalProfileForm({ onSaved, onCancel, existingProfile, fa
     region: existingProfile?.region || '',
     experience_years: existingProfile?.experience_years ?? 0,
     summary: existingProfile?.summary || '',
-    skills: existingProfile?.skills || [] as string[],
+    skillsText: (existingProfile?.skills || []).join(', '),
   });
 
   useEffect(() => {
@@ -52,22 +51,10 @@ export function ProfessionalProfileForm({ onSaved, onCancel, existingProfile, fa
         region: existingProfile.region,
         experience_years: existingProfile.experience_years,
         summary: existingProfile.summary,
-        skills: existingProfile.skills,
+        skillsText: (existingProfile.skills || []).join(', '),
       });
     }
   }, [existingProfile]);
-
-  const addSkill = () => {
-    const s = skillInput.trim();
-    if (s && !form.skills.includes(s)) {
-      setForm(prev => ({ ...prev, skills: [...prev.skills, s] }));
-    }
-    setSkillInput('');
-  };
-
-  const removeSkill = (skill: string) => {
-    setForm(prev => ({ ...prev, skills: prev.skills.filter(s => s !== skill) }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,7 +76,7 @@ export function ProfessionalProfileForm({ onSaved, onCancel, existingProfile, fa
         region: form.region.trim(),
         experience_years: Number(form.experience_years) || 0,
         summary: form.summary.trim(),
-        skills: form.skills,
+        skills: form.skillsText.split(',').map(s => s.trim()).filter(Boolean),
       };
 
       let result;
@@ -208,35 +195,14 @@ export function ProfessionalProfileForm({ onSaved, onCancel, existingProfile, fa
       {/* Skills */}
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1.5">Competenze</label>
-        <div className="flex gap-2 mb-2">
-          <input
-            type="text"
-            value={skillInput}
-            onChange={(e) => setSkillInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSkill(); } }}
-            placeholder="Aggiungi una competenza e premi Invio"
-            className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-          />
-          <button
-            type="button"
-            onClick={addSkill}
-            className="px-3 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
-        {form.skills.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {form.skills.map(skill => (
-              <span key={skill} className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full border border-blue-100">
-                {skill}
-                <button type="button" onClick={() => removeSkill(skill)} className="hover:text-blue-900 ml-0.5">
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
+        <textarea
+          rows={3}
+          value={form.skillsText}
+          onChange={(e) => setForm(prev => ({ ...prev, skillsText: e.target.value }))}
+          placeholder="Es. JavaScript, Excel, Inglese, Saldatura, AutoCAD..."
+          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
+        />
+        <p className="text-xs text-gray-400 mt-1">Scrivi le tue competenze separate da virgola</p>
       </div>
 
       {/* Actions */}

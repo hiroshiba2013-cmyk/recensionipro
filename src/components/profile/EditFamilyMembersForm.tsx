@@ -15,6 +15,7 @@ interface FamilyMember {
   fiscal_code: string;
   avatar_url: string | null;
   resume_url: string | null;
+  category_id: string | null;
 }
 
 interface SubscriptionPlan {
@@ -45,10 +46,14 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
   const [nextPlan, setNextPlan] = useState<SubscriptionPlan | null>(null);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     loadFamilyMembers();
     loadSubscriptionData();
+    supabase.from('business_categories').select('id, name').order('name').then(({ data }) => {
+      if (data) setCategories(data);
+    });
   }, [customerId]);
 
   const loadFamilyMembers = async () => {
@@ -122,6 +127,7 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
         fiscal_code: '',
         avatar_url: null,
         resume_url: null,
+        category_id: null,
       },
     ]);
   };
@@ -220,6 +226,7 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
               relationship: member.relationship,
               date_of_birth: member.date_of_birth,
               fiscal_code: member.fiscal_code,
+              category_id: member.category_id || null,
             });
 
           if (error) throw error;
@@ -233,6 +240,7 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
               relationship: member.relationship,
               date_of_birth: member.date_of_birth,
               fiscal_code: member.fiscal_code,
+              category_id: member.category_id || null,
             })
             .eq('id', member.id);
 
@@ -421,9 +429,17 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
                       {new Date(member.date_of_birth).toLocaleDateString('it-IT')}
                     </p>
                   </div>
-                  <div className="md:col-span-2">
+                  <div>
                     <p className="text-sm text-gray-600 mb-1">Codice Fiscale</p>
                     <p className="text-lg font-semibold text-gray-900">{member.fiscal_code}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Categoria</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {member.category_id
+                        ? categories.find(c => c.id === member.category_id)?.name || '-'
+                        : '-'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -614,7 +630,7 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
                   />
                 </div>
 
-                <div className="md:col-span-2">
+                <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Codice Fiscale
                   </label>
@@ -626,6 +642,19 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
                     maxLength={16}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Categoria
+                  </label>
+                  <SearchableSelect
+                    value={member.category_id || ''}
+                    onChange={(value) => handleChange(member.id, 'category_id', value)}
+                    options={categories.map(cat => ({ value: cat.id, label: cat.name }))}
+                    placeholder="Seleziona la categoria"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Viene mostrata nelle attivita aggiunte da questo membro</p>
                 </div>
               </div>
             </div>

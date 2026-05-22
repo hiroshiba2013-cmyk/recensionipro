@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Trash2, Eye, X as CloseIcon, FilterX, Save, FileEdit as Edit, CircleUser as UserCircle, MapPin, UserPlus, CreditCard, CheckCircle, Clock, AlertCircle, ChevronDown } from 'lucide-react';
+import { Users, Trash2, Eye, X as CloseIcon, FilterX, Save, FileEdit as Edit, CircleUser as UserCircle, MapPin, UserPlus, CreditCard, CheckCircle, Clock, AlertCircle, ChevronDown, Tag } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
 
@@ -16,6 +16,8 @@ interface User {
   phone?: string;
   fiscal_code?: string;
   billing_address?: string;
+  billing_street?: string;
+  billing_street_number?: string;
   billing_city?: string;
   billing_province?: string;
   billing_postal_code?: string;
@@ -28,10 +30,15 @@ interface User {
   pec_email?: string;
   website_url?: string;
   description?: string;
+  category_id?: string;
   office_address?: string;
+  office_street?: string;
+  office_street_number?: string;
   office_city?: string;
   office_province?: string;
   office_postal_code?: string;
+  // internal reference to registered_businesses id
+  _rb_id?: string;
 }
 
 interface SubscriptionPlan {
@@ -73,11 +80,15 @@ interface BusinessLocation {
   name: string;
   internal_name?: string;
   address: string;
+  street?: string;
+  street_number?: string;
   city: string;
   province: string;
   postal_code?: string;
   phone?: string;
   email?: string;
+  category_id?: string;
+  vat_number?: string;
 }
 
 interface BusinessLocationRow {
@@ -111,9 +122,13 @@ export default function UsersManagementSection() {
   const [expandedBusinessLocationsUserId, setExpandedBusinessLocationsUserId] = useState<string | null>(null);
   const [showAddMemberForm, setShowAddMemberForm] = useState(false);
   const [newMember, setNewMember] = useState<Omit<FamilyMember, 'id'>>({ first_name: '', last_name: '', nickname: '', date_of_birth: '', relationship: '', fiscal_code: '' });
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     loadUsers();
+    supabase.from('business_categories').select('id, name').order('name').then(({ data }) => {
+      if (data) setCategories(data);
+    });
   }, [filterType]);
 
   const loadUsers = async () => {
@@ -290,16 +305,17 @@ export default function UsersManagementSection() {
       // Poi carichiamo le location collegate al business
       const { data, error } = await supabase
         .from('registered_business_locations')
-        .select('id, name, internal_name, street, street_number, city, province, postal_code, phone, email')
+        .select('id, name, internal_name, street, street_number, city, province, postal_code, phone, email, category_id, vat_number')
         .eq('business_id', business.id)
         .order('name');
 
       if (error) throw error;
 
-      // Trasforma i dati per compatibilità con l'interfaccia BusinessLocation
       const locations = (data || []).map(loc => ({
         ...loc,
-        address: `${loc.street}${loc.street_number ? ' ' + loc.street_number : ''}`
+        address: `${loc.street || ''}${loc.street_number ? ' ' + loc.street_number : ''}`.trim(),
+        street: loc.street || '',
+        street_number: loc.street_number || '',
       }));
 
       setBusinessLocations(locations);
@@ -324,17 +340,32 @@ export default function UsersManagementSection() {
         if (!error && businessData) {
           enrichedUser = {
             ...enrichedUser,
+            _rb_id: businessData.id,
             company_name: businessData.name || user.company_name,
             vat_number: businessData.vat_number || user.vat_number,
             unique_code: businessData.unique_code || user.unique_code,
             ateco_code: businessData.ateco_code || user.ateco_code,
             pec_email: businessData.pec_email || user.pec_email,
-            website_url: businessData.website || user.website_url,
+            phone: businessData.phone || user.phone,
+            website_url: businessData.website_url || businessData.website || user.website_url,
             description: businessData.description || user.description,
-            billing_address: businessData.billing_street || user.billing_address,
+            category_id: businessData.category_id || user.category_id,
+            billing_street: businessData.billing_street || '',
+            billing_street_number: businessData.billing_street_number || '',
+            billing_address: businessData.billing_street
+              ? `${businessData.billing_street}${businessData.billing_street_number ? ' ' + businessData.billing_street_number : ''}`
+              : (user.billing_address || ''),
             billing_city: businessData.billing_city || user.billing_city,
             billing_province: businessData.billing_province || user.billing_province,
             billing_postal_code: businessData.billing_postal_code || user.billing_postal_code,
+            office_street: businessData.office_street || '',
+            office_street_number: businessData.office_street_number || '',
+            office_address: businessData.office_street
+              ? `${businessData.office_street}${businessData.office_street_number ? ' ' + businessData.office_street_number : ''}`
+              : (user.office_address || ''),
+            office_city: businessData.office_city || user.office_city,
+            office_province: businessData.office_province || user.office_province,
+            office_postal_code: businessData.office_postal_code || user.office_postal_code,
           };
         }
       } catch (error) {
@@ -440,16 +471,19 @@ export default function UsersManagementSection() {
 
     try {
       const { error } = await supabase
-        .from('business_locations')
+        .from('registered_business_locations')
         .update({
           name: editedLocation.name,
-          internal_name: editedLocation.internal_name,
-          address: editedLocation.address,
+          internal_name: editedLocation.internal_name || null,
+          street: editedLocation.street || null,
+          street_number: editedLocation.street_number || null,
           city: editedLocation.city,
           province: editedLocation.province,
-          postal_code: editedLocation.postal_code,
-          phone: editedLocation.phone,
-          email: editedLocation.email,
+          postal_code: editedLocation.postal_code || null,
+          phone: editedLocation.phone || null,
+          email: editedLocation.email || null,
+          category_id: editedLocation.category_id || null,
+          vat_number: editedLocation.vat_number || null,
         })
         .eq('id', editedLocation.id);
 
@@ -470,35 +504,59 @@ export default function UsersManagementSection() {
 
     setSaving(true);
     try {
-      const { error } = await supabase
+      // Always update profiles (works for all user types)
+      const profileUpdate: Record<string, any> = {
+        full_name: editedUser.full_name,
+        nickname: editedUser.nickname,
+        email: editedUser.email,
+        phone: editedUser.phone,
+        fiscal_code: editedUser.fiscal_code,
+        billing_address: editedUser.billing_address,
+        billing_city: editedUser.billing_city,
+        billing_province: editedUser.billing_province,
+        billing_postal_code: editedUser.billing_postal_code,
+        date_of_birth: editedUser.date_of_birth,
+        relationship: editedUser.relationship,
+      };
+
+      const { error: profileError } = await supabase
         .from('profiles')
-        .update({
-          full_name: editedUser.full_name,
-          nickname: editedUser.nickname,
-          email: editedUser.email,
-          phone: editedUser.phone,
-          fiscal_code: editedUser.fiscal_code,
-          billing_address: editedUser.billing_address,
-          billing_city: editedUser.billing_city,
-          billing_province: editedUser.billing_province,
-          billing_postal_code: editedUser.billing_postal_code,
-          date_of_birth: editedUser.date_of_birth,
-          relationship: editedUser.relationship,
-          company_name: editedUser.company_name,
-          vat_number: editedUser.vat_number,
-          unique_code: editedUser.unique_code,
-          ateco_code: editedUser.ateco_code,
-          pec_email: editedUser.pec_email,
-          website_url: editedUser.website_url,
-          description: editedUser.description,
-          office_address: editedUser.office_address,
-          office_city: editedUser.office_city,
-          office_province: editedUser.office_province,
-          office_postal_code: editedUser.office_postal_code,
-        })
+        .update(profileUpdate)
         .eq('id', editedUser.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // For business users, also update registered_businesses
+      if (editedUser.user_type === 'business' && editedUser._rb_id) {
+        const rbUpdate: Record<string, any> = {
+          name: editedUser.company_name,
+          vat_number: editedUser.vat_number || null,
+          unique_code: editedUser.unique_code || null,
+          ateco_code: editedUser.ateco_code || null,
+          pec_email: editedUser.pec_email || null,
+          phone: editedUser.phone || null,
+          website_url: editedUser.website_url || null,
+          description: editedUser.description || null,
+          category_id: editedUser.category_id || null,
+          billing_street: editedUser.billing_street || null,
+          billing_street_number: editedUser.billing_street_number || null,
+          billing_city: editedUser.billing_city || null,
+          billing_province: editedUser.billing_province || null,
+          billing_postal_code: editedUser.billing_postal_code || null,
+          office_street: editedUser.office_street || null,
+          office_street_number: editedUser.office_street_number || null,
+          office_city: editedUser.office_city || null,
+          office_province: editedUser.office_province || null,
+          office_postal_code: editedUser.office_postal_code || null,
+        };
+
+        const { error: rbError } = await supabase
+          .from('registered_businesses')
+          .update(rbUpdate)
+          .eq('id', editedUser._rb_id);
+
+        if (rbError) throw rbError;
+      }
 
       showToast('Utente aggiornato con successo!', 'success');
       setViewingUser(editedUser);
@@ -1525,6 +1583,189 @@ export default function UsersManagementSection() {
                           </div>
                         )}
                       </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1 flex items-center gap-1"><Tag className="w-3.5 h-3.5" />Categoria</label>
+                        {isEditing ? (
+                          <select
+                            value={editedUser.category_id || ''}
+                            onChange={(e) => setEditedUser({ ...editedUser, category_id: e.target.value || undefined })}
+                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          >
+                            <option value="">— Nessuna —</option>
+                            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                          </select>
+                        ) : (
+                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                            {categories.find(c => c.id === viewingUser.category_id)?.name || '—'}
+                          </div>
+                        )}
+                      </div>
+                      {/* Sede Legale inline in Dati Aziendali */}
+                      <div className="md:col-span-2 mt-2">
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Sede Legale / Fatturazione</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">Via</label>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={editedUser.billing_street || ''}
+                                onChange={(e) => setEditedUser({ ...editedUser, billing_street: e.target.value })}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            ) : (
+                              <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                                {viewingUser.billing_street || '—'}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">N. Civico</label>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={editedUser.billing_street_number || ''}
+                                onChange={(e) => setEditedUser({ ...editedUser, billing_street_number: e.target.value })}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            ) : (
+                              <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                                {viewingUser.billing_street_number || '—'}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">CAP</label>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={editedUser.billing_postal_code || ''}
+                                onChange={(e) => setEditedUser({ ...editedUser, billing_postal_code: e.target.value })}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                maxLength={5}
+                              />
+                            ) : (
+                              <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                                {viewingUser.billing_postal_code || '—'}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">Città</label>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={editedUser.billing_city || ''}
+                                onChange={(e) => setEditedUser({ ...editedUser, billing_city: e.target.value })}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            ) : (
+                              <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                                {viewingUser.billing_city || '—'}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">Provincia</label>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={editedUser.billing_province || ''}
+                                onChange={(e) => setEditedUser({ ...editedUser, billing_province: e.target.value.toUpperCase() })}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+                                maxLength={2}
+                              />
+                            ) : (
+                              <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 uppercase">
+                                {viewingUser.billing_province || '—'}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      {/* Sede Operativa inline */}
+                      <div className="md:col-span-2 mt-2">
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Sede Operativa (Opzionale)</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">Via</label>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={editedUser.office_street || ''}
+                                onChange={(e) => setEditedUser({ ...editedUser, office_street: e.target.value })}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            ) : (
+                              <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                                {viewingUser.office_street || '—'}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">N. Civico</label>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={editedUser.office_street_number || ''}
+                                onChange={(e) => setEditedUser({ ...editedUser, office_street_number: e.target.value })}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            ) : (
+                              <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                                {viewingUser.office_street_number || '—'}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">CAP</label>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={editedUser.office_postal_code || ''}
+                                onChange={(e) => setEditedUser({ ...editedUser, office_postal_code: e.target.value })}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                maxLength={5}
+                              />
+                            ) : (
+                              <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                                {viewingUser.office_postal_code || '—'}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">Città</label>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={editedUser.office_city || ''}
+                                onChange={(e) => setEditedUser({ ...editedUser, office_city: e.target.value })}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            ) : (
+                              <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                                {viewingUser.office_city || '—'}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">Provincia</label>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={editedUser.office_province || ''}
+                                onChange={(e) => setEditedUser({ ...editedUser, office_province: e.target.value.toUpperCase() })}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+                                maxLength={2}
+                              />
+                            ) : (
+                              <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 uppercase">
+                                {viewingUser.office_province || '—'}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                       <div className="md:col-span-2">
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Descrizione</label>
                         {isEditing ? (
@@ -1537,144 +1778,6 @@ export default function UsersManagementSection() {
                         ) : (
                           <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
                             {viewingUser.description || '—'}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Sede Legale / Fatturazione */}
-                  <div className="bg-gray-50 rounded-xl border border-gray-100 p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Sede Legale / Fatturazione</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Via e Numero Civico</label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={editedUser.billing_address || ''}
-                            onChange={(e) => setEditedUser({ ...editedUser, billing_address: e.target.value })}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        ) : (
-                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
-                            {viewingUser.billing_address || '—'}
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">CAP</label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={editedUser.billing_postal_code || ''}
-                            onChange={(e) => setEditedUser({ ...editedUser, billing_postal_code: e.target.value })}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            maxLength={5}
-                          />
-                        ) : (
-                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
-                            {viewingUser.billing_postal_code || '—'}
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Città</label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={editedUser.billing_city || ''}
-                            onChange={(e) => setEditedUser({ ...editedUser, billing_city: e.target.value })}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        ) : (
-                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
-                            {viewingUser.billing_city || '—'}
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Provincia</label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={editedUser.billing_province || ''}
-                            onChange={(e) => setEditedUser({ ...editedUser, billing_province: e.target.value.toUpperCase() })}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
-                            maxLength={2}
-                          />
-                        ) : (
-                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 uppercase">
-                            {viewingUser.billing_province || '—'}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Sede Operativa */}
-                  <div className="bg-gray-50 rounded-xl border border-gray-100 p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Sede Operativa (Opzionale)</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Via e Numero Civico</label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={editedUser.office_address || ''}
-                            onChange={(e) => setEditedUser({ ...editedUser, office_address: e.target.value })}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        ) : (
-                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
-                            {viewingUser.office_address || '—'}
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">CAP</label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={editedUser.office_postal_code || ''}
-                            onChange={(e) => setEditedUser({ ...editedUser, office_postal_code: e.target.value })}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            maxLength={5}
-                          />
-                        ) : (
-                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
-                            {viewingUser.office_postal_code || '—'}
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Città</label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={editedUser.office_city || ''}
-                            onChange={(e) => setEditedUser({ ...editedUser, office_city: e.target.value })}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        ) : (
-                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
-                            {viewingUser.office_city || '—'}
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Provincia</label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={editedUser.office_province || ''}
-                            onChange={(e) => setEditedUser({ ...editedUser, office_province: e.target.value.toUpperCase() })}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
-                            maxLength={2}
-                          />
-                        ) : (
-                          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 uppercase">
-                            {viewingUser.office_province || '—'}
                           </div>
                         )}
                       </div>
@@ -1800,19 +1903,34 @@ export default function UsersManagementSection() {
                                     )}
                                   </div>
 
-                                  {/* Indirizzo */}
-                                  <div>
-                                    <label className="block text-xs font-semibold text-gray-600 mb-1">Indirizzo</label>
-                                    {isEditingThisLocation ? (
-                                      <input
-                                        type="text"
-                                        value={displayLocation.address}
-                                        onChange={(e) => setEditedLocation({ ...displayLocation, address: e.target.value })}
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                      />
-                                    ) : (
-                                      <p className="text-sm text-gray-700">{displayLocation.address}</p>
-                                    )}
+                                  {/* Via e Numero Civico (separati) */}
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-600 mb-1">Via</label>
+                                      {isEditingThisLocation ? (
+                                        <input
+                                          type="text"
+                                          value={displayLocation.street || ''}
+                                          onChange={(e) => setEditedLocation({ ...displayLocation, street: e.target.value, address: `${e.target.value} ${displayLocation.street_number || ''}`.trim() })}
+                                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                        />
+                                      ) : (
+                                        <p className="text-sm text-gray-700">{displayLocation.street || '—'}</p>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-600 mb-1">N. Civico</label>
+                                      {isEditingThisLocation ? (
+                                        <input
+                                          type="text"
+                                          value={displayLocation.street_number || ''}
+                                          onChange={(e) => setEditedLocation({ ...displayLocation, street_number: e.target.value, address: `${displayLocation.street || ''} ${e.target.value}`.trim() })}
+                                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                        />
+                                      ) : (
+                                        <p className="text-sm text-gray-700">{displayLocation.street_number || '—'}</p>
+                                      )}
+                                    </div>
                                   </div>
 
                                   {/* CAP, Città, Provincia */}
@@ -1886,6 +2004,39 @@ export default function UsersManagementSection() {
                                         />
                                       ) : (
                                         <p className="text-sm text-gray-700">{displayLocation.email || '—'}</p>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* P.IVA Sede e Categoria */}
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-600 mb-1">P.IVA Sede</label>
+                                      {isEditingThisLocation ? (
+                                        <input
+                                          type="text"
+                                          value={displayLocation.vat_number || ''}
+                                          onChange={(e) => setEditedLocation({ ...displayLocation, vat_number: e.target.value })}
+                                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                          maxLength={11}
+                                        />
+                                      ) : (
+                                        <p className="text-sm text-gray-700">{displayLocation.vat_number || '—'}</p>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-600 mb-1 flex items-center gap-1"><Tag className="w-3 h-3" />Categoria</label>
+                                      {isEditingThisLocation ? (
+                                        <select
+                                          value={displayLocation.category_id || ''}
+                                          onChange={(e) => setEditedLocation({ ...displayLocation, category_id: e.target.value || undefined })}
+                                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                        >
+                                          <option value="">— Nessuna —</option>
+                                          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                        </select>
+                                      ) : (
+                                        <p className="text-sm text-gray-700">{categories.find(c => c.id === displayLocation.category_id)?.name || '—'}</p>
                                       )}
                                     </div>
                                   </div>

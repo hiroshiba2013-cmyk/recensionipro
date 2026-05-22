@@ -29,6 +29,7 @@ export function FavoritesSection() {
   const [favoriteJobs, setFavoriteJobs] = useState<FavoriteItem[]>([]);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [counts, setCounts] = useState({ businesses: 0, ads: 0, jobs: 0 });
 
   useEffect(() => {
     if (user && profile) {
@@ -36,6 +37,25 @@ export function FavoritesSection() {
       loadFamilyMembers();
     }
   }, [user, profile, activeTab]);
+
+  // Carica i conteggi di tutti i tab al mount per i badge
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const [bRes, aRes, jRes] = await Promise.all([
+          supabase.from('favorite_businesses').select('id').eq('user_id', user.id),
+          supabase.from('favorite_classified_ads').select('id').eq('user_id', user.id),
+          supabase.from('favorite_job_postings').select('id').eq('user_id', user.id),
+        ]);
+        setCounts({
+          businesses: bRes.data?.length ?? 0,
+          ads: aRes.data?.length ?? 0,
+          jobs: jRes.data?.length ?? 0,
+        });
+      } catch {}
+    })();
+  }, [user]);
 
   const loadFamilyMembers = async () => {
     if (!profile) return;
@@ -66,7 +86,9 @@ export function FavoritesSection() {
             family_member_id,
             business_id,
             business_location_id,
-            unclaimed_business_location_id
+            unclaimed_business_location_id,
+            registered_business_location_id,
+            registered_business_id
           `)
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
@@ -76,14 +98,60 @@ export function FavoritesSection() {
           return;
         }
 
-        console.log('Favorites data from DB:', favoritesData);
 
         const enrichedFavorites = await Promise.all(
           favoritesData.map(async (fav: any) => {
             let itemData = null;
 
-            if (fav.business_location_id) {
-              // Per sedi specifiche di business rivendicati
+            if (fav.registered_business_location_id) {
+              // Sede di attività registrata (sistema nuovo)
+              const { data: rblData } = await supabase
+                .from('registered_business_locations')
+                .select(`
+                  id,
+                  name,
+                  internal_name,
+                  street,
+                  city,
+                  phone,
+                  registered_businesses!business_id(id, name)
+                `)
+                .eq('id', fav.registered_business_location_id)
+                .maybeSingle();
+
+              if (rblData) {
+                const rb = (rblData as any).registered_businesses;
+                itemData = {
+                  id: rblData.id,
+                  business_id: rb?.id || rblData.id,
+                  address: rblData.street,
+                  city: rblData.city,
+                  phone: rblData.phone,
+                  businesses: { name: rb?.name || rblData.internal_name || rblData.name || 'Attività' },
+                  is_registered: true
+                };
+              }
+            } else if (fav.registered_business_id) {
+              // Attività registrata senza sede specifica
+              const { data: rbData } = await supabase
+                .from('registered_businesses')
+                .select('id, name, phone, billing_city')
+                .eq('id', fav.registered_business_id)
+                .maybeSingle();
+
+              if (rbData) {
+                itemData = {
+                  id: rbData.id,
+                  business_id: rbData.id,
+                  address: null,
+                  city: (rbData as any).billing_city || null,
+                  phone: (rbData as any).phone || null,
+                  businesses: { name: (rbData as any).name || 'Attività' },
+                  is_registered: true
+                };
+              }
+            } else if (fav.business_location_id) {
+              // Per sedi specifiche di business rivendicati (sistema legacy)
               const { data: locationData } = await supabase
                 .from('business_locations')
                 .select(`
@@ -171,8 +239,8 @@ export function FavoritesSection() {
         );
 
         const filteredFavorites = enrichedFavorites.filter(f => f.item !== null);
-        console.log('Enriched favorites:', filteredFavorites);
         setFavoriteBusinesses(filteredFavorites);
+        setCounts(prev => ({ ...prev, businesses: filteredFavorites.length }));
       } else if (activeTab === 'ads') {
         const { data } = await supabase
           .from('favorite_classified_ads')
@@ -193,6 +261,7 @@ export function FavoritesSection() {
           .order('created_at', { ascending: false });
 
         setFavoriteAds(data || []);
+        setCounts(prev => ({ ...prev, ads: data?.length ?? prev.ads }));
       } else if (activeTab === 'jobs') {
         const { data } = await supabase
           .from('favorite_job_postings')
@@ -214,6 +283,7 @@ export function FavoritesSection() {
           .order('created_at', { ascending: false });
 
         setFavoriteJobs(data || []);
+        setCounts(prev => ({ ...prev, jobs: data?.length ?? prev.jobs }));
       }
     } catch (error) {
       console.error('Error loading favorites:', error);
@@ -258,11 +328,7 @@ export function FavoritesSection() {
     return acc;
   }, {} as Record<string, FavoriteItem[]>);
 
-  console.log('Grouped businesses:', groupedBusinesses);
-  console.log('Active tab:', activeTab);
-  console.log('Loading:', loading);
-
-  const groupedAds = favoriteAds.reduce((acc, fav) => {
+const groupedAds = favoriteAds.reduce((acc, fav) => {
     const owner = fav.family_member_id || 'main';
     if (!acc[owner]) acc[owner] = [];
     acc[owner].push(fav);
@@ -284,6 +350,8 @@ export function FavoritesSection() {
       e.stopPropagation();
       if (business.is_unclaimed) {
         navigate(`/business/unclaimed/${business.id}`);
+      } else if (business.is_registered) {
+        navigate(`/business/${business.business_id}`);
       } else {
         navigate(`/business/${business.business_id}`);
       }
@@ -422,6 +490,11 @@ export function FavoritesSection() {
         >
           <Building2 className="w-5 h-5" />
           Attività
+          {counts.businesses > 0 && (
+            <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full">
+              {counts.businesses}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveTab('ads')}
@@ -433,6 +506,11 @@ export function FavoritesSection() {
         >
           <ShoppingBag className="w-5 h-5" />
           Annunci
+          {counts.ads > 0 && (
+            <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full">
+              {counts.ads}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveTab('jobs')}
@@ -444,6 +522,11 @@ export function FavoritesSection() {
         >
           <Briefcase className="w-5 h-5" />
           Offerte di Lavoro
+          {counts.jobs > 0 && (
+            <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full">
+              {counts.jobs}
+            </span>
+          )}
         </button>
       </div>
 

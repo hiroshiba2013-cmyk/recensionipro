@@ -23,7 +23,7 @@ export function LocationSelectorDropdown() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (businessLocations.length === 0) {
+  if (businessLocations.length <= 1) {
     return null;
   }
 

@@ -83,8 +83,8 @@ export default function AuctionsSection() {
         .from('auctions')
         .select(`
           *,
-          user:user_id(full_name, nickname, email),
-          winner:winner_id(full_name, nickname),
+          user:profiles!auctions_user_id_fkey(full_name, nickname, email),
+          winner:profiles!auctions_winner_id_fkey(full_name, nickname),
           bid_count:auction_bids(count)
         `)
         .order('created_at', { ascending: false });

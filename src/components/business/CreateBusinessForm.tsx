@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Building, X, Save, Search, PlusCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
@@ -7,20 +7,10 @@ import { ClaimBusinessLocationsForm } from './ClaimBusinessLocationsForm';
 import { getPlanDisplayName } from '../../lib/subscription-helper';
 import { useToast } from '../common/Toast';
 
-const businessCategories = [
-  'Ristorante',
-  'Bar/Caffetteria',
-  'Hotel/B&B',
-  'Negozio',
-  'Parrucchiere/Barbiere',
-  'Centro Estetico',
-  'Palestra',
-  'Supermercato',
-  'Farmacia',
-  'Officina',
-  'Lavanderia',
-  'Altro'
-];
+interface Category {
+  id: string;
+  name: string;
+}
 
 interface UnclaimedLocation {
   id: string;
@@ -71,9 +61,10 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
   const [saving, setSaving] = useState(false);
   const [checkingVat, setCheckingVat] = useState(false);
   const [existingBusiness, setExistingBusiness] = useState<ExistingBusinessInfo | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState({
     name: '',
-    category: '',
+    category_id: '',
     city: '',
     province: '',
     address: '',
@@ -94,6 +85,12 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
     billing_city: '',
     billing_province: '',
   });
+
+  useEffect(() => {
+    supabase.from('business_categories').select('id, name').order('name').then(({ data }) => {
+      if (data) setCategories(data);
+    });
+  }, []);
 
   const checkVatNumber = async (vat: string) => {
     if (vat.length !== 11) return;
@@ -172,7 +169,7 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
       const firstLocation = locations[0];
       setFormData({
         name: firstLocation.name,
-        category: '',
+        category_id: firstLocation.category_id || '',
         city: firstLocation.city,
         province: firstLocation.province,
         address: firstLocation.street,
@@ -209,7 +206,7 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
         .insert({
           owner_id: ownerId,
           name: formData.name,
-          category_id: claimedLocations[0]?.category_id || null,
+          category_id: formData.category_id || claimedLocations[0]?.category_id || null,
           city: formData.city,
           province: formData.province,
           address: formData.address,
@@ -761,6 +758,23 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Categoria Attivita *
+              </label>
+              <select
+                value={formData.category_id}
+                onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Seleziona categoria</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -942,24 +956,6 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Categoria *
-                </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Seleziona categoria</option>
-                  {businessCategories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </div>
           </div>
         )}

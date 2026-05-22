@@ -37,6 +37,7 @@ export interface BusinessData {
   officePostalCode?: string;
   officeCity?: string;
   officeProvince?: string;
+  categoryId?: string;
 }
 
 export interface BusinessLocation {

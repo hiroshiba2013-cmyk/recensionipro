@@ -105,6 +105,7 @@ export function DashboardPageNew() {
   const [showClassifiedAdForm, setShowClassifiedAdForm] = useState(false);
   const [editingClassifiedAdId, setEditingClassifiedAdId] = useState<string | undefined>(undefined);
   const [customerClassifiedAds, setCustomerClassifiedAds] = useState<any[]>([]);
+  const [favBusinessesCount, setFavBusinessesCount] = useState(0);
   const [showCustomerAdForm, setShowCustomerAdForm] = useState(false);
   const [editingCustomerAdId, setEditingCustomerAdId] = useState<string | undefined>(undefined);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
@@ -265,8 +266,7 @@ export function DashboardPageNew() {
                   .select(`
                     *,
                     customer:profiles!customer_id(full_name),
-                    responses:review_responses(*),
-                    business_location:registered_business_locations(internal_name, city)
+                    responses:review_responses(*)
                   `)
                   .in('business_location_id', locationIds)
                   .eq('review_status', 'approved')
@@ -403,6 +403,13 @@ export function DashboardPageNew() {
         }
         const { data: adsData } = await adsQuery;
         if (adsData) setCustomerClassifiedAds(adsData);
+
+        // Conteggio attività preferite
+        const { data: favData } = await supabase
+          .from('favorite_businesses')
+          .select('id')
+          .eq('user_id', profile.id);
+        setFavBusinessesCount(favData?.length ?? 0);
       }
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -934,7 +941,7 @@ export function DashboardPageNew() {
                       { key: 'ads', label: 'I Tuoi Annunci', icon: Tag, color: 'green', badge: customerClassifiedAds.length > 0 ? String(customerClassifiedAds.length) : null },
                       { key: 'auctions_customer', label: 'Le Mie Aste', icon: TrendingUp, color: 'orange', badge: null },
                       { key: 'fav_ads', label: 'Annunci Preferiti', icon: Heart, color: 'red', badge: null },
-                      { key: 'fav_businesses', label: 'Attività Preferite', icon: Building, color: 'rose', badge: null },
+                      { key: 'fav_businesses', label: 'Attività Preferite', icon: Building, color: 'rose', badge: favBusinessesCount > 0 ? String(favBusinessesCount) : null },
                     ].map(({ key, label, icon: Icon, color, badge }) => {
                       const colorMap: Record<string, string> = {
                         yellow: openSections[key] ? 'bg-yellow-500 text-white border-yellow-500' : 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100',

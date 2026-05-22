@@ -4,6 +4,7 @@ import { supabase, BusinessCategory } from '../lib/supabase';
 import { LocationCard } from '../components/business/LocationCard';
 import { AdvancedSearch, SearchFilters } from '../components/search/AdvancedSearch';
 import { PROVINCE_TO_CODE } from '../lib/cities';
+import { useAuth } from '../contexts/AuthContext';
 
 interface BusinessLocation {
   id: string;
@@ -61,12 +62,64 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 ];
 
 export function SearchResultsPage() {
+  const { user } = useAuth();
   const [locations, setLocations] = useState<BusinessLocation[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [initialFilters, setInitialFilters] = useState<SearchFilters | null>(null);
   const [currentSearch, setCurrentSearch] = useState(window.location.search);
   const [sortBy, setSortBy] = useState<SortOption>('default');
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(() => {
+    // Restore from sessionStorage on mount so favorites survive navigation
+    if (!user) return new Set();
+    try {
+      const stored = sessionStorage.getItem('searchFavoriteIds');
+      return stored ? new Set<string>(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  const persistFavoriteIds = (set: Set<string>) => {
+    try {
+      sessionStorage.setItem('searchFavoriteIds', JSON.stringify([...set]));
+    } catch {}
+    setFavoriteIds(set);
+  };
+
+  const loadFavoriteIds = async (locs: BusinessLocation[]) => {
+    if (!user) return;
+    if (locs.length === 0) {
+      persistFavoriteIds(new Set());
+      return;
+    }
+    const ids = locs.map(l => l.id);
+    const { data: favData } = await supabase
+      .from('favorite_businesses')
+      .select('unclaimed_business_location_id, registered_business_location_id')
+      .eq('user_id', user.id)
+      .or(
+        `unclaimed_business_location_id.in.(${ids.join(',')}),registered_business_location_id.in.(${ids.join(',')})`
+      );
+    if (favData) {
+      const favSet = new Set<string>();
+      favData.forEach((f: any) => {
+        if (f.unclaimed_business_location_id) favSet.add(f.unclaimed_business_location_id);
+        if (f.registered_business_location_id) favSet.add(f.registered_business_location_id);
+      });
+      persistFavoriteIds(favSet);
+    }
+  };
+
+  // Reload when user authenticates after locations already loaded
+  useEffect(() => {
+    if (user && locations.length > 0) {
+      loadFavoriteIds(locations);
+    }
+    if (!user) {
+      persistFavoriteIds(new Set());
+    }
+  }, [user]);
 
   useEffect(() => {
     const handleLocationChange = () => {
@@ -171,6 +224,8 @@ export function SearchResultsPage() {
           category: location.category_id && location.category_name ? { id: location.category_id, name: location.category_name, icon: '' } : null
         },
         added_by: location.added_by || null,
+        source: location.result_source || null,
+        location_type: location.location_type || null,
         category_name: location.category_name || null,
         avg_rating: 0,
         review_count: 0
@@ -181,17 +236,23 @@ export function SearchResultsPage() {
         return;
       }
 
-      // Fetch ratings in bulk for all locations
+      // Fetch ratings in bulk — split into 3 separate IN queries to avoid huge OR strings
       const allIds = allLocations.map(loc => loc.id);
-      const { data: ratingsData } = await supabase
-        .from('reviews')
-        .select('business_id, unclaimed_business_location_id, overall_rating, review_type')
-        .eq('review_status', 'approved')
-        .or(`business_id.in.(${allIds.join(',')}),unclaimed_business_location_id.in.(${allIds.join(',')})`);
+      const FIELDS = 'business_id, unclaimed_business_location_id, registered_business_location_id, overall_rating, review_type';
+      const [rRegistered, rUnclaimed, rLegacy] = await Promise.all([
+        supabase.from('reviews').select(FIELDS).eq('review_status', 'approved').in('registered_business_location_id', allIds),
+        supabase.from('reviews').select(FIELDS).eq('review_status', 'approved').in('unclaimed_business_location_id', allIds),
+        supabase.from('reviews').select(FIELDS).eq('review_status', 'approved').in('business_id', allIds),
+      ]);
+      const ratingsData = [
+        ...(rRegistered.data || []),
+        ...(rUnclaimed.data || []),
+        ...(rLegacy.data || []),
+      ];
 
       const ratingMap: Record<string, { sum: number; count: number; byType: Record<string, { sum: number; count: number }> }> = {};
-      (ratingsData || []).forEach((r: any) => {
-        const id = r.business_id || r.unclaimed_business_location_id;
+      ratingsData.forEach((r: any) => {
+        const id = r.registered_business_location_id || r.unclaimed_business_location_id || r.business_id;
         if (!id) return;
         if (!ratingMap[id]) ratingMap[id] = { sum: 0, count: 0, byType: {} };
         ratingMap[id].sum += r.overall_rating || 0;
@@ -205,7 +266,8 @@ export function SearchResultsPage() {
       const MANAGEMENT_TYPES = ['booking_not_completed', 'quote_request', 'customer_service', 'problem_before_service'];
 
       let locationsWithRatings = allLocations.map(loc => {
-        const rid = loc.business_id || loc.id;
+        // Use loc.id as key — ratings are keyed by the location ID (registered_business_location_id / unclaimed_business_location_id)
+        const rid = loc.id;
         const r = ratingMap[rid];
         const byType = r?.byType || {};
 
@@ -281,6 +343,7 @@ export function SearchResultsPage() {
       });
 
       setLocations(locationsWithRatings);
+      await loadFavoriteIds(locationsWithRatings);
     } catch (error) {
       console.error('Error during search:', error);
       setLocations([]);
@@ -434,6 +497,15 @@ export function SearchResultsPage() {
               <LocationCard
                 key={location.id}
                 location={location}
+                initialIsFavorite={favoriteIds.has(location.id)}
+                onFavoriteToggle={(id, isFav) => {
+                  setFavoriteIds(prev => {
+                    const next = new Set(prev);
+                    if (isFav) next.add(id); else next.delete(id);
+                    try { sessionStorage.setItem('searchFavoriteIds', JSON.stringify([...next])); } catch {}
+                    return next;
+                  });
+                }}
               />
             ))}
           </div>

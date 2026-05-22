@@ -10,6 +10,7 @@ interface ReviewFormProps {
   businessType?: 'imported' | 'user_added' | 'registered';
   businessLocationId?: string;
   unclaimedBusinessLocationId?: string;
+  registeredBusinessLocationId?: string;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -29,6 +30,7 @@ export function ReviewForm({
   businessType,
   businessLocationId,
   unclaimedBusinessLocationId,
+  registeredBusinessLocationId,
   onClose,
   onSuccess
 }: ReviewFormProps) {
@@ -85,11 +87,13 @@ export function ReviewForm({
     { value: 'problem_before_service', label: 'Ho avuto un problema prima dell\'erogazione', icon: '⚠', color: 'amber' }
   ];
 
+  const OPTIONAL_KEYS = new Set(['service_gestione', 'booking_gestione']);
+
   const getRatingGroupsForType = (type: ReviewType): RatingGroup[] => {
     switch (type) {
       case 'service_used':
         return [
-          { key: 'service_gestione', label: 'Gestione Prenotazione', value: serviceGestionePrenotazione, setter: setServiceGestionePrenotazione },
+          { key: 'service_gestione', label: 'Gestione Prenotazione (facoltativo)', value: serviceGestionePrenotazione, setter: setServiceGestionePrenotazione },
           { key: 'service_affidabilita', label: 'Affidabilità', value: serviceAffidabilita, setter: setServiceAffidabilita },
           { key: 'service_organizzazione', label: 'Organizzazione', value: serviceOrganizzazione, setter: setServiceOrganizzazione },
           { key: 'service_esperienza', label: 'Esperienza/Servizio', value: serviceEsperienza, setter: setServiceEsperienza },
@@ -97,7 +101,7 @@ export function ReviewForm({
         ];
       case 'booking_not_completed':
         return [
-          { key: 'booking_gestione', label: 'Gestione Prenotazione', value: bookingGestionePrenotazione, setter: setBookingGestionePrenotazione },
+          { key: 'booking_gestione', label: 'Gestione Prenotazione (facoltativo)', value: bookingGestionePrenotazione, setter: setBookingGestionePrenotazione },
           { key: 'booking_affidabilita', label: 'Affidabilità', value: bookingAffidabilita, setter: setBookingAffidabilita },
           { key: 'booking_organizzazione', label: 'Organizzazione', value: bookingOrganizzazione, setter: setBookingOrganizzazione },
           { key: 'booking_comunicazione', label: 'Comunicazione', value: bookingComunicazione, setter: setBookingComunicazione },
@@ -130,13 +134,15 @@ export function ReviewForm({
 
   const allRatingsFilledForType = (type: ReviewType): boolean => {
     const groups = getRatingGroupsForType(type);
-    return groups.every(g => g.value > 0);
+    return groups.every(g => OPTIONAL_KEYS.has(g.key) || g.value > 0);
   };
 
   const getAverageRatingForType = (type: ReviewType): number => {
     const groups = getRatingGroupsForType(type);
     if (groups.length === 0 || !allRatingsFilledForType(type)) return 0;
-    return groups.reduce((sum, g) => sum + g.value, 0) / groups.length;
+    const filled = groups.filter(g => g.value > 0);
+    if (filled.length === 0) return 0;
+    return filled.reduce((sum, g) => sum + g.value, 0) / filled.length;
   };
 
   const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -215,11 +221,13 @@ export function ReviewForm({
         customer_id: profile?.id,
         family_member_id: activeProfile && !activeProfile.isOwner ? activeProfile.id : null,
         business_type: businessType || null,
-        business_id: businessType === 'registered' ? businessId : null,
+        business_id: null,
         business_location_id: businessLocationId || null,
-        imported_business_id: businessType === 'imported' ? businessId : null,
-        user_added_business_id: businessType === 'user_added' ? businessId : null,
-        unclaimed_business_location_id: unclaimedBusinessLocationId || (businessType === 'imported' ? businessId : null),
+        imported_business_id: null,
+        user_added_business_id: null,
+        unclaimed_business_location_id: unclaimedBusinessLocationId || (businessType === 'imported' || businessType === 'user_added' ? businessId : null),
+        registered_business_location_id: registeredBusinessLocationId || null,
+        registered_business_id: (businessType === 'registered' && !registeredBusinessLocationId) ? businessId : null,
         review_type: reviewType,
         title,
         content,
@@ -230,13 +238,13 @@ export function ReviewForm({
       };
 
       if (reviewType === 'service_used') {
-        reviewData.booking_management_rating = serviceGestionePrenotazione;
+        reviewData.booking_management_rating = serviceGestionePrenotazione > 0 ? serviceGestionePrenotazione : null;
         reviewData.reliability_rating = serviceAffidabilita;
         reviewData.organization_rating = serviceOrganizzazione;
         reviewData.experience_rating = serviceEsperienza;
         reviewData.price_rating = servicePrezzo;
       } else if (reviewType === 'booking_not_completed') {
-        reviewData.booking_gestione_prenotazione = bookingGestionePrenotazione;
+        reviewData.booking_gestione_prenotazione = bookingGestionePrenotazione > 0 ? bookingGestionePrenotazione : null;
         reviewData.booking_affidabilita = bookingAffidabilita;
         reviewData.booking_organizzazione = bookingOrganizzazione;
         reviewData.booking_comunicazione = bookingComunicazione;
@@ -261,7 +269,15 @@ export function ReviewForm({
         .from('reviews')
         .insert([reviewData]);
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        const isDuplicate = insertError.code === '23505' || insertError.code === '409' || insertError.message?.includes('duplicate') || insertError.message?.includes('unique');
+        if (isDuplicate) {
+          showToast('Hai già inviato una recensione per questa attività.', 'error');
+          onClose();
+          return;
+        }
+        throw insertError;
+      }
 
       showToast('Recensione inviata con successo! Sarà visibile dopo l\'approvazione da parte dell\'amministratore.', 'success');
       onSuccess();
@@ -381,7 +397,7 @@ export function ReviewForm({
                 <h3 className="font-semibold text-lg mb-5 text-gray-900">{getStepTitle(reviewType)}</h3>
 
                 {getRatingGroupsForType(reviewType).map((group) => (
-                  <div key={group.key}>
+                  <div key={group.key} className={OPTIONAL_KEYS.has(group.key) ? 'opacity-70' : ''}>
                     {renderStarRating(group.value, group.setter, group.label)}
                   </div>
                 ))}

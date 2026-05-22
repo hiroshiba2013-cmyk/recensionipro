@@ -57,6 +57,8 @@ interface Review {
   business_id: string | null;
   business_location_id: string | null;
   unclaimed_business_location_id: string | null;
+  registered_business_location_id: string | null;
+  registered_business_id: string | null;
   business_location?: {
     name: string;
     internal_name: string | null;
@@ -74,9 +76,27 @@ interface Review {
     street: string;
     category: { name: string } | null;
   } | null;
+  registered_business_location?: {
+    name: string;
+    internal_name: string | null;
+    city: string;
+    province: string | null;
+    region: string | null;
+    street: string;
+    category: { name: string } | null;
+    parent_business: { name: string } | null;
+  } | null;
+  registered_business?: {
+    name: string;
+  } | null;
   businesses?: {
     name: string;
   } | null;
+  responses?: {
+    id: string;
+    content: string;
+    created_at: string;
+  }[] | null;
 }
 
 const RATING_OPTIONS = [
@@ -124,6 +144,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
   const [locationFilter, setLocationFilter] = useState({ region: '', province: '', city: '' });
   const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [editForm, setEditForm] = useState<Partial<Review> | null>(null);
+  const [showResponseExpanded, setShowResponseExpanded] = useState(false);
 
   const getReviewerName = (review: Review) => {
     if (review.family_member) {
@@ -170,15 +191,15 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
     }
 
     if (locationFilter.region) {
-      const loc = review.business_location || review.unclaimed_business_location;
+      const loc = review.registered_business_location || review.business_location || review.unclaimed_business_location;
       if (!loc || loc.region !== locationFilter.region) return false;
     }
     if (locationFilter.province) {
-      const loc = review.business_location || review.unclaimed_business_location;
+      const loc = review.registered_business_location || review.business_location || review.unclaimed_business_location;
       if (!loc || loc.province !== locationFilter.province) return false;
     }
     if (locationFilter.city) {
-      const loc = review.business_location || review.unclaimed_business_location;
+      const loc = review.registered_business_location || review.business_location || review.unclaimed_business_location;
       if (!loc || loc.city !== locationFilter.city) return false;
     }
 
@@ -219,8 +240,14 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
   };
 
   const getBusinessName = (review: Review) => {
+    if (review.registered_business_location) {
+      return review.registered_business_location.parent_business?.name || review.registered_business?.name || review.registered_business_location.internal_name || review.registered_business_location.name || 'Attività';
+    }
+    if (review.registered_business) {
+      return review.registered_business.name;
+    }
     if (review.business_location) {
-      return review.business_location.internal_name || review.business_location.name || review.businesses?.name || 'Attività';
+      return review.businesses?.name || review.business_location.internal_name || review.business_location.name || 'Attività';
     }
     if (review.unclaimed_business_location) {
       return review.unclaimed_business_location.name;
@@ -231,7 +258,22 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
     return 'Attività non specificata';
   };
 
+  const getLocationName = (review: Review): string | null => {
+    if (review.registered_business_location) {
+      const loc = review.registered_business_location;
+      return loc.internal_name && loc.internal_name !== loc.name ? loc.internal_name : loc.city || null;
+    }
+    if (review.business_location) {
+      const loc = review.business_location;
+      return loc.internal_name || loc.city || null;
+    }
+    return null;
+  };
+
   const getLocationInfo = (review: Review) => {
+    if (review.registered_business_location) {
+      return `${review.registered_business_location.street}, ${review.registered_business_location.city}`;
+    }
     if (review.business_location) {
       return `${review.business_location.address}, ${review.business_location.city}`;
     }
@@ -242,6 +284,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
   };
 
   const getCategoryName = (review: Review): string | null => {
+    if (review.registered_business_location?.category?.name) return review.registered_business_location.category.name;
     if (review.business_location?.category?.name) return review.business_location.category.name;
     if (review.unclaimed_business_location?.category?.name) return review.unclaimed_business_location.category.name;
     return null;
@@ -658,6 +701,9 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                     <Building2 className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="font-semibold text-blue-900">{getBusinessName(review)}</p>
+                      {getLocationName(review) && (
+                        <p className="text-xs font-medium text-blue-700 mb-0.5">Sede: {getLocationName(review)}</p>
+                      )}
                       <div className="flex items-center gap-1 text-sm text-gray-600">
                         <MapPin className="w-3 h-3" />
                         <span>{getLocationInfo(review)}</span>
@@ -682,7 +728,7 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                     Modifica
                   </button>
                   <button
-                    onClick={() => setSelectedReview(review)}
+                    onClick={() => { setSelectedReview(review); setShowResponseExpanded(false); }}
                     className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <Eye className="w-4 h-4" />
@@ -796,6 +842,9 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                     <div>
                       <p className="text-xs text-blue-600 font-medium uppercase tracking-wide mb-0.5">Attività</p>
                       <p className="font-semibold text-blue-900 text-sm">{getBusinessName(selectedReview)}</p>
+                      {getLocationName(selectedReview) && (
+                        <p className="text-xs font-medium text-blue-700 mt-0.5">Sede: {getLocationName(selectedReview)}</p>
+                      )}
                       <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
                         <MapPin className="w-3 h-3" />{getLocationInfo(selectedReview)}
                       </p>
@@ -959,6 +1008,40 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                       ))}
                     </div>
                     <p className="text-xs text-green-700 mt-3 italic">Clicca sulle immagini per aprirle a dimensione completa.</p>
+                  </div>
+                )}
+
+                {/* Risposta dell'attività (collassabile) */}
+                {selectedReview.responses && selectedReview.responses.length > 0 && (
+                  <div className="mb-6">
+                    <button
+                      type="button"
+                      onClick={() => setShowResponseExpanded(v => !v)}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors border border-gray-200"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-gray-600" />
+                        <span className="text-sm font-semibold text-gray-700">Risposta dell'attività</span>
+                        <span className="text-xs bg-gray-300 text-gray-700 px-2 py-0.5 rounded-full font-medium">
+                          {selectedReview.responses.length}
+                        </span>
+                      </div>
+                      {showResponseExpanded ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+                    </button>
+                    {showResponseExpanded && (
+                      <div className="mt-2 space-y-2">
+                        {selectedReview.responses.map((resp) => (
+                          <div key={resp.id} className="pl-4 border-l-4 border-gray-300 bg-gray-50 rounded-r-xl py-3 pr-4">
+                            <p className="text-sm text-gray-800 leading-relaxed">{resp.content}</p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              {new Date(resp.created_at).toLocaleDateString('it-IT', { year: 'numeric', month: 'long', day: 'numeric' })}
+                              {' alle '}
+                              {new Date(resp.created_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 

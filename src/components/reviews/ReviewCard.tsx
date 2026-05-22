@@ -1,10 +1,12 @@
-import { Star, Clock, CheckCircle, MapPin, FileText, User, Tag } from 'lucide-react';
+import { useState } from 'react';
+import { Star, Clock, CheckCircle, MapPin, FileText, User, Tag, ChevronDown, ChevronUp, Building2 } from 'lucide-react';
 import { Review } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import ReportButton from '../moderation/ReportButton';
 
 interface ReviewCardProps {
   review: Review;
+  hideProof?: boolean;
 }
 
 const reviewTypeConfig: Record<string, { label: string; icon: string; bg: string; border: string; pill: string }> = {
@@ -49,8 +51,9 @@ const TYPE_CRITERIA: Record<string, { label: string; field: string }[]> = {
   ],
 };
 
-export function ReviewCard({ review }: ReviewCardProps) {
+export function ReviewCard({ review, hideProof = false }: ReviewCardProps) {
   const { user } = useAuth();
+  const [responseExpanded, setResponseExpanded] = useState(false);
   const isOwnReview = user?.id === review.customer_id;
 
   const formatDate = (date: string) =>
@@ -140,15 +143,27 @@ export function ReviewCard({ review }: ReviewCardProps) {
         )}
 
         {/* Business / location info */}
-        {((review as any).business?.name || (review as any).location_info) && (
-          <div className="flex items-center gap-1.5 mb-3">
-            <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-            <p className="text-xs text-gray-500 truncate">
-              {(review as any).business?.name && <span className="font-medium">{(review as any).business.name}</span>}
-              {(review as any).location_info?.city && <span> &mdash; {(review as any).location_info.city}</span>}
-            </p>
-          </div>
-        )}
+        {(() => {
+          const r = review as any;
+          const bizName =
+            r.business?.name ||
+            r.unclaimed_business?.name ||
+            r.rbl?.rb?.name ||
+            r.registered_business?.name ||
+            r.location_info?.name ||
+            null;
+          if (!bizName) return null;
+          return (
+            <div className="flex items-center gap-1.5 mb-3 px-3 py-2 bg-amber-50 border border-amber-100 rounded-xl">
+              <MapPin className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+              <p className="text-xs text-gray-700 truncate">
+                <span className="text-amber-600 font-semibold text-xs mr-1">Recensione per:</span>
+                <span className="font-bold text-gray-900">{bizName}</span>
+                {r.location_info?.city && <span className="text-gray-500"> &mdash; {r.location_info.city}</span>}
+              </p>
+            </div>
+          );
+        })()}
 
         {/* Title */}
         {review.title && (
@@ -180,8 +195,8 @@ export function ReviewCard({ review }: ReviewCardProps) {
           </div>
         )}
 
-        {/* Proof documents indicator */}
-        {proofDocs.length > 0 && (
+        {/* Proof documents indicator — hidden for business owners */}
+        {proofDocs.length > 0 && !hideProof && (
           <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg">
             <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
             <span className="text-xs font-semibold text-blue-800">
@@ -193,12 +208,26 @@ export function ReviewCard({ review }: ReviewCardProps) {
           </div>
         )}
 
-        {/* Business response */}
+        {/* Business response (collapsible) */}
         {review.responses && review.responses.length > 0 && (
-          <div className="mt-2 pl-4 border-l-2 border-gray-200 bg-gray-50 rounded-r-lg py-3 pr-3">
-            <p className="text-xs font-bold text-gray-700 mb-1">Risposta dell'attività</p>
-            <p className="text-sm text-gray-600">{review.responses[0].content}</p>
-            <p className="text-xs text-gray-400 mt-1">{formatDate(review.responses[0].created_at)}</p>
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => setResponseExpanded(v => !v)}
+              className="w-full flex items-center justify-between px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors border border-gray-200"
+            >
+              <div className="flex items-center gap-2">
+                <Building2 className="w-3.5 h-3.5 text-gray-500" />
+                <span className="text-xs font-semibold text-gray-600">Risposta dell'attività</span>
+              </div>
+              {responseExpanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
+            </button>
+            {responseExpanded && (
+              <div className="mt-1.5 pl-4 border-l-2 border-gray-300 bg-gray-50 rounded-r-xl py-3 pr-3">
+                <p className="text-sm text-gray-700 leading-relaxed">{review.responses[0].content}</p>
+                <p className="text-xs text-gray-400 mt-1">{formatDate(review.responses[0].created_at)}</p>
+              </div>
+            )}
           </div>
         )}
 

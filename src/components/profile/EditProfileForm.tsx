@@ -34,6 +34,7 @@ interface ProfileData {
   office_province?: string;
   office_address?: string;
   business_category_id?: string;
+  category_id?: string;
   description?: string;
 }
 
@@ -77,14 +78,13 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
     office_city: profile.office_city || '',
     office_province: profile.office_province || '',
     business_category_id: profile.business_category_id || '',
+    category_id: profile.category_id || '',
     description: profile.description || '',
   });
 
   useEffect(() => {
-    if (profile.user_type === 'business') {
-      loadCategories();
-    }
-  }, [profile.user_type]);
+    loadCategories();
+  }, []);
 
   const loadCategories = async () => {
     const { data } = await supabase
@@ -124,6 +124,7 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
         billing_province: formData.billing_province.toUpperCase(),
         billing_address: billingAddress,
         full_name: `${formData.first_name} ${formData.last_name}`,
+        category_id: profile.user_type !== 'business' ? (formData.category_id || null) : undefined,
       };
 
       if (profile.user_type === 'business') {
@@ -133,6 +134,7 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
         updateData.pec_email = formData.pec_email;
         updateData.ateco_code = formData.ateco_code;
         updateData.website_url = formData.website_url;
+        updateData.phone = formData.phone || null;
         updateData.office_street = formData.office_street;
         updateData.office_street_number = formData.office_street_number;
         updateData.office_postal_code = formData.office_postal_code;
@@ -190,6 +192,7 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
       office_city: profile.office_city || '',
       office_province: profile.office_province || '',
       business_category_id: profile.business_category_id || '',
+      category_id: profile.category_id || '',
       description: profile.description || '',
     });
     setIsEditing(false);
@@ -307,6 +310,14 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
               <p className="text-sm text-gray-600 mb-1">Telefono</p>
               <p className="text-lg font-semibold text-gray-900">{profile.phone || '-'}</p>
             </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Categoria</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {profile.category_id
+                  ? categories.find(c => c.id === profile.category_id)?.name || '-'
+                  : '-'}
+              </p>
+            </div>
             <div className="md:col-span-2">
               <p className="text-sm text-gray-600 mb-1">Indirizzo di Fatturazione</p>
               <p className="text-lg font-semibold text-gray-900">{profile.billing_address || '-'}</p>
@@ -413,6 +424,20 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
                   onChange={handleChange}
                   required
                   placeholder="Es. azienda@pec.it"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Telefono
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="Es. +39 02 1234567"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -720,6 +745,19 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Categoria
+              </label>
+              <SearchableSelect
+                value={formData.category_id}
+                onChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}
+                options={categories.map(cat => ({ value: cat.id, label: cat.name }))}
+                placeholder="Seleziona la tua categoria"
+              />
+              <p className="text-xs text-gray-500 mt-1">Viene mostrata nelle attivita che aggiungi alla piattaforma</p>
             </div>
           </div>
         )}

@@ -26,6 +26,7 @@ const AuctionsPage = lazy(() => import('../pages/AuctionsPage'));
 const AuctionDetailPage = lazy(() => import('../pages/AuctionDetailPage'));
 const JobSeekerDetailPage = lazy(() => import('../pages/JobSeekerDetailPage').then(m => ({ default: m.JobSeekerDetailPage })));
 const ProfessionalProfilePage = lazy(() => import('../pages/ProfessionalProfilePage').then(m => ({ default: m.ProfessionalProfilePage })));
+const ReviewsPage = lazy(() => import('../pages/ReviewsPage').then(m => ({ default: m.ReviewsPage })));
 
 const RouterContext = createContext<{ params: Record<string, string> }>({ params: {} });
 
@@ -115,7 +116,9 @@ export function Router() {
 
   let page: React.ReactNode = null;
 
-  if (currentPath === '/select-profile') {
+  if (currentPath === '/reviews') {
+    page = <ReviewsPage />;
+  } else if (currentPath === '/select-profile') {
     page = <ProfileSelectionPage />;
   } else if (currentPath === '/search') {
     page = <SearchResultsPage />;

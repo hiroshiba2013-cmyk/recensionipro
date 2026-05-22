@@ -28,6 +28,7 @@ export function ReviewResponseForm({ reviewId, onClose, onSuccess }: ReviewRespo
         .insert({
           review_id: reviewId,
           business_owner_id: profile.id,
+          business_id: null,
           content: content
         });
 

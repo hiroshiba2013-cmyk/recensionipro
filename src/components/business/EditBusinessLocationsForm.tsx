@@ -39,6 +39,7 @@ interface BusinessLocation {
   description?: string | null;
   services?: string;
   services_description?: string | null;
+  category_id?: string | null;
 }
 
 interface EditBusinessLocationsFormProps {
@@ -57,6 +58,13 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
   const [maxLocations, setMaxLocations] = useState<number>(1);
   const [subscriptionPlan, setSubscriptionPlan] = useState<string>('');
   const [isRegisteredBusiness, setIsRegisteredBusiness] = useState(false);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    supabase.from('business_categories').select('id, name').order('name').then(({ data }) => {
+      if (data) setCategories(data);
+    });
+  }, []);
 
   useEffect(() => {
     const loadLocations = async () => {
@@ -354,6 +362,7 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
           description: location.description?.trim() || null,
           services: servicesArray,
           services_description: location.services_description?.trim() || null,
+          ...(isRegisteredBusiness && { category_id: location.category_id || null }),
         };
 
         if (isRegisteredBusiness) {
@@ -677,6 +686,24 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                   />
                   <p className="text-xs text-gray-500 mt-1">Questa descrizione aiuta i clienti a trovare e riconoscere la sede</p>
                 </div>
+
+                {isRegisteredBusiness && (
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Categoria Sede (opzionale)
+                    </label>
+                    <select
+                      value={location.category_id || ''}
+                      onChange={(e) => handleChange(location.id, 'category_id', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Stessa categoria dell'azienda</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
