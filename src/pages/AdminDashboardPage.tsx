@@ -797,6 +797,20 @@ export function AdminDashboardPage() {
           }
 
           entityName = business?.name || '';
+        } else if (report.reported_entity_type === 'job_posting') {
+          const { data: job } = await supabase
+            .from('job_postings')
+            .select('title')
+            .eq('id', report.reported_entity_id)
+            .maybeSingle();
+          entityName = job?.title || '';
+        } else if (report.reported_entity_type === 'product') {
+          const { data: product } = await supabase
+            .from('products')
+            .select('name')
+            .eq('id', report.reported_entity_id)
+            .maybeSingle();
+          entityName = product?.name || '';
         }
       } catch (err) {
         console.error('Error loading entity name:', err);

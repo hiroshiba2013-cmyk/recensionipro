@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { AlertTriangle, CheckCircle, XCircle, Eye, Filter, Search, FileText, MessageSquare, Store, Star, ShoppingBag, Briefcase } from 'lucide-react';
+import { useState } from 'react';
+import { AlertTriangle, CheckCircle, XCircle, Eye, Search, FileText, MessageSquare, Store, Star, ShoppingBag, Briefcase, Package } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
 
@@ -58,12 +58,29 @@ interface BusinessDetails {
   website: string | null;
 }
 
+interface JobPostingDetails {
+  id: string;
+  title: string;
+  description: string;
+  location: string | null;
+  position_type: string | null;
+  company_name: string | null;
+  experience_level: string | null;
+}
+
+interface ProductDetails {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number | null;
+}
+
 interface ReportsSectionProps {
   reports: Report[];
   onReload: () => Promise<void>;
 }
 
-type FilterType = 'all' | 'classified_ad' | 'review' | 'business';
+type FilterType = 'all' | 'classified_ad' | 'review' | 'business' | 'job_posting' | 'product';
 
 export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
   const { showToast } = useToast();
@@ -71,7 +88,7 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [entityDetails, setEntityDetails] = useState<ClassifiedAdDetails | ReviewDetails | BusinessDetails | null>(null);
+  const [entityDetails, setEntityDetails] = useState<ClassifiedAdDetails | ReviewDetails | BusinessDetails | JobPostingDetails | ProductDetails | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
   const handleResolveReport = async (reportId: string) => {
@@ -182,6 +199,24 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
         }
 
         setEntityDetails(data);
+      } else if (report.reported_entity_type === 'job_posting') {
+        const { data, error } = await supabase
+          .from('job_postings')
+          .select('id, title, description, location, position_type, company_name, experience_level')
+          .eq('id', report.reported_entity_id)
+          .maybeSingle();
+
+        if (error) throw error;
+        setEntityDetails(data);
+      } else if (report.reported_entity_type === 'product') {
+        const { data, error } = await supabase
+          .from('products')
+          .select('id, name, description, price')
+          .eq('id', report.reported_entity_id)
+          .maybeSingle();
+
+        if (error) throw error;
+        setEntityDetails(data);
       }
     } catch (error: any) {
       console.error('Error loading entity details:', error);
@@ -205,27 +240,23 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
 
   const getEntityTypeBadgeColor = (type: string) => {
     switch (type) {
-      case 'classified_ad':
-        return 'bg-blue-100 text-blue-800';
-      case 'review':
-        return 'bg-purple-100 text-purple-800';
-      case 'business':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'classified_ad': return 'bg-blue-100 text-blue-800';
+      case 'review': return 'bg-yellow-100 text-yellow-800';
+      case 'business': return 'bg-green-100 text-green-800';
+      case 'job_posting': return 'bg-orange-100 text-orange-800';
+      case 'product': return 'bg-teal-100 text-teal-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getEntityTypeLabel = (type: string) => {
     switch (type) {
-      case 'classified_ad':
-        return 'Annuncio';
-      case 'review':
-        return 'Recensione';
-      case 'business':
-        return 'Attività';
-      default:
-        return type;
+      case 'classified_ad': return 'Annuncio';
+      case 'review': return 'Recensione';
+      case 'business': return 'Attività';
+      case 'job_posting': return 'Offerta Lavoro';
+      case 'product': return 'Prodotto';
+      default: return type;
     }
   };
 
@@ -327,12 +358,14 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
 
         {/* Filter tabs */}
         <div className="relative z-10 mt-4 flex flex-wrap gap-2">
-          {(['all', 'classified_ad', 'review', 'business'] as FilterType[]).map((type) => {
+          {(['all', 'classified_ad', 'review', 'business', 'job_posting', 'product'] as FilterType[]).map((type) => {
             const labels: Record<FilterType, string> = {
               all: 'Tutte',
               classified_ad: 'Annunci',
               review: 'Recensioni',
               business: 'Attività',
+              job_posting: 'Lavoro',
+              product: 'Prodotti',
             };
             const isActive = filterType === type;
             return (
@@ -385,6 +418,8 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
                         {report.reported_entity_type === 'business' && <Store className="w-4 h-4 text-gray-700" />}
                         {report.reported_entity_type === 'classified_ad' && <ShoppingBag className="w-4 h-4 text-gray-700" />}
                         {report.reported_entity_type === 'review' && <Star className="w-4 h-4 text-gray-700" />}
+                        {report.reported_entity_type === 'job_posting' && <Briefcase className="w-4 h-4 text-gray-700" />}
+                        {report.reported_entity_type === 'product' && <Package className="w-4 h-4 text-gray-700" />}
                         {report.entity_name}
                       </p>
                     )}
@@ -474,6 +509,8 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
                         {report.reported_entity_type === 'business' && <Store className="w-3 h-3 text-gray-700" />}
                         {report.reported_entity_type === 'classified_ad' && <ShoppingBag className="w-3 h-3 text-gray-700" />}
                         {report.reported_entity_type === 'review' && <Star className="w-3 h-3 text-gray-700" />}
+                        {report.reported_entity_type === 'job_posting' && <Briefcase className="w-3 h-3 text-gray-700" />}
+                        {report.reported_entity_type === 'product' && <Package className="w-3 h-3 text-gray-700" />}
                         {report.entity_name}
                       </p>
                     )}
@@ -680,6 +717,76 @@ export function ReportsSection({ reports, onReload }: ReportsSectionProps) {
                       <div>
                         <span className="text-gray-600">Descrizione:</span>
                         <p className="font-medium mt-1 text-gray-700">{(entityDetails as BusinessDetails).description}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {!loadingDetails && entityDetails && selectedReport.reported_entity_type === 'job_posting' && (
+                <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <Briefcase className="w-5 h-5 text-orange-600" />
+                    Dettagli Offerta di Lavoro Segnalata
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-gray-600">Titolo:</span>
+                      <p className="font-medium text-gray-900">{(entityDetails as JobPostingDetails).title}</p>
+                    </div>
+                    {(entityDetails as JobPostingDetails).company_name && (
+                      <div>
+                        <span className="text-gray-600">Azienda:</span>
+                        <p className="font-medium">{(entityDetails as JobPostingDetails).company_name}</p>
+                      </div>
+                    )}
+                    {(entityDetails as JobPostingDetails).location && (
+                      <div>
+                        <span className="text-gray-600">Località:</span>
+                        <p className="font-medium">{(entityDetails as JobPostingDetails).location}</p>
+                      </div>
+                    )}
+                    {(entityDetails as JobPostingDetails).position_type && (
+                      <div>
+                        <span className="text-gray-600">Tipo posizione:</span>
+                        <p className="font-medium">{(entityDetails as JobPostingDetails).position_type}</p>
+                      </div>
+                    )}
+                    {(entityDetails as JobPostingDetails).experience_level && (
+                      <div>
+                        <span className="text-gray-600">Esperienza richiesta:</span>
+                        <p className="font-medium">{(entityDetails as JobPostingDetails).experience_level}</p>
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-gray-600">Descrizione:</span>
+                      <p className="font-medium mt-1 text-gray-700">{(entityDetails as JobPostingDetails).description}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!loadingDetails && entityDetails && selectedReport.reported_entity_type === 'product' && (
+                <div className="bg-teal-50 rounded-lg p-4 border border-teal-200">
+                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <Package className="w-5 h-5 text-teal-600" />
+                    Dettagli Prodotto Segnalato
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-gray-600">Nome:</span>
+                      <p className="font-medium text-gray-900">{(entityDetails as ProductDetails).name}</p>
+                    </div>
+                    {(entityDetails as ProductDetails).price !== null && (
+                      <div>
+                        <span className="text-gray-600">Prezzo:</span>
+                        <p className="font-medium text-green-600">€{(entityDetails as ProductDetails).price}</p>
+                      </div>
+                    )}
+                    {(entityDetails as ProductDetails).description && (
+                      <div>
+                        <span className="text-gray-600">Descrizione:</span>
+                        <p className="font-medium mt-1 text-gray-700">{(entityDetails as ProductDetails).description}</p>
                       </div>
                     )}
                   </div>
