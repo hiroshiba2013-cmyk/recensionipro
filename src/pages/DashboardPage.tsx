@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Plus, Star, Building, MessageSquare, Check, Shield, TrendingUp,
-  Heart, Gift, Users as UsersIcon, Package, Briefcase, Users,
+  Heart, Gift, Users as UsersIcon, Briefcase, Users,
   DollarSign, Trophy, Activity, Tag, ChevronDown, ChevronUp,
   User, Mail, Phone, MapPin, FileText, Globe, Pencil, Save, X, CreditCard, Hash, Building2,
   Lock, Gavel, LogOut
@@ -46,14 +46,6 @@ interface Subscription {
   start_date: string;
   end_date: string;
   trial_end_date?: string;
-}
-
-interface Product {
-  id: string;
-  business_id: string;
-  location_id: string | null;
-  name: string;
-  created_at: string;
 }
 
 interface JobPosting {
@@ -923,7 +915,6 @@ export function DashboardPage() {
 
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [jobSeekers, setJobSeekers] = useState<JobSeeker[]>([]);
   const [solidarityStats, setSolidarityStats] = useState<SolidarityStats | null>(null);
@@ -1138,7 +1129,7 @@ export function DashboardPage() {
   const loadData = async () => {
     if (!profile) return;
     setLoading(true);
-    setReviews([]); setProducts([]); setJobPostings([]); setJobSeekers([]);
+    setReviews([]); setJobPostings([]); setJobSeekers([]);
     try {
       if (profile.user_type === 'business') {
         // job seekers (other people looking for work — shown in biz_seekers section)
@@ -1609,10 +1600,9 @@ export function DashboardPage() {
                 {/* Stats bar — visible for single-location or when a specific location is selected */}
                 {(isSingleLocation || selectedBusinessLocationId) && (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="text-center"><p className="text-2xl font-bold text-yellow-600">{reviews.length}</p><p className="text-xs text-gray-500 mt-0.5 flex items-center justify-center gap-1"><Star className="w-3 h-3" />Recensioni</p></div>
-                      <div className="text-center border-x border-gray-100"><p className="text-2xl font-bold text-blue-600">{products.length}</p><p className="text-xs text-gray-500 mt-0.5 flex items-center justify-center gap-1"><Package className="w-3 h-3" />Prodotti</p></div>
-                      <div className="text-center"><p className="text-2xl font-bold text-orange-600">{jobPostings.length}</p><p className="text-xs text-gray-500 mt-0.5 flex items-center justify-center gap-1"><Briefcase className="w-3 h-3" />Offerte</p></div>
+                      <div className="text-center border-l border-gray-100"><p className="text-2xl font-bold text-orange-600">{jobPostings.length}</p><p className="text-xs text-gray-500 mt-0.5 flex items-center justify-center gap-1"><Briefcase className="w-3 h-3" />Offerte</p></div>
                     </div>
                   </div>
                 )}

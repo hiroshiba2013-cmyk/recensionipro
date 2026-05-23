@@ -3,7 +3,7 @@ import { Flag } from 'lucide-react';
 import ReportModal from './ReportModal';
 
 interface ReportButtonProps {
-  entityType: 'review' | 'business' | 'classified_ad' | 'job_posting' | 'product';
+  entityType: 'review' | 'business' | 'classified_ad' | 'job_posting';
   entityId: string;
   compact?: boolean;
 }
@@ -21,8 +21,6 @@ export default function ReportButton({ entityType, entityId, compact = false }: 
         return 'Segnala attività';
       case 'job_posting':
         return 'Segnala offerta';
-      case 'product':
-        return 'Segnala prodotto';
       default:
         return 'Segnala';
     }

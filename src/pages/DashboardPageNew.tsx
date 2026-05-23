@@ -1,6 +1,6 @@
 // v2 - badge navigation
 import React, { useState, useEffect } from 'react';
-import { Plus, Star, Building, Building2, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Package, Briefcase, Users, DollarSign, Trophy, Activity, Tag, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
+import { Plus, Star, Building, Building2, MessageSquare, User, Check, Shield, TrendingUp, Heart, Gift, Users as UsersIcon, Briefcase, Users, DollarSign, Trophy, Activity, Tag, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Business, Review, FamilyMember } from '../lib/supabase';
 import { BusinessJobPostingForm } from '../components/business/BusinessJobPostingForm';
@@ -34,14 +34,6 @@ interface Subscription {
   start_date: string;
   end_date: string;
   trial_end_date?: string;
-}
-
-interface Product {
-  id: string;
-  business_id: string;
-  location_id: string | null;
-  name: string;
-  created_at: string;
 }
 
 interface JobPosting {
@@ -91,7 +83,6 @@ export function DashboardPageNew() {
   const navigate = useNavigate();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [jobSeekers, setJobSeekers] = useState<JobSeeker[]>([]);
   const [topLocations, setTopLocations] = useState<TopLocation[]>([]);
@@ -182,7 +173,6 @@ export function DashboardPageNew() {
 
     // Reset dei dati quando cambia la sede
     setReviews([]);
-    setProducts([]);
     setJobPostings([]);
     setJobSeekers([]);
     setTopLocations([]);
@@ -279,7 +269,6 @@ export function DashboardPageNew() {
                 const { data: reviewsData } = await reviewsQuery;
                 if (reviewsData) setReviews(reviewsData);
               }
-              // Products not linked to registered businesses - nothing to load
             } else {
               // Old businesses table
               let reviewsQuery = supabase
@@ -664,16 +653,12 @@ export function DashboardPageNew() {
               <>
                 {selectedBusinessLocationId && (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="text-center">
                         <p className="text-2xl font-bold text-yellow-600">{reviews.length}</p>
                         <p className="text-xs text-gray-500 mt-0.5 flex items-center justify-center gap-1"><Star className="w-3 h-3" />Recensioni</p>
                       </div>
-                      <div className="text-center border-x border-gray-100">
-                        <p className="text-2xl font-bold text-blue-600">{products.length}</p>
-                        <p className="text-xs text-gray-500 mt-0.5 flex items-center justify-center gap-1"><Package className="w-3 h-3" />Prodotti</p>
-                      </div>
-                      <div className="text-center">
+                      <div className="text-center border-l border-gray-100">
                         <p className="text-2xl font-bold text-orange-600">{jobPostings.length}</p>
                         <p className="text-xs text-gray-500 mt-0.5 flex items-center justify-center gap-1"><Briefcase className="w-3 h-3" />Offerte</p>
                       </div>

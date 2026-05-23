@@ -50,14 +50,6 @@ const REPORT_REASONS: Record<string, Array<{ value: string; label: string }>> = 
     { value: 'wrong_category', label: 'Categoria errata' },
     { value: 'other', label: 'Altro' },
   ],
-  product: [
-    { value: 'fake', label: 'Prodotto falso o ingannevole' },
-    { value: 'illegal', label: 'Prodotto illegale o contraffatto' },
-    { value: 'offensive', label: 'Contenuto offensivo o inappropriato' },
-    { value: 'spam', label: 'Spam o pubblicità ingannevole' },
-    { value: 'wrong_category', label: 'Categoria errata' },
-    { value: 'other', label: 'Altro' },
-  ],
 };
 
 export default function ReportModal({ entityType, entityId, onClose }: ReportModalProps) {

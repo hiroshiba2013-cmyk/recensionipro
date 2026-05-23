@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Shield, Users, FileText, ShoppingBag, Activity, CheckCircle, XCircle, Clock, Eye, Trash2, LogOut, Building2, AlertTriangle, Briefcase, Package, MapPin, UserCheck, Heart, Award, TrendingUp, MessageSquare, Mail, CreditCard, BookOpen, Gavel } from 'lucide-react';
+import { Shield, Users, FileText, ShoppingBag, Activity, CheckCircle, XCircle, Clock, Eye, Trash2, LogOut, Building2, AlertTriangle, Briefcase, MapPin, UserCheck, Heart, Award, TrendingUp, MessageSquare, Mail, CreditCard, BookOpen, Gavel } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { AdminStats } from '../components/admin/AdminStats';
 import { ReportsSection } from '../components/admin/ReportsSection';
 import { BusinessesSection } from '../components/admin/BusinessesSection';
 import { JobPostingsSection } from '../components/admin/JobPostingsSection';
-import { ProductsSection } from '../components/admin/ProductsSection';
 import { ReviewsSection } from '../components/admin/ReviewsSection';
 import { ClassifiedAdsSection } from '../components/admin/ClassifiedAdsSection';
 import { AdminProfileDashboard } from '../components/admin/AdminProfileDashboard';
@@ -36,7 +35,6 @@ interface DashboardStats {
   activeSubscriptions: number;
   trialSubscriptions: number;
   totalBusinesses: number;
-  totalProducts: number;
   totalReports: number;
   pendingReports: number;
   pendingAds: number;
@@ -216,18 +214,6 @@ interface RegisteredBusiness {
   locations_count: number;
 }
 
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  stock: number;
-  created_at: string;
-  business_location: {
-    name: string;
-  } | null;
-}
-
 export function AdminDashboardPage() {
   const { showToast } = useToast();
   const { profile, user } = useAuth();
@@ -263,7 +249,6 @@ export function AdminDashboardPage() {
     activeSubscriptions: 0,
     trialSubscriptions: 0,
     totalBusinesses: 0,
-    totalProducts: 0,
     totalReports: 0,
     pendingReports: 0,
     pendingAds: 0,
@@ -288,7 +273,6 @@ export function AdminDashboardPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [businesses, setBusinesses] = useState<RegisteredBusiness[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingCounts, setPendingCounts] = useState<PendingCounts>({ reviews: 0, ads: 0, businesses: 0, reports: 0, auctions: 0, jobs: 0, jobSeekers: 0, newUsers: 0, newSubscriptions: 0, newMessages: 0, unreadPlatformMessages: 0 });
 
@@ -454,8 +438,6 @@ export function AdminDashboardPage() {
         await loadJobPostings();
       } else if (activeTab === 'businesses') {
         await loadBusinesses();
-      } else if (activeTab === 'products') {
-        await loadProducts();
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -483,7 +465,6 @@ export function AdminDashboardPage() {
       adsGiftCount,
       activeSubsCount,
       trialSubsCount,
-      productsCount,
       reportsCount,
       pendingReportsCount,
       pendingAdsCount,
@@ -513,7 +494,6 @@ export function AdminDashboardPage() {
       // Abbonamenti attivi/trial: stato istantaneo
       supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'active'),
       supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'trial'),
-      dated(supabase.from('products').select('id', { count: 'exact', head: true })),
       dated(supabase.from('reports').select('id', { count: 'exact', head: true })),
       // Pending: sempre stato istantaneo
       supabase.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
@@ -560,7 +540,6 @@ export function AdminDashboardPage() {
       activeSubscriptions: activeSubsCount.count || 0,
       trialSubscriptions: trialSubsCount.count || 0,
       totalBusinesses: imported + userAdded + selfReg + claimed,
-      totalProducts: productsCount.count || 0,
       totalReports: reportsCount.count || 0,
       pendingReports: pendingReportsCount.count || 0,
       pendingAds: pendingAdsCount.count || 0,
@@ -804,13 +783,6 @@ export function AdminDashboardPage() {
             .eq('id', report.reported_entity_id)
             .maybeSingle();
           entityName = job?.title || '';
-        } else if (report.reported_entity_type === 'product') {
-          const { data: product } = await supabase
-            .from('products')
-            .select('name')
-            .eq('id', report.reported_entity_id)
-            .maybeSingle();
-          entityName = product?.name || '';
         }
       } catch (err) {
         console.error('Error loading entity name:', err);
@@ -867,28 +839,6 @@ export function AdminDashboardPage() {
     setBusinesses(businessesWithLocations);
   };
 
-  const loadProducts = async () => {
-    const { data, error } = await supabase
-      .from('products')
-      .select(`
-        id,
-        name,
-        description,
-        price,
-        stock,
-        created_at,
-        business_location:business_locations(name)
-      `)
-      .order('created_at', { ascending: false })
-      .limit(100);
-
-    if (error) {
-      console.error('Error loading products:', error);
-      return;
-    }
-
-    setProducts(data || []);
-  };
 
   const approveReview = async (reviewId: string) => {
     try {

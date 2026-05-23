@@ -23,7 +23,6 @@ interface AdminStatsProps {
     activeSubscriptions: number;
     trialSubscriptions: number;
     totalBusinesses: number;
-    totalProducts: number;
     totalReports: number;
     pendingReports: number;
     pendingAds: number;
