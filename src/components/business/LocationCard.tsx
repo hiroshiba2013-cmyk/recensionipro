@@ -189,6 +189,7 @@ export function LocationCard({ location, initialIsFavorite, onFavoriteToggle }: 
           </div>
           <VerificationBadge
             isClaimed={!!location.is_claimed}
+            isImported={!location.is_claimed && !location.added_by && location.location_type === 'unclaimed'}
             isUserAdded={!!location.added_by && !location.is_claimed}
             size="sm"
           />

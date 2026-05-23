@@ -292,6 +292,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
         if (filters.city) query = query.ilike('city', `%${filters.city}%`);
         if (filters.provinceCode) query = query.eq('province', filters.provinceCode);
         if (filters.region) query = query.eq('region', filters.region);
+        if (filters.category) query = query.eq('category_id', filters.category);
         if (filters.verified === 'verified') {
           query = query.eq('approval_status', 'approved');
         } else if (filters.verified === 'unverified') {
@@ -833,21 +834,36 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
               value={{ region: filters.region, province: filters.province, provinceCode: filters.provinceCode, city: filters.city }}
               onChange={loc => setFilters({ ...filters, region: loc.region, province: loc.province, provinceCode: loc.provinceCode, city: loc.city })}
             />
-            {activeTab === 'user_added' && (
+            {(activeTab === 'imported' || activeTab === 'user_added') && (
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Stato Approvazione</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
                   <select
-                    value={filters.verified}
-                    onChange={(e) => setFilters({ ...filters, verified: e.target.value as any })}
+                    value={filters.category}
+                    onChange={(e) => setFilters({ ...filters, category: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   >
-                    <option value="all">Tutte</option>
-                    <option value="unverified">In Attesa</option>
-                    <option value="verified">Approvate</option>
-                    <option value="rejected">Rifiutate</option>
+                    <option value="">Tutte le categorie</option>
+                    {allCategories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
                   </select>
                 </div>
+                {activeTab === 'user_added' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Stato Approvazione</label>
+                    <select
+                      value={filters.verified}
+                      onChange={(e) => setFilters({ ...filters, verified: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    >
+                      <option value="all">Tutte</option>
+                      <option value="unverified">In Attesa</option>
+                      <option value="verified">Approvate</option>
+                      <option value="rejected">Rifiutate</option>
+                    </select>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -857,7 +873,7 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
             <div className="text-gray-600">
               Visualizzazione {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, totalCount)} di {totalCount.toLocaleString()} attività
             </div>
-            {(filters.name || filters.address || filters.postalCode || filters.city || filters.province || filters.region || filters.provinceCode || filters.verified !== 'all') && (
+            {(filters.name || filters.address || filters.postalCode || filters.city || filters.province || filters.region || filters.provinceCode || filters.category || filters.verified !== 'all') && (
               <button
                 onClick={() => setFilters({ name: '', address: '', postalCode: '', city: '', province: '', provinceCode: '', region: '', category: '', verified: 'all' })}
                 className="text-blue-600 hover:text-blue-700 font-medium"
