@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, CheckCircle, Search, ArrowUpDown } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Search, ArrowUpDown, MapPin, SlidersHorizontal } from 'lucide-react';
 import { supabase, BusinessCategory } from '../lib/supabase';
 import { LocationCard } from '../components/business/LocationCard';
 import { AdvancedSearch, SearchFilters } from '../components/search/AdvancedSearch';
@@ -477,19 +477,41 @@ export function SearchResultsPage() {
         )}
 
         {loading ? (
-          <div className="text-center py-12 bg-white rounded-lg shadow-sm">
+          <div className="text-center py-12 bg-white rounded-lg shadow-sm" aria-busy="true" aria-live="polite">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
             <p className="text-gray-700 text-lg font-medium">Ricerca in corso...</p>
             <p className="text-gray-500 text-sm mt-2">Stiamo cercando le migliori attività per te</p>
           </div>
         ) : !hasSearched ? (
-          <div className="text-center py-12 bg-white rounded-lg">
-            <p className="text-gray-600 text-lg">Usa i filtri sopra per cercare sedi delle attività</p>
+          <div className="text-center py-16 bg-white rounded-xl border border-gray-100 shadow-sm">
+            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Search className="w-8 h-8 text-blue-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Cerca un'attività</h3>
+            <p className="text-gray-500 max-w-sm mx-auto">Usa i filtri qui sopra per trovare attività, negozi e servizi nella tua zona</p>
           </div>
         ) : locations.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg">
-            <p className="text-gray-600 text-lg">Nessuna sede trovata</p>
-            <p className="text-gray-500 mt-2">Prova a modificare i filtri di ricerca</p>
+          <div className="text-center py-16 bg-white rounded-xl border border-gray-100 shadow-sm">
+            <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <MapPin className="w-8 h-8 text-amber-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Nessuna sede trovata</h3>
+            <p className="text-gray-500 mb-4 max-w-sm mx-auto">Non abbiamo trovato attività con questi criteri. Prova ad ampliare la ricerca.</p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+                Modifica i filtri
+              </button>
+              <a
+                href="/"
+                className="inline-flex items-center gap-2 border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Torna alla home
+              </a>
+            </div>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

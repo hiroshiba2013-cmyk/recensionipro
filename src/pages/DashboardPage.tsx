@@ -1141,8 +1141,10 @@ export function DashboardPage() {
         if (myJs) setMyJobSeekers(myJs);
 
         // solidarity
-        const { data: rev } = await supabase.rpc('get_total_revenue');
-        if (rev !== null) setSolidarityStats({ total_revenue: rev, charity_amount: rev * 0.1 });
+        try {
+          const { data: rev } = await supabase.rpc('get_total_revenue');
+          if (rev !== null) setSolidarityStats({ total_revenue: rev, charity_amount: rev * 0.1 });
+        } catch { /* non critico */ }
 
         // businesses
         let { data: regData } = await supabase.from('registered_businesses').select('*').eq('owner_id', profile.id);
@@ -1590,7 +1592,16 @@ export function DashboardPage() {
         {isBiz && <TrialStatusBanner onUpgradeClick={() => navigate('/subscription')} />}
 
         {loading ? (
-          <div className="text-center py-16"><div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>
+          <div className="animate-pulse space-y-4 py-4" aria-busy="true" aria-label="Caricamento dashboard">
+            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-28 bg-gray-200 rounded-xl"></div>
+              ))}
+            </div>
+            <div className="h-64 bg-gray-200 rounded-xl"></div>
+            <div className="h-48 bg-gray-200 rounded-xl"></div>
+          </div>
         ) : (
           <div className="space-y-4">
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { User, Menu, X, Home, Phone, FileText, CreditCard, MessageCircle, Heart, Building2, Shield, Tag, Briefcase, UserCog, Gavel, Trophy, Star } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -59,6 +59,16 @@ export function Header() {
     if (!user || !profile || profile.user_type === 'admin') return;
     loadPendingReviews();
   }, [user, profile]);
+
+  const closeMenu = useCallback(() => setShowMobileMenu(false), []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeMenu();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [closeMenu]);
 
   const loadPendingReviews = async () => {
     if (!user?.id || !profile) return;
@@ -167,7 +177,7 @@ export function Header() {
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16">
-            <a href="/" className="flex items-center flex-shrink-0">
+            <a href="/" className="flex items-center flex-shrink-0" aria-label="Trovafacile - Torna alla home">
               <img
                 src="/chatgpt_image_4_dic_2025,_22_51_45.png"
                 alt="TrovaFacile"
@@ -190,11 +200,15 @@ export function Header() {
                     href="/messages"
                     className="relative flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors font-medium px-2"
                     title={t('header.messages')}
+                    aria-label={unreadMessages > 0 ? `Messaggi (${unreadMessages} non letti)` : t('header.messages')}
                   >
                     <MessageCircle className="w-4 h-4" />
                     <span className="text-sm">{t('header.messages')}</span>
                     {unreadMessages > 0 && (
-                      <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] flex items-center justify-center px-1 bg-red-600 text-white text-[10px] font-bold rounded-full shadow-lg ring-2 ring-white">
+                      <span
+                        className="absolute -top-2 -right-2 min-w-[18px] h-[18px] flex items-center justify-center px-1 bg-red-600 text-white text-[10px] font-bold rounded-full shadow-lg ring-2 ring-white"
+                        aria-hidden="true"
+                      >
                         {unreadMessages > 99 ? '99+' : unreadMessages}
                       </span>
                     )}
@@ -347,14 +361,17 @@ export function Header() {
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
               className="lg:hidden text-gray-700 hover:text-blue-600 ml-auto"
+              aria-label={showMobileMenu ? 'Chiudi menu' : 'Apri menu di navigazione'}
+              aria-expanded={showMobileMenu}
+              aria-controls="mobile-menu-nav"
             >
               {showMobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
 
           {showMobileMenu && (
-            <div className="lg:hidden border-t border-gray-200 py-4 max-h-[80vh] overflow-y-auto">
-              <nav className="flex flex-col gap-4">
+            <div id="mobile-menu-nav" className="lg:hidden border-t border-gray-200 py-4 max-h-[80vh] overflow-y-auto">
+              <nav className="flex flex-col gap-4" role="navigation" aria-label="Menu principale mobile">
                 {user && profile && profile.user_type === 'admin' ? (
                   <>
                     <a

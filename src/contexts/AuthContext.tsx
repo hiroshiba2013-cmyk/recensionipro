@@ -140,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('id', userId)
         .maybeSingle();
 
+      if (!mountedRef.current) return;
       if (error) throw error;
       setProfile(data);
 
@@ -176,6 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select('*')
         .eq('customer_id', userId);
 
+      if (!mountedRef.current) return;
       setFamilyMembers(members || []);
 
       const savedProfileId = storageGet(`activeProfile_${userId}`);
@@ -228,11 +230,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadFamilyMembers = async () => {
     if (!user?.id) return;
-    const { data: members } = await supabase
-      .from('customer_family_members')
-      .select('*')
-      .eq('customer_id', user.id);
-    setFamilyMembers(members || []);
+    try {
+      const { data: members } = await supabase
+        .from('customer_family_members')
+        .select('*')
+        .eq('customer_id', user.id);
+      if (!mountedRef.current) return;
+      setFamilyMembers(members || []);
+    } catch {
+      // silent
+    }
   };
 
   const loadBusinessLocationsInternal = async (userId: string, profileData: Profile) => {

@@ -300,10 +300,32 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           return q;
         };
 
-        // Query conteggio per avg_rating
-        const { data: reviewsData } = await buildReviewFilter(
-          supabase.from('reviews').select('overall_rating').eq('review_status', 'approved')
-        );
+        // Esegui ratings, recensioni complete e job postings in parallelo
+        const [
+          { data: reviewsData },
+          { data: fullReviewsData },
+          { data: jobsData },
+        ] = await Promise.all([
+          buildReviewFilter(
+            supabase.from('reviews').select('overall_rating').eq('review_status', 'approved')
+          ),
+          buildReviewFilter(
+            supabase.from('reviews')
+              .select(`
+                *,
+                customer:profiles!customer_id(full_name, nickname),
+                responses:review_responses(*),
+                family_member:customer_family_members(first_name, last_name, nickname),
+                registered_business_location:registered_business_locations(id, name, internal_name, street, city)
+              `)
+              .eq('review_status', 'approved')
+              .order('created_at', { ascending: false })
+              .limit(200)
+          ),
+          businessType === 'registered'
+            ? supabase.from('job_postings').select('*').eq('business_id', businessId).eq('status', 'active')
+            : Promise.resolve({ data: [] }),
+        ]);
 
         const avg_rating = reviewsData && reviewsData.length > 0
           ? reviewsData.reduce((sum: number, r: any) => sum + r.overall_rating, 0) / reviewsData.length
@@ -315,20 +337,6 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           review_count: reviewsData?.length || 0,
           business_type: businessType,
         });
-
-        // Query recensioni complete
-        const { data: fullReviewsData } = await buildReviewFilter(
-          supabase.from('reviews')
-            .select(`
-              *,
-              customer:profiles!customer_id(full_name, nickname),
-              responses:review_responses(*),
-              family_member:customer_family_members(first_name, last_name, nickname),
-              registered_business_location:registered_business_locations(id, name, internal_name, street, city)
-            `)
-            .eq('review_status', 'approved')
-            .order('created_at', { ascending: false })
-        );
 
         if (fullReviewsData) {
           const reviewsWithBusinessName = fullReviewsData.map((review: any) => {
@@ -346,17 +354,8 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           setReviews(reviewsWithBusinessName);
         }
 
-        // Job postings solo per registered businesses
-        if (businessType === 'registered') {
-          const { data: jobsData } = await supabase
-            .from('job_postings')
-            .select('*')
-            .eq('business_id', businessId)
-            .eq('status', 'active');
-
-          if (jobsData) {
-            setJobPostings(jobsData);
-          }
+        if (jobsData && jobsData.length > 0) {
+          setJobPostings(jobsData);
         }
       }
     } catch (error) {
@@ -546,8 +545,30 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50 py-8" aria-busy="true" aria-label="Caricamento dettagli attività">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-gray-200 rounded w-32"></div>
+            <div className="bg-white rounded-xl shadow-xl overflow-hidden">
+              <div className="h-48 sm:h-64 md:h-72 bg-gray-200"></div>
+              <div className="p-4 sm:p-6 md:p-8 space-y-4">
+                <div className="h-6 bg-gray-200 rounded w-2/3"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div className="grid md:grid-cols-3 gap-6">
+                  <div className="md:col-span-2 space-y-3">
+                    <div className="h-4 bg-gray-200 rounded"></div>
+                    <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                    <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="h-32 bg-gray-200 rounded-xl"></div>
+                    <div className="h-24 bg-gray-200 rounded-xl"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
