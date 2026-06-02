@@ -291,7 +291,7 @@ function LandingPage() {
           <p className="text-gray-500 mb-10 max-w-2xl mx-auto">
             Partecipa alle aste e trova occasioni uniche. Metti all'asta oggetti che non usi più o aggiudica i migliori lotti pubblicati dagli utenti della piattaforma. Tutto in modo trasparente e sicuro.
           </p>
-          <div className="grid grid-cols-3 gap-4 max-w-xl mx-auto mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 max-w-xl mx-auto mb-8">
             {[
               { icon: Gavel, color: 'bg-orange-100 text-orange-600', label: '100%', sub: 'Aste verificate e approvate' },
               { icon: Gift, color: 'bg-amber-100 text-amber-600', label: 'Gratis', sub: 'Pubblicazione asta senza costi' },
@@ -323,7 +323,7 @@ function LandingPage() {
           <p className="text-gray-500 mb-10 max-w-2xl mx-auto">
             Compra, vendi o regala oggetti usati direttamente tra privati. Pubblica annunci in modo gratuito e raggiungi migliaia di utenti nella tua zona. Nessuna commissione, nessuna intermediazione.
           </p>
-          <div className="grid grid-cols-3 gap-4 max-w-xl mx-auto mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 max-w-xl mx-auto mb-8">
             {[
               { icon: Tag, color: 'bg-green-100 text-green-600', label: 'Vendo', sub: 'Dai una seconda vita agli oggetti' },
               { icon: Search, color: 'bg-blue-100 text-blue-600', label: 'Cerco', sub: 'Trova ciò che stai cercando' },
@@ -380,7 +380,7 @@ function LandingPage() {
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Cosa Puoi Fare con Trovafacile</h2>
             <p className="text-gray-500">Una piattaforma completa per connettere persone e attività</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
             {[
               { step: '1', color: 'bg-blue-500', label: 'Registrati', desc: 'Crea il tuo account gratuito in pochi secondi' },
               { step: '2', color: 'bg-teal-500', label: 'Esplora', desc: 'Cerca attività, servizi, aste e annunci nella tua zona' },

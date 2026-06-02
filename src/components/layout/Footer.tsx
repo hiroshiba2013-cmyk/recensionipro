@@ -49,10 +49,10 @@ export function Footer() {
   ];
 
   return (
-    <footer className="bg-gray-900 text-white pt-14 pb-8">
+    <footer className="bg-gray-900 text-white pt-8 sm:pt-12 md:pt-14 pb-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid md:grid-cols-5 gap-8 mb-10">
-          <div className="md:col-span-1">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 sm:gap-8 mb-8 sm:mb-10">
+          <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <MapPin className="w-4 h-4 text-white" />

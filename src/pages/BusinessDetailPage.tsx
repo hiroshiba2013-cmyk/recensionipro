@@ -638,7 +638,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
         )}
 
         <div className="bg-white rounded-xl shadow-xl overflow-hidden">
-          <div className="relative h-72 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
+          <div className="relative h-48 sm:h-64 md:h-72 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
             {business.logo_url && (
               <img
                 src={business.logo_url}
@@ -647,10 +647,10 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
               />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
-            <div className="absolute bottom-0 left-0 right-0 p-8">
+            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-8">
               <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h1 className="text-5xl font-extrabold text-white mb-2 drop-shadow-lg">{business.name}</h1>
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white mb-2 drop-shadow-lg truncate">{business.name}</h1>
                   {business.category && (
                     <span className="inline-block mb-3 px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-sm font-semibold rounded-full">
                       {(business.category as any).name}
@@ -739,8 +739,8 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
             </div>
           </div>
 
-          <div className="p-8">
-            <div className="grid md:grid-cols-3 gap-8">
+          <div className="p-4 sm:p-6 md:p-8">
+            <div className="grid md:grid-cols-3 gap-6 md:gap-8">
               <div className="md:col-span-2 space-y-8">
                 {filterLocationId && (
                   <div className="bg-blue-50 border-l-4 border-blue-600 rounded-r-lg p-4">

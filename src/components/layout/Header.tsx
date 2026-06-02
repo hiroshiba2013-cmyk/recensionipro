@@ -353,8 +353,8 @@ export function Header() {
           </div>
 
           {showMobileMenu && (
-            <div className="lg:hidden border-t border-gray-200 py-4">
-              <nav className="flex flex-col gap-5">
+            <div className="lg:hidden border-t border-gray-200 py-4 max-h-[80vh] overflow-y-auto">
+              <nav className="flex flex-col gap-4">
                 {user && profile && profile.user_type === 'admin' ? (
                   <>
                     <a
@@ -391,9 +391,9 @@ export function Header() {
                 ) : user && profile && profile.user_type !== 'admin' ? (
                   <>
                     {selectedLocation && (
-                      <div className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium border border-blue-300">
-                        <span className="font-semibold">{t('header.selectedLocation')}:</span>
-                        <span>{selectedLocation.internal_name || selectedLocation.city}</span>
+                      <div className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium border border-blue-300 overflow-hidden">
+                        <span className="font-semibold shrink-0">{t('header.selectedLocation')}:</span>
+                        <span className="truncate">{selectedLocation.internal_name || selectedLocation.city}</span>
                       </div>
                     )}
                     <a
