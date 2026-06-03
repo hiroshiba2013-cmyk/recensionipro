@@ -33,13 +33,14 @@ interface Conversation {
   job_seekers?: { title: string };
   job_postings?: { title: string; company_name: string | null };
   auctions?: { title: string };
+  professional_profiles?: { profession: string | null };
   unread_count?: number;
 }
 
 const MAX_IMAGES = 5;
 
 function isJobConversation(type: string) {
-  return type === 'job_seeker' || type === 'job_posting';
+  return type === 'job_seeker' || type === 'job_posting' || type === 'professional_profile';
 }
 function isClassifiedConversation(type: string) {
   return type === 'classified_ad';
@@ -67,6 +68,19 @@ export function MessagesPage() {
 
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
   const [filter, setFilter] = useState<'all' | 'classified_ad' | 'job_seeker' | 'job_posting' | 'auction'>('all');
+
+  // Tipi di conversazione raggruppati per filtro
+  const FILTER_TYPES: Record<string, string[]> = {
+    classified_ad: ['classified_ad'],
+    job_seeker: ['job_seeker', 'professional_profile'],
+    job_posting: ['job_posting'],
+    auction: ['auction'],
+  };
+
+  const matchesFilter = (convType: string, filterKey: string) => {
+    if (filterKey === 'all') return true;
+    return (FILTER_TYPES[filterKey] || [filterKey]).includes(convType);
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -127,14 +141,14 @@ export function MessagesPage() {
         }
       } else if (profile?.user_type === 'business') {
         if (selectedBusinessLocationId) {
-          // Conversazioni per la sede selezionata + senza sede + SEMPRE tutte le candidature lavoro
+          // Conversazioni per la sede selezionata + senza sede + SEMPRE tutte le candidature/profili lavoro
           query = query.or(
             `and(participant1_id.eq.${user.id},participant1_location_id.eq.${selectedBusinessLocationId}),` +
             `and(participant2_id.eq.${user.id},participant2_location_id.eq.${selectedBusinessLocationId}),` +
             `and(participant1_id.eq.${user.id},participant1_location_id.is.null),` +
             `and(participant2_id.eq.${user.id},participant2_location_id.is.null),` +
-            `and(participant1_id.eq.${user.id},conversation_type.in.(job_seeker,job_posting)),` +
-            `and(participant2_id.eq.${user.id},conversation_type.in.(job_seeker,job_posting))`
+            `and(participant1_id.eq.${user.id},conversation_type.in.(job_seeker,job_posting,professional_profile)),` +
+            `and(participant2_id.eq.${user.id},conversation_type.in.(job_seeker,job_posting,professional_profile))`
           );
         } else {
           query = query.or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`);
@@ -165,6 +179,9 @@ export function MessagesPage() {
           } else if (conv.conversation_type === 'auction') {
             const { data: auctionData } = await supabase.from('auctions').select('title').eq('id', conv.reference_id).maybeSingle();
             referenceData = { auctions: auctionData };
+          } else if (conv.conversation_type === 'professional_profile') {
+            const { data: ppData } = await supabase.from('professional_profiles').select('profession').eq('id', conv.reference_id).maybeSingle();
+            referenceData = { professional_profiles: ppData };
           }
 
           const { count } = await supabase.from('messages').select('*', { count: 'exact', head: true }).eq('conversation_id', conv.id).eq('is_read', false).neq('sender_id', user.id);
@@ -393,7 +410,7 @@ export function MessagesPage() {
                 { key: 'job_posting', label: 'Offerte', icon: Building2 },
                 { key: 'auction', label: 'Aste', icon: Gavel },
               ] as const).map(({ key, label, icon: Icon }) => {
-                const count = key === 'all' ? conversations.length : conversations.filter((c) => c.conversation_type === key).length;
+                const count = key === 'all' ? conversations.length : conversations.filter((c) => matchesFilter(c.conversation_type, key)).length;
                 return (
                   <button
                     key={key}
@@ -411,7 +428,7 @@ export function MessagesPage() {
 
           <div className="flex-1 overflow-y-auto">
             {(() => {
-              const filtered = filter === 'all' ? conversations : conversations.filter((c) => c.conversation_type === filter);
+              const filtered = filter === 'all' ? conversations : conversations.filter((c) => matchesFilter(c.conversation_type, filter));
               return filtered.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center p-6">
                   <MessageCircle className="w-16 h-16 text-gray-400 mb-4" />
@@ -447,6 +464,8 @@ export function MessagesPage() {
                       {conv.job_seekers && <div className={`text-sm truncate ${hasUnread ? 'text-gray-800 font-medium' : 'text-gray-600'}`}>{conv.job_seekers.title}</div>}
                       {conv.job_postings && <div className={`text-sm truncate ${hasUnread ? 'text-gray-800 font-medium' : 'text-gray-600'}`}>{conv.job_postings.title}</div>}
                       {conv.auctions && <div className={`text-sm truncate ${hasUnread ? 'text-gray-800 font-medium' : 'text-gray-600'}`}>{conv.auctions.title}</div>}
+                      {conv.professional_profiles && <div className={`text-sm truncate ${hasUnread ? 'text-gray-800 font-medium' : 'text-gray-600'}`}>{conv.professional_profiles.profession || 'Profilo professionale'}</div>}
+                      {conv.conversation_type === 'professional_profile' && !conv.professional_profiles && <div className={`text-sm truncate ${hasUnread ? 'text-gray-800 font-medium' : 'text-gray-600'}`}>Profilo professionale</div>}
                       <div className={`text-xs mt-1 ${hasUnread ? 'text-blue-600 font-semibold' : 'text-gray-500'}`}>{formatMessageTime(conv.last_message_at)}</div>
                     </div>
                   </button>
