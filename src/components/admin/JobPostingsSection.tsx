@@ -76,8 +76,8 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload, 
   const { showToast } = useToast();
   const { user } = useAuth();
   const [jobType, setJobType] = useState<JobType>('all');
-  const [approvalFilter, setApprovalFilter] = useState<ApprovalFilter>('pending');
-  const [seekerApprovalFilter, setSeekerApprovalFilter] = useState<SeekerApprovalFilter>('pending');
+  const [approvalFilter, setApprovalFilter] = useState<ApprovalFilter>('all');
+  const [seekerApprovalFilter, setSeekerApprovalFilter] = useState<SeekerApprovalFilter>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState({ region: '', province: '', city: '' });
   const [selectedJobPosting, setSelectedJobPosting] = useState<JobPosting | null>(null);

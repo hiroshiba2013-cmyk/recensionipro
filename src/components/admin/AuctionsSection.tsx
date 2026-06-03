@@ -54,7 +54,7 @@ export default function AuctionsSection() {
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [approvalFilter, setApprovalFilter] = useState<string>('pending');
+  const [approvalFilter, setApprovalFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [priceRangeFilter, setPriceRangeFilter] = useState<string>('all');
   const [locationFilter, setLocationFilter] = useState({ region: '', province: '', city: '' });
