@@ -160,10 +160,11 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
       const to = from + itemsPerPage - 1;
 
       if (activeTab === 'all') {
-        // Build unclaimed query with filters
+        // Build unclaimed query with filters — exclude already claimed ones
         let unclaimedQ = supabase
           .from('unclaimed_business_locations')
           .select(`*, category:category_id(name)`, { count: 'exact' })
+          .eq('is_claimed', false)
           .order('created_at', { ascending: false });
         if (filters.name) unclaimedQ = unclaimedQ.ilike('name', `%${filters.name}%`);
         if (filters.address) unclaimedQ = unclaimedQ.ilike('street', `%${filters.address}%`);
@@ -278,11 +279,11 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
             added_by_profile:added_by(full_name, nickname, email)
           `, { count: 'exact' });
 
-        // Filter by source (imported vs user_added)
+        // Filter by source (imported vs user_added) — exclude claimed ones
         if (activeTab === 'imported') {
-          query = query.is('added_by', null);
+          query = query.is('added_by', null).eq('is_claimed', false);
         } else {
-          query = query.not('added_by', 'is', null);
+          query = query.not('added_by', 'is', null).eq('is_claimed', false);
         }
 
         // Apply advanced filters
