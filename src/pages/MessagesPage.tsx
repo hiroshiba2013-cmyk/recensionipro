@@ -127,7 +127,15 @@ export function MessagesPage() {
         }
       } else if (profile?.user_type === 'business') {
         if (selectedBusinessLocationId) {
-          query = query.or(`and(participant1_id.eq.${user.id},participant1_location_id.eq.${selectedBusinessLocationId}),and(participant2_id.eq.${user.id},participant2_location_id.eq.${selectedBusinessLocationId}),and(participant1_id.eq.${user.id},participant1_location_id.is.null),and(participant2_id.eq.${user.id},participant2_location_id.is.null)`);
+          // Conversazioni per la sede selezionata + senza sede + SEMPRE tutte le candidature lavoro
+          query = query.or(
+            `and(participant1_id.eq.${user.id},participant1_location_id.eq.${selectedBusinessLocationId}),` +
+            `and(participant2_id.eq.${user.id},participant2_location_id.eq.${selectedBusinessLocationId}),` +
+            `and(participant1_id.eq.${user.id},participant1_location_id.is.null),` +
+            `and(participant2_id.eq.${user.id},participant2_location_id.is.null),` +
+            `and(participant1_id.eq.${user.id},conversation_type.in.(job_seeker,job_posting)),` +
+            `and(participant2_id.eq.${user.id},conversation_type.in.(job_seeker,job_posting))`
+          );
         } else {
           query = query.or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`);
         }
