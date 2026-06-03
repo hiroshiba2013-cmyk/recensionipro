@@ -336,10 +336,10 @@ export function ClaimBusinessPage() {
 
         {/* Benefits */}
         <div className="mt-10 bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Perche Rivendicare la Tua Attivita?</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Perché Rivendicare la Tua Attività?</h3>
           <ul className="space-y-2.5 text-sm text-gray-600">
             {[
-              'Gestisci le informazioni della tua attivita',
+              'Gestisci le informazioni della tua attività',
               'Rispondi alle recensioni dei clienti',
               'Pubblica offerte di lavoro',
               'Ottieni il badge di verifica',
