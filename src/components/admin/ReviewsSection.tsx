@@ -463,6 +463,13 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
     }
   };
 
+  const counts = {
+    all: reviews.length,
+    pending: reviews.filter(r => r.review_status === 'pending').length,
+    approved: reviews.filter(r => r.review_status === 'approved').length,
+    rejected: reviews.filter(r => r.review_status === 'rejected').length,
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
@@ -473,6 +480,73 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
         >
           <Filter className="w-5 h-5" />
           {showFilters ? 'Nascondi Filtri' : 'Mostra Filtri'}
+        </button>
+      </div>
+
+      {/* Filtri rapidi per stato */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-2">
+        <button
+          onClick={() => setFilterStatus('all')}
+          className={`rounded-xl border-2 p-4 text-left transition-all ${
+            filterStatus === 'all'
+              ? 'border-gray-700 bg-gray-700 text-white shadow-md'
+              : 'border-gray-200 bg-white hover:border-gray-400 hover:shadow'
+          }`}
+        >
+          <p className={`text-2xl font-bold mb-1 ${filterStatus === 'all' ? 'text-white' : 'text-gray-900'}`}>
+            {counts.all}
+          </p>
+          <p className={`text-sm font-medium ${filterStatus === 'all' ? 'text-gray-200' : 'text-gray-500'}`}>
+            Tutte
+          </p>
+        </button>
+
+        <button
+          onClick={() => setFilterStatus('pending')}
+          className={`rounded-xl border-2 p-4 text-left transition-all ${
+            filterStatus === 'pending'
+              ? 'border-yellow-500 bg-yellow-500 text-white shadow-md'
+              : 'border-yellow-200 bg-yellow-50 hover:border-yellow-400 hover:shadow'
+          }`}
+        >
+          <p className={`text-2xl font-bold mb-1 ${filterStatus === 'pending' ? 'text-white' : 'text-yellow-700'}`}>
+            {counts.pending}
+          </p>
+          <p className={`text-sm font-medium ${filterStatus === 'pending' ? 'text-yellow-100' : 'text-yellow-600'}`}>
+            In attesa
+          </p>
+        </button>
+
+        <button
+          onClick={() => setFilterStatus('approved')}
+          className={`rounded-xl border-2 p-4 text-left transition-all ${
+            filterStatus === 'approved'
+              ? 'border-green-600 bg-green-600 text-white shadow-md'
+              : 'border-green-200 bg-green-50 hover:border-green-400 hover:shadow'
+          }`}
+        >
+          <p className={`text-2xl font-bold mb-1 ${filterStatus === 'approved' ? 'text-white' : 'text-green-700'}`}>
+            {counts.approved}
+          </p>
+          <p className={`text-sm font-medium ${filterStatus === 'approved' ? 'text-green-100' : 'text-green-600'}`}>
+            Approvate
+          </p>
+        </button>
+
+        <button
+          onClick={() => setFilterStatus('rejected')}
+          className={`rounded-xl border-2 p-4 text-left transition-all ${
+            filterStatus === 'rejected'
+              ? 'border-red-600 bg-red-600 text-white shadow-md'
+              : 'border-red-200 bg-red-50 hover:border-red-400 hover:shadow'
+          }`}
+        >
+          <p className={`text-2xl font-bold mb-1 ${filterStatus === 'rejected' ? 'text-white' : 'text-red-700'}`}>
+            {counts.rejected}
+          </p>
+          <p className={`text-sm font-medium ${filterStatus === 'rejected' ? 'text-red-100' : 'text-red-600'}`}>
+            Rifiutate
+          </p>
         </button>
       </div>
 
@@ -516,20 +590,6 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                 placeholder="Inserisci nome attivita'..."
                 className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Stato Recensione</label>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">Tutte ({reviews.length})</option>
-                <option value="pending">In attesa ({reviews.filter(r => r.review_status === 'pending').length})</option>
-                <option value="approved">Approvate ({reviews.filter(r => r.review_status === 'approved').length})</option>
-                <option value="rejected">Rifiutate ({reviews.filter(r => r.review_status === 'rejected').length})</option>
-              </select>
             </div>
 
             <div>
