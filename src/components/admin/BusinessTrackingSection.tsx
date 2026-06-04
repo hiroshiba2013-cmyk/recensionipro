@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Building2, CheckCircle, UserPlus, MapPin, Eye, Trash2, X, Search } from 'lucide-react';
+import { Building2, CheckCircle, UserPlus, MapPin, Eye, Trash2, X, Search, ShieldCheck, Clock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { AdminLocationFilter, LocationFilterState } from './AdminLocationFilter';
 import { useToast } from '../common/Toast';
@@ -192,6 +192,25 @@ export function BusinessTrackingSection({ onReload }: Props) {
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full flex-shrink-0 ${badge.bg}`}>
                     {badge.icon}{badge.label}
                   </span>
+                  {/* Approval status badge for user-added businesses */}
+                  {activity.type === 'user_added' && (
+                    activity.approval_status === 'approved' ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full flex-shrink-0 bg-green-100 text-green-700">
+                        <ShieldCheck className="w-3 h-3" />
+                        Approvata
+                      </span>
+                    ) : activity.approval_status === 'rejected' ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full flex-shrink-0 bg-red-100 text-red-700">
+                        <X className="w-3 h-3" />
+                        Rifiutata
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full flex-shrink-0 bg-yellow-100 text-yellow-700">
+                        <Clock className="w-3 h-3" />
+                        In attesa
+                      </span>
+                    )
+                  )}
                   <div className="flex-shrink-0 hidden md:block text-right">
                     <div className="text-sm text-gray-900">{activity.city || '—'}</div>
                     <div className="text-xs text-gray-500">{activity.province || '—'}</div>

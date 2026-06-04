@@ -207,7 +207,11 @@ export function BusinessesSection({ onReload }: BusinessesSectionProps) {
           services: business.services,
           services_description: business.services_description,
           category: business.category,
-          source: (business.added_by ? 'user_added' : 'imported') as 'user_added' | 'imported'
+          source: (business.added_by ? 'user_added' : 'imported') as 'user_added' | 'imported',
+          approval_status: business.approval_status,
+          points_awarded: business.points_awarded,
+          added_by: business.added_by,
+          added_by_family_member_id: business.added_by_family_member_id,
         }));
 
         const registeredBusinesses = (claimedResult.data || []).flatMap(business => {
