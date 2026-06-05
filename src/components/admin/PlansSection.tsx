@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CreditCard, FileEdit as Edit, Save, X, CheckCircle, Users, Clock } from 'lucide-react';
+import { CreditCard, FileEdit as Edit, Save, X, CheckCircle, Users, Clock, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
 
@@ -47,8 +47,19 @@ export function PlansSection({ adminId }: PlansSectionProps) {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'plans' | 'subscriptions'>('plans');
+
+  const emptyPlan = (): Plan => ({
+    id: '',
+    name: '',
+    price: 0,
+    billing_period: 'monthly',
+    max_persons: 1,
+    created_at: '',
+  });
 
   useEffect(() => {
     loadPlans();
@@ -123,26 +134,58 @@ export function PlansSection({ adminId }: PlansSectionProps) {
 
     try {
       setSaving(true);
-      const { error } = await supabase
-        .from('subscription_plans')
-        .update({
-          name: editingPlan.name,
-          price: editingPlan.price,
-          billing_period: editingPlan.billing_period,
-          max_persons: editingPlan.max_persons,
-        })
-        .eq('id', editingPlan.id);
 
-      if (error) throw error;
+      if (isCreating) {
+        const { error } = await supabase
+          .from('subscription_plans')
+          .insert({
+            name: editingPlan.name,
+            price: editingPlan.price,
+            billing_period: editingPlan.billing_period,
+            max_persons: editingPlan.max_persons,
+          });
+        if (error) throw error;
+        showToast('Piano creato con successo!', 'success');
+      } else {
+        const { error } = await supabase
+          .from('subscription_plans')
+          .update({
+            name: editingPlan.name,
+            price: editingPlan.price,
+            billing_period: editingPlan.billing_period,
+            max_persons: editingPlan.max_persons,
+          })
+          .eq('id', editingPlan.id);
+        if (error) throw error;
+        showToast('Piano aggiornato con successo!', 'success');
+      }
 
-      showToast('Piano aggiornato con successo!', 'success');
       setEditingPlan(null);
+      setIsCreating(false);
       loadPlans();
     } catch (error: any) {
       console.error('Error saving plan:', error);
       showToast(`Errore: ${error.message}`, 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const confirmDeletePlan = async () => {
+    if (!deletingPlanId) return;
+    try {
+      const { error } = await supabase
+        .from('subscription_plans')
+        .delete()
+        .eq('id', deletingPlanId);
+      if (error) throw error;
+      showToast('Piano eliminato con successo!', 'success');
+      setDeletingPlanId(null);
+      loadPlans();
+      loadSubscriptions();
+    } catch (error: any) {
+      showToast(`Errore: ${error.message}`, 'error');
+      setDeletingPlanId(null);
     }
   };
 
@@ -258,6 +301,13 @@ export function PlansSection({ adminId }: PlansSectionProps) {
               </span>
             </div>
           </div>
+          <button
+            onClick={() => { setEditingPlan(emptyPlan()); setIsCreating(true); }}
+            className="flex items-center gap-2 bg-white text-gray-900 px-4 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-100 transition-colors shadow"
+          >
+            <Plus className="w-4 h-4" />
+            Nuovo Piano
+          </button>
         </div>
       </div>
 
@@ -354,13 +404,21 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                           </div>
                         </div>
 
-                        <button
-                          onClick={() => setEditingPlan(plan)}
-                          className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                        >
-                          <Edit className="w-4 h-4" />
-                          Modifica Piano
-                        </button>
+                        <div className="flex gap-2 mt-4">
+                          <button
+                            onClick={() => { setEditingPlan(plan); setIsCreating(false); }}
+                            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                          >
+                            <Edit className="w-4 h-4" />
+                            Modifica
+                          </button>
+                          <button
+                            onClick={() => setDeletingPlanId(plan.id)}
+                            className="flex items-center justify-center gap-1.5 bg-red-50 text-red-600 border border-red-200 px-3 py-2.5 rounded-lg hover:bg-red-100 transition-colors font-medium"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -479,13 +537,13 @@ export function PlansSection({ adminId }: PlansSectionProps) {
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
               <div>
-                <h3 className="text-2xl font-bold text-gray-900">Modifica Piano</h3>
+                <h3 className="text-2xl font-bold text-gray-900">{isCreating ? 'Nuovo Piano' : 'Modifica Piano'}</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Aggiorna le informazioni del piano di abbonamento
+                  {isCreating ? 'Crea un nuovo piano di abbonamento' : 'Aggiorna le informazioni del piano di abbonamento'}
                 </p>
               </div>
               <button
-                onClick={() => setEditingPlan(null)}
+                onClick={() => { setEditingPlan(null); setIsCreating(false); }}
                 className="text-gray-500 hover:text-gray-700 transition-colors"
               >
                 <X className="w-6 h-6" />
@@ -573,7 +631,7 @@ export function PlansSection({ adminId }: PlansSectionProps) {
 
               <div className="flex gap-3 pt-6 border-t">
                 <button
-                  onClick={() => setEditingPlan(null)}
+                  onClick={() => { setEditingPlan(null); setIsCreating(false); }}
                   className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-semibold"
                 >
                   Annulla
@@ -584,9 +642,42 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                   className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   <Save className="w-5 h-5" />
-                  {saving ? 'Salvataggio...' : 'Salva Modifiche'}
+                  {saving ? 'Salvataggio...' : isCreating ? 'Crea Piano' : 'Salva Modifiche'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {deletingPlanId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Elimina Piano</h3>
+                <p className="text-sm text-gray-600">Questa azione non può essere annullata.</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-700 bg-red-50 border border-red-200 rounded-lg p-3 mb-6">
+              Se ci sono abbonamenti attivi associati a questo piano, l'eliminazione potrebbe fallire. Assicurati che nessun utente stia utilizzando questo piano prima di eliminarlo.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeletingPlanId(null)}
+                className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-semibold"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={confirmDeletePlan}
+                className="flex-1 bg-red-600 text-white px-4 py-2.5 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 font-semibold"
+              >
+                <Trash2 className="w-4 h-4" />
+                Elimina Piano
+              </button>
             </div>
           </div>
         </div>
