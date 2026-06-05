@@ -75,7 +75,7 @@ export function PlansSection({ adminId }: PlansSectionProps) {
 
   const loadSubscriptions = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: subsData, error: subsError } = await supabase
         .from('subscriptions')
         .select(`
           id,
@@ -86,19 +86,32 @@ export function PlansSection({ adminId }: PlansSectionProps) {
           end_date,
           trial_end_date,
           payment_method_added,
-          customer:profiles!subscriptions_customer_id_fkey(
-            id, full_name, nickname, email, user_type
-          ),
-          plan:subscription_plans!subscriptions_plan_id_fkey(
+          plan:subscription_plans(
             id, name, price, billing_period, max_persons
           )
         `)
         .order('start_date', { ascending: false });
 
-      if (error) throw error;
+      if (subsError) throw subsError;
+      if (!subsData || subsData.length === 0) {
+        setSubscriptions([]);
+        return;
+      }
 
-      // Filtra righe senza customer o piano (dati orfani)
-      const valid = (data || []).filter(s => s.customer && s.plan);
+      const customerIds = [...new Set(subsData.map(s => s.customer_id))];
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, nickname, email, user_type')
+        .in('id', customerIds);
+
+      if (profilesError) throw profilesError;
+
+      const profileMap = new Map((profilesData || []).map(p => [p.id, p]));
+
+      const valid = subsData
+        .filter(s => s.plan && profileMap.has(s.customer_id))
+        .map(s => ({ ...s, customer: profileMap.get(s.customer_id) }));
+
       setSubscriptions(valid as any);
     } catch (error: any) {
       showToast(`Errore caricamento abbonamenti: ${error.message}`, 'error');
