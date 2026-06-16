@@ -3,7 +3,6 @@ import { CheckCircle, XCircle, Eye, Star, Filter, MapPin, Building2, Calendar, C
 import { supabase } from '../../lib/supabase';
 import { AdminLocationFilter } from './AdminLocationFilter';
 import { useToast } from '../common/Toast';
-import { getModerationBadge } from '../../lib/moderation';
 
 interface Review {
   id: string;
@@ -739,7 +738,6 @@ export function ReviewsSection({ reviews, onReload, adminId }: ReviewsSectionPro
                     >
                       {review.review_status === 'approved' ? 'Approvata' : review.review_status === 'pending' ? 'In attesa' : 'Rifiutata'}
                     </span>
-                    {(() => { const b = getModerationBadge(review.ai_moderation_status); return <span className={`px-2 py-0.5 text-xs rounded-full font-medium border ${b.color} ${b.bg} ${b.border}`}>{b.label}</span>; })()}
                     {reviewHasProof(review) && (
                       <span className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-full font-semibold bg-green-100 text-green-800 border border-green-300">
                         <Image className="w-3 h-3" />

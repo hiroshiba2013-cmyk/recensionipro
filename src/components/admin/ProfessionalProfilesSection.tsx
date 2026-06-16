@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Briefcase, Search, MapPin, Star, X, Pencil, Save, Trash2, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
-import { getModerationBadge } from '../../lib/moderation';
 
 interface ProfessionalProfile {
   id: string;
@@ -251,9 +250,6 @@ export function ProfessionalProfilesSection() {
                       {p.skills.length} competenze
                     </span>
                   )}
-
-                  {/* AI moderation */}
-                  {(() => { const b = getModerationBadge(p.ai_moderation_status); return <span className={`inline-flex text-xs font-medium border px-2 py-0.5 rounded-full flex-shrink-0 ${b.color} ${b.bg} ${b.border}`}>{b.label}</span>; })()}
 
                   {/* Date */}
                   <span className="hidden md:block text-xs text-gray-400 flex-shrink-0">

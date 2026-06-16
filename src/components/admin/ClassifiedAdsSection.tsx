@@ -4,7 +4,6 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { AdminLocationFilter } from './AdminLocationFilter';
 import { useToast } from '../common/Toast';
-import { getModerationBadge } from '../../lib/moderation';
 
 interface ClassifiedAd {
   id: string;
@@ -395,7 +394,6 @@ export function ClassifiedAdsSection({ ads, onReload }: ClassifiedAdsSectionProp
                     <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(ad.status)}`}>
                       {ad.status}
                     </span>
-                    {(() => { const b = getModerationBadge(ad.ai_moderation_status); return <span className={`rounded-full px-2 py-0.5 text-xs font-medium border ${b.color} ${b.bg} ${b.border}`}>{b.label}</span>; })()}
                   </div>
                   <h3 className="font-bold text-lg text-gray-900 mb-1">{ad.title}</h3>
                   {ad.price !== null && ad.price > 0 && (
