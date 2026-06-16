@@ -213,7 +213,15 @@ export function ReviewForm({
     setLoading(true);
     setError('');
 
-    const modResult = await moderateContent({ contentType: 'review', title, description: content });
+    const modResult = await moderateContent({
+      contentType: 'review',
+      title,
+      description: content,
+      userId: user?.id,
+      rating: Math.max(1, Math.min(5, Math.round(getAverageRatingForType(reviewType)))),
+      hasProofDocuments: proofDocuments.length > 0,
+      targetBusinessId: businessLocationId || unclaimedBusinessLocationId || registeredBusinessLocationId || businessId,
+    });
     if (modResult.verdict === 'rejected') {
       setError(`Contenuto non conforme alle linee guida: ${modResult.reason}`);
       setLoading(false);

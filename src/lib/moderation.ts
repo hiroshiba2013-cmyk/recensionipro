@@ -16,6 +16,11 @@ export interface ModerationInput {
   description?: string;
   category?: string;
   price?: number;
+  // Review-specific anti-fake signals (passed to edge function for DB enrichment)
+  userId?: string;
+  rating?: number;
+  hasProofDocuments?: boolean;
+  targetBusinessId?: string;
 }
 
 export async function moderateContent(input: ModerationInput): Promise<ModerationResult> {
