@@ -6,6 +6,7 @@ import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { ITALIAN_REGIONS } from '../../lib/cities';
 import { X } from 'lucide-react';
 import { useToast } from '../common/Toast';
+import { moderateContent } from '../../lib/moderation';
 
 interface JobSeekerFormProps {
   onSuccess: () => void;
@@ -64,6 +65,18 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
     if (!user) return;
 
     setLoading(true);
+
+    const modResult = await moderateContent({
+      contentType: 'job_seeker',
+      title: formData.title,
+      description: formData.description,
+    });
+    if (modResult.verdict === 'rejected') {
+      showToast(`Contenuto non conforme alle linee guida: ${modResult.reason}`, 'error');
+      setLoading(false);
+      return;
+    }
+
     try {
       const locationString = [formData.city, formData.province, formData.region]
         .filter(Boolean)
@@ -326,7 +339,7 @@ export function JobSeekerForm({ onSuccess, onCancel }: JobSeekerFormProps) {
             disabled={loading}
             className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 font-medium"
           >
-            {loading ? 'Pubblicazione...' : 'Pubblica Annuncio'}
+            {loading ? 'Analisi in corso...' : 'Pubblica Annuncio'}
           </button>
           <button
             type="button"

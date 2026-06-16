@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../common/Toast';
 import { ITALIAN_REGIONS } from '../../lib/cities';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
+import { moderateContent } from '../../lib/moderation';
 
 interface ProfessionalProfile {
   id?: string;
@@ -66,6 +67,18 @@ export function ProfessionalProfileForm({ onSaved, onCancel, existingProfile, fa
     }
 
     setSaving(true);
+
+    const modResult = await moderateContent({
+      contentType: 'professional_profile',
+      title: form.profession,
+      description: form.summary,
+    });
+    if (modResult.verdict === 'rejected') {
+      showToast(`Contenuto non conforme alle linee guida: ${modResult.reason}`, 'error');
+      setSaving(false);
+      return;
+    }
+
     try {
       const payload = {
         user_id: user.id,
@@ -222,7 +235,7 @@ export function ProfessionalProfileForm({ onSaved, onCancel, existingProfile, fa
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm transition-colors disabled:opacity-60"
         >
           <Save className="w-4 h-4" />
-          {saving ? 'Salvataggio...' : 'Salva Profilo'}
+          {saving ? 'Analisi in corso...' : 'Salva Profilo'}
         </button>
       </div>
     </form>

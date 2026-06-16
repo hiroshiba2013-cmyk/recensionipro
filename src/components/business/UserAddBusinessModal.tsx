@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { ITALIAN_REGIONS } from '../../lib/cities';
 import { useToast } from '../common/Toast';
+import { moderateContent } from '../../lib/moderation';
 
 interface UserAddBusinessModalProps {
   userId: string;
@@ -48,6 +49,17 @@ export function UserAddBusinessModal({ userId, familyMemberId, onSuccess, onCanc
     e.preventDefault();
     if (!form.name.trim()) return;
     setLoading(true);
+
+    const modResult = await moderateContent({
+      contentType: 'business',
+      title: form.name,
+      description: form.description,
+    });
+    if (modResult.verdict === 'rejected') {
+      showToast(`Contenuto non conforme alle linee guida: ${modResult.reason}`, 'error');
+      setLoading(false);
+      return;
+    }
 
     try {
       // Check duplicate

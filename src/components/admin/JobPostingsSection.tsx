@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { AdminLocationFilter } from './AdminLocationFilter';
 import { useToast } from '../common/Toast';
+import { getModerationBadge } from '../../lib/moderation';
 
 interface JobPosting {
   id: string;
@@ -514,8 +515,9 @@ export function JobPostingsSection({ jobPostings: initialJobPostings, onReload, 
                   >
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
                           {getApprovalBadge(job.approval_status)}
+                          {(() => { const b = getModerationBadge(job.ai_moderation_status); return <span className={`rounded-full px-2 py-0.5 text-xs font-medium border ${b.color} ${b.bg} ${b.border}`}>{b.label}</span>; })()}
                         </div>
                         <h3 className="font-bold text-lg text-gray-900 mb-2">{job.title}</h3>
                         {job.business_location && (

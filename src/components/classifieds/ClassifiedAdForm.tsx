@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { ITALIAN_REGIONS } from '../../lib/cities';
 import { useToast } from '../common/Toast';
+import { moderateContent } from '../../lib/moderation';
 
 interface Category {
   id: string;
@@ -155,6 +156,18 @@ export function ClassifiedAdForm({ adId, businessLocationId, isRegisteredBusines
     if (!user) return;
 
     setLoading(true);
+
+    const modResult = await moderateContent({
+      contentType: 'classified_ad',
+      title: formData.title,
+      description: formData.description,
+      price: formData.price ? parseFloat(formData.price) : undefined,
+    });
+    if (modResult.verdict === 'rejected') {
+      showToast(`Contenuto non conforme alle linee guida: ${modResult.reason}`, 'error');
+      setLoading(false);
+      return;
+    }
 
     try {
       let imageUrls = formData.images;
@@ -473,7 +486,7 @@ export function ClassifiedAdForm({ adId, businessLocationId, isRegisteredBusines
             disabled={loading}
             className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
-            {loading ? 'Salvataggio...' : adId ? 'Salva Modifiche' : 'Invia Annuncio'}
+            {loading ? 'Analisi in corso...' : adId ? 'Salva Modifiche' : 'Invia Annuncio'}
           </button>
         </div>
         {!adId && (

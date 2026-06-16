@@ -3,6 +3,7 @@ import { Star, X, Upload, FileText, ChevronRight, ChevronLeft } from 'lucide-rea
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../common/Toast';
+import { moderateContent } from '../../lib/moderation';
 
 interface ReviewFormProps {
   businessId?: string;
@@ -210,6 +211,14 @@ export function ReviewForm({
     }
 
     setLoading(true);
+    setError('');
+
+    const modResult = await moderateContent({ contentType: 'review', title, description: content });
+    if (modResult.verdict === 'rejected') {
+      setError(`Contenuto non conforme alle linee guida: ${modResult.reason}`);
+      setLoading(false);
+      return;
+    }
 
     try {
       const documentUrls = await uploadDocuments();
@@ -555,7 +564,7 @@ export function ReviewForm({
                     disabled={loading || content.length < 100}
                     className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
-                    {loading ? 'Invio in corso...' : 'Invia Recensione'}
+                    {loading ? 'Analisi in corso...' : 'Invia Recensione'}
                   </button>
                 </div>
               </div>

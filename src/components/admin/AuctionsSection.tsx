@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { AdminLocationFilter } from './AdminLocationFilter';
 import { useToast } from '../common/Toast';
+import { getModerationBadge } from '../../lib/moderation';
 
 const AUCTION_CATEGORIES = [
   'Elettronica',
@@ -443,8 +444,9 @@ export default function AuctionsSection() {
                           {auction.description}
                         </p>
                       </div>
-                      <div className="flex gap-2 flex-shrink-0">
+                      <div className="flex gap-2 flex-shrink-0 flex-wrap">
                         {getApprovalBadge(auction.approval_status)}
+                        {(() => { const b = getModerationBadge(auction.ai_moderation_status); return <span className={`rounded-full px-2 py-0.5 text-xs font-medium border ${b.color} ${b.bg} ${b.border}`}>{b.label}</span>; })()}
                       </div>
                     </div>
 

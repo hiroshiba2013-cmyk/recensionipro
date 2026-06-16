@@ -6,6 +6,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { ITALIAN_REGIONS } from '../../lib/cities';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { useToast } from '../common/Toast';
+import { moderateContent } from '../../lib/moderation';
 
 interface AuctionFormProps {
   onSuccess?: () => void;
@@ -114,6 +115,19 @@ export default function AuctionForm({ onSuccess, onCancel, businessLocationId, i
 
     setLoading(true);
     setError('');
+
+    const modResult = await moderateContent({
+      contentType: 'auction',
+      title: formData.title,
+      description: formData.description,
+      category: formData.category,
+      price: formData.base_price ? parseFloat(formData.base_price) : undefined,
+    });
+    if (modResult.verdict === 'rejected') {
+      setError(`Contenuto non conforme alle linee guida: ${modResult.reason}`);
+      setLoading(false);
+      return;
+    }
 
     try {
       if (images.length === 0) {
@@ -382,7 +396,7 @@ export default function AuctionForm({ onSuccess, onCancel, businessLocationId, i
           disabled={loading}
           className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50"
         >
-          {loading ? 'Creazione...' : 'Crea Asta'}
+          {loading ? 'Analisi in corso...' : 'Crea Asta'}
         </button>
       </div>
     </form>

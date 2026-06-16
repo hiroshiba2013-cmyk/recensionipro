@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { SearchableSelect } from '../common/SearchableSelect';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { ITALIAN_REGIONS } from '../../lib/cities';
+import { moderateContent } from '../../lib/moderation';
 
 interface Business {
   id: string;
@@ -137,6 +138,17 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
     }
 
     setLoading(true);
+
+    const modResult = await moderateContent({
+      contentType: 'job_posting',
+      title: formData.title,
+      description: formData.description,
+    });
+    if (modResult.verdict === 'rejected') {
+      setError(`Contenuto non conforme alle linee guida: ${modResult.reason}`);
+      setLoading(false);
+      return;
+    }
 
     try {
       const skillsArray = formData.requiredSkills
@@ -411,7 +423,7 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
         disabled={loading}
         className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 font-medium"
       >
-        {loading ? 'Pubblicazione...' : 'Pubblica Annuncio'}
+        {loading ? 'Analisi in corso...' : 'Pubblica Annuncio'}
       </button>
     </form>
   );
