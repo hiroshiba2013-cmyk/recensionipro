@@ -11,14 +11,16 @@ import { ItalianCityProvinceSelect } from '../components/common/ItalianCityProvi
 const categories = [
   'Tutte',
   'Elettronica',
-  'Abbigliamento',
+  'Motori',
   'Casa e Giardino',
-  'Sport',
-  'Collezionismo',
-  'Auto e Moto',
+  'Moda e Accessori',
+  'Hobby e Tempo Libero',
+  'Infanzia',
   'Libri',
-  'Giocattoli',
-  'Arte',
+  'Film',
+  'Musica',
+  'Attrezzature Professionali',
+  'Aste Solidali',
   'Altro'
 ];
 
@@ -192,43 +194,30 @@ export default function AuctionsPage() {
             </div>
           )}
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  selectedCategory === cat
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Categoria</label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 text-sm bg-white"
               >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-4 flex gap-4">
-            <button
-              onClick={() => setFilters({ ...filters, status: 'active' })}
-              className={`px-4 py-2 rounded-lg font-medium ${
-                filters.status === 'active'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Attive
-            </button>
-            <button
-              onClick={() => setFilters({ ...filters, status: 'completed' })}
-              className={`px-4 py-2 rounded-lg font-medium ${
-                filters.status === 'completed'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Concluse
-            </button>
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Stato</label>
+              <select
+                value={filters.status}
+                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 text-sm bg-white"
+              >
+                <option value="active">Attive</option>
+                <option value="completed">Concluse</option>
+              </select>
+            </div>
           </div>
         </div>
 

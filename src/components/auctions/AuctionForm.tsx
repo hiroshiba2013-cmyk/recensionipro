@@ -16,14 +16,16 @@ interface AuctionFormProps {
 
 const categories = [
   'Elettronica',
-  'Abbigliamento',
+  'Motori',
   'Casa e Giardino',
-  'Sport',
-  'Collezionismo',
-  'Auto e Moto',
+  'Moda e Accessori',
+  'Hobby e Tempo Libero',
+  'Infanzia',
   'Libri',
-  'Giocattoli',
-  'Arte',
+  'Film',
+  'Musica',
+  'Attrezzature Professionali',
+  'Aste Solidali',
   'Altro'
 ];
 
