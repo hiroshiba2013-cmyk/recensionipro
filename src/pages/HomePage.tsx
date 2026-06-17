@@ -413,6 +413,7 @@ function AuthenticatedHomePage() {
   const [featuredAuctions, setFeaturedAuctions] = useState<any[]>([]);
   const [topUsers, setTopUsers] = useState<any[]>([]);
   const [topBusinesses, setTopBusinesses] = useState<any[]>([]);
+  const [featuredLocations, setFeaturedLocations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const isBusiness = profile?.user_type === 'business';
@@ -430,7 +431,7 @@ function AuthenticatedHomePage() {
     try {
       setLoading(true);
 
-      const [jobSeekersResult, jobPostingsResult, sellAdsResult, topDataResult, auctionsResult, featuredAuctionsResult] = await Promise.all([
+      const [jobSeekersResult, jobPostingsResult, sellAdsResult, topDataResult, auctionsResult, featuredAuctionsResult, featuredLocationsResult] = await Promise.all([
         // Business users see job seekers (private users looking for work)
         (async () => {
           if (!isBusiness) return [];
@@ -522,7 +523,9 @@ function AuthenticatedHomePage() {
           .eq('status', 'active')
           .eq('approval_status', 'approved')
           .order('ends_at', { ascending: true })
-          .limit(6)
+          .limit(6),
+
+        supabase.rpc('get_top_business_locations', { limit_count: 8 })
       ]);
 
       if (jobSeekersResult) {
@@ -566,6 +569,10 @@ function AuthenticatedHomePage() {
           ...a,
           bid_count: a.bid_count?.[0]?.count || 0
         })));
+      }
+
+      if (featuredLocationsResult.data) {
+        setFeaturedLocations(featuredLocationsResult.data);
       }
     } catch (error) {
       console.error('Error loading home data:', error);
@@ -617,6 +624,42 @@ function AuthenticatedHomePage() {
       </section>
 
       <TopBusinessesBanner />
+
+      {/* Attività in Evidenza */}
+      {featuredLocations.length > 0 && (
+        <section className="bg-white border-b border-gray-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 rounded-xl shadow-lg">
+                  <Star className="w-6 h-6 text-white fill-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Attività in Evidenza</h2>
+                  <p className="text-sm text-gray-600">Le sedi con le valutazioni globali più alte</p>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate('/search?sort=rating_desc')}
+                className="group flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-5 py-2.5 rounded-xl hover:shadow-lg font-semibold transition-all hover:scale-105"
+              >
+                Vedi tutte
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {featuredLocations.slice(0, 8).map((loc: any, index: number) => (
+                <FeaturedLocationCard
+                  key={loc.id}
+                  location={loc}
+                  rank={index + 1}
+                  onClick={() => navigate(`/business/${loc.id}`)}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {loading ? (
@@ -952,6 +995,71 @@ function AuthenticatedHomePage() {
               </section>
             )}
           </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FeaturedLocationCard({ location, rank, onClick }: { location: any; rank: number; onClick: () => void }) {
+  const name = location.name || 'Sede';
+  const avgRating = location.avg_rating || 0;
+  const reviewCount = location.review_count || 0;
+  const fillFn = (star: number) => Math.min(1, Math.max(0, avgRating - (star - 1)));
+
+  return (
+    <div
+      onClick={onClick}
+      className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all cursor-pointer overflow-hidden hover:-translate-y-1 group"
+    >
+      <div className="relative h-36 bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center overflow-hidden">
+        {location.avatar_url ? (
+          <img src={location.avatar_url} alt={name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+        ) : (
+          <span className="text-5xl font-extrabold text-emerald-200 group-hover:scale-110 transition-transform duration-300">
+            {name.charAt(0).toUpperCase()}
+          </span>
+        )}
+        <div className="absolute top-2.5 left-2.5 bg-emerald-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow">
+          {rank}
+        </div>
+        {location.is_claimed && (
+          <div className="absolute top-2.5 right-2.5 bg-blue-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow">
+            Verificata
+          </div>
+        )}
+      </div>
+      <div className="p-4">
+        <h3 className="font-bold text-gray-900 mb-0.5 line-clamp-1 text-sm">{name}</h3>
+        {location.category_name && (
+          <p className="text-xs text-blue-600 font-medium mb-2 line-clamp-1">{location.category_name}</p>
+        )}
+        {location.city && (
+          <div className="flex items-center gap-1 text-xs text-gray-500 mb-3">
+            <MapPin className="w-3 h-3 flex-shrink-0" />
+            <span className="truncate">{location.city}{location.province ? `, ${location.province}` : ''}</span>
+          </div>
+        )}
+        {reviewCount > 0 ? (
+          <div className="flex items-center gap-1.5 pt-2 border-t border-gray-100">
+            <div className="flex items-center gap-0.5">
+              {[1, 2, 3, 4, 5].map((star) => {
+                const fill = fillFn(star);
+                const uid = `fl-${location.id}-${star}`;
+                return (
+                  <svg key={star} width={14} height={14} viewBox="0 0 24 24">
+                    <defs><clipPath id={uid}><rect x="0" y="0" width={24 * fill} height="24" /></clipPath></defs>
+                    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" fill="#e5e7eb" stroke="#e5e7eb" strokeWidth="1" />
+                    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" fill="#22c55e" stroke="#22c55e" strokeWidth="1" clipPath={`url(#${uid})`} />
+                  </svg>
+                );
+              })}
+            </div>
+            <span className="font-bold text-xs text-gray-900">{avgRating.toFixed(1)}</span>
+            <span className="text-xs text-gray-400">({reviewCount})</span>
+          </div>
+        ) : (
+          <p className="text-xs text-gray-400 italic pt-2 border-t border-gray-100">Nessuna recensione</p>
         )}
       </div>
     </div>
