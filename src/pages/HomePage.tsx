@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Star, Search, Award, Tag, Briefcase, Heart, Users, MapPin, Euro, ArrowRight, Check, Building2, Gavel, Shield, Gift, Lock, User } from 'lucide-react';
+import { Star, Search, Award, Tag, Briefcase, Heart, Users, MapPin, Euro, ArrowRight, Check, Building2, Gavel, Shield, Gift, Lock, User, Volume2 } from 'lucide-react';
 import { AdvancedSearch } from '../components/search/AdvancedSearch';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from '../components/Router';
 import TopBusinessesBanner from '../components/business/TopBusinessesBanner';
 import AuctionCard from '../components/auctions/AuctionCard';
+import { usePageCustomization } from '../hooks/usePageCustomization';
 
 export function HomePage() {
   const { user, profile, loading } = useAuth();
@@ -150,6 +151,7 @@ function PricingPreviewSection({ plans, onNavigate }: { plans: any[]; onNavigate
 function LandingPage() {
   const navigate = useNavigate();
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
+  const customization = usePageCustomization('landing');
 
   useEffect(() => {
     supabase
@@ -163,8 +165,23 @@ function LandingPage() {
   return (
     <div className="min-h-screen bg-gray-50">
 
+      {/* Announcement banner */}
+      {customization?.announcement_active && customization.announcement_text && (
+        <div className="bg-blue-600 text-white py-2.5 px-4 text-center text-sm font-medium flex items-center justify-center gap-2">
+          <Volume2 className="w-4 h-4 flex-shrink-0" />
+          {customization.announcement_text}
+        </div>
+      )}
+
       {/* HERO */}
-      <section className="bg-white border-b border-gray-100">
+      <section
+        className="bg-white border-b border-gray-100"
+        style={customization?.hero_image_url ? {
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.88), rgba(255,255,255,0.88)), url(${customization.hero_image_url})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        } : undefined}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
           <div className="max-w-2xl mx-auto text-center">
             <div>
@@ -173,11 +190,12 @@ function LandingPage() {
                 La piattaforma che connette persone e attività
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-5">
-                Benvenuto su{' '}
-                <span className="text-blue-600">Trovafacile</span>
+                {customization?.hero_title || (
+                  <>Benvenuto su{' '}<span className="text-blue-600">Trovafacile</span></>
+                )}
               </h1>
               <p className="text-lg text-gray-500 mb-3 leading-relaxed">
-                La piattaforma che connette persone e attività locali in tutta Italia
+                {customization?.hero_subtitle || 'La piattaforma che connette persone e attività locali in tutta Italia'}
               </p>
               <p className="text-sm text-gray-400 mb-8">
                 Prova gratuita di 30 giorni per utenti privati e aziende
@@ -415,6 +433,7 @@ function AuthenticatedHomePage() {
   const [topBusinesses, setTopBusinesses] = useState<any[]>([]);
   const [featuredLocations, setFeaturedLocations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const customization = usePageCustomization('home_authenticated');
 
   const isBusiness = profile?.user_type === 'business';
 
@@ -589,8 +608,23 @@ function AuthenticatedHomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Announcement banner */}
+      {customization?.announcement_active && customization.announcement_text && (
+        <div className="bg-blue-600 text-white py-2.5 px-4 text-center text-sm font-medium flex items-center justify-center gap-2">
+          <Volume2 className="w-4 h-4 flex-shrink-0" />
+          {customization.announcement_text}
+        </div>
+      )}
+
       {/* Hero */}
-      <section className="bg-white border-b border-gray-100">
+      <section
+        className="bg-white border-b border-gray-100"
+        style={customization?.hero_image_url ? {
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.88), rgba(255,255,255,0.88)), url(${customization.hero_image_url})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        } : undefined}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
           <div className="max-w-2xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
@@ -601,7 +635,7 @@ function AuthenticatedHomePage() {
               Ciao, <span className="text-blue-600">{heroDisplayName}</span>!
             </h1>
             <p className="text-lg text-gray-500">
-              Esplora attività locali, trova candidati, vendi e compra oggetti
+              {customization?.hero_subtitle || 'Esplora attività locali, trova candidati, vendi e compra oggetti'}
             </p>
           </div>
           <div className="mt-10 max-w-4xl">

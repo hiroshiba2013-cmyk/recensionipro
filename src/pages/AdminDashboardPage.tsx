@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, Users, FileText, ShoppingBag, Activity, CheckCircle, XCircle, Clock, Eye, Trash2, LogOut, Building2, AlertTriangle, Briefcase, MapPin, UserCheck, Heart, Award, TrendingUp, MessageSquare, Mail, CreditCard, BookOpen, Gavel } from 'lucide-react';
+import { Shield, Users, FileText, ShoppingBag, Activity, CheckCircle, XCircle, Clock, Eye, Trash2, LogOut, Building2, AlertTriangle, Briefcase, MapPin, UserCheck, Heart, Award, TrendingUp, MessageSquare, Mail, CreditCard, BookOpen, Gavel, Layers } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { AdminStats } from '../components/admin/AdminStats';
@@ -19,6 +19,7 @@ import { ContactSection } from '../components/admin/ContactSection';
 import { PlatformMessagesSection } from '../components/admin/PlatformMessagesSection';
 import { PlansSection } from '../components/admin/PlansSection';
 import { RulesSection } from '../components/admin/RulesSection';
+import { PageCustomizationSection } from '../components/admin/PageCustomizationSection';
 import AuctionsSection from '../components/admin/AuctionsSection';
 import { ProfessionalProfilesSection } from '../components/admin/ProfessionalProfilesSection';
 import { useToast } from '../components/common/Toast';
@@ -1340,6 +1341,17 @@ export function AdminDashboardPage() {
                 <BookOpen className="w-4 h-4" />
                 Regole
               </button>
+              <button
+                onClick={() => handleTabChange('page_customization')}
+                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'page_customization'
+                    ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <Layers className="w-4 h-4" />
+                Pagine
+              </button>
             </div>
           </div>
         </div>
@@ -1834,6 +1846,8 @@ export function AdminDashboardPage() {
             {activeTab === 'plans' && <PlansSection adminId={profile!.id} />}
 
             {activeTab === 'rules' && <RulesSection adminId={profile!.id} />}
+
+            {activeTab === 'page_customization' && <PageCustomizationSection adminId={profile!.id} />}
           </>
         )}
       </div>
