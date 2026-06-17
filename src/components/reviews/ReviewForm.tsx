@@ -213,6 +213,26 @@ export function ReviewForm({
     setError('');
 
     try {
+      // Check calendar-year limit before uploading anything
+      const familyMemberId = activeProfile && !activeProfile.isOwner ? activeProfile.id : null;
+      const { data: yearCheck, error: yearCheckError } = await supabase.rpc('check_review_allowed_this_year', {
+        p_customer_id: profile?.id,
+        p_family_member_id: familyMemberId,
+        p_business_id: (businessType !== 'imported' && businessType !== 'user_added' && businessType !== 'registered') ? businessId ?? null : null,
+        p_imported_business_id: businessType === 'imported' ? businessId ?? null : null,
+        p_user_added_business_id: businessType === 'user_added' ? businessId ?? null : null,
+        p_unclaimed_business_location_id: unclaimedBusinessLocationId ?? (businessType === 'imported' || businessType === 'user_added' ? businessId ?? null : null),
+        p_registered_business_location_id: registeredBusinessLocationId ?? null,
+      });
+
+      if (yearCheckError) throw yearCheckError;
+
+      if (!yearCheck) {
+        showToast('Hai già recensito questa attività nel ' + new Date().getFullYear() + '. Potrai farlo di nuovo dal 1° gennaio ' + (new Date().getFullYear() + 1) + '.', 'error');
+        onClose();
+        return;
+      }
+
       const documentUrls = await uploadDocuments();
       const avg = getAverageRatingForType(reviewType);
 
@@ -273,7 +293,7 @@ export function ReviewForm({
       if (insertError) {
         const isDuplicate = insertError.code === '23505' || insertError.code === '409' || insertError.message?.includes('duplicate') || insertError.message?.includes('unique');
         if (isDuplicate) {
-          showToast('Hai già inviato una recensione per questa attività.', 'error');
+          showToast('Hai già recensito questa attività quest\'anno.', 'error');
           onClose();
           return;
         }
