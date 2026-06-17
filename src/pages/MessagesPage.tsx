@@ -436,7 +436,7 @@ export function MessagesPage() {
                 <div className="flex flex-col items-center justify-center h-full text-center p-6">
                   <MessageCircle className="w-16 h-16 text-gray-400 mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">{filter === 'all' ? 'Nessun messaggio' : 'Nessuna conversazione'}</h3>
-                  <p className="text-gray-600">{filter === 'all' ? 'Inizia una conversazione contattando un venditore' : 'Nessuna conversazione in questa categoria'}</p>
+                  {filter !== 'all' && <p className="text-gray-600">Nessuna conversazione in questa categoria</p>}
                 </div>
               ) : filtered.map((conv) => {
                 const hasUnread = (conv.unread_count || 0) > 0;
