@@ -45,7 +45,7 @@ export function JobSeekerCard({ jobSeeker, onContact, showContactButton = true }
               onClick={(e) => e.stopPropagation()}
               className="text-gray-600 font-medium hover:text-blue-600 hover:underline transition-colors"
             >
-              {jobSeeker.profiles.nickname || jobSeeker.profiles.full_name}
+              {jobSeeker.profiles.nickname || 'Candidato'}
             </a>
           )}
           {jobSeeker.business_categories && (

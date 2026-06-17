@@ -148,7 +148,7 @@ export function ProfessionalProfilePage() {
   }
 
   const pp = professionalProfile!;
-  const displayName = pp.profiles?.nickname || pp.profiles?.full_name || 'Candidato';
+  const displayName = pp.profiles?.nickname || 'Candidato';
   const initial = displayName.charAt(0).toUpperCase();
   const location = [pp.city, pp.province, pp.region].filter(Boolean).join(', ');
 

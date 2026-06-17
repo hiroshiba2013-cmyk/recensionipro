@@ -131,7 +131,8 @@ export function JobSeekerDetailPage() {
   }
 
   const isOwner = user?.id === jobSeeker.user_id;
-  const displayName = jobSeeker.profiles.nickname || jobSeeker.profiles.full_name;
+  const isBusiness = profile?.user_type === 'business';
+  const displayName = jobSeeker.profiles.nickname || 'Candidato';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -280,7 +281,7 @@ export function JobSeekerDetailPage() {
               )}
             </div>
 
-            {(jobSeeker.phone || jobSeeker.email) && !isOwner && (
+            {(jobSeeker.phone || jobSeeker.email) && !isOwner && isBusiness && (
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <h3 className="font-semibold text-gray-900 mb-4">Contatti diretti</h3>
                 <div className="space-y-3">
