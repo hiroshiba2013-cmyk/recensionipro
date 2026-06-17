@@ -18,6 +18,7 @@ import { ProfileClassifiedAdCard } from '../components/classifieds/ProfileClassi
 import { ClassifiedAdForm } from '../components/classifieds/ClassifiedAdForm';
 import { useNavigate } from '../components/Router';
 import { BusinessLocationAvatarUpload } from '../components/business/BusinessLocationAvatarUpload';
+import { usePageCustomization } from '../hooks/usePageCustomization';
 
 interface SubscriptionPlan {
   id: string;
@@ -81,6 +82,7 @@ interface SolidarityStats {
 export function DashboardPageNew() {
   const { profile, selectedBusinessLocationId, activeProfile, refreshBusinessLocations, businessLocations } = useAuth();
   const navigate = useNavigate();
+  const customization = usePageCustomization(profile?.user_type === 'business' ? 'dashboard_business' : 'dashboard_private');
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
@@ -555,6 +557,11 @@ export function DashboardPageNew() {
   return (
     <div className="min-h-screen bg-gray-50">
       <TrialExpirationModal />
+      {customization?.announcement_active && customization.announcement_text && (
+        <div className="bg-slate-800 text-white text-sm font-medium text-center py-2 px-4">
+          {customization.announcement_text}
+        </div>
+      )}
 
       {/* Hero */}
       <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700">

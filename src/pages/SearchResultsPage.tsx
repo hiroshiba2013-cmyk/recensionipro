@@ -5,6 +5,7 @@ import { LocationCard } from '../components/business/LocationCard';
 import { AdvancedSearch, SearchFilters } from '../components/search/AdvancedSearch';
 import { PROVINCE_TO_CODE } from '../lib/cities';
 import { useAuth } from '../contexts/AuthContext';
+import { usePageCustomization } from '../hooks/usePageCustomization';
 
 interface BusinessLocation {
   id: string;
@@ -62,6 +63,7 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 ];
 
 export function SearchResultsPage() {
+  const customization = usePageCustomization('search');
   const { user } = useAuth();
   const [locations, setLocations] = useState<BusinessLocation[]>([]);
   const [loading, setLoading] = useState(false);
@@ -378,22 +380,40 @@ export function SearchResultsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Announcement banner */}
+      {customization?.announcement_active && customization.announcement_text && (
+        <div className="bg-blue-600 text-white text-sm font-medium text-center py-2 px-4">
+          {customization.announcement_text}
+        </div>
+      )}
       {/* Hero */}
-      <section className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+      <section
+        className="bg-white border-b border-gray-100 relative"
+        style={customization?.hero_image_url ? {
+          backgroundImage: `url(${customization.hero_image_url})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        } : undefined}
+      >
+        {customization?.hero_image_url && <div className="absolute inset-0 bg-black/50" />}
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <button
             onClick={handleBackToHome}
-            className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm font-medium mb-6 transition-colors"
+            className={`inline-flex items-center gap-2 ${customization?.hero_image_url ? 'text-gray-300 hover:text-white' : 'text-gray-500 hover:text-gray-900'} text-sm font-medium mb-6 transition-colors`}
           >
             <ArrowLeft className="w-4 h-4" />
             Torna alla home
           </button>
-          <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
+          <div className={`inline-flex items-center gap-2 ${customization?.hero_image_url ? 'bg-blue-500/30 text-blue-100' : 'bg-blue-50 text-blue-700'} text-xs font-semibold px-3 py-1.5 rounded-full mb-4`}>
             <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
             Attivita in tutta Italia
           </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-4">Cerca Attivita</h1>
-          <p className="text-lg text-gray-500 mb-8">Trova le migliori attivita locali verificate nella tua zona</p>
+          <h1 className={`text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-4 ${customization?.hero_image_url ? 'text-white' : 'text-gray-900'}`}>
+            {customization?.hero_title || 'Cerca Attivita'}
+          </h1>
+          <p className={`text-lg mb-8 ${customization?.hero_image_url ? 'text-gray-200' : 'text-gray-500'}`}>
+            {customization?.hero_subtitle || 'Trova le migliori attivita locali verificate nella tua zona'}
+          </p>
           <AdvancedSearch
             onSearch={applyFilters}
             isLoading={loading}

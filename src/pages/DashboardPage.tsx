@@ -30,6 +30,7 @@ import { ProfessionalProfileForm } from '../components/profile/ProfessionalProfi
 import { AvatarUpload } from '../components/profile/AvatarUpload';
 import { useToast } from '../components/common/Toast';
 import { useNavigate } from '../components/Router';
+import { usePageCustomization } from '../hooks/usePageCustomization';
 
 interface SubscriptionPlan {
   id: string;
@@ -912,6 +913,7 @@ export function DashboardPage() {
   const { user, profile, selectedBusinessLocationId, activeProfile, signOut, updateFamilyMemberAvatar } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const customization = usePageCustomization(profile?.user_type === 'business' ? 'dashboard_business' : 'dashboard_private');
 
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -1355,6 +1357,11 @@ export function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
 <TrialExpirationModal />
+      {customization?.announcement_active && customization.announcement_text && (
+        <div className="bg-slate-800 text-white text-sm font-medium text-center py-2 px-4">
+          {customization.announcement_text}
+        </div>
+      )}
 
       {/* PIN Modal */}
       {showPinModal && profile && (

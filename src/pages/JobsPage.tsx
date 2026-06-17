@@ -9,6 +9,7 @@ import { FavoriteButton } from '../components/favorites/FavoriteButton';
 import { ItalianCityProvinceSelect } from '../components/common/ItalianCityProvinceSelect';
 import { ITALIAN_REGIONS } from '../lib/cities';
 import { useToast } from '../components/common/Toast';
+import { usePageCustomization } from '../hooks/usePageCustomization';
 
 interface JobPosting {
   id: string;
@@ -82,6 +83,7 @@ interface SearchFilters {
 }
 
 export function JobsPage() {
+  const customization = usePageCustomization('jobs');
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'offers' | 'seekers'>('offers');
   const [jobs, setJobs] = useState<JobPosting[]>([]);
@@ -547,15 +549,33 @@ export function JobsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Announcement banner */}
+      {customization?.announcement_active && customization.announcement_text && (
+        <div className="bg-green-600 text-white text-sm font-medium text-center py-2 px-4">
+          {customization.announcement_text}
+        </div>
+      )}
       {/* Hero */}
-      <section className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
-          <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+      <section
+        className="bg-white border-b border-gray-100 relative"
+        style={customization?.hero_image_url ? {
+          backgroundImage: `url(${customization.hero_image_url})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        } : undefined}
+      >
+        {customization?.hero_image_url && <div className="absolute inset-0 bg-black/50" />}
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
+          <div className={`inline-flex items-center gap-2 ${customization?.hero_image_url ? 'bg-green-500/30 text-green-100' : 'bg-green-50 text-green-700'} text-xs font-semibold px-3 py-1.5 rounded-full mb-6`}>
             <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
             Offerte e candidature
           </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-3">Lavoro</h1>
-          <p className="text-lg text-gray-500">Trova opportunita di lavoro o trova i candidati ideali per la tua attivita</p>
+          <h1 className={`text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-3 ${customization?.hero_image_url ? 'text-white' : 'text-gray-900'}`}>
+            {customization?.hero_title || 'Lavoro'}
+          </h1>
+          <p className={`text-lg ${customization?.hero_image_url ? 'text-gray-200' : 'text-gray-500'}`}>
+            {customization?.hero_subtitle || 'Trova opportunita di lavoro o trova i candidati ideali per la tua attivita'}
+          </p>
         </div>
       </section>
 
