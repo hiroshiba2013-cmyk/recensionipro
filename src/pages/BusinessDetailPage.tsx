@@ -14,6 +14,36 @@ import { FavoriteButton } from '../components/favorites/FavoriteButton';
 import { VerificationBadge } from '../components/business/VerificationBadge';
 import { ConfirmModal, AlertModal } from '../components/common/ConfirmModal';
 
+function PartialStarsInline({ rating, size = 16 }: { rating: number; size?: number }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((star) => {
+        const fill = Math.min(1, Math.max(0, rating - (star - 1)));
+        const uid = `bdp-star-${star}-${Math.round(rating * 10)}`;
+        return (
+          <svg key={star} width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <clipPath id={uid}>
+                <rect x="0" y="0" width={24 * fill} height="24" />
+              </clipPath>
+            </defs>
+            <polygon
+              points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+              fill="#e5e7eb" stroke="#e5e7eb" strokeWidth="1"
+            />
+            <polygon
+              points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+              fill="#22c55e" stroke="#22c55e" strokeWidth="1"
+              clipPath={`url(#${uid})`}
+            />
+          </svg>
+        );
+      })}
+    </div>
+  );
+}
+
+
 interface BusinessDetailPageProps {
   businessId: string;
 }
@@ -1015,9 +1045,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                             <h3 className="font-bold text-xl text-gray-900">{location.name || 'Sede'}</h3>
                             {(location.review_count || 0) > 0 && (
                               <div className="flex items-center gap-1.5 shrink-0">
-                                {[1, 2, 3, 4, 5].map((s) => (
-                                  <Star key={s} className={`w-4 h-4 ${s <= Math.round(location.avg_rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-200 text-gray-200'}`} />
-                                ))}
+                                <PartialStarsInline rating={location.avg_rating || 0} size={16} />
                                 <span className="font-bold text-sm text-gray-900 ml-1">{(location.avg_rating || 0).toFixed(1)}</span>
                                 <span className="text-xs text-gray-500">({location.review_count})</span>
                               </div>
