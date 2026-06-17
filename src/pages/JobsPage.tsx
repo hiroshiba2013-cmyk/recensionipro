@@ -95,6 +95,8 @@ export function JobsPage() {
   const [markingAsViewed, setMarkingAsViewed] = useState<string | null>(null);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [professionalProfile, setProfessionalProfile] = useState<any | null>(null);
+  const [professionalProfileLoaded, setProfessionalProfileLoaded] = useState(false);
   const { user, profile, selectedBusinessLocationId, activeProfile } = useAuth();
 
   const [sortBy, setSortBy] = useState<string>('recent_desc');
@@ -123,6 +125,18 @@ export function JobsPage() {
       setSelectedJobId(jobId);
     }
   }, []);
+
+  useEffect(() => {
+    if (!user || !profile || profile.user_type === 'business') return;
+    const fmId = activeProfile?.isOwner === false ? activeProfile.id : null;
+    let q = supabase.from('professional_profiles').select('id').eq('user_id', profile.id);
+    if (fmId) q = q.eq('family_member_id', fmId);
+    else q = q.is('family_member_id', null);
+    q.maybeSingle().then(({ data }) => {
+      setProfessionalProfile(data || null);
+      setProfessionalProfileLoaded(true);
+    });
+  }, [user, profile?.id, activeProfile?.id]);
 
   useEffect(() => {
     if (activeTab === 'offers') {
@@ -574,7 +588,15 @@ export function JobsPage() {
 
           {activeTab === 'seekers' && user && profile?.user_type !== 'business' && !showJobSeekerForm && (
             <button
-              onClick={() => setShowJobSeekerForm(true)}
+              onClick={() => {
+                if (professionalProfileLoaded && !professionalProfile) {
+                  showToast('Devi prima creare un profilo professionale per pubblicare annunci cerco lavoro', 'info');
+                  window.history.pushState({}, '', '/dashboard');
+                  window.dispatchEvent(new PopStateEvent('popstate'));
+                } else {
+                  setShowJobSeekerForm(true);
+                }
+              }}
               className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors mb-6"
             >
               <Plus className="w-5 h-5" />
