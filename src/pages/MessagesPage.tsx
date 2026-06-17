@@ -416,10 +416,10 @@ export function MessagesPage() {
                   <button
                     key={key}
                     onClick={() => setFilter(key)}
-                    className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100'}`}
+                    className={`w-full flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100'}`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      {Icon ? <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-gray-400'}`} /> : <MessageCircle className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-gray-400'}`} />}
+                    <div className="flex items-center gap-2 min-w-0">
+                      {Icon ? <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-white' : 'text-gray-400'}`} /> : <MessageCircle className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-white' : 'text-gray-400'}`} />}
                       <span className="truncate">{label}</span>
                     </div>
                     <span className={`text-xs flex-shrink-0 ${isActive ? 'text-blue-100' : 'text-gray-400'}`}>{count}</span>
