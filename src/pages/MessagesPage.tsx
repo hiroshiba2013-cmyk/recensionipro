@@ -402,24 +402,27 @@ export function MessagesPage() {
         <div className={`w-full md:w-96 bg-white border-r border-gray-200 flex flex-col ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
           <div className="p-4 border-b border-gray-200">
             <h1 className="text-xl font-bold text-gray-900 mb-3">Conversazioni</h1>
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <div className="flex flex-col gap-0.5">
               {([
-                { key: 'all', label: 'Tutti', icon: null },
+                { key: 'all', label: 'Tutte', icon: null },
                 { key: 'classified_ad', label: 'Annunci', icon: Tag },
                 { key: 'job_seeker', label: 'Candidature', icon: Briefcase },
                 { key: 'job_posting', label: 'Offerte', icon: Building2 },
                 { key: 'auction', label: 'Aste', icon: Gavel },
               ] as const).map(({ key, label, icon: Icon }) => {
                 const count = key === 'all' ? conversations.length : conversations.filter((c) => matchesFilter(c.conversation_type, key)).length;
+                const isActive = filter === key;
                 return (
                   <button
                     key={key}
                     onClick={() => setFilter(key)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${filter === key ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                    className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100'}`}
                   >
-                    {Icon && <Icon className="w-3.5 h-3.5" />}
-                    {label}
-                    <span className={`text-xs rounded-full px-1.5 py-0.5 font-bold ${filter === key ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}>{count}</span>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {Icon ? <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-gray-400'}`} /> : <MessageCircle className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-gray-400'}`} />}
+                      <span className="truncate">{label}</span>
+                    </div>
+                    <span className={`text-xs flex-shrink-0 ${isActive ? 'text-blue-100' : 'text-gray-400'}`}>{count}</span>
                   </button>
                 );
               })}
