@@ -203,31 +203,44 @@ export function LocationCard({ location, initialIsFavorite, onFavoriteToggle }: 
 
         <div className="flex flex-wrap items-center gap-2 mb-3">
           {(location.review_count || 0) > 0 ? (
-            <>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 rounded-full border border-yellow-300">
-                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+            <div className="w-full">
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={`w-4 h-4 ${
+                        star <= Math.round(location.avg_rating || 0)
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'fill-gray-200 text-gray-200'
+                      }`}
+                    />
+                  ))}
+                </div>
                 <span className="font-bold text-sm text-gray-900">{(location.avg_rating || 0).toFixed(1)}</span>
-                <span className="text-xs text-gray-600 font-medium">
-                  ({location.review_count} {location.review_count === 1 ? 'rec.' : 'rec.'})
+                <span className="text-xs text-gray-500">
+                  · {location.review_count} {location.review_count === 1 ? 'recensione' : 'recensioni'}
                 </span>
               </div>
-              {(location.service_review_count || 0) > 0 && (
-                <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 rounded-full border border-blue-200" title="Valutazione servizio">
-                  <Star className="w-3 h-3 fill-blue-400 text-blue-400" />
-                  <span className="text-xs font-semibold text-blue-700">{(location.service_avg_rating || 0).toFixed(1)}</span>
-                  <span className="text-xs text-blue-500">serv.</span>
-                </div>
-              )}
-              {(location.management_review_count || 0) > 0 && (
-                <div className="flex items-center gap-1 px-2 py-1 bg-green-50 rounded-full border border-green-200" title="Valutazione gestione">
-                  <Star className="w-3 h-3 fill-green-400 text-green-400" />
-                  <span className="text-xs font-semibold text-green-700">{(location.management_avg_rating || 0).toFixed(1)}</span>
-                  <span className="text-xs text-green-500">gest.</span>
-                </div>
-              )}
-            </>
+              <div className="flex flex-wrap gap-1.5">
+                {(location.service_review_count || 0) > 0 && (
+                  <div className="flex items-center gap-1 px-2 py-0.5 bg-blue-50 rounded-full border border-blue-200" title="Media servizi usufruiti">
+                    <Star className="w-3 h-3 fill-blue-400 text-blue-400" />
+                    <span className="text-xs font-semibold text-blue-700">{(location.service_avg_rating || 0).toFixed(1)}</span>
+                    <span className="text-xs text-blue-500">serv.</span>
+                  </div>
+                )}
+                {(location.management_review_count || 0) > 0 && (
+                  <div className="flex items-center gap-1 px-2 py-0.5 bg-green-50 rounded-full border border-green-200" title="Media gestione/preventivi/assistenza">
+                    <Star className="w-3 h-3 fill-green-400 text-green-400" />
+                    <span className="text-xs font-semibold text-green-700">{(location.management_avg_rating || 0).toFixed(1)}</span>
+                    <span className="text-xs text-green-500">gest.</span>
+                  </div>
+                )}
+              </div>
+            </div>
           ) : (
-            <span className="text-xs text-gray-400 italic">Nessuna recensione</span>
+            <span className="text-xs text-gray-400 italic">Nessuna recensione ancora</span>
           )}
         </div>
 

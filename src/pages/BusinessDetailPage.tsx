@@ -55,6 +55,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
       let businessData: any = null;
       let businessType: 'imported' | 'user_added' | 'registered' | null = null;
       let isNewRegistered = false; // true = registered_businesses table (uses location IDs), false = businesses table (uses business_id)
+      let pendingLocations: any[] = [];
 
       // Cerca in businesses (attività rivendicate)
       const { data: claimedData } = await supabase
@@ -86,7 +87,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
             allLocations = allLocations.filter((loc: any) => loc.id === locationId);
           }
 
-          setLocations(allLocations);
+          pendingLocations = allLocations;
         }
       }
 
@@ -235,7 +236,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
               allLocations = allLocations.filter((loc: any) => loc.id === locationId);
             }
 
-            setLocations(allLocations);
+            pendingLocations = allLocations;
           }
         }
       }
@@ -266,7 +267,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
               allLocations = allLocations.filter((loc: any) => loc.id === locationId);
             }
 
-            setLocations(allLocations);
+            pendingLocations = allLocations;
           }
         }
       }
@@ -307,7 +308,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
           { data: jobsData },
         ] = await Promise.all([
           buildReviewFilter(
-            supabase.from('reviews').select('overall_rating').eq('review_status', 'approved')
+            supabase.from('reviews').select('overall_rating, review_type, registered_business_location_id, unclaimed_business_location_id, business_location_id, business_id').eq('review_status', 'approved')
           ),
           buildReviewFilter(
             supabase.from('reviews')
@@ -330,6 +331,41 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
         const avg_rating = reviewsData && reviewsData.length > 0
           ? reviewsData.reduce((sum: number, r: any) => sum + r.overall_rating, 0) / reviewsData.length
           : 0;
+
+        // Calcola rating per-sede e aggiorna le locations
+        if (pendingLocations.length > 0 && reviewsData && reviewsData.length > 0) {
+          const MANAGEMENT_TYPES = new Set(['booking_not_completed', 'quote_request', 'customer_service', 'problem_before_service']);
+          const ratingByLoc: Record<string, { sum: number; count: number; svcSum: number; svcCount: number; mgtSum: number; mgtCount: number }> = {};
+          reviewsData.forEach((r: any) => {
+            const locId = r.registered_business_location_id || r.unclaimed_business_location_id || r.business_location_id;
+            if (!locId) return;
+            if (!ratingByLoc[locId]) ratingByLoc[locId] = { sum: 0, count: 0, svcSum: 0, svcCount: 0, mgtSum: 0, mgtCount: 0 };
+            ratingByLoc[locId].sum += r.overall_rating || 0;
+            ratingByLoc[locId].count += 1;
+            if (r.review_type === 'service_used') {
+              ratingByLoc[locId].svcSum += r.overall_rating || 0;
+              ratingByLoc[locId].svcCount += 1;
+            } else if (MANAGEMENT_TYPES.has(r.review_type)) {
+              ratingByLoc[locId].mgtSum += r.overall_rating || 0;
+              ratingByLoc[locId].mgtCount += 1;
+            }
+          });
+          const enriched = pendingLocations.map((loc: any) => {
+            const rd = ratingByLoc[loc.id];
+            return {
+              ...loc,
+              avg_rating: rd && rd.count > 0 ? Math.round((rd.sum / rd.count) * 10) / 10 : 0,
+              review_count: rd?.count || 0,
+              service_avg_rating: rd && rd.svcCount > 0 ? Math.round((rd.svcSum / rd.svcCount) * 10) / 10 : 0,
+              service_review_count: rd?.svcCount || 0,
+              management_avg_rating: rd && rd.mgtCount > 0 ? Math.round((rd.mgtSum / rd.mgtCount) * 10) / 10 : 0,
+              management_review_count: rd?.mgtCount || 0,
+            };
+          });
+          setLocations(enriched);
+        } else {
+          setLocations(pendingLocations);
+        }
 
         setBusiness({
           ...businessData,
@@ -975,7 +1011,18 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
                     <div className="space-y-6">
                       {locations.slice(1).map((location) => (
                         <div key={location.id} className="border-2 border-gray-200 rounded-xl p-6 bg-white shadow-sm hover:shadow-md transition-shadow">
-                          <h3 className="font-bold text-xl mb-3 text-gray-900">{location.name || 'Sede'}</h3>
+                          <div className="flex items-start justify-between gap-4 mb-3">
+                            <h3 className="font-bold text-xl text-gray-900">{location.name || 'Sede'}</h3>
+                            {(location.review_count || 0) > 0 && (
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star key={s} className={`w-4 h-4 ${s <= Math.round(location.avg_rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-200 text-gray-200'}`} />
+                                ))}
+                                <span className="font-bold text-sm text-gray-900 ml-1">{(location.avg_rating || 0).toFixed(1)}</span>
+                                <span className="text-xs text-gray-500">({location.review_count})</span>
+                              </div>
+                            )}
+                          </div>
                           {location.description && (
                             <p className="text-sm text-gray-600 mb-4 italic border-l-4 border-blue-500 pl-3 py-1">{location.description}</p>
                           )}
