@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Mail, Phone, MapPin, Clock, Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Mail, Phone, MapPin, Clock, Send, CheckCircle, AlertCircle, Facebook, Instagram, Twitter, MessageCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -12,9 +12,32 @@ const SUBJECTS = [
   'Altro',
 ];
 
+interface ContactInfo {
+  email: string;
+  phone: string;
+  address: { street: string; city: string; cap: string; country: string };
+  facebook: string;
+  instagram: string;
+  twitter: string;
+  whatsapp: string;
+  supportHours: string;
+}
+
+const DEFAULTS: ContactInfo = {
+  email: 'info@trovafacile.it',
+  phone: '',
+  address: { street: 'Via Roma, 123', city: 'Milano', cap: '20100', country: 'Italia' },
+  facebook: '',
+  instagram: '',
+  twitter: '',
+  whatsapp: '',
+  supportHours: 'Lun - Ven: 9:00 - 18:00',
+};
+
 export function ContactPage() {
   const { user, profile } = useAuth();
 
+  const [contactInfo, setContactInfo] = useState<ContactInfo>(DEFAULTS);
   const [form, setForm] = useState({
     name: profile?.full_name || '',
     email: user?.email || '',
@@ -24,6 +47,30 @@ export function ContactPage() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    supabase
+      .from('platform_settings')
+      .select('setting_key, setting_value')
+      .eq('category', 'contact')
+      .then(({ data }) => {
+        if (!data?.length) return;
+        const info: ContactInfo = { ...DEFAULTS };
+        data.forEach(row => {
+          switch (row.setting_key) {
+            case 'contact_email': info.email = row.setting_value?.value || DEFAULTS.email; break;
+            case 'contact_phone': info.phone = row.setting_value?.value || ''; break;
+            case 'contact_address': info.address = { ...DEFAULTS.address, ...row.setting_value }; break;
+            case 'contact_social_facebook': info.facebook = row.setting_value?.value || ''; break;
+            case 'contact_social_instagram': info.instagram = row.setting_value?.value || ''; break;
+            case 'contact_social_twitter': info.twitter = row.setting_value?.value || ''; break;
+            case 'contact_whatsapp': info.whatsapp = row.setting_value?.value || ''; break;
+            case 'contact_support_hours': info.supportHours = row.setting_value?.value || DEFAULTS.supportHours; break;
+          }
+        });
+        setContactInfo(info);
+      });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,13 +90,15 @@ export function ContactPage() {
     setSending(false);
 
     if (err) {
-      setError('Errore durante l\'invio. Riprova tra qualche momento.');
+      setError("Errore durante l'invio. Riprova tra qualche momento.");
       return;
     }
 
     setSent(true);
     setForm(prev => ({ ...prev, subject: '', message: '' }));
   };
+
+  const hasSocials = contactInfo.facebook || contactInfo.instagram || contactInfo.twitter || contactInfo.whatsapp;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -76,50 +125,97 @@ export function ContactPage() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
             <h2 className="text-xl font-bold text-gray-900 mb-6">Informazioni di Contatto</h2>
             <div className="space-y-6">
-              <div className="flex items-start gap-4">
-                <div className="w-11 h-11 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Mail className="w-5 h-5 text-blue-600" />
+              {contactInfo.email && (
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm mb-0.5">Email</p>
+                    {contactInfo.email.split(',').map(e => (
+                      <p key={e} className="text-gray-600 text-sm">{e.trim()}</p>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold text-gray-900 text-sm mb-0.5">Email</p>
-                  <p className="text-gray-600 text-sm">info@trovafacile.it</p>
-                  <p className="text-gray-600 text-sm">supporto@trovafacile.it</p>
-                </div>
-              </div>
+              )}
 
-              <div className="flex items-start gap-4">
-                <div className="w-11 h-11 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Phone className="w-5 h-5 text-green-600" />
+              {contactInfo.phone && (
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Phone className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm mb-0.5">Telefono</p>
+                    <p className="text-gray-600 text-sm">{contactInfo.phone}</p>
+                    {contactInfo.supportHours && (
+                      <p className="text-gray-500 text-xs">{contactInfo.supportHours}</p>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold text-gray-900 text-sm mb-0.5">Telefono</p>
-                  <p className="text-gray-600 text-sm">da definire</p>
-                  <p className="text-gray-500 text-xs">Lun-Ven: 9:00 - 18:00</p>
-                </div>
-              </div>
+              )}
 
-              <div className="flex items-start gap-4">
-                <div className="w-11 h-11 bg-amber-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <MapPin className="w-5 h-5 text-amber-600" />
+              {(contactInfo.address.street || contactInfo.address.city) && (
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 bg-amber-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm mb-0.5">Sede</p>
+                    {contactInfo.address.street && <p className="text-gray-600 text-sm">{contactInfo.address.street}</p>}
+                    {contactInfo.address.city && (
+                      <p className="text-gray-600 text-sm">
+                        {[contactInfo.address.cap, contactInfo.address.city, contactInfo.address.country].filter(Boolean).join(', ')}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold text-gray-900 text-sm mb-0.5">Sede</p>
-                  <p className="text-gray-600 text-sm">Via Roma, 123</p>
-                  <p className="text-gray-600 text-sm">20100 Milano, Italia</p>
-                </div>
-              </div>
+              )}
 
-              <div className="flex items-start gap-4">
-                <div className="w-11 h-11 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-5 h-5 text-gray-500" />
+              {contactInfo.supportHours && !contactInfo.phone && (
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-5 h-5 text-gray-500" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm mb-0.5">Orari</p>
+                    {contactInfo.supportHours.split(',').map(h => (
+                      <p key={h} className="text-gray-600 text-sm">{h.trim()}</p>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold text-gray-900 text-sm mb-0.5">Orari</p>
-                  <p className="text-gray-600 text-sm">Lun - Ven: 9:00 - 18:00</p>
-                  <p className="text-gray-600 text-sm">Sab: 9:00 - 13:00</p>
-                  <p className="text-gray-500 text-sm">Dom: Chiuso</p>
+              )}
+
+              {hasSocials && (
+                <div className="pt-2 border-t border-gray-100">
+                  <p className="font-semibold text-gray-900 text-sm mb-3">Social</p>
+                  <div className="flex gap-3">
+                    {contactInfo.facebook && (
+                      <a href={contactInfo.facebook} target="_blank" rel="noopener noreferrer"
+                        className="w-9 h-9 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center hover:bg-blue-200 transition-colors">
+                        <Facebook className="w-4 h-4" />
+                      </a>
+                    )}
+                    {contactInfo.instagram && (
+                      <a href={contactInfo.instagram} target="_blank" rel="noopener noreferrer"
+                        className="w-9 h-9 bg-pink-100 text-pink-700 rounded-lg flex items-center justify-center hover:bg-pink-200 transition-colors">
+                        <Instagram className="w-4 h-4" />
+                      </a>
+                    )}
+                    {contactInfo.twitter && (
+                      <a href={contactInfo.twitter} target="_blank" rel="noopener noreferrer"
+                        className="w-9 h-9 bg-sky-100 text-sky-700 rounded-lg flex items-center justify-center hover:bg-sky-200 transition-colors">
+                        <Twitter className="w-4 h-4" />
+                      </a>
+                    )}
+                    {contactInfo.whatsapp && (
+                      <a href={`https://wa.me/${contactInfo.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                        className="w-9 h-9 bg-green-100 text-green-700 rounded-lg flex items-center justify-center hover:bg-green-200 transition-colors">
+                        <MessageCircle className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -232,9 +328,9 @@ export function ContactPage() {
           <p className="text-gray-600 mb-5 text-sm">
             Prima di contattarci, consulta le nostre FAQ per trovare risposte immediate.
           </p>
-          <button className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm">
+          <a href="/rules" className="inline-block bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm">
             Vai alle FAQ
-          </button>
+          </a>
         </div>
       </div>
     </div>
