@@ -7,42 +7,70 @@ interface FeatureDef {
   key: string;
   label: string;
   description: string;
-  category: 'base' | 'social' | 'content' | 'business';
+  category: string;
 }
 
-const ALL_FEATURES: FeatureDef[] = [
+// Funzionalità per utenti PRIVATI (customer)
+const PRIVATE_FEATURES: FeatureDef[] = [
   // Base
   { key: 'search', label: 'Ricerca attività', description: 'Cerca attività per nome, categoria e città', category: 'base' },
-  { key: 'map', label: 'Mappa interattiva', description: 'Visualizza attività su mappa', category: 'base' },
-  { key: 'notifications', label: 'Notifiche', description: 'Ricevi notifiche in tempo reale', category: 'base' },
-  { key: 'favorites', label: 'Preferiti', description: 'Salva attività nei preferiti', category: 'base' },
-  { key: 'leaderboard', label: 'Classifica punti', description: 'Accedi alla classifica utenti', category: 'base' },
+  { key: 'map', label: 'Mappa interattiva', description: 'Visualizza attività su mappa geografica', category: 'base' },
+  { key: 'notifications', label: 'Notifiche', description: 'Ricevi notifiche push in tempo reale', category: 'base' },
+  { key: 'favorites', label: 'Preferiti', description: 'Salva attività e annunci nei preferiti', category: 'base' },
+  { key: 'leaderboard', label: 'Classifica punti', description: 'Accedi alla classifica utenti per punti', category: 'base' },
+  { key: 'points', label: 'Sistema punti', description: 'Accumula punti con recensioni e attività', category: 'base' },
   // Social
-  { key: 'reviews', label: 'Recensioni', description: 'Scrivi e leggi recensioni', category: 'social' },
-  { key: 'messages', label: 'Messaggistica', description: 'Invia messaggi privati', category: 'social' },
-  { key: 'reports', label: 'Segnalazioni', description: 'Segnala contenuti inappropriati', category: 'social' },
-  // Content
-  { key: 'classified_ads', label: 'Annunci', description: 'Pubblica e visualizza annunci', category: 'content' },
-  { key: 'auctions', label: 'Aste', description: 'Partecipa e crea aste', category: 'content' },
-  { key: 'job_postings', label: 'Offerte di lavoro', description: 'Pubblica e visualizza offerte', category: 'content' },
-  { key: 'job_seeker', label: 'Cerca lavoro', description: 'Crea profilo cercasi lavoro', category: 'content' },
-  { key: 'solidarity', label: 'Solidarietà', description: 'Accedi alla sezione solidarietà', category: 'content' },
-  { key: 'discounts', label: 'Sconti', description: 'Accedi e pubblica sconti', category: 'content' },
-  // Business / Profilo avanzato
-  { key: 'family_members', label: 'Membri famiglia', description: 'Aggiungi profili familiari', category: 'business' },
-  { key: 'professional_profile', label: 'Profilo professionale', description: 'Crea profilo professionale', category: 'business' },
-  { key: 'add_business', label: 'Segnala attività', description: "Segnala nuove attività mancanti", category: 'business' },
-  { key: 'claim_business', label: 'Reclama attività', description: 'Reclama la tua attività', category: 'business' },
-  { key: 'business_dashboard', label: 'Pannello business', description: 'Dashboard gestione attività', category: 'business' },
-  { key: 'multiple_locations', label: 'Sedi multiple', description: 'Gestisci più sedi', category: 'business' },
-  { key: 'points', label: 'Sistema punti', description: 'Accumula e usa punti', category: 'base' },
+  { key: 'reviews', label: 'Recensioni', description: 'Scrivi recensioni con voto e prova d\'acquisto', category: 'social' },
+  { key: 'messages', label: 'Messaggistica', description: 'Invia e ricevi messaggi privati con altri utenti', category: 'social' },
+  { key: 'reports', label: 'Segnalazioni', description: 'Segnala recensioni o contenuti inappropriati', category: 'social' },
+  // Contenuti
+  { key: 'classified_ads', label: 'Annunci', description: 'Pubblica e visualizza annunci di compravendita', category: 'content' },
+  { key: 'auctions', label: 'Aste', description: 'Crea e partecipa ad aste online', category: 'content' },
+  { key: 'job_seeker', label: 'Profilo cercasi lavoro', description: 'Crea il tuo profilo come candidato di lavoro', category: 'content' },
+  { key: 'solidarity', label: 'Solidarietà', description: 'Accedi alla sezione solidarietà e donazioni', category: 'content' },
+  { key: 'discounts', label: 'Sconti e coupon', description: 'Visualizza e riscatta sconti esclusivi', category: 'content' },
+  { key: 'add_business', label: 'Segnala attività mancante', description: 'Segnala una nuova attività non presente nel database', category: 'content' },
+  // Profilo avanzato
+  { key: 'family_members', label: 'Membri della famiglia', description: 'Aggiungi profili per i tuoi familiari conviventi', category: 'profile' },
+  { key: 'professional_profile', label: 'Profilo professionale', description: 'Crea un profilo come professionista (avvocato, medico ecc.)', category: 'profile' },
+  { key: 'claim_business', label: 'Reclama attività', description: 'Rivendica la proprietà di un\'attività nel database', category: 'profile' },
 ];
 
-const CATEGORY_LABELS: Record<string, string> = {
+// Funzionalità per utenti BUSINESS (aziende)
+const BUSINESS_FEATURES: FeatureDef[] = [
+  // Base
+  { key: 'search', label: 'Ricerca attività', description: 'Cerca attività per nome, categoria e città', category: 'base' },
+  { key: 'map', label: 'Mappa interattiva', description: 'Visualizza attività su mappa geografica', category: 'base' },
+  { key: 'notifications', label: 'Notifiche', description: 'Ricevi notifiche push in tempo reale', category: 'base' },
+  { key: 'favorites', label: 'Preferiti', description: 'Salva attività e annunci nei preferiti', category: 'base' },
+  // Gestione attività
+  { key: 'business_dashboard', label: 'Pannello gestione attività', description: 'Dashboard completa per gestire la tua attività', category: 'gestione' },
+  { key: 'multiple_locations', label: 'Sedi multiple', description: 'Gestisci più sedi o filiali della tua attività', category: 'gestione' },
+  { key: 'claim_business', label: 'Reclama attività', description: 'Rivendica la proprietà dell\'attività nel database', category: 'gestione' },
+  { key: 'discounts', label: 'Pubblica sconti e coupon', description: 'Crea offerte e sconti per i tuoi clienti', category: 'gestione' },
+  { key: 'review_responses', label: 'Risposta alle recensioni', description: 'Rispondi pubblicamente alle recensioni dei clienti', category: 'gestione' },
+  // Comunicazione
+  { key: 'messages', label: 'Messaggistica', description: 'Invia e ricevi messaggi privati con clienti e utenti', category: 'comunicazione' },
+  { key: 'reports', label: 'Segnalazioni', description: 'Segnala recensioni false o contenuti inappropriati', category: 'comunicazione' },
+  // Contenuti & Marketing
+  { key: 'classified_ads', label: 'Annunci', description: 'Pubblica annunci di prodotti e servizi', category: 'marketing' },
+  { key: 'auctions', label: 'Aste', description: 'Crea e gestisci aste per i tuoi prodotti', category: 'marketing' },
+  { key: 'job_postings', label: 'Offerte di lavoro', description: 'Pubblica offerte di lavoro per la tua azienda', category: 'marketing' },
+  { key: 'solidarity', label: 'Solidarietà', description: 'Partecipa alle iniziative di solidarietà locale', category: 'marketing' },
+];
+
+const PRIVATE_CATEGORY_LABELS: Record<string, string> = {
   base: 'Funzionalità Base',
-  social: 'Funzionalità Social',
+  social: 'Social & Community',
   content: 'Contenuti & Servizi',
-  business: 'Business & Professionisti',
+  profile: 'Profilo Avanzato',
+};
+
+const BUSINESS_CATEGORY_LABELS: Record<string, string> = {
+  base: 'Funzionalità Base',
+  gestione: 'Gestione Attività',
+  comunicazione: 'Comunicazione',
+  marketing: 'Marketing & Contenuti',
 };
 
 interface Plan {
@@ -182,9 +210,9 @@ export function PlansSection({ adminId }: PlansSectionProps) {
     setEditingPlan({ ...editingPlan, features: updated });
   };
 
-  const toggleAllInCategory = (category: string) => {
+  const toggleAllInCategory = (category: string, features: FeatureDef[]) => {
     if (!editingPlan) return;
-    const catKeys = ALL_FEATURES.filter(f => f.category === category).map(f => f.key);
+    const catKeys = features.filter(f => f.category === category).map(f => f.key);
     const allSelected = catKeys.every(k => (editingPlan.features || []).includes(k));
     const current = editingPlan.features || [];
     const updated = allSelected
@@ -283,6 +311,12 @@ export function PlansSection({ adminId }: PlansSectionProps) {
     ];
   };
 
+  const planType = getPlanType(editingPlan?.name || '');
+  const isBusiness = planType === 'Business';
+  const activeFeatures = isBusiness ? BUSINESS_FEATURES : PRIVATE_FEATURES;
+  const activeCategoryLabels = isBusiness ? BUSINESS_CATEGORY_LABELS : PRIVATE_CATEGORY_LABELS;
+  const activeCategories = Object.keys(activeCategoryLabels);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -305,8 +339,6 @@ export function PlansSection({ adminId }: PlansSectionProps) {
   const isExpired = (endDate: string) => new Date(endDate) < new Date();
 
   const activeSubscriptions = subscriptions.filter(s => s.status === 'active' || s.status === 'trial');
-
-  const categories = ['base', 'social', 'content', 'business'] as const;
 
   return (
     <div className="space-y-6">
@@ -373,8 +405,9 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                     const planType = getPlanType(plan.name);
                     const isBusiness = planType === 'Business';
                     const colorClass = getPlanColor(plan);
+                    const allFeatureDefs = isBusiness ? BUSINESS_FEATURES : PRIVATE_FEATURES;
                     const enabledFeatures = (plan.features || [])
-                      .map(k => ALL_FEATURES.find(f => f.key === k))
+                      .map(k => allFeatureDefs.find(f => f.key === k))
                       .filter(Boolean) as FeatureDef[];
                     const visibleFeatures = enabledFeatures.slice(0, 5);
                     const extraCount = enabledFeatures.length - visibleFeatures.length;
@@ -624,17 +657,22 @@ export function PlansSection({ adminId }: PlansSectionProps) {
               {/* Features */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <label className="text-sm font-semibold text-gray-700">
-                    Funzionalità incluse
-                    <span className="ml-2 text-xs font-normal text-gray-500">
-                      ({(editingPlan.features || []).length}/{ALL_FEATURES.length} selezionate)
-                    </span>
-                  </label>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700">
+                      Funzionalità incluse
+                      <span className="ml-2 text-xs font-normal text-gray-500">
+                        ({(editingPlan.features || []).length}/{activeFeatures.length} selezionate)
+                      </span>
+                    </label>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Funzionalità disponibili per piani <strong>{isBusiness ? 'Business' : 'Privati'}</strong>
+                    </p>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
-                  {categories.map(cat => {
-                    const catFeatures = ALL_FEATURES.filter(f => f.category === cat);
+                  {activeCategories.map(cat => {
+                    const catFeatures = activeFeatures.filter(f => f.category === cat);
                     const selectedCount = catFeatures.filter(f => (editingPlan.features || []).includes(f.key)).length;
                     const allSelected = selectedCount === catFeatures.length;
 
@@ -642,10 +680,10 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                       <div key={cat} className="border border-gray-200 rounded-xl overflow-hidden">
                         <button
                           type="button"
-                          onClick={() => toggleAllInCategory(cat)}
+                          onClick={() => toggleAllInCategory(cat, activeFeatures)}
                           className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
                         >
-                          <span className="text-sm font-semibold text-gray-800">{CATEGORY_LABELS[cat]}</span>
+                          <span className="text-sm font-semibold text-gray-800">{activeCategoryLabels[cat]}</span>
                           <span className="flex items-center gap-2">
                             <span className="text-xs text-gray-500">{selectedCount}/{catFeatures.length}</span>
                             <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${allSelected ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
