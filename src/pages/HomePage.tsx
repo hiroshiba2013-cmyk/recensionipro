@@ -191,7 +191,7 @@ function LandingPage() {
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-5">
                 {customization?.hero_title || (
-                  <>Benvenuto su{' '}<span className="text-blue-600">Trovafacile</span></>
+                  <>Benvenuto su{' '}<span className="text-blue-600">Lhimo</span></>
                 )}
               </h1>
               <p className="text-lg text-gray-500 mb-3 leading-relaxed">
@@ -237,7 +237,7 @@ function LandingPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Scegli il Tuo Account</h2>
-            <p className="text-gray-500">Unisciti a Trovafacile e scopri tutte le funzionalità della piattaforma</p>
+            <p className="text-gray-500">Unisciti a Lhimo e scopri tutte le funzionalità della piattaforma</p>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
             {/* Privato */}
@@ -374,7 +374,7 @@ function LandingPage() {
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-3">Sezione Solidarietà</h2>
           <p className="text-gray-500 mb-6 leading-relaxed">
-            Il 10% del fatturato di Trovafacile viene devoluto in beneficenza ad associazioni e enti no profit che gli utenti sceglieranno attraverso un form dedicato.
+            Il 10% del fatturato di Lhimo viene devoluto in beneficenza ad associazioni e enti no profit che gli utenti sceglieranno attraverso un form dedicato.
           </p>
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm text-left mb-6">
             <h3 className="font-bold text-gray-900 mb-3">Come Funziona</h3>
@@ -395,7 +395,7 @@ function LandingPage() {
       <section className="py-16 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Cosa Puoi Fare con Trovafacile</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Cosa Puoi Fare con Lhimo</h2>
             <p className="text-gray-500">Una piattaforma completa per connettere persone e attività</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">

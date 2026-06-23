@@ -57,7 +57,7 @@ export function Footer() {
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <MapPin className="w-4 h-4 text-white" />
               </div>
-              <span className="font-bold text-lg">Trovafacile</span>
+              <span className="font-bold text-lg">Lhimo</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed mb-4">
               La piattaforma che connette persone e attività locali in tutta Italia.
@@ -96,7 +96,7 @@ export function Footer() {
 
         <div className="border-t border-gray-800 pt-6 space-y-2 text-center">
           <p className="text-gray-500 text-sm">
-            &copy; {new Date().getFullYear()} Trovafacile. Tutti i diritti riservati.
+            &copy; {new Date().getFullYear()} Lhimo. Tutti i diritti riservati.
           </p>
           <p className="text-gray-600 text-xs">
             Dati geografici &copy;{' '}

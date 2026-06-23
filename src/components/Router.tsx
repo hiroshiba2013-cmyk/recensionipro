@@ -104,7 +104,7 @@ export function Router() {
   // Redirect alla home quando l'utente fa logout
   useEffect(() => {
     if (loading) return;
-    const publicPaths = ['/', '/claim-business', '/rivendica-attivita', '/contact', '/contatti', '/rules', '/regolamento', '/solidarity', '/leaderboard'];
+    const publicPaths = ['/', '/claim-business', '/rivendica-attivita', '/contact', '/contatti', '/rules', '/regolamento', '/solidarity', '/leaderboard', '/subscription'];
     const isPublic = publicPaths.includes(currentPath)
       || currentPath.startsWith('/business/')
       || currentPath.startsWith('/admin');

@@ -177,10 +177,10 @@ export function Header() {
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16">
-            <a href="/" className="flex items-center flex-shrink-0" aria-label="Trovafacile - Torna alla home">
+            <a href="/" className="flex items-center flex-shrink-0" aria-label="Lhimo - Torna alla home">
               <img
                 src="/chatgpt_image_4_dic_2025,_22_51_45.png"
-                alt="TrovaFacile"
+                alt="Lhimo"
                 className="h-12"
               />
             </a>

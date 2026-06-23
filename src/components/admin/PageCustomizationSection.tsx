@@ -10,7 +10,7 @@ const PAGES = [
     label: 'Home pubblica',
     icon: '🏠',
     description: 'Visitatori non autenticati',
-    defaultTitle: 'Benvenuto su Trovafacile',
+    defaultTitle: 'Benvenuto su Lhimo',
     defaultSubtitle: 'La piattaforma che connette persone e attività locali in tutta Italia',
     hasHero: true,
     hasAnnouncement: true,

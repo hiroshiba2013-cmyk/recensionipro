@@ -24,7 +24,7 @@ interface ContactInfo {
 }
 
 const DEFAULTS: ContactInfo = {
-  email: 'info@trovafacile.it',
+  email: 'info@lhimo.it',
   phone: '',
   address: { street: 'Via Roma, 123', city: 'Milano', cap: '20100', country: 'Italia' },
   facebook: '',

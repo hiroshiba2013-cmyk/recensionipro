@@ -121,13 +121,13 @@ const translations = {
 
     // HomePage
     'home.welcomeTo': 'Benvenuto su',
-    'home.platformName': 'Trovafacile',
+    'home.platformName': 'Lhimo',
     'home.tagline': 'La piattaforma italiana che connette cittadini e attività locali.',
     'home.subtitle': 'Recensioni verificate, prodotti, annunci, lavoro e solidarietà in un unico posto.',
     'home.trialInfo': 'Un mese di prova gratuito per tutti! Poi a partire da €0.49/mese per privati e €2.49/mese + IVA per attività.',
     'home.startFree': 'Inizia Gratis',
     'home.viewPlans': 'Vedi i Piani',
-    'home.whatCanYouDo': 'Cosa puoi fare con Trovafacile',
+    'home.whatCanYouDo': 'Cosa puoi fare con Lhimo',
     'home.completeDescription': 'Una piattaforma completa per tutte le tue esigenze quotidiane',
     'home.feature.search.title': 'Cerca Attività',
     'home.feature.search.description': 'Trova facilmente attività commerciali nella tua zona. Cerca per categoria, città o nome e scopri i migliori servizi vicino a te.',
@@ -144,7 +144,7 @@ const translations = {
     'home.leaderboard.title': 'Classifica Utenti con Premi Esclusivi',
     'home.leaderboard.description': 'Scrivi recensioni (utenti privati) e ricevi recensioni (professionisti) per scalare la classifica! I migliori 20 utenti dell\'anno riceveranno gift card ricaricabili come premio per il loro contributo. Più recensioni scrivi con foto e dettagli, più punti guadagni!',
     'home.solidarity.title': 'Solidarietà: Il 10% del Fatturato in Beneficenza',
-    'home.solidarity.description1': 'Trovafacile dona ogni anno il',
+    'home.solidarity.description1': 'Lhimo dona ogni anno il',
     'home.solidarity.percentage': '10% del proprio fatturato',
     'home.solidarity.description2': 'ad associazioni no profit e progetti di beneficenza scelti dai nostri iscritti con un sondaggio.',
     'home.solidarity.transparency': 'Tutti i documenti che attestano il fatturato e le donazioni sono pubblicati nella sezione Solidarietà per garantire massima trasparenza.',
@@ -195,7 +195,7 @@ const translations = {
 
     // RulesPage
     'rules.title': 'Regolamento della Piattaforma',
-    'rules.subtitle': 'Linee guida per l\'utilizzo di Trovafacile',
+    'rules.subtitle': 'Linee guida per l\'utilizzo di Lhimo',
     'rules.conduct': 'Codice di Condotta',
     'rules.reviews': 'Recensioni',
     'rules.businesses': 'Attività Commerciali',
@@ -336,13 +336,13 @@ const translations = {
 
     // HomePage
     'home.welcomeTo': 'Welcome to',
-    'home.platformName': 'Trovafacile',
+    'home.platformName': 'Lhimo',
     'home.tagline': 'The Italian platform that connects citizens and local businesses.',
     'home.subtitle': 'Verified reviews, products, classifieds, jobs and solidarity in one place.',
     'home.trialInfo': 'One month free trial for everyone! Then starting from €0.49/month for individuals and €2.49/month + VAT for businesses.',
     'home.startFree': 'Start Free',
     'home.viewPlans': 'View Plans',
-    'home.whatCanYouDo': 'What you can do with Trovafacile',
+    'home.whatCanYouDo': 'What you can do with Lhimo',
     'home.completeDescription': 'A complete platform for all your daily needs',
     'home.feature.search.title': 'Search Businesses',
     'home.feature.search.description': 'Easily find commercial activities in your area. Search by category, city or name and discover the best services near you.',
@@ -359,7 +359,7 @@ const translations = {
     'home.leaderboard.title': 'User Leaderboard with Exclusive Prizes',
     'home.leaderboard.description': 'Write reviews (individual users) and receive reviews (professionals) to climb the leaderboard! The top 20 users of the year will receive reloadable gift cards as a reward for their contribution. The more reviews you write with photos and details, the more points you earn!',
     'home.solidarity.title': 'Solidarity: 10% of Revenue to Charity',
-    'home.solidarity.description1': 'Trovafacile donates every year',
+    'home.solidarity.description1': 'Lhimo donates every year',
     'home.solidarity.percentage': '10% of its revenue',
     'home.solidarity.description2': 'to non-profit associations and charity projects chosen by our members through a survey.',
     'home.solidarity.transparency': 'All documents certifying revenue and donations are published in the Solidarity section to ensure maximum transparency.',
@@ -410,7 +410,7 @@ const translations = {
 
     // RulesPage
     'rules.title': 'Platform Rules',
-    'rules.subtitle': 'Guidelines for using Trovafacile',
+    'rules.subtitle': 'Guidelines for using Lhimo',
     'rules.conduct': 'Code of Conduct',
     'rules.reviews': 'Reviews',
     'rules.businesses': 'Businesses',

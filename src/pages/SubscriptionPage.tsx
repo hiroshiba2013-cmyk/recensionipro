@@ -343,7 +343,7 @@ export function SubscriptionPage() {
               </h2>
             </div>
             <p className="text-xl text-gray-800 max-w-4xl mx-auto leading-relaxed text-center mb-6">
-              Il tuo abbonamento fa la differenza! Ogni anno Trovafacile donerà il <strong>10% del fatturato totale</strong> ad associazioni di beneficenza.
+              Il tuo abbonamento fa la differenza! Ogni anno Lhimo donerà il <strong>10% del fatturato totale</strong> ad associazioni di beneficenza.
             </p>
             <div className="grid md:grid-cols-3 gap-4 max-w-5xl mx-auto mt-8">
               <div className="bg-white/80 backdrop-blur rounded-xl p-4 text-center">
@@ -625,7 +625,7 @@ export function SubscriptionPage() {
               </h2>
             </div>
             <p className="text-xl text-gray-800 max-w-4xl mx-auto leading-relaxed text-center mb-6">
-              Il tuo abbonamento fa la differenza! Ogni anno Trovafacile donerà il <strong>10% del fatturato totale</strong> ad associazioni di beneficenza.
+              Il tuo abbonamento fa la differenza! Ogni anno Lhimo donerà il <strong>10% del fatturato totale</strong> ad associazioni di beneficenza.
             </p>
             <div className="grid md:grid-cols-3 gap-4 max-w-5xl mx-auto mt-8">
               <div className="bg-white/80 backdrop-blur rounded-xl p-4 text-center">
@@ -1067,7 +1067,7 @@ export function SubscriptionPage() {
             Il tuo abbonamento vale il 10% di beneficenza
           </h2>
           <p className="text-lg text-gray-700 max-w-4xl mx-auto leading-relaxed">
-            Trovafacile ogni anno donerà il 10% del proprio FATTURATO, che sarà visibile con documenti certificati, ad associazioni che voterete voi utenti
+            Lhimo ogni anno donerà il 10% del proprio FATTURATO, che sarà visibile con documenti certificati, ad associazioni che voterete voi utenti
           </p>
         </div>
 

@@ -1139,7 +1139,7 @@ export function DashboardPageNew() {
                             <div className="w-9 h-9 bg-green-500 rounded-full flex items-center justify-center"><Heart className="w-5 h-5 text-white" fill="currentColor" /></div>
                             <h3 className="font-bold text-gray-900">10% in Beneficenza</h3>
                           </div>
-                          <p className="text-sm text-gray-700 mb-3">Ogni anno Trovafacile dona il <strong>10% del fatturato</strong> ad associazioni di beneficenza.</p>
+                          <p className="text-sm text-gray-700 mb-3">Ogni anno Lhimo dona il <strong>10% del fatturato</strong> ad associazioni di beneficenza.</p>
                           <div className="grid grid-cols-3 gap-2">
                             <div className="bg-white/80 rounded-lg p-2 text-center"><Gift className="w-4 h-4 text-green-600 mx-auto mb-1" /><p className="text-xs font-semibold text-gray-900">Trasparenza</p></div>
                             <div className="bg-white/80 rounded-lg p-2 text-center"><UsersIcon className="w-4 h-4 text-green-600 mx-auto mb-1" /><p className="text-xs font-semibold text-gray-900">Voti Utenti</p></div>

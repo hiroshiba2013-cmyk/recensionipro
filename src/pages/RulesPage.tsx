@@ -21,10 +21,10 @@ interface FAQ {
 }
 
 const LAST_UPDATED = 'maggio 2026';
-const PLATFORM_NAME = 'Trovafacile';
-const CONTACT_EMAIL = 'privacy@trovafacile.it';
+const PLATFORM_NAME = 'Lhimo';
+const CONTACT_EMAIL = 'privacy@lhimo.it';
 // TODO: sostituire con i dati legali reali prima del go-live
-const COMPANY_NAME = 'Trovafacile S.r.l.';
+const COMPANY_NAME = 'Lhimo S.r.l.';
 const COMPANY_ADDRESS = 'da definire';
 const VAT_NUMBER = 'da definire';
 
@@ -475,7 +475,7 @@ export function RulesPage() {
                   },
                   {
                     label: 'Diritto di recesso',
-                    text: `Ai sensi degli artt. 52-59 del D.Lgs. 206/2005 (Codice del Consumo), hai diritto di recedere dall'abbonamento entro 14 giorni dalla sottoscrizione senza motivazione. Per esercitare il diritto di recesso scrivi a recesso@trovafacile.it indicando nome, email, data di sottoscrizione e numero abbonamento. Il rimborso avviene entro 14 giorni sulla stessa modalità di pagamento.`,
+                    text: `Ai sensi degli artt. 52-59 del D.Lgs. 206/2005 (Codice del Consumo), hai diritto di recedere dall'abbonamento entro 14 giorni dalla sottoscrizione senza motivazione. Per esercitare il diritto di recesso scrivi a recesso@lhimo.it indicando nome, email, data di sottoscrizione e numero abbonamento. Il rimborso avviene entro 14 giorni sulla stessa modalità di pagamento.`,
                   },
                 ],
               },

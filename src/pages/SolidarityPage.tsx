@@ -136,7 +136,7 @@ export function SolidarityPage() {
             10% del fatturato donato ogni anno
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-4">
-            Solidarieta <span className="text-green-600">Trovafacile</span>
+            Solidarieta <span className="text-green-600">Lhimo</span>
           </h1>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-8">
             Doniamo il 10% del nostro fatturato annuale a organizzazioni no profit e progetti sociali scelti dagli iscritti

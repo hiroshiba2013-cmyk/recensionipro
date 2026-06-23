@@ -26,8 +26,8 @@ interface RulesSectionProps {
 }
 
 const LAST_UPDATED = 'maggio 2026';
-const PLATFORM_NAME = 'Trovafacile';
-const CONTACT_EMAIL = 'privacy@trovafacile.it';
+const PLATFORM_NAME = 'Lhimo';
+const CONTACT_EMAIL = 'privacy@lhimo.it';
 const COMPANY_NAME = '[Ragione Sociale]';
 const COMPANY_ADDRESS = '[Indirizzo, CAP, Città]';
 const VAT_NUMBER = '[P.IVA]';
