@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CreditCard, FileEdit as Edit, Save, X, CheckCircle, Users, Clock, Plus, Trash2, AlertTriangle } from 'lucide-react';
+import { CreditCard, FileEdit as Edit, Save, X, CheckCircle, Users, Clock, Plus, Trash2, AlertTriangle, Star, Heart, MessageSquare, Bookmark, Megaphone, ShoppingBag, Briefcase, Trophy, Shield, Tag, Eye, TrendingUp, Gift, Search, Map, Bell, Award, UserPlus, Flag, Gavel, Building2, BarChart2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
 
@@ -8,55 +8,57 @@ interface FeatureDef {
   label: string;
   description: string;
   category: string;
+  icon: React.ElementType;
+  iconColor: string;
 }
 
 // Funzionalità per utenti PRIVATI (customer)
 const PRIVATE_FEATURES: FeatureDef[] = [
   // Base
-  { key: 'search', label: 'Ricerca attività', description: 'Cerca attività per nome, categoria e città', category: 'base' },
-  { key: 'map', label: 'Mappa interattiva', description: 'Visualizza attività su mappa geografica', category: 'base' },
-  { key: 'notifications', label: 'Notifiche', description: 'Ricevi notifiche push in tempo reale', category: 'base' },
-  { key: 'favorites', label: 'Preferiti', description: 'Salva attività e annunci nei preferiti', category: 'base' },
-  { key: 'leaderboard', label: 'Classifica punti', description: 'Accedi alla classifica utenti per punti', category: 'base' },
-  { key: 'points', label: 'Sistema punti', description: 'Accumula punti con recensioni e attività', category: 'base' },
+  { key: 'search', label: 'Ricerca attività', description: 'Cerca attività per nome, categoria e città', category: 'base', icon: Search, iconColor: 'text-blue-600' },
+  { key: 'map', label: 'Mappa interattiva', description: 'Visualizza attività su mappa geografica', category: 'base', icon: Map, iconColor: 'text-teal-600' },
+  { key: 'notifications', label: 'Notifiche', description: 'Ricevi notifiche push in tempo reale', category: 'base', icon: Bell, iconColor: 'text-blue-500' },
+  { key: 'favorites', label: 'Preferiti', description: 'Salva attività e annunci nei preferiti', category: 'base', icon: Bookmark, iconColor: 'text-purple-600' },
+  { key: 'leaderboard', label: 'Classifica punti', description: 'Accedi alla classifica utenti per punti', category: 'base', icon: Trophy, iconColor: 'text-yellow-500' },
+  { key: 'points', label: 'Sistema punti', description: 'Accumula punti con recensioni e attività', category: 'base', icon: Award, iconColor: 'text-orange-500' },
   // Social
-  { key: 'reviews', label: 'Recensioni', description: 'Scrivi recensioni con voto e prova d\'acquisto', category: 'social' },
-  { key: 'messages', label: 'Messaggistica', description: 'Invia e ricevi messaggi privati con altri utenti', category: 'social' },
-  { key: 'reports', label: 'Segnalazioni', description: 'Segnala recensioni o contenuti inappropriati', category: 'social' },
+  { key: 'reviews', label: 'Recensioni', description: 'Scrivi recensioni con voto e prova d\'acquisto', category: 'social', icon: MessageSquare, iconColor: 'text-blue-600' },
+  { key: 'messages', label: 'Messaggistica', description: 'Invia e ricevi messaggi privati con altri utenti', category: 'social', icon: MessageSquare, iconColor: 'text-green-600' },
+  { key: 'reports', label: 'Segnalazioni', description: 'Segnala recensioni o contenuti inappropriati', category: 'social', icon: Flag, iconColor: 'text-red-500' },
   // Contenuti
-  { key: 'classified_ads', label: 'Annunci', description: 'Pubblica e visualizza annunci di compravendita', category: 'content' },
-  { key: 'auctions', label: 'Aste', description: 'Crea e partecipa ad aste online', category: 'content' },
-  { key: 'job_seeker', label: 'Profilo cercasi lavoro', description: 'Crea il tuo profilo come candidato di lavoro', category: 'content' },
-  { key: 'solidarity', label: 'Solidarietà', description: 'Accedi alla sezione solidarietà e donazioni', category: 'content' },
-  { key: 'discounts', label: 'Sconti e coupon', description: 'Visualizza e riscatta sconti esclusivi', category: 'content' },
-  { key: 'add_business', label: 'Segnala attività mancante', description: 'Segnala una nuova attività non presente nel database', category: 'content' },
+  { key: 'classified_ads', label: 'Annunci', description: 'Pubblica e visualizza annunci di compravendita', category: 'content', icon: Megaphone, iconColor: 'text-orange-600' },
+  { key: 'auctions', label: 'Aste', description: 'Crea e partecipa ad aste online', category: 'content', icon: Gavel, iconColor: 'text-amber-600' },
+  { key: 'job_seeker', label: 'Profilo cercasi lavoro', description: 'Crea il tuo profilo come candidato di lavoro', category: 'content', icon: Briefcase, iconColor: 'text-gray-700' },
+  { key: 'solidarity', label: 'Solidarietà', description: 'Accedi alla sezione solidarietà e donazioni', category: 'content', icon: Heart, iconColor: 'text-green-600' },
+  { key: 'discounts', label: 'Sconti e coupon', description: 'Visualizza e riscatta sconti esclusivi', category: 'content', icon: Tag, iconColor: 'text-orange-500' },
+  { key: 'add_business', label: 'Segnala attività mancante', description: 'Segnala una nuova attività non presente nel database', category: 'content', icon: Plus, iconColor: 'text-blue-500' },
   // Profilo avanzato
-  { key: 'family_members', label: 'Membri della famiglia', description: 'Aggiungi profili per i tuoi familiari conviventi', category: 'profile' },
-  { key: 'professional_profile', label: 'Profilo professionale', description: 'Crea un profilo come professionista (avvocato, medico ecc.)', category: 'profile' },
-  { key: 'claim_business', label: 'Reclama attività', description: 'Rivendica la proprietà di un\'attività nel database', category: 'profile' },
+  { key: 'family_members', label: 'Membri della famiglia', description: 'Aggiungi profili per i tuoi familiari conviventi', category: 'profile', icon: Users, iconColor: 'text-blue-600' },
+  { key: 'professional_profile', label: 'Profilo professionale', description: 'Crea un profilo come professionista (avvocato, medico ecc.)', category: 'profile', icon: UserPlus, iconColor: 'text-teal-600' },
+  { key: 'claim_business', label: 'Reclama attività', description: 'Rivendica la proprietà di un\'attività nel database', category: 'profile', icon: Building2, iconColor: 'text-gray-700' },
 ];
 
 // Funzionalità per utenti BUSINESS (aziende)
 const BUSINESS_FEATURES: FeatureDef[] = [
   // Base
-  { key: 'search', label: 'Ricerca attività', description: 'Cerca attività per nome, categoria e città', category: 'base' },
-  { key: 'map', label: 'Mappa interattiva', description: 'Visualizza attività su mappa geografica', category: 'base' },
-  { key: 'notifications', label: 'Notifiche', description: 'Ricevi notifiche push in tempo reale', category: 'base' },
-  { key: 'favorites', label: 'Preferiti', description: 'Salva attività e annunci nei preferiti', category: 'base' },
+  { key: 'search', label: 'Ricerca attività', description: 'Cerca attività per nome, categoria e città', category: 'base', icon: Search, iconColor: 'text-blue-600' },
+  { key: 'map', label: 'Mappa interattiva', description: 'Visualizza attività su mappa geografica', category: 'base', icon: Map, iconColor: 'text-teal-600' },
+  { key: 'notifications', label: 'Notifiche', description: 'Ricevi notifiche push in tempo reale', category: 'base', icon: Bell, iconColor: 'text-blue-500' },
+  { key: 'favorites', label: 'Preferiti', description: 'Salva attività e annunci nei preferiti', category: 'base', icon: Bookmark, iconColor: 'text-purple-600' },
   // Gestione attività
-  { key: 'business_dashboard', label: 'Pannello gestione attività', description: 'Dashboard completa per gestire la tua attività', category: 'gestione' },
-  { key: 'multiple_locations', label: 'Sedi multiple', description: 'Gestisci più sedi o filiali della tua attività', category: 'gestione' },
-  { key: 'claim_business', label: 'Reclama attività', description: 'Rivendica la proprietà dell\'attività nel database', category: 'gestione' },
-  { key: 'discounts', label: 'Pubblica sconti e coupon', description: 'Crea offerte e sconti per i tuoi clienti', category: 'gestione' },
-  { key: 'review_responses', label: 'Risposta alle recensioni', description: 'Rispondi pubblicamente alle recensioni dei clienti', category: 'gestione' },
+  { key: 'business_dashboard', label: 'Pannello gestione attività', description: 'Dashboard completa per gestire la tua attività', category: 'gestione', icon: BarChart2, iconColor: 'text-blue-600' },
+  { key: 'multiple_locations', label: 'Sedi multiple', description: 'Gestisci più sedi o filiali della tua attività', category: 'gestione', icon: Building2, iconColor: 'text-gray-700' },
+  { key: 'claim_business', label: 'Reclama attività', description: 'Rivendica la proprietà dell\'attività nel database', category: 'gestione', icon: Shield, iconColor: 'text-blue-600' },
+  { key: 'discounts', label: 'Pubblica sconti e coupon', description: 'Crea offerte e sconti per i tuoi clienti', category: 'gestione', icon: Tag, iconColor: 'text-orange-600' },
+  { key: 'review_responses', label: 'Risposta alle recensioni', description: 'Rispondi pubblicamente alle recensioni dei clienti', category: 'gestione', icon: MessageSquare, iconColor: 'text-blue-500' },
   // Comunicazione
-  { key: 'messages', label: 'Messaggistica', description: 'Invia e ricevi messaggi privati con clienti e utenti', category: 'comunicazione' },
-  { key: 'reports', label: 'Segnalazioni', description: 'Segnala recensioni false o contenuti inappropriati', category: 'comunicazione' },
+  { key: 'messages', label: 'Messaggistica', description: 'Invia e ricevi messaggi privati con clienti e utenti', category: 'comunicazione', icon: MessageSquare, iconColor: 'text-green-600' },
+  { key: 'reports', label: 'Segnalazioni', description: 'Segnala recensioni false o contenuti inappropriati', category: 'comunicazione', icon: Flag, iconColor: 'text-red-500' },
   // Contenuti & Marketing
-  { key: 'classified_ads', label: 'Annunci', description: 'Pubblica annunci di prodotti e servizi', category: 'marketing' },
-  { key: 'auctions', label: 'Aste', description: 'Crea e gestisci aste per i tuoi prodotti', category: 'marketing' },
-  { key: 'job_postings', label: 'Offerte di lavoro', description: 'Pubblica offerte di lavoro per la tua azienda', category: 'marketing' },
-  { key: 'solidarity', label: 'Solidarietà', description: 'Partecipa alle iniziative di solidarietà locale', category: 'marketing' },
+  { key: 'classified_ads', label: 'Annunci', description: 'Pubblica annunci di prodotti e servizi', category: 'marketing', icon: Megaphone, iconColor: 'text-orange-600' },
+  { key: 'auctions', label: 'Aste', description: 'Crea e gestisci aste per i tuoi prodotti', category: 'marketing', icon: Gavel, iconColor: 'text-amber-600' },
+  { key: 'job_postings', label: 'Offerte di lavoro', description: 'Pubblica offerte di lavoro per la tua azienda', category: 'marketing', icon: Briefcase, iconColor: 'text-gray-700' },
+  { key: 'solidarity', label: 'Solidarietà', description: 'Partecipa alle iniziative di solidarietà locale', category: 'marketing', icon: Heart, iconColor: 'text-green-600' },
 ];
 
 const PRIVATE_CATEGORY_LABELS: Record<string, string> = {
@@ -72,6 +74,28 @@ const BUSINESS_CATEGORY_LABELS: Record<string, string> = {
   comunicazione: 'Comunicazione',
   marketing: 'Marketing & Contenuti',
 };
+
+// Static feature rows shown on plan cards (matches SubscriptionPage)
+const PRIVATE_CARD_FEATURES = [
+  { icon: MessageSquare, iconColor: 'text-blue-600', label: 'Recensioni illimitate' },
+  { icon: Bookmark, iconColor: 'text-purple-600', label: 'Salva preferiti' },
+  { icon: Megaphone, iconColor: 'text-orange-600', label: 'Pubblicare annunci' },
+  { icon: ShoppingBag, iconColor: 'text-teal-600', label: 'Cerca, vendi, regala oggetti' },
+  { icon: Briefcase, iconColor: 'text-gray-700', label: 'Ricerca offerte di lavoro' },
+  { icon: Trophy, iconColor: 'text-yellow-500', label: 'Classifica a premi' },
+  { icon: Heart, iconColor: 'text-green-600', label: '10% Beneficenza annuale', fill: true },
+];
+
+const BUSINESS_CARD_FEATURES = [
+  { icon: Shield, iconColor: 'text-blue-600', label: 'Profilo verificato' },
+  { icon: Tag, iconColor: 'text-orange-600', label: 'Sconti illimitati' },
+  { icon: MessageSquare, iconColor: 'text-blue-500', label: 'Risposte recensioni' },
+  { icon: Eye, iconColor: 'text-purple-600', label: 'Vedere recensioni altre aziende' },
+  { icon: TrendingUp, iconColor: 'text-teal-600', label: 'Statistiche avanzate' },
+  { icon: Star, iconColor: 'text-yellow-500', label: 'Priorità visibilità', fill: true },
+  { icon: Briefcase, iconColor: 'text-gray-700', label: 'Inserire annunci di lavoro' },
+  { icon: Heart, iconColor: 'text-green-600', label: '10% Beneficenza annuale', fill: true },
+];
 
 interface Plan {
   id: string;
@@ -288,15 +312,6 @@ export function PlansSection({ adminId }: PlansSectionProps) {
 
   const getPlanType = (name: string) => name.toLowerCase().includes('business') ? 'Business' : 'Privato';
 
-  const getPlanColor = (plan: Plan) => {
-    const isBusiness = getPlanType(plan.name) === 'Business';
-    const isYearly = plan.billing_period === 'yearly';
-    if (!isBusiness && !isYearly) return 'from-blue-600 to-blue-700';
-    if (!isBusiness && isYearly) return 'from-green-600 to-green-700';
-    if (isBusiness && !isYearly) return 'from-orange-600 to-orange-700';
-    return 'from-violet-600 to-violet-700';
-  };
-
   const organizePlans = () => {
     const privateMonthly = plans.filter(p => !p.name.toLowerCase().includes('business') && p.billing_period === 'monthly');
     const privateYearly = plans.filter(p => !p.name.toLowerCase().includes('business') && p.billing_period === 'yearly');
@@ -304,10 +319,10 @@ export function PlansSection({ adminId }: PlansSectionProps) {
     const businessYearly = plans.filter(p => p.name.toLowerCase().includes('business') && p.billing_period === 'yearly');
 
     return [
-      { title: 'Piani Privati Mensili', plans: privateMonthly, borderColor: 'border-blue-600', bgColor: 'bg-blue-50' },
-      { title: 'Piani Privati Annuali', plans: privateYearly, borderColor: 'border-green-600', bgColor: 'bg-green-50' },
-      { title: 'Piani Business Mensili', plans: businessMonthly, borderColor: 'border-orange-600', bgColor: 'bg-orange-50' },
-      { title: 'Piani Business Annuali', plans: businessYearly, borderColor: 'border-violet-600', bgColor: 'bg-violet-50' },
+      { title: 'Piani Privati Mensili', plans: privateMonthly },
+      { title: 'Piani Privati Annuali', plans: privateYearly },
+      { title: 'Piani Business Mensili', plans: businessMonthly },
+      { title: 'Piani Business Annuali', plans: businessYearly },
     ];
   };
 
@@ -395,85 +410,76 @@ export function PlansSection({ adminId }: PlansSectionProps) {
           {planGroups.map((group, groupIndex) => (
             group.plans.length > 0 && (
               <div key={groupIndex} className="space-y-4">
-                <div className={`border-l-4 ${group.borderColor} pl-4 py-2 ${group.bgColor} rounded-r-lg`}>
-                  <h3 className="text-xl font-bold text-gray-900">{group.title}</h3>
-                  <p className="text-sm text-gray-600">{group.plans.length} {group.plans.length === 1 ? 'piano disponibile' : 'piani disponibili'}</p>
-                </div>
+                <h3 className="text-lg font-bold text-gray-900 border-b border-gray-200 pb-2">{group.title}</h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {group.plans.map((plan) => {
-                    const planType = getPlanType(plan.name);
-                    const isBusiness = planType === 'Business';
-                    const colorClass = getPlanColor(plan);
-                    const allFeatureDefs = isBusiness ? BUSINESS_FEATURES : PRIVATE_FEATURES;
-                    const enabledFeatures = (plan.features || [])
-                      .map(k => allFeatureDefs.find(f => f.key === k))
-                      .filter(Boolean) as FeatureDef[];
-                    const visibleFeatures = enabledFeatures.slice(0, 5);
-                    const extraCount = enabledFeatures.length - visibleFeatures.length;
+                    const planIsBusiness = getPlanType(plan.name) === 'Business';
+                    const isAnnual = plan.billing_period === 'yearly';
+                    const cardFeatures = planIsBusiness ? BUSINESS_CARD_FEATURES : PRIVATE_CARD_FEATURES;
 
                     return (
-                      <div key={plan.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex flex-col">
-                        {/* Card header */}
-                        <div className={`p-5 rounded-t-2xl text-white bg-gradient-to-r ${colorClass}`}>
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-semibold">{planType}</span>
-                            <span className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-semibold">{getPeriodLabel(plan.billing_period)}</span>
-                          </div>
-                          <h3 className="text-base font-bold mb-2 line-clamp-2">{plan.name}</h3>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-3xl font-bold">€{parseFloat(plan.price.toString()).toFixed(2)}</span>
-                            <span className="text-white/70 text-sm">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
-                          </div>
-                        </div>
-
-                        {/* Card body */}
-                        <div className="p-5 flex-1 flex flex-col gap-4">
-                          {/* Capacity */}
-                          <div className="flex items-center gap-2 text-sm text-gray-700">
-                            <Users className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                            <span className="font-medium">
-                              {isBusiness
-                                ? (plan.max_persons === 999 ? 'Sedi illimitate' : `Fino a ${plan.max_persons} ${plan.max_persons === 1 ? 'sede' : 'sedi'}`)
-                                : `Fino a ${plan.max_persons} ${plan.max_persons === 1 ? 'persona' : 'persone'}`}
+                      <div
+                        key={plan.id}
+                        className={`bg-white rounded-xl shadow-lg p-6 border-2 transition-all relative flex flex-col ${
+                          isAnnual ? 'border-green-400 ring-2 ring-green-200' : 'border-gray-200 hover:border-blue-500'
+                        }`}
+                      >
+                        {isAnnual && (
+                          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                            <span className="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                              <Star className="w-3 h-3" fill="currentColor" />
+                              RISPARMIO
                             </span>
                           </div>
+                        )}
 
-                          {/* Features */}
-                          <div className="flex-1">
-                            {enabledFeatures.length === 0 ? (
-                              <p className="text-xs text-gray-400 italic">Nessuna funzionalità configurata</p>
-                            ) : (
-                              <div className="space-y-1.5">
-                                {visibleFeatures.map(f => (
-                                  <div key={f.key} className="flex items-center gap-1.5 text-xs text-gray-700">
-                                    <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
-                                    <span>{f.label}</span>
-                                  </div>
-                                ))}
-                                {extraCount > 0 && (
-                                  <div className="text-xs text-gray-500 pl-5">+{extraCount} altre funzionalità</div>
-                                )}
+                        <h3 className="text-xl font-bold text-gray-900 mb-1">{plan.name}</h3>
+                        <p className="text-xs text-gray-500 mb-4">
+                          Fino a {plan.max_persons} {planIsBusiness
+                            ? (plan.max_persons === 1 ? 'sede' : 'sedi')
+                            : (plan.max_persons === 1 ? 'persona' : 'persone')}
+                        </p>
+
+                        <div className="mb-6">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-4xl font-bold text-blue-600">€{Number(plan.price).toFixed(2)}</span>
+                            <span className="text-gray-600">/{plan.billing_period === 'monthly' ? 'mese' : 'anno'}</span>
+                          </div>
+                          {planIsBusiness && (
+                            <p className="text-xs text-gray-500 mt-1">+ IVA</p>
+                          )}
+                        </div>
+
+                        <div className="mb-6 space-y-2 flex-1">
+                          {cardFeatures.map((f, i) => {
+                            const Icon = f.icon;
+                            return (
+                              <div key={i} className="flex items-center gap-2 text-sm text-gray-700">
+                                <Icon className={`w-4 h-4 ${f.iconColor} flex-shrink-0`} {...(f.fill ? { fill: 'currentColor' } : {})} />
+                                <span>{f.label}</span>
                               </div>
-                            )}
-                          </div>
+                            );
+                          })}
+                        </div>
 
-                          {/* Actions */}
-                          <div className="flex gap-2 pt-2 border-t border-gray-100">
-                            <button
-                              onClick={() => { setEditingPlan(plan); setIsCreating(false); }}
-                              className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-                            >
-                              <Edit className="w-3.5 h-3.5" />
-                              Modifica
-                            </button>
-                            <button
-                              onClick={() => setDeletingPlanId(plan.id)}
-                              className="flex items-center justify-center bg-red-50 text-red-600 border border-red-200 px-3 py-2 rounded-lg hover:bg-red-100 transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
+                        <div className="flex gap-2 mt-auto">
+                          <button
+                            onClick={() => { setEditingPlan(plan); setIsCreating(false); }}
+                            className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-colors ${
+                              isAnnual
+                                ? 'bg-green-600 text-white hover:bg-green-700'
+                                : 'bg-blue-600 text-white hover:bg-blue-700'
+                            }`}
+                          >
+                            Modifica
+                          </button>
+                          <button
+                            onClick={() => setDeletingPlanId(plan.id)}
+                            className="flex items-center justify-center bg-red-50 text-red-600 border border-red-200 px-3 py-2 rounded-lg hover:bg-red-100 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
                     );
@@ -516,7 +522,7 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                     const expiryDate = isTrial && sub.trial_end_date ? sub.trial_end_date : sub.end_date;
                     const expired = isExpired(expiryDate);
                     const expiringSoon = !expired && isExpiringSoon(expiryDate);
-                    const isBusiness = sub.customer.user_type === 'business';
+                    const subIsBusiness = sub.customer.user_type === 'business';
 
                     return (
                       <tr key={sub.id} className="hover:bg-gray-50 transition-colors">
@@ -524,8 +530,8 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                           <div>
                             <div className="font-semibold text-gray-900 flex items-center gap-2">
                               {sub.customer.full_name}
-                              <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${isBusiness ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}>
-                                {isBusiness ? 'Business' : 'Privato'}
+                              <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${subIsBusiness ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}>
+                                {subIsBusiness ? 'Business' : 'Privato'}
                               </span>
                             </div>
                             <div className="text-xs text-gray-500 mt-0.5">{sub.customer.email}</div>
@@ -538,7 +544,7 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                             <span>{getPeriodLabel(sub.plan.billing_period)}</span>
                             <span className="text-gray-300">•</span>
                             <span>
-                              {isBusiness
+                              {subIsBusiness
                                 ? sub.plan.max_persons === 999 ? 'Sedi illimitate' : `${sub.plan.max_persons} ${sub.plan.max_persons === 1 ? 'sede' : 'sedi'}`
                                 : `${sub.plan.max_persons} ${sub.plan.max_persons === 1 ? 'persona' : 'persone'}`}
                             </span>
@@ -694,6 +700,7 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                         <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {catFeatures.map(feature => {
                             const checked = (editingPlan.features || []).includes(feature.key);
+                            const Icon = feature.icon;
                             return (
                               <label
                                 key={feature.key}
@@ -703,11 +710,14 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                                   type="checkbox"
                                   checked={checked}
                                   onChange={() => toggleFeature(feature.key)}
-                                  className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 flex-shrink-0"
                                 />
-                                <div className="min-w-0">
-                                  <div className={`text-sm font-medium ${checked ? 'text-blue-800' : 'text-gray-800'}`}>{feature.label}</div>
-                                  <div className="text-xs text-gray-500 mt-0.5 leading-tight">{feature.description}</div>
+                                <div className="flex items-start gap-2 min-w-0">
+                                  <Icon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${feature.iconColor}`} />
+                                  <div className="min-w-0">
+                                    <div className={`text-sm font-medium ${checked ? 'text-blue-800' : 'text-gray-800'}`}>{feature.label}</div>
+                                    <div className="text-xs text-gray-500 mt-0.5 leading-tight">{feature.description}</div>
+                                  </div>
                                 </div>
                               </label>
                             );
