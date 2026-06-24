@@ -171,7 +171,15 @@ export function PlansSection({ adminId }: PlansSectionProps) {
         .order('price', { ascending: true });
 
       if (error) throw error;
-      setPlans((data || []).map(p => ({ ...p, features: Array.isArray(p.features) ? p.features : [] })));
+      setPlans((data || []).map(p => {
+        let features: string[] = [];
+        if (Array.isArray(p.features)) {
+          features = p.features.map((f: any) => (typeof f === 'string' ? f : String(f)));
+        } else if (typeof p.features === 'string') {
+          try { features = JSON.parse(p.features); } catch { features = []; }
+        }
+        return { ...p, features };
+      }));
     } catch (error: any) {
       console.error('Error loading plans:', error);
       showToast('Errore nel caricamento dei piani', 'error');
