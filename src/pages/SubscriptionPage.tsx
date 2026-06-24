@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import {
   Check, Heart, Star, Shield, TrendingUp, Users, Gift,
   Trophy, MessageSquare, Bookmark, Megaphone, Briefcase,
-  ShoppingBag, Eye, Tag, Map, Bell, Flag, CreditCard,
+  ShoppingBag, Eye, Tag, Map, Bell, Flag, CreditCard, Building2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -55,13 +55,18 @@ const PRIVATE_FEATURE_MAP: FeatureDisplay[] = [
 
 const BUSINESS_FEATURE_MAP: FeatureDisplay[] = [
   { key: 'claim_business', label: 'Profilo verificato', icon: Shield, iconColor: 'text-blue-600' },
-  { key: 'discounts', label: 'Sconti illimitati', icon: Tag, iconColor: 'text-orange-600' },
-  { key: 'review_responses', label: 'Risposte recensioni', icon: MessageSquare, iconColor: 'text-blue-500' },
-  { key: 'business_dashboard', label: 'Statistiche avanzate', icon: TrendingUp, iconColor: 'text-teal-600' },
-  { key: 'multiple_locations', label: 'Priorità visibilità', icon: Star, iconColor: 'text-yellow-500', fill: true },
+  { key: 'review_responses', label: 'Risposte alle recensioni', icon: MessageSquare, iconColor: 'text-blue-500' },
+  { key: 'view_reviews', label: 'Vedere recensioni altre aziende', icon: Eye, iconColor: 'text-teal-600' },
+  { key: 'priority_visibility', label: 'Priorità visibilità', icon: TrendingUp, iconColor: 'text-orange-500' },
   { key: 'job_postings', label: 'Inserire annunci di lavoro', icon: Briefcase, iconColor: 'text-gray-700' },
-  { key: 'classified_ads', label: 'Annunci e aste', icon: Megaphone, iconColor: 'text-orange-600' },
   { key: 'solidarity', label: '10% Beneficenza annuale', icon: Heart, iconColor: 'text-green-600', fill: true },
+  { key: 'discounts', label: 'Pubblica sconti e coupon', icon: Tag, iconColor: 'text-orange-600' },
+  { key: 'messages', label: 'Messaggistica', icon: MessageSquare, iconColor: 'text-green-600' },
+  { key: 'multiple_locations', label: 'Sedi multiple', icon: Building2, iconColor: 'text-gray-700' },
+  { key: 'reports', label: 'Segnala recensioni/annunci', icon: Flag, iconColor: 'text-red-500' },
+  { key: 'notifications', label: 'Ricevi notifiche', icon: Bell, iconColor: 'text-blue-500' },
+  { key: 'favorites', label: 'Salva preferiti', icon: Bookmark, iconColor: 'text-purple-600' },
+  { key: 'annual_discount', label: 'Sconto con piano annuale', icon: Star, iconColor: 'text-yellow-500', fill: true },
 ];
 
 function parsePlanFeatures(raw: any): string[] {

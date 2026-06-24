@@ -48,49 +48,31 @@ const PRIVATE_CATEGORY_LABELS: Record<string, string> = {
 };
 
 // ── Business plans ────────────────────────────────────────────────────────────
-const BUSINESS_FEATURES: FeatureDef[] = [
-  { key: 'search', label: 'Ricerca attività', description: 'Cerca attività per nome, categoria e città', category: 'base', icon: Search, iconColor: 'text-blue-600' },
-  { key: 'map', label: 'Mappa interattiva', description: 'Visualizza attività su mappa geografica', category: 'base', icon: Map, iconColor: 'text-teal-600' },
-  { key: 'notifications', label: 'Notifiche', description: 'Ricevi notifiche push in tempo reale', category: 'base', icon: Bell, iconColor: 'text-blue-500' },
-  { key: 'favorites', label: 'Preferiti', description: 'Salva attività e annunci nei preferiti', category: 'base', icon: Bookmark, iconColor: 'text-purple-600' },
-  { key: 'business_dashboard', label: 'Pannello gestione attività', description: 'Dashboard completa per gestire la tua attività', category: 'gestione', icon: BarChart2, iconColor: 'text-blue-600' },
-  { key: 'multiple_locations', label: 'Sedi multiple', description: 'Gestisci più sedi o filiali della tua attività', category: 'gestione', icon: Building2, iconColor: 'text-gray-700' },
-  { key: 'claim_business', label: 'Reclama attività', description: "Rivendica la proprietà dell'attività nel database", category: 'gestione', icon: Shield, iconColor: 'text-blue-600' },
-  { key: 'discounts', label: 'Pubblica sconti e coupon', description: 'Crea offerte e sconti per i tuoi clienti', category: 'gestione', icon: Tag, iconColor: 'text-orange-600' },
-  { key: 'review_responses', label: 'Risposta alle recensioni', description: 'Rispondi pubblicamente alle recensioni dei clienti', category: 'gestione', icon: MessageSquare, iconColor: 'text-blue-500' },
-  { key: 'messages', label: 'Messaggistica', description: 'Invia e ricevi messaggi privati con clienti e utenti', category: 'comunicazione', icon: MessageSquare, iconColor: 'text-green-600' },
-  { key: 'reports', label: 'Segnalazioni', description: 'Segnala recensioni false o contenuti inappropriati', category: 'comunicazione', icon: Flag, iconColor: 'text-red-500' },
-  { key: 'classified_ads', label: 'Annunci', description: 'Pubblica annunci di prodotti e servizi', category: 'marketing', icon: Megaphone, iconColor: 'text-orange-600' },
-  { key: 'auctions', label: 'Aste', description: 'Crea e gestisci aste per i tuoi prodotti', category: 'marketing', icon: Gavel, iconColor: 'text-amber-600' },
-  { key: 'job_postings', label: 'Offerte di lavoro', description: 'Pubblica offerte di lavoro per la tua azienda', category: 'marketing', icon: Briefcase, iconColor: 'text-gray-700' },
-  { key: 'solidarity', label: 'Solidarietà', description: 'Partecipa alle iniziative di solidarietà locale', category: 'marketing', icon: Heart, iconColor: 'text-green-600' },
+const BUSINESS_DEFAULT_FEATURES: FeatureDef[] = [
+  { key: 'claim_business', label: 'Profilo verificato', description: "Rivendica e verifica la tua attività sulla piattaforma", category: 'default', icon: Shield, iconColor: 'text-blue-600' },
+  { key: 'review_responses', label: 'Risposte alle recensioni', description: 'Rispondi pubblicamente alle recensioni dei clienti', category: 'default', icon: MessageSquare, iconColor: 'text-blue-500' },
+  { key: 'view_reviews', label: 'Vedere recensioni altre aziende', description: 'Accedi alle recensioni di tutte le aziende sulla piattaforma', category: 'default', icon: Eye, iconColor: 'text-teal-600' },
+  { key: 'priority_visibility', label: 'Priorità visibilità', description: 'La tua attività appare in cima ai risultati di ricerca', category: 'default', icon: TrendingUp, iconColor: 'text-orange-500' },
+  { key: 'job_postings', label: 'Inserire annunci di lavoro', description: 'Pubblica offerte di lavoro per la tua azienda', category: 'default', icon: Briefcase, iconColor: 'text-gray-700' },
+  { key: 'solidarity', label: '10% Beneficenza annuale', description: "Il 10% del fatturato va in beneficenza, gli utenti scelgono l'associazione", category: 'default', icon: Heart, iconColor: 'text-green-600', fill: true },
 ];
+
+const BUSINESS_OPTIONAL_FEATURES: FeatureDef[] = [
+  { key: 'discounts', label: 'Pubblica sconti e coupon', description: 'Crea offerte e sconti esclusivi per i tuoi clienti', category: 'optional', icon: Tag, iconColor: 'text-orange-600' },
+  { key: 'messages', label: 'Messaggistica', description: 'Invia e ricevi messaggi privati con clienti e utenti', category: 'optional', icon: MessageSquare, iconColor: 'text-green-600' },
+  { key: 'multiple_locations', label: 'Sedi multiple', description: 'Gestisci più sedi o filiali della tua attività', category: 'optional', icon: Building2, iconColor: 'text-gray-700' },
+  { key: 'reports', label: 'Segnala recensioni/annunci', description: 'Segnala contenuti inappropriati o recensioni false', category: 'optional', icon: Flag, iconColor: 'text-red-500' },
+  { key: 'notifications', label: 'Ricevi notifiche', description: 'Ricevi notifiche push in tempo reale', category: 'optional', icon: Bell, iconColor: 'text-blue-500' },
+  { key: 'favorites', label: 'Salva preferiti', description: 'Salva attività e annunci nei preferiti', category: 'optional', icon: Bookmark, iconColor: 'text-purple-600' },
+  { key: 'annual_discount', label: 'Sconto con piano annuale', description: 'Sconto speciale attivando un piano annuale', category: 'optional', icon: Star, iconColor: 'text-yellow-500', fill: true },
+];
+
+const BUSINESS_FEATURES: FeatureDef[] = [...BUSINESS_DEFAULT_FEATURES, ...BUSINESS_OPTIONAL_FEATURES];
 
 const BUSINESS_CATEGORY_LABELS: Record<string, string> = {
-  base: 'Funzionalità Base',
-  gestione: 'Gestione Attività',
-  comunicazione: 'Comunicazione',
-  marketing: 'Marketing & Contenuti',
+  default: 'Funzionalità Incluse',
+  optional: 'Funzionalità Aggiuntive (attivabili)',
 };
-
-// ── Card display rows (matches SubscriptionPage icons) ────────────────────────
-const PRIVATE_CARD_FEATURES = [
-  { icon: MessageSquare, iconColor: 'text-blue-600', label: 'Recensioni illimitate' },
-  { icon: ShoppingBag, iconColor: 'text-teal-600', label: 'Cerca, vendi, regala oggetti' },
-  { icon: Briefcase, iconColor: 'text-gray-700', label: 'Ricerca offerte di lavoro' },
-  { icon: Trophy, iconColor: 'text-yellow-500', label: 'Classifica a premi' },
-  { icon: Heart, iconColor: 'text-green-600', label: '10% Beneficenza annuale', fill: true },
-];
-
-const BUSINESS_CARD_FEATURES = [
-  { icon: Shield, iconColor: 'text-blue-600', label: 'Profilo verificato' },
-  { icon: Tag, iconColor: 'text-orange-600', label: 'Sconti illimitati' },
-  { icon: MessageSquare, iconColor: 'text-blue-500', label: 'Risposte recensioni' },
-  { icon: TrendingUp, iconColor: 'text-teal-600', label: 'Statistiche avanzate' },
-  { icon: Star, iconColor: 'text-yellow-500', label: 'Priorità visibilità', fill: true },
-  { icon: Briefcase, iconColor: 'text-gray-700', label: 'Inserire annunci di lavoro' },
-  { icon: Heart, iconColor: 'text-green-600', label: '10% Beneficenza annuale', fill: true },
-];
 
 interface Plan {
   id: string;
@@ -211,21 +193,25 @@ export function PlansSection({ adminId }: PlansSectionProps) {
     list.map(f => (typeof f === 'string' ? f : String(f)));
 
   const toggleFeature = (key: string) => {
-    if (!editingPlan) return;
-    const current = normalizeFeaturesList(editingPlan.features || []);
-    const updated = current.includes(key) ? current.filter(f => f !== key) : [...current, key];
-    setEditingPlan({ ...editingPlan, features: updated });
+    setEditingPlan(prev => {
+      if (!prev) return prev;
+      const current = normalizeFeaturesList(prev.features || []);
+      const updated = current.includes(key) ? current.filter(f => f !== key) : [...current, key];
+      return { ...prev, features: updated };
+    });
   };
 
   const toggleAllInCategory = (category: string, features: FeatureDef[]) => {
-    if (!editingPlan) return;
     const catKeys = features.filter(f => f.category === category).map(f => f.key);
-    const current = normalizeFeaturesList(editingPlan.features || []);
-    const allSelected = catKeys.every(k => current.includes(k));
-    const updated = allSelected
-      ? current.filter(k => !catKeys.includes(k))
-      : [...new Set([...current, ...catKeys])];
-    setEditingPlan({ ...editingPlan, features: updated });
+    setEditingPlan(prev => {
+      if (!prev) return prev;
+      const current = normalizeFeaturesList(prev.features || []);
+      const allSelected = catKeys.every(k => current.includes(k));
+      const updated = allSelected
+        ? current.filter(k => !catKeys.includes(k))
+        : [...new Set([...current, ...catKeys])];
+      return { ...prev, features: updated };
+    });
   };
 
   const savePlan = async () => {
@@ -367,7 +353,6 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                   {group.plans.map(plan => {
                     const planIsBusiness = getPlanType(plan.name) === 'Business';
                     const isAnnual = plan.billing_period === 'yearly';
-                    const cardFeatures = planIsBusiness ? BUSINESS_CARD_FEATURES : PRIVATE_CARD_FEATURES;
                     return (
                       <div
                         key={plan.id}
@@ -396,15 +381,17 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                           {planIsBusiness && <p className="text-xs text-gray-500 mt-1">+ IVA</p>}
                         </div>
                         <div className="mb-6 space-y-2 flex-1">
-                          {cardFeatures.map((f, i) => {
-                            const Icon = f.icon;
-                            return (
-                              <div key={i} className="flex items-center gap-2 text-sm text-gray-700">
-                                <Icon className={`w-4 h-4 ${f.iconColor} flex-shrink-0`} {...(f.fill ? { fill: 'currentColor' } : {})} />
-                                <span>{f.label}</span>
-                              </div>
-                            );
-                          })}
+                          {(planIsBusiness ? BUSINESS_FEATURES : PRIVATE_FEATURES)
+                            .filter(f => plan.features.includes(f.key))
+                            .map(f => {
+                              const Icon = f.icon;
+                              return (
+                                <div key={f.key} className="flex items-center gap-2 text-sm text-gray-700">
+                                  <Icon className={`w-4 h-4 ${f.iconColor} flex-shrink-0`} {...(f.fill ? { fill: 'currentColor' } : {})} />
+                                  <span>{f.label}</span>
+                                </div>
+                              );
+                            })}
                         </div>
                         <div className="flex gap-2 mt-auto">
                           <button

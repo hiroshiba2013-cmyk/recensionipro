@@ -1,1495 +1,217 @@
 import { useState, useEffect } from 'react';
-import {
-  MapPin, Phone, Mail, Globe, Star, Briefcase,
-  Building2, Clock, AlertCircle, CheckCircle, ArrowLeft, Flag
-} from 'lucide-react';
-import { supabase, Business, Review, JobPosting, BusinessLocation } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ReviewForm } from '../components/reviews/ReviewForm';
 import { ReviewCard } from '../components/reviews/ReviewCard';
-import BusinessMap from '../components/map/BusinessMap';
-import ReportButton from '../components/moderation/ReportButton';
-import ReportModal from '../components/moderation/ReportModal';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
-import { VerificationBadge } from '../components/business/VerificationBadge';
-import { ConfirmModal, AlertModal } from '../components/common/ConfirmModal';
-
-function PartialStarsInline({ rating, size = 16 }: { rating: number; size?: number }) {
-  return (
-    <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((star) => {
-        const fill = Math.min(1, Math.max(0, rating - (star - 1)));
-        const uid = `bdp-star-${star}-${Math.round(rating * 10)}`;
-        return (
-          <svg key={star} width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <clipPath id={uid}>
-                <rect x="0" y="0" width={24 * fill} height="24" />
-              </clipPath>
-            </defs>
-            <polygon
-              points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
-              fill="#e5e7eb" stroke="#e5e7eb" strokeWidth="1"
-            />
-            <polygon
-              points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
-              fill="#22c55e" stroke="#22c55e" strokeWidth="1"
-              clipPath={`url(#${uid})`}
-            />
-          </svg>
-        );
-      })}
-    </div>
-  );
-}
-
+import ReportButton from '../components/moderation/ReportButton';
+import { MapPin, Phone, Globe, Star, ArrowLeft, CheckCircle, Mail, Tag } from 'lucide-react';
 
 interface BusinessDetailPageProps {
   businessId: string;
 }
 
-interface BusinessWithRating extends Business {
-  avg_rating?: number;
-  review_count?: number;
-}
-
 export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
-  const { user, profile, activeProfile } = useAuth();
-  const [business, setBusiness] = useState<BusinessWithRating | null>(null);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
-  const [locations, setLocations] = useState<BusinessLocation[]>([]);
+  const { profile } = useAuth();
+  const goBack = () => window.history.back();
   const [loading, setLoading] = useState(true);
+  const [business, setBusiness] = useState<any>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [showReviewForm, setShowReviewForm] = useState(false);
-  const [claimingBusiness, setClaimingBusiness] = useState(false);
-  const [filterLocationId, setFilterLocationId] = useState<string | null>(null);
-  const [isNewRegistered, setIsNewRegistered] = useState(false);
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [confirmModal, setConfirmModal] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
-  const [alertModal, setAlertModal] = useState<{ title: string; message: string; variant: 'success' | 'error' | 'info'; actionLabel?: string; onAction?: () => void } | null>(null);
+  const [error, setError] = useState('');
+
+  const isUnclaimed = window.location.pathname.startsWith('/business/unclaimed/');
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-
-    // Leggi il parametro locationId dall'URL
-    const params = new URLSearchParams(window.location.search);
-    const locationId = params.get('locationId');
-    setFilterLocationId(locationId);
-
-    loadBusinessData(locationId);
+    loadBusiness();
   }, [businessId]);
 
-  const loadBusinessData = async (locationId: string | null = null) => {
-    setLoading(true);
+  const loadBusiness = async () => {
     try {
-      let businessData: any = null;
-      let businessType: 'imported' | 'user_added' | 'registered' | null = null;
-      let isNewRegistered = false; // true = registered_businesses table (uses location IDs), false = businesses table (uses business_id)
-      let pendingLocations: any[] = [];
+      setLoading(true);
+      setError('');
 
-      // Cerca in businesses (attività rivendicate)
-      const { data: claimedData } = await supabase
-        .from('businesses')
-        .select(`
-          *,
-          category:business_categories(*),
-          locations:business_locations(*)
-        `)
-        .eq('id', businessId)
-        .maybeSingle();
-
-      if (claimedData) {
-        businessData = {
-          ...claimedData,
-          is_claimed: true,
-          owner_id: claimedData.owner_id,
-          verified: claimedData.verification_badge === 'verified',
-        };
-        businessType = 'registered';
-        if (claimedData.locations) {
-          let allLocations = claimedData.locations.map((loc: any) => ({
-            ...loc,
-            name: loc.internal_name || loc.name,
-          }));
-
-          // Filtra per location specifica se locationId è presente
-          if (locationId) {
-            allLocations = allLocations.filter((loc: any) => loc.id === locationId);
-          }
-
-          pendingLocations = allLocations;
-        }
-      }
-
-      // Se non trovata, cerca in unclaimed_business_locations
-      if (!businessData) {
-        const { data: unclaimedData } = await supabase
-          .from('unclaimed_business_locations')
-          .select(`
-            *,
-            category:business_categories(*)
-          `)
+      if (isUnclaimed) {
+        const { data, error: err } = await supabase
+          .from('business_locations')
+          .select('*, business:businesses(name, category:business_categories(name))')
           .eq('id', businessId)
           .maybeSingle();
-
-        if (unclaimedData) {
-          businessData = {
-            id: unclaimedData.id,
-            name: unclaimedData.name,
-            category_id: unclaimedData.category_id,
-            category: unclaimedData.category,
-            description: unclaimedData.description,
-            is_claimed: unclaimedData.is_claimed || false,
-            owner_id: unclaimedData.claimed_by || null,
-            verified: false,
-            created_at: unclaimedData.created_at,
-            address: `${unclaimedData.street}${unclaimedData.street_number ? ', ' + unclaimedData.street_number : ''}`,
-            city: unclaimedData.city,
-            phone: unclaimedData.phone,
-            email: unclaimedData.email,
-            website: unclaimedData.website,
-            website_url: unclaimedData.website,
-          };
-          businessType = 'imported';
-        }
-      }
-
-      // Se non trovata, cerca in imported_businesses
-      if (!businessData) {
-        const { data: importedData } = await supabase
-          .from('imported_businesses')
-          .select(`
-            *,
-            category:business_categories(*)
-          `)
+        if (err) throw err;
+        if (!data) { setError('Attività non trovata'); return; }
+        setBusiness({ ...data, source: 'unclaimed' });
+        loadReviews(businessId, 'location');
+      } else {
+        const { data, error: err } = await supabase
+          .from('registered_business_locations')
+          .select('*, business:registered_businesses(business_name, category:business_categories(name))')
           .eq('id', businessId)
           .maybeSingle();
-
-        if (importedData) {
-          businessData = {
-            id: importedData.id,
-            name: importedData.name,
-            category_id: importedData.category_id,
-            category: importedData.category,
-            description: importedData.description,
-            is_claimed: false,
-            owner_id: null,
-            verified: false,
-            created_at: importedData.created_at,
-            address: `${importedData.street}${importedData.street_number ? ', ' + importedData.street_number : ''}`,
-            city: importedData.city,
-            phone: importedData.phone,
-            email: importedData.email,
-            website: importedData.website,
-            website_url: importedData.website,
-          };
-          businessType = 'imported';
-        }
-      }
-
-      // Se non trovata, cerca in user_added_businesses
-      if (!businessData) {
-        const { data: userAddedData } = await supabase
-          .from('user_added_businesses')
-          .select(`
-            *,
-            category:business_categories(*)
-          `)
-          .eq('id', businessId)
-          .maybeSingle();
-
-        if (userAddedData) {
-          businessData = {
-            id: userAddedData.id,
-            name: userAddedData.name,
-            category_id: userAddedData.category_id,
-            category: userAddedData.category,
-            description: userAddedData.description,
-            is_claimed: false,
-            owner_id: null,
-            verified: false,
-            created_at: userAddedData.created_at,
-            address: `${userAddedData.street}${userAddedData.street_number ? ', ' + userAddedData.street_number : ''}`,
-            city: userAddedData.city,
-            phone: userAddedData.phone,
-            email: userAddedData.email,
-            website: userAddedData.website,
-            website_url: userAddedData.website,
-          };
-          businessType = 'user_added';
-        }
-      }
-
-      // Cerca in registered_businesses (attività registrate tramite form)
-      if (!businessData) {
-        const { data: registeredData } = await supabase
-          .from('registered_businesses')
-          .select(`
-            *,
-            category:business_categories(*),
-            locations:registered_business_locations(*)
-          `)
-          .eq('id', businessId)
-          .maybeSingle();
-
-        if (registeredData) {
-          businessData = {
-            id: registeredData.id,
-            name: registeredData.name,
-            category_id: registeredData.category_id,
-            category: registeredData.category,
-            description: registeredData.description,
-            is_claimed: true,
-            owner_id: registeredData.owner_id,
-            verified: true,
-            verification_badge: registeredData.verification_badge,
-            created_at: registeredData.created_at,
-            address: registeredData.office_address || registeredData.office_street || '',
-            city: registeredData.office_city || registeredData.billing_city || '',
-            phone: registeredData.phone,
-            email: registeredData.pec_email,
-            website: registeredData.website,
-          };
-          businessType = 'registered';
-          isNewRegistered = true;
-          setIsNewRegistered(true);
-
-          if (registeredData.locations) {
-            let allLocations = registeredData.locations.map((loc: any) => ({
-              ...loc,
-              address: loc.street ? `${loc.street}${loc.street_number ? ' ' + loc.street_number : ''}` : '',
-              name: loc.internal_name || loc.name,
-              business_name: registeredData.name,
-            }));
-
-            if (locationId) {
-              allLocations = allLocations.filter((loc: any) => loc.id === locationId);
-            }
-
-            pendingLocations = allLocations;
-          }
-        }
-      }
-
-      // Se non trovata, cerca nella vecchia tabella businesses (per attività rivendicate prima della migrazione)
-      if (!businessData) {
-        const { data: oldBusinessData } = await supabase
-          .from('businesses')
-          .select(`
-            *,
-            category:business_categories(*),
-            locations:business_locations(*)
-          `)
-          .eq('id', businessId)
-          .maybeSingle();
-
-        if (oldBusinessData) {
-          businessData = {
-            ...oldBusinessData,
-            verified: oldBusinessData.is_claimed,
-          };
-          businessType = 'registered';
-          if (oldBusinessData.locations) {
-            let allLocations = oldBusinessData.locations;
-
-            // Filtra per location specifica se locationId è presente
-            if (locationId) {
-              allLocations = allLocations.filter((loc: any) => loc.id === locationId);
-            }
-
-            pendingLocations = allLocations;
-          }
-        }
-      }
-
-      if (businessData && businessType) {
-        // Raccoglie gli ID delle sedi per le query recensioni
-        let registeredLocationIds: string[] = [];
-        if (isNewRegistered) {
-          const { data: locIds } = await supabase
-            .from('registered_business_locations')
-            .select('id')
-            .eq('business_id', businessId);
-          registeredLocationIds = locIds ? locIds.map((l: any) => l.id) : [];
-        }
-
-        const buildReviewFilter = (q: any) => {
-          if (businessType === 'imported') {
-            return q.or(`imported_business_id.eq.${businessId},unclaimed_business_location_id.eq.${businessId}`);
-          } else if (businessType === 'user_added') {
-            return q.eq('user_added_business_id', businessId);
-          } else if (businessType === 'registered') {
-            if (isNewRegistered) {
-              if (registeredLocationIds.length > 0) {
-                return q.in('registered_business_location_id', registeredLocationIds);
-              }
-              return q.eq('business_id', 'no-match');
-            } else {
-              return q.eq('business_id', businessId);
-            }
-          }
-          return q;
-        };
-
-        // Esegui ratings, recensioni complete e job postings in parallelo
-        const [
-          { data: reviewsData },
-          { data: fullReviewsData },
-          { data: jobsData },
-        ] = await Promise.all([
-          buildReviewFilter(
-            supabase.from('reviews').select('overall_rating, review_type, registered_business_location_id, unclaimed_business_location_id, business_location_id, business_id').eq('review_status', 'approved')
-          ),
-          buildReviewFilter(
-            supabase.from('reviews')
-              .select(`
-                *,
-                customer:profiles!customer_id(full_name, nickname),
-                responses:review_responses(*),
-                family_member:customer_family_members(first_name, last_name, nickname),
-                registered_business_location:registered_business_locations(id, name, internal_name, street, city)
-              `)
-              .eq('review_status', 'approved')
-              .order('created_at', { ascending: false })
-              .limit(200)
-          ),
-          businessType === 'registered'
-            ? supabase.from('job_postings').select('*').eq('business_id', businessId).eq('status', 'active')
-            : Promise.resolve({ data: [] }),
-        ]);
-
-        const avg_rating = reviewsData && reviewsData.length > 0
-          ? reviewsData.reduce((sum: number, r: any) => sum + r.overall_rating, 0) / reviewsData.length
-          : 0;
-
-        // Calcola rating per-sede e aggiorna le locations
-        if (pendingLocations.length > 0 && reviewsData && reviewsData.length > 0) {
-          const MANAGEMENT_TYPES = new Set(['booking_not_completed', 'quote_request', 'customer_service', 'problem_before_service']);
-          const ratingByLoc: Record<string, { sum: number; count: number; svcSum: number; svcCount: number; mgtSum: number; mgtCount: number }> = {};
-          reviewsData.forEach((r: any) => {
-            const locId = r.registered_business_location_id || r.unclaimed_business_location_id || r.business_location_id;
-            if (!locId) return;
-            if (!ratingByLoc[locId]) ratingByLoc[locId] = { sum: 0, count: 0, svcSum: 0, svcCount: 0, mgtSum: 0, mgtCount: 0 };
-            ratingByLoc[locId].sum += r.overall_rating || 0;
-            ratingByLoc[locId].count += 1;
-            if (r.review_type === 'service_used') {
-              ratingByLoc[locId].svcSum += r.overall_rating || 0;
-              ratingByLoc[locId].svcCount += 1;
-            } else if (MANAGEMENT_TYPES.has(r.review_type)) {
-              ratingByLoc[locId].mgtSum += r.overall_rating || 0;
-              ratingByLoc[locId].mgtCount += 1;
-            }
-          });
-          const enriched = pendingLocations.map((loc: any) => {
-            const rd = ratingByLoc[loc.id];
-            return {
-              ...loc,
-              avg_rating: rd && rd.count > 0 ? Math.round((rd.sum / rd.count) * 10) / 10 : 0,
-              review_count: rd?.count || 0,
-              service_avg_rating: rd && rd.svcCount > 0 ? Math.round((rd.svcSum / rd.svcCount) * 10) / 10 : 0,
-              service_review_count: rd?.svcCount || 0,
-              management_avg_rating: rd && rd.mgtCount > 0 ? Math.round((rd.mgtSum / rd.mgtCount) * 10) / 10 : 0,
-              management_review_count: rd?.mgtCount || 0,
-            };
-          });
-          setLocations(enriched);
+        if (err || !data) {
+          const { data: loc, error: locErr } = await supabase
+            .from('business_locations')
+            .select('*, business:businesses(name, category:business_categories(name))')
+            .eq('id', businessId)
+            .maybeSingle();
+          if (locErr) throw locErr;
+          if (!loc) { setError('Attività non trovata'); return; }
+          setBusiness({ ...loc, source: 'unclaimed' });
+          loadReviews(businessId, 'location');
         } else {
-          setLocations(pendingLocations);
-        }
-
-        setBusiness({
-          ...businessData,
-          avg_rating,
-          review_count: reviewsData?.length || 0,
-          business_type: businessType,
-        });
-
-        if (fullReviewsData) {
-          const reviewsWithBusinessName = fullReviewsData.map((review: any) => {
-            const loc = review.business_location || review.registered_business_location;
-            return {
-              ...review,
-              business: { name: businessData.name },
-              category_name: businessData.category?.name ?? null,
-              location_info: loc ? {
-                name: loc.internal_name || loc.name,
-                city: loc.city
-              } : { city: businessData.city }
-            };
-          });
-          setReviews(reviewsWithBusinessName);
-        }
-
-        if (jobsData && jobsData.length > 0) {
-          setJobPostings(jobsData);
+          setBusiness({ ...data, source: 'registered' });
+          loadReviews(businessId, 'registered');
         }
       }
-    } catch (error) {
-      console.error('Error loading business data:', error);
+    } catch (e: any) {
+      setError('Errore nel caricamento');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleClaimBusiness = () => {
-    if (!profile || profile.user_type !== 'business') {
-      setAlertModal({ title: 'Accesso negato', message: "Solo gli utenti business possono rivendicare un'attività.", variant: 'error' });
-      return;
-    }
-    if (!business) return;
-    if (business.is_claimed || business.owner_id) {
-      setAlertModal({ title: 'Già rivendicata', message: 'Questa attività è già stata rivendicata da un altro utente.', variant: 'info' });
-      return;
-    }
-
-    setConfirmModal({
-      title: `Rivendica "${business.name}"`,
-      message: 'Una volta rivendicata, dovrai fornire la documentazione necessaria per la verifica.\n\nConfermi di essere il proprietario legittimo di questa attività?',
-      onConfirm: () => { setConfirmModal(null); performClaimBusiness(); },
-    });
-  };
-
-  const performClaimBusiness = async () => {
-    if (!business || !profile) return;
-
-    setClaimingBusiness(true);
+  const loadReviews = async (id: string, type: string) => {
     try {
-      const businessType = business.business_type as string | undefined;
-
-      if (businessType === 'imported') {
-        // Recupera i dati dall'imported_businesses
-        const { data: importedData, error: fetchError } = await supabase
-          .from('imported_businesses')
-          .select('*')
-          .eq('id', businessId)
-          .maybeSingle();
-
-        if (fetchError || !importedData) {
-          throw new Error('Attività non trovata');
-        }
-
-        // Crea la nuova business registrata
-        const { data: newBusiness, error: insertError } = await supabase
-          .from('registered_businesses')
-          .insert({
-            owner_id: profile.id,
-            name: importedData.name,
-            category_id: importedData.category_id,
-            description: importedData.description,
-            source_type: 'claimed_imported',
-            source_id: businessId,
-            verification_badge: 'claimed',
-          })
-          .select()
-          .single();
-
-        if (insertError || !newBusiness) {
-          throw insertError || new Error('Errore creazione business');
-        }
-
-        // Crea la location registrata
-        const { error: locationError } = await supabase
-          .from('registered_business_locations')
-          .insert({
-            business_id: newBusiness.id,
-            street: importedData.street,
-            street_number: importedData.street_number,
-            city: importedData.city,
-            province: importedData.province,
-            region: importedData.region,
-            postal_code: importedData.postal_code,
-            latitude: importedData.latitude,
-            longitude: importedData.longitude,
-            phone: importedData.phone,
-            email: importedData.email,
-            website: importedData.website,
-            business_hours: importedData.business_hours,
-            is_primary: true,
-          });
-
-        if (locationError) throw locationError;
-
-        // Sposta le recensioni
-        await supabase
-          .from('reviews')
-          .update({
-            business_type: 'registered',
-            business_id: newBusiness.id,
-            imported_business_id: null,
-          })
-          .eq('imported_business_id', businessId);
-
-        // Elimina da imported_businesses
-        await supabase
-          .from('imported_businesses')
-          .delete()
-          .eq('id', businessId);
-
-      } else if (businessType === 'user_added') {
-        // Recupera i dati dall'user_added_businesses
-        const { data: userAddedData, error: fetchError } = await supabase
-          .from('user_added_businesses')
-          .select('*')
-          .eq('id', businessId)
-          .maybeSingle();
-
-        if (fetchError || !userAddedData) {
-          throw new Error('Attività non trovata');
-        }
-
-        // Crea la nuova business registrata
-        const { data: newBusiness, error: insertError } = await supabase
-          .from('registered_businesses')
-          .insert({
-            owner_id: profile.id,
-            name: userAddedData.name,
-            category_id: userAddedData.category_id,
-            description: userAddedData.description,
-            source_type: 'claimed_user_added',
-            source_id: businessId,
-            verification_badge: 'claimed',
-          })
-          .select()
-          .single();
-
-        if (insertError || !newBusiness) {
-          throw insertError || new Error('Errore creazione business');
-        }
-
-        // Crea la location registrata
-        const { error: locationError } = await supabase
-          .from('registered_business_locations')
-          .insert({
-            business_id: newBusiness.id,
-            street: userAddedData.street,
-            street_number: userAddedData.street_number,
-            city: userAddedData.city,
-            province: userAddedData.province,
-            region: userAddedData.region,
-            postal_code: userAddedData.postal_code,
-            latitude: userAddedData.latitude,
-            longitude: userAddedData.longitude,
-            phone: userAddedData.phone,
-            email: userAddedData.email,
-            website: userAddedData.website,
-            is_primary: true,
-          });
-
-        if (locationError) throw locationError;
-
-        // Sposta le recensioni
-        await supabase
-          .from('reviews')
-          .update({
-            business_type: 'registered',
-            business_id: newBusiness.id,
-            user_added_business_id: null,
-          })
-          .eq('user_added_business_id', businessId);
-
-        // Elimina da user_added_businesses
-        await supabase
-          .from('user_added_businesses')
-          .delete()
-          .eq('id', businessId);
-      }
-
-      setAlertModal({
-        title: 'Rivendicazione completata',
-        message: 'La tua richiesta è stata registrata. Il nostro team verificherà i tuoi dati e ti contatterà per completare il processo di verifica.\n\nNel frattempo, puoi gestire l\'attività dalla tua dashboard.',
-        variant: 'success',
-        actionLabel: 'Vai alla Dashboard',
-        onAction: () => { window.location.href = '/dashboard'; },
-      });
-    } catch (error) {
-      console.error('Error claiming business:', error);
-      setAlertModal({ title: 'Errore', message: "Errore durante la rivendicazione dell'attività. Riprova.", variant: 'error' });
-    } finally {
-      setClaimingBusiness(false);
-    }
+      const col = type === 'registered' ? 'registered_business_location_id' : 'business_location_id';
+      const { data } = await supabase
+        .from('reviews')
+        .select('*, profile:profiles(full_name, nickname)')
+        .eq(col, id)
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false });
+      setReviews(data || []);
+    } catch {}
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8" aria-busy="true" aria-label="Caricamento dettagli attività">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-gray-200 rounded w-32"></div>
-            <div className="bg-white rounded-xl shadow-xl overflow-hidden">
-              <div className="h-48 sm:h-64 md:h-72 bg-gray-200"></div>
-              <div className="p-4 sm:p-6 md:p-8 space-y-4">
-                <div className="h-6 bg-gray-200 rounded w-2/3"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div className="md:col-span-2 space-y-3">
-                    <div className="h-4 bg-gray-200 rounded"></div>
-                    <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                    <div className="h-4 bg-gray-200 rounded w-4/6"></div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="h-32 bg-gray-200 rounded-xl"></div>
-                    <div className="h-24 bg-gray-200 rounded-xl"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
-  if (!business) {
+  if (error || !business) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Attività non trovata</h2>
-          <p className="text-gray-600 mb-6">L'attività che stai cercando non esiste.</p>
-          <a
-            href="/"
-            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Torna alla Home
-          </a>
+          <p className="text-gray-600 mb-4">{error || 'Attività non trovata'}</p>
+          <button onClick={goBack} className="text-blue-600 hover:underline flex items-center gap-2 mx-auto">
+            <ArrowLeft className="w-4 h-4" />Torna indietro
+          </button>
         </div>
       </div>
     );
   }
 
-  const canReview = profile?.user_type === 'customer' && (profile?.subscription_status === 'active' || profile?.subscription_status === 'trial');
-  const isOwner = profile && business.owner_id === profile.id;
-  const canClaim = profile?.user_type === 'business' && !business.is_claimed && !business.owner_id;
-  const canShowClaimButton = !business.is_claimed && !business.owner_id && profile?.user_type !== 'customer';
-  const needsBusinessAccount = canShowClaimButton && profile?.user_type !== 'business';
+  const name = business.source === 'registered'
+    ? business.business?.business_name || business.location_name || 'Attività'
+    : business.business?.name || business.name || 'Attività';
+  const category = business.business?.category?.name || '';
+  const city = business.city || '';
+  const address = business.address || business.street || '';
+  const phone = business.phone || '';
+  const email = business.email || '';
+  const website = business.website || '';
+  const isVerified = business.source === 'registered' || business.is_claimed;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <button
-          onClick={() => {
-            const returnUrl = sessionStorage.getItem('searchReturnUrl');
-            const scrollPosition = sessionStorage.getItem('searchScrollPosition');
-            if (returnUrl) {
-              sessionStorage.removeItem('searchReturnUrl');
-              sessionStorage.setItem('shouldRestoreScroll', 'true');
-              if (scrollPosition) {
-                sessionStorage.setItem('targetScrollPosition', scrollPosition);
-                sessionStorage.removeItem('searchScrollPosition');
-              }
-              window.history.pushState({}, '', returnUrl);
-              window.dispatchEvent(new PopStateEvent('popstate'));
-            } else {
-              window.history.back();
-            }
-          }}
-          className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-medium"
+          onClick={goBack}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4" />
           Torna indietro
         </button>
 
-        {!business.is_claimed && (
-          <div className="mb-6 bg-gradient-to-r from-blue-50 to-green-50 border-l-4 border-blue-600 rounded-lg p-4">
-            <p className="text-sm text-gray-700">
-              I dati di questa attività sono forniti da{' '}
-              <a
-                href="https://www.openstreetmap.org"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 font-semibold underline"
-              >
-                OpenStreetMap
-              </a>
-              {' '}e{' '}
-              <a
-                href="https://www.geofabrik.de"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 font-semibold underline"
-              >
-                Geofabrik
-              </a>
-              , rilasciati sotto licenza{' '}
-              <a
-                href="https://www.openstreetmap.org/copyright"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 font-semibold underline"
-              >
-                ODbL
-              </a>
-              .
-            </p>
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-3xl font-bold text-gray-900">{name}</h1>
+                {isVerified && (
+                  <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                    <CheckCircle className="w-3.5 h-3.5" />Verificata
+                  </span>
+                )}
+              </div>
+              {category && (
+                <div className="flex items-center gap-1.5 text-sm text-gray-500 mb-1">
+                  <Tag className="w-4 h-4" />{category}
+                </div>
+              )}
+              {city && (
+                <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                  <MapPin className="w-4 h-4" />{address ? `${address}, ` : ''}{city}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <FavoriteButton businessLocationId={businessId} />
+              {profile && <ReportButton entityType="business" entityId={businessId} />}
+            </div>
           </div>
-        )}
 
-        <div className="bg-white rounded-xl shadow-xl overflow-hidden">
-          <div className="relative h-48 sm:h-64 md:h-72 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
-            {business.logo_url && (
-              <img
-                src={business.logo_url}
-                alt={business.name}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
+          <div className="flex flex-wrap gap-4 mt-4">
+            {phone && (
+              <a href={`tel:${phone}`} className="flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm">
+                <Phone className="w-4 h-4" />{phone}
+              </a>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
-            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-8">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white mb-2 drop-shadow-lg truncate">{business.name}</h1>
-                  {business.category && (
-                    <span className="inline-block mb-3 px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-sm font-semibold rounded-full">
-                      {(business.category as any).name}
-                    </span>
-                  )}
-                  <div className="flex flex-wrap items-center gap-4">
-                    {business.avg_rating && business.avg_rating > 0 ? (
-                      <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full">
-                        <div className="flex">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-5 h-5 ${
-                                i < Math.round(business.avg_rating!)
-                                  ? 'fill-yellow-400 text-yellow-400'
-                                  : 'text-white/50'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="font-semibold text-white">
-                          {business.avg_rating.toFixed(1)}
-                        </span>
-                        <span className="text-white/80 text-sm">
-                          ({business.review_count} {business.review_count === 1 ? 'recensione' : 'recensioni'})
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full">
-                        <span className="text-white text-sm font-medium">Nessuna recensione</span>
-                      </div>
-                    )}
-                    <div className="bg-white/10 backdrop-blur-md rounded-full p-1">
-                      <VerificationBadge isClaimed={!!business.is_claimed} size="md" />
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  {user && !isOwner && (
-                    <>
-                      <div className="bg-white/20 backdrop-blur-md rounded-lg hover:bg-white/30 transition-colors">
-                        <FavoriteButton
-                          type="business"
-                          itemId={
-                            (business.business_type === 'imported' || business.business_type === 'user_added')
-                              ? businessId
-                              : (filterLocationId || locations[0]?.id || businessId)
-                          }
-                          familyMemberId={activeProfile && !activeProfile.isOwner ? activeProfile.id : null}
-                          businessColumn={
-                            (business.business_type === 'imported' || business.business_type === 'user_added')
-                              ? 'unclaimed'
-                              : isNewRegistered
-                              ? (locations.length > 0 ? 'registered' : 'registered_no_location')
-                              : 'legacy'
-                          }
-                        />
-                      </div>
-                      <button
-                        onClick={() => {
-                          console.log('🚩 Segnala attività clicked');
-                          setShowReportModal(true);
-                        }}
-                        className="bg-white/20 backdrop-blur-md rounded-lg px-3 py-2 hover:bg-red-500/30 transition-colors flex items-center justify-center"
-                        title="Segnala attività"
-                      >
-                        <Flag className="w-5 h-5 text-white" />
-                      </button>
-                    </>
-                  )}
-                  {canShowClaimButton && (
-                    <button
-                      onClick={needsBusinessAccount ? () => {
-                        sessionStorage.setItem('claimBusinessId', businessId);
-                        window.location.href = '/?register=business';
-                      } : handleClaimBusiness}
-                      disabled={claimingBusiness}
-                      className="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-all shadow-lg hover:shadow-xl font-bold disabled:opacity-50 flex items-center gap-2"
-                    >
-                      <Building2 className="w-5 h-5" />
-                      {claimingBusiness ? 'Rivendicazione...' : 'Rivendica Attività'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 sm:p-6 md:p-8">
-            <div className="grid md:grid-cols-3 gap-6 md:gap-8">
-              <div className="md:col-span-2 space-y-8">
-                {filterLocationId && (
-                  <div className="bg-blue-50 border-l-4 border-blue-600 rounded-r-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <MapPin className="w-5 h-5 text-blue-600" />
-                        <div>
-                          <p className="text-sm font-semibold text-blue-900">
-                            Stai visualizzando una sede specifica
-                          </p>
-                          <p className="text-xs text-blue-700">
-                            {locations.length > 0 && locations[0].city ? `Sede di ${locations[0].city}` : 'Sede selezionata dalla ricerca'}
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          window.history.pushState({}, '', `/business/${businessId}`);
-                          window.location.reload();
-                        }}
-                        className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                      >
-                        Vedi tutte le sedi
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {business.description && (
-                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border-l-4 border-blue-600">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
-                      Descrizione
-                    </h2>
-                    <p className="text-gray-700 leading-relaxed text-lg">{business.description}</p>
-                  </div>
-                )}
-
-                {(() => {
-                  const primaryLocation = locations.length > 0 ? locations[0] : null;
-                  const displayAddress = business.address || primaryLocation?.address;
-                  const displayCity = business.city || primaryLocation?.city;
-                  const displayPhone = business.phone || primaryLocation?.phone;
-                  const displayEmail = business.email || primaryLocation?.email;
-                  const displayWebsite = business.website || business.website_url;
-                  const displayBusinessHours = primaryLocation?.business_hours;
-                  const displayDescription = primaryLocation?.description;
-                  const displayServices = primaryLocation?.services;
-
-                  const hasContactInfo = displayAddress || displayPhone || displayEmail || displayWebsite || displayBusinessHours || displayDescription || displayServices;
-
-                  if (!hasContactInfo) return null;
-
-                  return (
-                    <div className="bg-white rounded-xl border-2 border-gray-200 p-6 shadow-sm">
-                      <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                        <div className="w-2 h-8 bg-green-600 rounded-full"></div>
-                        Informazioni di Contatto
-                      </h2>
-                      {displayDescription && (
-                        <div className="mb-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
-                          <p className="text-sm text-gray-700 italic">{displayDescription}</p>
-                        </div>
-                      )}
-                      <div className="space-y-3">
-                        {business.category && (
-                          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                            <Briefcase className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                            <div>
-                              <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Categoria</p>
-                              <p className="text-gray-900 font-medium">{(business.category as any).name}</p>
-                            </div>
-                          </div>
-                        )}
-                        {displayAddress && (
-                          <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                            <MapPin className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
-                            <div>
-                              <p className="text-gray-900 font-medium">
-                                {business.address || (primaryLocation?.address && `${primaryLocation.address}${primaryLocation.street_number ? ', ' + primaryLocation.street_number : ''}`)}
-                              </p>
-                              <p className="text-gray-600 text-sm">
-                                {business.city || (primaryLocation?.postal_code && primaryLocation?.city ? `${primaryLocation.postal_code} ${primaryLocation.city} (${primaryLocation.province})` : primaryLocation?.city)}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                        {displayPhone && (
-                          <a href={`tel:${displayPhone}`} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-green-50 transition-colors group">
-                            <Phone className="w-5 h-5 text-green-600 group-hover:scale-110 transition-transform" />
-                            <span className="text-gray-900 font-medium group-hover:text-green-600">
-                              {displayPhone}
-                            </span>
-                          </a>
-                        )}
-                        {displayEmail && (
-                          <a href={`mailto:${displayEmail}`} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition-colors group">
-                            <Mail className="w-5 h-5 text-blue-600 group-hover:scale-110 transition-transform" />
-                            <span className="text-gray-900 font-medium group-hover:text-blue-600">
-                              {displayEmail}
-                            </span>
-                          </a>
-                        )}
-                        {displayWebsite && (
-                          <a
-                            href={displayWebsite}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition-colors group"
-                          >
-                            <Globe className="w-5 h-5 text-indigo-600 group-hover:scale-110 transition-transform" />
-                            <span className="text-gray-900 font-medium group-hover:text-indigo-600 truncate">
-                              {displayWebsite}
-                            </span>
-                          </a>
-                        )}
-                        {displayServices && displayServices.length > 0 && (
-                          <div className="border-t-2 border-gray-200 pt-4 mt-4">
-                            <div className="flex items-center gap-2 mb-3">
-                              <CheckCircle className="w-5 h-5 text-green-600" />
-                              <h3 className="text-base font-semibold text-gray-900">Servizi Disponibili</h3>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {displayServices.map((service: string, idx: number) => (
-                                <span key={idx} className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 text-sm font-medium px-4 py-2 rounded-full border border-green-200 hover:shadow-md transition-shadow">
-                                  {service}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {displayBusinessHours && (
-                          <div className="border-t-2 border-gray-200 pt-4 mt-4">
-                            <div className="flex items-center gap-2 mb-4">
-                              <Clock className="w-6 h-6 text-blue-600" />
-                              <h3 className="text-lg font-bold text-gray-900">Orari di Apertura</h3>
-                            </div>
-                            {typeof displayBusinessHours === 'string' ? (
-                              <p className="text-gray-700">{displayBusinessHours}</p>
-                            ) : (
-                              <div className="grid gap-2">
-                                {(() => {
-                                  const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-                                  const dayNames: Record<string, string> = {
-                                    monday: 'Lunedì',
-                                    tuesday: 'Martedì',
-                                    wednesday: 'Mercoledì',
-                                    thursday: 'Giovedì',
-                                    friday: 'Venerdì',
-                                    saturday: 'Sabato',
-                                    sunday: 'Domenica'
-                                  };
-                                  const entries = Object.entries(displayBusinessHours as Record<string, any>);
-                                  const sortedEntries = entries.sort(([dayA], [dayB]) => {
-                                    return dayOrder.indexOf(dayA) - dayOrder.indexOf(dayB);
-                                  });
-
-                                  return sortedEntries.map(([day, hours]: [string, any]) => {
-                                    const today = new Date().toLocaleDateString('it-IT', { weekday: 'long' }).toLowerCase();
-                                    const isToday = dayNames[day]?.toLowerCase() === today;
-                                    const isClosed = hours.closed === true || hours.closed === 'true';
-
-                                    return (
-                                      <div
-                                        key={day}
-                                        className={`flex justify-between items-center px-4 py-3 rounded-lg ${
-                                          isToday ? 'bg-blue-50 border-2 border-blue-500' : 'bg-gray-50'
-                                        }`}
-                                      >
-                                        <span className={`font-medium ${isToday ? 'text-blue-900' : 'text-gray-900'}`}>
-                                          {dayNames[day] || day}
-                                          {isToday && <span className="ml-2 text-xs bg-blue-600 text-white px-2 py-1 rounded-full">Oggi</span>}
-                                        </span>
-                                        <span className={`text-sm font-medium ${
-                                          isClosed
-                                            ? 'text-red-600'
-                                            : isToday
-                                              ? 'text-green-700'
-                                              : 'text-gray-700'
-                                        }`}>
-                                          {isClosed ? 'Chiuso' : `${hours.open || ''} - ${hours.close || ''}`}
-                                        </span>
-                                      </div>
-                                    );
-                                  });
-                                })()}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {(() => {
-                  const hasValidLocation = locations.some(loc => loc.latitude && loc.longitude);
-                  if (!hasValidLocation) return null;
-
-                  return (
-                    <div>
-                      <h2 className="text-2xl font-bold text-gray-900 mb-4">Posizione</h2>
-                      <BusinessMap businessId={businessId} height="400px" />
-                    </div>
-                  );
-                })()}
-
-                {locations.length > 1 && (
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Altre Sedi</h2>
-                    <div className="space-y-6">
-                      {locations.slice(1).map((location) => (
-                        <div key={location.id} className="border-2 border-gray-200 rounded-xl p-6 bg-white shadow-sm hover:shadow-md transition-shadow">
-                          <div className="flex items-start justify-between gap-4 mb-3">
-                            <h3 className="font-bold text-xl text-gray-900">{location.name || 'Sede'}</h3>
-                            {(location.review_count || 0) > 0 && (
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                <PartialStarsInline rating={location.avg_rating || 0} size={16} />
-                                <span className="font-bold text-sm text-gray-900 ml-1">{(location.avg_rating || 0).toFixed(1)}</span>
-                                <span className="text-xs text-gray-500">({location.review_count})</span>
-                              </div>
-                            )}
-                          </div>
-                          {location.description && (
-                            <p className="text-sm text-gray-600 mb-4 italic border-l-4 border-blue-500 pl-3 py-1">{location.description}</p>
-                          )}
-                          <div className="space-y-3">
-                            <div className="flex items-start gap-3">
-                              <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
-                              <p className="text-gray-700">
-                                {location.address}{location.street_number ? ', ' + location.street_number : ''}, {location.postal_code} {location.city} ({location.province})
-                              </p>
-                            </div>
-                            {location.phone && (
-                              <div className="flex items-center gap-3">
-                                <Phone className="w-5 h-5 text-gray-400" />
-                                <a href={`tel:${location.phone}`} className="text-blue-600 hover:underline font-medium">
-                                  {location.phone}
-                                </a>
-                              </div>
-                            )}
-                            {location.email && (
-                              <div className="flex items-center gap-3">
-                                <Mail className="w-5 h-5 text-gray-400" />
-                                <a href={`mailto:${location.email}`} className="text-blue-600 hover:underline">
-                                  {location.email}
-                                </a>
-                              </div>
-                            )}
-                            {location.services && location.services.length > 0 && (
-                              <div className="border-t pt-3 mt-3">
-                                <p className="text-sm text-gray-700 mb-2 font-semibold">Servizi disponibili:</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {location.services.map((service: string, idx: number) => (
-                                    <span key={idx} className="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">
-                                      {service}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {location.business_hours && (
-                              <div className="border-t pt-4 mt-4">
-                                <div className="flex items-center gap-2 mb-3">
-                                  <Clock className="w-5 h-5 text-blue-600" />
-                                  <h4 className="text-base font-semibold text-gray-900">Orari di Apertura</h4>
-                                </div>
-                                {typeof location.business_hours === 'string' ? (
-                                  <p className="text-gray-700">{location.business_hours}</p>
-                                ) : (
-                                  <div className="grid gap-2">
-                                    {(() => {
-                                      const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-                                      const dayNames: Record<string, string> = {
-                                        monday: 'Lunedì',
-                                        tuesday: 'Martedì',
-                                        wednesday: 'Mercoledì',
-                                        thursday: 'Giovedì',
-                                        friday: 'Venerdì',
-                                        saturday: 'Sabato',
-                                        sunday: 'Domenica'
-                                      };
-                                      const entries = Object.entries(location.business_hours as Record<string, any>);
-                                      const sortedEntries = entries.sort(([dayA], [dayB]) => {
-                                        return dayOrder.indexOf(dayA) - dayOrder.indexOf(dayB);
-                                      });
-
-                                      return sortedEntries.map(([day, hours]: [string, any]) => {
-                                        const today = new Date().toLocaleDateString('it-IT', { weekday: 'long' }).toLowerCase();
-                                        const isToday = dayNames[day]?.toLowerCase() === today;
-                                        const isClosed = hours.closed === true || hours.closed === 'true';
-
-                                        return (
-                                          <div
-                                            key={day}
-                                            className={`flex justify-between items-center px-3 py-2 rounded-lg ${
-                                              isToday ? 'bg-blue-50 border-2 border-blue-500' : 'bg-gray-50'
-                                            }`}
-                                          >
-                                            <span className={`text-sm font-medium ${isToday ? 'text-blue-900' : 'text-gray-900'}`}>
-                                              {dayNames[day] || day}
-                                              {isToday && <span className="ml-2 text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">Oggi</span>}
-                                            </span>
-                                            <span className={`text-sm font-medium ${
-                                              isClosed
-                                                ? 'text-red-600'
-                                                : isToday
-                                                  ? 'text-green-700'
-                                                  : 'text-gray-700'
-                                            }`}>
-                                              {isClosed ? 'Chiuso' : `${hours.open || ''} - ${hours.close || ''}`}
-                                            </span>
-                                          </div>
-                                        );
-                                      });
-                                    })()}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {jobPostings.length > 0 && (
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <Briefcase className="w-6 h-6" />
-                      Offerte di Lavoro
-                    </h2>
-                    <div className="space-y-4">
-                      {jobPostings.map((job) => (
-                        <div key={job.id} className="border border-gray-200 rounded-lg p-4">
-                          <h3 className="font-semibold text-lg mb-2">{job.title}</h3>
-                          <p className="text-gray-700 mb-3">{job.description}</p>
-                          <div className="flex flex-wrap gap-2 text-sm text-gray-600">
-                            <span className="bg-gray-100 px-3 py-1 rounded-full">
-                              {job.employment_type}
-                            </span>
-                            <span className="bg-gray-100 px-3 py-1 rounded-full">
-                              {job.location}
-                            </span>
-                            {job.salary_range && (
-                              <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full">
-                                {job.salary_range}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── SEZIONE RECENSIONI HERO ── */}
-                <div>
-
-                  {/* Hero header */}
-                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 mb-6 px-6 py-8">
-                    {/* pattern decorativo */}
-                    <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '28px 28px' }} />
-                    <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-                      <div>
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Opinioni verificate</p>
-                        <h2 className="text-3xl font-bold text-white leading-tight">Recensioni</h2>
-                        {reviews.length > 0 && (() => {
-                          const overallAvg = reviews.reduce((s, r) => s + r.overall_rating, 0) / reviews.length;
-                          const label = ['', 'Pessimo', 'Discreto', 'Buono', 'Eccellente', 'Ottimo'][Math.round(overallAvg)] ?? '';
-                          return (
-                            <div className="flex items-center gap-3 mt-3">
-                              <div className="flex">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star key={i} className={`w-6 h-6 ${i < Math.round(overallAvg) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-600'}`} />
-                                ))}
-                              </div>
-                              <span className="text-2xl font-black text-white">{overallAvg.toFixed(1)}</span>
-                              <span className="text-sm font-medium text-gray-300">{label}</span>
-                              <span className="text-sm text-gray-400">&middot; {reviews.length} {reviews.length === 1 ? 'recensione' : 'recensioni'}</span>
-                            </div>
-                          );
-                        })()}
-                        {reviews.length === 0 && (
-                          <p className="text-gray-400 text-sm mt-2">Nessuna recensione ancora</p>
-                        )}
-                      </div>
-                      {canReview && !isOwner && (
-                        <button
-                          onClick={() => setShowReviewForm(true)}
-                          className="flex-shrink-0 inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-semibold px-6 py-3 rounded-xl shadow-lg shadow-orange-900/30 transition-all duration-150"
-                        >
-                          <Star className="w-5 h-5 fill-white" />
-                          Scrivi Recensione
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Stat cards per tipo */}
-                  {reviews.length > 0 && (() => {
-                    const MANAGEMENT_TYPES = ['booking_not_completed', 'quote_request', 'customer_service', 'problem_before_service'];
-                    const serviceReviews = reviews.filter(r => (r as any).review_type === 'service_used');
-                    const managementReviews = reviews.filter(r => MANAGEMENT_TYPES.includes((r as any).review_type));
-                    const serviceAvg = serviceReviews.length > 0 ? serviceReviews.reduce((s, r) => s + r.overall_rating, 0) / serviceReviews.length : 0;
-                    const managementAvg = managementReviews.length > 0 ? managementReviews.reduce((s, r) => s + r.overall_rating, 0) / managementReviews.length : 0;
-
-                    const detailTypes = [
-                      { key: 'booking_not_completed',  label: 'Prenotazione non completata', accent: '#ef4444', accentLight: '#fef2f2', accentBorder: '#fecaca' },
-                      { key: 'quote_request',          label: 'Preventivo / Informazioni',    accent: '#3b82f6', accentLight: '#eff6ff', accentBorder: '#bfdbfe' },
-                      { key: 'customer_service',       label: 'Assistenza Clienti',            accent: '#0d9488', accentLight: '#f0fdfa', accentBorder: '#99f6e4' },
-                      { key: 'problem_before_service', label: 'Problema pre-servizio',         accent: '#f59e0b', accentLight: '#fffbeb', accentBorder: '#fde68a' },
-                    ];
-                    const detailData = detailTypes.map(rt => {
-                      const tr = reviews.filter(r => (r as any).review_type === rt.key);
-                      const avg = tr.length > 0 ? tr.reduce((s, r) => s + r.overall_rating, 0) / tr.length : 0;
-                      return { ...rt, count: tr.length, avg };
-                    }).filter(d => d.count > 0);
-
-                    return (
-                      <div className="mb-8 space-y-3">
-                        {/* Big stat cards */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {serviceReviews.length > 0 && (
-                            <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-5 shadow-md">
-                              <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-white/10" />
-                              <p className="text-emerald-100 text-xs font-bold uppercase tracking-widest mb-2">Servizio fruito</p>
-                              <div className="flex items-end gap-3">
-                                <span className="text-5xl font-black text-white leading-none">{serviceAvg.toFixed(1)}</span>
-                                <div className="pb-1">
-                                  <div className="flex mb-0.5">
-                                    {[...Array(5)].map((_, i) => (
-                                      <Star key={i} className={`w-5 h-5 ${i < Math.round(serviceAvg) ? 'fill-yellow-300 text-yellow-300' : 'text-emerald-400'}`} />
-                                    ))}
-                                  </div>
-                                  <p className="text-emerald-100 text-xs">{serviceReviews.length} {serviceReviews.length === 1 ? 'recensione' : 'recensioni'}</p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                          {managementReviews.length > 0 && (
-                            <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-5 shadow-md">
-                              <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-white/10" />
-                              <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mb-2">Gestione e Affidabilita'</p>
-                              <div className="flex items-end gap-3">
-                                <span className="text-5xl font-black text-white leading-none">{managementAvg.toFixed(1)}</span>
-                                <div className="pb-1">
-                                  <div className="flex mb-0.5">
-                                    {[...Array(5)].map((_, i) => (
-                                      <Star key={i} className={`w-5 h-5 ${i < Math.round(managementAvg) ? 'fill-yellow-300 text-yellow-300' : 'text-blue-400'}`} />
-                                    ))}
-                                  </div>
-                                  <p className="text-blue-100 text-xs">{managementReviews.length} {managementReviews.length === 1 ? 'recensione' : 'recensioni'}</p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Detail breakdown pills */}
-                        {detailData.length > 0 && (
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                            {detailData.map(d => (
-                              <div key={d.key} className="rounded-xl border px-3 py-3" style={{ background: d.accentLight, borderColor: d.accentBorder }}>
-                                <p className="text-xs font-semibold mb-1 truncate" style={{ color: d.accent }}>{d.label}</p>
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-xl font-black" style={{ color: d.accent }}>{d.avg.toFixed(1)}</span>
-                                  <div className="flex">
-                                    {[...Array(5)].map((_, i) => (
-                                      <Star key={i} className={`w-3 h-3 ${i < Math.round(d.avg) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
-                                    ))}
-                                  </div>
-                                </div>
-                                <p className="text-xs mt-0.5" style={{ color: d.accent }}>{d.count} {d.count === 1 ? 'rec.' : 'rec.'}</p>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                  {/* Lista recensioni */}
-                  {reviews.length === 0 ? (
-                    <div className="flex flex-col items-center py-16 gap-4">
-                      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
-                        <Star className="w-8 h-8 text-gray-300" />
-                      </div>
-                      <div className="text-center">
-                        <p className="font-semibold text-gray-700 text-lg">Ancora nessuna recensione</p>
-                        <p className="text-sm text-gray-400 mt-1">
-                          {profile?.user_type === 'business' ? 'Le recensioni dei clienti appariranno qui.' : 'Sii il primo a condividere la tua esperienza!'}
-                        </p>
-                      </div>
-                      {canReview && !isOwner && (
-                        <button
-                          onClick={() => setShowReviewForm(true)}
-                          className="mt-2 inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
-                        >
-                          <Star className="w-4 h-4 fill-white" />
-                          Scrivi la prima recensione
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {reviews.map((review) => (
-                        <ReviewCard key={review.id} review={review} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                {business.category && (
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <h3 className="font-semibold text-gray-900 mb-2">Categoria</h3>
-                    <p className="text-gray-700">{business.category.name}</p>
-                    {business.ateco_code && (
-                      <p className="text-sm text-gray-500 mt-1">ATECO: {business.ateco_code}</p>
-                    )}
-                  </div>
-                )}
-
-                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
-                  <h3 className="font-semibold text-gray-900 mb-3">
-                    Stato Attività
-                  </h3>
-                  {!business.is_claimed ? (
-                    <>
-                      <div className="mb-4 flex items-start gap-2">
-                        <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                        <p className="text-sm font-medium text-amber-900">
-                          Attività non ancora rivendicata
-                        </p>
-                      </div>
-                      <p className="text-sm text-gray-700 mb-4">
-                        Questa attività non è ancora stata rivendicata dal proprietario. I dati sono forniti da OpenStreetMap.
-                      </p>
-                      {canShowClaimButton && (
-                        <>
-                          <p className="text-sm text-gray-700 mb-4">
-                            {needsBusinessAccount
-                              ? 'Se sei il proprietario di questa attività, crea un account business per rivenindicarla e gestirla.'
-                              : 'Se sei il proprietario di questa attività, puoi rivenindicarla per gestirla e rispondere alle recensioni.'}
-                          </p>
-                          <button
-                            onClick={needsBusinessAccount ? () => {
-                              sessionStorage.setItem('claimBusinessId', businessId);
-                              window.location.href = '/?register=business';
-                            } : handleClaimBusiness}
-                            disabled={claimingBusiness}
-                            className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
-                          >
-                            {claimingBusiness ? 'Rivendicazione...' : needsBusinessAccount ? 'Crea Account Business' : 'Rivendica Ora'}
-                          </button>
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    <div className="flex items-start gap-2">
-                      <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm font-medium text-green-900">
-                        {isOwner
-                          ? 'Questa è la tua attività. Puoi gestirla dalla dashboard.'
-                          : 'Attività verificata e gestita dal proprietario'}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            {email && (
+              <a href={`mailto:${email}`} className="flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm">
+                <Mail className="w-4 h-4" />{email}
+              </a>
+            )}
+            {website && (
+              <a href={website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm">
+                <Globe className="w-4 h-4" />Sito web
+              </a>
+            )}
           </div>
         </div>
 
-        {!business.is_claimed && (
-          <div className="mt-8 bg-gradient-to-r from-blue-50 to-green-50 border-l-4 border-blue-600 rounded-lg p-4">
-            <p className="text-sm text-gray-700">
-              I dati di questa attività sono forniti da{' '}
-              <a
-                href="https://www.openstreetmap.org"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 font-semibold underline"
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">
+              Recensioni ({reviews.length})
+            </h2>
+            {profile && profile.user_type === 'customer' && !showReviewForm && (
+              <button
+                onClick={() => setShowReviewForm(true)}
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold"
               >
-                OpenStreetMap
-              </a>
-              {' '}e{' '}
-              <a
-                href="https://www.geofabrik.de"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 font-semibold underline"
-              >
-                Geofabrik
-              </a>
-              , rilasciati sotto licenza{' '}
-              <a
-                href="https://www.openstreetmap.org/copyright"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 font-semibold underline"
-              >
-                ODbL
-              </a>
-              .
-            </p>
+                <Star className="w-4 h-4" />Scrivi recensione
+              </button>
+            )}
           </div>
-        )}
+
+          {showReviewForm && (
+            <div className="mb-6">
+              <ReviewForm
+                businessLocationId={isUnclaimed ? businessId : undefined}
+                registeredBusinessLocationId={!isUnclaimed ? businessId : undefined}
+                onSuccess={() => { setShowReviewForm(false); loadBusiness(); }}
+                onCancel={() => setShowReviewForm(false)}
+              />
+            </div>
+          )}
+
+          {reviews.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Star className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p>Nessuna recensione ancora. Sii il primo a recensire!</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {reviews.map(review => (
+                <ReviewCard key={review.id} review={review} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-
-      {showReviewForm && (
-        <ReviewForm
-          businessId={businessId}
-          businessName={business.name}
-          businessType={(business as any).business_type}
-          registeredBusinessLocationId={
-            isNewRegistered && locations.length > 0
-              ? (filterLocationId || locations[0]?.id)
-              : undefined
-          }
-          onClose={() => setShowReviewForm(false)}
-          onSuccess={() => {
-            setShowReviewForm(false);
-            loadBusinessData();
-          }}
-        />
-      )}
-
-      {showReportModal && (
-        <ReportModal
-          entityType="business"
-          entityId={businessId}
-          onClose={() => setShowReportModal(false)}
-        />
-      )}
-
-      {confirmModal && (
-        <ConfirmModal
-          isOpen={true}
-          title={confirmModal.title}
-          message={confirmModal.message}
-          confirmLabel="Conferma rivendicazione"
-          variant="info"
-          onConfirm={confirmModal.onConfirm}
-          onCancel={() => setConfirmModal(null)}
-        />
-      )}
-
-      {alertModal && (
-        <AlertModal
-          isOpen={true}
-          title={alertModal.title}
-          message={alertModal.message}
-          variant={alertModal.variant}
-          actionLabel={alertModal.actionLabel}
-          onAction={alertModal.onAction}
-          onClose={() => setAlertModal(null)}
-        />
-      )}
     </div>
   );
 }
