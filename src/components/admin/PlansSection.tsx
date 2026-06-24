@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import {
   CreditCard, Save, X, CheckCircle, Users, Clock, Plus, Trash2, AlertTriangle,
-  Star, Heart, MessageSquare, Bookmark, Megaphone, Briefcase, ShoppingBag,
-  Trophy, Shield, Tag, Eye, TrendingUp, Search, Map, Bell, Award, UserPlus,
-  Flag, Gavel, Building2, BarChart2,
+  Star, Heart, MessageSquare, Bookmark, Briefcase, ShoppingBag,
+  Trophy, Shield, Tag, Eye, TrendingUp, Bell,
+  Flag, Building2,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
