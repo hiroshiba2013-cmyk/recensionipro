@@ -235,7 +235,7 @@ export function PlansSection({ adminId }: PlansSectionProps) {
 
   const toggleFeature = (key: string) => {
     if (!editingPlan) return;
-    const current = editingPlan.features || [];
+    const current = (editingPlan.features || []).map(f => typeof f === 'string' ? f : String(f));
     const updated = current.includes(key)
       ? current.filter(f => f !== key)
       : [...current, key];
@@ -245,8 +245,8 @@ export function PlansSection({ adminId }: PlansSectionProps) {
   const toggleAllInCategory = (category: string, features: FeatureDef[]) => {
     if (!editingPlan) return;
     const catKeys = features.filter(f => f.category === category).map(f => f.key);
-    const allSelected = catKeys.every(k => (editingPlan.features || []).includes(k));
-    const current = editingPlan.features || [];
+    const current = (editingPlan.features || []).map(f => typeof f === 'string' ? f : String(f));
+    const allSelected = catKeys.every(k => current.includes(k));
     const updated = allSelected
       ? current.filter(k => !catKeys.includes(k))
       : [...new Set([...current, ...catKeys])];
@@ -473,7 +473,7 @@ export function PlansSection({ adminId }: PlansSectionProps) {
 
                         <div className="flex gap-2 mt-auto">
                           <button
-                            onClick={() => { setEditingPlan(plan); setIsCreating(false); }}
+                            onClick={() => { setEditingPlan({ ...plan, features: [...(plan.features || [])] }); setIsCreating(false); }}
                             className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-colors ${
                               isAnnual
                                 ? 'bg-green-600 text-white hover:bg-green-700'
@@ -687,7 +687,8 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                 <div className="space-y-4">
                   {activeCategories.map(cat => {
                     const catFeatures = activeFeatures.filter(f => f.category === cat);
-                    const selectedCount = catFeatures.filter(f => (editingPlan.features || []).includes(f.key)).length;
+                    const currentFeatures = (editingPlan.features || []).map(f => typeof f === 'string' ? f : String(f));
+                    const selectedCount = catFeatures.filter(f => currentFeatures.includes(f.key)).length;
                     const allSelected = selectedCount === catFeatures.length;
 
                     return (
@@ -707,7 +708,8 @@ export function PlansSection({ adminId }: PlansSectionProps) {
                         </button>
                         <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {catFeatures.map(feature => {
-                            const checked = (editingPlan.features || []).includes(feature.key);
+                            const featuresList = (editingPlan.features || []).map(f => typeof f === 'string' ? f : String(f));
+                            const checked = featuresList.includes(feature.key);
                             const Icon = feature.icon;
                             return (
                               <label
