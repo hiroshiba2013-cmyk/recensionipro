@@ -148,7 +148,11 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
               )}
             </div>
             <div className="flex items-center gap-2">
-              <FavoriteButton businessLocationId={businessId} />
+              <FavoriteButton
+                type="business"
+                itemId={businessId}
+                businessColumn={business.source === 'registered' ? 'registered' : 'unclaimed'}
+              />
               {profile && <ReportButton entityType="business" entityId={businessId} />}
             </div>
           </div>
