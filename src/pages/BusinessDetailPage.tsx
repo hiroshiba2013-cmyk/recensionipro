@@ -33,6 +33,18 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
       setError('');
 
       if (isUnclaimed) {
+        // Try unclaimed_business_locations first (new table)
+        const { data: unclaimedData } = await supabase
+          .from('unclaimed_business_locations')
+          .select('*, category:business_categories(name)')
+          .eq('id', businessId)
+          .maybeSingle();
+        if (unclaimedData) {
+          setBusiness({ ...unclaimedData, source: 'unclaimed', address: unclaimedData.street });
+          loadReviews(businessId, 'unclaimed_location');
+          return;
+        }
+        // Fallback to legacy business_locations table
         const { data, error: err } = await supabase
           .from('business_locations')
           .select('*, business:businesses(name, category:business_categories(name))')
@@ -88,7 +100,10 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
 
   const loadReviews = async (id: string, type: string) => {
     try {
-      const col = type === 'registered' ? 'registered_business_location_id' : 'business_location_id';
+      let col: string;
+      if (type === 'registered') col = 'registered_business_location_id';
+      else if (type === 'unclaimed_location') col = 'unclaimed_business_location_id';
+      else col = 'business_location_id';
       const { data } = await supabase
         .from('reviews')
         .select('*, profile:profiles(full_name, nickname)')
@@ -123,7 +138,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
   const name = business.source === 'registered'
     ? business.business?.business_name || business.location_name || 'Attività'
     : business.business?.name || business.name || 'Attività';
-  const category = business.business?.category?.name || '';
+  const category = business.category?.name || business.business?.category?.name || '';
   const city = business.city || '';
   const address = business.address || business.street || '';
   const phone = business.phone || '';

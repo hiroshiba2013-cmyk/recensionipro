@@ -163,14 +163,16 @@ export function LocationCard({ location, initialIsFavorite, onFavoriteToggle }: 
     e.preventDefault();
     e.stopPropagation();
 
-    // Se l'attività è reclamata, naviga verso la pagina business
-    // Altrimenti naviga verso la pagina della location non reclamata
-    const targetId = location.business_id || location.id;
+    const isUnclaimed = location.source === 'unclaimed' || location.source === 'user_added' || location.source === 'imported' || location.location_type === 'unclaimed';
 
-    // Se c'è un business_id (attività reclamata), passa anche il location_id per mostrare la sede specifica
-    const url = location.business_id
-      ? `/business/${targetId}?locationId=${location.id}`
-      : `/business/${targetId}`;
+    let url: string;
+    if (isUnclaimed) {
+      url = `/business/unclaimed/${location.id}`;
+    } else if (location.business_id) {
+      url = `/business/${location.business_id}?locationId=${location.id}`;
+    } else {
+      url = `/business/${location.id}`;
+    }
 
     sessionStorage.setItem('searchReturnUrl', window.location.pathname + window.location.search);
     sessionStorage.setItem('searchScrollPosition', window.scrollY.toString());
