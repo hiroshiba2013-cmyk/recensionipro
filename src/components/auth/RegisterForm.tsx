@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth, CustomerData, BusinessData } from '../../contexts/AuthContext';
 import { SearchableSelect } from '../common/SearchableSelect';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
-import { Plus, Trash2, MapPin } from 'lucide-react';
+import { Plus, Trash2, MapPin, Instagram, Facebook } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface FamilyMember {
@@ -374,6 +374,9 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     pecEmail: '',
     phone: '',
     website: '',
+    instagram_url: '',
+    facebook_url: '',
+    tiktok_url: '',
     description: '',
     billingStreet: '',
     billingStreetNumber: '',
@@ -821,6 +824,9 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             pec_email: businessForm.pecEmail,
             ateco_code: businessForm.atecoCode,
             website: businessForm.website || null,
+            instagram_url: businessForm.instagram_url || null,
+            facebook_url: businessForm.facebook_url || null,
+            tiktok_url: businessForm.tiktok_url || null,
             billing_street: businessForm.billingStreet,
             billing_street_number: businessForm.billingStreetNumber,
             billing_postal_code: businessForm.billingPostalCode,
@@ -1858,6 +1864,60 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 placeholder="es. https://www.azienda.it"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="instagram_url" className="block text-sm font-medium text-gray-700 mb-1">
+                Instagram (opzionale)
+              </label>
+              <div className="flex items-center gap-2">
+                <Instagram className="w-5 h-5 text-pink-500 flex-shrink-0" />
+                <input
+                  id="instagram_url"
+                  name="instagram_url"
+                  type="url"
+                  value={businessForm.instagram_url}
+                  onChange={handleBusinessChange}
+                  placeholder="https://instagram.com/tuaazienda"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:border-transparent text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="facebook_url" className="block text-sm font-medium text-gray-700 mb-1">
+                Facebook (opzionale)
+              </label>
+              <div className="flex items-center gap-2">
+                <Facebook className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                <input
+                  id="facebook_url"
+                  name="facebook_url"
+                  type="url"
+                  value={businessForm.facebook_url}
+                  onChange={handleBusinessChange}
+                  placeholder="https://facebook.com/tuaazienda"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="tiktok_url" className="block text-sm font-medium text-gray-700 mb-1">
+                TikTok (opzionale)
+              </label>
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 flex-shrink-0 text-gray-800" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.97a8.27 8.27 0 004.84 1.55V7.07a4.85 4.85 0 01-1.07-.38z"/></svg>
+                <input
+                  id="tiktok_url"
+                  name="tiktok_url"
+                  type="url"
+                  value={businessForm.tiktok_url}
+                  onChange={handleBusinessChange}
+                  placeholder="https://tiktok.com/@tuaazienda"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm"
+                />
+              </div>
             </div>
 
             <div className="mb-3">
