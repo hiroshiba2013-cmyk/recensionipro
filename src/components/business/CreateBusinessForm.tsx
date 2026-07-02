@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building, X, Save, Search, PlusCircle } from 'lucide-react';
+import { Building, X, Save, Search, PlusCircle, Instagram, Facebook } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
@@ -84,6 +84,9 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
     billing_postal_code: '',
     billing_city: '',
     billing_province: '',
+    instagram_url: '',
+    facebook_url: '',
+    tiktok_url: '',
   });
 
   useEffect(() => {
@@ -188,6 +191,9 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
         billing_postal_code: '',
         billing_city: '',
         billing_province: '',
+        instagram_url: '',
+        facebook_url: '',
+        tiktok_url: '',
       });
     }
 
@@ -342,6 +348,9 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
             country: 'Italia',
             is_primary: true,
             description: formData.location_description || null,
+            instagram_url: formData.instagram_url || null,
+            facebook_url: formData.facebook_url || null,
+            tiktok_url: formData.tiktok_url || null,
           });
 
         if (locationError) throw locationError;
@@ -895,6 +904,44 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
               <p className="text-xs text-gray-500 mt-1">Questa descrizione aiuta i clienti a trovare e riconoscere la sede</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Social Media (opzionale)
+              </label>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Instagram className="w-5 h-5 text-pink-500 flex-shrink-0" />
+                  <input
+                    type="url"
+                    value={formData.instagram_url}
+                    onChange={(e) => setFormData({ ...formData, instagram_url: e.target.value })}
+                    placeholder="https://instagram.com/..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:border-transparent text-sm"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Facebook className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                  <input
+                    type="url"
+                    value={formData.facebook_url}
+                    onChange={(e) => setFormData({ ...formData, facebook_url: e.target.value })}
+                    placeholder="https://facebook.com/..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 flex-shrink-0 text-gray-800" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.97a8.27 8.27 0 004.84 1.55V7.07a4.85 4.85 0 01-1.07-.38z"/></svg>
+                  <input
+                    type="url"
+                    value={formData.tiktok_url}
+                    onChange={(e) => setFormData({ ...formData, tiktok_url: e.target.value })}
+                    placeholder="https://tiktok.com/@..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>

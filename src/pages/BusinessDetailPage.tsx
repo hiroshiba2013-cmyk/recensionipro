@@ -5,7 +5,7 @@ import { ReviewForm } from '../components/reviews/ReviewForm';
 import { ReviewCard } from '../components/reviews/ReviewCard';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
 import ReportButton from '../components/moderation/ReportButton';
-import { MapPin, Phone, Globe, Star, ArrowLeft, CheckCircle, Mail, Tag } from 'lucide-react';
+import { MapPin, Phone, Globe, Star, ArrowLeft, CheckCircle, Mail, Tag, Instagram, Facebook } from 'lucide-react';
 
 interface BusinessDetailPageProps {
   businessId: string;
@@ -113,6 +113,9 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
   const email = business.email || '';
   const website = business.website || '';
   const isVerified = business.source === 'registered' || business.is_claimed;
+  const instagram_url = business.instagram_url || '';
+  const facebook_url = business.facebook_url || '';
+  const tiktok_url = business.tiktok_url || '';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -171,6 +174,21 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
             {website && (
               <a href={website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm">
                 <Globe className="w-4 h-4" />Sito web
+              </a>
+            )}
+            {instagram_url && (
+              <a href={instagram_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-pink-500 hover:text-pink-600 text-sm">
+                <Instagram className="w-4 h-4" />Instagram
+              </a>
+            )}
+            {facebook_url && (
+              <a href={facebook_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm">
+                <Facebook className="w-4 h-4" />Facebook
+              </a>
+            )}
+            {tiktok_url && (
+              <a href={tiktok_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-gray-800 hover:text-gray-900 text-sm">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.97a8.27 8.27 0 004.84 1.55V7.07a4.85 4.85 0 01-1.07-.38z"/></svg>TikTok
               </a>
             )}
           </div>

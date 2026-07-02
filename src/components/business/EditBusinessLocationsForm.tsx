@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapPin, FileEdit as Edit, Save, X, Building2 } from 'lucide-react';
+import { MapPin, FileEdit as Edit, Save, X, Building2, Instagram, Facebook } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
@@ -40,6 +40,9 @@ interface BusinessLocation {
   services?: string;
   services_description?: string | null;
   category_id?: string | null;
+  instagram_url?: string | null;
+  facebook_url?: string | null;
+  tiktok_url?: string | null;
 }
 
 interface EditBusinessLocationsFormProps {
@@ -362,6 +365,9 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
           description: location.description?.trim() || null,
           services: servicesArray,
           services_description: location.services_description?.trim() || null,
+          instagram_url: location.instagram_url?.trim() || null,
+          facebook_url: location.facebook_url?.trim() || null,
+          tiktok_url: location.tiktok_url?.trim() || null,
           ...(isRegisteredBusiness && { category_id: location.category_id || null }),
         };
 
@@ -537,6 +543,28 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                         <div>
                           <p className="text-xs text-gray-500">Email</p>
                           <p className="text-sm font-medium text-gray-900">{location.email}</p>
+                        </div>
+                      )}
+                      {(location.instagram_url || location.facebook_url || location.tiktok_url) && (
+                        <div className="md:col-span-2">
+                          <p className="text-xs text-gray-500 mb-1">Social Media</p>
+                          <div className="flex gap-3">
+                            {location.instagram_url && (
+                              <a href={location.instagram_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-pink-600 hover:underline">
+                                <Instagram className="w-4 h-4" />Instagram
+                              </a>
+                            )}
+                            {location.facebook_url && (
+                              <a href={location.facebook_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-blue-600 hover:underline">
+                                <Facebook className="w-4 h-4" />Facebook
+                              </a>
+                            )}
+                            {location.tiktok_url && (
+                              <a href={location.tiktok_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-gray-800 hover:underline">
+                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.97a8.27 8.27 0 004.84 1.55V7.07a4.85 4.85 0 01-1.07-.38z"/></svg>TikTok
+                              </a>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -783,6 +811,44 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     placeholder="Es. sede@azienda.it"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Social Media (opzionale)
+                  </label>
+                  <div className="grid md:grid-cols-3 gap-3">
+                    <div className="flex items-center gap-2">
+                      <Instagram className="w-5 h-5 text-pink-500 flex-shrink-0" />
+                      <input
+                        type="url"
+                        value={location.instagram_url || ''}
+                        onChange={(e) => handleChange(location.id, 'instagram_url', e.target.value)}
+                        placeholder="https://instagram.com/..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:border-transparent text-sm"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Facebook className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                      <input
+                        type="url"
+                        value={location.facebook_url || ''}
+                        onChange={(e) => handleChange(location.id, 'facebook_url', e.target.value)}
+                        placeholder="https://facebook.com/..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.97a8.27 8.27 0 004.84 1.55V7.07a4.85 4.85 0 01-1.07-.38z"/></svg>
+                      <input
+                        type="url"
+                        value={location.tiktok_url || ''}
+                        onChange={(e) => handleChange(location.id, 'tiktok_url', e.target.value)}
+                        placeholder="https://tiktok.com/@..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {!selectedLocationId && (

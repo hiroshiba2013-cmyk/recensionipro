@@ -41,6 +41,9 @@ interface BusinessLocation {
   service_review_count?: number;
   management_avg_rating?: number;
   management_review_count?: number;
+  instagram_url?: string | null;
+  facebook_url?: string | null;
+  tiktok_url?: string | null;
 }
 
 type SortOption =
@@ -241,11 +244,17 @@ export function SearchResultsPage() {
       // Fetch ratings in bulk — split into 3 separate IN queries to avoid huge OR strings
       const allIds = allLocations.map(loc => loc.id);
       const FIELDS = 'business_id, unclaimed_business_location_id, registered_business_location_id, overall_rating, review_type';
-      const [rRegistered, rUnclaimed, rLegacy] = await Promise.all([
+      const [rRegistered, rUnclaimed, rLegacy, socialRegistered, socialLegacy] = await Promise.all([
         supabase.from('reviews').select(FIELDS).eq('review_status', 'approved').in('registered_business_location_id', allIds),
         supabase.from('reviews').select(FIELDS).eq('review_status', 'approved').in('unclaimed_business_location_id', allIds),
         supabase.from('reviews').select(FIELDS).eq('review_status', 'approved').in('business_id', allIds),
+        supabase.from('registered_business_locations').select('id, instagram_url, facebook_url, tiktok_url').in('id', allIds),
+        supabase.from('business_locations').select('id, instagram_url, facebook_url, tiktok_url').in('id', allIds),
       ]);
+      const socialMap: Record<string, { instagram_url?: string | null; facebook_url?: string | null; tiktok_url?: string | null }> = {};
+      [...(socialRegistered.data || []), ...(socialLegacy.data || [])].forEach((s: any) => {
+        if (s.id) socialMap[s.id] = { instagram_url: s.instagram_url, facebook_url: s.facebook_url, tiktok_url: s.tiktok_url };
+      });
       const ratingsData = [
         ...(rRegistered.data || []),
         ...(rUnclaimed.data || []),
@@ -344,7 +353,10 @@ export function SearchResultsPage() {
         return aName.localeCompare(bName);
       });
 
-      setLocations(locationsWithRatings);
+      setLocations(locationsWithRatings.map(loc => ({
+        ...loc,
+        ...(socialMap[loc.id] || {}),
+      })));
       await loadFavoriteIds(locationsWithRatings);
     } catch (error) {
       console.error('Error during search:', error);
