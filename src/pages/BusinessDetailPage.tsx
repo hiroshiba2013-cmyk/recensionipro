@@ -21,6 +21,7 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
   const [error, setError] = useState('');
 
   const isUnclaimed = window.location.pathname.startsWith('/business/unclaimed/');
+  const locationId = new URLSearchParams(window.location.search).get('locationId');
 
   useEffect(() => {
     loadBusiness();
@@ -42,24 +43,40 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
         setBusiness({ ...data, source: 'unclaimed' });
         loadReviews(businessId, 'location');
       } else {
+        // If locationId is provided, try to fetch that specific registered location
+        const targetId = locationId || businessId;
         const { data, error: err } = await supabase
           .from('registered_business_locations')
           .select('*, business:registered_businesses(business_name, category:business_categories(name))')
-          .eq('id', businessId)
+          .eq('id', targetId)
           .maybeSingle();
         if (err || !data) {
+          // Fallback: try by business_id (get first location)
+          const { data: byBusiness } = await supabase
+            .from('registered_business_locations')
+            .select('*, business:registered_businesses(business_name, category:business_categories(name))')
+            .eq('business_id', businessId)
+            .order('is_primary', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (byBusiness) {
+            setBusiness({ ...byBusiness, source: 'registered' });
+            loadReviews(byBusiness.id, 'registered');
+            return;
+          }
+          // Final fallback: legacy business_locations table
           const { data: loc, error: locErr } = await supabase
             .from('business_locations')
             .select('*, business:businesses(name, category:business_categories(name))')
-            .eq('id', businessId)
+            .eq('id', targetId)
             .maybeSingle();
           if (locErr) throw locErr;
           if (!loc) { setError('Attività non trovata'); return; }
           setBusiness({ ...loc, source: 'unclaimed' });
-          loadReviews(businessId, 'location');
+          loadReviews(targetId, 'location');
         } else {
           setBusiness({ ...data, source: 'registered' });
-          loadReviews(businessId, 'registered');
+          loadReviews(targetId, 'registered');
         }
       }
     } catch (e: any) {
