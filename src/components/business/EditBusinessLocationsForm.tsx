@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { BusinessLocationAvatarUpload } from './BusinessLocationAvatarUpload';
+import { BusinessLocationPhotos } from './BusinessLocationPhotos';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../common/Toast';
 
@@ -607,6 +608,11 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                         );
                       })}
                     </div>
+                  </div>
+                )}
+                {!location.id.startsWith('new-') && isRegisteredBusiness && (
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <BusinessLocationPhotos locationId={location.id} />
                   </div>
                 )}
               </div>

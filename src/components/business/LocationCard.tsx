@@ -333,46 +333,56 @@ export function LocationCard({ location, initialIsFavorite, onFavoriteToggle }: 
             </div>
           )}
 
-          {(location.instagram_url || location.facebook_url || location.tiktok_url) && (
-            <div className="flex items-center gap-3 pt-1">
-              {location.instagram_url && (
-                <a
-                  href={location.instagram_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  title="Instagram"
-                  className="text-pink-500 hover:text-pink-600 transition-colors"
-                >
-                  <Instagram className="w-4 h-4" />
-                </a>
-              )}
-              {location.facebook_url && (
-                <a
-                  href={location.facebook_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  title="Facebook"
-                  className="text-blue-600 hover:text-blue-700 transition-colors"
-                >
-                  <Facebook className="w-4 h-4" />
-                </a>
-              )}
-              {location.tiktok_url && (
-                <a
-                  href={location.tiktok_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  title="TikTok"
-                  className="text-gray-800 hover:text-gray-900 transition-colors"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.97a8.27 8.27 0 004.84 1.55V7.07a4.85 4.85 0 01-1.07-.38z"/></svg>
-                </a>
-              )}
-            </div>
-          )}
+          <div className="flex items-center gap-3 pt-1">
+            {location.instagram_url ? (
+              <a
+                href={location.instagram_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                title="Instagram"
+                className="text-pink-500 hover:text-pink-600 transition-colors"
+              >
+                <Instagram className="w-4 h-4" />
+              </a>
+            ) : (
+              <span title="Instagram non disponibile" className="text-gray-300 cursor-default">
+                <Instagram className="w-4 h-4" />
+              </span>
+            )}
+            {location.facebook_url ? (
+              <a
+                href={location.facebook_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                title="Facebook"
+                className="text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                <Facebook className="w-4 h-4" />
+              </a>
+            ) : (
+              <span title="Facebook non disponibile" className="text-gray-300 cursor-default">
+                <Facebook className="w-4 h-4" />
+              </span>
+            )}
+            {location.tiktok_url ? (
+              <a
+                href={location.tiktok_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                title="TikTok"
+                className="text-gray-800 hover:text-gray-900 transition-colors"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.97a8.27 8.27 0 004.84 1.55V7.07a4.85 4.85 0 01-1.07-.38z"/></svg>
+              </a>
+            ) : (
+              <span title="TikTok non disponibile" className="text-gray-300 cursor-default">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.97a8.27 8.27 0 004.84 1.55V7.07a4.85 4.85 0 01-1.07-.38z"/></svg>
+              </span>
+            )}
+          </div>
         </div>
 
         {canWriteReview && (

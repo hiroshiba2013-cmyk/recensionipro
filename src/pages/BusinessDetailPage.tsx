@@ -5,6 +5,7 @@ import { ReviewForm } from '../components/reviews/ReviewForm';
 import { ReviewCard } from '../components/reviews/ReviewCard';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
 import ReportButton from '../components/moderation/ReportButton';
+import { BusinessLocationPhotos } from '../components/business/BusinessLocationPhotos';
 import { MapPin, Phone, Globe, Star, ArrowLeft, CheckCircle, Mail, Tag, Instagram, Facebook } from 'lucide-react';
 
 interface BusinessDetailPageProps {
@@ -225,6 +226,12 @@ export function BusinessDetailPage({ businessId }: BusinessDetailPageProps) {
             )}
           </div>
         </div>
+
+        {business.source === 'registered' && (
+          <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
+            <BusinessLocationPhotos locationId={business.id} readOnly />
+          </div>
+        )}
 
         <div className="bg-white rounded-2xl shadow-lg p-8">
           <div className="flex items-center justify-between mb-6">
