@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Building2, MapPin, CheckCircle, XCircle, ArrowRight, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { ITALIAN_PROVINCES, PROVINCE_TO_CODE } from '../lib/cities';
+import { ITALIAN_REGIONS, PROVINCES_BY_REGION, ITALIAN_PROVINCES, PROVINCE_TO_CODE } from '../lib/cities';
 import { useToast } from '../components/common/Toast';
 
 interface LocationResult {
@@ -27,11 +27,14 @@ export function ClaimBusinessPage() {
   const { showToast } = useToast();
   const [businessName, setBusinessName] = useState('');
   const [address, setAddress] = useState('');
-  const [province, setProvince] = useState('');       // nome completo es. "Varese"
-  const [provinceCode, setProvinceCode] = useState(''); // sigla es. "VA"
+  const [region, setRegion] = useState('');
+  const [province, setProvince] = useState('');
+  const [provinceCode, setProvinceCode] = useState('');
   const [city, setCity] = useState('');
   const [cities, setCities] = useState<string[]>([]);
   const [loadingCities, setLoadingCities] = useState(false);
+
+  const availableProvinces = region ? (PROVINCES_BY_REGION[region] ?? ITALIAN_PROVINCES) : ITALIAN_PROVINCES;
 
   const [results, setResults] = useState<LocationResult[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -45,8 +48,8 @@ export function ClaimBusinessPage() {
     if (!provinceCode) { setCities([]); setCity(''); return; }
     setLoadingCities(true);
     setCity('');
-    supabase.rpc('get_cities_by_province', { p_province: provinceCode }).then(({ data }) => {
-      setCities((data || []).map((r: { city: string }) => r.city));
+    supabase.rpc('get_comuni_by_provincia', { p_provincia: provinceCode }).then(({ data }) => {
+      setCities((data || []).map((r: { comune: string }) => r.comune));
       setLoadingCities(false);
     });
   }, [provinceCode]);
@@ -145,7 +148,25 @@ export function ClaimBusinessPage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Regione */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Regione</label>
+                <select
+                  value={region}
+                  onChange={e => {
+                    setRegion(e.target.value);
+                    setProvince('');
+                    setProvinceCode('');
+                    setCity('');
+                  }}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+                >
+                  <option value="">Tutte le regioni</option>
+                  {ITALIAN_REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+
               {/* Provincia */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Provincia</label>
@@ -159,7 +180,7 @@ export function ClaimBusinessPage() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
                 >
                   <option value="">Tutte le province</option>
-                  {ITALIAN_PROVINCES.map(p => (
+                  {availableProvinces.map(p => (
                     <option key={p} value={p}>{p} ({PROVINCE_TO_CODE[p] || ''})</option>
                   ))}
                 </select>
