@@ -87,7 +87,7 @@ export function Header() {
           .from('reviews')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', user.id)
-          .eq('status', 'approved');
+          .eq('review_status', 'approved');
         const { count } = await (fmId ? q.eq('family_member_id', fmId) : q.is('family_member_id', null));
         setPendingReviews(count || 0);
       }
