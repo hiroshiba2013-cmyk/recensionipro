@@ -4,6 +4,8 @@ import { ChevronDown, X } from 'lucide-react';
 interface Option {
   value: string;
   label: string;
+  isGroupHeader?: boolean;
+  group?: string;
 }
 
 interface SearchableSelectProps {
@@ -32,12 +34,20 @@ export function SearchableSelect({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const selectedOption = options.find(opt => opt.value === value);
+  const selectableOptions = options.filter(o => !o.isGroupHeader);
+  const selectedOption = selectableOptions.find(opt => opt.value === value);
   const displayValue = selectedOption ? selectedOption.label : '';
 
-  const filteredOptions = options.filter(option =>
-    option.label.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOptions = searchTerm
+    ? options.filter(option =>
+        option.isGroupHeader
+          ? options.some(
+              o => !o.isGroupHeader && o.group === option.label &&
+              o.label.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+          : option.label.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : options;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -46,26 +56,21 @@ export function SearchableSelect({
         setSearchTerm('');
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
-    }
+    if (isOpen && inputRef.current) inputRef.current.focus();
   }, [isOpen]);
 
   const handleToggle = () => {
-    if (!disabled) {
-      setIsOpen(!isOpen);
-      setSearchTerm('');
-    }
+    if (!disabled) { setIsOpen(!isOpen); setSearchTerm(''); }
   };
 
-  const handleSelect = (optionValue: string) => {
-    onChange(optionValue);
+  const handleSelect = (option: Option) => {
+    if (option.isGroupHeader) return;
+    onChange(option.value);
     setIsOpen(false);
     setSearchTerm('');
   };
@@ -78,12 +83,7 @@ export function SearchableSelect({
 
   return (
     <div ref={containerRef} className="relative">
-      <input
-        type="hidden"
-        name={name}
-        value={value}
-        required={required}
-      />
+      <input type="hidden" name={name} value={value} required={required} />
 
       <div
         onClick={handleToggle}
@@ -109,41 +109,40 @@ export function SearchableSelect({
 
         <div className="flex items-center gap-1">
           {value && !disabled && !isOpen && (
-            <button
-              type="button"
-              onClick={handleClear}
-              className="text-gray-400 hover:text-gray-600 p-1"
-            >
+            <button type="button" onClick={handleClear} className="text-gray-400 hover:text-gray-600 p-1">
               <X className="w-4 h-4" />
             </button>
           )}
-          <ChevronDown
-            className={`w-5 h-5 text-gray-400 transition-transform ${
-              isOpen ? 'transform rotate-180' : ''
-            }`}
-          />
+          <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} />
         </div>
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-y-auto">
           {filteredOptions.length === 0 ? (
-            <div className="px-4 py-3 text-gray-500 text-sm">
-              Nessun risultato trovato
-            </div>
+            <div className="px-4 py-3 text-gray-500 text-sm">Nessun risultato trovato</div>
           ) : (
             <div className="py-1">
-              {filteredOptions.map((option) => (
-                <div
-                  key={option.value}
-                  onClick={() => handleSelect(option.value)}
-                  className={`px-4 py-2 cursor-pointer hover:bg-blue-50 transition-colors ${
-                    option.value === value ? 'bg-blue-100 text-blue-900 font-medium' : 'text-gray-900'
-                  }`}
-                >
-                  {option.label}
-                </div>
-              ))}
+              {filteredOptions.map((option, idx) =>
+                option.isGroupHeader ? (
+                  <div
+                    key={`group-${idx}`}
+                    className="px-3 py-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 border-t border-gray-100 first:border-t-0 select-none"
+                  >
+                    {option.label}
+                  </div>
+                ) : (
+                  <div
+                    key={option.value}
+                    onClick={() => handleSelect(option)}
+                    className={`pl-5 pr-4 py-2 cursor-pointer hover:bg-blue-50 transition-colors text-sm ${
+                      option.value === value ? 'bg-blue-100 text-blue-900 font-medium' : 'text-gray-900'
+                    }`}
+                  >
+                    {option.label}
+                  </div>
+                )
+              )}
             </div>
           )}
         </div>

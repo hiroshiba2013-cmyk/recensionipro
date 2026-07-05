@@ -13,6 +13,8 @@ interface Business {
 interface Category {
   id: string;
   name: string;
+  parent_id: string | null;
+  parent_name?: string;
 }
 
 interface JobFormData {
@@ -92,10 +94,14 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
     try {
       const { data } = await supabase
         .from('business_categories')
-        .select('id, name')
+        .select('id, name, parent_id')
         .order('name');
-
-      setCategories(data || []);
+      if (!data) return;
+      const parents = data.filter(c => !c.parent_id);
+      const children = data.filter(c => c.parent_id);
+      const parentMap: Record<string, string> = {};
+      parents.forEach(p => { parentMap[p.id] = p.name; });
+      setCategories(children.map(c => ({ ...c, parent_name: parentMap[c.parent_id!] || '' })));
     } catch (error) {
       console.error('Error loading categories:', error);
     }
@@ -227,13 +233,21 @@ export function BusinessJobForm({ onSuccess }: BusinessJobFormProps) {
         <SearchableSelect
           value={formData.categoryId}
           onChange={(value) => setFormData(prev => ({ ...prev, categoryId: value }))}
-          options={[
-            { value: '', label: 'Seleziona una categoria...' },
-            ...categories.map((cat) => ({
-              value: cat.id,
-              label: cat.name,
-            }))
-          ]}
+          options={(() => {
+            const groups: string[] = [];
+            const opts: { value: string; label: string; isGroupHeader?: boolean; group?: string }[] = [
+              { value: '', label: 'Seleziona una categoria...' },
+            ];
+            categories.forEach(cat => {
+              const g = cat.parent_name || '';
+              if (g && !groups.includes(g)) {
+                groups.push(g);
+                opts.push({ value: `__group__${g}`, label: g, isGroupHeader: true });
+              }
+              opts.push({ value: cat.id, label: cat.name, group: g });
+            });
+            return opts;
+          })()}
           placeholder="Seleziona una categoria..."
         />
       </div>
