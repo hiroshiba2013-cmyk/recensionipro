@@ -3,6 +3,7 @@ import { Briefcase, MapPin, DollarSign, Filter, X, Check, MessageCircle, Plus, B
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { SearchableSelect } from '../components/common/SearchableSelect';
+import { CategoryHierarchySelect } from '../components/common/CategoryHierarchySelect';
 import { JobSeekerForm } from '../components/jobs/JobSeekerForm';
 import { JobSeekerCard } from '../components/jobs/JobSeekerCard';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
@@ -95,7 +96,7 @@ export function JobsPage() {
   const [viewedJobs, setViewedJobs] = useState<string[]>([]);
   const [appliedJobId, setAppliedJobId] = useState<string | null>(null);
   const [markingAsViewed, setMarkingAsViewed] = useState<string | null>(null);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string; parent_id: string | null }[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [professionalProfile, setProfessionalProfile] = useState<any | null>(null);
   const [professionalProfileLoaded, setProfessionalProfileLoaded] = useState(false);
@@ -156,7 +157,7 @@ export function JobsPage() {
     try {
       const { data } = await supabase
         .from('business_categories')
-        .select('id, name')
+        .select('id, name, parent_id')
         .order('name');
 
       setCategories(data || []);
@@ -670,16 +671,10 @@ export function JobsPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Categoria Lavorativa
                   </label>
-                  <SearchableSelect
+                  <CategoryHierarchySelect
                     value={filters.category}
                     onChange={(value) => setFilters({ ...filters, category: value })}
-                    options={[
-                      { value: '', label: 'Tutte le categorie' },
-                      ...categories.map((cat) => ({
-                        value: cat.id,
-                        label: cat.name,
-                      }))
-                    ]}
+                    categories={categories}
                     placeholder="Tutte le categorie"
                   />
                 </div>

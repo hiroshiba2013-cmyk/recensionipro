@@ -3,6 +3,7 @@ import { Star, Search, Filter, ChevronDown, MapPin, Calendar, ThumbsUp, ThumbsDo
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ReviewCard } from '../components/reviews/ReviewCard';
+import { CategoryHierarchySelect } from '../components/common/CategoryHierarchySelect';
 
 type SortOption = 'newest' | 'oldest' | 'highest' | 'lowest';
 type FilterType = 'all' | 'service_used' | 'booking_not_completed' | 'quote_request' | 'customer_service' | 'problem_before_service';
@@ -78,6 +79,13 @@ export function ReviewsPage() {
   const [sort, setSort] = useState<SortOption>('newest');
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [stats, setStats] = useState({ total: 0, avg: 0, thisMonth: 0 });
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [categories, setCategories] = useState<{ id: string; name: string; parent_id: string | null }[]>([]);
+
+  useEffect(() => {
+    supabase.from('business_categories').select('id, name, parent_id').order('name')
+      .then(({ data }) => setCategories(data || []));
+  }, []);
 
   useEffect(() => {
     loadReviews();
@@ -114,28 +122,29 @@ export function ReviewsPage() {
       const { data, error } = await q;
       if (error) throw error;
 
-      // Enrich with business names
+      // Enrich with business names and category
       const enriched = await Promise.all((data || []).map(async (r) => {
         let business_name = '';
         let business_city = '';
+        let business_category_id: string | null = null;
         try {
           if (r.business_type === 'registered' && r.business_location_id) {
             const { data: loc } = await supabase
               .from('registered_business_locations')
-              .select('name, city')
+              .select('name, city, category_id')
               .eq('id', r.business_location_id)
               .maybeSingle();
-            if (loc) { business_name = loc.name; business_city = loc.city; }
+            if (loc) { business_name = loc.name; business_city = loc.city; business_category_id = loc.category_id; }
           } else if (r.business_type === 'unclaimed' && r.unclaimed_business_location_id) {
             const { data: loc } = await supabase
               .from('business_locations')
-              .select('name, city')
+              .select('name, city, category_id')
               .eq('id', r.unclaimed_business_location_id)
               .maybeSingle();
-            if (loc) { business_name = loc.name; business_city = loc.city; }
+            if (loc) { business_name = loc.name; business_city = loc.city; business_category_id = loc.category_id; }
           }
         } catch { /* silent */ }
-        return { ...r, business_name, business_city };
+        return { ...r, business_name, business_city, business_category_id };
       }));
 
       setReviews(enriched);
@@ -154,6 +163,7 @@ export function ReviewsPage() {
   };
 
   const filtered = reviews.filter(r => {
+    if (selectedCategory && (r as any).business_category_id !== selectedCategory) return false;
     if (!search.trim()) return true;
     const s = search.toLowerCase();
     return (
@@ -240,6 +250,16 @@ export function ReviewsPage() {
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
+        </div>
+
+        {/* Category filter */}
+        <div className="mb-6">
+          <CategoryHierarchySelect
+            value={selectedCategory}
+            onChange={setSelectedCategory}
+            categories={categories}
+            placeholder="Filtra per categoria attività..."
+          />
         </div>
 
         {/* Results count */}
