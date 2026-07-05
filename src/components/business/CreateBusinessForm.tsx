@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Building, X, Save, Search, PlusCircle, Instagram, Facebook } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
+import { CategoryHierarchySelect } from '../common/CategoryHierarchySelect';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { ClaimBusinessLocationsForm } from './ClaimBusinessLocationsForm';
 import { getPlanDisplayName } from '../../lib/subscription-helper';
@@ -10,6 +11,7 @@ import { useToast } from '../common/Toast';
 interface Category {
   id: string;
   name: string;
+  parent_id: string | null;
 }
 
 interface UnclaimedLocation {
@@ -90,7 +92,7 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
   });
 
   useEffect(() => {
-    supabase.from('business_categories').select('id, name').order('name').then(({ data }) => {
+    supabase.from('business_categories').select('id, name, parent_id').order('name').then(({ data }) => {
       if (data) setCategories(data);
     });
   }, []);
@@ -821,17 +823,12 @@ export function CreateBusinessForm({ ownerId, onSuccess, onCancel }: CreateBusin
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Categoria Attivita *
               </label>
-              <select
+              <CategoryHierarchySelect
                 value={formData.category_id}
-                onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Seleziona categoria</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
+                onChange={(value) => setFormData({ ...formData, category_id: value })}
+                categories={categories}
+                placeholder="Seleziona categoria"
+              />
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Building, MapPin, Phone, Mail, Globe, Award, Clock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { CategoryHierarchySelect } from '../common/CategoryHierarchySelect';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { ITALIAN_REGIONS } from '../../lib/cities';
 import { useToast } from '../common/Toast';
@@ -15,6 +16,7 @@ interface UserAddBusinessModalProps {
 interface Category {
   id: string;
   name: string;
+  parent_id: string | null;
 }
 
 export function UserAddBusinessModal({ userId, familyMemberId, onSuccess, onCancel }: UserAddBusinessModalProps) {
@@ -36,7 +38,7 @@ export function UserAddBusinessModal({ userId, familyMemberId, onSuccess, onCanc
   });
 
   useEffect(() => {
-    supabase.from('business_categories').select('id, name').order('name').then(({ data }) => {
+    supabase.from('business_categories').select('id, name, parent_id').order('name').then(({ data }) => {
       if (data) setCategories(data);
     });
   }, []);
@@ -156,16 +158,12 @@ export function UserAddBusinessModal({ userId, familyMemberId, onSuccess, onCanc
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">
               Categoria <span className="text-xs font-normal text-gray-400">(facoltativa)</span>
             </label>
-            <select
+            <CategoryHierarchySelect
               value={form.category_id}
-              onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}
-              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            >
-              <option value="">Seleziona categoria</option>
-              {categories.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+              onChange={value => setForm(f => ({ ...f, category_id: value }))}
+              categories={categories}
+              placeholder="Seleziona categoria"
+            />
           </div>
 
           {/* Indirizzo */}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { MapPin, FileEdit as Edit, Save, X, Building2, Instagram, Facebook, Globe } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
+import { CategoryHierarchySelect } from '../common/CategoryHierarchySelect';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import { BusinessLocationAvatarUpload } from './BusinessLocationAvatarUpload';
 import { BusinessLocationPhotos } from './BusinessLocationPhotos';
@@ -63,10 +64,10 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
   const [maxLocations, setMaxLocations] = useState<number>(1);
   const [subscriptionPlan, setSubscriptionPlan] = useState<string>('');
   const [isRegisteredBusiness, setIsRegisteredBusiness] = useState(false);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string; parent_id: string | null }[]>([]);
 
   useEffect(() => {
-    supabase.from('business_categories').select('id, name').order('name').then(({ data }) => {
+    supabase.from('business_categories').select('id, name, parent_id').order('name').then(({ data }) => {
       if (data) setCategories(data);
     });
   }, []);
@@ -738,16 +739,12 @@ export function EditBusinessLocationsForm({ businessId, selectedLocationId, onUp
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Categoria Sede (opzionale)
                     </label>
-                    <select
+                    <CategoryHierarchySelect
                       value={location.category_id || ''}
-                      onChange={(e) => handleChange(location.id, 'category_id', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">Stessa categoria dell'azienda</option>
-                      {categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                      ))}
-                    </select>
+                      onChange={(value) => handleChange(location.id, 'category_id', value)}
+                      categories={categories}
+                      placeholder="Stessa categoria dell'azienda"
+                    />
                   </div>
                 )}
 

@@ -3,6 +3,7 @@ import { Users, FileEdit as Edit, Save, X, Plus, Trash2, TrendingUp, AlertTriang
 import { supabase } from '../../lib/supabase';
 import { FamilyMemberAvatarUpload } from './FamilyMemberAvatarUpload';
 import { SearchableSelect } from '../common/SearchableSelect';
+import { CategoryHierarchySelect } from '../common/CategoryHierarchySelect';
 import { useToast } from '../common/Toast';
 
 interface FamilyMember {
@@ -46,12 +47,12 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
   const [nextPlan, setNextPlan] = useState<SubscriptionPlan | null>(null);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string; parent_id: string | null }[]>([]);
 
   useEffect(() => {
     loadFamilyMembers();
     loadSubscriptionData();
-    supabase.from('business_categories').select('id, name').order('name').then(({ data }) => {
+    supabase.from('business_categories').select('id, name, parent_id').order('name').then(({ data }) => {
       if (data) setCategories(data);
     });
   }, [customerId]);
@@ -648,10 +649,10 @@ export function EditFamilyMembersForm({ customerId, onUpdate }: EditFamilyMember
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Categoria
                   </label>
-                  <SearchableSelect
+                  <CategoryHierarchySelect
                     value={member.category_id || ''}
                     onChange={(value) => handleChange(member.id, 'category_id', value)}
-                    options={categories.map(cat => ({ value: cat.id, label: cat.name }))}
+                    categories={categories}
                     placeholder="Seleziona la categoria"
                   />
                   <p className="text-xs text-gray-500 mt-1">Viene mostrata nelle attivita aggiunte da questo membro</p>

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, X, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
-import { supabase, BusinessCategory } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
+import { CategoryHierarchySelect } from '../common/CategoryHierarchySelect';
 import { ItalianCityProvinceSelect } from '../common/ItalianCityProvinceSelect';
 import BusinessAutocomplete from './BusinessAutocomplete';
 import { ITALIAN_REGIONS } from '../../lib/cities';
@@ -40,7 +41,7 @@ const RATING_OPTIONS = [
 export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPage = false, initialFilters }: AdvancedSearchProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showRatingFilters, setShowRatingFilters] = useState(false);
-  const [categories, setCategories] = useState<BusinessCategory[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string; parent_id: string | null }[]>([]);
 
   const [filters, setFilters] = useState<SearchFilters>(initialFilters || {
     category: '',
@@ -76,7 +77,7 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
     try {
       const { data } = await supabase
         .from('business_categories')
-        .select('*')
+        .select('id, name, parent_id')
         .order('name');
       if (data) setCategories(data);
     } catch (error) {
@@ -153,15 +154,11 @@ export function AdvancedSearch({ onSearch, isLoading = false, navigateToSearchPa
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
-                <SearchableSelect
+                <CategoryHierarchySelect
                   value={filters.category}
                   onChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
-                  options={[
-                    { value: '', label: 'Tutte le categorie' },
-                    ...categories.map((cat) => ({ value: cat.id, label: cat.name }))
-                  ]}
+                  categories={categories}
                   placeholder="Tutte le categorie"
-                  className="text-sm"
                 />
               </div>
 

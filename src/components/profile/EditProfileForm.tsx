@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FileEdit as Edit, Save, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { SearchableSelect } from '../common/SearchableSelect';
+import { CategoryHierarchySelect } from '../common/CategoryHierarchySelect';
 import { useToast } from '../common/Toast';
 
 interface ProfileData {
@@ -46,6 +47,7 @@ interface EditProfileFormProps {
 interface Category {
   id: string;
   name: string;
+  parent_id: string | null;
 }
 
 export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
@@ -89,7 +91,7 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
   const loadCategories = async () => {
     const { data } = await supabase
       .from('business_categories')
-      .select('id, name')
+      .select('id, name, parent_id')
       .order('name');
 
     if (data) {
@@ -460,10 +462,10 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Categoria
                 </label>
-                <SearchableSelect
+                <CategoryHierarchySelect
                   value={formData.business_category_id}
                   onChange={(value) => setFormData(prev => ({ ...prev, business_category_id: value }))}
-                  options={categories.map(cat => ({ value: cat.id, label: cat.name }))}
+                  categories={categories}
                   placeholder="Seleziona categoria"
                 />
               </div>
@@ -751,10 +753,10 @@ export function EditProfileForm({ profile, onUpdate }: EditProfileFormProps) {
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Categoria
               </label>
-              <SearchableSelect
+              <CategoryHierarchySelect
                 value={formData.category_id}
                 onChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}
-                options={categories.map(cat => ({ value: cat.id, label: cat.name }))}
+                categories={categories}
                 placeholder="Seleziona la tua categoria"
               />
               <p className="text-xs text-gray-500 mt-1">Viene mostrata nelle attivita che aggiungi alla piattaforma</p>
