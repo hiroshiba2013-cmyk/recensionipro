@@ -57,7 +57,7 @@ Google offre **200€ di credito gratuito al mese**, che equivale a:
 
 ```bash
 curl -X POST \
-  'https://zlzupeuwfpcpgxymdvpi.supabase.co/functions/v1/import-businesses-google' \
+  'https://lrqeojukjpjllnvsjtor.supabase.co/functions/v1/import-businesses-google' \
   -H 'Authorization: Bearer TUA_SUPABASE_KEY' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -162,7 +162,7 @@ Verifica che stai passando l'header Authorization con la Supabase key.
 ```bash
 # Importa tutte le attività di Varese nel raggio di 10 km
 curl -X POST \
-  'https://zlzupeuwfpcpgxymdvpi.supabase.co/functions/v1/import-businesses-google' \
+  'https://lrqeojukjpjllnvsjtor.supabase.co/functions/v1/import-businesses-google' \
   -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' \
   -H 'Content-Type: application/json' \
   -d '{
