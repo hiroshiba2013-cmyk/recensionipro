@@ -411,7 +411,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
       lastName: '',
       nickname: '',
       dateOfBirth: '',
-      taxCode: '',
+      fiscalCode: '',
       relationship: 'Coniuge',
     }]);
   };
